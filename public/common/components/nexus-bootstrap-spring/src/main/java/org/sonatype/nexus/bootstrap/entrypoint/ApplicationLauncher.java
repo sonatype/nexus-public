@@ -19,8 +19,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -35,7 +34,6 @@ import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropert
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.FALSE;
 
 @Component
-@Singleton
 public class ApplicationLauncher
 {
   public static final String SYSTEM_USERID = "*SYSTEM";
@@ -50,7 +48,7 @@ public class ApplicationLauncher
 
   private final NexusProperties nexusProperties;
 
-  @Inject
+  @Autowired
   public ApplicationLauncher(
       final NexusEditionSelector nexusEditionSelector,
       final ConfigurableApplicationContext context,

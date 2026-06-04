@@ -970,4 +970,70 @@ public class DefaultCapabilityRegistryTest
     when(subject.getPrincipal()).thenReturn(principal);
     return subject;
   }
+
+  @Test
+  public void pullAndRefreshReferencesFromDB_addsNewCapabilitiesFromDatabase() {
+    CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.version()).thenReturn(0);
+
+    // Load registry with one existing capability
+    CapabilityStorageItem existingItem = new CapabilityStorageItemData();
+    existingItem.setVersion(0);
+    existingItem.setType(CAPABILITY_TYPE.toString());
+    existingItem.setEnabled(true);
+    existingItem.setProperties(Maps.newHashMap());
+    CapabilityIdentity existingId = capabilityIdentity("existing-capability");
+
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(existingId, existingItem));
+    underTest.load();
+    assertThat(underTest.getAll(), hasSize(1));
+
+    // Simulate another node adding a capability to database
+    CapabilityStorageItem newItem = new CapabilityStorageItemData();
+    newItem.setVersion(0);
+    newItem.setType(CAPABILITY_TYPE.toString());
+    newItem.setEnabled(true);
+    newItem.setProperties(Maps.newHashMap());
+    CapabilityIdentity newId = capabilityIdentity("new-capability");
+
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(existingId, existingItem, newId, newItem));
+    underTest.pullAndRefreshReferencesFromDB();
+
+    assertThat(underTest.getAll(), hasSize(2));
+  }
+
+  @Test
+  public void pullAndRefreshReferencesFromDB_removesDeletedCapabilitiesFromMemory() {
+    CapabilityDescriptor descriptor = mock(CapabilityDescriptor.class);
+    when(capabilityDescriptorRegistry.get(CAPABILITY_TYPE)).thenReturn(descriptor);
+    when(descriptor.version()).thenReturn(0);
+
+    // Load registry with two capabilities
+    CapabilityStorageItem item1 = new CapabilityStorageItemData();
+    item1.setVersion(0);
+    item1.setType(CAPABILITY_TYPE.toString());
+    item1.setEnabled(true);
+    item1.setProperties(Maps.newHashMap());
+    CapabilityIdentity id1 = capabilityIdentity("capability-1");
+
+    CapabilityStorageItem item2 = new CapabilityStorageItemData();
+    item2.setVersion(0);
+    item2.setType(CAPABILITY_TYPE.toString());
+    item2.setEnabled(true);
+    item2.setProperties(Maps.newHashMap());
+    CapabilityIdentity id2 = capabilityIdentity("capability-2");
+
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(id1, item1, id2, item2));
+    underTest.load();
+    assertThat(underTest.getAll(), hasSize(2));
+
+    // Simulate another node deleting one capability from database
+    when(capabilityStorage.getAll()).thenReturn(ImmutableMap.of(id1, item1));
+    underTest.pullAndRefreshReferencesFromDB();
+
+    assertThat(underTest.getAll(), hasSize(1));
+    assertThat(underTest.get(id1), is(notNullValue()));
+    assertThat(underTest.get(id2), is(nullValue()));
+  }
 }

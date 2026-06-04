@@ -18,10 +18,8 @@ import javax.cache.CacheManager;
 import javax.cache.configuration.Factory;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.ExpiryPolicy;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +31,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @SuppressWarnings("rawtypes")
 @Component
-@Singleton
 public class CacheHelper
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -42,7 +39,7 @@ public class CacheHelper
 
   private final Provider<CacheBuilder> cacheBuilderProvider;
 
-  @Inject
+  @Autowired
   public CacheHelper(
       final Provider<CacheManager> cacheManagerProvider,
       final Provider<CacheBuilder> cacheBuilderProvider)

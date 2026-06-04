@@ -35,6 +35,14 @@ public interface ApiKeyStore
   Collection<ApiKeyInternal> browseByCreatedDate(String domain, OffsetDateTime date);
 
   /**
+   * Browse all tokens across all domains (paginated).
+   *
+   * @param page 0-based page number
+   * @param pageSize maximum number of results per page
+   */
+  Collection<ApiKeyInternal> browseAll(int page, int pageSize);
+
+  /**
    * Browse tokens in the domain (paginated)
    */
   Collection<ApiKeyInternal> browsePaginated(String domain, int page, int pageSize);

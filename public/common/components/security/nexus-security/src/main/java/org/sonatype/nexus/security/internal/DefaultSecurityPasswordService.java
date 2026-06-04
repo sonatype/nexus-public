@@ -23,8 +23,7 @@ import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.security.authc.AuthenticationFailureReason;
 import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.authc.credential.HashingPasswordService;
 import org.apache.shiro.authc.credential.PasswordService;
@@ -56,7 +55,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_PASSWORD
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class DefaultSecurityPasswordService
     implements HashingPasswordService
 {
@@ -86,7 +84,7 @@ public class DefaultSecurityPasswordService
 
   private final Integer configuredPasswordIterations;
 
-  @Inject
+  @Autowired
   public DefaultSecurityPasswordService(
       @Qualifier("legacy") final PasswordService legacyPasswordService,
       @Value(NEXUS_SECURITY_PASSWORD_ALGORITHM_NAMED_VALUE) final String nexusPasswordAlgorithm,

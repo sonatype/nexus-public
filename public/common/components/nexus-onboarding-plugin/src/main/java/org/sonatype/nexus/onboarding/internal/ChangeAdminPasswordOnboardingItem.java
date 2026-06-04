@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class ChangeAdminPasswordOnboardingItem
     implements OnboardingItem
 {
@@ -41,7 +38,7 @@ public class ChangeAdminPasswordOnboardingItem
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public ChangeAdminPasswordOnboardingItem(final SecuritySystem securitySystem) {
     this.securitySystem = checkNotNull(securitySystem);
   }

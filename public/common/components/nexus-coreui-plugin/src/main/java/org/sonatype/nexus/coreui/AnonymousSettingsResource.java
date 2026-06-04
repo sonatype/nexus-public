@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -39,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.19
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(AnonymousSettingsResource.RESOURCE_PATH)
@@ -52,7 +50,7 @@ public class AnonymousSettingsResource
 
   private final AnonymousManager anonymousManager;
 
-  @Inject
+  @Autowired
   public AnonymousSettingsResource(final AnonymousManager anonymousManager) {
     this.anonymousManager = checkNotNull(anonymousManager);
   }

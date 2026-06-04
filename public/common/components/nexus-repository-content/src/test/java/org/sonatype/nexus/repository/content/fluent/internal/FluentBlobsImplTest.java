@@ -289,17 +289,17 @@ public class FluentBlobsImplTest
     when(srcConfig.getName()).thenReturn("default");
     when(srcStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
 
-    Blob copiedBlob = mock(Blob.class);
-    when(blobStore.copy(any(BlobId.class), any(Map.class))).thenReturn(copiedBlob);
-
     Map<HashAlgorithm, HashCode> hashes =
         Map.of(HashAlgorithm.SHA1, HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709"));
 
     TempBlob result = underTest.ingest(srcBlob, srcStore, hashes);
 
     assertThat(result, is(notNullValue()));
-    assertThat(result.getBlob(), is(copiedBlob));
-    verify(blobStore).copy(any(BlobId.class), any(Map.class));
+    assertThat(result, is(instanceOf(AttachableBlob.class)));
+    AttachableBlob attachableBlob = (AttachableBlob) result;
+    assertThat(attachableBlob.getBlob(), is(srcBlob));
+    // verify copy was NOT called since we re-attach instead
+    verify(blobStore, never()).copy(any(BlobId.class), any(Map.class));
   }
 
   @Test
@@ -943,22 +943,14 @@ public class FluentBlobsImplTest
     when(srcConfig.getName()).thenReturn("shared-store");
     when(srcStore.getBlobStoreConfiguration()).thenReturn(srcConfig);
 
-    Blob copiedBlob = mock(Blob.class);
-    when(blobStore.copy(any(BlobId.class), any(Map.class))).thenReturn(copiedBlob);
-
     Map<HashAlgorithm, HashCode> hashes =
         Map.of(HashAlgorithm.SHA1, HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709"));
 
     TempBlob result = underTest.ingest(srcBlob, srcStore, hashes);
 
     assertThat(result, is(notNullValue()));
-    // verify copy was called with proper headers derived from srcBlob headers + tempHeaders
-    ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
-    verify(blobStore).copy(eq(srcBlobId), headersCaptor.capture());
-    Map<String, String> capturedHeaders = headersCaptor.getValue();
-    assertThat(capturedHeaders.get(CONTENT_TYPE_HEADER), is("application/json"));
-    assertThat(capturedHeaders.get(REPO_NAME_HEADER), is(REPO_NAME));
-    // original blob name should be preserved since it was in srcHeaders
-    assertThat(capturedHeaders.get(BLOB_NAME_HEADER), is("original-blob"));
+    assertThat(result, is(instanceOf(AttachableBlob.class)));
+    // verify copy was NOT called since we re-attach instead
+    verify(blobStore, never()).copy(any(BlobId.class), any(Map.class));
   }
 }

@@ -19,8 +19,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.datastore.mybatis.CipherAwareTypeHandler;
 
 import com.fasterxml.jackson.core.Base64Variant;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.21
  */
 @Component
-@Singleton
 public class ApiKeyTokenTypeHandler
     extends CipherAwareTypeHandler<ApiKeyToken>
 {

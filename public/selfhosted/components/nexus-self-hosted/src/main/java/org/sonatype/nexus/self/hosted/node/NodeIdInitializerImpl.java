@@ -15,10 +15,8 @@ package org.sonatype.nexus.self.hosted.node;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.internal.node.NodeIdEncoding;
 import org.sonatype.nexus.internal.node.NodeIdInitializer;
 import org.sonatype.nexus.node.datastore.NodeIdStore;
@@ -36,7 +34,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * cluster.
  */
 @Component
-@Singleton
 public class NodeIdInitializerImpl
     implements NodeIdInitializer
 {
@@ -48,7 +45,7 @@ public class NodeIdInitializerImpl
 
   private final Provider<KeyStoreManager> keyStoreProvider;
 
-  @Inject
+  @Autowired
   public NodeIdInitializerImpl(
       @Qualifier(NODE_KEY_STORE_TYPE) final Provider<KeyStoreManager> keyStoreProvider,
       final NodeIdStore nodeIdStore)

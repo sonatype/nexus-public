@@ -24,9 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.hash.HashCode;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -40,12 +38,11 @@ import org.springframework.stereotype.Component;
  */
 @Deprecated
 @Component
-@Singleton
 public class HashAlgorithmHelper
 {
   private final int bufferSize;
 
-  @Inject
+  @Autowired
   public HashAlgorithmHelper(
       @Value("${nexus.calculateChecksums.bufferSize:32768}") final int bufferSize)
   {

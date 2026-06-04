@@ -23,8 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -64,7 +63,6 @@ import org.springframework.stereotype.Component;
  * @since 3.24
  */
 @Component
-@Singleton
 public class UploadManagerImpl
     implements UploadManager
 {
@@ -82,7 +80,7 @@ public class UploadManagerImpl
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public UploadManagerImpl(
       final List<UploadHandler> uploadHandlersList,
       final UploadComponentMultipartHelper multipartHelper,
@@ -277,7 +275,7 @@ public class UploadManagerImpl
   }
 
   private void logUploadDetails(final ComponentUpload componentUpload, final Repository repository) {
-    if (log.isInfoEnabled()) {
+    if (log.isDebugEnabled()) {
       Map<String, String> componentFields = componentUpload.getFields();
       List<AssetUpload> assetUploads = componentUpload.getAssetUploads();
 
@@ -294,7 +292,7 @@ public class UploadManagerImpl
       for (Entry<String, String> entry : componentFields.entrySet()) {
         sb.append(entry.getKey()).append("=\"").append(entry.getValue()).append("\" ");
       }
-      log.info(sb.toString());
+      log.debug(sb.toString());
 
       for (AssetUpload assetUpload : assetUploads) {
         sb = new StringBuilder();
@@ -303,7 +301,7 @@ public class UploadManagerImpl
         for (Entry<String, String> entry : assetUpload.getFields().entrySet()) {
           sb.append(entry.getKey()).append("=\"").append(entry.getValue()).append("\" ");
         }
-        log.info(sb.toString());
+        log.debug(sb.toString());
       }
     }
   }

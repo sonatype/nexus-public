@@ -15,9 +15,7 @@ package org.sonatype.nexus.quartz.internal.store;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.DataStore;
 
@@ -33,13 +31,12 @@ import org.springframework.stereotype.Component;
  * @since 3.19
  */
 @Component
-@Singleton
 public class ConfigStoreConnectionProvider
     implements ConnectionProvider
 {
   private final DataSessionSupplier sessionSupplier;
 
-  @Inject
+  @Autowired
   public ConfigStoreConnectionProvider(final DataSessionSupplier sessionSupplier) {
     this.sessionSupplier = checkNotNull(sessionSupplier);
   }

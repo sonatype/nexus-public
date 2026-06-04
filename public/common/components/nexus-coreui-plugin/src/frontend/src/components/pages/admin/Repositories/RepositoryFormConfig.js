@@ -41,6 +41,8 @@ import AptEnforceDistributionConfiguration from './facets/AptEnforceDistribution
 import AptSigningConfiguration from './facets/AptSigningConfiguration';
 import AptFlatConfiguration from './facets/AptFlatConfiguration';
 import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
+import AlpineSigningConfiguration from './facets/AlpineSigningConfiguration';
+import RawQueryParamsConfiguration from './facets/RawQueryParamsConfiguration';
 
 import {genericDefaultValues} from './RepositoryFormDefaultValues';
 import {
@@ -141,12 +143,32 @@ const repositoryFormats = {
       ...genericValidators.hosted(data)
     })
   },
+  alpine_proxy: {
+    facets: [AlpineSigningConfiguration, ...genericFacets.proxy],
+    defaultValues: {
+      ...genericDefaultValues.proxy,
+      alpineSigning: {
+        keypair: null,
+        passphrase: null
+      }
+    },
+    validators: (data) => ({
+      ...genericValidators.proxy(data),
+      alpineSigning: {
+        keypair: ValidationUtils.validateNotBlank(data.alpineSigning?.keypair)
+      }
+    })
+  },
   raw_proxy: {
-    facets: [ContentDespositionConfiguration, ...genericFacets.proxy],
+    facets: [ContentDespositionConfiguration, RawQueryParamsConfiguration, ...genericFacets.proxy],
     defaultValues: {
       ...genericDefaultValues.proxy,
       ...replicationDefaultValue,
-      raw: {contentDisposition: 'ATTACHMENT'}
+      raw: {
+        contentDisposition: 'ATTACHMENT',
+        forwardQueryParameters: false,
+        excludedQueryParameters: []
+      }
     },
     validators: (data) => ({
       ...genericValidators.proxy(data)

@@ -14,9 +14,7 @@ package org.sonatype.nexus.security;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -35,14 +33,13 @@ import org.springframework.stereotype.Component;
  * Helper component to map user principals to associated information.
  */
 @Component
-@Singleton
 public class UserPrincipalsHelper
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final List<UserManager> userManagers;
 
-  @Inject
+  @Autowired
   public UserPrincipalsHelper(final List<UserManager> userManagers) {
     this.userManagers = checkNotNull(userManagers);
   }

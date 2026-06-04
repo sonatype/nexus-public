@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -53,7 +52,6 @@ import org.springframework.stereotype.Component;
  * @since 3.30
  */
 @Component
-@Singleton
 @Path(RESOURCE_PATH)
 public class BlobStoreInternalResource
     implements Resource
@@ -88,7 +86,7 @@ public class BlobStoreInternalResource
 
   private static final Logger logger = LoggerFactory.getLogger(BlobStoreInternalResource.class);
 
-  @Inject
+  @Autowired
   public BlobStoreInternalResource(
       final BlobStoreManager blobStoreManager,
       final BlobStoreConfigurationStore store,

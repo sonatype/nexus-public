@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.coreui.internal.log;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 @Path(LogResource.RESOURCE_URI)
 public class LogResource
     implements Resource
@@ -50,7 +48,7 @@ public class LogResource
 
   private final LogMarker logMarker;
 
-  @Inject
+  @Autowired
   public LogResource(final LogMarker logMarker) {
     this.logMarker = checkNotNull(logMarker);
   }

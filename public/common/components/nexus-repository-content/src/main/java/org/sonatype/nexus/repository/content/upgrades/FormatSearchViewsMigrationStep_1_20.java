@@ -16,19 +16,16 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * Drop legacy format search views.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class FormatSearchViewsMigrationStep_1_20
     implements DatabaseMigrationStep
 {
@@ -36,7 +33,7 @@ public class FormatSearchViewsMigrationStep_1_20
 
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public FormatSearchViewsMigrationStep_1_20(final List<Format> formats) {
     this.formats = formats;
   }

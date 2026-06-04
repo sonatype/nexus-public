@@ -14,7 +14,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS } from '../../../interface/ExtJS';
 import UIStrings from '../../../constants/UIStrings';
 import LoginPage from './LoginPage';
 
@@ -78,7 +78,7 @@ jest.mock('@uirouter/react', () => {
   };
 });
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
+jest.mock('../../../interface/ExtJS', () => ({
   ExtJS: {
     useState: jest.fn(),
     state: jest.fn(),

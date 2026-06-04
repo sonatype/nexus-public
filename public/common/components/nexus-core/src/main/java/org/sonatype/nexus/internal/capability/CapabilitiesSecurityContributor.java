@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.capability;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class CapabilitiesSecurityContributor
     extends SecurityContributorSupport
     implements SecurityContributor

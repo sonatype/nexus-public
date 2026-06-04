@@ -15,7 +15,6 @@ package org.sonatype.nexus.coreui.internal.ui;
 import javax.validation.ValidationException;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.coreui.internal.ui.UISwitchFeedbackResource.FeedbackRequest;
 import org.sonatype.nexus.httpclient.HttpClientManager;
@@ -49,8 +48,10 @@ import org.apache.http.protocol.HttpContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -69,8 +70,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class UISwitchFeedbackResourceTest
-    extends Test5Support
 {
   @Mock
   HttpClientManager httpClientManager;

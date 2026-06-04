@@ -159,7 +159,7 @@ function areAllRequiredStatesEnabled(statesEnabled) {
       return stateValue.length > 0;
     }
     else {
-      return stateValue.enabled;
+      return stateValue?.enabled ?? false;
     }
   });
 }

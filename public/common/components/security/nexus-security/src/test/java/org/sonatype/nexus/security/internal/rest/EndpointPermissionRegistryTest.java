@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.testsupport.Test5Support;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 
@@ -33,7 +31,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 
 class EndpointPermissionRegistryTest
-    extends Test5Support
 {
   private EndpointPermissionRegistry newRegistry() {
     @SuppressWarnings("unchecked")

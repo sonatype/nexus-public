@@ -12,18 +12,13 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useAuditLogApi } from '../useAuditLogApi';
-import { restClient } from '@/utils/api';
-import type { AuditFilters, AuditLogResponse } from '../audit.types';
+import { useAuditLogApi } from '@sonatype/nexus-ui-plugin/src/frontend/src/utils/audit/useAuditLogApi';
+import type { AuditFilters, AuditLogResponse } from '@sonatype/nexus-ui-plugin/src/frontend/src/utils/audit/audit.types';
+import { restClient } from '@sonatype/nexus-ui-plugin';
 
-// Mock the restClient
-jest.mock('@/utils/api', () => ({
-  restClient: {
-    get: jest.fn(),
-  },
-}));
-
-const mockRestClient = restClient as jest.Mocked<typeof restClient>;
+// Spy on restClient.get. This works regardless of how the source imports restClient.
+// The spy will intercept calls to the real method.
+const mockGet = jest.spyOn(restClient, 'get');
 
 // Test data
 const mockAuditLogResponse: AuditLogResponse = {
@@ -59,8 +54,10 @@ const mockAuditLogResponse: AuditLogResponse = {
 
 const defaultFilters: AuditFilters = {
   categories: [],
+  domains: [],
   eventTypes: [],
   dateRange: 'last-30-days',
+  initiator: '',
   initiators: [],
   searchQuery: '',
 };
@@ -68,7 +65,7 @@ const defaultFilters: AuditFilters = {
 describe('useAuditLogApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRestClient.get.mockResolvedValue(mockAuditLogResponse);
+    mockGet.mockResolvedValue(mockAuditLogResponse);
   });
 
   describe('Initial Fetch', () => {
@@ -103,10 +100,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('/service/rest/internal/ui/audit-log');
       expect(calledUrl).toContain('page=1');
       expect(calledUrl).toContain('limit=20');
@@ -124,10 +121,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('page=3');
     });
 
@@ -141,10 +138,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('limit=50');
     });
   });
@@ -165,10 +162,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('categories=security');
       expect(calledUrl).toContain('categories=repository');
     });
@@ -190,10 +187,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('types=created');
       expect(calledUrl).toContain('types=deleted');
     });
@@ -215,10 +212,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('initiators=admin');
       expect(calledUrl).toContain('initiators=system');
     });
@@ -240,10 +237,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('startDate=');
       expect(calledUrl).toContain('endDate=');
     });
@@ -263,10 +260,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('startDate=');
       expect(calledUrl).toContain('endDate=');
     });
@@ -288,10 +285,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('startDate=2026-03-01T00%3A00%3A00.000Z');
       expect(calledUrl).toContain('endDate=2026-03-10T23%3A59%3A59.999Z');
     });
@@ -313,10 +310,10 @@ describe('useAuditLogApi', () => {
       );
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalled();
+        expect(mockGet).toHaveBeenCalled();
       });
 
-      const calledUrl = mockRestClient.get.mock.calls[0][0];
+      const calledUrl = mockGet.mock.calls[0][0];
       expect(calledUrl).toContain('q=test+search');
     });
   });
@@ -324,7 +321,7 @@ describe('useAuditLogApi', () => {
   describe('Error Handling', () => {
     it('should handle API errors', async () => {
       const errorMessage = 'Network error';
-      mockRestClient.get.mockRejectedValueOnce(new Error(errorMessage));
+      mockGet.mockRejectedValueOnce(new Error(errorMessage));
 
       const { result } = renderHook(() =>
         useAuditLogApi({
@@ -343,7 +340,7 @@ describe('useAuditLogApi', () => {
     });
 
     it('should handle non-Error exceptions', async () => {
-      mockRestClient.get.mockRejectedValueOnce('Unknown error');
+      mockGet.mockRejectedValueOnce('Unknown error');
 
       const { result } = renderHook(() =>
         useAuditLogApi({
@@ -375,14 +372,14 @@ describe('useAuditLogApi', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockRestClient.get).toHaveBeenCalledTimes(1);
+      expect(mockGet).toHaveBeenCalledTimes(1);
 
       act(() => {
         result.current.refetch();
       });
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalledTimes(2);
+        expect(mockGet).toHaveBeenCalledTimes(2);
       });
     });
   });
@@ -405,7 +402,7 @@ describe('useAuditLogApi', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockRestClient.get).toHaveBeenCalledTimes(1);
+      expect(mockGet).toHaveBeenCalledTimes(1);
 
       const newFilters: AuditFilters = {
         ...defaultFilters,
@@ -415,7 +412,7 @@ describe('useAuditLogApi', () => {
       rerender({ filters: newFilters });
 
       await waitFor(() => {
-        expect(mockRestClient.get).toHaveBeenCalledTimes(2);
+        expect(mockGet).toHaveBeenCalledTimes(2);
       });
     });
   });

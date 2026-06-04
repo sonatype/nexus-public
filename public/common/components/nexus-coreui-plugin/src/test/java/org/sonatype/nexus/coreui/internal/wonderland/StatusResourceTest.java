@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui.internal.wonderland;
 
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
@@ -20,7 +22,6 @@ import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,19 +39,28 @@ class StatusResourceTest
   @Mock
   private ApplicationVersion applicationVersion;
 
-  @InjectMocks
+  @Mock
+  private NexusEditionSelector nexusEditionSelector;
+
+  @Mock
+  private NexusEdition nexusEdition;
+
   private StatusResource underTest;
 
   @Test
   void getReturnsVersionAndEdition() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("PRO");
+    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
+    when(nexusEdition.getId()).thenReturn("nexus-professional-edition");
 
+    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));
     assertThat(result.getVersion(), is("3.70.0-01"));
     assertThat(result.getEdition(), is("PRO"));
+    assertThat(result.getIsCloud(), is(false));
     verify(applicationVersion).getVersion();
     verify(applicationVersion).getEdition();
   }
@@ -59,23 +69,47 @@ class StatusResourceTest
   void getReturnsOssEdition() {
     when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
     when(applicationVersion.getEdition()).thenReturn("OSS");
+    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
+    when(nexusEdition.getId()).thenReturn("nexus-core-edition");
 
+    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));
     assertThat(result.getVersion(), is("3.70.0-01"));
     assertThat(result.getEdition(), is("OSS"));
+    assertThat(result.getIsCloud(), is(false));
+  }
+
+  @Test
+  void getReturnsIsCloudTrueForCloudEdition() {
+    when(applicationVersion.getVersion()).thenReturn("3.70.0-01");
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
+    when(nexusEdition.getId()).thenReturn("nexus-cloud-edition");
+
+    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
+    StatusXO result = underTest.get();
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getVersion(), is("3.70.0-01"));
+    assertThat(result.getEdition(), is("PRO"));
+    assertThat(result.getIsCloud(), is(true));
   }
 
   @Test
   void getHandlesNullValues() {
     when(applicationVersion.getVersion()).thenReturn(null);
     when(applicationVersion.getEdition()).thenReturn(null);
+    when(nexusEditionSelector.getCurrent()).thenReturn(nexusEdition);
+    when(nexusEdition.getId()).thenReturn("nexus-professional-edition");
 
+    underTest = new StatusResource(applicationVersion, nexusEditionSelector);
     StatusXO result = underTest.get();
 
     assertThat(result, is(notNullValue()));
     assertThat(result.getVersion(), is((String) null));
     assertThat(result.getEdition(), is((String) null));
+    assertThat(result.getIsCloud(), is(false));
   }
 }

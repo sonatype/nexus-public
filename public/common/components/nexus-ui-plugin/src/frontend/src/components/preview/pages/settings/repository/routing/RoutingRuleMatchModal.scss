@@ -1,0 +1,171 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.routing-rule-match-modal {
+  max-width: 500px;
+
+  &__header {
+    padding-bottom: var(--space-3, 12px);
+    border-bottom: 1px solid var(--gray-a3);
+  }
+
+  &__close {
+    padding: 0;
+    margin: 0;
+
+    &:hover {
+      color: var(--gray-12, #1a1a1a);
+
+      [data-theme='dark'] & {
+        color: var(--gray-12, #edeef0);
+      }
+    }
+  }
+
+  &__body {
+    padding: var(--space-4, 16px) 0;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  &__section {
+    margin-bottom: var(--space-4, 16px);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__section--path {
+    background: var(--gray-2, #f9f9fb);
+    padding: var(--space-3, 12px);
+    border-radius: var(--radius-2, 6px);
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #19191b);
+    }
+  }
+
+  &__section--matchers {
+    background: var(--blue-1, #eff8ff);
+    padding: var(--space-3, 12px);
+    border-radius: var(--radius-2, 6px);
+
+    [data-theme='dark'] & {
+      background: var(--blue-3, #1a3554);
+    }
+  }
+
+  &__section--id {
+    opacity: 0.75;
+  }
+
+  &__label {
+    margin-bottom: var(--space-1, 4px);
+    color: var(--gray-11, #6f6f78);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
+  }
+
+  &__mode {
+    font-weight: 500;
+
+    .rt-Text {
+      margin-bottom: 0;
+    }
+  }
+
+  &__mode-icon {
+    display: flex;
+    align-items: center;
+
+    &--allow {
+      color: var(--green-9, #30a46c);
+    }
+
+    &--block {
+      color: var(--red-9, #e5484d);
+    }
+  }
+
+  &__path {
+    font-family: monospace;
+    color: var(--color-text-primary, #1a1a1a);
+    word-break: break-all;
+  }
+
+  &__matchers-note {
+    margin-bottom: var(--space-3, 12px);
+    font-style: italic;
+  }
+
+  &__matchers-list {
+    margin: 0;
+    padding-left: var(--space-4, 16px);
+    list-style-type: disc;
+
+    li {
+      margin-bottom: var(--space-1, 4px);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__matcher {
+    font-family: monospace;
+    background: var(--gray-3, #f1f1f3);
+    padding: 2px var(--space-2, 8px);
+    border-radius: var(--radius-1, 4px);
+    color: var(--color-text-primary, #1a1a1a);
+
+    [data-theme='dark'] & {
+      background: var(--gray-3, #222225);
+    }
+  }
+
+  &__id {
+    font-family: monospace;
+    font-size: 0.85em;
+  }
+
+  &__footer {
+    padding-top: var(--space-3, 12px);
+    border-top: 1px solid var(--gray-a3);
+  }
+
+  &__close-button {
+    background: var(--gray-6, #e4e4e7);
+    border: none;
+    padding: var(--space-2, 8px) var(--space-4, 16px);
+    border-radius: var(--radius-2, 6px);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--gray-7, #d0d0d4);
+    }
+
+    [data-theme='dark'] & {
+      background: var(--gray-6, #3d3d43);
+
+      &:hover {
+        background: var(--gray-5, #4a4a50);
+      }
+    }
+  }
+}

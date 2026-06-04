@@ -18,9 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiBucketConfiguration;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiFailoverBucket;
 import org.sonatype.nexus.api.rest.common.blobstore.s3.model.S3BlobStoreApiModel;
@@ -51,14 +49,13 @@ import org.springframework.stereotype.Component;
  * @since 3.20
  */
 @Component
-@Singleton
 public class S3BlobStoreApiUpdateValidation
 {
   private static final String BLOB_STORE_NAME = "name";
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public S3BlobStoreApiUpdateValidation(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = blobStoreManager;
   }

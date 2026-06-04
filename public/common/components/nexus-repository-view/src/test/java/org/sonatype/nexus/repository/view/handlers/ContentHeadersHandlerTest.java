@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import org.sonatype.nexus.repository.date.DateTimeUtils;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.http.NxrmHttpHeaders;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
@@ -111,44 +110,4 @@ public class ContentHeadersHandlerTest
     assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), nullValue());
     assertThat(r.getHeaders().get(HttpHeaders.ETAG), nullValue());
   }
-
-  @Test
-  public void okResponseWithPCCSHash() throws Exception {
-    final Content content = new Content(new StringPayload(payloadString, "text/plain"));
-    content.getAttributes().set(Content.CONTENT_LAST_MODIFIED, now);
-    content.getAttributes().set(Content.CONTENT_ETAG, "etag");
-    content.getAttributes().set(Content.CONTENT_PCCS_HASH, "pccs-hash-123");
-    when(context.proceed()).thenReturn(HttpResponses.ok(content));
-    final Response r = subject.handle(context);
-    assertThat(r.getStatus().isSuccessful(), is(true));
-    assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), equalTo(DateTimeUtils.formatDateTime(now)));
-    assertThat(r.getHeaders().get(HttpHeaders.ETAG), equalTo("\"etag\""));
-    assertThat(r.getHeaders().get(NxrmHttpHeaders.PCCS_HASH), equalTo("pccs-hash-123"));
-  }
-
-  @Test
-  public void okResponseWithPCCSHashOnly() throws Exception {
-    final Content content = new Content(new StringPayload(payloadString, "text/plain"));
-    content.getAttributes().set(Content.CONTENT_PCCS_HASH, "pccs-hash-456");
-    when(context.proceed()).thenReturn(HttpResponses.ok(content));
-    final Response r = subject.handle(context);
-    assertThat(r.getStatus().isSuccessful(), is(true));
-    assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), nullValue());
-    assertThat(r.getHeaders().get(HttpHeaders.ETAG), nullValue());
-    assertThat(r.getHeaders().get(NxrmHttpHeaders.PCCS_HASH), equalTo("pccs-hash-456"));
-  }
-
-  @Test
-  public void okResponseWithoutPCCSHash() throws Exception {
-    final Content content = new Content(new StringPayload(payloadString, "text/plain"));
-    content.getAttributes().set(Content.CONTENT_LAST_MODIFIED, now);
-    content.getAttributes().set(Content.CONTENT_ETAG, "etag");
-    when(context.proceed()).thenReturn(HttpResponses.ok(content));
-    final Response r = subject.handle(context);
-    assertThat(r.getStatus().isSuccessful(), is(true));
-    assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), equalTo(DateTimeUtils.formatDateTime(now)));
-    assertThat(r.getHeaders().get(HttpHeaders.ETAG), equalTo("\"etag\""));
-    assertThat(r.getHeaders().get(NxrmHttpHeaders.PCCS_HASH), nullValue());
-  }
-
 }

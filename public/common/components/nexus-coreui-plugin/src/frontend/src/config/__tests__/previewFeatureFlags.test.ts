@@ -21,7 +21,7 @@ import {
   canPreviewWip,
   getWipPreviewUrl,
   PREVIEW_FEATURE_FLAGS,
-} from '../previewFeatureFlags';
+} from '@sonatype/nexus-ui-plugin/src/frontend/src/components/preview/config/featureFlags';
 
 describe('previewFeatureFlags', () => {
   // Store original window properties
@@ -128,13 +128,13 @@ describe('previewFeatureFlags', () => {
       expect(PREVIEW_FEATURE_FLAGS['repository.repositories']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['repository.blobstores']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['repository.selectors']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['repository.cleanuppolicies']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['repository.cleanuppolicies']).toBe(true);
     });
 
     it('has security features partially enabled per release spec', () => {
       // Coming Soon
       expect(PREVIEW_FEATURE_FLAGS['security.privileges']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.roles']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['security.roles']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['security.users']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['security.anonymous']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['security.ldap']).toBe(false);
@@ -159,12 +159,12 @@ describe('previewFeatureFlags', () => {
       // Enabled
       expect(PREVIEW_FEATURE_FLAGS['system.api']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['system.nodes']).toBe(true);
+      expect(PREVIEW_FEATURE_FLAGS['system.capabilities']).toBe(true);
+      expect(PREVIEW_FEATURE_FLAGS['system.tasks']).toBe(true);
       // Coming Soon
       expect(PREVIEW_FEATURE_FLAGS['system.licensing']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['system.upgrade']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['system.capabilities']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['system.emailserver']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['system.tasks']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['system.http']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['iqserver']).toBe(false);
     });

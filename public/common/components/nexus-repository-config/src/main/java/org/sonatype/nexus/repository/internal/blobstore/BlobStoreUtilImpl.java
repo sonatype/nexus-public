@@ -23,9 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -44,13 +42,12 @@ import org.springframework.stereotype.Component;
  * @since 3.15
  */
 @Component
-@Singleton
 public class BlobStoreUtilImpl
     implements BlobStoreUtil
 {
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public BlobStoreUtilImpl(@Lazy final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }

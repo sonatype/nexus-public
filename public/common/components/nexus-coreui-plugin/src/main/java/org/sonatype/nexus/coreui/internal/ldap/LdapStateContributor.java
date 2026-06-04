@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.ldap;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.realm.RealmManager;
 
@@ -27,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class LdapStateContributor
     implements StateContributor
 {
@@ -41,7 +38,7 @@ public class LdapStateContributor
 
   private final RealmManager realmManager;
 
-  @Inject
+  @Autowired
   public LdapStateContributor(
       @Value("${nexus.react.ldap:false}") final Boolean featureFlag,
       @Value("${nexus.ldap.mapped.role.query.character.limit:3}") final int mappedRoleQueryCharacterLimit,

@@ -21,9 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.search.sql.query.security.SqlSearchPermissionBuilder;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -49,7 +47,6 @@ import org.springframework.stereotype.Component;
  * A utility which converts a {@link SearchRequest} into an {@link Expression} with the current user's security.
  */
 @Component
-@Singleton
 public class ExpressionBuilder
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -60,7 +57,7 @@ public class ExpressionBuilder
 
   private final Map<String, FilterType> filterTypeByAttribute;
 
-  @Inject
+  @Autowired
   public ExpressionBuilder(
       final SqlSearchPermissionBuilder permissionBuilder,
       final List<SqlSearchQueryContribution> handlersList,

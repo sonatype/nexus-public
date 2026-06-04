@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.capability.CapabilityBooterSupport;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.rapture.internal.settings.SettingsCapabilityConfiguration;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class RaptureCapabilitiesBooter
     extends CapabilityBooterSupport
 {

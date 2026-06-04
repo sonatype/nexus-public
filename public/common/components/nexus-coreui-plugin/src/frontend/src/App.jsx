@@ -14,21 +14,28 @@ import React, { Suspense, useState, useEffect, useLayoutEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 import { UIRouter, UIView, useRouter } from '@uirouter/react';
-import { ExtJS, UnsavedChangesModal, RouteLoadingFallback, ToastProvider, bootstrapFromREST } from '@sonatype/nexus-ui-plugin';
-import { SessionExpiryModal, ToastProvider as CoreuiToastProvider, useSessionExpiry } from './components/shared';
+import { ExtJS, UnsavedChangesModal, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, TooltipContainerProvider as NuiTooltipContainerProvider } from '@sonatype/nexus-ui-plugin';
+import LeftNavigationMenuRadix from './components/LeftNavigationMenu/LeftNavigationMenuRadix';
 import { Theme, AlertDialog, Button, Flex } from '@radix-ui/themes';
 import { TooltipContainerProvider } from './components/shared/Tooltip/TooltipContainerContext';
 import { getRouter } from './routerConfig/routerConfig';
 import { ROUTE_NAMES } from './routerConfig/routeNames/routeNames';
-import LeftNavigationMenuRadix from './components/LeftNavigationMenu/LeftNavigationMenuRadix';
 import GlobalHeaderRadix from './components/GlobalHeader/GlobalHeaderRadix';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 import './App.scss';
+import './components/shared/Toast.scss';
 import SystemNotices from './components/widgets/SystemStatusAlerts/SystemNotices';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import { useRedirectOnLogout } from './hooks/useRedirectOnLogout';
 import usePreventPushStateOnHash from './hooks/usePreventPushStateOnHash';
+
+// WHOLE_DOCUMENT allows DOMPurify to parse <head> and preserve <style> tags that customers
+// place there; FORCE_BODY returns only body content so no <html>/<head> wrapper leaks into the DOM.
+const BRANDING_SANITIZE_OPTIONS = Object.freeze({
+  WHOLE_DOCUMENT: true,
+  FORCE_BODY: true,
+});
 
 /**
  * Nexus One unsaved changes dialog for Preview UI router navigation.
@@ -116,10 +123,12 @@ function AppWithRadixTheme() {
   return (
     <Theme appearance={effectiveTheme} accentColor="green" grayColor="slate" radius="medium">
       <TooltipContainerProvider>
-        <ToastProvider>
-          <SessionExpiryHost />
-          <App />
-        </ToastProvider>
+        <NuiTooltipContainerProvider>
+          <ToastProvider>
+            <SessionExpiryHost />
+            <App />
+          </ToastProvider>
+        </NuiTooltipContainerProvider>
       </TooltipContainerProvider>
     </Theme>
   );
@@ -129,6 +138,11 @@ export function App() {
   useRedirectOnLogout();
   usePreventPushStateOnHash();
   const {effectiveTheme} = useTheme();
+  const toast = useToast();
+  useLayoutEffect(() => {
+    window.__nexusToast = toast;
+    return () => { delete window.__nexusToast; };
+  }, [toast]);
   const router = useRouter();
   const currentStateName = router.globals.$current.name || '';
 
@@ -156,7 +170,7 @@ export function App() {
         <div
           className="nxrm-branding-header"
           data-testid="nxrm-branding-header"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headerHtml) }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headerHtml, BRANDING_SANITIZE_OPTIONS) }}
         />
       )}
 
@@ -172,11 +186,9 @@ export function App() {
 
       <div className="nxrm-main-content">
         <Theme appearance={effectiveTheme} accentColor="blue" grayColor="slate" radius="medium">
-          <CoreuiToastProvider>
-            <Suspense fallback={<RouteLoadingFallback />}>
-              <UIView />
-            </Suspense>
-          </CoreuiToastProvider>
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <UIView />
+          </Suspense>
         </Theme>
       </div>
 
@@ -184,7 +196,7 @@ export function App() {
         <div
           className="nxrm-branding-footer"
           data-testid="nxrm-branding-footer"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(footerHtml) }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(footerHtml, BRANDING_SANITIZE_OPTIONS) }}
         />
       )}
     </>

@@ -22,8 +22,7 @@ import org.sonatype.nexus.webresources.UrlWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Component;
  */
 @Qualifier("static")
 @Component
-@Singleton
 public class StaticWebResource
     implements WebResourceBundle
 {
@@ -47,7 +45,7 @@ public class StaticWebResource
 
   private final List<WebResource> staticResources = new ArrayList<WebResource>();
 
-  @Inject
+  @Autowired
   public StaticWebResource(final ApplicationContext context, final MimeSupport mimeSupport) throws IOException {
     addAvailableResource(context, mimeSupport, "static");
     addAvailableResource(context, mimeSupport, "assets");

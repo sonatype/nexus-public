@@ -16,8 +16,6 @@ import java.util.Locale;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -35,7 +33,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *
  * @since 3.0
  */
-@Singleton
 @Component
 @Qualifier(Maven2Format.NAME)
 public class Maven2MavenPathParser

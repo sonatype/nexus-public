@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
-import jakarta.inject.Singleton;
-
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class TrimBrowseNodesTaskDescriptor
     extends TaskDescriptorSupport
 {

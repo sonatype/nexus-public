@@ -111,8 +111,8 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/admin/repository/repositories', heritage: 'admin/repository/repositories' },
   { preview: 'preview/admin/repository/blobstores', heritage: 'admin/repository/blobstores' },
   { preview: 'preview/admin/repository/selectors', heritage: 'admin/repository/selectors' },
-  { preview: 'preview/admin/repository/cleanuppolicies', heritage: 'admin/repository/cleanuppolicies' },
-  { preview: 'preview/admin/repository/routingrules', heritage: 'admin/repository/routingrules' },
+  { preview: 'preview/admin/repository/cleanup-policies', heritage: 'admin/repository/cleanuppolicies' },
+  { preview: 'preview/admin/repository/routing-rules', heritage: 'admin/repository/routingrules' },
   { preview: 'preview/admin/repository/datastore', heritage: 'admin/repository/datastore' },
   { preview: 'preview/admin/repository/proprietary', heritage: 'admin/repository/proprietary' },
   { preview: 'preview/admin/security/privileges', heritage: 'admin/security/privileges' },
@@ -122,7 +122,7 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/admin/security/ldap', heritage: 'admin/security/ldap' },
   { preview: 'preview/admin/security/realms', heritage: 'admin/security/realms' },
   { preview: 'preview/admin/security/sslcertificates', heritage: 'admin/security/sslcertificates' },
-  { preview: 'preview/admin/security/usertoken', heritage: 'admin/security/usertoken' },
+  { preview: 'preview/admin/security/user-tokens', heritage: 'admin/security/usertoken' },
   { preview: 'preview/admin/security/saml', heritage: 'admin/security/saml' },
   { preview: 'preview/admin/security/oauth2', heritage: 'admin/security/oauth2' },
   { preview: 'preview/admin/security/crowd', heritage: 'admin/security/atlassiancrowd' },
@@ -215,6 +215,12 @@ export function heritageToPreviewPath(currentPath) {
     newPath = 'preview/user/usertoken';
   } else if (cleanPath.startsWith('user/')) {
     newPath = 'preview/' + cleanPath;
+  } else if (cleanPath === 'admin/repository/cleanuppolicies' || cleanPath.startsWith('admin/repository/cleanuppolicies/')) {
+    newPath = cleanPath.replace('admin/repository/cleanuppolicies', 'preview/admin/repository/cleanup-policies');
+  } else if (cleanPath === 'admin/repository/routingrules' || cleanPath.startsWith('admin/repository/routingrules/')) {
+    newPath = cleanPath.replace('admin/repository/routingrules', 'preview/admin/repository/routing-rules');
+  } else if (cleanPath === 'admin/security/usertoken' || cleanPath.startsWith('admin/security/usertoken/')) {
+    newPath = cleanPath.replace('admin/security/usertoken', 'preview/admin/security/user-tokens');
   } else if (cleanPath === 'admin/support/status' || cleanPath.startsWith('admin/support/status/')) {
     newPath = cleanPath.replace('admin/support/status', 'preview/admin/support/metrichealth');
   } else if (cleanPath.startsWith('admin/')) {

@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.search;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -21,174 +20,37 @@ import java.util.Map;
  *
  * @since 3.38
  */
-public class AssetSearchResult
+public interface AssetSearchResult
 {
-  private String path;
+  Map<String, Object> getAttributes();
 
-  private String id;
+  Date getCreated();
 
-  private String repository;
+  String getBlobRef();
 
-  private String format;
+  Date getBinaryUpdated();
 
-  private Map<String, String> checksum;
+  Map<String, String> getChecksum();
 
-  private String contentType;
+  String getContentType();
 
-  private Date lastModified;
+  Long getFileSize();
 
-  private Date lastDownloaded;
+  String getFormat();
 
-  private Date blobCreated;
+  String getId();
 
-  private Date blobUpdated;
+  Date getLastDownloaded();
 
-  private String blobRef;
+  Date getLastModified();
 
-  private Date lastVerified;
+  Date getLastVerified();
 
-  private Long fileSize;
+  String getPath();
 
-  private String uploader;
+  String getRepository();
 
-  private String uploaderIp;
+  String getUploader();
 
-  private Map<String, Object> attributes = new HashMap<>();
-
-  public String getPath() {
-    return path;
-  }
-
-  public void setPath(final String path) {
-    this.path = path;
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public void setId(final String id) {
-    this.id = id;
-  }
-
-  public String getRepository() {
-    return repository;
-  }
-
-  public void setRepository(final String repository) {
-    this.repository = repository;
-  }
-
-  public Long getFileSize() {
-    return fileSize;
-  }
-
-  public void setFileSize(final Long fileSize) {
-    this.fileSize = fileSize;
-  }
-
-  public Date getLastDownloaded() {
-    return lastDownloaded;
-  }
-
-  public void setLastDownloaded(final Date lastDownloaded) {
-    this.lastDownloaded = lastDownloaded;
-  }
-
-  public String getFormat() {
-    return format;
-  }
-
-  public void setFormat(final String format) {
-    this.format = format;
-  }
-
-  public Map<String, String> getChecksum() {
-    return checksum;
-  }
-
-  public void setChecksum(final Map<String, String> checksum) {
-    this.checksum = checksum;
-  }
-
-  public String getContentType() {
-    return contentType;
-  }
-
-  public void setContentType(final String contentType) {
-    this.contentType = contentType;
-  }
-
-  public Date getLastModified() {
-    return lastModified;
-  }
-
-  public void setLastModified(final Date lastModified) {
-    this.lastModified = lastModified;
-  }
-
-  public Date getBlobCreated() {
-    return blobCreated;
-  }
-
-  public void setBlobCreated(final Date blobCreated) {
-    this.blobCreated = blobCreated;
-  }
-
-  public Date getBlobUpdated() {
-    return blobUpdated;
-  }
-
-  public void setBlobUpdated(final Date blobUpdated) {
-    this.blobUpdated = blobUpdated;
-  }
-
-  public String getBlobRef() {
-    return blobRef;
-  }
-
-  public void setBlobRef(final String blobRef) {
-    this.blobRef = blobRef;
-  }
-
-  public Date getLastVerified() {
-    return lastVerified;
-  }
-
-  public void setLastVerified(final Date lastVerified) {
-    this.lastVerified = lastVerified;
-  }
-
-  public String getUploader() {
-    return uploader;
-  }
-
-  public void setUploader(final String uploader) {
-    this.uploader = uploader;
-  }
-
-  public String getUploaderIp() {
-    return uploaderIp;
-  }
-
-  public void setUploaderIp(final String uploaderIp) {
-    this.uploaderIp = uploaderIp;
-  }
-
-  public Map<String, Object> getAttributes() {
-    return attributes;
-  }
-
-  public void setAttributes(final Map<String, Object> attributes) {
-    this.attributes.putAll(attributes);
-  }
-
-  @Override
-  public String toString() {
-    return "AssetSearchResult [path=" + path + ", id=" + id + ", repository=" + repository + ", format=" + format
-        + ", checksum=" + checksum + ", contentType=" + contentType + ", lastModified=" + lastModified
-        + ", lastDownloaded=" + lastDownloaded + ", blobCreated=" + blobCreated + ", blobUpdated=" + blobUpdated
-        + ", blobRef=" + blobRef + ", lastVerified=" + lastVerified + ", fileSize=" + fileSize + ", attributes="
-        + attributes + "]";
-  }
+  String getUploaderIp();
 }

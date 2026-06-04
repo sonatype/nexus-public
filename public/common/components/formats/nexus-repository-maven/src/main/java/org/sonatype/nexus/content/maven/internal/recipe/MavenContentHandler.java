@@ -15,8 +15,6 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import java.io.IOException;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.25
  */
 @Component
-@Singleton
 public class MavenContentHandler
     implements Handler
 {

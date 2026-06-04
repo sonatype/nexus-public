@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.webresources.UrlWebResource;
 import org.sonatype.nexus.webresources.WebResource;
@@ -32,7 +30,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class PublicFilesWebResourceBundle
     implements WebResourceBundle
 {
@@ -46,7 +43,7 @@ public class PublicFilesWebResourceBundle
 
   private final MimeSupport mimeSupport;
 
-  @Inject
+  @Autowired
   public PublicFilesWebResourceBundle(final MimeSupport mimeSupport) {
     this.mimeSupport = checkNotNull(mimeSupport);
   }

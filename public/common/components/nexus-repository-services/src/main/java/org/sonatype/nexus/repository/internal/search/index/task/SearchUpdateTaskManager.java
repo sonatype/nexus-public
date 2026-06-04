@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Singleton
 public class SearchUpdateTaskManager
     extends StateGuardLifecycleSupport
 {
@@ -58,7 +55,7 @@ public class SearchUpdateTaskManager
 
   private PeriodicJobService periodicJobService;
 
-  @Inject
+  @Autowired
   public SearchUpdateTaskManager(
       final TaskScheduler taskScheduler,
       final RepositoryManager repositoryManager,

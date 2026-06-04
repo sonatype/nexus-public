@@ -18,8 +18,8 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.condition.Conditions;
 import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -31,7 +31,7 @@ import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -255,7 +255,7 @@ public abstract class CapabilitySupport<ConfigT>
 
   private Conditions conditions;
 
-  @Inject
+  @Autowired
   public void installConditionComponents(final Conditions conditions) {
     checkState(this.conditions == null);
     this.conditions = checkNotNull(conditions);
@@ -272,7 +272,7 @@ public abstract class CapabilitySupport<ConfigT>
 
   private TemplateHelper templateHelper;
 
-  @Inject
+  @Autowired
   public void setTemplateHelper(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
   }

@@ -19,10 +19,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
@@ -42,8 +42,6 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -55,7 +53,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(FileBlobStore.TYPE)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class FileBlobStoreDescriptor
     extends BlobStoreDescriptorSupport
 {
@@ -86,7 +83,7 @@ public class FileBlobStoreDescriptor
 
   private final FileBlobStorePathValidator pathValidator;
 
-  @Inject
+  @Autowired
   public FileBlobStoreDescriptor(
       final BlobStoreQuotaService quotaService,
       final ApplicationDirectories applicationDirectories,

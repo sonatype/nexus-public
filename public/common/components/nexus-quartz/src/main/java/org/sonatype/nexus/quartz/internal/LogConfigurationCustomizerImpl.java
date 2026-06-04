@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.quartz.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.springframework.stereotype.Component;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.0
  */
 @Component
-@Singleton
 public class LogConfigurationCustomizerImpl
     implements LogConfigurationCustomizer
 {

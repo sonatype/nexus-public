@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -45,7 +45,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -71,16 +71,16 @@ public class SimpleApiRepositoryAdapter
   private DatabaseCheck databaseCheck;
 
   @VisibleForTesting
-  @Inject
+  @Autowired
   void setDatabaseCheck(DatabaseCheck databaseCheck) {
     this.databaseCheck = databaseCheck;
   }
 
-  @Inject
+  @Autowired
   @Value("${" + REPLICATION_HTTP_ENABLED + ":true}")
   private boolean replicationFeatureEnabled;
 
-  @Inject
+  @Autowired
   public SimpleApiRepositoryAdapter(final RoutingRuleStore routingRuleStore) {
     this.routingRuleStore = checkNotNull(routingRuleStore);
   }

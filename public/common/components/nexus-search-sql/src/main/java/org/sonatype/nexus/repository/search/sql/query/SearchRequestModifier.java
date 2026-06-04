@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.search.sql.query;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.search.SearchRequest;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -30,14 +28,13 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class SearchRequestModifier
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private Map<String, SqlSearchQueryContribution> handlers;
 
-  @Inject
+  @Autowired
   public SearchRequestModifier(final List<SqlSearchQueryContribution> handlersList) {
     this.handlers = QualifierUtil.buildQualifierBeanMap(checkNotNull(handlersList));
   }

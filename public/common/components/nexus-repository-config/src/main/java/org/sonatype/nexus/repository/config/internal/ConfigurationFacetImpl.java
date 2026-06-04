@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
@@ -55,7 +55,7 @@ public class ConfigurationFacetImpl
 
   private final Provider<Validator> validatorProvider;
 
-  @Inject
+  @Autowired
   public ConfigurationFacetImpl(
       final ConfigurationStore store,
       @Qualifier(ConfigurationObjectMapperProvider.NAME) final ObjectMapper objectMapper,

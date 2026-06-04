@@ -14,18 +14,32 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
 import org.sonatype.nexus.content.raw.RawContentFacet;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Parameters;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 import com.google.common.collect.ImmutableSet;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE;
 
 /**
  * Raw proxy facet.
@@ -44,18 +58,58 @@ public class RawProxyFacet
   // All characters that raw format needs when feature is disabled
   private static final ImmutableSet<String> CHARS_ALL_RAW = ImmutableSet.of("^", "#", "?", "\u202F", "[", "]");
 
+  private boolean queryParamsForwardingEnabled;
+
+  @Autowired
+  @VisibleForTesting
+  void setQueryParamsForwardingEnabled(
+      @Value(RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE) final boolean queryParamsForwardingEnabled)
+  {
+    this.queryParamsForwardingEnabled = queryParamsForwardingEnabled;
+  }
+
+  @VisibleForTesting
+  final QueryParameterForwardingHelper queryParamHelper = new QueryParameterForwardingHelper();
+
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
-    return content().get(assetPath(context)).orElse(null);
+    return content().get(cacheKey(context)).orElse(null);
   }
 
   @Override
   protected Content store(final Context context, final Content payload) throws IOException {
-    return content().put(assetPath(context), payload);
+    return content().put(cacheKey(context), payload);
+  }
+
+  @Override
+  protected void doConfigure(Configuration configuration) throws Exception {
+    super.doConfigure(configuration);
+    configureQueryParamForwarding(configuration);
+  }
+
+  @Override
+  protected void doUpdate(Configuration configuration) throws Exception {
+    super.doUpdate(configuration);
+    configureQueryParamForwarding(configuration);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void configureQueryParamForwarding(final Configuration configuration) {
+    if (!queryParamsForwardingEnabled) {
+      queryParamHelper.updateConfig(false, Collections.emptyList());
+      return;
+    }
+    boolean forward = Boolean.TRUE.equals(configuration.attributes("raw")
+        .get("forwardQueryParameters", Boolean.class, Boolean.FALSE));
+    List<String> excluded = configuration.attributes("raw")
+        .get("excludedQueryParameters", List.class, Collections.emptyList());
+    queryParamHelper.updateConfig(forward, excluded);
   }
 
   @Override
   protected String getUrl(final Context context) {
+    // Return only the path - query parameters will be appended in buildFetchHttpRequest()
+    // after all encoding is complete to avoid the encoding pipeline converting ? to %3F
     return getEscapeHelper().uriSegments(removeSlashPrefix(assetPath(context)));
   }
 
@@ -72,9 +126,49 @@ public class RawProxyFacet
 
     String encodedUrl = url;
     for (String ch : charsToEncode) {
-      encodedUrl = encodedUrl.replace(ch, URLEncoder.encode(ch, "UTF-8"));
+      encodedUrl = encodedUrl.replace(ch, URLEncoder.encode(ch, StandardCharsets.UTF_8));
     }
     return encodedUrl;
+  }
+
+  @Override
+  protected HttpRequestBase buildFetchHttpRequest(final URI uri, final Context context, final Content stale) {
+    // Append query string AFTER all path encoding is complete to avoid the encoding
+    // pipeline in ProxyFacetSupport converting ? to %3F
+    Parameters parameters = context.getRequest().getParameters();
+    String queryString = queryParamHelper.buildQueryString(parameters);
+
+    URI finalUri = uri;
+    if (!queryString.isEmpty()) {
+      try {
+        finalUri = new URIBuilder(uri)
+            .setCustomQuery(queryString) // Properly handles existing query strings
+            .build();
+        log.debug("Raw proxy: forwarding request to {} with query parameters", finalUri);
+        // Note: Parameter values not logged for security. Use excludedQueryParameters to filter sensitive params.
+      }
+      catch (URISyntaxException e) {
+        log.warn("Failed to append query parameters to URI: {}. Using URI without query string.",
+            e.getMessage());
+        // Fall back to original URI (better than crashing)
+        finalUri = uri;
+      }
+    }
+
+    return super.buildFetchHttpRequest(finalUri, context, stale);
+  }
+
+  /**
+   * Builds a cache key that includes query parameters when forwarding is enabled,
+   * so each unique parameter combination is stored as a separate cached asset.
+   */
+  private String cacheKey(final Context context) {
+    String path = assetPath(context);
+    String queryString = queryParamHelper.buildQueryString(context.getRequest().getParameters());
+    if (!queryString.isEmpty()) {
+      return path + "?" + queryString;
+    }
+    return path;
   }
 
   private RawContentFacet content() {

@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -43,24 +41,26 @@ import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
-import org.springframework.stereotype.Component;
+import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 
 /**
  * @since 3.27
  */
 @Component
-@Singleton
 @Path(AssetsResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -76,7 +76,7 @@ public class AssetsResource
 
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
-  @Inject
+  @Autowired
   public AssetsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
       final MaintenanceService maintenanceService,
@@ -107,7 +107,8 @@ public class AssetsResource
     RepositoryItemIDXO repositoryItemIDXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
     Asset asset = getAsset(id, repository, new DetachedEntityId(repositoryItemIDXO.getId()));
-    return fromAsset(asset, repository, this.assetDescriptors);
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
+    return fromAsset(asset, repository, this.assetDescriptors, uploaderVisible);
   }
 
   @DELETE
@@ -136,13 +137,14 @@ public class AssetsResource
     }
   }
 
-  protected static List<AssetXO> toAssetXOs(
+  protected List<AssetXO> toAssetXOs(
       final Repository repository,
       final List<FluentAsset> assets,
       final Map<String, AssetXODescriptor> assetDescriptors)
   {
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     return assets.stream()
-        .map(asset -> fromAsset(asset, repository, assetDescriptors))
+        .map(asset -> fromAsset(asset, repository, assetDescriptors, uploaderVisible))
         .collect(toList());
   }
 

@@ -45,7 +45,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.validation.Validate;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -72,7 +72,7 @@ public class UserApiResource
 
   private final AdminPasswordFileManager adminPasswordFileManager;
 
-  @Inject
+  @Autowired
   public UserApiResource(
       final SecuritySystem securitySystem,
       final AdminPasswordFileManager adminPasswordFileManager)

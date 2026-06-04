@@ -17,11 +17,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
@@ -42,9 +42,7 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -67,7 +65,6 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(BlobStoreGroup.TYPE)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BlobStoreGroupDescriptor
     extends BlobStoreDescriptorSupport
 {
@@ -98,7 +95,7 @@ public class BlobStoreGroupDescriptor
 
   private final Map<String, FillPolicy> fillPolicies;
 
-  @Inject
+  @Autowired
   public BlobStoreGroupDescriptor(
       @Lazy final BlobStoreManager blobStoreManager,
       final BlobStoreUtil blobStoreUtil,

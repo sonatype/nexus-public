@@ -16,9 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -41,14 +39,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.19
  */
 @ConditionalOnProperty(name = "nexus.s3.copierName", havingValue = "parallelCopier", matchIfMissing = true)
-@Singleton
 @Component
 @Qualifier("parallelCopier")
 public class ParallelCopier
     extends ParallelRequester
     implements S3Copier
 {
-  @Inject
+  @Autowired
   public ParallelCopier(
       @Value("${nexus.s3.parallelRequests.chunksize:5242880}") final int chunkSize,
       @Value("${nexus.s3.parallelRequests.parallelism:0}") final int nThreads)

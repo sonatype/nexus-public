@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.search.sql;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 @Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptSearchCustomFieldContributor
     implements SearchCustomFieldContributor
 {

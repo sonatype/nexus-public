@@ -14,8 +14,6 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.sql.SearchResult;
@@ -29,7 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 /**
  * An {@link SqlSearchResultDecorator} which annotates {@link ComponentSearchResult} with the maven baseVersion.
  */
-@Singleton
 @Component
 @Qualifier(Maven2Format.NAME)
 public class MavenSqlSearchResultDecorator

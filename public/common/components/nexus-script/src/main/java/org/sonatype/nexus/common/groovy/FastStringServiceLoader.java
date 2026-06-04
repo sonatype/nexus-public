@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.groovy;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.thread.TcclBlock;
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Component;
  * Sets the FastStringService context-class-loader to the current thread class-loader
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class FastStringServiceLoader
     extends StateGuardLifecycleSupport

@@ -16,8 +16,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
@@ -38,7 +36,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *
  * @since 3.26
  */
-@Singleton
 @Component
 @Qualifier(Maven2Format.NAME)
 public class Maven2ComponentFinder

@@ -13,11 +13,29 @@
 package org.sonatype.nexus.repository.routing;
 
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.event.EventWithSource;
 
 /**
  * @since 3.21
  */
-public interface RoutingRuleInvalidatedEvent
+public class RoutingRuleInvalidatedEvent
+    extends EventWithSource
 {
-  EntityId getRoutingRuleId();
+  private String routingRuleId;
+
+  public RoutingRuleInvalidatedEvent() {
+    // required for Jackson deserialization
+  }
+
+  public RoutingRuleInvalidatedEvent(final EntityId routingRuleId) {
+    this.routingRuleId = routingRuleId.getValue();
+  }
+
+  public String getRoutingRuleId() {
+    return routingRuleId;
+  }
+
+  public void setRoutingRuleId(final String routingRuleId) {
+    this.routingRuleId = routingRuleId;
+  }
 }

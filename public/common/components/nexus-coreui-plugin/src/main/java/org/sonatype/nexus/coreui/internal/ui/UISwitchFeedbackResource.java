@@ -26,10 +26,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.kv.KeyValueStore;
@@ -69,15 +70,16 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDB
  * Returns 204 in all cases so that navigation is never blocked.
  */
 @Component
-@Singleton
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true")
 @Path("internal/ui/switch-feedback")
 public class UISwitchFeedbackResource
-    extends ComponentSupport
     implements Resource
 {
+
+  private static final Logger log = LoggerFactory.getLogger(UISwitchFeedbackResource.class);
+
   static final int MAX_FEEDBACK_LENGTH = 500;
 
   static final int REQUEST_TIMEOUT_MS = 2_000;
@@ -104,7 +106,7 @@ public class UISwitchFeedbackResource
 
   private volatile CloseableHttpClient httpClient;
 
-  @Inject
+  @Autowired
   public UISwitchFeedbackResource(
       final HttpClientManager httpClientManager,
       final ObjectMapper objectMapper,

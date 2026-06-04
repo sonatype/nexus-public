@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.29
  */
 @Component
-@Singleton
 public class PasswordSanitizing<T extends Map<String, ?>>
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

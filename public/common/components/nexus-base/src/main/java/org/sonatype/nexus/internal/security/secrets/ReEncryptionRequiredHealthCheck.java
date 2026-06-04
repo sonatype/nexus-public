@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.secrets;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.internal.security.secrets.tasks.ReEncryptTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -30,7 +28,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("Re-encryption required")
-@Singleton
 public class ReEncryptionRequiredHealthCheck
     extends HealthCheck
 {
@@ -46,7 +43,7 @@ public class ReEncryptionRequiredHealthCheck
 
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public ReEncryptionRequiredHealthCheck(final SecretsService secretsService, final TaskScheduler taskScheduler) {
     this.secretsService = checkNotNull(secretsService);
     this.taskScheduler = checkNotNull(taskScheduler);

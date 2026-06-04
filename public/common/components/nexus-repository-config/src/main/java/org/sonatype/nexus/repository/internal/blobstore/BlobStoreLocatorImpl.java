@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreLocator;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.34
  */
 @Component
-@Singleton
 public class BlobStoreLocatorImpl
     implements BlobStoreLocator
 {
@@ -43,7 +40,7 @@ public class BlobStoreLocatorImpl
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public BlobStoreLocatorImpl(final BlobStoreManager blobStoreManager, final RepositoryManager repositoryManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);

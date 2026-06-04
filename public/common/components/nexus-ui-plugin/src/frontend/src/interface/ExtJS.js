@@ -171,17 +171,63 @@ export default class ExtJS {
       NX.Security.requestSession(b64u, b64p).then(
         (response) => {
           const normalizedResponse = ExtJS.normalizeAjaxResponse(response);
+          // Include headers in the response for rate limiting information.
+          // ExtJS response objects may return getAllResponseHeaders() as either a
+          // raw header string (native XHR) or an already-parsed object (ExtJS wrapper).
+          if (response.getAllResponseHeaders) {
+            normalizedResponse.headers = ExtJS._parseResponseHeaders(response.getAllResponseHeaders());
+          }
 
           // Set user state on successful authentication
           if (normalizedResponse.status >= 200 && normalizedResponse.status < 300) {
             NX.State.setUser({id: username});
           }
 
+          // Reject for 4xx/5xx errors so that the Promise can be properly handled by error handlers
+          if (normalizedResponse.status >= 400) {
+            reject({response: normalizedResponse});
+            return;
+          }
+
           resolve({response: normalizedResponse});
         },
-        (error) => reject({response: ExtJS.normalizeAjaxResponse(error)})
+        (error) => {
+          const normalizedResponse = ExtJS.normalizeAjaxResponse(error);
+          if (error.getAllResponseHeaders) {
+            normalizedResponse.headers = ExtJS._parseResponseHeaders(error.getAllResponseHeaders());
+          }
+          reject({response: normalizedResponse});
+        }
       );
     });
+  }
+
+  /**
+   * Parses response headers into a lowercase-keyed object.
+   * Handles both a raw header string (native XHR) and a pre-parsed object (ExtJS wrapper).
+   * @param {string|Object} allHeaders
+   * @returns {Object}
+   */
+  static _parseResponseHeaders(allHeaders) {
+    if (!allHeaders) {
+      return {};
+    }
+    if (typeof allHeaders === 'string') {
+      const result = {};
+      allHeaders.split('\n').forEach(header => {
+        const colonIdx = header.indexOf(':');
+        if (colonIdx > 0) {
+          result[header.slice(0, colonIdx).trim().toLowerCase()] = header.slice(colonIdx + 1).trim();
+        }
+      });
+      return result;
+    }
+    // ExtJS may return an already-parsed headers object
+    const result = {};
+    Object.keys(allHeaders).forEach(key => {
+      result[key.toLowerCase()] = String(allHeaders[key]);
+    });
+    return result;
   }
 
   static normalizeAjaxResponse(response) {
@@ -744,3 +790,7 @@ export default class ExtJS {
     });
   }
 }
+
+// Named re-export so consumers using `import { ExtJS } from '...'` get the
+// same class as the default export under Babel CJS interop.
+export { ExtJS };

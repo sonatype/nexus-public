@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class GcMonitor
 
   private final Map<String, GcStats> previousGcStats = new ConcurrentHashMap<>();
 
-  @Inject
+  @Autowired
   public GcMonitor(
       @Value("${nexus.jvm.gc.info.threshold:1000}") final long gcInfoThresholdMs,
       @Value("${nexus.jvm.gc.warning.threshold:5000}") final long gcWarningThresholdMs,

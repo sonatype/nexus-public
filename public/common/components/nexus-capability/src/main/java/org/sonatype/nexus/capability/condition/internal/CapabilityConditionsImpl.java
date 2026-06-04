@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * @since capabilities 2.0
  */
 @Component
-@Singleton
 public class CapabilityConditionsImpl
     implements CapabilityConditions
 {
@@ -43,7 +40,7 @@ public class CapabilityConditionsImpl
 
   private final CapabilityDescriptorRegistry descriptorRegistry;
 
-  @Inject
+  @Autowired
   public CapabilityConditionsImpl(
       final EventManager eventManager,
       final CapabilityDescriptorRegistry descriptorRegistry,

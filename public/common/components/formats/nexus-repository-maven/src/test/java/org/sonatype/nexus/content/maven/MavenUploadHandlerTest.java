@@ -74,6 +74,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -732,7 +733,8 @@ public class MavenUploadHandlerTest
     MavenPath jarPath = capturedPaths.get(0);
     Payload jarPayload = capturedPayloads.get(0);
     assertThat(jarPath.getPath(), is("org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar"));
-    assertThat(jarPayload.getContentType(), is("application/java-archive"));
+    // Windows registry may return "application/jar" instead of "application/java-archive"
+    assertThat(jarPayload.getContentType(), anyOf(is("application/java-archive"), is("application/jar")));
 
     // Second call should be the generated checksum file
     MavenPath checksumPath = capturedPaths.get(1);
@@ -822,14 +824,19 @@ public class MavenUploadHandlerTest
 
     when(mimeSupport.guessMimeTypeFromPath("/path/to/file.unknown")).thenReturn("application/octet-stream");
 
-    // Test JAR files
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.jar"), is("application/java-archive"));
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.war"), is("application/java-archive"));
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.ear"), is("application/java-archive"));
+    // Test JAR files - Windows registry may return "application/jar" via Files.probeContentType
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.jar"),
+        anyOf(is("application/java-archive"), is("application/jar")));
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.war"),
+        anyOf(is("application/java-archive"), is("application/jar")));
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.ear"),
+        anyOf(is("application/java-archive"), is("application/jar")));
 
-    // Test XML files
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.pom"), is("application/xml"));
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.xml"), is("application/xml"));
+    // Test XML files - Windows registry may return "text/xml" via Files.probeContentType
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.pom"),
+        anyOf(is("application/xml"), is("text/xml")));
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.xml"),
+        anyOf(is("application/xml"), is("text/xml")));
 
     // Test hash/signature files
     assertThat(underTest.determineContentTypeFromPath("/path/to/file.jar.md5"), is("text/plain"));
@@ -841,8 +848,10 @@ public class MavenUploadHandlerTest
     assertThat(underTest.determineContentTypeFromPath("/path/to/file.unknown"), is("application/octet-stream"));
 
     // Test case insensitivity
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.JAR"), is("application/java-archive"));
-    assertThat(underTest.determineContentTypeFromPath("/path/to/file.POM"), is("application/xml"));
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.JAR"),
+        anyOf(is("application/java-archive"), is("application/jar")));
+    assertThat(underTest.determineContentTypeFromPath("/path/to/file.POM"),
+        anyOf(is("application/xml"), is("text/xml")));
   }
 
   @Test

@@ -22,7 +22,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
@@ -44,7 +43,6 @@ import static org.sonatype.nexus.common.app.WebFilterPriority.WEB_RESOURCES;
 @WebFilter(filterName = PreviewUiFallbackFilter.NAME, urlPatterns = "/preview/*")
 @Order(WEB_RESOURCES - 100)
 @Component
-@Singleton
 public class PreviewUiFallbackFilter
     implements Filter
 {

@@ -17,9 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
@@ -35,14 +33,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Remove all capability duplicate records from storage.
  */
 @Component
-@Singleton
 public class CleanupCapabilityDuplicatesService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final CapabilityStorage capabilityStorage;
 
-  @Inject
+  @Autowired
   public CleanupCapabilityDuplicatesService(final CapabilityStorage capabilityStorage) {
     this.capabilityStorage = checkNotNull(capabilityStorage);
   }

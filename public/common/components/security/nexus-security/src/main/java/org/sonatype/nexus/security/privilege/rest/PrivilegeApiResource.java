@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -53,7 +53,7 @@ public class PrivilegeApiResource
     extends PrivilegeApiResourceSupport
     implements Resource, PrivilegeApiResourceDoc
 {
-  @Inject
+  @Autowired
   public PrivilegeApiResource(
       final SecuritySystem securitySystem,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)

@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.internal.script.groovy;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.script.ScriptEngineManager;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Component;
  * Groovy script engine loader. Is used to run groovy scripts.
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class GroovyScriptEngineLoader
     extends StateGuardLifecycleSupport
@@ -37,7 +35,7 @@ public class GroovyScriptEngineLoader
 
   private final ScriptEngineManager scriptEngineManager;
 
-  @Inject
+  @Autowired
   public GroovyScriptEngineLoader(
       final ApplicationDirectories applicationDirectories,
       final ScriptEngineManager scriptEngineManager)

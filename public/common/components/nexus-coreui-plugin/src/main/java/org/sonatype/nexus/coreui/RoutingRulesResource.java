@@ -19,8 +19,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -68,7 +67,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RoutingRulesResource.RESOURCE_PATH)
@@ -91,19 +89,20 @@ public class RoutingRulesResource
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
-  @Inject
+  private final RepositoryManager repositoryManager;
+
+  @Autowired
   public RoutingRulesResource(
       final RoutingRuleStore routingRuleStore,
       final RoutingRuleHelper routingRuleHelper,
-      final RepositoryPermissionChecker repositoryPermissionChecker)
+      final RepositoryPermissionChecker repositoryPermissionChecker,
+      final RepositoryManager repositoryManager)
   {
     this.routingRuleStore = checkNotNull(routingRuleStore);
     this.routingRuleHelper = checkNotNull(routingRuleHelper);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.repositoryManager = checkNotNull(repositoryManager);
   }
-
-  @Inject
-  private RepositoryManager repositoryManager;
 
   @POST
   @RequiresAuthentication
@@ -216,8 +215,8 @@ public class RoutingRulesResource
   {
     Map<Class<?>, List<Repository>> repositoriesByType = stream(repositoryManager.browse())
         .collect(groupingBy(r -> r.getType().getClass()));
-    List<Repository> groupRepositories = repositoriesByType.get(GroupType.class);
-    List<Repository> proxyRepositories = repositoriesByType.get(ProxyType.class);
+    List<Repository> groupRepositories = repositoriesByType.getOrDefault(GroupType.class, emptyList());
+    List<Repository> proxyRepositories = repositoriesByType.getOrDefault(ProxyType.class, emptyList());
 
     Map<RoutingRule, Boolean> routingRulePathMapping = routingRuleStore.list()
         .stream()
@@ -313,6 +312,8 @@ public class RoutingRulesResource
         .sorted(String.CASE_INSENSITIVE_ORDER)
         .collect(toList());
 
+    // Note: the detail page shows only repos the current user has permission to see.
+    // The list page (setAssignedRepositories) intentionally uses the unfiltered total.
     routingRule.setAssignedRepositoryCount(repositoryNames.size());
     routingRule.setAssignedRepositoryNames(repositoryNames);
   }

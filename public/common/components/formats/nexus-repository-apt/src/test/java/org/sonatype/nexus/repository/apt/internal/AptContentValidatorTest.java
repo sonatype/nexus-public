@@ -20,9 +20,18 @@ import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AptContentValidatorTest
 {
@@ -76,5 +85,87 @@ class AptContentValidatorTest
         "/dists/noble/Release.gpg",
         "application/pgp");
     assertThat(type, equalTo("application/pgp-signature"));
+  }
+
+  @Test
+  public void releaseGpgWithUpstreamTextPlainDeclared_doesNotThrowAndReturnsSignatureType() {
+    // Upstream servers sometimes return Release.gpg with Content-Type: text/plain.
+    // The validator must not corrupt the content name by appending .txt (which causes
+    // InvalidContentException when strict validation compares "text/plain" vs "pgp-signature").
+    String pgpContent = """
+        -----BEGIN PGP SIGNATURE-----
+        iQIzBAABCAAdFiEETLUBkCB7R1ij9zp5btDnuCZD4TEFAmi8AkgACgkQbtDnuCZD
+        4TFqlhAAlDKAWkf/O8MdhTIYozuDPXpRxL32nMBAOL+amYDj47HT2dM/TqFddroI
+        =cv9j
+        -----END PGP SIGNATURE-----
+        """;
+
+    String[] result = new String[1];
+    assertDoesNotThrow(() -> result[0] = underTest.determineContentType(
+        true,
+        () -> new ByteArrayInputStream(pgpContent.getBytes()),
+        new AptMimeRulesSource(),
+        "/dists/jammy/Release.gpg",
+        "text/plain")); // upstream declared text/plain for a .gpg file
+
+    assertThat(result[0], equalTo("application/pgp-signature"));
+  }
+
+  @Test
+  public void extensionlessFileGetsTxtAppendedBeforeDelegation() throws IOException {
+    // Packages, Release, InRelease (no dot in the basename) declared text/plain should
+    // have .txt appended so the default validator can confirm they are plain text.
+    DefaultContentValidator mockValidator = mock(DefaultContentValidator.class);
+    AptContentValidator validator = new AptContentValidator(mockValidator);
+    when(mockValidator.determineContentType(anyBoolean(), any(), any(), anyString(), anyString()))
+        .thenReturn("text/plain");
+
+    ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
+    validator.determineContentType(
+        true,
+        () -> new ByteArrayInputStream("Package: nano\n".getBytes()),
+        new AptMimeRulesSource(),
+        "/dists/focal/main/binary-amd64/Packages",
+        "text/plain");
+
+    verify(mockValidator).determineContentType(anyBoolean(), any(), any(), nameCaptor.capture(), anyString());
+    assertThat(nameCaptor.getValue(), equalTo("/dists/focal/main/binary-amd64/Packages.txt"));
+  }
+
+  @Test
+  public void fileWithExtensionIsNotRenamedBeforeDelegation() throws IOException {
+    // Files that already have an extension (e.g. Packages.gz, Release.gpg) must NOT get
+    // .txt appended — that would break content-type validation for the actual extension.
+    DefaultContentValidator mockValidator = mock(DefaultContentValidator.class);
+    AptContentValidator validator = new AptContentValidator(mockValidator);
+    when(mockValidator.determineContentType(anyBoolean(), any(), any(), anyString(), anyString()))
+        .thenReturn("application/x-gzip");
+
+    ArgumentCaptor<String> nameCaptor = ArgumentCaptor.forClass(String.class);
+    validator.determineContentType(
+        true,
+        () -> new ByteArrayInputStream(new byte[0]),
+        new AptMimeRulesSource(),
+        "/dists/focal/main/binary-amd64/Packages.gz",
+        "text/plain");
+
+    verify(mockValidator).determineContentType(anyBoolean(), any(), any(), nameCaptor.capture(), anyString());
+    assertThat(nameCaptor.getValue(), equalTo("/dists/focal/main/binary-amd64/Packages.gz"));
+  }
+
+  @Test
+  public void nullContentNameIsPassedThroughUnmodified() throws IOException {
+    // A null contentName must not throw NullPointerException.
+    DefaultContentValidator mockValidator = mock(DefaultContentValidator.class);
+    AptContentValidator validator = new AptContentValidator(mockValidator);
+    when(mockValidator.determineContentType(anyBoolean(), any(), any(), isNull(), anyString()))
+        .thenReturn("application/octet-stream");
+
+    assertDoesNotThrow(() -> validator.determineContentType(
+        false,
+        () -> new ByteArrayInputStream(new byte[0]),
+        new AptMimeRulesSource(),
+        null,
+        "text/plain"));
   }
 }

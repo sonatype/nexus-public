@@ -26,8 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -51,6 +50,7 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -60,11 +60,13 @@ import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -83,7 +85,6 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
  * @since 3.26
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class ContentComponentHelper
     implements ComponentHelper
 {
@@ -101,13 +102,16 @@ public class ContentComponentHelper
 
   private final SelectorFactory selectorFactory;
 
-  @Inject
+  private final Map<String, AssetXODescriptor> assetDescriptors;
+
+  @Autowired
   public ContentComponentHelper(
       final MaintenanceService maintenanceService,
       final List<ComponentFinder> componentFindersList,
       final AssetPermissionChecker assetPermissionChecker,
       final SelectorFactory selectorFactory,
-      final RepositoryManager repositoryManager)
+      final RepositoryManager repositoryManager,
+      final List<AssetXODescriptor> assetDescriptorsList)
   {
     this.maintenanceService = checkNotNull(maintenanceService);
     this.componentFinders = QualifierUtil.buildQualifierBeanMap(checkNotNull(componentFindersList));
@@ -116,6 +120,7 @@ public class ContentComponentHelper
         checkNotNull(componentFinders.get("default"));
     this.selectorFactory = checkNotNull(selectorFactory);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
   @Override
@@ -130,8 +135,9 @@ public class ContentComponentHelper
     String repositoryName = repository.getName();
     String format = repository.getFormat().getValue();
 
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     return assetPermissionChecker.findPermittedAssets(assets, format, BROWSE)
-        .map(entry -> toAssetXO(repositoryName, entry.getValue(), format, entry.getKey()))
+        .map(entry -> toAssetXO(repositoryName, entry.getValue(), format, entry.getKey(), uploaderVisible))
         .collect(toList());
   }
 
@@ -155,6 +161,7 @@ public class ContentComponentHelper
 
     int numAssets = 0;
     List<AssetXO> assets = new ArrayList<>();
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
 
     for (Repository r : previewRepositories) {
       String format = r.getFormat().getValue();
@@ -186,7 +193,7 @@ public class ContentComponentHelper
       if (nextLimit > 0) {
         assetQuery.browse(nextLimit, null)
             .stream()
-            .map(asset -> toAssetXO(r.getName(), r.getName(), format, asset))
+            .map(asset -> toAssetXO(r.getName(), r.getName(), format, asset, uploaderVisible))
             .collect(Collectors.toCollection(() -> assets));
       }
     }
@@ -240,8 +247,10 @@ public class ContentComponentHelper
     String repositoryName = repository.getName();
     String format = repository.getFormat().getValue();
 
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     return assetPermissionChecker.isPermitted(asset.get(), format, BROWSE)
-        .map(containingRepositoryName -> toAssetXO(repositoryName, containingRepositoryName, format, asset.get()))
+        .map(containingRepositoryName -> toAssetXO(repositoryName, containingRepositoryName, format, asset.get(),
+            uploaderVisible))
         .orElseThrow(AuthorizationException::new);
   }
 
@@ -297,7 +306,8 @@ public class ContentComponentHelper
         .findFirst();
   }
 
-  private static ComponentXO toComponentXO(
+  @SuppressWarnings({"unchecked"})
+  private ComponentXO toComponentXO(
       final String repositoryName,
       final String format,
       final Component component)
@@ -311,6 +321,36 @@ public class ContentComponentHelper
     componentXO.setName(component.name());
     componentXO.setVersion(component.version());
 
+    // Add component attributes similar to how assets handle them
+    Map<String, Object> attributes = new HashMap<>(component.attributes().backing());
+    Object formatAttributes = attributes.get(format);
+    if (!Strings2.isEmpty(component.kind())) {
+      if (formatAttributes instanceof Map) {
+        ((Map<String, Object>) formatAttributes).put("component_kind", component.kind());
+      }
+      else {
+        attributes.put(format, Collections.singletonMap("component_kind", component.kind()));
+      }
+    }
+
+    // Filter format-specific attributes using AssetXODescriptor if available
+    AssetXODescriptor descriptor = assetDescriptors.get(format);
+    if (descriptor != null && formatAttributes instanceof Map) {
+      Map<String, Object> originalFormatAttrs = (Map<String, Object>) formatAttributes;
+      Map<String, Object> filteredFormatAttrs = new HashMap<>();
+
+      Set<String> exposedKeys = descriptor.listExposedAttributeKeys();
+      for (Map.Entry<String, Object> entry : originalFormatAttrs.entrySet()) {
+        if (exposedKeys.contains(entry.getKey())) {
+          filteredFormatAttrs.put(entry.getKey(), entry.getValue());
+        }
+      }
+
+      attributes.put(format, filteredFormatAttrs);
+    }
+
+    componentXO.setAttributes(attributes);
+
     return componentXO;
   }
 
@@ -319,7 +359,8 @@ public class ContentComponentHelper
       final String repositoryName,
       final String containingRepositoryName,
       final String format,
-      final Asset asset)
+      final Asset asset,
+      final boolean uploaderVisible)
   {
     AssetXO assetXO = new AssetXO();
     assetXO.setRepositoryName(repositoryName);
@@ -358,13 +399,31 @@ public class ContentComponentHelper
       assetXO.setContentType(blob.contentType());
       assetXO.setBlobUpdated(blobCreated);
       attributes.put("checksum", blob.checksums());
-      assetXO.setCreatedBy(blob.createdBy().orElse(null));
-      assetXO.setCreatedByIp(blob.createdByIp().orElse(null));
+      if (uploaderVisible) {
+        assetXO.setCreatedBy(blob.createdBy().orElse(null));
+        assetXO.setCreatedByIp(blob.createdByIp().orElse(null));
+      }
     });
 
     if (repositoryManager.get(repositoryName).getType() instanceof HostedType && attributes.containsKey(CONTENT)) {
       Map<String, Object> contentMap = (Map<String, Object>) attributes.get(CONTENT);
       contentMap.remove(CONTENT_LAST_MODIFIED);
+    }
+
+    // Filter format-specific attributes using AssetXODescriptor if available
+    AssetXODescriptor descriptor = assetDescriptors.get(format);
+    if (descriptor != null && formatAttributes instanceof Map) {
+      Map<String, Object> originalFormatAttrs = (Map<String, Object>) formatAttributes;
+      Map<String, Object> filteredFormatAttrs = new HashMap<>();
+
+      Set<String> exposedKeys = descriptor.listExposedAttributeKeys();
+      for (Map.Entry<String, Object> entry : originalFormatAttrs.entrySet()) {
+        if (exposedKeys.contains(entry.getKey())) {
+          filteredFormatAttrs.put(entry.getKey(), entry.getValue());
+        }
+      }
+
+      attributes.put(format, filteredFormatAttrs);
     }
 
     assetXO.setAttributes(attributes);

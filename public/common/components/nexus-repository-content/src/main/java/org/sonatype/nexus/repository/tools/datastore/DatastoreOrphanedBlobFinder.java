@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -59,7 +59,7 @@ public class DatastoreOrphanedBlobFinder
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public DatastoreOrphanedBlobFinder(
       final RepositoryManager repositoryManager,
       final BlobStoreManager blobStoreManager)

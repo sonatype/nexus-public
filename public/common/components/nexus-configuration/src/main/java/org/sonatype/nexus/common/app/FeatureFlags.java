@@ -20,9 +20,6 @@ package org.sonatype.nexus.common.app;
  */
 public class FeatureFlags
 {
-  /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
-  public static final String FEATURE_GOLANG_HOSTED = "nexus.format.golang.hosted.enabled";
-
   /* Cargo format is temporarily hidden behind the feature flag. Default value: false */
   public static final String CARGO_FORMAT_ENABLED = "nexus.format.cargo.enabled";
 
@@ -346,12 +343,12 @@ public class FeatureFlags
   public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES_NAMED_VALUE =
       "${nexus.authorizingrealm.permissionscache.expireafterwrite.minutes:60}";
 
-  /* Principal permissions cache expire after access in minutes. Default value: 5 */
+  /* Principal permissions cache expire after access in minutes. Default value: 60 */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES =
       "nexus.authorizingrealm.permissionscache.expireafteraccess.minutes";
 
   public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.expireafteraccess.minutes:5}";
+      "${nexus.authorizingrealm.permissionscache.expireafteraccess.minutes:60}";
 
   /* Principal permissions cache record statistics. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS =
@@ -373,6 +370,23 @@ public class FeatureFlags
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
       "${nexus.hosted.repository.evaluation.enabled:false}";
 
+  public static final String HOSTED_REPOSITORY_WORK_DIRECTORY_VALUE =
+      "${nexus.lifecycle.hosted-repository.workdirectory:}";
+
+  /**
+   * Controls whether query parameter forwarding is available for Raw proxy repositories.
+   * When enabled, the UI configuration panel and REST API fields ({@code forwardQueryParameters},
+   * {@code excludedQueryParameters}) become visible and functional. When disabled (the default),
+   * the feature is completely hidden: the UI panel is suppressed and the REST API ignores
+   * these attributes on both input and output.
+   *
+   * Default: false (feature hidden)
+   */
+  public static final String RAW_QUERYPARAMS_FORWARDING_ENABLED = "nexus.raw.queryparams.forwarding.enabled";
+
+  public static final String RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE =
+      "${nexus.raw.queryparams.forwarding.enabled:false}";
+
   /**
    * Controls whether internal JVM/infrastructure metrics (JVM gauges, Jetty metrics, HikariCP metrics, thread dumps,
    * HTTP request metrics, and @Timed/@ExceptionMetered aspects) are registered. When disabled, the metrics endpoints
@@ -389,4 +403,11 @@ public class FeatureFlags
 
   public static final String TELEMETRY_MANDATORY_ENABLED_NAMED_VALUE =
       "${nexus.telemetry.mandatory.enabled:false}";
+
+  /*
+   * Authentication rate limiting (brute force protection, CWE-307). Available values: true, false. Default value: true
+   */
+  public static final String AUTH_RATE_LIMIT_ENABLED = "nexus.auth.ratelimit.enabled";
+
+  public static final String AUTH_RATE_LIMIT_ENABLED_NAMED_VALUE = "${nexus.auth.ratelimit.enabled:true}";
 }

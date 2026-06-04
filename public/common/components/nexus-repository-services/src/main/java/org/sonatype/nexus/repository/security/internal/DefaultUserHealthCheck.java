@@ -19,8 +19,7 @@ import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.codahale.metrics.health.HealthCheck;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENA
 @Component
 @Qualifier("Default Admin Credentials")
 @ConditionalOnProperty(name = NEXUS_SECURITY_FIPS_ENABLED, havingValue = "false", matchIfMissing = true)
-@Singleton
 public class DefaultUserHealthCheck
     extends HealthCheck
 {
@@ -59,7 +57,7 @@ public class DefaultUserHealthCheck
 
   private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
 
-  @Inject
+  @Autowired
   public DefaultUserHealthCheck(
       final RealmManager realmManager,
       final SecurityConfigurationManager securityConfigurationManager,

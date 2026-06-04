@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotBlank;
 
 import org.sonatype.nexus.blobstore.SelectOption;
@@ -32,7 +32,7 @@ public class CustomS3RegionCapabilityConfiguration
   @NotBlank
   private String customRegions;
 
-  @Inject
+  @Autowired
   public CustomS3RegionCapabilityConfiguration(final Map<String, String> properties) {
     checkNotNull(properties);
     this.customRegions = properties.get(REGIONS);

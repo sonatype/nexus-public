@@ -14,15 +14,12 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class RemoveDistributedCooperationMigrationStep_2_14
     implements DatabaseMigrationStep
 {

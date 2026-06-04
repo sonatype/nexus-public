@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.anonymous;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -32,12 +30,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Primary
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class AnonymousConfigurationStoreImpl
     extends ConfigStoreSupport<AnonymousConfigurationDAO>
     implements AnonymousConfigurationStore
 {
-  @Inject
+  @Autowired
   public AnonymousConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

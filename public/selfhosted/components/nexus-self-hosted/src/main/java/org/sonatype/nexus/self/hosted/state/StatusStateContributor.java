@@ -15,9 +15,7 @@ package org.sonatype.nexus.self.hosted.state;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.rapture.internal.state.StatusXO;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class StatusStateContributor
     implements StateContributor
 {
@@ -45,7 +42,7 @@ public class StatusStateContributor
 
   private final ApplicationVersion applicationVersion;
 
-  @Inject
+  @Autowired
   public StatusStateContributor(final ApplicationVersion applicationVersion) {
     this.applicationVersion = checkNotNull(applicationVersion);
   }

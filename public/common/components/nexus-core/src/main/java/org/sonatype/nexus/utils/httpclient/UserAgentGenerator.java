@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.utils.httpclient;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.slf4j.Logger;
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class UserAgentGenerator
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -46,7 +43,7 @@ public class UserAgentGenerator
 
   private String edition;
 
-  @Inject
+  @Autowired
   public UserAgentGenerator(final ApplicationVersion applicationVersion) {
     this.applicationVersion = checkNotNull(applicationVersion);
   }

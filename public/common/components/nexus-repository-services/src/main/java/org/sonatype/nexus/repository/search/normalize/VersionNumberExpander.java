@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.search.normalize;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.sonatype.goodies.common.Loggers;
+import org.slf4j.LoggerFactory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class VersionNumberExpander
   private VersionNumberExpander() {
   }
 
-  public static final Logger log = Loggers.getLogger(VersionNumberExpander.class);
+  public static final Logger log = LoggerFactory.getLogger(VersionNumberExpander.class);
 
   public static String expand(String version) {
     if (StringUtils.isBlank(version)) {

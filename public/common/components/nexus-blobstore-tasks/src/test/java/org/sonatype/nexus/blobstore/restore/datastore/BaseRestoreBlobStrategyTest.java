@@ -14,6 +14,8 @@ package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
@@ -21,12 +23,11 @@ import javax.annotation.Nonnull;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
-import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.log.DryRunPrefix;
-import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
@@ -51,12 +52,14 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
 @ExtendWith(MockitoExtension.class)
 class BaseRestoreBlobStrategyTest
 
 {
-  private static final String BLOB_STORE_NAME = "test-blobstore";
+  private static final String TEST_BLOB_STORE_NAME = "test-blobstore";
 
   private static final String REPO_NAME = "test-repo";
 
@@ -95,10 +98,7 @@ class BaseRestoreBlobStrategyTest
   private BlobId blobId;
 
   @Mock
-  private BlobMetrics blobMetrics;
-
-  @Mock
-  private Format format;
+  private Configuration repositoryConfiguration;
 
   private Properties properties;
 
@@ -114,9 +114,15 @@ class BaseRestoreBlobStrategyTest
     properties.setProperty(HEADER_PREFIX + BLOB_NAME_HEADER, BLOB_NAME);
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
-    when(blobStoreConfiguration.getName()).thenReturn(BLOB_STORE_NAME);
+    when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
     when(blob.getId()).thenReturn(blobId);
     when(repository.getName()).thenReturn(REPO_NAME);
+    when(repository.getConfiguration()).thenReturn(repositoryConfiguration);
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    Map<String, Object> storageAttributes = new HashMap<>();
+    storageAttributes.put(BLOB_STORE_NAME, TEST_BLOB_STORE_NAME);
+    attributes.put(STORAGE, storageAttributes);
+    when(repositoryConfiguration.getAttributes()).thenReturn(attributes);
     when(repositoryManager.get(REPO_NAME)).thenReturn(repository);
     when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
     when(blobAttributes.isDeleted()).thenReturn(false);
@@ -177,7 +183,7 @@ class BaseRestoreBlobStrategyTest
     }
 
     @Override
-    protected void createAssetFromBlob(final Blob assetBlob, final DataStoreRestoreBlobData data) throws IOException {
+    protected void createAssetFromData(final DataStoreRestoreBlobData data) throws IOException {
       Throwables.propagateIfPossible(exception, IOException.class);
     }
 

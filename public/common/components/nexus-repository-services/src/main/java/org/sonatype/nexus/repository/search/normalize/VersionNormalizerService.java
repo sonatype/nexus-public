@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Format;
 
@@ -26,12 +24,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class VersionNormalizerService
 {
   private final Map<String, VersionNormalizer> versionNormalizers;
 
-  @Inject
+  @Autowired
   public VersionNormalizerService(final List<VersionNormalizer> versionNormalizersList) {
     this.versionNormalizers = QualifierUtil.buildQualifierBeanMap(checkNotNull(versionNormalizersList));
   }

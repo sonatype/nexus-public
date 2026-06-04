@@ -37,6 +37,7 @@ jest.mock('@uirouter/react', () => ({
 let mockIsVisible = true;
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     search: (...args) => mockSearch(...args),
     state: () => ({getValue: () => false}),

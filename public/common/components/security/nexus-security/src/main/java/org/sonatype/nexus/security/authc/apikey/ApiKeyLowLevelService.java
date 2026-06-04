@@ -26,6 +26,11 @@ public interface ApiKeyLowLevelService
     extends ApiKeyService
 {
   /**
+   * Browse all tokens across all domains (paginated)
+   */
+  Collection<ApiKey> browseAll(int page, int pageSize);
+
+  /**
    * Browse tokens in the domain
    */
   Collection<ApiKey> browse(String domain);
@@ -42,8 +47,6 @@ public interface ApiKeyLowLevelService
 
   /**
    * Persists an API-Key with a predetermined value.
-   *
-   * @since 3.1
    */
   default void persistApiKey(final String domain, final PrincipalCollection principals, final char[] apiKey) {
     persistApiKey(domain, principals, apiKey, null);

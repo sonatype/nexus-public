@@ -13,9 +13,7 @@
 package org.sonatype.nexus.content.raw.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -43,13 +41,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(RawHostedRecipe.NAME)
-@Singleton
 public class RawHostedRecipe
     extends RawRecipeSupport
 {
   public static final String NAME = "raw-hosted";
 
-  @Inject
+  @Autowired
   public RawHostedRecipe(@Qualifier(HostedType.NAME) final Type type, @Qualifier(RawFormat.NAME) final Format format) {
     super(type, format);
   }

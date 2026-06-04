@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import configureAxios from '@sonatype/nexus-rapture/src/frontend/src/configureAxios';
+import configureAxios from './configureAxios';
 
 global.NX = {
   app: {

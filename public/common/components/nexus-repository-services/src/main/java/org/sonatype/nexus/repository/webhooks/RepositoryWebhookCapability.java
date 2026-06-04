@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Condition;
@@ -92,7 +92,7 @@ public class RepositoryWebhookCapability
 
   private final List<WebhookSubscription> subscriptions = new ArrayList<>();
 
-  @Inject
+  @Autowired
   public RepositoryWebhookCapability(
       final WebhookService webhookService,
       final RepositoryConditions repositoryConditions)

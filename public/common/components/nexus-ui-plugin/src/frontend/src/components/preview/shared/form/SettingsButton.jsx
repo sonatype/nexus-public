@@ -41,13 +41,15 @@ export function SettingsButton({
   disabled = false,
   loading = false,
   icon: Icon,
+  trailingIcon: TrailingIcon,
+  iconSize = 16,
   size = 'medium',
   className = '',
   testId,
   ...rest
 }) {
   const isDisabled = disabled || loading;
-  
+
   // Auto-generate testId from type if not provided
   const dataTestId = testId || (type === 'submit' ? 'button-submit' : undefined);
 
@@ -77,12 +79,15 @@ export function SettingsButton({
       {...rest}
     >
       {loading ? (
-        <Loader2 size={16} className="settings-button__spinner" />
+        <Loader2 size={iconSize} className="settings-button__spinner" />
       ) : Icon ? (
-        <Icon size={16} className="settings-button__icon" />
+        <Icon size={iconSize} className="settings-button__icon" />
       ) : null}
       {textChildren.length > 0 && (
         <span className="settings-button__text">{textChildren}</span>
+      )}
+      {!loading && TrailingIcon && (
+        <TrailingIcon size={iconSize} className="settings-button__icon settings-button__icon--trailing" />
       )}
     </button>
   );
@@ -101,8 +106,12 @@ SettingsButton.propTypes = {
   disabled: PropTypes.bool,
   /** Show loading spinner */
   loading: PropTypes.bool,
-  /** Optional icon component (Lucide icon) */
+  /** Optional leading icon component (Lucide icon) */
   icon: PropTypes.elementType,
+  /** Optional trailing icon component (Lucide icon, e.g. ExternalLink) */
+  trailingIcon: PropTypes.elementType,
+  /** Icon size in pixels (default 16) */
+  iconSize: PropTypes.number,
   /** Button size */
   size: PropTypes.oneOf(['small', 'medium', 'large']),
   /** Additional CSS class */

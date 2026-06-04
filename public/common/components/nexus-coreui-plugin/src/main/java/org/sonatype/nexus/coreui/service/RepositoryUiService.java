@@ -57,6 +57,7 @@ import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
+import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager;
 import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
@@ -79,8 +80,7 @@ import org.sonatype.nexus.validation.group.Update;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -92,7 +92,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil.initializeCleanupAttributes;
 
 @Component
-@Singleton
 public class RepositoryUiService
     implements StateContributor
 {
@@ -125,7 +124,7 @@ public class RepositoryUiService
   public static final String INVALID_BLOBSTORENAME_EXCEPTION_MESSAGE =
       "Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.";
 
-  @Inject
+  @Autowired
   public RepositoryUiService(
       final RepositoryCacheInvalidationService repositoryCacheInvalidationService,
       final RepositoryManager repositoryManager,
@@ -302,6 +301,9 @@ public class RepositoryUiService
     }
 
     Repository repository = safelyGetRepository(name, BreadActions.EDIT);
+
+    // Validate remoteUrl change for delegated admins (NEXUS-51839)
+    validateRemoteUrlChange(repository, repositoryXO.getAttributes());
 
     // Replace stored password and bearerTokenId if placeholders are used
     Optional.of(repositoryXO)
@@ -798,5 +800,80 @@ public class RepositoryUiService
 
   public void addRecipe(final String format, final Recipe recipe) {
     recipes.put(format, recipe);
+  }
+
+  private static final String PROXY_REMOTE_URL_CHANGED =
+      "Remote URL has changed. " +
+          "Authentication credentials have been reset and must be re-entered.";
+
+  private void validateRemoteUrlChange(
+      final Repository repository,
+      final Map<String, Map<String, Object>> newAttributes) throws ReflectiveOperationException
+  {
+    if (!isRemoteUrlChanged(repository.getConfiguration().getAttributes(), newAttributes)) {
+      return;
+    }
+
+    Map<String, Object> authentication = Optional.ofNullable(newAttributes)
+        .map(attr -> attr.get("httpclient"))
+        .filter(Map.class::isInstance)
+        .map(Map.class::cast)
+        .map(httpclient -> httpclient.get("authentication"))
+        .filter(Map.class::isInstance)
+        .map(Map.class::cast)
+        .orElse(null);
+
+    if (authentication != null && hasAuthenticationPlaceholder(authentication)) {
+      throw new BadRequestException(PROXY_REMOTE_URL_CHANGED);
+    }
+  }
+
+  private static boolean hasAuthenticationPlaceholder(
+      final Map<String, Object> authentication) throws ReflectiveOperationException
+  {
+    String type = (String) authentication.get("type");
+    if (type == null) {
+      return false;
+    }
+
+    Class<? extends AuthenticationConfiguration> configClass = AuthenticationConfiguration.TYPES.get(type);
+    if (configClass == null) {
+      return false;
+    }
+
+    AuthenticationConfiguration config = configClass.getDeclaredConstructor().newInstance();
+    for (String fieldName : config.getSecretFieldNames()) {
+      String value = (String) authentication.get(fieldName);
+      if (PasswordPlaceholder.is(value)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @VisibleForTesting
+  static boolean isRemoteUrlChanged(
+      final Map<String, Map<String, Object>> oldAttributes,
+      final Map<String, Map<String, Object>> newAttributes)
+  {
+    String oldUrl = extractRemoteUrl(oldAttributes);
+    String newUrl = extractRemoteUrl(newAttributes);
+
+    if (oldUrl == null || newUrl == null) {
+      return false;
+    }
+
+    return !oldUrl.equals(newUrl);
+  }
+
+  private static String extractRemoteUrl(final Map<String, Map<String, Object>> attributes) {
+    return Optional.ofNullable(attributes)
+        .map(attr -> attr.get("proxy"))
+        .filter(Map.class::isInstance)
+        .map(Map.class::cast)
+        .map(proxy -> proxy.get("remoteUrl"))
+        .filter(String.class::isInstance)
+        .map(String.class::cast)
+        .orElse(null);
   }
 }

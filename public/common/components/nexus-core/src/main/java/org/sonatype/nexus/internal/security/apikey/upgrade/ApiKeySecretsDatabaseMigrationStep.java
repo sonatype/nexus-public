@@ -14,9 +14,7 @@ package org.sonatype.nexus.internal.security.apikey.upgrade;
 
 import java.sql.Connection;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DefinedUpgradeRound;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
@@ -28,13 +26,12 @@ import org.springframework.stereotype.Component;
  * An upgrade step which triggers the task to move from {@code api_key} to {@code api_key_v2}
  */
 @Component
-@Singleton
 public class ApiKeySecretsDatabaseMigrationStep
     implements RepeatableDatabaseMigrationStep, DefinedUpgradeRound
 {
   private final UpgradeTaskScheduler scheduler;
 
-  @Inject
+  @Autowired
   public ApiKeySecretsDatabaseMigrationStep(final UpgradeTaskScheduler scheduler) {
     this.scheduler = checkNotNull(scheduler);
   }

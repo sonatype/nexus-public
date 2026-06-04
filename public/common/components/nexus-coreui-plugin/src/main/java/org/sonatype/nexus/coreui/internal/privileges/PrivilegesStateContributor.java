@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.privileges;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +27,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED_
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class PrivilegesStateContributor
     implements StateContributor
 {
@@ -37,7 +34,7 @@ public class PrivilegesStateContributor
 
   private final Map<String, Object> state;
 
-  @Inject
+  @Autowired
   public PrivilegesStateContributor(
       @Value(REACT_PRIVILEGES_NAMED_VALUE) final Boolean featureFlag)
   {

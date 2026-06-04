@@ -18,8 +18,6 @@ import java.util.regex.Pattern;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class VersionComparator
     implements Comparator<String>
 {

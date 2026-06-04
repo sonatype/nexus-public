@@ -16,8 +16,6 @@ import java.sql.Connection;
 import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * Drops all cached metadata in pypi group repositories, will be regenerated on request and stored in proper location
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class PypiAssetMigrationStep_1_35
     implements DatabaseMigrationStep
 {

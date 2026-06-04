@@ -18,11 +18,14 @@
 import adminRouteNames from './adminRouteNames';
 import browseRouteNames from './browseRouteNames';
 import userRouteNames from './userRouteNames';
-import { RouteNames } from '@sonatype/nexus-ui-plugin';
+import { PreviewRouteNames } from '@sonatype/nexus-ui-plugin';
 import { mergeDeepRight } from 'ramda';
 
-// In the case of a conflict, the routes defined here will override the shared route names
-export const ROUTE_NAMES = mergeDeepRight(RouteNames, {
+// Classic-UI and plugin-specific route names layered on top of the shared
+// preview ROUTE_NAMES from nexus-ui-plugin. Preview-only additions belong in
+// nexus-ui-plugin/src/frontend/src/components/preview/constants/RouteNames.ts
+// so both plugins pick them up automatically.
+export const ROUTE_NAMES = mergeDeepRight(PreviewRouteNames, {
   ADMIN: { ...adminRouteNames },
   BROWSE: { ...browseRouteNames },
   USER: { ...userRouteNames },

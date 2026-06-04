@@ -17,23 +17,36 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import jakarta.inject.Inject;
-
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
-import software.amazon.awssdk.core.exception.SdkClientException;
-import software.amazon.awssdk.http.apache.ApacheHttpClient;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import com.google.common.base.Predicates;
-import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
+import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -47,19 +60,6 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_ST
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.MAX_CONNECTION_POOL_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.S3ClientBuilder;
-import software.amazon.awssdk.services.sts.StsClient;
-import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 
 /**
  * Creates configured AmazonS3 clients.
@@ -84,19 +84,23 @@ public class AmazonS3Factory
 
   private final SecretsFactory secretsFactory;
 
-  @Inject
+  private final AwsCredentialsProvider sharedCredentialsProvider;
+
+  @Autowired
   public AmazonS3Factory(
       @Value("${nexus.s3.connection.pool:-1}") final int connectionPoolSize,
       @Nullable @Value("${nexus.s3.connection.ttl:#{null}}") final Time connectionTtl,
       @Value("${nexus.s3.cloudwatchmetrics.enabled:false}") final boolean cloudWatchMetricsEnabled,
       @Value("${nexus.s3.cloudwatchmetrics.namespace:nexus-blobstore-s3}") final String cloudWatchMetricsNamespace,
-      final SecretsFactory secretsFactory)
+      final SecretsFactory secretsFactory,
+      @Qualifier("sharedS3CredentialsProvider") final AwsCredentialsProvider sharedCredentialsProvider)
   {
     this.defaultConnectionPoolSize = connectionPoolSize;
     this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
     this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
     this.connectionTtl = connectionTtl;
     this.secretsFactory = checkNotNull(secretsFactory);
+    this.sharedCredentialsProvider = checkNotNull(sharedCredentialsProvider);
   }
 
   public EncryptingS3Client create(final BlobStoreConfiguration blobStoreConfiguration) {
@@ -123,6 +127,12 @@ public class AmazonS3Factory
       credentialsProvider = buildCredentialsProvider(credentials, region, assumeRole);
 
       builder = builder.credentialsProvider(credentialsProvider);
+    }
+    else {
+      // No explicit credentials configured — S3Client would fall back to DefaultCredentialsProvider,
+      // creating one IMDS client per blobstore. Share the singleton provider instead so all blobstores
+      // use one IMDS client, preventing IMDS exhaustion with thousands of blobstores (e.g. 2500+).
+      builder = builder.credentialsProvider(sharedCredentialsProvider);
     }
 
     String endpoint = s3Configuration.get(ENDPOINT_KEY, String.class);
@@ -162,7 +172,19 @@ public class AmazonS3Factory
       log.info("CloudWatch metrics enabled using namespace {}", cloudWatchMetricsNamespace);
     }
 
-    return new EncryptingS3Client(builder.build(), blobStoreConfiguration);
+    // Use explicit per-blobstore credentials for the presigner when configured; otherwise fall back
+    // to the shared singleton provider. This keeps S3Client and S3Presigner on the same credential
+    // chain and ensures the presigner never holds its own IMDS client.
+    //
+    // When explicit credentials are set, wrap them in a SharedS3CredentialsProvider (no-op close)
+    // before giving them to the presigner. AWS SDK bug #4386 causes S3Presigner.close() to call
+    // close() on its credentials provider. For StaticCredentialsProvider this is harmless, but for
+    // StsAssumeRoleCredentialsProvider it would destroy the shared STS client still in use by the
+    // S3Client, causing credential refresh failures. The no-op wrapper prevents this in all cases.
+    AwsCredentialsProvider presignerProvider = credentialsProvider != null
+        ? new SharedS3CredentialsProvider(credentialsProvider)
+        : sharedCredentialsProvider;
+    return new EncryptingS3Client(builder.build(), blobStoreConfiguration, presignerProvider);
   }
 
   private AwsCredentials buildCredentials(

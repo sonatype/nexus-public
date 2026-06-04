@@ -14,8 +14,6 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
@@ -31,7 +29,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(MavenBaseVersionSqlSearchQueryContribution.NAME)
-@Singleton
 public class MavenBaseVersionSqlSearchQueryContribution
     extends SqlSearchQueryContributionSupport
 {

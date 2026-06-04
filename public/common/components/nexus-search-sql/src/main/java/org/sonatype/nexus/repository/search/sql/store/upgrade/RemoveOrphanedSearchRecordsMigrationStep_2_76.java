@@ -20,8 +20,6 @@ import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +30,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Removes orphaned records from search_components and search_assets tables.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RemoveOrphanedSearchRecordsMigrationStep_2_76
     implements DatabaseMigrationStep
 {

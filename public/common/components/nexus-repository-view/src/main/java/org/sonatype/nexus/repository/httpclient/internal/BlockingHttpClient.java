@@ -17,7 +17,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.sequence.FibonacciNumberSequence;
 import org.sonatype.nexus.common.sequence.NumberSequence;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;

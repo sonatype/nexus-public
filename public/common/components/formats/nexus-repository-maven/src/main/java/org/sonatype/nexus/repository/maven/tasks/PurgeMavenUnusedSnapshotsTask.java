@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -55,7 +55,7 @@ public class PurgeMavenUnusedSnapshotsTask
 
   private final Format maven2Format;
 
-  @Inject
+  @Autowired
   public PurgeMavenUnusedSnapshotsTask(
       @Qualifier(GroupType.NAME) final Type groupType,
       @Qualifier(HostedType.NAME) final Type hostedType,

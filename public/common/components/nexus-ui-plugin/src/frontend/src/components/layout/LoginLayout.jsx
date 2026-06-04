@@ -12,7 +12,7 @@
  */
 
 import React from "react";
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS } from '../../interface/ExtJS';
 
 import './LoginLayout.scss';
 

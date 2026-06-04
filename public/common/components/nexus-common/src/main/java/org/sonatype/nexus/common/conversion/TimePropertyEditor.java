@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.conversion;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 public class TimePropertyEditor
     extends PropertyEditorSupport

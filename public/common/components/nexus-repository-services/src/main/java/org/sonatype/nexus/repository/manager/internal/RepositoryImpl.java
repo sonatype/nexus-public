@@ -41,7 +41,7 @@ import org.sonatype.nexus.repository.RepositoryStoppedEvent;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class RepositoryImpl
 
   private String name;
 
-  @Inject
+  @Autowired
   public RepositoryImpl(final EventManager eventManager, final Type type, final Format format) {
     this.eventManager = checkNotNull(eventManager);
     this.type = checkNotNull(type);

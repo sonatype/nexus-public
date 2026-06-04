@@ -16,8 +16,6 @@ import java.sql.Connection;
 import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * No-op baseline version for Zero Downtime Upgrades
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class NexusBaselineMigrationStep_2_0
     implements DatabaseMigrationStep
 {

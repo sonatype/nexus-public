@@ -33,6 +33,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
@@ -121,11 +122,12 @@ public class EncryptingS3Client
 
   public EncryptingS3Client(
       final S3Client delegate,
-      final BlobStoreConfiguration blobStoreConfig)
+      final BlobStoreConfiguration blobStoreConfig,
+      final AwsCredentialsProvider presignerCredentialsProvider)
   {
     this.delegate = delegate;
     this.blobStoreConfig = blobStoreConfig;
-    this.presigner = createPresigner(delegate, blobStoreConfig);
+    this.presigner = createPresigner(delegate, blobStoreConfig, presignerCredentialsProvider);
 
     encrypter = getEncrypter(blobStoreConfig);
 
@@ -443,30 +445,54 @@ public class EncryptingS3Client
   }
 
   /*
-   * Constructing the S3Presigner involves classpath scanning by the AWS SDK to identify interceptors
+   * Constructing the S3Presigner involves classpath scanning by the AWS SDK to identify interceptors.
    *
-   * IMPORTANT: S3Presigner MUST have its own credentials provider instance, separate from the S3Client.
-   * Sharing the same credentials provider causes "Connection pool shut down" errors when using AWS IRSA
-   * (AWS_WEB_IDENTITY_TOKEN_FILE) because closing the presigner closes the shared credentials provider's
-   * internal STS client used for token refresh.
+   * IMPORTANT: the credentials provider passed to the presigner MUST tolerate being closed without
+   * destroying shared state. AWS SDK bug #4386 causes S3Presigner.close() to call close() on its
+   * credentials provider, which can destroy a shared STS client and cause "Connection pool shut down"
+   * errors on subsequent credential refreshes. The caller (AmazonS3Factory) is responsible for
+   * ensuring the supplied provider is safe to close — see inline comments below.
    *
    * See: https://github.com/aws/aws-sdk-java-v2/issues/4386
    * "The StsClient should not be shut down as long as the credentials provider is in use"
    */
-  private static S3Presigner createPresigner(final S3Client delegate, final BlobStoreConfiguration blobStoreConfig) {
+  private static S3Presigner createPresigner(
+      final S3Client delegate,
+      final BlobStoreConfiguration blobStoreConfig,
+      final AwsCredentialsProvider credentialsProvider)
+  {
     // Create S3Presigner with the same configuration as the main S3 client
     S3Presigner.Builder presignerBuilder = S3Presigner.builder();
 
     // Copy the same configuration from the delegate S3Client
     presignerBuilder.region(delegate.serviceClientConfiguration().region());
 
-    // Create a NEW credentials provider instance for the presigner
-    // instead of sharing the delegate's credentials provider. This prevents the presigner from
-    // closing the shared credentials provider's internal STS client when the presigner is closed.
-    // The DefaultCredentialsProvider will use the same credential sources (env vars, config files,
-    // IRSA token file, etc.) but with its own STS client instance.
-    presignerBuilder.credentialsProvider(
-        software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.create());
+    // Use the supplied credentials provider for the presigner.
+    //
+    // AWS SDK bug #4386: S3Presigner.close() calls close() on its credentials provider.
+    // If that provider owns an STS client (e.g. StsAssumeRoleCredentialsProvider), closing it
+    // destroys the STS client and causes "Connection pool shut down" errors on any subsequent
+    // credential refresh — including on the S3Client if it shares the same provider instance.
+    //
+    // AmazonS3Factory ensures the provider passed here is always safe to close:
+    //
+    // 1. Explicit static keys → SharedS3CredentialsProvider(StaticCredentialsProvider)
+    // The no-op-close wrapper prevents the SDK bug from propagating. The underlying
+    // StaticCredentialsProvider is stateless so this is belt-and-braces.
+    //
+    // 2. Explicit keys + assume-role → SharedS3CredentialsProvider(StsAssumeRoleCredentialsProvider)
+    // The no-op-close wrapper prevents the SDK bug from closing the STS client that the
+    // S3Client's StsAssumeRoleCredentialsProvider (the unwrapped instance) still relies on
+    // for credential refresh. The S3Client holds the unwrapped provider directly; only the
+    // presigner sees the wrapper. Both resolve credentials through the same underlying chain.
+    //
+    // 3. No explicit keys → SharedS3CredentialsProvider singleton
+    // close() is a deliberate no-op on this singleton wrapper (see SharedS3CredentialsProvider
+    // JavaDoc). The underlying DefaultCredentialsProvider is only closed by Spring at
+    // application shutdown via destroy(). Safe for all deployments (cloud and self-hosted).
+    //
+    // See NEXUS-50503.
+    presignerBuilder.credentialsProvider(credentialsProvider);
 
     // Copy endpoint override if present
     Optional<URI> endpointOverride = delegate.serviceClientConfiguration().endpointOverride();

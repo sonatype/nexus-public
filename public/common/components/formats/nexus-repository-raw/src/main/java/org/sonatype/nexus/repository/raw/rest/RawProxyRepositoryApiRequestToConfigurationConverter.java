@@ -12,55 +12,74 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
+import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
-import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE;
+import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
+import static org.sonatype.nexus.repository.raw.rest.RawAttributes.EXCLUDED_QUERY_PARAMETERS;
+import static org.sonatype.nexus.repository.raw.rest.RawAttributes.FORWARD_QUERY_PARAMETERS;
 
 /**
  * @since 3.25
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RawProxyRepositoryApiRequestToConfigurationConverter
     extends ProxyRepositoryApiRequestToConfigurationConverter<RawProxyRepositoryApiRequest>
 {
-  private RepositoryManager repositoryManager;
+  private final boolean rawQueryParamsForwardingEnabled;
+
+  private final RepositoryManager repositoryManager;
 
   @Autowired
-  public RawProxyRepositoryApiRequestToConfigurationConverter(final RoutingRuleStore routingRuleStore) {
+  public RawProxyRepositoryApiRequestToConfigurationConverter(
+      final RoutingRuleStore routingRuleStore,
+      final RepositoryManager repositoryManager,
+      @Value(RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE) final boolean rawQueryParamsForwardingEnabled)
+  {
     super(routingRuleStore);
-  }
-
-  @Autowired
-  public void setRepositoryManager(final RepositoryManager repositoryManager) {
-    this.repositoryManager = repositoryManager;
+    this.repositoryManager = checkNotNull(repositoryManager);
+    this.rawQueryParamsForwardingEnabled = rawQueryParamsForwardingEnabled;
   }
 
   @Override
   public Configuration convert(final RawProxyRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
+    NestedAttributesMap configAttributes = configuration.attributes("raw");
+    RawAttributes requestAttributes = request.getRaw();
 
     String requestedDisposition = null;
-    if (request.getRaw() != null && request.getRaw().getContentDisposition() != null) {
+    if (requestAttributes != null && requestAttributes.getContentDisposition() != null) {
       requestedDisposition = request.getRaw().getContentDisposition().name();
     }
 
+    // Always resolve content disposition , by default to ATTACHMENT on creation
     String contentDisposition = ContentDispositionHelper.resolveContentDisposition(
         requestedDisposition,
         repositoryManager,
         request.getName(),
         "raw");
 
-    configuration.attributes("raw").set(CONTENT_DISPOSITION, contentDisposition);
+    configAttributes.set(CONTENT_DISPOSITION, contentDisposition);
+
+    if (requestAttributes != null && rawQueryParamsForwardingEnabled) {
+      if (requestAttributes.getForwardQueryParameters() != null) {
+        configAttributes.set(FORWARD_QUERY_PARAMETERS, requestAttributes.getForwardQueryParameters());
+      }
+      if (requestAttributes.getExcludedQueryParameters() != null) {
+        configAttributes.set(EXCLUDED_QUERY_PARAMETERS, requestAttributes.getExcludedQueryParameters());
+      }
+    }
+
     return configuration;
   }
 }

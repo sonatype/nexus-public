@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.wonderland;
 
 import java.util.List;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -36,7 +35,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 @Path(SettingsResource.RESOURCE_URI)
 public class SettingsResource
     implements Resource

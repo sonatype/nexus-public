@@ -18,9 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
@@ -32,14 +30,13 @@ import org.springframework.stereotype.Component;
  * Provides a mapping from search attribute or alias to {@link SearchField}
  */
 @Component
-@Singleton
 public class SearchMappingService
 {
   private final Map<String, SearchField> attributeToField = new HashMap<>();
 
   private final Map<String, Boolean> attributeToExactMatch = new HashMap<>();
 
-  @Inject
+  @Autowired
   public SearchMappingService(final List<SearchMappings> searchMappings) {
     checkNotNull(searchMappings).stream()
         .map(SearchMappings::get)

@@ -18,8 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.search.sql.SearchCustomFieldContributor;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -33,7 +31,6 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-@Singleton
 @Component
 @Qualifier(Maven2Format.NAME)
 public class MavenSearchCustomFieldContributor

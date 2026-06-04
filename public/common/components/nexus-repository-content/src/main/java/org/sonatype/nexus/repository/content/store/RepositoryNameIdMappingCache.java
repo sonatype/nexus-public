@@ -29,8 +29,7 @@ import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -46,7 +45,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  */
 @Lazy
 @Component
-@Singleton
 @ConditionalOnProperty(name = REPOSITORY_SIZE_ENABLED, havingValue = "true", matchIfMissing = true)
 public class RepositoryNameIdMappingCache
     implements EventAware
@@ -63,7 +61,7 @@ public class RepositoryNameIdMappingCache
 
   private Boolean available;
 
-  @Inject
+  @Autowired
   public RepositoryNameIdMappingCache(
       final List<FormatStoreManager> formatStoreManagers,
       final List<Format> formats,

@@ -27,7 +27,7 @@ import org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.logging.task.TaskLogging;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -52,7 +52,7 @@ public class BlobStoreMetricsMigrationTask
 
   private final ApplicationContext context;
 
-  @Inject
+  @Autowired
   public BlobStoreMetricsMigrationTask(
       final BlobStoreManager blobStoreManager,
       final BlobStoreMetricsStore metricsStore,

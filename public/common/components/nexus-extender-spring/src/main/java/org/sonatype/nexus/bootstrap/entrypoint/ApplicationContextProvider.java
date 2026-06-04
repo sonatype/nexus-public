@@ -12,13 +12,11 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint;
 
-import jakarta.inject.Singleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class ApplicationContextProvider
     implements ApplicationContextAware
 {

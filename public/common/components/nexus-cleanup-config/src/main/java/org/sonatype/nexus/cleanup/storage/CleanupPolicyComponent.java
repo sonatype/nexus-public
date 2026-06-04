@@ -14,9 +14,7 @@ package org.sonatype.nexus.cleanup.storage;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  * @since 3.14
  */
 @Component
-@Singleton
 @DirectAction(action = "cleanup_CleanupPolicy")
 public class CleanupPolicyComponent
     extends DirectComponentSupport
@@ -55,7 +52,7 @@ public class CleanupPolicyComponent
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
-  @Inject
+  @Autowired
   public CleanupPolicyComponent(
       final CleanupPolicyStorage cleanupPolicyStorage,
       final RepositoryManager repositoryManager,

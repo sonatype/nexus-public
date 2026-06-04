@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -50,7 +50,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>32.1.2-jre</version>
+        <version>33.4.8-jre</version>
         <exclusions>
           <exclusion>
             <groupId>org.checkerframework</groupId>
@@ -71,6 +71,10 @@
           <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>listenablefuture</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -260,7 +264,7 @@
       <dependency>
         <groupId>org.mozilla</groupId>
         <artifactId>rhino</artifactId>
-        <version>1.7.15</version>
+        <version>1.7.15.1</version>
       </dependency>
 
       <dependency>
@@ -308,13 +312,20 @@
       </dependency>
 
       <!--
-        Upgrade netty-bom to 4.2.12.Final to resolve CVE-2026-33871 (CVSS 7.5)
-        in netty-codec-http2.
+        NEXUS-53122: Upgrade netty-bom to 4.2.15.Final to resolve CVE-2026-42587
+        (codec-http/http2 decompression limit bypass - CVSS 8.7).
+        This version also addresses:
+        - CVE-2026-33871 (netty-codec-http2 - CVSS 7.5)
+        - CVE-2026-42577 (epoll transport DoS - CVSS 8.7)
+        - CVE-2026-42578 (handler-proxy HTTP header injection - CVSS 7.5)
+        - CVE-2026-42579 (codec-dns domain name validation - CVSS 7.5)
+        - CVE-2026-42580, CVE-2026-42581, CVE-2026-42584, CVE-2026-42585, CVE-2026-41417 (codec-http request smuggling - CVSS 5.3-8.7)
+        - CVE-2026-42583 (codec-compression memory allocation DoS - CVSS 7.5)
       -->
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.12.Final</version>
+        <version>4.2.15.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -444,6 +455,12 @@
         <groupId>com.sun.mail</groupId>
         <artifactId>jakarta.mail</artifactId>
         <version>${jakarta-mail.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.goodies</groupId>
+        <artifactId>package-url-java</artifactId>
+        <version>1.1.1</version>
       </dependency>
 
     </dependencies>

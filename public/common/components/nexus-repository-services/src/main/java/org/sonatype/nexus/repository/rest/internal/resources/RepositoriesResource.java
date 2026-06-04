@@ -13,8 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Component;
  * @since 3.9
  */
 @Component
-@Singleton
 @Path(RepositoriesResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -46,7 +44,7 @@ public class RepositoriesResource
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
-  @Inject
+  @Autowired
   public RepositoriesResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter) {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
   }

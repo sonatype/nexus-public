@@ -58,7 +58,7 @@ import org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -141,7 +141,7 @@ public abstract class QuartzSchedulerSPI
   private boolean active;
 
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count
-  @Inject
+  @Autowired
   public QuartzSchedulerSPI(
       final EventManager eventManager,
       final NodeAccess nodeAccess,

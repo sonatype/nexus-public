@@ -16,9 +16,7 @@ import java.net.URL;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -39,7 +37,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.22
  */
-@Singleton
 @Component
 @Qualifier(DefaultTaskNotificationMessageGenerator.ID)
 @Primary
@@ -52,7 +49,7 @@ public class DefaultTaskNotificationMessageGenerator
 
   private final TemplateHelper templateHelper;
 
-  @Inject
+  @Autowired
   public DefaultTaskNotificationMessageGenerator(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
   }

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.onboarding.capability;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.capability.CapabilityBooterSupport;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 
@@ -26,7 +24,6 @@ import static org.sonatype.nexus.onboarding.capability.OnboardingCapabilityConfi
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class OnboardingCapabilityBooter
     extends CapabilityBooterSupport
 {

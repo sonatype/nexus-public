@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.capability.secrets.migration;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
@@ -38,7 +38,7 @@ public class CapabilitySecretsMigrator
 {
   private final CapabilityRegistry capabilityRegistry;
 
-  @Inject
+  @Autowired
   public CapabilitySecretsMigrator(final CapabilityRegistry capabilityRegistry) {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
   }

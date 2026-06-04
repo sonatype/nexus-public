@@ -14,8 +14,7 @@ package org.sonatype.nexus.security.role.rest;
 
 import java.util.Comparator;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,7 +40,6 @@ import static org.sonatype.nexus.security.role.rest.RoleApiResource.SOURCE_NOT_F
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RoleInternalResource.RESOURCE_PATH)
@@ -54,7 +52,7 @@ public class RoleInternalResource
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public RoleInternalResource(final SecuritySystem securitySystem) {
     this.securitySystem = checkNotNull(securitySystem);
   }

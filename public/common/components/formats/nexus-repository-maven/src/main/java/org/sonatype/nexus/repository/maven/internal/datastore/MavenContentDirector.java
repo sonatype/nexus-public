@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.datastore;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
@@ -43,7 +41,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @org.springframework.stereotype.Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenContentDirector
     implements ContentDirector
 {

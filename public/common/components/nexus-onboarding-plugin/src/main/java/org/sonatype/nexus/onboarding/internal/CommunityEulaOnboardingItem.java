@@ -12,19 +12,17 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class CommunityEulaOnboardingItem
     extends CommunityOnboardingItem
 {
-  @Inject
+  @Autowired
   public CommunityEulaOnboardingItem(
       final ApplicationVersion applicationVersion,
       final GlobalKeyValueStore globalKeyValueStore)

@@ -14,10 +14,7 @@ package org.sonatype.nexus.scheduling.internal;
 
 import java.util.concurrent.Future;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.Freezable;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -25,10 +22,10 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
-import org.springframework.core.annotation.Order;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,9 +35,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Priority(Integer.MIN_VALUE) // start scheduler at the end of this phase
-@Order
-@Singleton
+@Order(Ordered.LOWEST_PRECEDENCE) // start scheduler at the end of this phase
 public class TaskActivation
     extends StateGuardLifecycleSupport
     implements Freezable
@@ -49,7 +44,7 @@ public class TaskActivation
 
   private volatile boolean frozen;
 
-  @Inject
+  @Autowired
   public TaskActivation(final SchedulerSPI scheduler) {
     this.scheduler = checkNotNull(scheduler);
   }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.internal.search.index.task;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -49,7 +49,7 @@ public class SearchUpdateTask
 
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public SearchUpdateTask(
       final RepositoryManager repositoryManager,
       final SearchUpdateService searchUpdateService,

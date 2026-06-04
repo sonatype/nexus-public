@@ -42,7 +42,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import {faPlus, faTrash} from '@fortawesome/free-solid-svg-icons';
 import RoutingRulesPreview from './RoutingRulesFormPreview';
 import RoutingRuleMatcherRow from './RoutingRuleMatcherRow';
-import { DeleteConfirmationModal } from '../../../shared/modals/DeleteConfirmationModal';
+import { DeleteConfirmationModal } from '@sonatype/nexus-ui-plugin';
 import { isEmpty } from 'ramda';
 
 import './RoutingRules.scss';

@@ -14,8 +14,7 @@ package org.sonatype.nexus.security.privilege.rest;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.security.SecuritySystem;
@@ -27,14 +26,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(PrivilegeApiResourceV1.RESOURCE_URI)
 public class PrivilegeApiResourceV1
     extends PrivilegeApiResource
 {
   static final String RESOURCE_URI = SecurityApiConstants.V1_RESOURCE_URI + "privileges";
 
-  @Inject
+  @Autowired
   public PrivilegeApiResourceV1(
       final SecuritySystem securitySystem,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)

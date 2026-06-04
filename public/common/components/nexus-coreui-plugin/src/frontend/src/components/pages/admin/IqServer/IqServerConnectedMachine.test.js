@@ -196,6 +196,40 @@ describe('IqServerConnectedMachine', () => {
       expect(Axios.post).toHaveBeenCalledWith('service/rest/v1/iq/verify-connection');
     });
 
+    it('sets connectionStatus to error when response has success: false (HTTP 200)', async () => {
+      const mockConfig = {
+        enabled: true,
+        url: 'http://localhost:8070',
+        licensedSolutions: []
+      };
+
+      Axios.get.mockResolvedValue({data: mockConfig});
+      Axios.post.mockResolvedValue({data: {success: false, reason: 'Invalid credentials'}});
+
+      service = interpret(IqServerConnectedMachine).start();
+
+      await waitFor(service, (state) => state.matches('loaded'));
+
+      expect(service.state.context.connectionStatus).toBe('error');
+    });
+
+    it('sets connectionStatus to error when success: false with no reason (HTTP 200)', async () => {
+      const mockConfig = {
+        enabled: true,
+        url: 'http://localhost:8070',
+        licensedSolutions: []
+      };
+
+      Axios.get.mockResolvedValue({data: mockConfig});
+      Axios.post.mockResolvedValue({data: {success: false}});
+
+      service = interpret(IqServerConnectedMachine).start();
+
+      await waitFor(service, (state) => state.matches('loaded'));
+
+      expect(service.state.context.connectionStatus).toBe('error');
+    });
+
     it('handles network timeout during verification', async () => {
       const mockConfig = {
         enabled: true,

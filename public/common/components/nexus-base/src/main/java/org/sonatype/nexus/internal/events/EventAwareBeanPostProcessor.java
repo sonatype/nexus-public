@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.events;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 
@@ -29,7 +27,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * This class is part of the second round of scanning and is responsible for registering beans with the EventManager
  * which was created in the first round of scanning.
  */
-@Singleton
 @Component
 class EventAwareBeanPostProcessor
     implements BeanPostProcessor

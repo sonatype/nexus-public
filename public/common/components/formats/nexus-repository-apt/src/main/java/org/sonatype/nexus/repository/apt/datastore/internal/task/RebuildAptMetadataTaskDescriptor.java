@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.task;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class RebuildAptMetadataTaskDescriptor
     extends TaskDescriptorSupport
 {

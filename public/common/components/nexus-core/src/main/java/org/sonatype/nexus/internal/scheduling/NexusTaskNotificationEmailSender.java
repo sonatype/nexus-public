@@ -14,10 +14,8 @@ package org.sonatype.nexus.internal.scheduling;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
@@ -42,7 +40,6 @@ import org.springframework.stereotype.Component;
 /**
  * {@link EventAware} that will send notification email (if necessary) in case of a completed or failed {@link Task}.
  */
-@Singleton
 @Component
 public class NexusTaskNotificationEmailSender
     implements EventAware, Asynchronous
@@ -53,7 +50,7 @@ public class NexusTaskNotificationEmailSender
 
   private final Map<String, TaskNotificationMessageGenerator> taskNotificationMessageGenerators;
 
-  @Inject
+  @Autowired
   public NexusTaskNotificationEmailSender(
       final Provider<EmailManager> emailManager,
       final List<TaskNotificationMessageGenerator> taskNotificationMessageGeneratorsList)

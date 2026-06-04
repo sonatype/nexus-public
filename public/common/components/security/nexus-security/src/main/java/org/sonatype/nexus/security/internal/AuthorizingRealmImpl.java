@@ -13,10 +13,13 @@
 package org.sonatype.nexus.security.internal;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.common.Description;
@@ -34,8 +37,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -67,7 +69,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PRINCIPAL_PERMISSIONS_C
  *
  * This realm ONLY handles authorization.
  */
-@Singleton
 @Component
 @Qualifier(AuthorizingRealmImpl.NAME)
 @Description("Local Authorizing Realm")
@@ -85,11 +86,27 @@ public class AuthorizingRealmImpl
 
   private final Map<String, UserManager> userManagerMap;
 
-  private final Cache<PrincipalCollection, Collection<Permission>> principalPermissionsCache;
+  /**
+   * Bundles the expanded permission collection for a principal with a result cache so both
+   * live and die together — no stale result entries can outlive the permission set they were
+   * computed from.
+   */
+  private static final class PermissionsState
+  {
+    final Collection<Permission> permissions;
+
+    final ConcurrentHashMap<Permission, Boolean> results = new ConcurrentHashMap<>();
+
+    PermissionsState(final Collection<Permission> permissions) {
+      this.permissions = permissions;
+    }
+  }
+
+  private final Cache<PrincipalCollection, PermissionsState> principalPermissionsCache;
 
   private final boolean principalPermissionsCacheEnabled;
 
-  @Inject
+  @Autowired
   public AuthorizingRealmImpl(
       final RealmSecurityManager realmSecurityManager,
       final UserManager userManager,
@@ -122,7 +139,7 @@ public class AuthorizingRealmImpl
       cacheBuilder.recordStats();
     }
 
-    this.principalPermissionsCache = cacheBuilder.build();
+    this.principalPermissionsCache = cacheBuilder.<PrincipalCollection, PermissionsState>build();
 
     HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
     credentialsMatcher.setHashAlgorithmName(Sha1Hash.ALGORITHM_NAME);
@@ -226,30 +243,82 @@ public class AuthorizingRealmImpl
 
   @Override
   protected boolean isPermitted(final Permission permission, final AuthorizationInfo info) {
-    Collection<Permission> userPermissions;
+    if (!principalPermissionsCacheEnabled) {
+      return linearScan(permission, this.getPermissions(info));
+    }
 
-    if (principalPermissionsCacheEnabled) {
-      PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
-      userPermissions = principalPermissionsCache.getIfPresent(principals);
-      if (userPermissions == null) {
-        userPermissions = this.getPermissions(info);
-        principalPermissionsCache.put(principals, userPermissions);
+    PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
+    PermissionsState cached = principalPermissionsCache.getIfPresent(principals);
+    if (cached == null) {
+      cached = new PermissionsState(this.getPermissions(info));
+      principalPermissionsCache.put(principals, cached);
+    }
+
+    // computeIfAbsent is atomic: the linear scan runs at most once per (principal, permission) pair.
+    // Subsequent isPermitted calls for the same pair are O(1) map lookups, eliminating the
+    // O(system_privileges x user_permissions) scan that caused the 15-second UI block (NEXUS-52583).
+    final PermissionsState state = cached;
+    return state.results.computeIfAbsent(permission, p -> linearScan(p, state.permissions));
+  }
+
+  /**
+   * Overrides Shiro's permission expansion to use a single batch DB query per BFS level
+   * instead of one query per role, reducing cold-login cost from O(roles) DB round-trips
+   * to O(depth) batch calls (NEXUS-52583).
+   *
+   * Shiro's {@code resolveRolePermissions} is private so we override the parent
+   * {@code getPermissions(AuthorizationInfo)} which owns the role-expansion loop.
+   */
+  @Override
+  protected Collection<Permission> getPermissions(final AuthorizationInfo info) {
+    if (info == null) {
+      return Collections.emptySet();
+    }
+
+    final Set<Permission> permissions = new LinkedHashSet<>();
+
+    Collection<String> stringPerms = info.getStringPermissions();
+    if (stringPerms != null) {
+      for (String sp : stringPerms) {
+        if (sp != null && !sp.isEmpty()) {
+          permissions.add(getPermissionResolver().resolvePermission(sp));
+        }
       }
     }
-    else {
-      userPermissions = this.getPermissions(info);
+
+    Collection<Permission> objectPerms = info.getObjectPermissions();
+    if (objectPerms != null) {
+      permissions.addAll(objectPerms);
     }
 
+    Collection<String> roleIds = info.getRoles();
+    if (roleIds != null && !roleIds.isEmpty()) {
+      if (getRolePermissionResolver() instanceof RolePermissionResolverImpl) {
+        permissions.addAll(
+            ((RolePermissionResolverImpl) getRolePermissionResolver()).resolvePermissionsForRoles(roleIds));
+      }
+      else {
+        for (String roleId : roleIds) {
+          Collection<Permission> resolved = getRolePermissionResolver().resolvePermissionsInRole(roleId);
+          if (resolved != null) {
+            permissions.addAll(resolved);
+          }
+        }
+      }
+    }
+
+    return permissions.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(permissions);
+  }
+
+  private static boolean linearScan(final Permission permission, final Collection<Permission> userPermissions) {
     if (userPermissions == null || userPermissions.isEmpty()) {
       return false;
     }
-
     for (Permission perm : userPermissions) {
       if (perm.implies(permission)) {
         return true;
       }
     }
-
     return false;
   }
 

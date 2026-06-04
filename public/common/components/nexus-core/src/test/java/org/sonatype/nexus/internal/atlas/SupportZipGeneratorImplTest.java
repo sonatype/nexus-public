@@ -20,8 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 
-import org.sonatype.goodies.common.ByteSize;
-import org.sonatype.goodies.common.Loggers;
+import org.sonatype.nexus.common.io.ByteSize;
+import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.common.wonderland.DownloadService;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class SupportZipGeneratorImplTest
 {
-  private static final Logger log = Loggers.getLogger(SupportZipGeneratorImplTest.class);
+  private static final Logger log = LoggerFactory.getLogger(SupportZipGeneratorImplTest.class);
 
   @Mock
   private DownloadService downloadService;

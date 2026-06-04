@@ -14,9 +14,7 @@ package org.sonatype.nexus.internal.security.secrets.upgrade;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.internal.security.secrets.task.SecretsMigrationTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
  * Migration step to migrate session token from existing blobstore configurations
  */
 @Component
-@Singleton
 public class BlobstoreSecretsMigrationStep_2_11
     implements DatabaseMigrationStep
 {
@@ -38,7 +35,7 @@ public class BlobstoreSecretsMigrationStep_2_11
 
   private final UpgradeTaskScheduler startupScheduler;
 
-  @Inject
+  @Autowired
   public BlobstoreSecretsMigrationStep_2_11(final UpgradeTaskScheduler startupScheduler) {
     this.startupScheduler = checkNotNull(startupScheduler);
   }

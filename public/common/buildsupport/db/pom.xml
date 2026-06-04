@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-db</artifactId>
@@ -29,13 +29,14 @@
 
   <properties>
     <jna.version>5.13.0</jna.version>
+    <flyway.version>12.4.0</flyway.version>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis</artifactId>
-        <version>3.5.15</version>
+        <version>3.5.19</version>
       </dependency>
 
       <dependency>
@@ -53,13 +54,19 @@
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
-        <version>42.7.2</version>
+        <version>42.7.11</version>
       </dependency>
 
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
-        <version>8.5.13</version>
+        <version>${flyway.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-database-postgresql</artifactId>
+        <version>${flyway.version}</version>
       </dependency>
 
       <dependency>

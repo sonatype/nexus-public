@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.provisioning;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.BlobStoreApi;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -29,13 +27,12 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class BlobStoreApiImpl
     implements BlobStoreApi
 {
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public BlobStoreApiImpl(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }

@@ -212,7 +212,7 @@ class AuthorizationManagerTest
     assertTrue(roleMap.containsKey("2"));
     assertTrue(roleMap.containsKey("3"));
     assertTrue(roleMap.containsKey("4"));
-    assertEquals(4, privileges.size());
+    assertEquals(5, privileges.size());
 
     Privilege priv3 = roleMap.get("3");
 

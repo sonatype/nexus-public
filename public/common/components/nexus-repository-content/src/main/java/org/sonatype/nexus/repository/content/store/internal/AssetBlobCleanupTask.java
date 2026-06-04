@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -87,7 +87,7 @@ public class AssetBlobCleanupTask
 
   private ExecutorService batchDeleteExecutorService;
 
-  @Inject
+  @Autowired
   public AssetBlobCleanupTask(
       final List<FormatStoreManager> formatStoreManagersList,
       final BlobStoreManager blobStoreManager,

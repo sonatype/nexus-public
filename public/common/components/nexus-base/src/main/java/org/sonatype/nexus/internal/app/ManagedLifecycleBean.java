@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.app;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 @ManagedObject
 public class ManagedLifecycleBean
 {
@@ -40,7 +37,7 @@ public class ManagedLifecycleBean
 
   private final ManagedLifecycleManager lifecycleManager;
 
-  @Inject
+  @Autowired
   public ManagedLifecycleBean(final ManagedLifecycleManager lifecycleManager) {
     this.lifecycleManager = checkNotNull(lifecycleManager);
   }

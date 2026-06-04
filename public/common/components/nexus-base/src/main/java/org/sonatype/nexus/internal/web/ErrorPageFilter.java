@@ -29,8 +29,7 @@ import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
 import com.google.common.base.Throwables;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authc.AuthenticationException;
 import org.eclipse.jetty.io.EofException;
 import org.springframework.core.annotation.Order;
@@ -53,7 +52,6 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 @Order(WebFilterPriority.WEB)
 @WebFilter("/*")
 @Component
-@Singleton
 public class ErrorPageFilter
     implements Filter
 {
@@ -61,7 +59,7 @@ public class ErrorPageFilter
 
   private final XFrameOptions xFrameOptions;
 
-  @Inject
+  @Autowired
   public ErrorPageFilter(final XFrameOptions xFrameOptions) {
     this.xFrameOptions = checkNotNull(xFrameOptions);
   }

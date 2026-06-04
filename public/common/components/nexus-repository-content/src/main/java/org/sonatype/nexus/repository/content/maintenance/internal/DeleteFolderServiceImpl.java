@@ -22,9 +22,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
@@ -60,7 +58,6 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 public class DeleteFolderServiceImpl
     implements DeleteFolderService
 {
@@ -78,7 +75,7 @@ public class DeleteFolderServiceImpl
 
   private final DatabaseCheck databaseCheck;
 
-  @Inject
+  @Autowired
   public DeleteFolderServiceImpl(
       final BrowseNodeQueryService browseNodeQueryService,
       final BrowseNodeConfiguration configuration,

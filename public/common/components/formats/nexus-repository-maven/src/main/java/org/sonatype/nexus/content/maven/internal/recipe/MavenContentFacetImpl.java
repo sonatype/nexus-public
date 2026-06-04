@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -154,7 +154,7 @@ public class MavenContentFacetImpl
     }
   }
 
-  @Inject
+  @Autowired
   public MavenContentFacetImpl(
       @Qualifier(Maven2Format.NAME) final FormatStoreManager formatStoreManager,
       final List<MavenPathParser> mavenPathParsersList,

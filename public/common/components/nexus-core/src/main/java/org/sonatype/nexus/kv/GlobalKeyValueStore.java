@@ -14,9 +14,7 @@ package org.sonatype.nexus.kv;
 
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.internal.kv.NexusKeyValueDAO;
@@ -34,14 +32,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class GlobalKeyValueStore
     extends ConfigStoreSupport<NexusKeyValueDAO>
     implements KeyValueStore
 {
   private final ObjectMapper mapper;
 
-  @Inject
+  @Autowired
   public GlobalKeyValueStore(final DataSessionSupplier sessionSupplier, final ObjectMapper mapper) {
     super(sessionSupplier, NexusKeyValueDAO.class);
     this.mapper = checkNotNull(mapper);

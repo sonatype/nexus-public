@@ -15,13 +15,9 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
-
 @Component
-@Scope(SCOPE_PROTOTYPE)
 public class NpmPyPiKeyValueIndexesMigrationStep_2_79
     extends KeyValueIndexesMigrationStepSupport
 {

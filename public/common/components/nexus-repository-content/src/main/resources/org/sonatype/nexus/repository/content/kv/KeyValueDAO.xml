@@ -13,7 +13,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="${namespace}">
   <insert id="createSchema" databaseId="PostgreSQL">
     CREATE TABLE IF NOT EXISTS ${format}_key_value (
@@ -176,6 +176,22 @@
        SET created = #{created}
      WHERE repository_id = #{repositoryId}
        AND category = #{category};
+  </update>
+
+  <update id="setCreatedDateForKey" databaseId="PostgreSQL">
+    UPDATE ${format}_key_value
+       SET created = #{created}
+     WHERE repository_id = #{repositoryId}
+       AND category = #{category}
+       AND key = #{key};
+  </update>
+
+  <update id="setCreatedDateForKey" databaseId="H2">
+    UPDATE ${format}_key_value
+       SET created = #{created}
+     WHERE repository_id = #{repositoryId}
+       AND category = #{category}
+       AND `key` = #{key};
   </update>
 
   <delete id="remove" databaseId="PostgreSQL">

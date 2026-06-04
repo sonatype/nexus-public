@@ -26,7 +26,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.codehaus.plexus.interpolation.EnvarBasedValueSource;
 import org.codehaus.plexus.interpolation.InterpolationException;
 import org.codehaus.plexus.interpolation.Interpolator;
@@ -62,16 +61,6 @@ public class NexusProperties
 
   private static final Logger LOG = LoggerFactory.getLogger(NexusProperties.class);
 
-  @VisibleForTesting
-  static final String REDACTED = "**REDACTED**";
-
-  private static final Set<String> SENSITIVE_PROPERTY_PATTERNS = Set.of(
-      "password",
-      "secret",
-      "token",
-      "cipher",
-      "credential");
-
   private static PropertyMap nexusProperties;
 
   private final NexusPropertiesVerifier nexusPropertiesVerifier = new NexusPropertiesVerifier();
@@ -81,11 +70,9 @@ public class NexusProperties
     init();
   }
 
-  @VisibleForTesting
   NexusProperties(final PropertyMap propertiesForTesting) {
     super("nexus-properties");
     nexusProperties = propertiesForTesting;
-    // Skip init() for testing - properties are provided directly
   }
 
   @Override
@@ -155,44 +142,11 @@ public class NexusProperties
 
       nexusPropertiesVerifier.verify(this);
 
-      LOG.info("nexus.properties: {}", redactSensitiveProperties(nexusProperties));
-
       nexusProperties.forEach(System::setProperty);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  /**
-   * Creates a redacted copy of properties for logging purposes.
-   * Replaces sensitive values (passwords, secrets, tokens, etc.) with REDACTED placeholder.
-   *
-   * @param properties the original properties map
-   * @return a new map with sensitive values redacted
-   */
-  @VisibleForTesting
-  static Map<String, String> redactSensitiveProperties(final PropertyMap properties) {
-    return properties.entrySet()
-        .stream()
-        .collect(Collectors.toMap(
-            Entry::getKey,
-            entry -> isSensitiveProperty(entry.getKey()) ? REDACTED : entry.getValue()));
-  }
-
-  /**
-   * Checks if a property key indicates sensitive data that should not be logged.
-   *
-   * @param key the property key to check
-   * @return true if the property is sensitive, false otherwise
-   */
-  @VisibleForTesting
-  static boolean isSensitiveProperty(final String key) {
-    if (key == null) {
-      return false;
-    }
-    String lowerKey = key.toLowerCase();
-    return SENSITIVE_PROPERTY_PATTERNS.stream().anyMatch(lowerKey::contains);
   }
 
   private void applyClasspathProperties(final PropertyMap nexusProperties) throws IOException {
@@ -203,7 +157,7 @@ public class NexusProperties
         properties.load(inputStream);
       }
       nexusProperties.putAll(properties);
-      LOG.debug("nexus.properties after loading from classpath {}: {}", INTERNAL_DEFAULT_PATH, nexusProperties);
+      LOG.debug("nexus.properties loaded from classpath {}", INTERNAL_DEFAULT_PATH);
     }
   }
 
@@ -218,10 +172,7 @@ public class NexusProperties
       props.load(externalFilepath.toURI().toURL());
       if (keysToWatch == null || keysToWatch.isEmpty()) {
         nexusProperties.putAll(props);
-        LOG.debug(
-            "nexus.properties after loading from file {}: {}",
-            externalFilepath.getAbsolutePath(),
-            nexusProperties);
+        LOG.debug("nexus.properties loaded from file {}", externalFilepath.getAbsolutePath());
       }
       else {
         for (Entry<String, String> entry : props.entrySet()) {
@@ -229,7 +180,7 @@ public class NexusProperties
           String value = entry.getValue();
           if (keysToWatch.contains(key)) {
             nexusProperties.put(key, value);
-            LOG.debug("Overriding key {} with value {} from file {}", key, value, externalFilepath);
+            LOG.debug("Overriding key {} from file {}", key, externalFilepath);
           }
         }
       }
@@ -246,9 +197,8 @@ public class NexusProperties
   private static void applySystemProperties(final PropertyMap nexusProperties) {
     for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
       String key = entry.getKey().toString();
-      String value = entry.getValue().toString();
-      nexusProperties.put(key, value);
-      LOG.debug("Overriding key {} with value {} from System.properties", key, value);
+      nexusProperties.put(key, entry.getValue().toString());
+      LOG.debug("Overriding key {} from System.properties", key);
     }
   }
 

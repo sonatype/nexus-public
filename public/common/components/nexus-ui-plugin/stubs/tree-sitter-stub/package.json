@@ -1,0 +1,6 @@
+{
+  "name": "tree-sitter",
+  "version": "0.0.0",
+  "description": "Empty stub to exclude tree-sitter native dependencies from swagger-ui-react",
+  "main": "index.js"
+}

@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.node;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -36,9 +34,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
  */
 @Component
 @ManagedLifecycle(phase = STORAGE)
-@Priority(Integer.MAX_VALUE - 1) // make sure this starts first
-@Order(Ordered.HIGHEST_PRECEDENCE + 1)
-@Singleton
+@Order(Ordered.HIGHEST_PRECEDENCE + 1) // make sure this starts first
 public class NodeAccessBooter
     implements Lifecycle
 {
@@ -46,7 +42,7 @@ public class NodeAccessBooter
 
   private final NodeAccess nodeAccess;
 
-  @Inject
+  @Autowired
   public NodeAccessBooter(final ObjectProvider<NodeIdInitializer> nodeIdInitializer, final NodeAccess nodeAccess) {
     this.nodeIdInitializer = checkNotNull(nodeIdInitializer);
     this.nodeAccess = checkNotNull(nodeAccess);

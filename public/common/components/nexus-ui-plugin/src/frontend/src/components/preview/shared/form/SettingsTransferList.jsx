@@ -13,7 +13,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Text } from '@radix-ui/themes';
+import { Box, Flex, IconButton, Text, TextField } from '@radix-ui/themes';
 import { Search, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 
 import './SettingsTransferList.scss';
@@ -34,6 +34,11 @@ import './SettingsTransferList.scss';
  *   getItemLabel={(item) => item.name}
  * />
  */
+/** Sanitize ID for use in data-testid (alphanumeric, hyphen, underscore only) */
+function sanitizeTestId(id) {
+  return String(id).replace(/[^a-zA-Z0-9-_]/g, '-');
+}
+
 export function SettingsTransferList({
   name: _name,
   label,
@@ -47,6 +52,10 @@ export function SettingsTransferList({
   helpText = '',
   disabled = false,
   className = '',
+  /** Optional testId for E2E; when provided, adds data-testid to root, search inputs, lists, and items */
+  testId,
+  /** Called when user clicks/selects an item (single click) - used for sidecar inspection */
+  onItemSelect,
 }) {
   const [availableSearch, setAvailableSearch] = useState('');
   const [selectedSearch, setSelectedSearch] = useState('');
@@ -79,7 +88,13 @@ export function SettingsTransferList({
 
   // Handlers
   const handleAvailableClick = useCallback((item, e) => {
+    e.stopPropagation();
+    e.preventDefault();
     const id = getItemId(item);
+    // Single click without modifier: notify parent for sidecar inspection (both Available and Granted)
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && onItemSelect) {
+      onItemSelect(item, false);
+    }
     if (e.ctrlKey || e.metaKey) {
       setAvailableSelection((prev) =>
         prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -96,10 +111,16 @@ export function SettingsTransferList({
     } else {
       setAvailableSelection([id]);
     }
-  }, [availableSelection, filteredAvailable, getItemId]);
+  }, [availableSelection, filteredAvailable, getItemId, onItemSelect]);
 
   const handleSelectedClick = useCallback((item, e) => {
+    e.stopPropagation();
+    e.preventDefault();
     const id = getItemId(item);
+    // Single click without modifier: notify parent for sidecar inspection
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && onItemSelect) {
+      onItemSelect(item, true);
+    }
     if (e.ctrlKey || e.metaKey) {
       setSelectedSelection((prev) =>
         prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -115,7 +136,7 @@ export function SettingsTransferList({
     } else {
       setSelectedSelection([id]);
     }
-  }, [selectedSelection, filteredSelected, getItemId]);
+  }, [selectedSelection, filteredSelected, getItemId, onItemSelect]);
 
   const moveToSelected = useCallback(() => {
     if (disabled || availableSelection.length === 0) return;
@@ -158,34 +179,45 @@ export function SettingsTransferList({
   }, [selectedItems, onChange, disabled, getItemId]);
 
   return (
-    <Box className={`settings-transfer-list ${disabled ? 'settings-transfer-list--disabled' : ''} ${className}`.trim()}>
+    <Box
+      className={`settings-transfer-list ${disabled ? 'settings-transfer-list--disabled' : ''} ${className}`.trim()}
+      data-testid={testId || undefined}
+    >
       {label && (
         <Text as="label" size="2" weight="medium" className="settings-transfer-list__label">
           {label}
         </Text>
       )}
       
-      <div className="settings-transfer-list__container">
+      <Flex className="settings-transfer-list__container">
         {/* Available List */}
-        <div className="settings-transfer-list__panel">
-          <div className="settings-transfer-list__header">
+        <Box className="settings-transfer-list__panel">
+          <Flex justify="between" align="center" className="settings-transfer-list__header">
             <Text size="1" weight="medium">{availableLabel}</Text>
             <Text size="1" className="settings-transfer-list__count">
-              {filteredAvailable.length} items
+              {filteredAvailable.length} {filteredAvailable.length === 1 ? 'item' : 'items'}
             </Text>
-          </div>
-          <div className="settings-transfer-list__search">
-            <Search size={14} className="settings-transfer-list__search-icon" />
-            <input
-              type="text"
+          </Flex>
+          <Box className="settings-transfer-list__search">
+            <TextField.Root
               placeholder="Filter..."
               value={availableSearch}
               onChange={(e) => setAvailableSearch(e.target.value)}
               disabled={disabled}
-              className="settings-transfer-list__search-input"
-            />
-          </div>
-          <div className="settings-transfer-list__items" role="listbox" aria-label={availableLabel}>
+              size="1"
+              data-testid={testId ? `${testId}-available-search` : undefined}
+            >
+              <TextField.Slot>
+                <Search size={14} />
+              </TextField.Slot>
+            </TextField.Root>
+          </Box>
+          <div
+            className="settings-transfer-list__items"
+            role="listbox"
+            aria-label={availableLabel}
+            data-testid={testId ? `${testId}-available-list` : undefined}
+          >
             {filteredAvailable.map((item) => {
               const id = getItemId(item);
               const isHighlighted = availableSelection.includes(id);
@@ -201,83 +233,100 @@ export function SettingsTransferList({
                     if (e.key === 'Enter') handleDoubleClick(item, false);
                   }}
                   className={`settings-transfer-list__item ${isHighlighted ? 'settings-transfer-list__item--selected' : ''}`}
+                  data-testid={testId ? `${testId}-available-item-${sanitizeTestId(id)}` : undefined}
                 >
                   {getItemLabel(item)}
                 </div>
               );
             })}
             {filteredAvailable.length === 0 && (
-              <div className="settings-transfer-list__empty">
-                {availableSearch ? 'No matches' : 'No items available'}
-              </div>
+              <Box className="settings-transfer-list__empty">
+                <Text size="1" color="gray">{availableSearch ? 'No matches' : 'No items available'}</Text>
+              </Box>
             )}
           </div>
-        </div>
+        </Box>
 
         {/* Controls */}
-        <div className="settings-transfer-list__controls">
-          <button
+        <Flex direction="column" align="center" justify="center" className="settings-transfer-list__controls">
+          <IconButton
             type="button"
+            variant="ghost"
+            color="gray"
+            size="1"
             onClick={moveAllToSelected}
             disabled={disabled || filteredAvailable.length === 0}
-            className="settings-transfer-list__button"
             aria-label="Move all to selected"
             title="Move all"
           >
             <ChevronsRight size={16} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             type="button"
+            variant="ghost"
+            color="gray"
+            size="1"
             onClick={moveToSelected}
             disabled={disabled || availableSelection.length === 0}
-            className="settings-transfer-list__button"
             aria-label="Move selected to right"
             title="Move selected"
           >
             <ChevronRight size={16} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             type="button"
+            variant="ghost"
+            color="gray"
+            size="1"
             onClick={moveToAvailable}
             disabled={disabled || selectedSelection.length === 0}
-            className="settings-transfer-list__button"
             aria-label="Move selected to left"
             title="Remove selected"
           >
             <ChevronLeft size={16} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             type="button"
+            variant="ghost"
+            color="gray"
+            size="1"
             onClick={moveAllToAvailable}
             disabled={disabled || selectedItems.length === 0}
-            className="settings-transfer-list__button"
             aria-label="Move all to available"
             title="Remove all"
           >
             <ChevronsLeft size={16} />
-          </button>
-        </div>
+          </IconButton>
+        </Flex>
 
         {/* Selected List */}
-        <div className="settings-transfer-list__panel">
-          <div className="settings-transfer-list__header">
+        <Box className="settings-transfer-list__panel">
+          <Flex justify="between" align="center" className="settings-transfer-list__header">
             <Text size="1" weight="medium">{selectedLabel}</Text>
             <Text size="1" className="settings-transfer-list__count">
-              {selectedItems.length} items
+              {selectedItems.length} {selectedItems.length === 1 ? 'item' : 'items'}
             </Text>
-          </div>
-          <div className="settings-transfer-list__search">
-            <Search size={14} className="settings-transfer-list__search-icon" />
-            <input
-              type="text"
+          </Flex>
+          <Box className="settings-transfer-list__search">
+            <TextField.Root
               placeholder="Filter..."
               value={selectedSearch}
               onChange={(e) => setSelectedSearch(e.target.value)}
               disabled={disabled}
-              className="settings-transfer-list__search-input"
-            />
-          </div>
-          <div className="settings-transfer-list__items" role="listbox" aria-label={selectedLabel}>
+              size="1"
+              data-testid={testId ? `${testId}-selected-search` : undefined}
+            >
+              <TextField.Slot>
+                <Search size={14} />
+              </TextField.Slot>
+            </TextField.Root>
+          </Box>
+          <div
+            className="settings-transfer-list__items"
+            role="listbox"
+            aria-label={selectedLabel}
+            data-testid={testId ? `${testId}-selected-list` : undefined}
+          >
             {filteredSelected.map((item) => {
               const id = getItemId(item);
               const isHighlighted = selectedSelection.includes(id);
@@ -293,19 +342,20 @@ export function SettingsTransferList({
                     if (e.key === 'Enter') handleDoubleClick(item, true);
                   }}
                   className={`settings-transfer-list__item ${isHighlighted ? 'settings-transfer-list__item--selected' : ''}`}
+                  data-testid={testId ? `${testId}-selected-item-${sanitizeTestId(id)}` : undefined}
                 >
                   {getItemLabel(item)}
                 </div>
               );
             })}
             {filteredSelected.length === 0 && (
-              <div className="settings-transfer-list__empty">
-                {selectedSearch ? 'No matches' : 'No items selected'}
-              </div>
+              <Box className="settings-transfer-list__empty">
+                <Text size="1" color="gray">{selectedSearch ? 'No matches' : 'No items selected'}</Text>
+              </Box>
             )}
           </div>
-        </div>
-      </div>
+        </Box>
+      </Flex>
 
       {helpText && (
         <Text as="p" size="1" className="settings-transfer-list__help">
@@ -341,6 +391,10 @@ SettingsTransferList.propTypes = {
   disabled: PropTypes.bool,
   /** Additional CSS class */
   className: PropTypes.string,
+  /** Optional testId for E2E; adds data-testid to root, search inputs, lists, and items */
+  testId: PropTypes.string,
+  /** Called when user clicks an item (single click, no modifier). Args: (item, isSelected). Use for sidecar inspection. */
+  onItemSelect: PropTypes.func,
 };
 
 export default SettingsTransferList;

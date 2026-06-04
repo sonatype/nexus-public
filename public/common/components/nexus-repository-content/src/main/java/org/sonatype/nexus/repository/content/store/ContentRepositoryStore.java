@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryP
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
@@ -46,7 +46,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
 {
   private ContentFacetFinder contentFacetFinder;
 
-  @Inject
+  @Autowired
   public ContentRepositoryStore(
       final DataSessionSupplier sessionSupplier,
       final ContentFacetFinder contentFacetFinder,

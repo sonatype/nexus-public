@@ -17,57 +17,7 @@ import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
 import { AuditFilterSidebar } from '../AuditFilterSidebar';
-import type { AuditFilters, AuditCategory } from '../audit.types';
-
-jest.mock('../../../../shared/FilterSidebar', () => ({
-  FilterSidebar: ({ sections, onClear, disabled, onFilterChange }: any) => (
-    <div data-testid="filter-sidebar">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onClear}
-        title="Clear all filters"
-      >
-        Clear all
-      </button>
-      {sections?.map((section: any) => (
-        <div key={section.id}>
-          <span>{section.label}</span>
-          {section.type === 'checkbox' && section.options?.map((opt: any) => {
-            const checked = Array.isArray(section.value) ? section.value.includes(opt.value) : section.value === opt.value;
-            return (
-              <label key={opt.value}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => {
-                    if (Array.isArray(section.value)) {
-                      const newVal = checked
-                        ? section.value.filter((v: string) => v !== opt.value)
-                        : [...section.value, opt.value];
-                      onFilterChange?.(section.id, newVal);
-                    }
-                  }}
-                  disabled={disabled}
-                />
-                {opt.label}
-              </label>
-            );
-          })}
-          {section.type === 'text' && (
-            <input
-              type="text"
-              role="textbox"
-              value={typeof section.value === 'string' ? section.value : ''}
-              onChange={(e) => onFilterChange?.(section.id, e.target.value)}
-              disabled={disabled}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  ),
-}));
+import { AuditFilters, AuditCategory } from '../audit.types';
 
 const defaultFilters: AuditFilters = {
   categories: [],
@@ -80,7 +30,6 @@ const defaultFilters: AuditFilters = {
 };
 
 const mockOnCategoryToggle = jest.fn();
-const mockOnDomainToggle = jest.fn();
 const mockOnEventTypeToggle = jest.fn();
 const mockOnInitiatorChange = jest.fn();
 const mockOnRepositoryNameChange = jest.fn();
@@ -98,14 +47,12 @@ function renderSidebar(overrides: Partial<Parameters<typeof AuditFilterSidebar>[
       filters={defaultFilters}
       repositories={[]}
       onCategoryToggle={mockOnCategoryToggle}
-      onDomainToggle={mockOnDomainToggle}
       onEventTypeToggle={mockOnEventTypeToggle}
       onInitiatorChange={mockOnInitiatorChange}
       onRepositoryNameChange={mockOnRepositoryNameChange}
       onRepositoryTypeChange={mockOnRepositoryTypeChange}
       onDateRangeChange={mockOnDateRangeChange}
       onClearAllFilters={mockOnClearAllFilters}
-      hasActiveFilters={false}
       {...overrides}
     />
   );
@@ -119,17 +66,17 @@ describe('AuditFilterSidebar', () => {
   describe('Rendering', () => {
     it('should render reset filters button', () => {
       renderSidebar();
-      expect(screen.getByRole('button', { name: /clear all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reset filters/i })).toBeInTheDocument();
     });
 
     it('should disable reset button when disabled prop is true', () => {
       renderSidebar({ disabled: true });
-      expect(screen.getByRole('button', { name: /clear all/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /reset filters/i })).toBeDisabled();
     });
 
     it('should enable reset button by default', () => {
       renderSidebar();
-      expect(screen.getByRole('button', { name: /clear all/i })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: /reset filters/i })).not.toBeDisabled();
     });
 
     it('should render date range section', () => {
@@ -187,7 +134,7 @@ describe('AuditFilterSidebar', () => {
         ...defaultFilters,
         categories: ['security' as AuditCategory],
       };
-      renderSidebar({ filters: filtersWithCategory, hasActiveFilters: true });
+      renderSidebar({ filters: filtersWithCategory });
       const checkboxes = screen.getAllByRole('checkbox');
       expect(checkboxes[0]).toBeChecked();
     });
@@ -207,7 +154,7 @@ describe('AuditFilterSidebar', () => {
         ...defaultFilters,
         eventTypes: ['created'],
       };
-      renderSidebar({ filters: filtersWithEventType, hasActiveFilters: true });
+      renderSidebar({ filters: filtersWithEventType });
       const checkboxes = screen.getAllByRole('checkbox');
       expect(checkboxes[4]).toBeChecked();
     });
@@ -215,8 +162,8 @@ describe('AuditFilterSidebar', () => {
 
   describe('Clear Filters', () => {
     it('should call onClearAllFilters when reset button clicked', async () => {
-      renderSidebar({ hasActiveFilters: true });
-      const resetButton = screen.getByRole('button', { name: /clear all/i });
+      renderSidebar();
+      const resetButton = screen.getByRole('button', { name: /reset filters/i });
       await userEvent.click(resetButton);
       expect(mockOnClearAllFilters).toHaveBeenCalled();
     });
@@ -233,7 +180,7 @@ describe('AuditFilterSidebar', () => {
 
     it('should disable reset button when disabled', () => {
       renderSidebar({ disabled: true });
-      expect(screen.getByRole('button', { name: /clear all/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /reset filters/i })).toBeDisabled();
     });
   });
 });

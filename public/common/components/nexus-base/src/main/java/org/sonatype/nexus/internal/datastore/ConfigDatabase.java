@@ -19,9 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.supportzip.ExportConfigData;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Singleton
 public class ConfigDatabase
     implements SupportBundleCustomizer
 {
@@ -54,7 +51,7 @@ public class ConfigDatabase
 
   private final Map<String, ExportConfigData> exportDataByName;
 
-  @Inject
+  @Autowired
   public ConfigDatabase(final List<ExportConfigData> exportDataByNameList) {
     this.exportDataByName = QualifierUtil.buildQualifierBeanMap(checkNotNull(exportDataByNameList));
   }

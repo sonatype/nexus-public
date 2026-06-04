@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
@@ -36,7 +35,6 @@ import static org.jboss.resteasy.api.validation.ConstraintType.Type.RETURN_VALUE
  * @since 3.0
  */
 @Component
-@Singleton
 @Provider
 public class ResteasyViolationExceptionMapper
     extends ValidationExceptionMapperSupport<ResteasyViolationException>

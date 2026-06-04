@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.content.tasks.normalize.internal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
@@ -33,7 +31,6 @@ import org.slf4j.LoggerFactory;
  */
 @Primary
 @Component
-@Singleton
 public class DefaultNormalizationPriorityService
     implements NormalizationPriorityService
 {
@@ -41,7 +38,7 @@ public class DefaultNormalizationPriorityService
 
   private final Map<Format, FormatStoreManager> prioritizedFormats;
 
-  @Inject
+  @Autowired
   public DefaultNormalizationPriorityService(
       final List<FormatStoreManager> formatStoreManagerList,
       final List<Format> formats)
@@ -49,6 +46,7 @@ public class DefaultNormalizationPriorityService
     final Map<String, FormatStoreManager> managersByFormat =
         QualifierUtil.buildQualifierBeanMap(formatStoreManagerList);
     this.prioritizedFormats = formats.stream()
+        .filter(format -> managersByFormat.containsKey(format.getValue()))
         .collect(Collectors.toMap(format -> format,
             format -> managersByFormat.get(format.getValue())));
   }

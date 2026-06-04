@@ -14,8 +14,7 @@ package org.sonatype.nexus.siesta;
 
 import java.io.IOException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebInitParam;
@@ -41,7 +40,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @org.springframework.stereotype.Component
-@Singleton
 @WebServlet(urlPatterns = SiestaServlet.REST_SERVICE_MP + "/*",
     initParams = @WebInitParam(name = "resteasy.servlet.mapping.prefix", value = SiestaServlet.REST_SERVICE_MP))
 public class SiestaServlet
@@ -53,7 +51,7 @@ public class SiestaServlet
 
   private final ComponentContainer componentContainer;
 
-  @Inject
+  @Autowired
   public SiestaServlet(final ComponentContainer componentContainer) {
     this.componentContainer = checkNotNull(componentContainer);
 

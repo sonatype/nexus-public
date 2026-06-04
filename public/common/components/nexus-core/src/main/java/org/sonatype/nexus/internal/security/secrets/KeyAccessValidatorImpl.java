@@ -23,9 +23,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -57,7 +55,6 @@ import org.springframework.stereotype.Component;
  * checks if all nodes have access to the key.
  */
 @Component
-@Singleton
 public class KeyAccessValidatorImpl
     extends StateGuardLifecycleSupport
     implements KeyAccessValidator, EventAware
@@ -84,7 +81,7 @@ public class KeyAccessValidatorImpl
 
   private final int timeoutSeconds;
 
-  @Inject
+  @Autowired
   public KeyAccessValidatorImpl(
       final EncryptionKeyValidator encryptionKeyValidator,
       @Nullable final NodeHeartbeatManager nodeHeartbeatManager,

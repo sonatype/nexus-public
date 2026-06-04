@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.user;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.security.SecuritySystem;
@@ -35,7 +35,7 @@ public class UniqueUserIdValidator
 {
   private final UserManager userManager;
 
-  @Inject
+  @Autowired
   public UniqueUserIdValidator(final SecuritySystem securitySystem) throws NoSuchUserManagerException {
     this.userManager = checkNotNull(securitySystem).getUserManager(UserManager.DEFAULT_SOURCE);
   }

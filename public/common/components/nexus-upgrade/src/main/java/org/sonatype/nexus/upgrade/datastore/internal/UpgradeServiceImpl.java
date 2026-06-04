@@ -14,7 +14,6 @@ package org.sonatype.nexus.upgrade.datastore.internal;
 
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -22,8 +21,7 @@ import org.sonatype.nexus.upgrade.UpgradeService;
 import org.sonatype.nexus.upgrade.datastore.DeploymentValidator;
 import org.sonatype.nexus.upgrade.datastore.UpgradeManager;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -40,10 +38,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
  */
 @Component
 @ConditionalOnProperty(name = CLUSTERED_ZERO_DOWNTIME_ENABLED, havingValue = "false", matchIfMissing = true)
-@Priority(Integer.MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ManagedLifecycle(phase = UPGRADE)
-@Singleton
 public class UpgradeServiceImpl
     extends StateGuardLifecycleSupport
     implements UpgradeService
@@ -52,7 +48,7 @@ public class UpgradeServiceImpl
 
   private final UpgradeManager upgradeManager;
 
-  @Inject
+  @Autowired
   public UpgradeServiceImpl(
       @Nullable final DeploymentValidator deploymentValidator,
       final UpgradeManager upgradeManager)

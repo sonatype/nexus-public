@@ -19,11 +19,10 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilitySupport;
@@ -96,7 +95,7 @@ public class GlobalWebhookCapability
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  @Inject
+  @Autowired
   private WebhookService webhookService;
 
   private final List<WebhookSubscription> subscriptions = new ArrayList<>();
@@ -198,7 +197,6 @@ public class GlobalWebhookCapability
   @AvailabilityVersion(from = "1.0")
   @Component
   @Qualifier(TYPE_ID)
-  @Singleton
   public static class Descriptor
       extends CapabilityDescriptorSupport<Configuration>
       implements Taggable

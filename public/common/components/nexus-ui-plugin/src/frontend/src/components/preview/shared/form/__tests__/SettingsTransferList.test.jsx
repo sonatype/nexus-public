@@ -16,12 +16,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SettingsTransferList } from '../SettingsTransferList';
 
-// Mock Radix UI components
-jest.mock('@radix-ui/themes', () => ({
-  Box: ({ children, className }) => <div className={className}>{children}</div>,
-  Text: ({ children, className, as: Tag = 'span' }) => <Tag className={className}>{children}</Tag>,
-}));
-
+// @radix-ui/themes is in transformIgnorePatterns — no mock needed
 // Mock lucide-react
 jest.mock('lucide-react', () => ({
   Search: () => <span data-testid="search-icon">🔍</span>,
@@ -278,7 +273,7 @@ describe('SettingsTransferList', () => {
     );
     
     expect(screen.getByText('3 items')).toBeInTheDocument(); // Available (4-1)
-    expect(screen.getByText('1 items')).toBeInTheDocument(); // Selected
+    expect(screen.getByText('1 item')).toBeInTheDocument(); // Selected (singular)
   });
 
   it('disables component when disabled is true', () => {
@@ -307,6 +302,70 @@ describe('SettingsTransferList', () => {
     
     expect(screen.getByText('Item One').closest('[role="option"]')).toHaveClass('settings-transfer-list__item--selected');
     expect(screen.getByText('Item Two').closest('[role="option"]')).toHaveClass('settings-transfer-list__item--selected');
+  });
+
+  describe('testId prop', () => {
+    it('sets data-testid on root when testId provided', () => {
+      render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
+      // Root data-testid is on the Radix Box; verify by checking child elements use the testId prefix
+      expect(screen.getByTestId('user-roles-available-search')).toBeInTheDocument();
+      expect(screen.getByTestId('user-roles-selected-search')).toBeInTheDocument();
+    });
+
+    it('sets data-testid on available search input', () => {
+      render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
+      expect(screen.getByTestId('user-roles-available-search')).toBeInTheDocument();
+    });
+
+    it('sets data-testid on selected search input', () => {
+      render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
+      expect(screen.getByTestId('user-roles-selected-search')).toBeInTheDocument();
+    });
+
+    it('sets data-testid on available list container', () => {
+      render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
+      expect(screen.getByTestId('user-roles-available-list')).toBeInTheDocument();
+    });
+
+    it('sets data-testid on selected list container', () => {
+      render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
+      expect(screen.getByTestId('user-roles-selected-list')).toBeInTheDocument();
+    });
+
+    it('sets data-testid on each available item with sanitized id', () => {
+      render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
+      expect(screen.getByTestId('user-roles-available-item-1')).toBeInTheDocument();
+      expect(screen.getByTestId('user-roles-available-item-2')).toBeInTheDocument();
+    });
+
+    it('sets data-testid on selected items with sanitized id', () => {
+      render(
+        <SettingsTransferList
+          {...defaultProps}
+          testId="user-roles"
+          selectedItems={[allItems[0]]}
+        />
+      );
+      expect(screen.getByTestId('user-roles-selected-item-1')).toBeInTheDocument();
+    });
+
+    it('sanitizes special characters in item ids for testid', () => {
+      const specialItems = [{ id: 'nx:all/*', name: 'All Privileges' }];
+      render(
+        <SettingsTransferList
+          {...defaultProps}
+          availableItems={specialItems}
+          testId="privs"
+          getItemId={(item) => item.id}
+        />
+      );
+      expect(screen.getByTestId('privs-available-item-nx-all--')).toBeInTheDocument();
+    });
+
+    it('does not set testId attributes when testId not provided', () => {
+      const { container } = render(<SettingsTransferList {...defaultProps} />);
+      expect(container.firstChild).not.toHaveAttribute('data-testid');
+    });
   });
 });
 

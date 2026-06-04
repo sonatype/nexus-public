@@ -28,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 
 /**
  * Creates a test which evaluates whether all assets under a component had their blob created (i.e. attached) before the
@@ -38,7 +36,6 @@ import org.springframework.context.annotation.Scope;
  */
 @org.springframework.stereotype.Component
 @Qualifier(LAST_BLOB_UPDATED_KEY)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class LastBlobUpdatedCleanupEvaluator
     implements ComponentCleanupEvaluator
 {

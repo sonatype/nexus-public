@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 
@@ -32,13 +30,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier("initial")
-@Singleton
 public class InitialRealmConfigurationProvider
     implements FactoryBean<RealmConfiguration>
 {
   private final RealmConfigurationStore store;
 
-  @Inject
+  @Autowired
   public InitialRealmConfigurationProvider(final RealmConfigurationStore store) {
     this.store = checkNotNull(store);
   }

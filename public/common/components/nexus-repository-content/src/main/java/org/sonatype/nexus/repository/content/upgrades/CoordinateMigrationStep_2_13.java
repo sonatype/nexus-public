@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.content.upgrades;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.content.tasks.CreateComponentIndexTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -27,7 +25,6 @@ import org.slf4j.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
-@Singleton
 @Component
 public class CoordinateMigrationStep_2_13
     implements DatabaseMigrationStep
@@ -36,7 +33,7 @@ public class CoordinateMigrationStep_2_13
 
   private final UpgradeTaskScheduler upgradeTaskScheduler;
 
-  @Inject
+  @Autowired
   public CoordinateMigrationStep_2_13(final UpgradeTaskScheduler upgradeTaskScheduler) {
     this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
   }

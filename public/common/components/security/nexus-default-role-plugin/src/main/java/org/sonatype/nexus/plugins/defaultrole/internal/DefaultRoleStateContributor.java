@@ -16,9 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -36,7 +34,6 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 @Primary
 @Component
-@Singleton
 public class DefaultRoleStateContributor
     implements StateContributor
 {
@@ -48,7 +45,7 @@ public class DefaultRoleStateContributor
 
   private final RealmManager realmManager;
 
-  @Inject
+  @Autowired
   public DefaultRoleStateContributor(
       final DefaultRoleRealm defaultRoleRealm,
       final SecuritySystem securitySystem,

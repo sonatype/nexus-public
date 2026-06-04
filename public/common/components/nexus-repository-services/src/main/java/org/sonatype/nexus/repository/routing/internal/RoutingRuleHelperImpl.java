@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 public class RoutingRuleHelperImpl
     implements RoutingRuleHelper
 {
@@ -56,7 +53,7 @@ public class RoutingRuleHelperImpl
 
   private volatile List<Permission> repositoryAddPermissions;
 
-  @Inject
+  @Autowired
   public RoutingRuleHelperImpl(
       final RoutingRuleCache routingRuleCache,
       @Lazy final RepositoryManager repositoryManager,

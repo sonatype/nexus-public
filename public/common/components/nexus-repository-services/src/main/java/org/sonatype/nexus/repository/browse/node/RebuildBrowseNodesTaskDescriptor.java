@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class RebuildBrowseNodesTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -42,7 +39,7 @@ public class RebuildBrowseNodesTaskDescriptor
 
   public static final String TASK_NAME = "Repair - Rebuild repository browse";
 
-  @Inject
+  @Autowired
   public RebuildBrowseNodesTaskDescriptor(
       final NodeAccess nodeAccess,
       final GroupType groupType,

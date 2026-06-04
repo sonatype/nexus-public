@@ -17,7 +17,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Format;
@@ -43,7 +43,7 @@ public class ComponentTableIndexesMigrationStep_2_50
 {
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public ComponentTableIndexesMigrationStep_2_50(final List<Format> formats) {
     this.formats = formats;
   }

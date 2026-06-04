@@ -16,13 +16,12 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Function;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.mail.Session;
 import javax.net.ssl.SSLContext;
 
-import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.concurrent.Mutex;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
@@ -60,7 +59,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.0
  */
 @Component
-@Singleton
 public class EmailManagerImpl
     implements EmailManager, EventAware
 {
@@ -86,7 +84,7 @@ public class EmailManagerImpl
 
   private final SecretsService secretsService;
 
-  @Inject
+  @Autowired
   public EmailManagerImpl(
       final EventManager eventManager,
       final EmailConfigurationStore store,

@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.tasklog;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 import org.springframework.stereotype.Component;
@@ -24,13 +22,12 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class TaskLogCleanupTaskDescriptor
     extends TaskDescriptorSupport
 {
   public static final String TYPE_ID = "tasklog.cleanup";
 
-  @Inject
+  @Autowired
   public TaskLogCleanupTaskDescriptor() {
     super(TYPE_ID, TaskLogCleanupTask.class, "Task log cleanup", TaskDescriptorSupport.NOT_VISIBLE,
         TaskDescriptorSupport.NOT_EXPOSED);

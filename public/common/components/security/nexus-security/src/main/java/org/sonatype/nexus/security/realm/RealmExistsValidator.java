@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.realm;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
@@ -37,7 +37,7 @@ public class RealmExistsValidator
 {
   private final RealmSecurityManager realmSecurityManager;
 
-  @Inject
+  @Autowired
   public RealmExistsValidator(final RealmSecurityManager realmSecurityManager) {
     this.realmSecurityManager = checkNotNull(realmSecurityManager);
   }

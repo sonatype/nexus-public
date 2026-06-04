@@ -28,7 +28,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.CoreApi;
 import org.sonatype.nexus.capability.*;
 import org.sonatype.nexus.crypto.secrets.SecretsService;

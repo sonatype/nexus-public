@@ -18,8 +18,7 @@ import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -30,12 +29,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class RealmConfigurationStoreImpl
     extends ConfigStoreSupport<RealmConfigurationDAO>
     implements RealmConfigurationStore
 {
-  @Inject
+  @Autowired
   public RealmConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

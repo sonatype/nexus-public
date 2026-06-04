@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.replication;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.repository.replication.ReplicationBlobStoreStatusManager.BlobStoreReplicationStatus;
 
@@ -27,7 +25,6 @@ import static org.sonatype.nexus.repository.replication.ReplicationBlobStoreStat
  */
 @Primary
 @Component
-@Singleton
 public class DefaultReplicationBlobStoreStatusManager
     implements ReplicationBlobStoreStatusManager
 {

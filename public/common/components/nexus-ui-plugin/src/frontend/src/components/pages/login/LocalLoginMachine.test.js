@@ -631,6 +631,119 @@ describe("LocalLoginMachine", () => {
     });
   });
 
+  describe("rate limiting (429)", () => {
+    it("transitions to rateLimited state and sets context on 429", (done) => {
+      const service = interpret(localLoginMachine);
+      service.start();
+
+      service.send({ type: "UPDATE", name: "username", value: "testuser" });
+      service.send({ type: "UPDATE", name: "password", value: "testpass" });
+
+      const error429 = {
+        response: { status: 429, headers: { "retry-after": "30" } },
+      };
+      mockRequestSession.mockRejectedValue(error429);
+
+      let inRateLimited = false;
+      service.onTransition((state) => {
+        if (state.matches("rateLimited") && !inRateLimited) {
+          inRateLimited = true;
+          expect(state.context.rateLimitWarning).toBe(true);
+          expect(state.context.retryAfterSeconds).toBe(30);
+          service.stop();
+          done();
+        }
+      });
+
+      service.send({ type: "SAVE" });
+    });
+
+    it("TICK decrements retryAfterSeconds when > 1", (done) => {
+      const service = interpret(localLoginMachine);
+      service.start();
+
+      service.send({ type: "UPDATE", name: "username", value: "testuser" });
+      service.send({ type: "UPDATE", name: "password", value: "testpass" });
+
+      const error429 = {
+        response: { status: 429, headers: { "retry-after": "5" } },
+      };
+      mockRequestSession.mockRejectedValue(error429);
+
+      let tickSent = false;
+      service.onTransition((state) => {
+        if (state.matches("rateLimited")) {
+          if (!tickSent) {
+            tickSent = true;
+            expect(state.context.retryAfterSeconds).toBe(5);
+            service.send({ type: "TICK" });
+          } else {
+            expect(state.context.retryAfterSeconds).toBe(4);
+            service.stop();
+            done();
+          }
+        }
+      });
+
+      service.send({ type: "SAVE" });
+    });
+
+    it("transitions back to loaded and clears rate limit when countdown expires", (done) => {
+      const service = interpret(localLoginMachine);
+      service.start();
+
+      service.send({ type: "UPDATE", name: "username", value: "testuser" });
+      service.send({ type: "UPDATE", name: "password", value: "testpass" });
+
+      const error429 = {
+        response: { status: 429, headers: { "retry-after": "1" } },
+      };
+      mockRequestSession.mockRejectedValue(error429);
+
+      let inRateLimited = false;
+      service.onTransition((state) => {
+        if (state.matches("rateLimited") && !inRateLimited) {
+          inRateLimited = true;
+          // retryAfterSeconds is 1; TICK should transition to loaded
+          service.send({ type: "TICK" });
+        } else if (state.matches("loaded") && inRateLimited) {
+          expect(state.context.rateLimitWarning).toBe(false);
+          expect(state.context.retryAfterSeconds).toBeNull();
+          service.stop();
+          done();
+        }
+      });
+
+      service.send({ type: "SAVE" });
+    });
+
+    it("non-429 error does NOT enter rateLimited state", (done) => {
+      const service = interpret(localLoginMachine);
+      service.start();
+
+      service.send({ type: "UPDATE", name: "username", value: "testuser" });
+      service.send({ type: "UPDATE", name: "password", value: "testpass" });
+
+      const error403 = { response: { status: 403, data: {} } };
+      mockRequestSession.mockRejectedValue(error403);
+
+      let saveStarted = false;
+      service.onTransition((state) => {
+        if (state.matches("saving")) {
+          saveStarted = true;
+        }
+        if (saveStarted && state.matches("loaded") && state.context.saveError) {
+          expect(state.context.rateLimitWarning).toBe(false);
+          expect(state.context.retryAfterSeconds).toBeNull();
+          service.stop();
+          done();
+        }
+      });
+
+      service.send({ type: "SAVE" });
+    });
+  });
+
   describe("dirty flag actions", () => {
     it("setDirtyFlag is a no-op", () => {
       const service = interpret(localLoginMachine);

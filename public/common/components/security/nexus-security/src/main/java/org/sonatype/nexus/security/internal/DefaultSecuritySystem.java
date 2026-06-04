@@ -25,9 +25,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
@@ -82,7 +80,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 @Component
 @Qualifier("default")
 @ManagedLifecycle(phase = SECURITY)
-@Singleton
 public class DefaultSecuritySystem
     extends StateGuardLifecycleSupport
     implements SecuritySystem
@@ -107,7 +104,7 @@ public class DefaultSecuritySystem
 
   private final SecurityHelper securityHelper;
 
-  @Inject
+  @Autowired
   public DefaultSecuritySystem(
       final EventManager eventManager,
       final RealmSecurityManager realmSecurityManager,

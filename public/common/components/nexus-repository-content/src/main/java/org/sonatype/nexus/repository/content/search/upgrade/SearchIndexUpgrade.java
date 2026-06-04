@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Recipe;
@@ -65,7 +65,7 @@ public abstract class SearchIndexUpgrade
 
   private Map<String, Recipe> recipes;
 
-  @Inject
+  @Autowired
   public final void inject(final List<Recipe> recipesList) {
     this.recipes = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesList));
   }

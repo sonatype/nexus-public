@@ -31,8 +31,6 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.DirectoryHelper;
 
 import com.google.common.io.ByteStreams;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SimpleFileOperations
     implements FileOperations
 {

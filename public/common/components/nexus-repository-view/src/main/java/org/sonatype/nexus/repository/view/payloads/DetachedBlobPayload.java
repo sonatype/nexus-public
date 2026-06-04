@@ -18,6 +18,7 @@ import java.io.InputStream;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.view.Payload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,15 +33,30 @@ public class DetachedBlobPayload
 {
   private final Blob blob;
 
+  @Nullable
+  private final BlobStore sourceBlobStore;
+
   private final String contentType;
 
   public DetachedBlobPayload(final Blob blob) {
     this.blob = checkNotNull(blob);
+    this.sourceBlobStore = null;
+    this.contentType = blob.getHeaders().get(CONTENT_TYPE_HEADER);
+  }
+
+  public DetachedBlobPayload(final Blob blob, final BlobStore sourceBlobStore) {
+    this.blob = checkNotNull(blob);
+    this.sourceBlobStore = checkNotNull(sourceBlobStore);
     this.contentType = blob.getHeaders().get(CONTENT_TYPE_HEADER);
   }
 
   public Blob getBlob() {
     return blob;
+  }
+
+  @Nullable
+  public BlobStore getSourceBlobStore() {
+    return sourceBlobStore;
   }
 
   @Override

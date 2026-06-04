@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -28,7 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("local")
-@Singleton
 public class LocalCooperationFactory
     extends ScopedCooperationFactorySupport
 {

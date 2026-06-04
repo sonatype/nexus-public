@@ -20,15 +20,12 @@ import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
 import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.25
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RawGroupRepositoryApiRequestToConfigurationConverter
     extends GroupRepositoryApiRequestToConfigurationConverter<RawGroupRepositoryApiRequest>
 {

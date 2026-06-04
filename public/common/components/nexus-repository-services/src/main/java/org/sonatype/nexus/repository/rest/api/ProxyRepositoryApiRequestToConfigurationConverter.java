@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
@@ -38,21 +38,18 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAG
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 
 import org.sonatype.nexus.rest.ValidationErrorsException;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRepositoryApiRequest>
     extends AbstractRepositoryApiRequestToConfigurationConverter<T>
 {
   private final RoutingRuleStore routingRuleStore;
 
-  @Inject
+  @Autowired
   public ProxyRepositoryApiRequestToConfigurationConverter(final RoutingRuleStore routingRuleStore) {
     this.routingRuleStore = routingRuleStore;
   }

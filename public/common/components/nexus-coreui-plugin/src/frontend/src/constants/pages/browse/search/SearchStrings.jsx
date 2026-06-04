@@ -28,11 +28,33 @@ export default {
         icon: faSearch
       }
     },
+    ALPINE: {
+      MENU: {
+        text: 'Alpine',
+        description: 'Search for components in Alpine repositories',
+        icon: faSearch
+      }
+    },
     APT: {
       MENU: {
         text: 'Apt',
         description: 'Search for components in Apt repositories',
         icon: faSearch
+      }
+    },
+    ANSIBLEGALAXY: {
+      MENU: {
+        text: 'Ansible Galaxy',
+        description: 'Search for components in Ansible Galaxy repositories',
+        icon: faSearch
+      },
+      CRITERIA: {
+        GROUP: 'Ansible Galaxy Repositories',
+        FIELD_LABEL: {
+          NAMESPACE: 'Namespace',
+          NAME: 'Name',
+          VERSION: 'Version',
+        }
       }
     },
     CARGO: {

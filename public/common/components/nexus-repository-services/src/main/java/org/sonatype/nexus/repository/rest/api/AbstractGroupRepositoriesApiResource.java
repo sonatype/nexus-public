@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.Collection;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintViolation;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.GET;
@@ -60,17 +60,17 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
 
   protected GroupRepositoryApiRequestToConfigurationConverter<T> configurationConverter;
 
-  @Inject
+  @Autowired
   public void setConstraintViolationFactory(final ConstraintViolationFactory constraintViolationFactory) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
   }
 
-  @Inject
+  @Autowired
   public void setApplicationVersion(final ApplicationVersion applicationVersion) {
     this.applicationVersion = applicationVersion;
   }
 
-  @Inject
+  @Autowired
   public void setConfigurationConverter(
       final GroupRepositoryApiRequestToConfigurationConverter<T> configurationConverter)
   {

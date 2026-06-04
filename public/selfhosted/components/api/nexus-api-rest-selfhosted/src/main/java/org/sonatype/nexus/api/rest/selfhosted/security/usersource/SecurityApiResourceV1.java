@@ -14,9 +14,7 @@ package org.sonatype.nexus.api.rest.selfhosted.security.usersource;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
@@ -28,12 +26,11 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(SecurityApiConstants.V1_RESOURCE_URI)
 public class SecurityApiResourceV1
     extends SecurityApiResource
 {
-  @Inject
+  @Autowired
   public SecurityApiResourceV1(final List<UserManager> userManagersList) {
     super(userManagersList);
   }

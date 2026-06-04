@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.config;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class RepositoryNameValidator
     extends ConstraintValidatorSupport<RepositoryName, String>
 {
-  @Inject
+  @Autowired
   private RepositoryManager repositoryManager;
 
   @Override

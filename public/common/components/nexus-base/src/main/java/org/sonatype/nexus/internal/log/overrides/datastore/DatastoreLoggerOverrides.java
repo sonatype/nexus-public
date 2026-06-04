@@ -20,9 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -46,7 +44,6 @@ import org.springframework.stereotype.Component;
  * {@link LoggerOverrides} datastore implementation.
  */
 @Component
-@Singleton
 @Primary
 @ManagedLifecycle(phase = STORAGE)
 @ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
@@ -62,7 +59,7 @@ public class DatastoreLoggerOverrides
 
   private final ReentrantReadWriteLock loggerLevelsLock = new ReentrantReadWriteLock();
 
-  @Inject
+  @Autowired
   public DatastoreLoggerOverrides(
       final ApplicationDirectories appDirectories,
       final LoggingOverridesStore loggingLevelsStore,

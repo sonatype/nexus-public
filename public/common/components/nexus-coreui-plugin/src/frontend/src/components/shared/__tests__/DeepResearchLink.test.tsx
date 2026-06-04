@@ -15,7 +15,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
-import { DeepResearchLink } from '../DeepResearchLink';
+import { DeepResearchLink } from '@sonatype/nexus-ui-plugin/src/frontend/src/components/preview/shared/DeepResearchLink';
 
 const renderWithTheme = (ui: React.ReactElement) => {
   return render(<Theme>{ui}</Theme>);

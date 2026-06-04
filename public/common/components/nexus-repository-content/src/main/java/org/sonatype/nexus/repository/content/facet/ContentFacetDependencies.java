@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.content.facet;
 
 import java.util.Optional;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.24
  */
 @Component
-@Singleton
 public class ContentFacetDependencies
 {
   private final BlobStoreManager blobStoreManager;
@@ -56,7 +53,7 @@ public class ContentFacetDependencies
 
   private final Optional<RepositoryMoveService> maybeMoveService;
 
-  @Inject
+  @Autowired
   public ContentFacetDependencies(
       final BlobStoreManager blobStoreManager,
       final DataSessionSupplier dataSessionSupplier,

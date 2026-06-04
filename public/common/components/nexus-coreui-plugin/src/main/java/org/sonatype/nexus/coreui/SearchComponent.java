@@ -49,8 +49,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -65,7 +64,6 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Search")
 public class SearchComponent
     extends DirectComponentSupport
@@ -82,7 +80,7 @@ public class SearchComponent
 
   private int searchResultsLimit;
 
-  @Inject
+  @Autowired
   public SearchComponent(
       final SearchService searchService,
       @Value("${nexus.searchResultsLimit:1000}") final int searchResultsLimit,

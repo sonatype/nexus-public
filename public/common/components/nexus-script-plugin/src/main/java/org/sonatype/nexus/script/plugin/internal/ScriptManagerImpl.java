@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.script.plugin.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = SERVICES)
-@Singleton
 public class ScriptManagerImpl
     extends StateGuardLifecycleSupport
     implements ScriptManager
@@ -51,7 +48,7 @@ public class ScriptManagerImpl
 
   private final boolean allowCreation;
 
-  @Inject
+  @Autowired
   public ScriptManagerImpl(
       final EventManager eventManager,
       final ScriptStore scriptStore,

@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -79,7 +78,6 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAG
  */
 @ExtendWith(AuthenticationExtension.class)
 public class BlobRepositoryMismatchTaskContinuationTest
-    extends Test5Support
 {
   private static final int CONCURRENCY_LIMIT = 5;
 

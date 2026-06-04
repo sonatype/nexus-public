@@ -24,8 +24,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -41,14 +40,13 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
  */
 @ManagedLifecycle(phase = SERVICES)
 @Component
-@Singleton
 public class SqlSearchEventHandler
     extends SearchEventHandler
     implements EventAware
 {
   private final SearchStore searchTableStore;
 
-  @Inject
+  @Autowired
   public SqlSearchEventHandler(
       final SearchStore searchTableStore,
       final RepositoryManager repositoryManager,

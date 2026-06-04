@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.token;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKey;
@@ -40,7 +40,7 @@ public abstract class BearerTokenManager
 
   private final String format;
 
-  @Inject
+  @Autowired
   public BearerTokenManager(
       final ApiKeyService apiKeyService,
       final SecurityHelper securityHelper,

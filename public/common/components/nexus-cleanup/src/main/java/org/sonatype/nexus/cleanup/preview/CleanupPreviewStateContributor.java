@@ -13,9 +13,7 @@
 package org.sonatype.nexus.cleanup.preview;
 
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -25,14 +23,13 @@ import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED
 import static org.sonatype.nexus.common.app.FeatureFlags.CLEANUP_PREVIEW_ENABLED_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
-@Singleton
 @Component
 public class CleanupPreviewStateContributor
     implements StateContributor
 {
   private final boolean cleanupPreviewEnabled;
 
-  @Inject
+  @Autowired
   public CleanupPreviewStateContributor(
       @Value(CLEANUP_PREVIEW_ENABLED_NAMED_VALUE) final boolean cleanupPreviewEnabled)
   {

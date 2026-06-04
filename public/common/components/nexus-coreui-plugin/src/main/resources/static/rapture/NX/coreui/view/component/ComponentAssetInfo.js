@@ -119,7 +119,45 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     computedInfo[NX.I18n.get('Assets_Info_Name')] = Ext.htmlEncode(component.get('name'));
     computedInfo[NX.I18n.get('Assets_Info_Version')] = Ext.htmlEncode(component.get('version'));
     computedInfo[NX.I18n.get('Assets_Info_Path')] = NX.coreui.util.RepositoryUrls.asRepositoryLink(asset, asset.get('format'));
-    computedInfo[NX.I18n.get('Assets_Info_ContentType')] = Ext.htmlEncode(contentType);
+
+    // Add format-specific metadata from component attributes
+    var format = asset.get('format');
+    var componentAttributes = component.get('attributes');
+
+    if (componentAttributes && componentAttributes[format]) {
+      var formatAttrs = componentAttributes[format];
+
+      // Add description if available
+      if (formatAttrs.description) {
+        computedInfo['Description'] = Ext.htmlEncode(formatAttrs.description);
+      }
+
+      // Add authors if available
+      if (formatAttrs.authors) {
+        var authorsDisplay = Ext.isArray(formatAttrs.authors)
+          ? formatAttrs.authors.join(', ')
+          : formatAttrs.authors;
+        computedInfo['Authors'] = Ext.htmlEncode(authorsDisplay);
+      }
+
+      // Add tags if available
+      if (formatAttrs.tags) {
+        var tagsDisplay = Ext.isArray(formatAttrs.tags)
+          ? formatAttrs.tags.join(', ')
+          : formatAttrs.tags;
+        computedInfo['Tags'] = Ext.htmlEncode(tagsDisplay);
+      }
+
+      // Add license if available
+      if (formatAttrs.license) {
+        var licenseDisplay = Ext.isArray(formatAttrs.license)
+          ? formatAttrs.license.join(', ')
+          : formatAttrs.license;
+        computedInfo['License'] = Ext.htmlEncode(licenseDisplay);
+      }
+    }
+
+    computedInfo[NX.I18n.get('Assets_Info_ContentType')] = Ext.htmlEncode(contentType || 'unknown');
     computedInfo[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
     computedInfo[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(asset.get('blobCreated'));
     computedInfo[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(asset.get('blobUpdated'));
@@ -135,8 +173,12 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     computedInfo[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(asset.get('blobRef'));
     computedInfo[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(asset.get('containingRepositoryName'));
 
-    computedInfo[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(asset.get('createdBy'));
-    computedInfo[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(asset.get('createdByIp'));
+    if (asset.get('createdBy')) {
+      computedInfo[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(asset.get('createdBy'));
+    }
+    if (asset.get('createdByIp')) {
+      computedInfo[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(asset.get('createdByIp'));
+    }
 
     if (attributesPanel) {
       attributesPanel.setAssetModel(asset);

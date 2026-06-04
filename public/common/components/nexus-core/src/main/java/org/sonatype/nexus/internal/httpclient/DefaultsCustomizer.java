@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.ByteSize;
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.io.ByteSize;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
 import org.sonatype.nexus.utils.httpclient.UserAgentGenerator;
@@ -38,7 +37,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Primary
 @Component
-@Singleton
 public class DefaultsCustomizer
     implements HttpDefaultsCustomizer
 {
@@ -56,7 +54,7 @@ public class DefaultsCustomizer
 
   private final int retryCount;
 
-  @Inject
+  @Autowired
   public DefaultsCustomizer(
       final UserAgentGenerator userAgentGenerator,
       @Value("${nexus.httpclient.requestTimeout:20s}") final Time requestTimeout,

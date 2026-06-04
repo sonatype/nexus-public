@@ -14,9 +14,7 @@ package org.sonatype.nexus.self.hosted.node;
 
 import java.io.File;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.ssl.KeyStoreStorageFactory;
 import org.sonatype.nexus.ssl.spi.KeyStoreStorage;
@@ -34,13 +32,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier(NodeKeyStoreManagerImpl.NAME)
-@Singleton
 public class FileKeyStoreStorageFactory
     implements KeyStoreStorageFactory
 {
   private final File basedir;
 
-  @Inject
+  @Autowired
   public FileKeyStoreStorageFactory(final ApplicationDirectories directories) {
     this.basedir = new File(directories.getWorkDirectory("keystores"), NodeKeyStoreManagerImpl.NAME);
   }

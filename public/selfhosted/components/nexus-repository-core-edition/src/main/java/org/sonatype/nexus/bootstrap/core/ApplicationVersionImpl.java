@@ -16,8 +16,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.edition.core.CoreNexusEdition;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -25,14 +24,13 @@ import org.springframework.stereotype.Component;
  * CORE {@link ApplicationVersion}.
  */
 @Component
-@Singleton
 @ConditionalOnProperty(value = "nexus.edition", havingValue = "CORE", matchIfMissing = true)
 public class ApplicationVersionImpl
     extends ApplicationVersionSupport
 {
   private final CoreNexusEdition coreNexusEdition;
 
-  @Inject
+  @Autowired
   public ApplicationVersionImpl(final CoreNexusEdition coreNexusEdition) {
     this.coreNexusEdition = coreNexusEdition;
   }

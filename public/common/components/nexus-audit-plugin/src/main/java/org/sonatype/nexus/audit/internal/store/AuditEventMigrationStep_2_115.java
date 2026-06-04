@@ -17,16 +17,12 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROTOTYPE;
 
 /**
  * Creates audit_events table for queryable audit event storage.
  */
 @Component
-@Scope(SCOPE_PROTOTYPE)
 public class AuditEventMigrationStep_2_115
     implements DatabaseMigrationStep
 {

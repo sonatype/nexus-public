@@ -12,12 +12,9 @@
  */
 package org.sonatype.nexus.security.config;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.config.memory.MemoryCPrivilege.MemoryCPrivilegeBuilder;
 import org.sonatype.nexus.security.config.memory.MemoryCRole;
 
-@Singleton
 public class TestSecurityContributor1
     implements SecurityContributor
 {

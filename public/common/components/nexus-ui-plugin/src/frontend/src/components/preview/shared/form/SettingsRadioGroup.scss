@@ -1,0 +1,63 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.settings-radio-group {
+  &__option {
+    padding: var(--space-3, 12px);
+    border: 1px solid var(--gray-6, #d1d1d6);
+    border-radius: var(--radius-2, 6px);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    background: var(--color-background, #fff);
+
+    &:hover {
+      border-color: var(--blue-8, #0091ff);
+    }
+
+    &--checked {
+      border-color: var(--blue-8, #0091ff);
+      background: var(--blue-2, #f0f9ff);
+    }
+
+    [data-theme='dark'] & {
+      background: var(--gray-1, #111113);
+      border-color: var(--gray-4, #27272b);
+
+      &:hover {
+        border-color: var(--blue-8, #0091ff);
+      }
+
+      &--checked {
+        background: var(--blue-3, #002a45);
+      }
+    }
+  }
+
+  &__input {
+    margin-top: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  &__badge {
+    margin-left: var(--space-1, 4px);
+    padding: 0 var(--space-2, 8px);
+    background: var(--blue-9, #0090ff);
+    color: white;
+    border-radius: var(--radius-1, 4px);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+}

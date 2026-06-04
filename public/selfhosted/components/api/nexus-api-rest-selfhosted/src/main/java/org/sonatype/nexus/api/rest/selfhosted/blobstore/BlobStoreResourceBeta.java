@@ -14,8 +14,7 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response.Status;
 
@@ -40,7 +39,6 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class BlobStoreResourceBeta
@@ -48,7 +46,7 @@ public class BlobStoreResourceBeta
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores";
 
-  @Inject
+  @Autowired
   public BlobStoreResourceBeta(
       final BlobStoreManager blobStoreManager,
       final BlobStoreConfigurationStore store,

@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.content.security.internal;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.security.AssetVariableResolverSupport;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
@@ -42,7 +40,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("simple")
-@Singleton
 public class SimpleVariableResolverAdapter
     extends AssetVariableResolverSupport
 {

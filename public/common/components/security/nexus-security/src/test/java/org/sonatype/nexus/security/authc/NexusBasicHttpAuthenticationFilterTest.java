@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.authc;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,6 +24,7 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,6 +35,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class NexusBasicHttpAuthenticationFilterTest
 {
@@ -111,6 +114,56 @@ public class NexusBasicHttpAuthenticationFilterTest
   }
 
   @Test
+  public void testOnLoginFailure_rateLimited_sends429() throws Exception {
+    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
+    injectField(filter, "rateLimiterService", rateLimiterService);
+
+    AuthenticationToken token = new UsernamePasswordToken("admin", "wrongpassword");
+    AuthenticationException e = new AuthenticationException("bad credentials",
+        new IncorrectCredentialsException());
+
+    when(rateLimiterService.checkAndRecord("admin")).thenReturn(new RateLimitResult(30L, 6));
+
+    boolean result = filter.onLoginFailure(token, e, request, response);
+
+    verify(rateLimiterService).checkAndRecord("admin");
+    verify(response).setHeader("Retry-After", "30");
+    verify(response).sendError(429, "Too many authentication attempts");
+    assertThat(result, is(false));
+  }
+
+  @Test
+  public void testOnLoginFailure_notRateLimited_doesNotSend429() throws Exception {
+    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
+    injectField(filter, "rateLimiterService", rateLimiterService);
+
+    AuthenticationToken token = new UsernamePasswordToken("admin", "wrongpassword");
+    AuthenticationException e = new AuthenticationException("bad credentials",
+        new IncorrectCredentialsException());
+
+    when(rateLimiterService.checkAndRecord("admin")).thenReturn(null);
+
+    // onLoginFailure falls through to super which returns false without 429
+    filter.onLoginFailure(token, e, request, response);
+
+    verify(rateLimiterService).checkAndRecord("admin");
+    verify(response, never()).sendError(429, "Too many authentication attempts");
+  }
+
+  @Test
+  public void testOnLoginSuccess_recordsSuccess() throws Exception {
+    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
+    injectField(filter, "rateLimiterService", rateLimiterService);
+    Subject subject = mock(Subject.class);
+    when(subject.getPrincipal()).thenReturn("admin");
+    AuthenticationToken token = new UsernamePasswordToken("admin", "password");
+
+    filter.onLoginSuccess(token, subject, request, response);
+
+    verify(rateLimiterService).recordSuccess("admin");
+  }
+
+  @Test
   public void testInfrastructureExceptionFallbackOnIOException() throws Exception {
     AuthenticationToken token = new UsernamePasswordToken("admin", "admin123");
 
@@ -131,5 +184,11 @@ public class NexusBasicHttpAuthenticationFilterTest
         eq("Service temporarily unavailable"));
     // Result should be false (super's fallback behavior)
     assertThat(result, is(false));
+  }
+
+  private static void injectField(final Object target, final String name, final Object value) throws Exception {
+    Field field = target.getClass().getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(target, value);
   }
 }

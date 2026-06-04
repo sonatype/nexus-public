@@ -21,7 +21,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -41,7 +41,7 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
   }
 
   @VisibleForTesting
-  @Inject
+  @Autowired
   public void setDependencies(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
   }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.capability;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
@@ -35,7 +35,7 @@ public class CapabilityTypeIsExposedValidator
 
   private final CapabilityDescriptorRegistry capabilityDescriptorRegistry;
 
-  @Inject
+  @Autowired
   public CapabilityTypeIsExposedValidator(
       final CapabilityFactoryRegistry capabilityFactoryRegistry,
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry)

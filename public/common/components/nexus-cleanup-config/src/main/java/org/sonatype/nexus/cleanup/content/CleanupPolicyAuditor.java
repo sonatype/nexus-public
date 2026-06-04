@@ -14,8 +14,6 @@ package org.sonatype.nexus.cleanup.content;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-@Singleton
 public class CleanupPolicyAuditor
     extends AuditorSupport
     implements EventAware

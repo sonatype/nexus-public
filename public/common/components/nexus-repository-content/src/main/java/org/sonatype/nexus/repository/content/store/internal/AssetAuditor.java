@@ -17,9 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
@@ -51,7 +49,6 @@ import org.springframework.stereotype.Component;
  * @since 3.27
  */
 @Component
-@Singleton
 public class AssetAuditor
     extends AuditorSupport
     implements EventAware
@@ -62,7 +59,7 @@ public class AssetAuditor
 
   private final DefaultBlobIdLocationResolver defaultBlobIdLocationResolver;
 
-  @Inject
+  @Autowired
   public AssetAuditor(
       @Value(ASSET_AUDITOR_ATTRIBUTE_CHANGES_ENABLED_VALUE) final boolean attributeChangesDetailEnabled,
       final DefaultBlobIdLocationResolver defaultBlobIdLocationResolver)

@@ -286,8 +286,7 @@ export default class Utils {
           saveError: () => undefined,
           saveErrors: () => ({})
         }),
-        logSaveError: (_, event) => {
-          console.log(`Save Error: ${event.data?.message}`);
+        logSaveError: () => {
           ExtJS.showErrorMessage(UIStrings.ERROR.SAVE_ERROR)
         },
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
@@ -295,8 +294,7 @@ export default class Utils {
         setLoadError: assign({
           loadError: (_, event) => event.data?.message
         }),
-        logLoadError: (_, event) => {
-          console.log(`Load Error: ${event.data?.message}`);
+        logLoadError: () => {
           ExtJS.showErrorMessage(UIStrings.ERROR.LOAD_ERROR)
         },
 

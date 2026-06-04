@@ -15,9 +15,7 @@ package org.sonatype.nexus.transaction;
 import java.io.IOException;
 
 import com.google.common.base.Suppliers;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -25,10 +23,8 @@ import static com.google.common.base.Preconditions.checkState;
  * Miscellaneous methods to exercise transactional aspects.
  */
 @SuppressWarnings("unused")
-@Singleton
 public class ExampleMethods
 {
-  @Singleton
   static class ExampleNestedStore
       implements TransactionalStore<TransactionalSession<?>>
   {
@@ -45,7 +41,7 @@ public class ExampleMethods
 
   final ExampleNestedStore nestedStore;
 
-  @Inject
+  @Autowired
   public ExampleMethods(final ExampleNestedStore nestedStore) {
     this.nestedStore = checkNotNull(nestedStore);
   }

@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.io;
 
 import java.time.Duration;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 /**
  * Supplies {@link Cooperation} points. Not intended for use with SQL/Datastore.

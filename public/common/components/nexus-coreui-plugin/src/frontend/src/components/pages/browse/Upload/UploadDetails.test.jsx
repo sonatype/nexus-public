@@ -1568,7 +1568,7 @@ describe('UploadDetails', function() {
           expect(Utils.timeoutPromise).toBeCalledWith(500);
 
           await waitFor(
-              () => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22foo%23%3F%25%20bar%22'),
+              () => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22foo%23%3F%25%20bar%22%20AND%20repository_name%3Dsimple-repo'),
               { timeout: 1500 }
           );
         }
@@ -1605,7 +1605,7 @@ describe('UploadDetails', function() {
         expect(screen.getByRole('status')).toHaveTextContent('Saving...');
         await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Success!'));
 
-        await waitFor(() => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22foo%23%3F%25%20bar%22'));
+        await waitFor(() => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22foo%23%3F%25%20bar%22%20AND%20repository_name%3Dsimple-repo'));
     });
 
     it('renders validation error messages when Upload is clicked with data missing', async function() {
@@ -1824,7 +1824,7 @@ describe('UploadDetails', function() {
       await userEvent.click(selectors.uploadBtn());
 
       await waitFor(
-          () => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22foobar%22'),
+          () => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22foobar%22%20AND%20repository_name%3Dmulti-repo'),
           { timeout: 1500 }
       );
     });
@@ -1893,7 +1893,7 @@ describe('UploadDetails', function() {
       await userEvent.click(await selectors.errorRetryBtn('find'));
 
       await waitFor(
-          () => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22asdf%22'),
+          () => expect(hashSpy).toHaveBeenCalledWith('browse/search/generic=keyword%3D%22asdf%22%20AND%20repository_name%3Dsimple-repo'),
           { timeout: 1500 }
       );
     });

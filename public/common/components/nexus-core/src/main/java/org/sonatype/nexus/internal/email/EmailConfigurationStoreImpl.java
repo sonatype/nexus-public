@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.email;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.email.EmailConfiguration;
@@ -32,12 +30,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Primary
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class EmailConfigurationStoreImpl
     extends ConfigStoreSupport<EmailConfigurationDAO>
     implements EmailConfigurationStore
 {
-  @Inject
+  @Autowired
   public EmailConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

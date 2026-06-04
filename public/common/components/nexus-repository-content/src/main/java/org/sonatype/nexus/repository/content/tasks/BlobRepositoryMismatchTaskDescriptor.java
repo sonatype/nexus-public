@@ -21,15 +21,12 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID;
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Scope(SCOPE_SINGLETON)
 public class BlobRepositoryMismatchTaskDescriptor
     extends TaskDescriptorSupport
 {

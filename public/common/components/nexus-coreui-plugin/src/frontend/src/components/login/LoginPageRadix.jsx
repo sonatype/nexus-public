@@ -23,7 +23,7 @@ const {
   SIGNIN_TITLE, SIGNIN_BUTTON, SIGNIN_BUTTON_LOADING, SIGNIN_FOOTER_LEAD,
   SSO_BUTTON, SSO_BUTTON_LOADING, SSO_DIVIDER_LABEL,
   USERNAME_LABEL, PASSWORD_LABEL, CONTINUE_WITHOUT_LOGIN,
-  INITIAL_PASSWORD_MESSAGE,
+  INITIAL_PASSWORD_MESSAGE, ERRORS,
 } = UIStrings;
 
 import proLogo from '../../../../art/logos/logo-pro-edition-header.svg';
@@ -64,6 +64,9 @@ export default function LoginPageRadix() {
     adminPasswordFilePath,
     onboardingRequired,
     isCloudEnvironment,
+    rateLimitWarning,
+    isRateLimited,
+    secondsLeft,
   } = useLoginPage();
 
   const {effectiveTheme} = useTheme();
@@ -126,6 +129,18 @@ export default function LoginPageRadix() {
                         {adminPasswordFilePath}
                       </Text>
                     </Flex>
+                  </Callout.Text>
+                </Callout.Root>
+              )}
+
+              {/* Rate Limit Warning */}
+              {rateLimitWarning && (
+                <Callout.Root role="alert" color="amber" size="2">
+                  <Callout.Icon>
+                    <Info size={16} />
+                  </Callout.Icon>
+                  <Callout.Text>
+                    {ERRORS.RATE_LIMITED(secondsLeft)}
                   </Callout.Text>
                 </Callout.Root>
               )}
@@ -201,7 +216,7 @@ export default function LoginPageRadix() {
                 size="3"
                 variant={showSsoLogin ? 'outline' : 'solid'}
                 className="nxrm-login-submit"
-                disabled={isSaving || !data.username || !data.password}
+                disabled={isSaving || !data.username || !data.password || rateLimitWarning}
               >
                 {isSaving ? SIGNIN_BUTTON_LOADING : SIGNIN_BUTTON}
               </Button>

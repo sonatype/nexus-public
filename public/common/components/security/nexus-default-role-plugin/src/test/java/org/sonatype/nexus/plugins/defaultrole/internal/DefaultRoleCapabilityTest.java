@@ -15,6 +15,7 @@ package org.sonatype.nexus.plugins.defaultrole.internal;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.security.realm.RealmManager;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import org.junit.Before;
@@ -40,6 +41,20 @@ public class DefaultRoleCapabilityTest
   @Before
   public void setup() {
     underTest = new DefaultRoleCapability(realmManager, defaultRoleRealm);
+  }
+
+  @Test
+  public void testRenderDescription_returnsNullWhenNoRoleSet() {
+    when(defaultRoleRealm.getRole()).thenReturn(null);
+
+    assertThat(underTest.renderDescription()).isNull();
+  }
+
+  @Test
+  public void testRenderDescription_returnsRoleNameWhenRoleSet() {
+    when(defaultRoleRealm.getRole()).thenReturn("nx-admin");
+
+    assertThat(underTest.renderDescription()).isEqualTo("nx-admin");
   }
 
   @Test

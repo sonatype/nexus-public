@@ -15,8 +15,6 @@ package org.sonatype.nexus.security.internal;
 import java.util.ConcurrentModificationException;
 import java.util.Set;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
@@ -37,7 +35,6 @@ import org.slf4j.LoggerFactory;
  * When a Role is removed references are removed from other roles and users.
  */
 @Component
-@Singleton
 public class SecurityConfigurationCleanerImpl
     implements SecurityConfigurationCleaner
 {

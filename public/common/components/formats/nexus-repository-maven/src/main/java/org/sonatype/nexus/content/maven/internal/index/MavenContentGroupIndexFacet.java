@@ -14,7 +14,7 @@ package org.sonatype.nexus.content.maven.internal.index;
 
 import java.io.IOException;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
@@ -39,7 +39,7 @@ public class MavenContentGroupIndexFacet
 {
   private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
 
-  @Inject
+  @Autowired
   public MavenContentGroupIndexFacet(
       final MavenIndexPublisher mavenIndexPublisher,
       final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider)

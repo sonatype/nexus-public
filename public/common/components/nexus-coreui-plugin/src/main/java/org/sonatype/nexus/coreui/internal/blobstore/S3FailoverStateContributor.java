@@ -15,9 +15,7 @@ package org.sonatype.nexus.coreui.internal.blobstore;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.rapture.StateContributor;
 
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * The failover configuration will be available on ZDU if schema version is at least on version 2.6.
  */
 @Component
-@Singleton
 public class S3FailoverStateContributor
     implements StateContributor
 {
@@ -45,7 +42,7 @@ public class S3FailoverStateContributor
 
   private final boolean zduEnabled;
 
-  @Inject
+  @Autowired
   public S3FailoverStateContributor(
       final DatabaseCheck databaseCheck,
       @Value(CLUSTERED_ZERO_DOWNTIME_ENABLED_NAMED_VALUE) final boolean zduEnabled)

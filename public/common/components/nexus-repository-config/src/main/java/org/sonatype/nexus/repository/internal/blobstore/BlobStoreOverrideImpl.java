@@ -22,8 +22,7 @@ import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -45,7 +44,6 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
  */
 @ConditionalOnProperty(name = "nexus.blobstore.override.enabled", havingValue = "true", matchIfMissing = true)
 @Component
-@Singleton
 public class BlobStoreOverrideImpl
     implements BlobStoreOverride
 {
@@ -62,7 +60,7 @@ public class BlobStoreOverrideImpl
 
   private final BlobStoreConfigurationStore blobStoreConfigurationStore;
 
-  @Inject
+  @Autowired
   public BlobStoreOverrideImpl(final BlobStoreConfigurationStore blobStoreConfigurationStore) {
     this.blobStoreConfigurationStore = checkNotNull(blobStoreConfigurationStore);
   }

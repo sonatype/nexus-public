@@ -16,9 +16,7 @@ import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
@@ -29,11 +27,10 @@ import org.springframework.stereotype.Component;
  * Store for persisted audit events, backed by MyBatis.
  */
 @Component
-@Singleton
 public class AuditEventStore
     extends ConfigStoreSupport<AuditEventDAO>
 {
-  @Inject
+  @Autowired
   public AuditEventStore(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

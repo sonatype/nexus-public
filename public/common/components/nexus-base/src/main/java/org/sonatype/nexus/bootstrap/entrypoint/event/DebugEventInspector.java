@@ -19,7 +19,7 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class DebugEventInspector
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public DebugEventInspector(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
     setEnabled(ENABLED_DEFAULT);

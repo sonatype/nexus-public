@@ -16,13 +16,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
 
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
@@ -55,7 +55,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Singleton
 public class UpgradeManagerImpl
     implements UpgradeManager
 {
@@ -67,7 +66,7 @@ public class UpgradeManagerImpl
 
   private final DataStoreManager dataStoreManager;
 
-  @Inject
+  @Autowired
   public UpgradeManagerImpl(
       final DataStoreManager dataStoreManager,
       final PostStartupUpgradeAuditor auditor,
@@ -266,6 +265,8 @@ public class UpgradeManagerImpl
         .baselineOnMigrate(true) // create flyway tables the first time migration is run
         .locations(new String[0]) // disable scanning for scripts
         .outOfOrder(true)
+        .configuration(Map.of("flyway.postgresql.transactional.lock", "false")) // NEXUS-52081: prevent deadlock with
+                                                                                // CREATE INDEX CONCURRENTLY
         .load();
   }
 

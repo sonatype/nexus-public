@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.internal.gpg;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class AptSigningHandler
     implements Handler
 {

@@ -19,15 +19,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.browse.RebuildBrowseNodesManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,7 +34,6 @@ import org.springframework.stereotype.Component;
  * @since 3.33
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BrowseNodeMigrationStep_1_1
     implements DatabaseMigrationStep
 {
@@ -48,7 +45,7 @@ public class BrowseNodeMigrationStep_1_1
 
   private List<String> formats;
 
-  @Inject
+  @Autowired
   public BrowseNodeMigrationStep_1_1(
       final List<Format> formats,
       final RebuildBrowseNodesManager rebuildBrowseNodesManager)

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.email.internal.secrets.migration;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.email.EmailConfiguration;
@@ -32,7 +32,7 @@ public class EmailSecretsMigrator
 {
   private final EmailManager emailManager;
 
-  @Inject
+  @Autowired
   public EmailSecretsMigrator(final EmailManager emailManager) {
     this.emailManager = checkNotNull(emailManager);
   }

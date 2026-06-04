@@ -14,14 +14,12 @@ package org.sonatype.nexus.jmx.reflect;
 
 import org.sonatype.nexus.jmx.ObjectNameEntry;
 
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
  * ???
  */
 @Component
-@Singleton
 @ManagedObject(
     domain = "org.sonatype.nexus.jmx",
     entries = {

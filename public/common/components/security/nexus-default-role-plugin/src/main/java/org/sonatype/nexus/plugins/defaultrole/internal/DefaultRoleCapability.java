@@ -14,10 +14,10 @@ package org.sonatype.nexus.plugins.defaultrole.internal;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
@@ -52,7 +52,7 @@ public class DefaultRoleCapability
 
   private final DefaultRoleRealm defaultRoleRealm;
 
-  @Inject
+  @Autowired
   public DefaultRoleCapability(final RealmManager realmManager, final DefaultRoleRealm defaultRoleRealm) {
     this.realmManager = checkNotNull(realmManager);
     this.defaultRoleRealm = checkNotNull(defaultRoleRealm);
@@ -65,7 +65,8 @@ public class DefaultRoleCapability
 
   @Override
   protected String renderDescription() {
-    return messages.description(defaultRoleRealm.getRole());
+    String role = defaultRoleRealm.getRole();
+    return role != null ? messages.description(role) : null;
   }
 
   @Override

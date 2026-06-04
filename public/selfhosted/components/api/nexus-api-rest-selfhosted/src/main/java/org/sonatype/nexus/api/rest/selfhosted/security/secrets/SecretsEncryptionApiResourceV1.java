@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.secrets;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.crypto.secrets.ReEncryptService;
@@ -22,14 +21,13 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Path(SecretsEncryptionApiResourceV1.RESOURCE_URI)
 public class SecretsEncryptionApiResourceV1
     extends SecretsEncryptionApiResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + RESOURCE_PATH;
 
-  @Inject
+  @Autowired
   public SecretsEncryptionApiResourceV1(final ReEncryptService reEncryptService) {
     super(reEncryptService);
   }

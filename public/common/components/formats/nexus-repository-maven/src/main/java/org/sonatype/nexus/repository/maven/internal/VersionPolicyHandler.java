@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -47,7 +47,7 @@ public class VersionPolicyHandler
 
   private final VersionPolicyValidator versionPolicyValidator;
 
-  @Inject
+  @Autowired
   public VersionPolicyHandler(final VersionPolicyValidator versionPolicyValidator) {
     this.versionPolicyValidator = checkNotNull(versionPolicyValidator);
   }

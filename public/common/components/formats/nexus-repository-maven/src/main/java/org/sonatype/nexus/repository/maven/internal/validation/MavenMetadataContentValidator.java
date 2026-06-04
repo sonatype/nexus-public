@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.validation;
 import java.io.IOException;
 import java.io.InputStream;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
@@ -35,7 +33,6 @@ import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.Metad
  * @since 3.16
  */
 @Component
-@Singleton
 public class MavenMetadataContentValidator
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
-import jakarta.inject.Singleton;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +25,6 @@ import static org.sonatype.nexus.repository.http.HttpStatus.PROXY_AUTHENTICATION
  */
 @Qualifier("default")
 @Component
-@Singleton
 public class DefaultAutoBlockConfiguration
     implements AutoBlockConfiguration
 {

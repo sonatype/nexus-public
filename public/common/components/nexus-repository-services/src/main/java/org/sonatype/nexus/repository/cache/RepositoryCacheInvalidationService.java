@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.cache;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.41
  */
 @Component
-@Singleton
 public class RepositoryCacheInvalidationService
     implements EventAware
 {
@@ -46,7 +43,7 @@ public class RepositoryCacheInvalidationService
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public RepositoryCacheInvalidationService(
       final RepositoryManager repositoryManager,
       final EventManager eventManager)

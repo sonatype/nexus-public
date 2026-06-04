@@ -78,13 +78,18 @@ export function SettingsSelect({
           {required && <span className="settings-select__required">*</span>}
         </label>
       )}
+      {helpText && !error && (
+        <Text as="p" size="1" id={helpId} className="settings-select__help">
+          {helpText}
+        </Text>
+      )}
       <Box className="settings-select__wrapper">
-        <Select.Root 
-          value={normalizedValue} 
+        <Select.Root
+          value={normalizedValue}
           onValueChange={handleChange}
           disabled={disabled}
         >
-          <Select.Trigger 
+          <Select.Trigger
             id={selectId}
             className="settings-select__trigger"
             placeholder={placeholder}
@@ -94,9 +99,9 @@ export function SettingsSelect({
           />
           <Select.Content className="settings-select__content" position="popper" sideOffset={4}>
             {normalizedOptions.map((option) => (
-              <Select.Item 
-                key={option.value} 
-                value={option.value} 
+              <Select.Item
+                key={option.value}
+                value={option.value}
                 disabled={option.disabled}
                 className="settings-select__item"
               >
@@ -106,14 +111,9 @@ export function SettingsSelect({
           </Select.Content>
         </Select.Root>
       </Box>
-      {helpText && !error && (
-        <Text as="p" size="1" id={helpId} className="settings-select__help">
-          {helpText}
-        </Text>
-      )}
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-select__error-text">
-          <AlertCircle size={14} />
+          <AlertCircle size={14} aria-hidden="true" />
           {error}
         </Text>
       )}
@@ -140,9 +140,9 @@ SettingsSelect.propTypes = {
   ),
   /** Placeholder text for empty selection */
   placeholder: PropTypes.string,
-  /** Help text displayed below select */
+  /** Help text displayed between label and select */
   helpText: PropTypes.string,
-  /** Error message */
+  /** Error message displayed below select */
   error: PropTypes.string,
   /** Mark field as required */
   required: PropTypes.bool,

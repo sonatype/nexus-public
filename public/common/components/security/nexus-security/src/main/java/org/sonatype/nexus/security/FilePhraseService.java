@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.AbstractPhraseService;
 import org.sonatype.nexus.crypto.PhraseService;
 
@@ -40,13 +38,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("file")
-@Singleton
 public class FilePhraseService
     extends AbstractPhraseService
 {
   private final Supplier<String> masterPhraseSupplier;
 
-  @Inject
+  @Autowired
   public FilePhraseService(@Value("${nexus.security.masterPhraseFile:#{null}}") @Nullable final File masterPhraseFile) {
     super(masterPhraseFile != null);
     this.masterPhraseSupplier = Suppliers.memoize(new Supplier<String>()

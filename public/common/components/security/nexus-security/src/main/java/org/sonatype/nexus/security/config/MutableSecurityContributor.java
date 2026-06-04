@@ -17,9 +17,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Locks;
+import org.sonatype.nexus.common.concurrent.Locks;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.internal.SecurityContributionChangedEvent;
 
@@ -52,7 +52,7 @@ public class MutableSecurityContributor
   @Nullable
   private SecurityConfigurationManager configurationManager;
 
-  @Inject
+  @Autowired
   protected void initialize(final EventManager eventManager, final SecurityConfigurationManager configurationManager) {
     checkState(!initialized, "already initialized");
     this.eventManager = Preconditions.checkNotNull(eventManager);

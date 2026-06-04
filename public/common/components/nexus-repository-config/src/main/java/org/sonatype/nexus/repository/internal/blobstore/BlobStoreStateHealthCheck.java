@@ -16,10 +16,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
@@ -36,13 +34,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("Blob Stores Ready")
-@Singleton
 public class BlobStoreStateHealthCheck
     extends HealthCheck
 {
   private final Provider<BlobStoreManager> blobStoreManagerProvider;
 
-  @Inject
+  @Autowired
   public BlobStoreStateHealthCheck(final Provider<BlobStoreManager> blobStoreManagerProvider) {
     this.blobStoreManagerProvider = Preconditions.checkNotNull(blobStoreManagerProvider);
   }

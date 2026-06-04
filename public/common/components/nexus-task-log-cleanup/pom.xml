@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <artifactId>nexus-task-log-cleanup</artifactId>
@@ -41,11 +41,6 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
     </dependency>
 
     <dependency>

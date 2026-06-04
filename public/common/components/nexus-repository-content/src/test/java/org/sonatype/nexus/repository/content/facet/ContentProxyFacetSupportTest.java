@@ -15,9 +15,6 @@ package org.sonatype.nexus.repository.content.facet;
 import java.io.IOException;
 import java.net.URI;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -42,18 +39,22 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -63,7 +64,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link ContentProxyFacetSupport}
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class ContentProxyFacetSupportTest
 {
   @Mock
@@ -98,7 +99,7 @@ public class ContentProxyFacetSupportTest
 
   private ContentProxyFacetSupport underTest;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     underTest = new ContentProxyFacetSupport()
     {
@@ -238,7 +239,7 @@ public class ContentProxyFacetSupportTest
     }
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void getPayload_withOkResponseButNullEntity_throwsIllegalState() throws IOException {
     URI uri = URI.create("http://remote.example.com/no-entity");
     HttpResponse response = mock(HttpResponse.class);
@@ -255,7 +256,7 @@ public class ContentProxyFacetSupportTest
     when(format.getValue()).thenReturn("maven2");
     when(type.getValue()).thenReturn("proxy");
 
-    underTest.getPayload(repository, uri);
+    assertThrows(IllegalStateException.class, () -> underTest.getPayload(repository, uri));
   }
 
   @Test
@@ -272,7 +273,6 @@ public class ContentProxyFacetSupportTest
     when(statusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
     when(response.getEntity()).thenReturn(entity);
     when(repository.getFormat()).thenReturn(null);
-    when(repository.getType()).thenReturn(type);
 
     Payload result = underTest.getPayload(repository, uri);
 
@@ -324,7 +324,7 @@ public class ContentProxyFacetSupportTest
     }
   }
 
-  @Test(expected = IOException.class)
+  @Test
   public void getPayload_withClientExecuteException_propagatesIOException() throws IOException {
     URI uri = URI.create("http://remote.example.com/fail");
 
@@ -337,7 +337,7 @@ public class ContentProxyFacetSupportTest
     when(format.getValue()).thenReturn("maven2");
     when(type.getValue()).thenReturn("proxy");
 
-    underTest.getPayload(repository, uri);
+    assertThrows(IOException.class, () -> underTest.getPayload(repository, uri));
   }
 
   // --- isNotModified tests (ETag-based blob reuse) ---
@@ -509,8 +509,8 @@ public class ContentProxyFacetSupportTest
         mockResponseWithBothHeaders(HttpStatus.SC_OK, "different-etag", "Fri, 02 Jan 2026 08:56:24 GMT");
     DateTime cachedLastModified = new DateTime(2026, 1, 2, 8, 56, 24, DateTimeZone.UTC);
     Content stale = mockContentWithBothHeaders("original-etag", cachedLastModified);
-    // ETag doesn't match, but Last-Modified matches, so should still reuse blob
-    assertThat(underTest.isNotModified(response, stale), is(true));
+    // ETag doesn't match, but Last-Modified matches, so should download new
+    assertThat(underTest.isNotModified(response, stale), is(false));
   }
 
   private static HttpResponse mockResponseWithEtag(final int statusCode, final String etag) {
@@ -520,12 +520,12 @@ public class ContentProxyFacetSupportTest
     when(response.getStatusLine()).thenReturn(status);
 
     if (etag != null) {
-      when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(true);
-      when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(new BasicHeader(HttpHeaders.ETAG, etag));
+      lenient().when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(true);
+      lenient().when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(new BasicHeader(HttpHeaders.ETAG, etag));
     }
     else {
-      when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
-      when(response.containsHeader("etag")).thenReturn(false);
+      lenient().when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
+      lenient().when(response.containsHeader("etag")).thenReturn(false);
     }
 
     return response;
@@ -537,8 +537,8 @@ public class ContentProxyFacetSupportTest
     when(status.getStatusCode()).thenReturn(statusCode);
     when(response.getStatusLine()).thenReturn(status);
 
-    when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
-    when(response.containsHeader("etag")).thenReturn(true);
+    lenient().when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
+    lenient().when(response.containsHeader("etag")).thenReturn(true);
     when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(null);
     when(response.getFirstHeader("etag")).thenReturn(new BasicHeader("etag", etag));
 
@@ -548,7 +548,7 @@ public class ContentProxyFacetSupportTest
   private static Content mockContentWithEtag(final String etag) {
     Content content = mock(Content.class);
     AttributesMap attributes = new AttributesMap();
-    when(content.getAttributes()).thenReturn(attributes);
+    lenient().when(content.getAttributes()).thenReturn(attributes);
     if (etag != null) {
       attributes.set(Content.CONTENT_ETAG, etag);
     }
@@ -562,8 +562,8 @@ public class ContentProxyFacetSupportTest
     when(response.getStatusLine()).thenReturn(status);
 
     // No ETag
-    when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
-    when(response.containsHeader("etag")).thenReturn(false);
+    lenient().when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
+    lenient().when(response.containsHeader("etag")).thenReturn(false);
     when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(null);
     when(response.getFirstHeader("etag")).thenReturn(null);
 
@@ -586,8 +586,8 @@ public class ContentProxyFacetSupportTest
     when(response.getStatusLine()).thenReturn(status);
 
     // No ETag
-    when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
-    when(response.containsHeader("etag")).thenReturn(false);
+    lenient().when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
+    lenient().when(response.containsHeader("etag")).thenReturn(false);
     when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(null);
     when(response.getFirstHeader("etag")).thenReturn(null);
 
@@ -609,8 +609,8 @@ public class ContentProxyFacetSupportTest
     when(response.getStatusLine()).thenReturn(status);
 
     if (etag != null) {
-      when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(true);
-      when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(new BasicHeader(HttpHeaders.ETAG, etag));
+      lenient().when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(true);
+      lenient().when(response.getFirstHeader(HttpHeaders.ETAG)).thenReturn(new BasicHeader(HttpHeaders.ETAG, etag));
     }
     else {
       when(response.containsHeader(HttpHeaders.ETAG)).thenReturn(false);
@@ -618,8 +618,9 @@ public class ContentProxyFacetSupportTest
     }
 
     if (lastModified != null) {
-      when(response.getFirstHeader(HttpHeaders.LAST_MODIFIED)).thenReturn(
-          new BasicHeader(HttpHeaders.LAST_MODIFIED, lastModified));
+      lenient().when(response.getFirstHeader(HttpHeaders.LAST_MODIFIED))
+          .thenReturn(
+              new BasicHeader(HttpHeaders.LAST_MODIFIED, lastModified));
     }
     else {
       when(response.getFirstHeader(HttpHeaders.LAST_MODIFIED)).thenReturn(null);
@@ -632,7 +633,7 @@ public class ContentProxyFacetSupportTest
   private static Content mockContentWithLastModified(final DateTime lastModified) {
     Content content = mock(Content.class);
     AttributesMap attributes = new AttributesMap();
-    when(content.getAttributes()).thenReturn(attributes);
+    lenient().when(content.getAttributes()).thenReturn(attributes);
     if (lastModified != null) {
       attributes.set(Content.CONTENT_LAST_MODIFIED, lastModified);
     }

@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Enhanced test asset store.
@@ -28,7 +28,7 @@ import jakarta.inject.Inject;
 public class TestAssetStore
     extends AssetStore<TestAssetDAO>
 {
-  @Inject
+  @Autowired
   public TestAssetStore(
       final DataSessionSupplier sessionSupplier,
       final String storeName)

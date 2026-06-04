@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.maliciousrisk;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -29,13 +27,12 @@ import static org.sonatype.nexus.common.app.FeatureFlags.MALWARE_RISK_ON_DISK_NO
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class MaliciousRiskOnDiskStateContributor
     implements StateContributor
 {
   private final Map<String, Object> state;
 
-  @Inject
+  @Autowired
   public MaliciousRiskOnDiskStateContributor(
       @Value(MALWARE_RISK_ENABLED_NAMED_VALUE) final boolean maliciousRiskEnabled,
       @Value(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED_NAMED_VALUE) final boolean maliciousRiskOnDiskNoneAdminOverrideEnabled)

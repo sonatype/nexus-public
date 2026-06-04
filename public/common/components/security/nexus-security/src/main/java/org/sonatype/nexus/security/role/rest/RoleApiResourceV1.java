@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.security.role.rest;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.security.SecuritySystem;
@@ -24,14 +23,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RoleApiResourceV1.RESOURCE_URI)
 public class RoleApiResourceV1
     extends RoleApiResource
 {
   public static final String RESOURCE_URI = SecurityApiConstants.V1_RESOURCE_URI + "roles";
 
-  @Inject
+  @Autowired
   public RoleApiResourceV1(final SecuritySystem securitySystem) {
     super(securitySystem);
   }

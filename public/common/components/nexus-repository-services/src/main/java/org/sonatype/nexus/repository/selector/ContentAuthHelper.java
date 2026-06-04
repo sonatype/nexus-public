@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.selector;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -32,14 +30,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 public class ContentAuthHelper
 {
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
   private final ContentPermissionChecker contentPermissionChecker;
 
-  @Inject
+  @Autowired
   public ContentAuthHelper(
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final ContentPermissionChecker contentPermissionChecker)

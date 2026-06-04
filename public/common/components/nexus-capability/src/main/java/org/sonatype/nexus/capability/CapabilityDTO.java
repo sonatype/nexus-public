@@ -48,6 +48,8 @@ public class CapabilityDTO
 
   private String description;
 
+  private String status;
+
   private Map<String, String> properties;
 
   private Map<String, String> tags;
@@ -70,6 +72,7 @@ public class CapabilityDTO
     error = context.hasFailure();
     stateDescription = context.stateDescription();
     description = capability.description();
+    status = capability.status();
     notes = context.notes();
     properties = filterProperties(context.properties(), capability);
 
@@ -172,6 +175,14 @@ public class CapabilityDTO
     this.description = description;
   }
 
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(final String status) {
+    this.status = status;
+  }
+
   public Map<String, String> getTags() {
     return tags;
   }
@@ -272,6 +283,7 @@ public class CapabilityDTO
         ", state:'" + state + '\'' +
         ", stateDescription:'" + stateDescription + '\'' +
         ", description:'" + description + '\'' +
+        ", status:'" + status + '\'' +
         ", properties:" + properties +
         ", tags:" + tags +
         ')';
@@ -290,13 +302,13 @@ public class CapabilityDTO
         Objects.equals(id, that.id) && Objects.equals(type, that.type) &&
         Objects.equals(typeName, that.typeName) && Objects.equals(notes, that.notes) &&
         Objects.equals(state, that.state) && Objects.equals(stateDescription, that.stateDescription) &&
-        Objects.equals(description, that.description) && Objects.equals(properties, that.properties) &&
-        Objects.equals(tags, that.tags);
+        Objects.equals(description, that.description) && Objects.equals(status, that.status) &&
+        Objects.equals(properties, that.properties) && Objects.equals(tags, that.tags);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(id, type, typeName, notes, enabled, active, error, state, stateDescription, description,
-        properties, tags);
+        status, properties, tags);
   }
 }

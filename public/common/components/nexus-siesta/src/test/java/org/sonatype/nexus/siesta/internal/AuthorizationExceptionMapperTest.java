@@ -154,4 +154,22 @@ class AuthorizationExceptionMapperTest
       assertThat(response.getHeaderString("WWW-Authenticate"), is("Basic realm=\"Nexus\""));
     }
   }
+
+  @Test
+  void shouldReturn403WithoutAuthChallenge_whenUnauthenticatedRequestFromUi() {
+    // Given: user is not authenticated (no principal) but request is from the UI
+    when(subject.getPrincipal()).thenReturn(null);
+    when(subject.isAuthenticated()).thenReturn(false);
+
+    doReturn(httpRequest).when(httpRequestProvider).get();
+    doReturn("true").when(httpRequest).getHeader("X-Nexus-UI");
+
+    // When: converting authorization exception
+    try (Response response = underTest.convert(new AuthorizationException(), "test-id")) {
+      // Then: should return 403 Forbidden without WWW-Authenticate header
+      // to avoid triggering the browser's native auth dialog
+      assertThat(response.getStatus(), is(Status.FORBIDDEN.getStatusCode()));
+      assertThat(response.getHeaderString("WWW-Authenticate"), is(nullValue()));
+    }
+  }
 }

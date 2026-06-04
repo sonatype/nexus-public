@@ -21,6 +21,13 @@ import { configure } from '@testing-library/react';
 // CI machines are CPU-constrained, causing flaky test failures.
 configure({ asyncUtilTimeout: 5000 });
 
+// Mock ResizeObserver for tests (required by some Radix components)
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 let lastValue = 0;
 
 window.crypto = {
@@ -74,7 +81,7 @@ global.NX = {
     error: jest.fn()
   },
   Permissions: {
-    check: jest.fn()
+    check: jest.fn().mockReturnValue(true)
   },
   app: {
     Application: {
@@ -92,6 +99,59 @@ global.NX = {
     requestSession: jest.fn(() => Promise.resolve({status: 204, responseText: ''}))
   }
 };
+
+// Default REST bootstrap state — components import ExtJS from relative path and call
+// window.__nxRestBootstrap for edition/state fallback when ExtJS isn't initialized.
+// Individual tests that need OSS can override window.__nxRestBootstrap.edition.
+window.__nxRestBootstrap = { edition: 'PRO' };
+
+// Reset NX.Permissions.check to return true before every test.
+// Components import ExtJS from relative path and call NX.Permissions.check directly.
+// Individual tests that need canUpdate=false should call:
+//   global.NX.Permissions.check.mockReturnValue(false)
+beforeEach(() => {
+  global.NX?.Permissions?.check?.mockReturnValue(true);
+});
+
+// Default axios mock: prevents JSDOM AggregateError from unmocked XHR.
+// All methods resolve with {data: undefined} by default so production null-guards
+// handle the empty response silently without triggering catch-block console.error.
+//
+// Overriding per test:
+//   jest.spyOn(Axios, 'get').mockResolvedValue({data: ...})  — spies on this mock in any file
+//   jest.mock('axios')  (no factory)                         — Jest auto-mock for that file only;
+//                                                              all methods are jest.fn() returning
+//                                                              undefined, not this factory
+//
+// Mock isolation: jest.config.js sets clearMocks:true, which clears call/instance
+// history after each test but does NOT reset implementations. If a test calls
+// jest.spyOn(Axios, 'get').mockResolvedValue(...), restore it with
+// jest.restoreAllMocks() in afterEach, or use mockResolvedValueOnce instead.
+jest.mock('axios', () => {
+  const emptyResponse = {
+    data: undefined, status: 200, statusText: 'OK',
+    headers: {}, config: { url: '', method: 'get', headers: {} },
+  };
+  const resolved = () => Promise.resolve(emptyResponse);
+  const makeInstance = () => ({
+    get: jest.fn(resolved),
+    post: jest.fn(resolved),
+    put: jest.fn(resolved),
+    delete: jest.fn(resolved),
+    patch: jest.fn(resolved),
+    request: jest.fn(resolved),
+    head: jest.fn(resolved),
+    options: jest.fn(resolved),
+    defaults: { headers: { common: {} }, baseURL: '' },
+    interceptors: {
+      request: { use: jest.fn(() => 0), eject: jest.fn(), clear: jest.fn() },
+      response: { use: jest.fn(() => 0), eject: jest.fn(), clear: jest.fn() },
+    },
+  });
+  const instance = makeInstance();
+  const mockAxios = { ...instance, create: jest.fn(() => makeInstance()) };
+  return { ...mockAxios, default: mockAxios };
+});
 
 // Mock @xstate/react to force devTools: false in tests to reduce console noise
 jest.mock('@xstate/react', () => {

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -71,7 +71,7 @@ public abstract class RepositoryTaskSupport
     super(taskLoggingEnabled);
   }
 
-  @Inject
+  @Autowired
   public void install(final RepositoryManager repositoryManager, @Qualifier(GroupType.NAME) final Type groupType) {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.groupType = checkNotNull(groupType, "repository group type required");

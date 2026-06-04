@@ -21,9 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -49,7 +47,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = STORAGE)
 public class DatabaseStatusDelayedExecutor
     extends StateGuardLifecycleSupport
@@ -59,7 +56,7 @@ public class DatabaseStatusDelayedExecutor
 
   private ExecutorService executor;
 
-  @Inject
+  @Autowired
   public DatabaseStatusDelayedExecutor(
       @Value("${nexus.delayedExecutor.threadPoolSize:1}") final int delayedExecutorThreadPoolSize)
   {

@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.property;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

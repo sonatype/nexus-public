@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.realm;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
@@ -24,14 +23,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RealmApiResourceV1.RESOURCE_URL)
 public class RealmApiResourceV1
     extends RealmApiResource
 {
   static final String RESOURCE_URL = APIConstants.V1_API_PREFIX + "/security/realms";
 
-  @Inject
+  @Autowired
   public RealmApiResourceV1(final RealmManager realmManager) {
     super(realmManager);
   }

@@ -18,8 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -68,7 +67,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENA
  * REST resource for checking API access for users and roles.
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
@@ -91,7 +89,7 @@ public class ApiAccessCheckResource
 
   private final RolePermissionResolver rolePermissionResolver;
 
-  @Inject
+  @Autowired
   public ApiAccessCheckResource(
       final SecuritySystem securitySystem,
       final SecurityHelper securityHelper,

@@ -192,6 +192,16 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
           var repositoryName = assetModel.get('repositoryName'),
               assetName = assetModel.get('name');
           return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + encodePath(assetName), assetName);
+      },
+      alpine: function (me, assetModel) {
+        var repositoryName = assetModel.get('repositoryName'),
+            assetName = assetModel.get('name');
+        return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + encodePath(assetName), assetName);
+      },
+      ansiblegalaxy: function (me, assetModel) {
+          var repositoryName = assetModel.get('repositoryName'),
+              assetName = assetModel.get('name');
+          return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + encodePath(assetName), assetName);
       }
   },
 
@@ -220,6 +230,12 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
     //</if>
 
     var linkStrategy = this.repositoryUrlStrategies[format];
+
+    if (!linkStrategy) {
+      // Fallback to a default strategy
+      linkStrategy = this.repositoryUrlStrategies.raw;
+    }
+
     return linkStrategy(this, assetModel);
   }
 });

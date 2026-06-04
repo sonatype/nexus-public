@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.supportzip.ExportConfigData;
 import org.sonatype.nexus.supportzip.ImportData;
@@ -33,14 +31,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("httpClientConfigurationExport")
-@Singleton
 public class HttpClientConfigurationExport
     extends JsonExporter
     implements ExportConfigData, ImportData
 {
   private final HttpClientConfigurationStore store;
 
-  @Inject
+  @Autowired
   public HttpClientConfigurationExport(final HttpClientConfigurationStore store) {
     this.store = store;
   }

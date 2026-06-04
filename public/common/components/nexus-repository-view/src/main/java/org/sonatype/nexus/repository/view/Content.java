@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Optional;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -52,10 +53,11 @@ public class Content
   public static final String CONTENT_ETAG = "etag";
 
   /**
-   * Key of content "PCCS Hash" attribute, with type {@link String}. Stores the hash of the PCCS filtered versions for a
-   * component, if PCCS filtering was applied.
+   * Key of content "Vary" attribute, with type {@link String}. The value is emitted on the HTTP
+   * {@code Vary} response header by {@code ContentHeadersHandler} to signal which request headers
+   * produced format-dependent responses (typically {@code Accept} for content negotiation).
    */
-  public static final String CONTENT_PCCS_HASH = "pccs_hash";
+  public static final String CONTENT_VARY = "Vary";
 
   /**
    * Common prefix for external metadata attributes to be stored in {@link Content#attributes}

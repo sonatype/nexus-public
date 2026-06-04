@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Browse node store.
@@ -32,7 +32,7 @@ import jakarta.inject.Inject;
 public class BrowseNodeStore<T extends BrowseNodeDAO>
     extends ContentStoreSupport<T>
 {
-  @Inject
+  @Autowired
   public BrowseNodeStore(
       final DataSessionSupplier sessionSupplier,
       final String contentStoreName,

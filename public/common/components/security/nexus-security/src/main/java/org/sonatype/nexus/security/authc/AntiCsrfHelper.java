@@ -25,8 +25,7 @@ import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.HttpHeaders;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.subject.Subject;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.16
  */
 @Component
-@Singleton
 public class AntiCsrfHelper
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -58,7 +56,7 @@ public class AntiCsrfHelper
 
   private final boolean secFetchHeaderEnabled;
 
-  @Inject
+  @Autowired
   public AntiCsrfHelper(
       @Value("${" + ENABLED + ":true}") final boolean enabled,
       @Value("${" + SEC_FETCH_SITE_HEADER_ENABLED + ":true}") final boolean secFetchHeaderEnabled,

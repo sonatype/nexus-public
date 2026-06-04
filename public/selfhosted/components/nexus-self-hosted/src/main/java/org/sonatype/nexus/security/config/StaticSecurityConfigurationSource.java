@@ -18,10 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
@@ -44,8 +41,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("static")
-@Singleton
-@Priority(Integer.MIN_VALUE)
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class StaticSecurityConfigurationSource
     implements SecurityConfigurationSource
@@ -64,7 +59,7 @@ public class StaticSecurityConfigurationSource
 
   public static final String ANONYMOUS = "anonymous";
 
-  @Inject
+  @Autowired
   public StaticSecurityConfigurationSource(
       final PasswordService passwordService,
       @Nullable final AdminPasswordSource adminPasswordSource,

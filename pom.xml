@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.92.3-01</version>
+  <version>3.93.0-06</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.92.3-01</nexus.version>
+    <nexus.version>3.93.0-06</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>3.5.14</spring-boot.version>
@@ -87,7 +87,7 @@
     <it.test.log.level>INFO</it.test.log.level>
 
     <!--
-    Default compile support for Java21+
+    Default compile support for Java21
     -->
     <maven.compiler.release>21</maven.compiler.release>
     <maven.compiler.source>21</maven.compiler.source>
@@ -125,7 +125,6 @@
     <test.includedGroups></test.includedGroups>
 
     <test.excludedGroups>
-      org.sonatype.goodies.testsupport.group.Perf,
       org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
     </test.excludedGroups>
 
@@ -137,7 +136,7 @@
     <!-- max heap memory for surefire-plugin -->
     <surefire.maxHeap>-Xmx300M</surefire.maxHeap>
     <mockito.version>5.21.0</mockito.version>
-    <aspectjtools.version>1.9.24</aspectjtools.version>
+    <aspectjtools.version>1.9.25.1</aspectjtools.version>
   </properties>
 
   <modules>
@@ -215,7 +214,7 @@
             <dependency>
               <groupId>org.codehaus.groovy</groupId>
               <artifactId>groovy-ant</artifactId>
-              <version>3.0.19</version>
+              <version>3.0.25</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -229,7 +228,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.92.3-01</version>
+          <version>3.93.0-06</version>
           <executions>
             <execution>
               <goals>
@@ -678,8 +677,8 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <!-- Overridden due to parent pom defining a version which does not support java 17 -->
-          <version>3.15.0</version>
+          <!-- Overridden due to parent pom defining a version which does not support java 25 -->
+          <version>3.15.2</version>
         </plugin>
 
         <plugin>
@@ -743,17 +742,17 @@
               <fail>true</fail>
               <rules>
                 <!--
-                Require Maven 3.9.6+ for java21 support
+                Require Maven 3.9.6+ for java25 support
                 -->
                 <requireMavenVersion>
                   <version>[3.9.6,)</version>
                 </requireMavenVersion>
 
                 <!--
-                Require Java 21+
+                Require Java 25+
                 -->
                 <requireJavaVersion>
-                  <version>[21,)</version>
+                  <version>[25,)</version>
                 </requireJavaVersion>
 
                 <!--
@@ -881,6 +880,8 @@
                     -->
                     <exclude>org.bouncycastle:*-jdk14:*</exclude>
                     <exclude>org.bouncycastle:*-jdk15:*</exclude>
+                    <exclude>org.bouncycastle:*-jdk15on:*</exclude>
+                    <exclude>org.bouncycastle:*-jdk15to18:*</exclude>
                     <exclude>bouncycastle:*-jdk14:*</exclude>
                     <exclude>bouncycastle:*-jdk15:*</exclude>
 
@@ -900,6 +901,14 @@
                     <exclude>javax.xml.bind:jaxb-api:*</exclude>
                     <exclude>com.sun.xml.bind:jaxb-core:*</exclude>
                     <exclude>com.sun.xml.bind:jaxb-impl:*</exclude>
+
+                    <!--
+                    Banned goodies artifacts — functionality has been inlined or replaced.
+                    -->
+                    <exclude>org.sonatype.goodies:goodies-testsupport</exclude>
+                    <exclude>org.sonatype.goodies:goodies-prefs</exclude>
+                    <exclude>org.sonatype.goodies:goodies-common</exclude>
+                    <exclude>org.sonatype.goodies:goodies-i18n</exclude>
                   </excludes>
 
                   <!--
@@ -1084,17 +1093,7 @@
       <id>h2-unit-tests</id>
       <properties>
         <test.excludedGroups>
-          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
-          org.sonatype.goodies.testsupport.group.Perf
-        </test.excludedGroups>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>postgres-unit-tests</id>
-      <properties>
-        <test.excludedGroups>
-          org.sonatype.goodies.testsupport.group.Perf
+          org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
         </test.excludedGroups>
       </properties>
     </profile>

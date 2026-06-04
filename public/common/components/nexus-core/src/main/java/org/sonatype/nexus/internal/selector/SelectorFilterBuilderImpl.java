@@ -17,9 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
@@ -33,7 +31,6 @@ import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class SelectorFilterBuilderImpl
     implements SelectorFilterBuilder
 {
@@ -43,7 +40,7 @@ public class SelectorFilterBuilderImpl
 
   private final SelectorManager selectorManager;
 
-  @Inject
+  @Autowired
   public SelectorFilterBuilderImpl(final SelectorManager selectorManager) {
     this.selectorManager = requireNonNull(selectorManager);
   }

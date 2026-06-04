@@ -15,12 +15,12 @@ package org.sonatype.nexus.repository.apt.datastore.data;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.kv.KeyValueStore;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class AptKeyValueStore
     extends KeyValueStore<AptKeyValueDAO>
 {
-  @Inject
+  @Autowired
   public AptKeyValueStore(final DataSessionSupplier sessionSupplier, final String contentStoreName) {
     super(sessionSupplier, contentStoreName, AptKeyValueDAO.class);
   }

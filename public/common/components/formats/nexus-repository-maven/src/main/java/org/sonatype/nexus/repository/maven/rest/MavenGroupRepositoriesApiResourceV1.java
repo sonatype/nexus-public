@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class MavenGroupRepositoriesApiResourceV1
     extends MavenGroupRepositoriesApiResource

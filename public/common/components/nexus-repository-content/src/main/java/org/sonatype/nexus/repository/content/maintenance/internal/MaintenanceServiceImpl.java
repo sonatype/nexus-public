@@ -18,9 +18,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import jakarta.inject.Named;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.MissingFacetException;
@@ -58,7 +57,6 @@ import static org.sonatype.nexus.thread.NexusExecutorService.forCurrentSubject;
  * @since 3.26
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class MaintenanceServiceImpl
     implements MaintenanceService
 {
@@ -76,13 +74,13 @@ public class MaintenanceServiceImpl
 
   private final DatabaseCheck databaseCheck;
 
-  @Inject
+  @Autowired
   public MaintenanceServiceImpl(
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final RepositoryPermissionChecker repositoryPermissionChecker,
       final DeleteFolderService deleteFolderService,
-      final ExecutorService executorService,
+      @Named("org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor") final ExecutorService executorService,
       final DatabaseCheck databaseCheck)
   {
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);

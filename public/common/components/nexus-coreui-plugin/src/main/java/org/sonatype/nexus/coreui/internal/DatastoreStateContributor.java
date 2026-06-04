@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.rapture.StateContributor;
 
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_IS_POSTGRESQL;
 
-@Singleton
 @Component
 public class DatastoreStateContributor
     implements StateContributor
@@ -34,7 +31,7 @@ public class DatastoreStateContributor
 
   private Map<String, Object> state;
 
-  @Inject
+  @Autowired
   public DatastoreStateContributor(final DatabaseCheck dbCheck) {
     this.dbCheck = checkNotNull(dbCheck);
   }

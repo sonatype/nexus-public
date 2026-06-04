@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.secrets.tasks;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -27,7 +25,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = SECRETS_MIGRATION_VERSION)
 @Component
 @Qualifier(ReEncryptTaskDescriptor.TYPE_ID)
-@Singleton
 public class ReEncryptTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -37,7 +34,7 @@ public class ReEncryptTaskDescriptor
 
   public static final String VISIBLE_FLAG_VALUE = "${nexus.secrets.re-encrypt.task.visible:false}";
 
-  @Inject
+  @Autowired
   public ReEncryptTaskDescriptor(
       @Value(EXPOSED_FLAG_VALUE) final boolean exposed,
       @Value(VISIBLE_FLAG_VALUE) final boolean visible)

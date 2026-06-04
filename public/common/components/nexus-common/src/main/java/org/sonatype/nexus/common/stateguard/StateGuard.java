@@ -19,8 +19,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.Locks;
-import org.sonatype.goodies.common.Loggers;
+import org.sonatype.nexus.common.concurrent.Locks;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -312,7 +312,7 @@ public class StateGuard
    */
   public static class Builder
   {
-    private static final Logger defaultLogger = Loggers.getLogger(StateGuard.class);
+    private static final Logger defaultLogger = LoggerFactory.getLogger(StateGuard.class);
 
     private Logger logger;
 

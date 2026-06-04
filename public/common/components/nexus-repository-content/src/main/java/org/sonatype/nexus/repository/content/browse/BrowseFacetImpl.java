@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -87,7 +87,7 @@ public class BrowseFacetImpl
 
   private BrowseNodeManager browseNodeManager;
 
-  @Inject
+  @Autowired
   public BrowseFacetImpl(
       final List<FormatStoreManager> formatStoreManagersByFormatList,
       final List<BrowseNodeGenerator> browseNodeGeneratorsByFormatList,

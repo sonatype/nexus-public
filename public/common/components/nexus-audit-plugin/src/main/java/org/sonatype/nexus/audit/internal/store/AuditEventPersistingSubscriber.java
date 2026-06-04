@@ -15,9 +15,7 @@ package org.sonatype.nexus.audit.internal.store;
 import java.time.ZoneOffset;
 import java.util.Date;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.common.app.FeatureFlags;
@@ -32,7 +30,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @ConditionalOnProperty(name = FeatureFlags.PREVIEW_UI_AUDIT_ENABLED, havingValue = "true")
 public class AuditEventPersistingSubscriber
     implements EventAware
@@ -41,7 +38,7 @@ public class AuditEventPersistingSubscriber
 
   private final AuditEventStore auditEventStore;
 
-  @Inject
+  @Autowired
   public AuditEventPersistingSubscriber(final AuditEventStore auditEventStore) {
     this.auditEventStore = auditEventStore;
   }

@@ -19,10 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -33,7 +30,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.MAX_VALUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
 import static org.sonatype.nexus.supportzip.datastore.RestoreHelper.FILE_SUFFIX;
 import org.springframework.stereotype.Component;
@@ -45,8 +41,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Singleton
-@Priority(MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ManagedLifecycle(phase = RESTORE)
 public class SupportRestorer
@@ -56,7 +50,7 @@ public class SupportRestorer
 
   private final Map<String, ImportData> importDataByName;
 
-  @Inject
+  @Autowired
   public SupportRestorer(
       final RestoreHelper restoreHelper,
       final List<ImportData> importDataByNameList)

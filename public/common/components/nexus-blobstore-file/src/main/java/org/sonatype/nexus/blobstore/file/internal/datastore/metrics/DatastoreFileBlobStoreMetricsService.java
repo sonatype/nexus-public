@@ -17,8 +17,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
@@ -39,13 +38,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
 @Qualifier(FileBlobStore.TYPE)
-@Priority(Integer.MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DatastoreFileBlobStoreMetricsService
     extends DatastoreBlobStoreMetricsServiceSupport<FileBlobStore>
 {
-  @Inject
+  @Autowired
   public DatastoreFileBlobStoreMetricsService(
       @Value("${nexus.blobstore.metrics.flushInterval:2}") final int metricsFlushPeriodSeconds,
       final BlobStoreMetricsStore blobStoreMetricsStore,

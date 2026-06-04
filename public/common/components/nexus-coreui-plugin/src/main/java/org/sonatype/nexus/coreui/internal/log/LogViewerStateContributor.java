@@ -16,22 +16,19 @@ import java.util.Collections;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class LogViewerStateContributor
     implements StateContributor
 {
   private final boolean enabled;
 
-  @Inject
+  @Autowired
   public LogViewerStateContributor(@Value("${nexus.datastore.clustered.enabled:false}") final boolean enabled) {
     this.enabled = enabled;
   }

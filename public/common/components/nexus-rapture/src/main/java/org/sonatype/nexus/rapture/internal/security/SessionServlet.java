@@ -24,8 +24,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authc.LoginEvent;
 import org.sonatype.nexus.security.authc.LogoutEvent;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
@@ -49,7 +48,6 @@ import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
  */
 @WebServlet(SessionServlet.SESSION_MP)
 @Component
-@Singleton
 @ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true")
 public class SessionServlet
     extends HttpServlet
@@ -60,7 +58,7 @@ public class SessionServlet
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public SessionServlet(final EventManager eventManager) {
     this.eventManager = eventManager;
   }

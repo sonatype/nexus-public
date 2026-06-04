@@ -14,7 +14,7 @@ package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.sequence.ThreadLocalSplittableRandom;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.sonatype.goodies.common.Time.millis;
+import static org.sonatype.nexus.common.time.Time.millis;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getString;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getTime;

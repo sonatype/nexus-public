@@ -19,9 +19,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.zip.ZipFile;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.datastore.DataStoreRestorer;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
@@ -43,7 +41,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class DataStoreRestorerLocalImpl
     implements DataStoreRestorer
 {
@@ -51,7 +48,7 @@ public class DataStoreRestorerLocalImpl
 
   private final ApplicationDirectories applicationDirectories;
 
-  @Inject
+  @Autowired
   public DataStoreRestorerLocalImpl(final ApplicationDirectories applicationDirectories) {
     this.applicationDirectories = checkNotNull(applicationDirectories);
   }

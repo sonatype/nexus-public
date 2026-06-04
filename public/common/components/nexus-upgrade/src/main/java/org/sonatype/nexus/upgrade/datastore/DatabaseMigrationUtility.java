@@ -16,7 +16,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Component;
  * @see DatabaseMigrationStep
  */
 @Component
-@Singleton
 public class DatabaseMigrationUtility
 {
   public boolean isH2(final Connection conn) throws SQLException {

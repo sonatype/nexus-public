@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -42,7 +42,7 @@ public class H2BackupTask
 
   private final ApplicationDirectories applicationDirectories;
 
-  @Inject
+  @Autowired
   public H2BackupTask(final DataStoreManager dataStoreManager, final ApplicationDirectories applicationDirectories) {
     this.dataStoreManager = checkNotNull(dataStoreManager);
     this.applicationDirectories = checkNotNull(applicationDirectories);

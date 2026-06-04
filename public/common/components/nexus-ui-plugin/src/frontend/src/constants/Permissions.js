@@ -39,7 +39,7 @@ function generatePermissions(permission, options = crudOptions) {
   return pick(options, permissions);
 }
 
-export default {
+const Permissions = {
   ADMIN: 'nexus:*',
   REPOSITORY_ADMIN: {
     READ: 'nexus:repository-admin:*:*:read',
@@ -67,3 +67,9 @@ export default {
   MIGRATION: generatePermissions('migration', [READ]),
   AUDIT: generatePermissions('audit', [READ]),
 };
+
+export default Permissions;
+
+// Named re-export so consumers using `import { Permissions } from '...'` get
+// the same dictionary as the default export under Babel CJS interop.
+export { Permissions };

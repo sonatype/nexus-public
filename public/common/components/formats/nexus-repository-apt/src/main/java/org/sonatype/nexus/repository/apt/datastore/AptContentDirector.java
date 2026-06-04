@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptHostedMetadataFacet;
@@ -48,7 +46,6 @@ import org.slf4j.LoggerFactory;
  */
 @Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptContentDirector
     implements ContentDirector
 {
@@ -64,7 +61,7 @@ public class AptContentDirector
 
   private static final String DISTS_PREFIX = "/dists/";
 
-  @Inject
+  @Autowired
   public AptContentDirector(final RepositoryManager repositoryManager) {
     this.repositoryManager = repositoryManager;
   }

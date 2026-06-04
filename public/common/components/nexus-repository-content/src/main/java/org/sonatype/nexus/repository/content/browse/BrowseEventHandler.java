@@ -23,9 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
@@ -76,7 +74,6 @@ import org.springframework.stereotype.Component;
  */
 @ManagedLifecycle(phase = SERVICES)
 @Component
-@Singleton
 public class BrowseEventHandler
     extends BrowseNodeEventHandlerSupport
     implements BrowseNodeEventHandler, EventAware // warning: don't make this EventAware.Asynchronous
@@ -122,7 +119,7 @@ public class BrowseEventHandler
   // simple flag stating whether or not there is a need to fire flush events
   private volatile boolean flushQueued;
 
-  @Inject
+  @Autowired
   public BrowseEventHandler(
       final Cooperation2Factory cooperation2Factory,
       final PeriodicJobService periodicJobService,

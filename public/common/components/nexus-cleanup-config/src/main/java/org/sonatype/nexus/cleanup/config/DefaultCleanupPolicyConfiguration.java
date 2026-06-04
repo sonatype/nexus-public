@@ -14,8 +14,6 @@ package org.sonatype.nexus.cleanup.config;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
@@ -36,7 +34,6 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SO
 @Primary
 @Component
 @Qualifier(DefaultCleanupPolicyConfiguration.NAME)
-@Singleton
 public class DefaultCleanupPolicyConfiguration
     implements CleanupPolicyConfiguration
 {

@@ -17,9 +17,7 @@ import java.nio.CharBuffer;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 
@@ -36,7 +34,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class MavenCipherImpl
     implements MavenCipher
 {
@@ -54,7 +51,7 @@ public class MavenCipherImpl
 
   private final PasswordCipher passwordCipher;
 
-  @Inject
+  @Autowired
   public MavenCipherImpl(final CryptoHelper cryptoHelper) {
     this.passwordCipher = new PasswordCipher(cryptoHelper);
   }

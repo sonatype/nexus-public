@@ -16,9 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappingsService;
 import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
@@ -36,7 +34,6 @@ import org.springframework.stereotype.Component;
  * @since 3.7
  */
 @Component
-@Singleton
 public class SearchParameterContributor
     extends ParameterContributor<QueryParameter>
 {
@@ -47,7 +44,7 @@ public class SearchParameterContributor
       SearchResource.RESOURCE_URI + SearchResource.SEARCH_ASSET_URI,
       SearchResource.RESOURCE_URI + SearchResource.SEARCH_AND_DOWNLOAD_URI);
 
-  @Inject
+  @Autowired
   public SearchParameterContributor(final SearchMappingsService searchMappings) {
     super(HTTP_METHODS, PATHS, transformMappings(searchMappings.getAllMappings()));
   }

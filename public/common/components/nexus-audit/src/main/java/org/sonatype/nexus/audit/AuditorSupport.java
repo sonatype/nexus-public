@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.text.Strings2;
@@ -79,7 +79,7 @@ public abstract class AuditorSupport
    */
   private Map<Class, String> typeLookup = new HashMap<>();
 
-  @Inject
+  @Autowired
   public void setAuditRecorder(final AuditRecorder auditRecorder) {
     this.auditRecorder = auditRecorder;
   }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.content.example.internal.recipe;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.SecurityFacetSupport;
@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 public class ExampleSecurityFacet
     extends SecurityFacetSupport
 {
-  @Inject
+  @Autowired
   public ExampleSecurityFacet(
       final ExampleFormatSecurityContributor securityContributor,
       @Qualifier("simple") final VariableResolverAdapter variableResolverAdapter,

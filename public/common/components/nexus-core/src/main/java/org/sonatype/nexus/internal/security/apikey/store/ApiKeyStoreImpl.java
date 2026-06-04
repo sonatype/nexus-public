@@ -14,14 +14,13 @@ package org.sonatype.nexus.internal.security.apikey.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -40,12 +39,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Deprecated
 @Component
 @Qualifier("v1")
-@Singleton
 public class ApiKeyStoreImpl
     extends ConfigStoreSupport<ApiKeyDAO>
     implements ApiKeyStore, EventAware
 {
-  @Inject
+  @Autowired
   public ApiKeyStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }
@@ -155,6 +153,13 @@ public class ApiKeyStoreImpl
   {
     dao().update(
         new ApiKeyData(from.getDomain(), principalCollection, new ApiKeyToken(from.getApiKey()), from.getCreated()));
+  }
+
+  @Override
+  public Collection<ApiKeyInternal> browseAll(final int page, final int pageSize) {
+    // This deprecated V1 store does not support bulk pagination; it always returns an empty list.
+    // API key export requires secrets migration to be complete so that keys are served by the V2 store.
+    return Collections.emptyList();
   }
 
   @Transactional

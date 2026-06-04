@@ -64,6 +64,14 @@ public interface ApiKeyV2DAO
       @Param("created") OffsetDateTime created);
 
   /**
+   * Browse all API Keys across all domains (paginated)
+   *
+   * @param skip the amount of records to skip/offset
+   * @param limit the amount of records to limit the query to
+   */
+  Collection<ApiKeyInternal> browseAll(@Param("skip") int skip, @Param("limit") int limit);
+
+  /**
    * Browse all API Keys in the specified domain (paginated)
    *
    * @param domain the domain, e.g. npm keys, nuget keys

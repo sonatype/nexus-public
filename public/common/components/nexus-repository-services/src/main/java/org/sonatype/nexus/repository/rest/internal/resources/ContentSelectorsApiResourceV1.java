@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -29,14 +28,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class ContentSelectorsApiResourceV1
     extends ContentSelectorsApiResource
 {
   static final String RESOURCE_URI = SecurityApiConstants.V1_RESOURCE_URI + "content-selectors";
 
-  @Inject
+  @Autowired
   public ContentSelectorsApiResourceV1(
       final SelectorFactory selectorFactory,
       final SelectorManager selectorManager,

@@ -22,8 +22,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.web.filter.mgt.FilterChainResolver;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.apache.shiro.web.servlet.AbstractShiroFilter;
@@ -41,7 +40,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
  */
 @WebFilter("/*")
 @ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true", matchIfMissing = true)
-@Singleton
 public class SecurityFilter
     extends AbstractShiroFilter
 {
@@ -51,7 +49,7 @@ public class SecurityFilter
 
   public static final String ATTR_USER_ID = "nexus.user.id";
 
-  @Inject
+  @Autowired
   public SecurityFilter(
       final WebSecurityManager webSecurityManager,
       final FilterChainResolver filterChainResolver)

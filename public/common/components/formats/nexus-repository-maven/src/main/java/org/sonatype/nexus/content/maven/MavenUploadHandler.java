@@ -22,9 +22,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -70,13 +68,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenUploadHandler
     extends MavenUploadHandlerSupport
 {
   private final MimeSupport mimeSupport;
 
-  @Inject
+  @Autowired
   public MavenUploadHandler(
       final Maven2MavenPathParser parser,
       @Qualifier(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,

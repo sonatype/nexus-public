@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -26,14 +24,13 @@ import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ROLES_MODAL_ENABL
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ROLES_MODAL_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
-@Singleton
 @Component
 public class RolesModalStateContributor
     implements StateContributor
 {
   private final boolean isRolesModalEnabled;
 
-  @Inject
+  @Autowired
   public RolesModalStateContributor(
       @Value(REACT_ROLES_MODAL_NAMED_VALUE) final boolean isRolesModalEnabled)
   {

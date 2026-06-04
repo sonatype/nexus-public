@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.status;
 
-import jakarta.inject.Singleton;
-
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,7 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("Available CPUs")
-@Singleton
 public class AvailableCpuHealthCheck
     extends HealthCheckComponentSupport
 {

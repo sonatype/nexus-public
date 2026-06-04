@@ -17,8 +17,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
@@ -42,7 +40,6 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 public class ContentFacetFinder
     implements EventAware
 {

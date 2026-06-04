@@ -19,9 +19,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 
@@ -32,13 +30,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class SecretTypeHandler
     extends BaseTypeHandler<Secret>
 {
   private final SecretsFactory factory;
 
-  @Inject
+  @Autowired
   public SecretTypeHandler(final SecretsFactory factory) {
     this.factory = checkNotNull(factory);
   }

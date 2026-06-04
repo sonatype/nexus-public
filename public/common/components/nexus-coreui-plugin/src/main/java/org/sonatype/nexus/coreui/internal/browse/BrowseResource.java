@@ -18,8 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -72,7 +71,6 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
  */
 @Api(value = "Repository Browse")
 @Component
-@Singleton
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path(BrowseResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
@@ -99,7 +97,7 @@ public class BrowseResource
 
   private final ComponentHelper componentHelper;
 
-  @Inject
+  @Autowired
   public BrowseResource(
       final RepositoryManager repositoryManager,
       final BrowseNodeQueryService browseNodeQueryService,

@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.role.rest;
 import java.util.Comparator;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -84,7 +84,7 @@ public class RoleApiResource
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public RoleApiResource(final SecuritySystem securitySystem) {
     this.securitySystem = checkNotNull(securitySystem);
   }

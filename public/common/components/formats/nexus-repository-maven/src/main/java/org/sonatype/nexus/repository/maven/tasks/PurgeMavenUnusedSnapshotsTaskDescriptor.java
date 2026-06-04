@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class PurgeMavenUnusedSnapshotsTaskDescriptor
     extends TaskDescriptorSupport
 {

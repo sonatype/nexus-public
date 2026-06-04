@@ -31,8 +31,7 @@ import io.swagger.models.Info;
 import io.swagger.models.Model;
 import io.swagger.models.Swagger;
 import io.swagger.models.properties.Property;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 
@@ -44,7 +43,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.3
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class SwaggerModel
 {
   private final ApplicationVersion applicationVersion;
@@ -53,7 +51,7 @@ public class SwaggerModel
 
   private final List<SwaggerContributor> contributors;
 
-  @Inject
+  @Autowired
   public SwaggerModel(
       final ApplicationVersion applicationVersion,
       final List<SwaggerContributor> contributors)

@@ -17,7 +17,7 @@ import java.net.URI;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
@@ -64,7 +64,7 @@ public class MavenProxyFacet
 
   private final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport;
 
-  @Inject
+  @Autowired
   public MavenProxyFacet(
       final ConstraintViolationFactory constraintViolationFactory,
       final MavenProxyRequestHeaderSupport mavenProxyRequestHeaderSupport)

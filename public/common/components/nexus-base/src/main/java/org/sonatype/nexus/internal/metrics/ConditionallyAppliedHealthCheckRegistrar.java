@@ -21,15 +21,13 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.systemchecks.ConditionallyAppliedHealthCheck;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 @Component
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class ConditionallyAppliedHealthCheckRegistrar
     extends StateGuardLifecycleSupport
@@ -38,7 +36,7 @@ public class ConditionallyAppliedHealthCheckRegistrar
 
   private final Map<String, ConditionallyAppliedHealthCheck> conditionallyAppliedHealthChecks;
 
-  @Inject
+  @Autowired
   public ConditionallyAppliedHealthCheckRegistrar(
       final HealthCheckRegistry healthCheckRegistry,
       final List<ConditionallyAppliedHealthCheck> conditionallyAppliedHealthChecksList)

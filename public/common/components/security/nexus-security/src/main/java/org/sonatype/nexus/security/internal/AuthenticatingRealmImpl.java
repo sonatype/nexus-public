@@ -14,9 +14,7 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.ConcurrentModificationException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.Description;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
@@ -57,7 +55,6 @@ import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DESCRIP
  *
  * This realm ONLY handles authentication.
  */
-@Singleton
 @Component
 @Qualifier(DEFAULT_REALM_NAME)
 @Description(DESCRIPTION)
@@ -79,7 +76,7 @@ public class AuthenticatingRealmImpl
 
   private final Integer configuredIterations;
 
-  @Inject
+  @Autowired
   public AuthenticatingRealmImpl(
       final SecurityConfigurationManager configuration,
       final PasswordService passwordService,

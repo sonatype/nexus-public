@@ -104,7 +104,7 @@ class AssetXOTest
     when(assetSearchResult.getId()).thenReturn("resource-id");
     when(assetSearchResult.getFormat()).thenReturn("test-format");
     java.util.Date blobCreatedDate = new java.util.Date();
-    when(assetSearchResult.getBlobCreated()).thenReturn(blobCreatedDate);
+    when(assetSearchResult.getCreated()).thenReturn(blobCreatedDate);
 
     AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
 
@@ -120,7 +120,7 @@ class AssetXOTest
     when(assetSearchResult.getId()).thenReturn("resource-id");
     when(assetSearchResult.getFormat()).thenReturn("test-format");
     java.util.Date blobUpdatedDate = new java.util.Date();
-    when(assetSearchResult.getBlobUpdated()).thenReturn(blobUpdatedDate);
+    when(assetSearchResult.getBinaryUpdated()).thenReturn(blobUpdatedDate);
 
     AssetXO assetXO = AssetXO.from(assetSearchResult, repository, null);
 

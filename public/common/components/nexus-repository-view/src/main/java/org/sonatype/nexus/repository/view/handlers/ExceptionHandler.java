@@ -14,8 +14,11 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -67,7 +70,59 @@ public class ExceptionHandler
       }
       return HttpResponses.notFound(e.getMessage());
     }
+    catch (BlobStoreWarmingUpException e) {
+      // Blob store connection pool is still initializing (temporary, retry-able)
+      log.info("Blob store '{}' warming up for {} {}, returning 503 to trigger client retry",
+          e.getBlobStoreName(),
+          context.getRequest().getAction(),
+          context.getRequest().getPath());
+      return HttpResponses.serviceUnavailable("Blob store warming up, please retry in a moment");
+    }
+    catch (MissingBlobException e) {
+      // CRITICAL: Blob exists in metadata but missing from storage (data corruption, not retry-able)
+      log.error("BLOB DATA LOSS: Blob {} missing from storage for {} {} - this indicates data corruption",
+          e.getBlobRef(),
+          context.getRequest().getAction(),
+          context.getRequest().getPath());
+      throw e; // Propagate as 500 error
+    }
+    catch (InvalidStateException e) {
+      // Generic invalid state (e.g., stopped repository, failed repository - not retry-able)
+      log.warn("Invalid state for {} {}: {}",
+          context.getRequest().getAction(),
+          context.getRequest().getPath(),
+          e.getMessage());
+      throw e; // Propagate as 500 error
+    }
     catch (Exception e) {
+      // Walk the cause chain to find wrapped exceptions (handles multi-level wrapping)
+      Throwable cause = e.getCause();
+      while (cause != null) {
+        if (cause instanceof BlobStoreWarmingUpException) {
+          // Blob store connection pool is still initializing (temporary, retry-able)
+          log.info("Blob store '{}' warming up for {} {} (wrapped), returning 503",
+              ((BlobStoreWarmingUpException) cause).getBlobStoreName(),
+              context.getRequest().getAction(),
+              context.getRequest().getPath());
+          return HttpResponses.serviceUnavailable("Blob store warming up, please retry in a moment");
+        }
+        if (cause instanceof MissingBlobException) {
+          // CRITICAL: Blob exists in metadata but missing from storage (data corruption, not retry-able)
+          log.error("BLOB DATA LOSS: Blob {} missing from storage for {} {} (wrapped) - data corruption",
+              ((MissingBlobException) cause).getBlobRef(),
+              context.getRequest().getAction(),
+              context.getRequest().getPath());
+          throw e; // Propagate as 500 error
+        }
+        if (cause instanceof InvalidStateException) {
+          log.warn("Invalid state for {} {} (wrapped): {}",
+              context.getRequest().getAction(),
+              context.getRequest().getPath(),
+              cause.getMessage());
+          throw e; // Propagate as 500 error
+        }
+        cause = cause.getCause();
+      }
       String exceptionName = e.getClass().getSimpleName();
       if (exceptionName.contains("OModificationOperationProhibitedException")
           || exceptionName.contains("OWriteOperationNotPermittedException")) {

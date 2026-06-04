@@ -134,15 +134,15 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
             onClick={onToggleCollapse || undefined}
             aria-expanded={isExpanded}
         >
-          <div className="risk-on-disk-toggle">
-            <NxFontAwesomeIcon icon={faCaretRight} className={isExpanded ? 'expanded' : ''}/>
-          </div>
           <div className="risk-on-disk-alert-title">
             <NxFontAwesomeIcon icon={faExclamationCircle}/>
             <NxH3>
               <span className="nxrm-malware-components-count-value">{riskOnDiskCount.toLocaleString()}</span>
               {getTitle()}
             </NxH3>
+          </div>
+          <div className="risk-on-disk-toggle">
+            <NxFontAwesomeIcon icon={faCaretRight} className={isExpanded ? 'expanded' : ''}/>
           </div>
         </button>
         {isExpanded && (

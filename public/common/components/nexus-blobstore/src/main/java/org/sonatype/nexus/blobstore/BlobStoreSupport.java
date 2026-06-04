@@ -52,7 +52,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.LoadingCache;
-import jakarta.inject.Inject;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -167,7 +167,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     }
   }
 
-  @Inject
+  @Autowired
   public void setMetricRegistry(final MetricRegistry metricRegistry) {
     this.metricRegistry = metricRegistry;
   }

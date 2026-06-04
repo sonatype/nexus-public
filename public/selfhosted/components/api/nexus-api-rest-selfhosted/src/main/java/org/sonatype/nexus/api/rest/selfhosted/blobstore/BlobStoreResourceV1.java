@@ -14,8 +14,7 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.ConnectionChecker;
@@ -34,14 +33,13 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
  * @since 3.24
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class BlobStoreResourceV1
     extends BlobStoreResource
 {
   static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
-  @Inject
+  @Autowired
   public BlobStoreResourceV1(
       final BlobStoreManager blobStoreManager,
       final BlobStoreConfigurationStore store,

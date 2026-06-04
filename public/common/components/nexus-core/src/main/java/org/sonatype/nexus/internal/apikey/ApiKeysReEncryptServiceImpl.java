@@ -25,8 +25,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -41,7 +40,6 @@ import static org.sonatype.nexus.crypto.secrets.SecretsService.SECRETS_MIGRATION
  * running.
  */
 @Component
-@Singleton
 public class ApiKeysReEncryptServiceImpl
     implements ApiKeysReEncryptService
 {
@@ -53,7 +51,7 @@ public class ApiKeysReEncryptServiceImpl
 
   private final Cooperation2 cooperation;
 
-  @Inject
+  @Autowired
   public ApiKeysReEncryptServiceImpl(
       final TaskScheduler taskScheduler,
       final DatabaseCheck databaseCheck,

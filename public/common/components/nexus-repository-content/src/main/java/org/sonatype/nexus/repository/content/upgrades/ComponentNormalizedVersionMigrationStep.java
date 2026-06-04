@@ -18,7 +18,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
@@ -32,15 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * Migration step to populate the normalized_version column on the {format}_component tables
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ComponentNormalizedVersionMigrationStep
     implements RepeatableDatabaseMigrationStep
 {
@@ -66,7 +63,7 @@ public class ComponentNormalizedVersionMigrationStep
 
   private final UpgradeTaskScheduler startupScheduler;
 
-  @Inject
+  @Autowired
   public ComponentNormalizedVersionMigrationStep(
       final List<Format> formats,
       final GlobalKeyValueStore globalKeyValueStore,

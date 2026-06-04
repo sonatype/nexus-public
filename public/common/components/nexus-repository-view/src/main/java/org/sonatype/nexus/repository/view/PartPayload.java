@@ -37,4 +37,17 @@ public interface PartPayload
    * Returns true for form fields and false for files.
    */
   boolean isFormField();
+
+  /**
+   * Returns the value of the specified header for this part.
+   * Returns null if the header is not present.
+   *
+   * @param name the header name (case-insensitive)
+   * @return the header value, or null if not present
+   * @since 3.80
+   */
+  @Nullable
+  default String getHeader(final String name) {
+    return null;
+  }
 }

@@ -27,8 +27,7 @@ import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorag
 import org.sonatype.nexus.internal.capability.storage.datastore.CapabilityStorageItemUpdatedEventImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -44,12 +43,11 @@ import static java.util.function.Function.identity;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class CapabilityStorageImpl
     extends ConfigStoreSupport<CapabilityStorageItemDAO>
     implements CapabilityStorage
 {
-  @Inject
+  @Autowired
   public CapabilityStorageImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

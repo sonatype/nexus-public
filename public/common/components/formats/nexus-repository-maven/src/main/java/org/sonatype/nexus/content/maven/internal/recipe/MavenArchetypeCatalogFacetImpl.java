@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -81,7 +81,7 @@ public class MavenArchetypeCatalogFacetImpl
 
   private final int componentPageSize;
 
-  @Inject
+  @Autowired
   public MavenArchetypeCatalogFacetImpl(
       @Value("${maven.archetypes.page.size:10}") final int componentPageSize)
   {

@@ -12,14 +12,12 @@
  */
 package org.sonatype.nexus.bootstrap.entrypoint.jvm;
 
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @ConditionalOnProperty(value = "nexus.noop.shutdown.delegate", havingValue = "true")
 public class NoopShutdownDelegate
     implements ShutdownDelegate

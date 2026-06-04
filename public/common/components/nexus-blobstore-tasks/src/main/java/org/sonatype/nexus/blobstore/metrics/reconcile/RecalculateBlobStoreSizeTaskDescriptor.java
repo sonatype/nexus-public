@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.metrics.reconcile;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -31,13 +29,12 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class RecalculateBlobStoreSizeTaskDescriptor
     extends TaskDescriptorSupport
 {
   public static final String TYPE_ID = "blobstore.metrics.reconcile";
 
-  @Inject
+  @Autowired
   public RecalculateBlobStoreSizeTaskDescriptor(
       @Value(RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED_VALUE) final boolean taskEnabled)
   {

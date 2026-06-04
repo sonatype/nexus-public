@@ -20,9 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -49,7 +47,6 @@ import org.springframework.stereotype.Component;
 /**
  * A maven2 metadata rebuilder written to take advantage of the SQL database design.
  */
-@Singleton
 @Component
 public class MavenMetadataRebuilder
     implements MetadataRebuilder
@@ -62,7 +59,7 @@ public class MavenMetadataRebuilder
 
   private final ExecutorService executor;
 
-  @Inject
+  @Autowired
   public MavenMetadataRebuilder(
       @Value("${nexus.maven.metadata.rebuild.bufferSize:1000}") final int bufferSize,
       @Value("${nexus.maven.metadata.rebuild.threadPoolSize:1}") final int maxTreads)

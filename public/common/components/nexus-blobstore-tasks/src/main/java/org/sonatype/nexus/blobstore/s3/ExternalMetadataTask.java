@@ -38,7 +38,7 @@ import org.sonatype.nexus.scheduling.CancelableHelper;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -71,7 +71,7 @@ public class ExternalMetadataTask
    * @param blobStoreManager the blob store manager
    * @param concurrencyLimit the number of concurrent threads processing the queue allowed.
    */
-  @Inject
+  @Autowired
   public ExternalMetadataTask(
       final BlobStoreManager blobStoreManager,
       @Value("${external.metadata.repository.concurrencyLimit:5}") final int concurrencyLimit)

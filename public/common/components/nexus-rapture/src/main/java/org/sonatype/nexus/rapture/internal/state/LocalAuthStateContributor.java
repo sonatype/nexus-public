@@ -15,9 +15,7 @@ package org.sonatype.nexus.rapture.internal.state;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.realm.RealmManager;
 
@@ -31,13 +29,12 @@ import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT
  *
  */
 @Component
-@Singleton
 public class LocalAuthStateContributor
     implements StateContributor
 {
   private final RealmManager realmManager;
 
-  @Inject
+  @Autowired
   public LocalAuthStateContributor(final RealmManager realmManager) {
     this.realmManager = realmManager;
   }

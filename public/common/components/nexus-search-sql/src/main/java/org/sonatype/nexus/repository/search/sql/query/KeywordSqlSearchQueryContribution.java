@@ -18,8 +18,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
@@ -48,7 +46,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(KeywordSqlSearchQueryContribution.NAME)
-@Singleton
 public class KeywordSqlSearchQueryContribution
     extends SqlSearchQueryContributionSupport
 {

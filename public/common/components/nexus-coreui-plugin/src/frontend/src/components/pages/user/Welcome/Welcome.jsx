@@ -23,7 +23,7 @@ import OutreachActions from './OutreachActions';
 import UsageCenter from './UsageCenter/UsageCenter';
 import MaliciousRiskOnDisk from '../../../widgets/riskondisk/MaliciousRiskOnDisk';
 import CEHardLimitAlerts from './CEHardLimitAlerts/CEHardLimitAlerts';
-import UsageCenter from './UsageCenter/UsageCenter';
+import TelemetryWarningBanner from '../../../shared/telemetry/TelemetryWarningBanner';
 
 import './Welcome.scss';
 
@@ -112,6 +112,7 @@ export default function Welcome() {
           <NxLoadWrapper loading={loading} error={error} retryHandler={load}>
             <div className="nxrm-welcome__outreach nx-viewport-sized__scrollable">
               <CEHardLimitAlerts />
+              <TelemetryWarningBanner />
               <MaliciousRiskOnDisk />
               {isAdmin && <UsageCenter />}
               <OutreachActions/>

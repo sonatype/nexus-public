@@ -93,7 +93,7 @@ import com.google.common.reflect.TypeToken;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
@@ -208,7 +208,7 @@ public class MyBatisDataStore
 
   private final boolean internalMetricsEnabled;
 
-  @Inject
+  @Autowired
   public MyBatisDataStore(
       @Qualifier("mybatis") final PbeCipher databaseCipher,
       final PasswordHelper passwordHelper,
@@ -476,7 +476,7 @@ public class MyBatisDataStore
     }
   }
 
-  @Inject
+  @Autowired
   public void setManagedLifecycleManager(@Lazy final ManagedLifecycleManager managedLifecycleManager) {
     this.managedLifecycleManager = checkNotNull(managedLifecycleManager);
   }

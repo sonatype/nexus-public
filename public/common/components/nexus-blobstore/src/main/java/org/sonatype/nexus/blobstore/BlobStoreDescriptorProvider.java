@@ -16,22 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class BlobStoreDescriptorProvider
 {
   private final Map<String, BlobStoreDescriptor> blobStoreDescriptors;
 
   private final DatabaseCheck databaseCheck;
 
-  @Inject
+  @Autowired
   public BlobStoreDescriptorProvider(
       final DatabaseCheck databaseCheck,
       final List<BlobStoreDescriptor> blobStoreDescriptorsList)

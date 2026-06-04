@@ -51,6 +51,31 @@
   .nx-foreign-layer {
     margin-left: var(--nx-spacing-8x);
   }
+
+  .nxrm-form-group-query-params {
+    .nxrm-query-params-description {
+      margin-left: var(--nx-spacing-6x);
+      margin-top: var(--nx-spacing-1x);
+    }
+
+    .nxrm-query-params-exclusion-list {
+      max-height: 270px;
+      width: 400px;
+
+      .nx-list {
+        width: 100%;
+      }
+    }
+
+    .nx-text-input {
+      width: 400px;
+    }
+
+    .nx-btn--icon-only {
+      min-width: 36px;
+      min-height: 36px;
+    }
+  }
 }
 
 .nxrm-repositories {

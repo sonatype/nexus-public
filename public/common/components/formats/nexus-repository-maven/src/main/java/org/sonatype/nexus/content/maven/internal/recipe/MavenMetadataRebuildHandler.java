@@ -13,8 +13,6 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 public class MavenMetadataRebuildHandler
     implements Handler
 {

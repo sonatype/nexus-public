@@ -23,8 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -35,7 +33,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(REGEX_KEY)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RegexCleanupEvaluator
     implements AssetCleanupEvaluator
 {

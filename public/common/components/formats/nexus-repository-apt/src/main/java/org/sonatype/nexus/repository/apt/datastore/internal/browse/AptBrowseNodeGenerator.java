@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.apt.datastore.internal.browse;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
@@ -36,7 +34,6 @@ import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
  */
 @org.springframework.stereotype.Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptBrowseNodeGenerator
     extends DefaultBrowseNodeGenerator
 {

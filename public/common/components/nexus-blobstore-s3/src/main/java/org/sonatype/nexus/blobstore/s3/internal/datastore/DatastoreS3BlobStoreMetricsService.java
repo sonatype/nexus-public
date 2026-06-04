@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal.datastore;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
@@ -34,7 +33,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
 @Qualifier(S3BlobStore.TYPE)
-@Priority(Integer.MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DatastoreS3BlobStoreMetricsService
@@ -42,7 +40,7 @@ public class DatastoreS3BlobStoreMetricsService
 {
   private static final ImmutableMap<String, Long> AVAILABLE_SPACE_BY_FILE_STORE = ImmutableMap.of("s3", Long.MAX_VALUE);
 
-  @Inject
+  @Autowired
   public DatastoreS3BlobStoreMetricsService(
       @Value("${nexus.blobstore.metrics.flushInterval:2}") final int metricsFlushPeriodSeconds,
       final BlobStoreMetricsStore blobStoreMetricsStore,

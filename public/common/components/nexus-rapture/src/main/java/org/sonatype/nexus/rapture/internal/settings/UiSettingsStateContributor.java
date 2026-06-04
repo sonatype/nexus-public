@@ -15,9 +15,7 @@ package org.sonatype.nexus.rapture.internal.settings;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.rapture.UiSettingsManager;
 
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class UiSettingsStateContributor
     implements StateContributor
 {
@@ -44,7 +41,7 @@ public class UiSettingsStateContributor
 
   private final UiSettingsManager rapture;
 
-  @Inject
+  @Autowired
   public UiSettingsStateContributor(final UiSettingsManager rapture) {
     this.rapture = checkNotNull(rapture);
   }

@@ -14,8 +14,6 @@ package org.sonatype.nexus.coreui;
 
 import java.util.HashMap;
 import java.util.Map;
-import jakarta.inject.Singleton;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +29,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(ConanAttributeTransformer.CONAN_FORMAT)
-@Singleton
 public class ConanAttributeTransformer
     implements AssetAttributeTransformer
 {

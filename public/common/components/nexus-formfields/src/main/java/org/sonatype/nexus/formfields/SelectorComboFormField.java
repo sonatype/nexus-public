@@ -14,8 +14,8 @@ package org.sonatype.nexus.formfields;
 
 import java.util.Map;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 
 /**
  * The model for a combo field allowing for selection of content selectors.

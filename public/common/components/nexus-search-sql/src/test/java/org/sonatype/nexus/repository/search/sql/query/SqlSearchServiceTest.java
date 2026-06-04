@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -195,15 +194,15 @@ class SqlSearchServiceTest
     when(blob.createdBy()).thenReturn(Optional.of("admin"));
     when(blob.createdByIp()).thenReturn(Optional.of("127.0.0.1"));
     when(blob.blobSize()).thenReturn(1024L);
-    when(blob.checksums()).thenReturn(Map.of());
 
     SearchResult componentInfo = mock();
+    when(componentInfo.format()).thenReturn("maven2");
 
     AssetSearchResult result = SqlSearchService.buildAssetSearch(asset, "maven-central", componentInfo);
 
     // Verify that blobCreated comes from asset.created()
     Date expectedBlobCreated = Date.from(assetCreatedTime.toInstant());
-    assertThat(result.getBlobCreated(), equalTo(expectedBlobCreated));
+    assertThat(result.getCreated(), equalTo(expectedBlobCreated));
 
     // Also verify that lastModified comes from asset.blobCreated()
     Date expectedLastModified = Date.from(blobCreatedTime.toInstant());

@@ -25,9 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapDeserializer;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapSerializer;
@@ -58,7 +56,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Singleton
 public class JsonExporter
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

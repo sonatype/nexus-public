@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.httpclient.handlers;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.kv.KeyValueStore;
@@ -28,11 +26,10 @@ import org.springframework.stereotype.Component;
  * @since 3.21
  */
 @Component
-@Singleton
 public class AuthenticationConfigurationHandler
     extends HttpClientConfigurationHandler<AuthenticationConfiguration>
 {
-  @Inject
+  @Autowired
   public AuthenticationConfigurationHandler(final SecretsFactory secretsFactory, final KeyValueStore keyValueStore) {
     super(secretsFactory, keyValueStore);
   }

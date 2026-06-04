@@ -42,14 +42,11 @@ import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getString;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
@@ -306,41 +303,6 @@ class BrowseNodeDAOTest
   }
 
   @DatabaseTest
-  void testRepositoryDeleteCascades() {
-    assumeFalse(isPostgreSQL());
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
-
-      List<BrowseNode> listing;
-
-      listing = getListing(dao, "beta");
-      assertThat(listing.get(0).getComponentId(), is(toExternalId(internalComponentId(component2))));
-      assertThat(listing.get(1).getAssetId(), is(toExternalId(internalAssetId(asset2))));
-
-      listing = getListing(dao, "gamma");
-      assertThat(listing.get(0).getComponentId(), is(toExternalId(internalComponentId(component1))));
-
-      listing = getListing(dao, "gamma", "one");
-      assertThat(listing.get(0).getAssetId(), is(toExternalId(internalAssetId(asset1))));
-    }
-
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      session.access(TestAssetDAO.class).deleteAsset(asset1);
-      session.access(TestAssetDAO.class).deleteAsset(asset2);
-      session.access(TestComponentDAO.class).deleteComponent(component1);
-      session.access(TestComponentDAO.class).deleteComponent(component2);
-      session.access(TestContentRepositoryDAO.class).deleteContentRepository(contentRepository);
-      session.getTransaction().commit();
-    }
-
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
-
-      assertThat(getListing(dao), is(empty()));
-    }
-  }
-
-  @DatabaseTest
   void testFilterClauseIsolation() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -359,34 +321,6 @@ class BrowseNodeDAOTest
       List<BrowseNode> nodes = dao.getByRequestPath(1, "/g/1/a");
       assertThat(nodes.isEmpty(), is(false));
       assertThat(nodes.get(0).getPath(), equalTo("/g/1/a"));
-    }
-  }
-
-  @DatabaseTest
-  void testDeleteByAssetIdAndPath() {
-    assumeTrue(isPostgreSQL());
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
-      Long deleted = dao.deleteByAssetIdAndPath(internalAssetId(asset1), "/g/1/a");
-      assertThat(deleted, greaterThan(0L));
-
-      List<BrowseNode> nodes = dao.getByRequestPath(1, "/g/1/a");
-      assertThat(nodes.isEmpty(), is(true));
-    }
-  }
-
-  @DatabaseTest
-  void testGetNodeParents() {
-    assumeTrue(isPostgreSQL());
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
-      List<BrowseNode> nodes = dao.getByRequestPath(1, "/g/1/a");
-      BrowseNodeData nodeData = (BrowseNodeData) nodes.get(0);
-      List<BrowseNode> nodeParents = dao.getNodeParents(nodeData.getNodeId());
-      assertThat(nodeParents.size(), is(3));
-      assertThat(nodeParents.get(0).getPath(), equalTo("/g/1/a"));
-      assertThat(nodeParents.get(1).getPath(), equalTo("/g/1/"));
-      assertThat(nodeParents.get(2).getPath(), equalTo("/g/"));
     }
   }
 

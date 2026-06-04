@@ -22,15 +22,12 @@ import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigu
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenProxyRepositoryApiRequestToConfigurationConverter
     extends ProxyRepositoryApiRequestToConfigurationConverter<MavenProxyRepositoryApiRequest>
 {

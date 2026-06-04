@@ -19,14 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import javax.validation.ValidationException;
 
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
 import org.sonatype.nexus.blobstore.SelectOption;
@@ -63,8 +63,6 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 
 import org.springframework.context.annotation.Lazy;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -76,7 +74,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(S3BlobStoreDescriptor.TYPE)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class S3BlobStoreDescriptor
     extends BlobStoreDescriptorSupport
 {
@@ -99,7 +96,7 @@ public class S3BlobStoreDescriptor
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public S3BlobStoreDescriptor(
       final BlobStoreQuotaService quotaService,
       @Lazy final BlobStoreManager blobStoreManager,

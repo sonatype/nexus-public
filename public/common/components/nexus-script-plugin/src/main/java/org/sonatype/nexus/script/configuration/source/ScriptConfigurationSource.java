@@ -25,15 +25,12 @@ import org.sonatype.nexus.script.configuration.model.ScriptConfigurationListXO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.StreamSupport.stream;
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
 
 @Component
-@Scope(SCOPE_SINGLETON)
 public class ScriptConfigurationSource
     extends AbstractConfigurationSource
 {

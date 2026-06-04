@@ -25,9 +25,8 @@ import org.sonatype.nexus.security.ClientInfo;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.net.HttpHeaders;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
@@ -47,7 +46,6 @@ import static java.util.Collections.newSetFromMap;
  */
 @WebFilter(filterName = AnonymousFilter.NAME)
 @Component
-@Singleton
 public class AnonymousFilter
     extends AdviceFilter
 {
@@ -67,7 +65,7 @@ public class AnonymousFilter
   private final Set<ClientInfo> cache = newSetFromMap(
       CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).<ClientInfo, Boolean>build().asMap());
 
-  @Inject
+  @Autowired
   public AnonymousFilter(final Provider<AnonymousManager> anonymousManager, final Provider<EventManager> eventManager) {
     this.anonymousManager = checkNotNull(anonymousManager);
     this.eventManager = checkNotNull(eventManager);

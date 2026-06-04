@@ -16,9 +16,7 @@ import java.sql.Connection;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -27,13 +25,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class SettingsCapabilityMigrationStep_1_28
     implements DatabaseMigrationStep
 {
   private final CapabilityStorage capabilityStorage;
 
-  @Inject
+  @Autowired
   public SettingsCapabilityMigrationStep_1_28(final CapabilityStorage capabilityStorage) {
     this.capabilityStorage = checkNotNull(capabilityStorage);
   }

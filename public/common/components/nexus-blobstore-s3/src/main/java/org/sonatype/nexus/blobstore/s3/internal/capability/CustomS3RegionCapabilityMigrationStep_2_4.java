@@ -14,13 +14,10 @@ package org.sonatype.nexus.blobstore.s3.internal.capability;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class CustomS3RegionCapabilityMigrationStep_2_4
     implements DatabaseMigrationStep
 {

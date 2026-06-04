@@ -53,11 +53,35 @@ describe('Licensing Historical Usage', () => {
     expect(screen.queryByText('Storage usage metrics may take up to 72 hours to update. Recent repository activity, such as publishing, downloading, or deleting components, may not appear immediately.')).not.toBeInTheDocument();
   });
 
+  it('renders the explanation about data update frequency', async () => {
+    jest.spyOn(ExtJS, 'useState').mockReturnValue(true);
+
+    await renderView();
+
+    const closeAlert = screen.getByRole("button", { name: "Close" });
+    expect(closeAlert).toBeInTheDocument();
+    expect(screen.getByText('This value may differ from the sum of individual repository storage totals. The storage usage includes: version history retained for 45 days after deletion, overwritten file versions retained for 30 days, and tenant access logs from the past 90 days.')).toBeInTheDocument();
+
+    closeAlert.click();
+
+    await waitFor(() => {
+      expect(screen.queryByText('This value may differ from the sum of individual repository storage totals. The storage usage includes: version history retained for 45 days after deletion, overwritten file versions retained for 30 days, and tenant access logs from the past 90 days.')).not.toBeInTheDocument();
+    });
+  });
+
+  it('does not render the explanation about data update frequency when state is false', async () => {
+    jest.spyOn(ExtJS, 'useState').mockReturnValue(false);
+
+    await renderView();
+
+    expect(screen.queryByText('This value may differ from the sum of individual repository storage totals. The storage usage includes: version history retained for 45 days after deletion, overwritten file versions retained for 30 days, and tenant access logs from the past 90 days.')).not.toBeInTheDocument();
+  });
+
   it('renders the title and description', async () => {
     await renderView();
 
     expect(screen.getByRole('heading', { name: 'Historical Usage' })).toBeInTheDocument();
-    expect(screen.getByText('Monitor your repository usage trends over time.')).toBeInTheDocument();
+    expect(screen.getByText('Monitor your storage usage trends over time.')).toBeInTheDocument();
   });
 
   it('renders the table headers correctly', async () => {

@@ -16,9 +16,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.validation.Constraint;
 import javax.validation.ConstraintValidatorContext;
 import javax.validation.ConstraintValidatorContext.ConstraintViolationBuilder;
@@ -41,14 +40,13 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class ConstraintViolationFactory
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final Provider<Validator> validatorProvider;
 
-  @Inject
+  @Autowired
   public ConstraintViolationFactory(final Provider<Validator> validatorProvider) {
     this.validatorProvider = checkNotNull(validatorProvider);
   }

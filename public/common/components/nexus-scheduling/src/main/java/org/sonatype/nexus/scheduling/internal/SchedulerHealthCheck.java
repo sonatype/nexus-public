@@ -14,10 +14,8 @@ package org.sonatype.nexus.scheduling.internal;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -43,13 +41,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("Scheduler")
-@Singleton
 public class SchedulerHealthCheck
     extends HealthCheck
 {
   private final Provider<SchedulerSPI> scheduler;
 
-  @Inject
+  @Autowired
   public SchedulerHealthCheck(final Provider<SchedulerSPI> scheduler) {
     this.scheduler = checkNotNull(scheduler);
   }

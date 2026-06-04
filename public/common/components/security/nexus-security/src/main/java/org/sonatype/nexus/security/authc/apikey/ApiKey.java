@@ -21,6 +21,8 @@ import org.apache.shiro.subject.PrincipalCollection;
  */
 public interface ApiKey
 {
+  String getDomain();
+
   char[] getApiKey();
 
   PrincipalCollection getPrincipals();

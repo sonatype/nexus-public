@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.wonderland;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.crypto.RandomBytesGenerator;
 
@@ -22,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AuthTicketGenerator
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -45,7 +42,7 @@ public class AuthTicketGenerator
 
   // NOTE: Default size is 66 to make full use of base64 encoding w/o padding
 
-  @Inject
+  @Autowired
   public AuthTicketGenerator(
       final RandomBytesGenerator randomBytes,
       @Value(CPREFIX + ".defaultSize:66}") final int defaultSize)

@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.cleanup;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
@@ -37,7 +35,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class Maven2CleanupPolicyConfiguration
     implements CleanupPolicyConfiguration
 {

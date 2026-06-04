@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.apt.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -21,6 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
  *
  * @since 3.20
  */
+@JsonInclude(Include.NON_NULL)
 public class AptSigningRepositoriesAttributes
 {
   @ApiModelProperty(value = "PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)",

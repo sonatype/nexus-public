@@ -20,9 +20,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.importtask.ImportFileConfiguration;
 import org.sonatype.nexus.repository.importtask.ImportStreamConfiguration;
@@ -47,11 +45,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(RawFormat.NAME)
-@Singleton
 public class RawUploadHandler
     extends RawUploadHandlerSupport
 {
-  @Inject
+  @Autowired
   public RawUploadHandler(
       final ContentPermissionChecker contentPermissionChecker,
       @Qualifier("simple") final VariableResolverAdapter variableResolverAdapter,

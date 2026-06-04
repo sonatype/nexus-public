@@ -14,9 +14,7 @@ package org.sonatype.nexus.internal.selector;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
@@ -40,14 +38,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class SelectorConfigurationStoreImpl
     extends ConfigStoreSupport<SelectorConfigurationDAO>
     implements SelectorConfigurationStore
 {
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public SelectorConfigurationStoreImpl(final DataSessionSupplier sessionSupplier, final EventManager eventManager) {
     super(sessionSupplier);
     this.eventManager = checkNotNull(eventManager);

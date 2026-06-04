@@ -18,8 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.common.text.Strings2;
@@ -53,7 +52,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "rapture_Security")
 public class SecurityComponent
     extends DirectComponentSupport
@@ -65,7 +63,7 @@ public class SecurityComponent
 
   private final AuthTicketService authTickets;
 
-  @Inject
+  @Autowired
   public SecurityComponent(
       final SecuritySystem securitySystem,
       final AnonymousManager anonymousManager,

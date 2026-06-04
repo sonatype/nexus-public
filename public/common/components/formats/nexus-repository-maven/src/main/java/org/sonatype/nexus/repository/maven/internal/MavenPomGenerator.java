@@ -13,12 +13,10 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 
 import org.springframework.stereotype.Component;
 
@@ -26,12 +24,11 @@ import org.springframework.stereotype.Component;
  * @since 3.8
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenPomGenerator
 {
   private final TemplateHelper templateHelper;
 
-  @Inject
+  @Autowired
   public MavenPomGenerator(final TemplateHelper templateHelper) {
     this.templateHelper = templateHelper;
   }

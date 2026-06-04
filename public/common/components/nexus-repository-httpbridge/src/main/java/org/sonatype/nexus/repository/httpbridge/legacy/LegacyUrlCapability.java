@@ -14,8 +14,8 @@ package org.sonatype.nexus.repository.httpbridge.legacy;
 
 import java.util.Map;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;

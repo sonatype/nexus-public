@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.template;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.velocity.app.VelocityEngine;
@@ -41,7 +39,6 @@ import static org.apache.velocity.runtime.RuntimeConstants.VM_PERM_INLINE_LOCAL;
  */
 @Primary
 @Component
-@Singleton
 public class VelocityEngineProvider
     implements FactoryBean<VelocityEngine>
 {
@@ -51,7 +48,7 @@ public class VelocityEngineProvider
 
   private final int velocityParserPoolSize;
 
-  @Inject
+  @Autowired
   public VelocityEngineProvider(
       @Value("${nexus.velocity." + PARSER_POOL_SIZE + ":20}") final int velocityParserPoolSize)
   {

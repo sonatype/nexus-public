@@ -18,8 +18,7 @@ import java.util.List;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -35,7 +34,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Primary
 @Component
-@Singleton
 public class ScriptEngineManagerProvider
     implements FactoryBean<ScriptEngineManager>
 {
@@ -47,7 +45,7 @@ public class ScriptEngineManagerProvider
 
   private final List<ScriptEngineFactory> factories;
 
-  @Inject
+  @Autowired
   public ScriptEngineManagerProvider(final List<ScriptEngineFactory> factories) {
     this.factories = checkNotNull(factories);
   }

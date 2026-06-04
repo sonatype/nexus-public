@@ -37,8 +37,7 @@ import org.sonatype.nexus.repository.search.sql.SearchRecord;
 import org.sonatype.nexus.repository.search.sql.query.DatabaseTypeDetector;
 import org.sonatype.nexus.repository.search.sql.store.SearchRecordData;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,6 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA512;
  * Producer of {@link SearchRecordData} objects to be stored in the sql search table.
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class SearchRecordProducer
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -71,7 +69,7 @@ public class SearchRecordProducer
 
   private final DatabaseTypeDetector databaseTypeDetector;
 
-  @Inject
+  @Autowired
   public SearchRecordProducer(
       final List<SearchCustomFieldContributor> searchCustomFieldContributorsList,
       final VersionNormalizerService versionNormalizerService,

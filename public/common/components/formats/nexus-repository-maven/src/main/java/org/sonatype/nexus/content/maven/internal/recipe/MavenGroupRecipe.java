@@ -13,10 +13,8 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.content.maven.internal.index.MavenContentGroupIndexFacet;
 import org.sonatype.nexus.repository.Format;
@@ -44,7 +42,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(Maven2GroupRecipe.NAME)
-@Singleton
 public class MavenGroupRecipe
     extends MavenRecipeSupport
     implements Maven2GroupRecipe
@@ -61,7 +58,7 @@ public class MavenGroupRecipe
 
   private final MavenContentIndexGroupHandler indexGroupHandler;
 
-  @Inject
+  @Autowired
   public MavenGroupRecipe(
       @Qualifier(GroupType.NAME) final Type type,
       @Qualifier(Maven2Format.NAME) final Format format,

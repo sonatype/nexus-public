@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
@@ -57,7 +57,7 @@ public class EhCacheManagerProvider
   // provide same manager instance until bounced
   private volatile CacheManager cacheManager;
 
-  @Inject
+  @Autowired
   public EhCacheManagerProvider(final ApplicationDirectories directories) {
     checkNotNull(directories);
     File file = new File(directories.getConfigDirectory("fabric"), CONFIG_FILE);

@@ -24,11 +24,10 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.InternalAccessible;
+import org.sonatype.nexus.common.InternalAccessible;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 import org.sonatype.nexus.webhooks.Webhook;
@@ -71,7 +70,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class WebhookServiceImpl
     implements WebhookService, EventAware, EventAware.Asynchronous
 {
@@ -98,7 +96,7 @@ public class WebhookServiceImpl
 
   private final ThreadPoolExecutor threadPoolExecutor;
 
-  @Inject
+  @Autowired
   public WebhookServiceImpl(
       final Provider<CloseableHttpClient> httpClientProvider,
       final List<Webhook> webhooks,

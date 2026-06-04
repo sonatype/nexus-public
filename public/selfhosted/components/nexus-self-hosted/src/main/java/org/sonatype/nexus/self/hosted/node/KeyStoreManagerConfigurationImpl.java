@@ -12,14 +12,13 @@
  */
 package org.sonatype.nexus.self.hosted.node;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfigurationSupport;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier(NodeKeyStoreManagerImpl.NAME)
-@Singleton
 public class KeyStoreManagerConfigurationImpl
     extends KeyStoreManagerConfigurationSupport
 {
@@ -52,7 +50,7 @@ public class KeyStoreManagerConfigurationImpl
    */
   private static final char[] PKP = "CyQM8zCFeorarTA8".toCharArray();
 
-  @Inject
+  @Autowired
   public KeyStoreManagerConfigurationImpl(
       @Value(CPREFIX + ".keyStoreType:JKS}") final String keyStoreType,
       @Value(CPREFIX + ".keyAlgorithm:RSA}") final String keyAlgorithm,

@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.content.store.internal;
 import java.util.Date;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -53,7 +51,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Singleton
 public class AssetBlobCleanupTaskManager
     extends LifecycleSupport
     implements EventAware, EventAware.Asynchronous
@@ -62,7 +59,7 @@ public class AssetBlobCleanupTaskManager
 
   private final SetMultimap<String, String> activeFormatStores = synchronizedSetMultimap(HashMultimap.create());
 
-  @Inject
+  @Autowired
   public AssetBlobCleanupTaskManager(final TaskScheduler taskScheduler) {
     this.taskScheduler = checkNotNull(taskScheduler);
   }

@@ -10,10 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useState, useEffect, createContext, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Flex, ScrollArea, Separator } from '@radix-ui/themes';
-import { Tooltip } from '../shared';
-import { useSref, useIsActive, useRouter } from '@uirouter/react';
 import {
   LayoutDashboard,
   Search,
@@ -21,25 +19,28 @@ import {
   HardDriveUpload,
   Tags,
   Settings,
-  ExternalLink,
   ShieldAlert,
-  FlaskConical,
-  FileCode,
-  ScrollText,
   ChevronDown,
   ChevronUp,
+  FileCode,
 } from 'lucide-react';
-import { useIsVisible } from '@sonatype/nexus-ui-plugin';
+import { useSref, useIsActive, useTransitionHook } from '@uirouter/react';
+import {
+  FORMATS,
+  NavItemBox,
+  PreviewUIContext,
+  useContextAwareRouteName,
+  useIsPreviewUI,
+  useRepositories,
+} from '@sonatype/nexus-ui-plugin';
 import { ROUTE_NAMES } from '../../routerConfig/routeNames/routeNames';
 import { useDefaultAdminRouteName } from './useDefaultAdminRouteName';
-import { useClmDashboardVisibility } from './useClmDashboardVisibility';
 import useSideNavbarCollapsedState from '../../hooks/useSideNavbarCollapsedState';
-import { FORMATS } from '../super/search/unified/searchFilters';
-import { useRepositories } from '../super/search/unified/useRepositories';
 
 import './LeftNavigationMenuRadix.scss';
 
 const CLASSIC_SEARCH_FORMATS = [
+  { id: 'alpine', apiFormat: 'alpine', label: FORMATS.alpine.label, routeKey: 'ALPINE' },
   { id: 'apt', apiFormat: 'apt', label: FORMATS.apt.label, routeKey: 'APT' },
   { id: 'cargo', apiFormat: 'cargo', label: FORMATS.cargo.label, routeKey: 'CARGO' },
   { id: 'cocoapods', apiFormat: 'cocoapods', label: FORMATS.cocoapods.label, routeKey: 'COCOAPODS' },
@@ -56,7 +57,7 @@ const CLASSIC_SEARCH_FORMATS = [
   { id: 'nuget', apiFormat: 'nuget', label: FORMATS.nuget.label, routeKey: 'NUGET' },
   { id: 'p2', apiFormat: 'p2', label: FORMATS.p2.label, routeKey: 'P2' },
   { id: 'pypi', apiFormat: 'pypi', label: FORMATS.pypi.label, routeKey: 'PYPI' },
-  { id: 'pub', apiFormat: 'pub', label: 'Pub', routeKey: 'PUB' }, // pub is absent from FORMATS in searchFilters.ts
+  { id: 'pub', apiFormat: 'pub', label: FORMATS.pub.label, routeKey: 'PUB' },
   { id: 'r', apiFormat: 'r', label: FORMATS.r.label, routeKey: 'R' },
   { id: 'raw', apiFormat: 'raw', label: FORMATS.raw.label, routeKey: 'RAW' },
   { id: 'rubygems', apiFormat: 'rubygems', label: FORMATS.rubygems.label, routeKey: 'RUBYGEMS' },
@@ -65,126 +66,35 @@ const CLASSIC_SEARCH_FORMATS = [
   { id: 'yum', apiFormat: 'yum', label: FORMATS.yum.label, routeKey: 'YUM' },
 ];
 
-// Context for Preview UI mode
-const PreviewUIContext = createContext(false);
-
 /**
- * Hook to detect if we're in Preview UI mode
+ * Local NavItem for Classic UI search submenu.
+ * Uses shared hooks from nexus-ui-plugin.
  */
-function useIsPreviewUI() {
-  const [isPreview, setIsPreview] = useState(false);
-
-  useEffect(() => {
-    function checkPreview() {
-      const hash = window.location.hash;
-      setIsPreview(hash.startsWith('#preview'));
-    }
-
-    checkPreview();
-    window.addEventListener('hashchange', checkPreview);
-    return () => window.removeEventListener('hashchange', checkPreview);
-  }, []);
-
-  return isPreview;
-}
-
-/**
- * Hook to get context-aware route name
- * Prefixes with 'preview.' when in Preview UI mode
- */
-function useContextAwareRouteName(name) {
-  const isPreviewUI = useContext(PreviewUIContext);
-
-  if (!name) return name;
-
-  // If already has preview prefix, return as is
-  if (name.startsWith('preview.')) {
-    return isPreviewUI ? name : name.replace('preview.', '');
-  }
-
-  // Add preview prefix if in preview mode
-  return isPreviewUI ? `preview.${name}` : name;
-}
-
-// Sentinel value to indicate route doesn't exist (distinct from undefined visibilityRequirements)
-const ROUTE_NOT_FOUND = Symbol('ROUTE_NOT_FOUND');
-
-/**
- * Hook to resolve route state and visibilityRequirements from a route.
- * Returns ROUTE_NOT_FOUND if the route doesn't exist, or the requirements (which may be undefined).
- */
-function useRouteVisibilityRequirements(baseName) {
-  const router = useRouter();
-  const contextAwareName = useContextAwareRouteName(baseName);
-
-  try {
-    // Try context-aware name first, fall back to base name
-    let state = router.stateRegistry.get(contextAwareName);
-    if (!state) {
-      state = router.stateRegistry.get(baseName);
-    }
-
-    if (!state) {
-      return ROUTE_NOT_FOUND; // Route doesn't exist
-    }
-
-    const data = state?.data || {};
-    // May be undefined if route has no visibility requirements (meaning always visible)
-    return data.visibilityRequirements;
-  } catch {
-    return ROUTE_NOT_FOUND;
-  }
-}
-
-/**
- * Hook to check if a route is visible based on permissions, editions, etc.
- * Uses the reactive useIsVisible hook from nexus-ui-plugin which subscribes to
- * Permissions#changed, State#changed, and State#userchanged events.
- */
-function useRouteVisibility(baseName) {
-  const visibilityRequirements = useRouteVisibilityRequirements(baseName);
-  const routeExists = visibilityRequirements !== ROUTE_NOT_FOUND;
-
-  // useIsVisible handles permission/state change events reactively
-  // If route has no requirements (undefined), useIsVisible returns true
-  const isRouteVisible = useIsVisible(routeExists ? visibilityRequirements : undefined);
-
-  // Route must exist to be visible. Missing routes return false (fail closed).
-  return routeExists ? isRouteVisible : false;
-}
-
-/**
- * Navigation Item Component using Radix + uirouter
- * Context-aware: uses preview.* routes when in Preview UI
- */
-function NavItem({
+function SearchNavItem({
   name,
   text,
   icon: Icon,
   selectedState,
   params = {},
   isCollapsed,
-  href: directHref,
-  isExternal,
 }) {
-  const contextAwareName = useContextAwareRouteName(name);
+  // Hooks must be called before any conditional returns (React Rules of Hooks)
+  const contextAwareName = useContextAwareRouteName(name) || name;
   const contextAwareSelectedState = useContextAwareRouteName(selectedState);
 
   const sref = useSref(contextAwareName, params);
   const isActive = useIsActive(contextAwareSelectedState || contextAwareName);
 
-  // Use direct href for external links, otherwise use router-generated href
-  const finalHref = directHref || sref.href;
-
-  // External links use href only (no onClick). Internal links use sref.onClick for router handling.
-  const handleClick = directHref ? undefined : sref.onClick;
+  // Defensive check: ensure name is always a valid string for useSref
+  if (!name) {
+    console.warn('[SearchNavItem] name prop is required but received:', name);
+    return null;
+  }
 
   const content = (
     <a
-      href={finalHref}
-      onClick={handleClick}
-      target={isExternal ? '_blank' : undefined}
-      rel={isExternal ? 'noopener noreferrer' : undefined}
+      href={sref.href}
+      onClick={sref.onClick}
       className={`guide-nav-item ${isActive ? 'guide-nav-item--active' : ''}`}
     >
       <Flex align="center" justify={isCollapsed ? 'center' : 'start'} gap="3" px="3" py="2">
@@ -194,52 +104,20 @@ function NavItem({
         {!isCollapsed && (
           <span className="guide-nav-item__text">{text}</span>
         )}
-        {isExternal && !isCollapsed && (
-          <ExternalLink size={18} className="guide-nav-item__external" />
-        )}
       </Flex>
     </a>
   );
-
-  if (isCollapsed) {
-    return (
-      <Tooltip content={text} side="right">
-        {content}
-      </Tooltip>
-    );
-  }
 
   return content;
 }
 
 /**
- * Wraps NavItem in Box only when visible. Prevents empty Box elements from
- * participating in Flex layout and creating extra gaps when NavItem returns null.
- */
-function NavItemBox(props) {
-  const { visibilityRoute, name, href, ...restProps } = props;
-  const routeForVisibility = visibilityRoute || name;
-  const routeIsVisible = useRouteVisibility(routeForVisibility);
-
-  // For external links (href), always render. For routes, check visibility.
-  if (!routeIsVisible && !href) return null;
-
-  return (
-    <Box>
-      <NavItem name={name} href={href} {...restProps} />
-    </Box>
-  );
-}
-
-/**
  * Search format child item.
  * Visibility is determined by the parent component via availableFormats from REST API.
- * Format data is synced to ExtJS BrowseableFormats controller so router visibility
- * checks pass when navigating.
  */
 function SearchFormatItem({ routeName, label }) {
   return (
-    <NavItem
+    <SearchNavItem
       name={routeName}
       text={label}
       icon={null}
@@ -252,48 +130,39 @@ function SearchFormatItem({ routeName, label }) {
 /**
  * Collapsible Search navigation for Classic UI.
  * Shows dynamically filtered format submenu based on configured repositories.
- * Note: Uses useRepositories hook (REST API) instead of ExtJS browseableformats state
- * which may not be properly initialized in some environments.
- * Syncs detected formats to ExtJS BrowseableFormats controller so router visibility
- * checks pass when navigating to format search routes.
  */
 export function SearchCollapsibleNav({ isCollapsed }) {
   const { BROWSE } = ROUTE_NAMES;
   const [isExpanded, setIsExpanded] = useState(false);
-  const router = useRouter();
 
-  // Check active states for parent search item (must be separate hook calls, no short-circuit)
+  // Check active states for parent search item
   const isGenericActive = useIsActive(BROWSE.SEARCH.GENERIC);
   const isCustomActive = useIsActive(BROWSE.SEARCH.CUSTOM);
-  // Parent is active only on generic/custom search, not on format-specific searches
   const isParentActive = isGenericActive || isCustomActive;
 
   const sref = useSref(BROWSE.SEARCH.GENERIC, { keyword: null });
 
-  // Auto-expand if on a search route
-  useEffect(() => {
-    const currentRoute = router.globals.current?.name;
-    if (currentRoute?.startsWith(BROWSE.SEARCH.ROOT)) {
+  // Auto-expand when transitioning to a search route using UI-Router hook
+  useTransitionHook('onSuccess', {}, (transition) => {
+    const toState = transition.to();
+    if (toState.name?.startsWith(BROWSE.SEARCH.ROOT)) {
       setIsExpanded(true);
     }
-  }, [router.globals.current?.name]);
+  });
 
-  // Get formats from REST API (more reliable than ExtJS state)
+  // Get formats from REST API
   const { availableFormats, loading } = useRepositories();
 
   // Sync React-detected formats to ExtJS BrowseableFormats controller
-  // This ensures router visibility checks pass for format routes
   useEffect(() => {
     if (loading || !availableFormats || availableFormats.size === 0) {
       return;
     }
 
-    // TODO: NEXUS-51995 - Replace with ExtJS interface method once available
     const app = window.Ext?.getApplication?.();
     const controller = app?.getController?.('NX.coreui.controller.BrowseableFormats');
 
     if (controller) {
-      // ExtJS store expects array of {id: string} objects
       const formatData = Array.from(availableFormats).map(format => ({ id: format }));
       controller.setFormats(formatData);
     }
@@ -314,41 +183,18 @@ export function SearchCollapsibleNav({ isCollapsed }) {
 
   const handleParentClick = (e) => {
     if (isCollapsed) {
-      // When collapsed, navigate to search
       return;
     }
     e.preventDefault();
     setIsExpanded(!isExpanded);
   };
 
-  const handleKeyDown = (e) => {
-    if (isCollapsed) return;
-    // Toggle on Enter or Space
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setIsExpanded(!isExpanded);
-    }
-    // Expand on ArrowDown when focused
-    if (e.key === 'ArrowDown' && !isExpanded) {
-      e.preventDefault();
-      setIsExpanded(true);
-    }
-    // Collapse on ArrowUp when expanded
-    if (e.key === 'ArrowUp' && isExpanded) {
-      e.preventDefault();
-      setIsExpanded(false);
-    }
-  };
-
   const content = (
     <div className={`search-collapsible ${isExpanded ? 'search-collapsible--expanded' : ''}`}>
-      {/* Parent Search Item */}
       <a
         href={sref.href}
         onClick={handleParentClick}
-        onKeyDown={handleKeyDown}
         aria-expanded={isCollapsed ? undefined : isExpanded}
-        aria-haspopup="true"
         className={`guide-nav-item ${isParentActive ? 'guide-nav-item--active' : ''}`}
       >
         <Flex align="center" justify={isCollapsed ? 'center' : 'space-between'} gap="3" px="3" py="2">
@@ -366,19 +212,15 @@ export function SearchCollapsibleNav({ isCollapsed }) {
         </Flex>
       </a>
 
-      {/* Submenu */}
       {!isCollapsed && isExpanded && (
         <Box className="search-collapsible__submenu">
-          {/* Always show Custom first */}
-          <NavItem
+          <SearchNavItem
             name={BROWSE.SEARCH.CUSTOM}
             text="Custom"
             icon={null}
             params={{ keyword: null }}
             isCollapsed={false}
           />
-
-          {/* Format-specific searches */}
           {visibleFormats.map((format) => (
             <SearchFormatItem
               key={format.id}
@@ -393,9 +235,19 @@ export function SearchCollapsibleNav({ isCollapsed }) {
 
   if (isCollapsed) {
     return (
-      <Tooltip content="Search" side="right">
-        {content}
-      </Tooltip>
+      <Box>
+        <a
+          href={sref.href}
+          onClick={sref.onClick}
+          className="guide-nav-item"
+        >
+          <Flex align="center" justify="center" gap="3" px="3" py="2">
+            <span className="guide-nav-item__icon">
+              <Search size={18} />
+            </span>
+          </Flex>
+        </a>
+      </Box>
     );
   }
 
@@ -404,22 +256,19 @@ export function SearchCollapsibleNav({ isCollapsed }) {
 
 /**
  * Modern Left Navigation Menu - SUPER UX with Radix UI
- * Fully migrated from RSC/ExtJS to Radix + Lucide + @uirouter/react
- * Context-aware: automatically uses preview.* routes when in Preview UI
+ * Self-hosted distribution: Dashboard, Search, Browse, Upload, Tags, Malware Risk, API, Settings
  */
 export default function LeftNavigationMenuRadix() {
   const { BROWSE, ADMIN } = ROUTE_NAMES;
-  const [isCollapsed, setIsCollapsed] = useSideNavbarCollapsedState(false);
+  const [isCollapsed] = useSideNavbarCollapsedState(false);
   const isPreviewUI = useIsPreviewUI();
 
   const adminInitialRouteName = useDefaultAdminRouteName();
   const isSettingsVisible = !!adminInitialRouteName;
-  const clmState = useClmDashboardVisibility();
 
   return (
     <PreviewUIContext.Provider value={isPreviewUI}>
     <nav className={`guide-sidebar ${isCollapsed ? 'guide-sidebar--collapsed' : ''}`} data-testid="left-nav">
-      {/* Navigation Items */}
       <ScrollArea className="guide-sidebar__nav" scrollbars="vertical">
         <Box {...(isCollapsed ? { pl: '1', pr: '2', py: '4' } : { p: '4' })} className="guide-sidebar__nav-content">
           <Flex direction="column" gap="2">
@@ -445,7 +294,7 @@ export default function LeftNavigationMenuRadix() {
               <SearchCollapsibleNav isCollapsed={isCollapsed} />
             )}
 
-            {/* Browse — Preview UI: new BrowsePage (filter sidebar + table); Heritage: legacy Browse */}
+            {/* Browse */}
             <NavItemBox
               name={isPreviewUI ? 'preview.browse.browse' : BROWSE.BROWSE.ROOT}
               text="Browse"
@@ -454,7 +303,7 @@ export default function LeftNavigationMenuRadix() {
               params={isPreviewUI ? {} : { repo: null }}
             />
 
-            {/* Upload - navigate to LIST, but check visibility against ROOT (which has permissions) */}
+            {/* Upload */}
             <NavItemBox
               name={BROWSE.UPLOAD.LIST}
               visibilityRoute={BROWSE.UPLOAD.ROOT}
@@ -473,7 +322,7 @@ export default function LeftNavigationMenuRadix() {
               params={{ itemId: null }}
             />
 
-            {/* Malware Risk — Nexus One UI shows new Malware Risk page; Default UI keeps Malicious Packages */}
+            {/* Malware Risk */}
             <NavItemBox
               name={isPreviewUI ? 'preview.browse.malwarerisk' : (BROWSE.MALWARERISK?.ROOT || 'browse.malwarerisk')}
               visibilityRoute={isPreviewUI ? 'preview.browse.malwarerisk' : (BROWSE.MALWARERISK?.ROOT || 'browse.malwarerisk')}
@@ -482,17 +331,7 @@ export default function LeftNavigationMenuRadix() {
               isCollapsed={isCollapsed}
             />
 
-            {/* Audit - System-wide audit log (Preview UI only) */}
-            {isPreviewUI && (
-              <NavItemBox
-                name="preview.browse.audit"
-                text="Audit"
-                icon={ScrollText}
-                isCollapsed={isCollapsed}
-              />
-            )}
-
-            {/* API - Swagger API documentation (Preview UI only) */}
+            {/* API */}
             {isPreviewUI && (
               <NavItemBox
                 name="preview.browse.api"
@@ -516,19 +355,6 @@ export default function LeftNavigationMenuRadix() {
                   isCollapsed={isCollapsed}
                 />
               </>
-            )}
-
-            {/* SONATYPE INTERNAL: Test Hub — below Settings, only in Preview UI */}
-            {isPreviewUI && ((typeof __SONATYPE_INTERNAL__ !== 'undefined' && __SONATYPE_INTERNAL__)
-              || (typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_INTERNAL') === 'true')) && (
-              <Box style={{ color: 'var(--amber-9)' }}>
-                <NavItemBox
-                  name="preview.test"
-                  text="[Test] Hub"
-                  icon={FlaskConical}
-                  isCollapsed={isCollapsed}
-                />
-              </Box>
             )}
 
           </Flex>

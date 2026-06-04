@@ -22,9 +22,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.log.LogManager;
 
@@ -43,7 +41,6 @@ import org.springframework.stereotype.Component;
  * @since 3.13
  */
 @Component
-@Singleton
 public class LastShutdownTimeServiceImpl
     implements LastShutdownTimeService
 {
@@ -67,7 +64,7 @@ public class LastShutdownTimeServiceImpl
 
   private Optional<Date> shutdownTimeGuess = null;
 
-  @Inject
+  @Autowired
   public LastShutdownTimeServiceImpl(
       final LogManager logManager,
       @Value("${nexus.log.lastShutdownTime.enabled:true}") final boolean enabled)

@@ -14,9 +14,8 @@ package org.sonatype.nexus.rest.client.internal;
 
 import java.net.URI;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 
@@ -51,7 +50,6 @@ import static com.google.common.cache.CacheLoader.from;
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class RestClientFactoryImpl
     implements RestClientFactory
 {
@@ -64,7 +62,7 @@ public class RestClientFactoryImpl
 
   private final Provider<HttpClient> httpClient;
 
-  @Inject
+  @Autowired
   public RestClientFactoryImpl(final Provider<HttpClient> httpClient) {
     this.httpClient = checkNotNull(httpClient);
   }

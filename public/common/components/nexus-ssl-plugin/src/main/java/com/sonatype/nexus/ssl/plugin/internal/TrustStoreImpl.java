@@ -25,8 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -76,7 +75,6 @@ import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertifica
  */
 @Lazy
 @Component
-@Singleton
 public class TrustStoreImpl
     implements EventAware, TrustStore
 {
@@ -108,7 +106,7 @@ public class TrustStoreImpl
 
   private volatile SSLContext sslcontext;
 
-  @Inject
+  @Autowired
   public TrustStoreImpl(
       final EventManager eventManager,
       @Lazy @Qualifier("ssl") final KeyStoreManager keyStoreManager,

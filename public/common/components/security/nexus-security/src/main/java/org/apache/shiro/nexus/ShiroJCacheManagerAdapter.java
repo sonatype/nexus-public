@@ -20,7 +20,7 @@ import javax.cache.expiry.Duration;
 import javax.cache.expiry.EternalExpiryPolicy;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 
 import com.google.common.annotations.VisibleForTesting;

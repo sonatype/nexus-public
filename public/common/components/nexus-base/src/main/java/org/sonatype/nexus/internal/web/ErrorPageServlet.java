@@ -25,8 +25,7 @@ import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
 
 import com.google.common.base.Throwables;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.eclipse.jetty.io.EofException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,6 @@ import static com.google.common.base.Throwables.getRootCause;
 @Order(WebFilterPriority.WEB)
 @WebServlet("/error.html")
 @Component
-@Singleton
 public class ErrorPageServlet
     extends HttpServlet
 {
@@ -85,7 +83,7 @@ public class ErrorPageServlet
 
   private final ErrorPageService errorPageService;
 
-  @Inject
+  @Autowired
   public ErrorPageServlet(final ErrorPageService errorPageService) {
     this.errorPageService = checkNotNull(errorPageService);
   }

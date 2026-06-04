@@ -11,13 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { Flex, Text, TextField, Button } from '@radix-ui/themes';
-import { AlertCircle } from 'lucide-react';
+import { Flex, Text, TextField, Button, Callout } from '@radix-ui/themes';
+import { AlertCircle, Info } from 'lucide-react';
 import { useMachine } from '@xstate/react';
 import { useRouter } from '@uirouter/react';
 import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS } from '../../../interface/ExtJS';
 import LoginPageStrings from '../../../constants/LoginPageStrings';
 import { RouteNames } from '../../../constants/RouteNames';
 import FormUtils from '../../../interface/FormUtils';
@@ -66,14 +66,14 @@ export default function LocalLogin({ primaryButton, onError }) {
         };
         await handleLoginSuccess(loginData);
       },
-      logSaveError: (_, event) => {
-        console.error('Login failed:', event.data);
-        const error = event.data;
-        const status = error.response?.status;
-        if (onError && status !== 403) {
+      logSaveError: (context, event) => {
+        const error = event.data || event.value;
+        const status = error?.response?.status;
+
+        if (onError && status !== 403 && status !== 429) {
           const errorMessage = status === 0
             ? LoginPageStrings.ERRORS.CONNECTION_FAILED
-            : error.response?.data?.message || LoginPageStrings.ERRORS.AUTHENTICATION_FAILED;
+            : error?.response?.data?.message || LoginPageStrings.ERRORS.AUTHENTICATION_FAILED;
           onError(errorMessage);
         }
       }
@@ -82,7 +82,7 @@ export default function LocalLogin({ primaryButton, onError }) {
 
   const formProps = FormUtils.formProps(current, send);
 
-  const { saveError: serverError, saveErrorData, saveErrors = {}, validationErrors = {} } = current.context;
+  const { saveError: serverError, saveErrorData, saveErrors = {}, validationErrors = {}, rateLimitWarning, retryAfterSeconds } = current.context;
   const isLoading = current.matches('saving');
   const hasAuthError = Boolean(saveErrors.username && saveErrors.password);
 
@@ -93,7 +93,7 @@ export default function LocalLogin({ primaryButton, onError }) {
   const shouldShowInlineError = serverError && hasAuthError;
 
   const handleFieldChange = (fieldName) => (value) => {
-    if (serverError) {
+    if (serverError || rateLimitWarning) {
       send({ type: 'CLEAR_SAVE_ERROR' });
     }
     FormUtils.handleUpdate(fieldName, send)(value);
@@ -170,6 +170,18 @@ export default function LocalLogin({ primaryButton, onError }) {
         />
       </Flex>
 
+      {/* Rate Limit Warning */}
+      {rateLimitWarning && (
+        <Callout.Root role="alert" color="amber" size="2">
+          <Callout.Icon>
+            <Info size={16} />
+          </Callout.Icon>
+          <Callout.Text>
+            {LoginPageStrings.ERRORS.RATE_LIMITED(retryAfterSeconds)}
+          </Callout.Text>
+        </Callout.Root>
+      )}
+
       {/* Server Error */}
       {shouldShowInlineError && (
         <Flex align="center" gap="2" className="server-error-message">
@@ -184,7 +196,7 @@ export default function LocalLogin({ primaryButton, onError }) {
         size="3"
         variant={primaryButton ? 'solid' : 'outline'}
         className="login-submit"
-        disabled={isLoading || !isFormValid}
+        disabled={isLoading || !isFormValid || rateLimitWarning}
         data-analytics-id="nxrm-login-local"
         data-testid="login-primary-button"
       >

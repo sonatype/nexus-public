@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.security.internal;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class VariableResolverAdapterManagerImpl
     implements VariableResolverAdapterManager
 {
@@ -48,7 +45,7 @@ public class VariableResolverAdapterManagerImpl
 
   private final Map<String, VariableResolverAdapter> adaptersByFormat;
 
-  @Inject
+  @Autowired
   public VariableResolverAdapterManagerImpl(final List<VariableResolverAdapter> adaptersByFormatList) {
     this.adaptersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(adaptersByFormatList));
     this.defaultAdapter = checkNotNull(this.adaptersByFormat.get(DEFAULT_ADAPTER_NAME));

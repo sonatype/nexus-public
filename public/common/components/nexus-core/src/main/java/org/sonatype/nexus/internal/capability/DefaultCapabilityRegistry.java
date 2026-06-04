@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,9 +68,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -85,7 +85,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
  * Default {@link CapabilityRegistry} implementation.
  */
 @Primary
-@Singleton
 @Component
 @ManagedLifecycle(phase = CAPABILITIES)
 public class DefaultCapabilityRegistry
@@ -125,7 +124,7 @@ public class DefaultCapabilityRegistry
    */
   private ExecutorService capabilitySyncExecutor;
 
-  @Inject
+  @Autowired
   DefaultCapabilityRegistry(
       final CapabilityStorage capabilityStorage,
       final CapabilityFactoryRegistry capabilityFactoryRegistry,
@@ -273,6 +272,7 @@ public class DefaultCapabilityRegistry
     DefaultCapabilityReference reference = references.get(id);
     return reference != null &&
         Objects.equals(reference.properties(), item.getProperties()) &&
+        Objects.equals(reference.notes(), item.getNotes()) &&
         reference.isEnabled() == item.isEnabled();
   }
 
@@ -555,21 +555,76 @@ public class DefaultCapabilityRegistry
 
   @Override
   public void pullAndRefreshReferencesFromDB() {
-    Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
-    references.forEach(
-        (capabilityIdentity, capabilityReference) -> Optional.ofNullable(refreshedCapabilities.get(capabilityIdentity)) // When
-                                                                                                                        // working
-                                                                                                                        // in
-                                                                                                                        // HA
-                                                                                                                        // mode
-                                                                                                                        // it
-                                                                                                                        // could
-                                                                                                                        // be
-                                                                                                                        // null
-            .ifPresent(value -> {
-              // Do NOT decrypt secrets automatically - capabilities must decrypt on-demand
-              doUpdate(capabilityReference, value, value.getProperties());
-            }));
+    try {
+      lock.lock();
+
+      Map<CapabilityIdentity, CapabilityStorageItem> refreshedCapabilities = capabilityStorage.getAll();
+
+      // Remove capabilities from memory that no longer exist in database
+      // Must call doRemove() to ensure proper lifecycle cleanup (deactivation, events, etc.)
+      Set<CapabilityIdentity> idsToRemove = new HashSet<>(references.keySet());
+      idsToRemove.removeAll(refreshedCapabilities.keySet());
+      for (CapabilityIdentity id : idsToRemove) {
+        doRemove(id);
+      }
+
+      // Sync all capabilities from database to memory
+      for (Map.Entry<CapabilityIdentity, CapabilityStorageItem> entry : refreshedCapabilities.entrySet()) {
+        CapabilityIdentity id = entry.getKey();
+        CapabilityStorageItem item = entry.getValue();
+
+        CapabilityType type = capabilityType(item.getType());
+        CapabilityDescriptor descriptor = capabilityDescriptorRegistry.get(type);
+
+        if (descriptor == null) {
+          log.warn("Cannot sync capability {} - unknown type {}", id, item.getType());
+          continue;
+        }
+
+        // Handle version conversion if descriptor version differs from stored version
+        Map<String, String> properties = item.getProperties();
+        if (descriptor.version() != item.getVersion()) {
+          log.debug(
+              "Converting capability \'{}\' properties from version \'{}\' to version \'{}\' during sync",
+              id, item.getVersion(), descriptor.version());
+          try {
+            properties = descriptor.convert(properties, item.getVersion());
+            if (properties == null) {
+              properties = Collections.emptyMap();
+            }
+            // Update storage with converted properties
+            capabilityStorage.update(id, capabilityStorage.newStorageItem(
+                descriptor.version(), item.getType(), item.isEnabled(), item.getNotes(), properties));
+          }
+          catch (Exception e) {
+            log.error(
+                "Failed converting capability \'{}\' properties from version \'{}\' to version \'{}\'. Skipping sync.",
+                id,
+                item.getVersion(), descriptor.version(), e);
+            continue;
+          }
+        }
+
+        Map<String, String> decryptedProps = decryptValuesIfNeeded(descriptor, properties);
+
+        DefaultCapabilityReference existingRef = references.get(id);
+        if (existingRef == null) {
+          DefaultCapabilityReference reference = create(id, type, descriptor);
+          reference.setNotes(item.getNotes());
+          reference.load(decryptedProps, item.getProperties());
+          if (item.isEnabled()) {
+            reference.enable();
+            reference.activate();
+          }
+        }
+        else if (!capabilityAlreadyUpToDate(id, item)) {
+          doUpdate(existingRef, item, decryptedProps);
+        }
+      }
+    }
+    finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -700,9 +755,16 @@ public class DefaultCapabilityRegistry
     DefaultCapabilityReference existingRef = references.get(id);
 
     if (existingRef == null) {
-      // Create new capability
+      // Use load() instead of doAdd() to fire onLoad()/CapabilityEvent.Loaded
+      // This is a DB sync from another node, not a user-initiated creation
       log.info("Syncing new capability {} from pending queue", id);
-      doAdd(id, type, descriptor, item, decryptedProps);
+      DefaultCapabilityReference reference = create(id, type, descriptor);
+      reference.setNotes(item.getNotes());
+      reference.load(decryptedProps, item.getProperties());
+      if (item.isEnabled()) {
+        reference.enable();
+        reference.activate();
+      }
     }
     else {
       // Update existing capability

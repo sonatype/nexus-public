@@ -20,8 +20,7 @@ import org.sonatype.nexus.repository.search.query.SearchResultComponentGenerator
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
  * @since 3.14
  */
 @Primary
-@Singleton
 @Component
 @Qualifier(DefaultSearchResultComponentGenerator.DEFAULT_SEARCH_RESULT_COMPONENT_GENERATOR_KEY)
 public class DefaultSearchResultComponentGenerator
@@ -38,7 +36,7 @@ public class DefaultSearchResultComponentGenerator
 {
   public static final String DEFAULT_SEARCH_RESULT_COMPONENT_GENERATOR_KEY = "default";
 
-  @Inject
+  @Autowired
   public DefaultSearchResultComponentGenerator(
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final RepositoryManager repositoryManager,

@@ -19,7 +19,7 @@ import org.sonatype.nexus.security.secrets.SecretsMigrator;
 
 import org.junit.Test;
 
-import static org.fest.assertions.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 

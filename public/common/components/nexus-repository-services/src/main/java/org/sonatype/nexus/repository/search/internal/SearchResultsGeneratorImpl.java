@@ -19,9 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchResponse;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.14
  */
 @Component
-@Singleton
 public class SearchResultsGeneratorImpl
     implements SearchResultsGenerator
 {
@@ -44,7 +41,7 @@ public class SearchResultsGeneratorImpl
 
   private final SearchResultComponentGenerator defaultSearchResultComponentGenerator;
 
-  @Inject
+  @Autowired
   SearchResultsGeneratorImpl(
       final List<SearchResultComponentGenerator> searchResultComponentGeneratorList)
   {

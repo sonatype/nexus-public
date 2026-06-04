@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class MavenGroupRepositoriesApiResourceBeta

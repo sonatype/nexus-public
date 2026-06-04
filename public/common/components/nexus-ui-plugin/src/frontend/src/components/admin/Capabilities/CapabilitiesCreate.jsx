@@ -146,7 +146,7 @@ export default function CapabilitiesCreate() {
                     <NxTile.Subsection data-testid='form-fields'>
                       {selectedType.formFields.map(field => (
                         <DynamicFormField
-                          key={field.id}
+                          key={`${selectedType.id}-${field.id}`}
                           id={field.id}
                           current={current}
                           initialValue={field.initialValue}

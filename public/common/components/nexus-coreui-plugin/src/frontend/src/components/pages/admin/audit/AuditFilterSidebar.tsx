@@ -12,14 +12,20 @@
  */
 
 import React, { useMemo } from 'react';
-import { Box, Button, Checkbox, Flex, Text, Select, TextField } from '@radix-ui/themes';
+import { Box, Flex, Text, Button, Select, Checkbox, TextField } from '@radix-ui/themes';
 import { RefreshCw } from 'lucide-react';
 
-import type { AuditFilters, AuditCategory } from './audit.types';
-import { CATEGORY_LABELS, COMMON_EVENT_TYPES, COMMON_DOMAINS } from './audit.constants';
+import type { AuditFilters, AuditCategory } from '@sonatype/nexus-ui-plugin';
+import {
+  CATEGORY_LABELS,
+  COMMON_EVENT_TYPES,
+  COMMON_DOMAINS,
+} from '@sonatype/nexus-ui-plugin';
 import { FilterSidebar, type FilterSection } from '../../../shared/FilterSidebar';
+import type { Repository } from '../../super/settings/repository/repositories/types';
+import './AuditFilterSidebar.scss';
 
-const CATEGORY_OPTIONS: Array<{ value: string; label: string }> = [
+const CATEGORY_OPTIONS: Array<{ value: AuditCategory; label: string }> = [
   { value: 'security', label: CATEGORY_LABELS.security },
   { value: 'repository', label: CATEGORY_LABELS.repository },
   { value: 'configuration', label: CATEGORY_LABELS.configuration },
@@ -33,168 +39,199 @@ const DATE_RANGE_OPTIONS = [
   { value: 'last-90-days', label: 'Last 90 days' },
 ];
 
-const EVENT_TYPE_OPTIONS = COMMON_EVENT_TYPES.map((type) => ({
-  value: type,
-  label: type.charAt(0).toUpperCase() + type.slice(1),
-}));
+const EVENT_TYPE_OPTIONS = [
+  ...COMMON_EVENT_TYPES.map((type) => ({
+    value: type,
+    label: type.charAt(0).toUpperCase() + type.slice(1),
+  })),
+  { value: 'automatic-malware-removed', label: 'Malware Cleaned' },
+];
 
 export interface AuditFilterSidebarProps {
   filters: AuditFilters;
-  repositories: any[];
+  repositories: Repository[];
   onCategoryToggle: (category: AuditCategory) => void;
-  onDomainToggle: (domain: string) => void;
   onEventTypeToggle: (eventType: string) => void;
   onInitiatorChange: (initiator: string) => void;
   onRepositoryNameChange: (repositoryName: string) => void;
   onRepositoryTypeChange: (repositoryType: string) => void;
   onDateRangeChange: (range: AuditFilters['dateRange']) => void;
   onClearAllFilters: () => void;
-  hasActiveFilters: boolean;
   disabled?: boolean;
 }
 
-/**
- * Filter sidebar for Audit Log page.
- * Provides filtering by category, domain, event type, initiator, and date range.
- * Uses the standard FilterSidebar component for consistency with the Search module.
- */
 export function AuditFilterSidebar({
   filters,
   repositories,
   onCategoryToggle,
-  onDomainToggle,
   onEventTypeToggle,
   onInitiatorChange,
   onRepositoryNameChange,
   onRepositoryTypeChange,
   onDateRangeChange,
   onClearAllFilters,
-  hasActiveFilters,
   disabled = false,
 }: AuditFilterSidebarProps): JSX.Element {
-  // Extract unique formats from repositories
   const formatOptions = useMemo(() => {
     const formats = new Set<string>();
-    repositories.forEach(repo => {
+    repositories.forEach((repo) => {
       if (repo.format) formats.add(repo.format);
     });
-    return Array.from(formats).sort().map(f => ({
-      value: f,
-      label: f.toUpperCase(),
-    }));
+    return Array.from(formats)
+      .sort()
+      .map((f) => ({ value: f, label: f.toUpperCase() }));
   }, [repositories]);
 
-  // Map repositories to options
   const repoOptions = useMemo(() => {
     return repositories
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map(repo => ({
-        value: repo.name,
-        label: repo.name,
-      }));
+      .map((repo) => ({ value: repo.name, label: repo.name }));
   }, [repositories]);
 
-  const sections: FilterSection[] = [
-    {
-      id: 'dateRange',
-      label: 'Date Range',
-      type: 'select',
-      options: DATE_RANGE_OPTIONS,
-      value: filters.dateRange,
-      defaultExpanded: true,
-    },
-    {
-      id: 'categories',
-      label: 'Categories',
-      type: 'checkbox',
-      options: CATEGORY_OPTIONS,
-      value: filters.categories,
-      defaultExpanded: true,
-    },
-    {
-      id: 'repositoryType',
-      label: 'Format',
-      type: 'select',
-      options: [
-        { value: '', label: 'All Formats' },
-        ...formatOptions
-      ],
-      value: filters.repositoryType || '',
-      defaultExpanded: true,
-    },
-    {
-      id: 'repositoryName',
-      label: 'Repository',
-      type: 'select',
-      options: [
-        { value: '', label: 'All Repositories' },
-        ...repoOptions
-      ],
-      value: filters.repositoryName || '',
-      defaultExpanded: true,
-    },
-    {
-      id: 'eventTypes',
-      label: 'Event Types',
-      type: 'checkbox',
-      options: [
-        ...EVENT_TYPE_OPTIONS,
-        { value: 'automatic-malware-removed', label: 'Malware Cleaned' }
-      ],
-      value: filters.eventTypes,
-      defaultExpanded: false,
-    },
-    {
-      id: 'initiator',
-      label: 'Initiator',
-      type: 'text',
-      value: filters.initiator || '',
-      defaultExpanded: false,
-    }
-  ];
-
-  const handleFilterChange = (sectionId: string, value: string | string[]) => {
-    switch (sectionId) {
-      case 'categories':
-        const newCats = value as AuditCategory[];
-        const currentCats = filters.categories;
-        const added = newCats.find(c => !currentCats.includes(c));
-        const removed = currentCats.find(c => !newCats.includes(c));
-        if (added) onCategoryToggle(added);
-        else if (removed) onCategoryToggle(removed);
-        break;
-      case 'eventTypes':
-        const newTypes = value as string[];
-        const currentTypes = filters.eventTypes;
-        const addedType = newTypes.find(t => !currentTypes.includes(t));
-        const removedType = currentTypes.find(t => !newTypes.includes(t));
-        if (addedType) onEventTypeToggle(addedType);
-        else if (removedType) onEventTypeToggle(removedType);
-        break;
-      case 'dateRange':
-        onDateRangeChange(value as AuditFilters['dateRange']);
-        break;
-      case 'repositoryType':
-        onRepositoryTypeChange(value as string);
-        break;
-      case 'repositoryName':
-        onRepositoryNameChange(value as string);
-        break;
-      case 'initiator':
-        onInitiatorChange(value as string);
-        break;
-    }
-  };
-
   return (
-    <FilterSidebar
-      title="Audit Filters"
-      sections={sections}
-      onFilterChange={handleFilterChange}
-      onClear={onClearAllFilters}
-      disabled={disabled}
-      className="audit-filter-sidebar"
-    />
+    <Box p="1" pt="0">
+      <Button
+        variant="outline"
+        color="gray"
+        size="2"
+        mb="4"
+        onClick={onClearAllFilters}
+        disabled={disabled}
+      >
+        <RefreshCw size={12} />
+        Reset filters
+      </Button>
+
+      <Flex direction="column" gap="4">
+        {/* Date Range */}
+        <Box>
+          <Text as="p" size="2" weight="bold" mb="2">
+            Date Range
+          </Text>
+          <Select.Root
+            size="2"
+            value={filters.dateRange || 'last-30-days'}
+            onValueChange={(value) => onDateRangeChange(value as AuditFilters['dateRange'])}
+            disabled={disabled}
+          >
+            <Select.Trigger className="audit-filter-sidebar__select-trigger" />
+            <Select.Content>
+              {DATE_RANGE_OPTIONS.map((opt) => (
+                <Select.Item key={opt.value} value={opt.value}>
+                  {opt.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </Box>
+
+        {/* Categories */}
+        <Box>
+          <Text as="p" size="2" weight="bold" mb="2">
+            Categories
+          </Text>
+          <Flex direction="column">
+            {CATEGORY_OPTIONS.map(({ value, label }) => (
+              <Flex key={value} align="center" gap="2" mb="1">
+                <Checkbox
+                  id={`category-${value}`}
+                  checked={filters.categories.includes(value)}
+                  onCheckedChange={() => onCategoryToggle(value)}
+                  disabled={disabled}
+                  size="2"
+                />
+                <Text as="label" size="2" htmlFor={`category-${value}`}>
+                  {label}
+                </Text>
+              </Flex>
+            ))}
+          </Flex>
+        </Box>
+
+        {/* Format */}
+        <Box>
+          <Text as="p" size="2" weight="bold" mb="2">
+            Format
+          </Text>
+          <Select.Root
+            size="2"
+            value={filters.repositoryType || '__all__'}
+            onValueChange={(value) => onRepositoryTypeChange(value === '__all__' ? '' : value)}
+            disabled={disabled}
+          >
+            <Select.Trigger className="audit-filter-sidebar__select-trigger" />
+            <Select.Content>
+              <Select.Item value="__all__">All Formats</Select.Item>
+              {formatOptions.map((opt) => (
+                <Select.Item key={opt.value} value={opt.value}>
+                  {opt.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </Box>
+
+        {/* Repository */}
+        <Box>
+          <Text as="p" size="2" weight="bold" mb="2">
+            Repository
+          </Text>
+          <Select.Root
+            size="2"
+            value={filters.repositoryName || '__all__'}
+            onValueChange={(value) => onRepositoryNameChange(value === '__all__' ? '' : value)}
+            disabled={disabled}
+          >
+            <Select.Trigger className="audit-filter-sidebar__select-trigger" />
+            <Select.Content>
+              <Select.Item value="__all__">All Repositories</Select.Item>
+              {repoOptions.map((opt) => (
+                <Select.Item key={opt.value} value={opt.value}>
+                  {opt.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </Box>
+
+        {/* Event Types */}
+        <Box>
+          <Text as="p" size="2" weight="bold" mb="2">
+            Event Types
+          </Text>
+          <Flex direction="column">
+            {EVENT_TYPE_OPTIONS.map(({ value, label }) => (
+              <Flex key={value} align="center" gap="2" mb="1">
+                <Checkbox
+                  id={`eventtype-${value}`}
+                  checked={filters.eventTypes.includes(value)}
+                  onCheckedChange={() => onEventTypeToggle(value)}
+                  disabled={disabled}
+                  size="2"
+                />
+                <Text as="label" size="2" htmlFor={`eventtype-${value}`}>
+                  {label}
+                </Text>
+              </Flex>
+            ))}
+          </Flex>
+        </Box>
+
+        {/* Initiator */}
+        <Box>
+          <Text as="p" size="2" weight="bold" mb="2">
+            Initiator
+          </Text>
+          <TextField.Root
+            placeholder="Filter by initiator..."
+            value={filters.initiator || ''}
+            onChange={(e) => onInitiatorChange(e.target.value)}
+            disabled={disabled}
+            size="2"
+          />
+        </Box>
+      </Flex>
+    </Box>
   );
 }

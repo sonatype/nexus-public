@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.tasklog;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -38,7 +38,7 @@ public class TaskLogCleanupTask
 {
   private final TaskLogCleanup taskLogCleanup;
 
-  @Inject
+  @Autowired
   public TaskLogCleanupTask(final TaskLogCleanup taskLogCleanup) {
     this.taskLogCleanup = checkNotNull(taskLogCleanup);
   }

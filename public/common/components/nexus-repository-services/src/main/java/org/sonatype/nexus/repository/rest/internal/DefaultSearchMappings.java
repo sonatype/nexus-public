@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.rest.internal;
 
 import java.util.List;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.sql.SearchField;
@@ -43,7 +41,6 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSIT
  */
 @Component
 @Qualifier("default")
-@Singleton
 public class DefaultSearchMappings
     implements SearchMappings
 {

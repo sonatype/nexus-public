@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.audit.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
@@ -29,7 +27,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.1
  */
 @Component
-@Singleton
 public class InitiatorProviderImpl
     implements InitiatorProvider
 {
@@ -37,7 +34,7 @@ public class InitiatorProviderImpl
 
   private final ClientInfoProvider clientInfoProvider;
 
-  @Inject
+  @Autowired
   public InitiatorProviderImpl(final ClientInfoProvider clientInfoProvider) {
     this.clientInfoProvider = clientInfoProvider;
   }

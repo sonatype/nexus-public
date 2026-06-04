@@ -19,9 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.Description;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.SecuritySystem;
@@ -60,7 +58,6 @@ import static org.sonatype.nexus.security.config.CUser.STATUS_CHANGE_PASSWORD;
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 @Description("Local")
 public class UserManagerImpl
     extends AbstractUserManager
@@ -74,7 +71,7 @@ public class UserManagerImpl
 
   private final PasswordValidator passwordValidator;
 
-  @Inject
+  @Autowired
   public UserManagerImpl(
       final EventManager eventManager,
       final SecurityConfigurationManager configuration,

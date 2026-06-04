@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.apt.datastore.internal.proxy;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
@@ -33,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * When enabled, requests for distributions other than the configured one will return 404.
  */
 @Component
-@Singleton
 public class AptDistributionValidationHandler
     implements Handler
 {

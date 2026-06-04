@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AssetReconcileData;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -39,7 +39,7 @@ import org.apache.ibatis.annotations.Param;
 public class AssetBlobStore<T extends AssetBlobDAO>
     extends ContentStoreSupport<T>
 {
-  @Inject
+  @Autowired
   public AssetBlobStore(
       final DataSessionSupplier sessionSupplier,
       final String contentStoreName,

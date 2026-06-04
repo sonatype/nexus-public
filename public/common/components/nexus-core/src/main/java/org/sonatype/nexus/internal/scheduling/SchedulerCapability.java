@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.scheduling;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.common.template.TemplateParameters;
@@ -40,7 +40,7 @@ public class SchedulerCapability
 
   private boolean pausedByUs = false;
 
-  @Inject
+  @Autowired
   public SchedulerCapability(final SchedulerSPI scheduler) {
     this.scheduler = checkNotNull(scheduler);
   }

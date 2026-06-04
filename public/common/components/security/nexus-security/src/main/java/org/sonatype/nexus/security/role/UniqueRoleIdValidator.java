@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.role;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.security.SecuritySystem;
@@ -38,7 +38,7 @@ public class UniqueRoleIdValidator
 {
   private final AuthorizationManager authorizationManager;
 
-  @Inject
+  @Autowired
   public UniqueRoleIdValidator(final SecuritySystem securitySystem) throws NoSuchAuthorizationManagerException {
     this.authorizationManager = checkNotNull(securitySystem).getAuthorizationManager(AuthorizationManagerImpl.SOURCE);
   }

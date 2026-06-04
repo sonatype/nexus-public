@@ -32,13 +32,11 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.jmx.reflect.ReflectionMBeanBuilder;
 
 import com.google.common.base.Strings;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Named;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Scope;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -53,7 +51,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ManagedObjectRegistrar
     implements ApplicationContextAware
 {
@@ -61,7 +58,7 @@ public class ManagedObjectRegistrar
 
   private MBeanServer server;
 
-  @Inject
+  @Autowired
   public ManagedObjectRegistrar(final MBeanServer server) {
     this.server = checkNotNull(server);
   }

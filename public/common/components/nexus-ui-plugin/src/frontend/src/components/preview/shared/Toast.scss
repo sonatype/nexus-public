@@ -112,14 +112,14 @@
   font-weight: 600;
   font-size: 14px;
   line-height: 1.4;
-  color: var(--gray-12);
+  color: var(--gray-12, #1c2024);
   margin: 0;
 }
 
 .toast__description {
   font-size: 13px;
   line-height: 1.4;
-  color: var(--gray-11);
+  color: var(--gray-11, #60646c);
   margin-top: 4px;
 }
 

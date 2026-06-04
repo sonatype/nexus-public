@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 import org.springframework.beans.factory.FactoryBean;
@@ -31,13 +29,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("initial")
-@Singleton
 public class InitialAnonymousConfigurationProvider
     implements FactoryBean<AnonymousConfiguration>
 {
   private final boolean enabled;
 
-  @Inject
+  @Autowired
   public InitialAnonymousConfigurationProvider(
       @Value("${nexus.security.default.anonymous:false}") final boolean enabled)
   {

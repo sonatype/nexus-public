@@ -1543,4 +1543,53 @@ public class FileBlobStoreTest
     assertThat(result.getMetrics(), is(notNullValue()));
     assertThat(result.getMetrics().getContentSize(), is((long) content.length));
   }
+
+  /**
+   * NEXUS-51514: a single blob deletion failure during compaction must not abort the entire run.
+   */
+  @Test
+  public void testCompact_continuesPastSingleDeleteFailure_NEXUS_51514() throws Exception {
+    BlobId blobId1 = new BlobId(UUID.randomUUID().toString());
+    BlobId blobId2 = new BlobId(UUID.randomUUID().toString());
+    BlobId blobId3 = new BlobId(UUID.randomUUID().toString());
+
+    // Create .bytes files so deleteHard returns true for blob1 and blob3
+    Path blob1Bytes = fullPath.resolve(blobId1.asUniqueString() + ".bytes");
+    Path blob3Bytes = fullPath.resolve(blobId3.asUniqueString() + ".bytes");
+    Files.createFile(blob1Bytes);
+    Files.createFile(blob3Bytes);
+
+    // blob2: create files and make the .bytes deletion throw
+    Path blob2Bytes = fullPath.resolve(blobId2.asUniqueString() + ".bytes");
+    Files.createFile(blob2Bytes);
+    doThrow(new IOException("Permission denied")).when(fileOperations).delete(blob2Bytes);
+
+    when(fileBlobDeletionIndex.count(any(OffsetDateTime.class))).thenReturn(3);
+    when(fileBlobDeletionIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(blobId1, blobId2, blobId3));
+
+    underTest.compact(null, Duration.ZERO);
+
+    // blob1 and blob3 were hard-deleted successfully
+    verify(fileBlobDeletionIndex).deleteRecord(blobId1);
+    verify(fileBlobDeletionIndex).deleteRecord(blobId3);
+
+    // blob2 failed — its record stays in the index for retry
+    verify(fileBlobDeletionIndex, never()).deleteRecord(blobId2);
+  }
+
+  @Test
+  public void testCompact_taskCancellationPropagatesDuringBlobDeletion() throws Exception {
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+
+    when(fileBlobDeletionIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(fileBlobDeletionIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(blobId));
+
+    cancelled.set(true);
+
+    assertThrows(TaskInterruptedException.class,
+        () -> underTest.compact(null, Duration.ZERO));
+  }
+
 }

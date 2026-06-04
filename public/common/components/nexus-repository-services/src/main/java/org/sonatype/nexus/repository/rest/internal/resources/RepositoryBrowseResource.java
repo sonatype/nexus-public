@@ -17,8 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -58,7 +57,6 @@ import org.springframework.stereotype.Component;
  * @since 3.6
  */
 @Component
-@Singleton
 @Path(RepositoryBrowseResource.RESOURCE_URI)
 @Produces(TEXT_HTML)
 public class RepositoryBrowseResource
@@ -84,7 +82,7 @@ public class RepositoryBrowseResource
 
   private final URL template;
 
-  @Inject
+  @Autowired
   public RepositoryBrowseResource(
       final RepositoryManager repositoryManager,
       final BrowseNodeQueryService browseNodeQueryService,

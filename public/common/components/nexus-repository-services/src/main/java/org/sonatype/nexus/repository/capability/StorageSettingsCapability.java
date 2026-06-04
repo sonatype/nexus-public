@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.capability;
 import java.time.Duration;
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 
@@ -40,7 +40,7 @@ public class StorageSettingsCapability
 {
   private final GlobalRepositorySettings globalSettings;
 
-  @Inject
+  @Autowired
   public StorageSettingsCapability(final GlobalRepositorySettings globalSettings) {
     this.globalSettings = checkNotNull(globalSettings);
   }

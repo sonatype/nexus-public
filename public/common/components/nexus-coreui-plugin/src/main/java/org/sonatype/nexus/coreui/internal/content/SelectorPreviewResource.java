@@ -14,8 +14,7 @@ package org.sonatype.nexus.coreui.internal.content;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -49,7 +48,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(SelectorPreviewResource.RESOURCE_PATH)
@@ -66,7 +64,7 @@ public class SelectorPreviewResource
 
   private final SelectorFactory selectorFactory;
 
-  @Inject
+  @Autowired
   public SelectorPreviewResource(
       final ComponentHelper componentHelper,
       final RepositoryManager repositoryManager,

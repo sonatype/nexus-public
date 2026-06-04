@@ -19,8 +19,8 @@ import java.util.Map;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.ByteSize;
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.io.ByteSize;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.conversion.BooleanPropertyEditor;
 import org.sonatype.nexus.common.conversion.ByteSizePropertyEditor;
 import org.sonatype.nexus.common.conversion.DurationPropertyEditor;

@@ -15,8 +15,6 @@ package org.sonatype.nexus.internal.atlas.customizers;
 import java.io.File;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.logging.task.TaskLogHome;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.5
  */
 @Component
-@Singleton
 public class TaskLogCustomizer
     implements SupportBundleCustomizer
 {

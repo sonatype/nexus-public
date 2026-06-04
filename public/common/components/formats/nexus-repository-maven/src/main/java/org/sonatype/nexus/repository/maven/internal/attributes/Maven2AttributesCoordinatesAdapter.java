@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.attributes;
 
 import java.util.Map;
 import java.util.TreeMap;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.application.scan.AttributesCoordinatesAdapter;
 import org.sonatype.nexus.repository.maven.internal.Attributes;
@@ -25,7 +23,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class Maven2AttributesCoordinatesAdapter
     implements AttributesCoordinatesAdapter
 {

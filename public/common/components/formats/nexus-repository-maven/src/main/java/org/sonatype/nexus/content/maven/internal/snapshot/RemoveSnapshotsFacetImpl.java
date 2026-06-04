@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.store.GAV;
@@ -60,7 +60,7 @@ public class RemoveSnapshotsFacetImpl
 {
   private final Type groupType;
 
-  @Inject
+  @Autowired
   public RemoveSnapshotsFacetImpl(
       @Qualifier(GroupType.NAME) final Type groupType)
   {

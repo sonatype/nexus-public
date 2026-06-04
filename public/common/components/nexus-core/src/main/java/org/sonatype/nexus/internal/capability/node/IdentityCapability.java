@@ -14,10 +14,10 @@ package org.sonatype.nexus.internal.capability.node;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.template.TemplateParameters;
@@ -49,7 +49,7 @@ public class IdentityCapability
 
   private final NodeAccess nodeAccess;
 
-  @Inject
+  @Autowired
   public IdentityCapability(final NodeAccess nodeAccess) {
     this.nodeAccess = checkNotNull(nodeAccess);
   }

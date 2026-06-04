@@ -13,13 +13,13 @@
 package org.sonatype.nexus.repository.routing.internal;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
@@ -46,7 +46,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class RoutingRuleCache
     implements EventAware
 {
@@ -60,7 +59,7 @@ public class RoutingRuleCache
 
   private final RoutingRuleStore routingRuleStore;
 
-  @Inject
+  @Autowired
   public RoutingRuleCache(final RoutingRuleStore routingRuleStore) {
     this.routingRuleStore = checkNotNull(routingRuleStore);
   }
@@ -124,7 +123,7 @@ public class RoutingRuleCache
   @AllowConcurrentEvents
   @Subscribe
   public void handle(final RoutingRuleInvalidatedEvent event) {
-    routingRuleCache.invalidate(event.getRoutingRuleId());
+    routingRuleCache.invalidate(new EntityUUID(UUID.fromString(event.getRoutingRuleId())));
   }
 
   private static class RepositoryMappingCacheLoader

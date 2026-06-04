@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapability;
 import org.sonatype.nexus.onboarding.capability.OnboardingCapabilityHelper;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
@@ -23,14 +21,13 @@ import static java.util.Objects.requireNonNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class InstanceStatus
 {
   private final AnonymousManager anonymousManager;
 
   private final OnboardingCapabilityHelper onboardingCapabilityHelper;
 
-  @Inject
+  @Autowired
   public InstanceStatus(
       final AnonymousManager anonymousManager,
       final OnboardingCapabilityHelper onboardingCapabilityHelper)

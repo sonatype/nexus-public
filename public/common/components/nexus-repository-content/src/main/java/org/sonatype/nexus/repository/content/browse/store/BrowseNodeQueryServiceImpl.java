@@ -54,8 +54,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableList;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -74,7 +73,6 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
  * @since 3.26
  */
 @Component
-@Singleton
 public class BrowseNodeQueryServiceImpl
     extends StateGuardLifecycleSupport
     implements BrowseNodeQueryService
@@ -99,7 +97,7 @@ public class BrowseNodeQueryServiceImpl
 
   private final SelectorFilterBuilder selectorFilterBuilder;
 
-  @Inject
+  @Autowired
   public BrowseNodeQueryServiceImpl(
       final SecurityHelper securityHelper,
       final SelectorManager selectorManager,

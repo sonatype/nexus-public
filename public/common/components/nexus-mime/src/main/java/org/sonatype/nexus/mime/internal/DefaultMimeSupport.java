@@ -31,8 +31,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
@@ -52,7 +51,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Primary
 @Component
-@Singleton
 public class DefaultMimeSupport
     implements MimeSupport
 {
@@ -68,7 +66,7 @@ public class DefaultMimeSupport
    */
   private final LoadingCache<String, List<String>> extensionToMimeTypeCache;
 
-  @Inject
+  @Autowired
   public DefaultMimeSupport() {
     this(new NexusMimeTypes());
   }

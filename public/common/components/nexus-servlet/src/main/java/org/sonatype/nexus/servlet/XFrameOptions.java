@@ -17,9 +17,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  * @since 3.11
  */
 @Component
-@Singleton
 public class XFrameOptions
     implements Serializable
 {
@@ -53,7 +50,7 @@ public class XFrameOptions
 
   private final Set<String> frameablePaths;
 
-  @Inject
+  @Autowired
   public XFrameOptions(
       @Value("${nexus.http.denyframe.enabled:true}") final boolean defaultDeny)
   {

@@ -14,9 +14,7 @@ package org.sonatype.nexus.internal.capability.storage.datastore.cleanup;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  * index on capability_storage_item table
  */
 @Component
-@Singleton
 public class CleanupCapabilityDuplicatesMigrationStep_1_27
     implements DatabaseMigrationStep
 {
@@ -39,7 +36,7 @@ public class CleanupCapabilityDuplicatesMigrationStep_1_27
 
   private final CleanupCapabilityDuplicatesService cleanupService;
 
-  @Inject
+  @Autowired
   public CleanupCapabilityDuplicatesMigrationStep_1_27(final CleanupCapabilityDuplicatesService cleanupService) {
     this.cleanupService = checkNotNull(cleanupService);
   }

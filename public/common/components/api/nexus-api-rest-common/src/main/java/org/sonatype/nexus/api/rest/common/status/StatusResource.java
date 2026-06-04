@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.api.rest.common.status;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.15
  */
 @Component
-@Singleton
 @Path(StatusResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)

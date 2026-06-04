@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.routing;
 
 import java.util.Map;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-@Singleton
 public class RoutingRuleAuditor
     extends AuditorSupport
     implements EventAware

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
@@ -71,7 +71,7 @@ public class CompactBlobStoreTask
 
   private final AtomicInteger processed = new AtomicInteger();
 
-  @Inject
+  @Autowired
   public CompactBlobStoreTask(
       @Nullable final ChangeRepositoryBlobStoreStore changeBlobstoreStore,
       final BlobStoreUsageChecker blobStoreUsageChecker,

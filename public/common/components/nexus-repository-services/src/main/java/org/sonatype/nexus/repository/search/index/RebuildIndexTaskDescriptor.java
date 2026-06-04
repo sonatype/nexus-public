@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.index;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -30,7 +28,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(RebuildIndexTaskDescriptor.TYPE_ID)
-@Singleton
 public class RebuildIndexTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -38,7 +35,7 @@ public class RebuildIndexTaskDescriptor
 
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
-  @Inject
+  @Autowired
   public RebuildIndexTaskDescriptor() {
     super(TYPE_ID,
         RebuildIndexTask.class,

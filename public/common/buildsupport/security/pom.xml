@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-security</artifactId>
@@ -143,19 +143,13 @@
 
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15to18</artifactId>
+        <artifactId>bcprov-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpg-jdk15to18</artifactId>
-        <version>${bouncycastle.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk15to18</artifactId>
+        <artifactId>bcpg-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
 
@@ -167,7 +161,7 @@
 
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcutil-jdk15to18</artifactId>
+        <artifactId>bcutil-jdk18on</artifactId>
         <version>${bouncycastle.version}</version>
       </dependency>
 

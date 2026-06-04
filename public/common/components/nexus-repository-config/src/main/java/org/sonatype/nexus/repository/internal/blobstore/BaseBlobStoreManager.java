@@ -204,12 +204,21 @@ public abstract class BaseBlobStoreManager
     }
     catch (Exception e) {
       log.error("Unable to restore BlobStore {}", configuration.getName(), e);
+      onRestoreError(configuration.getName(), e);
     }
     finally {
       if (blobStore != null) {
         track(configuration.getName(), blobStore);
       }
     }
+  }
+
+  /**
+   * Called when restoring a blobstore fails. Default is a no-op (swallow and continue).
+   * Subclasses may override to propagate the error.
+   */
+  protected void onRestoreError(final String name, final Exception e) {
+    // no-op by default
   }
 
   protected void startBlobStore(final Entry<String, BlobStore> entry) {
@@ -219,13 +228,19 @@ public abstract class BaseBlobStoreManager
     try {
       blobStore.start();
       eventManager.post(new BlobStoreStartedEvent(blobStore));
-
     }
     catch (Exception e) {
       log.error("Unable to start BlobStore {}", name, e);
+      onStartError(name, e);
     }
+  }
 
-    log.info("Completed initialization");
+  /**
+   * Called when starting a blobstore fails. Default is a no-op (swallow and continue).
+   * Subclasses may override to propagate the error.
+   */
+  protected void onStartError(final String name, final Exception e) {
+    // no-op by default
   }
 
   @Override
@@ -492,7 +507,7 @@ public abstract class BaseBlobStoreManager
   }
 
   @VisibleForTesting
-  void track(final String name, final BlobStore blobStore) {
+  protected void track(final String name, final BlobStore blobStore) {
     log.debug("Tracking: {}", name);
     stores.put(name, blobStore);
   }

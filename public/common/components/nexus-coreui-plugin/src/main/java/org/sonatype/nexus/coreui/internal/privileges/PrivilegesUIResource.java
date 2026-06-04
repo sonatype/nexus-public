@@ -14,8 +14,7 @@ package org.sonatype.nexus.coreui.internal.privileges;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,7 +35,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path("/internal/ui/privileges")
@@ -47,7 +45,7 @@ public class PrivilegesUIResource
 
   private final Map<String, PrivilegeDescriptor> privilegeDescriptors;
 
-  @Inject
+  @Autowired
   public PrivilegesUIResource(final List<PrivilegeDescriptor> privilegeDescriptorsList) {
     this.privilegeDescriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(privilegeDescriptorsList));
   }

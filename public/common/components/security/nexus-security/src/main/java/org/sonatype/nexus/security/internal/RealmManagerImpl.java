@@ -35,9 +35,8 @@ import org.sonatype.nexus.security.realm.SecurityRealm;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.cache.Cache;
@@ -63,7 +62,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * @since 3.0
  */
 @Component
-@Singleton
 public class RealmManagerImpl
     extends StateGuardLifecycleSupport
     implements RealmManager, ApplicationContextAware
@@ -84,7 +82,7 @@ public class RealmManagerImpl
 
   private ApplicationContext applicationContext;
 
-  @Inject
+  @Autowired
   public RealmManagerImpl(
       final EventManager eventManager,
       final RealmConfigurationStore store,

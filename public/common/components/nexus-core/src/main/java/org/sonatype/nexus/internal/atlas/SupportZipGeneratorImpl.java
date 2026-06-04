@@ -32,10 +32,9 @@ import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.ByteSize;
+import org.sonatype.nexus.common.io.ByteSize;
 import org.sonatype.nexus.common.log.SupportZipGeneratorRequest;
 import org.sonatype.nexus.common.wonderland.DownloadService;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -60,7 +59,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class SupportZipGeneratorImpl
     implements SupportZipGenerator
 {
@@ -84,7 +82,7 @@ public class SupportZipGeneratorImpl
 
   private static int archivedLogSize;
 
-  @Inject
+  @Autowired
   SupportZipGeneratorImpl(
       final DownloadService downloadService,
       final List<SupportBundleCustomizer> bundleCustomizers,

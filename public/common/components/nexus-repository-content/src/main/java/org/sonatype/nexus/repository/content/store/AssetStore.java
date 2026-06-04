@@ -44,7 +44,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.util.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -65,7 +65,7 @@ public class AssetStore<T extends AssetDAO>
 
   private final boolean clustered;
 
-  @Inject
+  @Autowired
   public AssetStore(
       final DataSessionSupplier sessionSupplier,
       @Value(DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean clustered,

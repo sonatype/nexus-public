@@ -34,8 +34,7 @@ import org.sonatype.nexus.security.jwt.JwtSessionRevocationService;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
@@ -67,7 +66,6 @@ import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
  */
 @WebServlet(SESSION_MP)
 @Component
-@Singleton
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtServlet
     extends HttpServlet
@@ -84,7 +82,7 @@ public class JwtServlet
 
   private final JwtSessionRevocationService jwtSessionRevocationService;
 
-  @Inject
+  @Autowired
   public JwtServlet(
       @Value("${nexus-context-path:#{null}}") final String contextPath,
       final EventManager eventManager,

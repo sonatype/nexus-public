@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.capability;
 
 import java.time.Duration;
 
-import jakarta.inject.Singleton;
-
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.24
  */
 @Component
-@Singleton
 public class GlobalRepositorySettings
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

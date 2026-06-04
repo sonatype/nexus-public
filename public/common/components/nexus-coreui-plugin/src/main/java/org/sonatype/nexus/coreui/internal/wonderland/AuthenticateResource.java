@@ -14,8 +14,7 @@ package org.sonatype.nexus.coreui.internal.wonderland;
 
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -45,7 +44,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 @Path(AuthenticateResource.RESOURCE_URI)
 public class AuthenticateResource
     implements Resource
@@ -56,7 +54,7 @@ public class AuthenticateResource
 
   private final AuthTicketService authTickets;
 
-  @Inject
+  @Autowired
   public AuthenticateResource(final AuthTicketService authTickets) {
     this.authTickets = checkNotNull(authTickets);
   }

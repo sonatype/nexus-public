@@ -15,13 +15,11 @@ package org.sonatype.nexus.ui;
 import java.io.IOException;
 import java.net.URL;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,14 +28,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class UiUtil
 {
   private static final String RESOURCE_PREFIX = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/static/**/";
 
   private final ApplicationContext context;
 
-  @Inject
+  @Autowired
   public UiUtil(final ApplicationContext context) {
     this.context = checkNotNull(context);
   }

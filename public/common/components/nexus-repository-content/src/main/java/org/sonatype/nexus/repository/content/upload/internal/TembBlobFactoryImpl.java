@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.content.upload.internal;
 
 import java.io.InputStream;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -32,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.24
  */
 @Component
-@Singleton
 public class TembBlobFactoryImpl
     implements TempBlobFactory
 {

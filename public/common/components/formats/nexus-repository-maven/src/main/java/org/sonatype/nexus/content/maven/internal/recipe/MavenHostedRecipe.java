@@ -13,10 +13,8 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.content.maven.internal.index.MavenContentHostedIndexFacet;
 import org.sonatype.nexus.repository.Format;
@@ -41,7 +39,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(Maven2HostedRecipe.NAME)
-@Singleton
 public class MavenHostedRecipe
     extends MavenRecipeSupport
     implements Maven2HostedRecipe
@@ -50,7 +47,7 @@ public class MavenHostedRecipe
 
   private final Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet;
 
-  @Inject
+  @Autowired
   public MavenHostedRecipe(
       @Qualifier(HostedType.NAME) final Type type,
       @Qualifier(Maven2Format.NAME) final Format format,

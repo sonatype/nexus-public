@@ -234,10 +234,20 @@ public class AssetXO
     return Objects.hash(id);
   }
 
+  // Defaults uploaderVisible=true for backward compatibility with existing callers
   public static AssetXO from(
       AssetSearchResult asset,
       Repository repository,
       @Nullable Map<String, AssetXODescriptor> assetDescriptors)
+  {
+    return from(asset, repository, assetDescriptors, true);
+  }
+
+  public static AssetXO from(
+      AssetSearchResult asset,
+      Repository repository,
+      @Nullable Map<String, AssetXODescriptor> assetDescriptors,
+      boolean uploaderVisible)
   {
     Configuration repoConfiguration = repository.getConfiguration();
     String blobStoreName = String.valueOf(repoConfiguration.attributes("storage").get("blobStoreName"));
@@ -253,13 +263,13 @@ public class AssetXO
         .lastModified(asset.getLastModified())
         .lastDownloaded(asset.getLastDownloaded())
         .fileSize(asset.getFileSize())
-        .blobCreated(asset.getBlobCreated())
-        .blobUpdated(asset.getBlobUpdated())
+        .blobCreated(asset.getCreated())
+        .blobUpdated(asset.getBinaryUpdated())
         .blobStoreName(blobStoreName)
         .blobRef(asset.getBlobRef())
         .lastVerified(CacheAttributeUtils.extractLastVerified(asset.getAttributes()))
-        .uploader(asset.getUploader())
-        .uploaderIp(asset.getUploaderIp())
+        .uploader(uploaderVisible ? asset.getUploader() : null)
+        .uploaderIp(uploaderVisible ? asset.getUploaderIp() : null)
         .build();
   }
 

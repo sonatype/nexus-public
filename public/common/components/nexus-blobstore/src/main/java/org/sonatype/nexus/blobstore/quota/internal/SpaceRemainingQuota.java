@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.quota.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
@@ -34,7 +32,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(SpaceRemainingQuota.ID)
-@Singleton
 public class SpaceRemainingQuota
     extends BlobStoreQuotaSupport
 {

@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.security.rest;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -45,7 +45,7 @@ public class RepositoryPrivilegeApiResource
     extends PrivilegeApiResourceSupport
     implements Resource, RepositoryPrivilegeApiResourceDoc
 {
-  @Inject
+  @Autowired
   public RepositoryPrivilegeApiResource(
       final SecuritySystem securitySystem,
       final List<PrivilegeDescriptor> privilegeDescriptors)

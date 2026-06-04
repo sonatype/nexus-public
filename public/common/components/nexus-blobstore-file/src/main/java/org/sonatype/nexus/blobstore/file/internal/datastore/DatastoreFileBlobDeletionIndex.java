@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlobsStore;
@@ -58,7 +58,7 @@ public class DatastoreFileBlobDeletionIndex
 
   private FileBlobStore blobStore;
 
-  @Inject
+  @Autowired
   public DatastoreFileBlobDeletionIndex(
       final SoftDeletedBlobsStore softDeletedBlobsStore,
       final PeriodicJobService periodicJobService,

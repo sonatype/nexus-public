@@ -16,15 +16,12 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class CleanupConfigUpgrade_1_9
     implements DatabaseMigrationStep
 {

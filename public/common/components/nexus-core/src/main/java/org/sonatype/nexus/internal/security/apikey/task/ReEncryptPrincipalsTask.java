@@ -34,7 +34,7 @@ import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -93,7 +93,7 @@ public class ReEncryptPrincipalsTask
 
   private final Integer nexusSecretsIterations;
 
-  @Inject
+  @Autowired
   public ReEncryptPrincipalsTask(
       final DataSessionSupplier sessionSupplier,
       final EncryptionKeySource encryptionKeySource,

@@ -85,6 +85,8 @@ import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.model.Upload;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -110,6 +112,9 @@ public class EncryptingS3ClientTest
   @Mock
   private S3Client delegate;
 
+  @Mock
+  private AwsCredentialsProvider credentialsProvider;
+
   private EncryptingS3Client clientUnderTest;
 
   private BlobStoreConfiguration blobStoreConfiguration;
@@ -120,7 +125,7 @@ public class EncryptingS3ClientTest
     when(s3Serviceconfiguration.region()).thenReturn(Region.US_EAST_1);
 
     blobStoreConfiguration = new MockBlobStoreConfiguration();
-    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
   }
 
   @Test
@@ -179,7 +184,7 @@ public class EncryptingS3ClientTest
   @Test
   void copyObject_addsAes256ToRequestsWhenSet() {
     blobStoreConfiguration.setAttributes(Map.of(CONFIG_KEY, Map.of(ENCRYPTION_TYPE, "s3ManagedEncryption")));
-    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
 
     final CopyObjectRequest request = CopyObjectRequest.builder()
         .sourceBucket("src")
@@ -253,7 +258,7 @@ public class EncryptingS3ClientTest
   void createMultipartUpload_addsKmsAndKeyToCreateMultipartWhenEnabled() {
     blobStoreConfiguration.setAttributes(
         Map.of(CONFIG_KEY, Map.of(ENCRYPTION_TYPE, "kmsManagedEncryption", ENCRYPTION_KEY, "kms-key-123")));
-    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
 
     final CreateMultipartUploadRequest request = CreateMultipartUploadRequest.builder()
         .bucket("bucket")
@@ -437,7 +442,7 @@ public class EncryptingS3ClientTest
       when(presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presigned);
       when(presigned.url()).thenReturn(expected);
 
-      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
       final URL result = clientUnderTest.generatePresignedUrl(bucketName, key, Duration.ofMinutes(5));
 
       final GetObjectPresignRequest expectedPresignRequest = GetObjectPresignRequest.builder()
@@ -473,7 +478,7 @@ public class EncryptingS3ClientTest
       when(presigned.url()).thenReturn(expected);
       when(delegate.serviceClientConfiguration()).thenReturn(config);
 
-      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
       final URL result = clientUnderTest.generatePresignedUrl(
           bucketName,
           key,
@@ -518,7 +523,7 @@ public class EncryptingS3ClientTest
       when(presigned.url()).thenReturn(expected);
       when(delegate.serviceClientConfiguration()).thenReturn(config);
 
-      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
 
       final URL result = clientUnderTest.generatePresignedUrl(
           bucketName,
@@ -672,7 +677,7 @@ public class EncryptingS3ClientTest
   @Test
   void putObject_addsS3ManagedEncryptionWhenEnabled() {
     blobStoreConfiguration.setAttributes(Map.of(CONFIG_KEY, Map.of(ENCRYPTION_TYPE, "s3ManagedEncryption")));
-    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration);
+    clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
 
     final PutObjectRequest request = PutObjectRequest.builder()
         .bucket("test-bucket")

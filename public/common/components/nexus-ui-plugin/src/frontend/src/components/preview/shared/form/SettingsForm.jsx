@@ -11,11 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Flex, ScrollArea, Heading, Text } from '@radix-ui/themes';
-import { SettingsButton } from './SettingsButton';
+import { AlertDialog, Box, Button, Flex, Heading, Text } from '@radix-ui/themes';
+import { AlertCircle } from 'lucide-react';
 import { SettingsAlert } from './SettingsAlert';
+import { useUnsavedChangesWarning, clearDirtyState } from '../hooks/useUnsavedChangesWarning';
 
 import './SettingsForm.scss';
 
@@ -63,15 +64,27 @@ export function SettingsForm({
   error = null,
   success = null,
   submitDisabled = false,
+  cancelDisabled = false,
+  noDirtyTracking = false,
+  confirmDiscard = true,
   showActions = true,
   // Whether to show the header section
   showHeader = true,
   // New props for header actions and footer extras
   headerActions,
   footerExtra,
+  // Additional action buttons to render before Cancel (e.g., Back button)
+  actionButtons,
+  // Progress bar or stepper to render below action bar (for wizards)
+  progressBar,
+  // Wizard mode: Cancel on left, Submit on right (default: Cancel on right)
+  cancelOnLeft = false,
   className = '',
   // Testability props
   testId,
+  // Analytics props
+  submitAnalyticsId,
+  cancelAnalyticsId,
   // Spread additional data-* attributes
   ...restProps
 }) {
@@ -81,14 +94,43 @@ export function SettingsForm({
   const isPristine = pristine !== undefined ? pristine : !dirty;
   const saveHandler = onSave || onSubmit;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isLoading && !isPristine && !submitDisabled && saveHandler) {
-      saveHandler(e);
+      try {
+        await saveHandler(e);
+        clearDirtyState(formIdRef.current);
+      } catch {
+        // Keep dirty state on failure so navigation warning still fires
+      }
     }
   };
 
   const isSubmitDisabled = isLoading || isPristine || submitDisabled;
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+
+  const handleCancelClick = () => {
+    if (!onCancel) return;
+    if (!confirmDiscard || isPristine || noDirtyTracking) {
+      onCancel();
+    } else {
+      setDiscardDialogOpen(true);
+    }
+  };
+
+  const handleDiscardConfirm = () => {
+    setDiscardDialogOpen(false);
+    // Clear this specific form from dirty tracking
+    clearDirtyState(formIdRef.current);
+    if (onCancel) onCancel();
+  };
+
+  const formIdRef = useRef(`settings-form-${Math.random().toString(36).slice(2, 8)}`);
+
+  // Automatically track unsaved changes and warn on navigation
+  // Hook clears automatically when form becomes pristine (isDirty = false)
+  // Skip tracking if noDirtyTracking is enabled (e.g., one-shot upload forms)
+  useUnsavedChangesWarning(!isPristine && !noDirtyTracking, formIdRef.current);
 
   // Filter restProps to only include data-* attributes for safety
   const dataProps = Object.keys(restProps).reduce((acc, key) => {
@@ -103,6 +145,7 @@ export function SettingsForm({
       className={`settings-form ${className}`.trim()} 
       onSubmit={handleSubmit}
       noValidate
+      autoComplete="off"
       data-testid={testId || 'settings-form'}
       data-loading={isLoading ? 'true' : 'false'}
       data-dirty={dirty ? 'true' : 'false'}
@@ -111,8 +154,8 @@ export function SettingsForm({
       aria-busy={isLoading}
       {...dataProps}
     >
-      {/* Header */}
-      {showHeader && (
+      {/* Header - only render if title is provided */}
+      {showHeader && title && (
         <Box className="settings-form__header">
           <Flex justify="between" align="start" className="settings-form__header-row">
             <Box className="settings-form__header-content">
@@ -134,73 +177,152 @@ export function SettingsForm({
         </Box>
       )}
 
-      {/* Alerts */}
-      {error && (
-        <Box className="settings-form__alerts">
-          <SettingsAlert type="error">{error}</SettingsAlert>
+      {/* Sticky Action Bar - always visible at top of form */}
+      {/* UX Best Practice: Primary actions (Save) on RIGHT, destructive (Delete) on LEFT */}
+      {showActions && (
+        <Box className="settings-form__action-bar">
+          {cancelOnLeft ? (
+            // Wizard layout: Cancel on LEFT, Back + Continue on RIGHT
+            <>
+              {/* Left side: Cancel + footerExtra (e.g. Delete button) */}
+              <Flex gap="2" align="center">
+                {onCancel && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="2"
+                    onClick={handleCancelClick}
+                    disabled={isLoading || cancelDisabled}
+                    data-testid="form-cancel"
+                    data-analytics-id={cancelAnalyticsId}
+                  >
+                    {cancelLabel}
+                  </Button>
+                )}
+                {footerExtra}
+              </Flex>
+
+              {/* Right side: Back + Continue */}
+              <Flex gap="3" align="center">
+                {actionButtons}
+                {saveHandler && (
+                  <Button
+                    type="submit"
+                    variant="solid"
+                    size="2"
+                    disabled={isSubmitDisabled}
+                    loading={isLoading}
+                    aria-busy={isLoading ? 'true' : undefined}
+                    data-testid="form-submit"
+                    data-analytics-id={submitAnalyticsId}
+                  >
+                    {submitLabel}
+                  </Button>
+                )}
+              </Flex>
+            </>
+          ) : (
+            // Standard layout: Extra on LEFT, Cancel + Submit on RIGHT
+            <>
+              {/* Left side: Destructive actions (Delete) + error message */}
+              <Flex gap="2" align="center" className="settings-form__action-bar-extra">
+                {footerExtra}
+                {error && (
+                  <Flex gap="1" align="center" className="settings-form__action-bar-error">
+                    <AlertCircle size={14} />
+                    <Text size="1" weight="medium">{error}</Text>
+                  </Flex>
+                )}
+              </Flex>
+
+              {/* Right side: Primary actions + status */}
+              <Flex gap="3" align="center">
+                {!isPristine && !error && !noDirtyTracking && (
+                  <Text size="1" className="settings-form__unsaved">
+                    Unsaved changes
+                  </Text>
+                )}
+                {actionButtons}
+                {onCancel && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="2"
+                    onClick={handleCancelClick}
+                    disabled={isLoading || cancelDisabled}
+                    data-testid="form-cancel"
+                    data-analytics-id={cancelAnalyticsId}
+                  >
+                    {cancelLabel}
+                  </Button>
+                )}
+                {saveHandler && (
+                  <Button
+                    type="submit"
+                    variant="solid"
+                    size="2"
+                    disabled={isSubmitDisabled}
+                    loading={isLoading}
+                    aria-busy={isLoading ? 'true' : undefined}
+                    data-testid="form-submit"
+                    data-analytics-id={submitAnalyticsId}
+                  >
+                    {submitLabel}
+                  </Button>
+                )}
+              </Flex>
+            </>
+          )}
         </Box>
       )}
+
+      {/* Progress Bar / Stepper - for wizards */}
+      {progressBar && (
+        <Box className="settings-form__progress-bar">
+          {progressBar}
+        </Box>
+      )}
+
+      {/* Alerts - errors now shown in sticky action bar above */}
       {success && (
         <Box className="settings-form__alerts">
           <SettingsAlert type="success">{success}</SettingsAlert>
         </Box>
       )}
 
-      {/* Content */}
-      <ScrollArea className="settings-form__content" scrollbars="vertical">
+      {/* Content - scrollable, action bar sticks above */}
+      <Box className="settings-form__content">
         <Box className="settings-form__inner">
           {children}
         </Box>
-      </ScrollArea>
+      </Box>
 
-      {/* Footer Actions */}
-      {showActions && (
-        <Box className="settings-form__footer">
-          <Flex gap="3" justify="between" align="center">
-            <Flex gap="3" align="center">
-              {saveHandler && (
-                <SettingsButton
-                  type="submit"
-                  variant="primary"
-                  disabled={isSubmitDisabled}
-                  loading={isLoading}
-                  testId="form-submit"
-                >
-                  {submitLabel}
-                </SettingsButton>
-              )}
-              {onCancel && (
-                <SettingsButton
-                  type="button"
-                  variant="secondary"
-                  onClick={onCancel}
-                  disabled={isLoading}
-                  testId="form-cancel"
-                >
-                  {cancelLabel}
-                </SettingsButton>
-              )}
-              {!isPristine && (
-                <Text size="1" className="settings-form__unsaved">
-                  You have unsaved changes
-                </Text>
-              )}
+      {/* Discard Changes Confirmation - only rendered when confirmDiscard is enabled */}
+      {confirmDiscard && (
+        <AlertDialog.Root open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+          <AlertDialog.Content maxWidth="450px">
+            <AlertDialog.Title>Unsaved Changes</AlertDialog.Title>
+            <AlertDialog.Description size="2">
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            </AlertDialog.Description>
+            <Flex gap="3" mt="4" justify="end">
+              <AlertDialog.Cancel>
+                <Button variant="soft" color="gray">Stay</Button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action>
+                <Button variant="solid" color="red" onClick={handleDiscardConfirm}>Leave</Button>
+              </AlertDialog.Action>
             </Flex>
-            {footerExtra && (
-              <Flex gap="2" className="settings-form__footer-extra">
-                {footerExtra}
-              </Flex>
-            )}
-          </Flex>
-        </Box>
+          </AlertDialog.Content>
+        </AlertDialog.Root>
       )}
     </form>
   );
 }
 
 SettingsForm.propTypes = {
-  /** Page title displayed in header */
-  title: PropTypes.string.isRequired,
+  /** Page title displayed in header (header hidden if not provided) */
+  title: PropTypes.string,
   /** Optional description below title */
   description: PropTypes.string,
   /** Form content (typically SettingsFormSection components) */
@@ -229,6 +351,12 @@ SettingsForm.propTypes = {
   success: PropTypes.string,
   /** Additional disable condition for submit */
   submitDisabled: PropTypes.bool,
+  /** Disables the cancel button */
+  cancelDisabled: PropTypes.bool,
+  /** Skip dirty state tracking (for one-shot forms like upload) */
+  noDirtyTracking: PropTypes.bool,
+  /** Show confirmation dialog when canceling with unsaved changes (default: true) */
+  confirmDiscard: PropTypes.bool,
   /** Whether to show action buttons */
   showActions: PropTypes.bool,
   /** Whether to show the header section */
@@ -237,10 +365,20 @@ SettingsForm.propTypes = {
   headerActions: PropTypes.node,
   /** Optional extra content in footer (e.g., Delete button) */
   footerExtra: PropTypes.node,
+  /** Additional action buttons before Cancel (e.g., Back button in wizards) */
+  actionButtons: PropTypes.node,
+  /** Progress bar or stepper to render below action bar (for wizards) */
+  progressBar: PropTypes.node,
+  /** Wizard mode: Cancel on left, Submit on right (default: Cancel on right) */
+  cancelOnLeft: PropTypes.bool,
   /** Additional CSS class */
   className: PropTypes.string,
   /** Custom test ID for the form (overrides default 'settings-form') */
   testId: PropTypes.string,
+  /** Analytics ID for the submit button */
+  submitAnalyticsId: PropTypes.string,
+  /** Analytics ID for the cancel button */
+  cancelAnalyticsId: PropTypes.string,
 };
 
 export default SettingsForm;

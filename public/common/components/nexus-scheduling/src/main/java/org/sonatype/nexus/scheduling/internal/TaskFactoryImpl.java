@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -31,11 +30,9 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Scope;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -54,10 +51,8 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  * @since 3.0
  */
 @ManagedLifecycle(phase = TASKS)
-@Priority(Integer.MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class TaskFactoryImpl
     extends StateGuardLifecycleSupport
     implements TaskFactory
@@ -80,7 +75,7 @@ public class TaskFactoryImpl
    */
   private volatile boolean initialized = false;
 
-  @Inject
+  @Autowired
   public TaskFactoryImpl(
       final DatabaseCheck databaseCheck,
       final List<TaskDescriptor> descriptors,

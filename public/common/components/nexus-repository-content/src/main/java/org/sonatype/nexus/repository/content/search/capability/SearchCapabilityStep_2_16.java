@@ -16,8 +16,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  * Migration step which removes the defunct SearchConfigurationCapability
  */
 @Component
-@Singleton
 public class SearchCapabilityStep_2_16
     extends SearchIndexUpgrade
     implements DatabaseMigrationStep

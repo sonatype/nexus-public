@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.repository.Repository;
@@ -59,7 +59,7 @@ public abstract class AbstractMetadataRebuilder
 
   protected final int timeoutSeconds;
 
-  @Inject
+  @Autowired
   public AbstractMetadataRebuilder(
       @Value("${nexus.maven.metadata.rebuild.bufferSize:1000}") final int bufferSize,
       @Value("${nexus.maven.metadata.rebuild.timeoutSeconds:60}") final int timeoutSeconds)

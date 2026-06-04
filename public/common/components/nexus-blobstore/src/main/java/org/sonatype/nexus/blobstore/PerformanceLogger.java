@@ -14,7 +14,7 @@ package org.sonatype.nexus.blobstore;
 
 import java.io.InputStream;
 
-import org.sonatype.goodies.common.Loggers;
+import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.blobstore.api.Blob;
 
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ public class PerformanceLogger
 
   private static final String IOSTAT_LOGGER_NAME = "org.sonatype.nexus.blobstore.iostat";
 
-  private final Logger log = Loggers.getLogger(IOSTAT_LOGGER_NAME);
+  private final Logger log = LoggerFactory.getLogger(IOSTAT_LOGGER_NAME);
 
   private String blobStoreName = "<not set>";
 

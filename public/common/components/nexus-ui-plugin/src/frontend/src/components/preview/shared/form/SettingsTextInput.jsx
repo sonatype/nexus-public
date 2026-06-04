@@ -13,14 +13,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Text } from '@radix-ui/themes';
+import { Text, TextField } from '@radix-ui/themes';
 import { AlertCircle } from 'lucide-react';
 
 import './SettingsTextInput.scss';
 
 /**
  * SettingsTextInput - Single-line text input with label, help text, and validation
- * 
+ *
  * @example
  * <SettingsTextInput
  *   name="hostname"
@@ -48,7 +48,7 @@ export function SettingsTextInput({
   min,
   max,
   step,
-  autoComplete,
+  autoComplete = 'off',
   className = '',
   inputRef,
   onBlur,
@@ -66,14 +66,19 @@ export function SettingsTextInput({
   };
 
   return (
-    <Box className={`settings-text-input ${error ? 'settings-text-input--error' : ''} ${className}`.trim()}>
+    <div className={`settings-text-input ${error ? 'settings-text-input--error' : ''} ${className}`.trim()}>
       {label && (
         <label htmlFor={inputId} className="settings-text-input__label">
           {label}
-          {required && <span className="settings-text-input__required">*</span>}
+          {required && <span className="settings-text-input__required" aria-hidden="true">*</span>}
         </label>
       )}
-      <input
+      {helpText && !error && (
+        <Text as="p" size="1" id={helpId} className="settings-text-input__help">
+          {helpText}
+        </Text>
+      )}
+      <TextField.Root
         ref={inputRef}
         id={inputId}
         name={name}
@@ -95,20 +100,16 @@ export function SettingsTextInput({
         aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
         aria-invalid={!!error}
         data-testid={`input-${name}`}
-        className="settings-text-input__input"
+        color={error ? 'red' : undefined}
+        size="2"
       />
-      {helpText && !error && (
-        <Text as="p" size="1" id={helpId} className="settings-text-input__help">
-          {helpText}
-        </Text>
-      )}
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-text-input__error">
-          <AlertCircle size={14} />
+          <AlertCircle size={14} aria-hidden="true" />
           {error}
         </Text>
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -123,9 +124,9 @@ SettingsTextInput.propTypes = {
   onChange: PropTypes.func,
   /** Placeholder text */
   placeholder: PropTypes.string,
-  /** Help text displayed below input */
+  /** Help text displayed between label and input */
   helpText: PropTypes.string,
-  /** Error message (replaces help text when present) */
+  /** Error message displayed below input (replaces help text when present) */
   error: PropTypes.string,
   /** Mark field as required */
   required: PropTypes.bool,
@@ -134,7 +135,7 @@ SettingsTextInput.propTypes = {
   /** Make input read-only */
   readOnly: PropTypes.bool,
   /** Input type (text, email, number, url, tel) */
-  type: PropTypes.oneOf(['text', 'email', 'number', 'url', 'tel']),
+  type: PropTypes.oneOf(['text', 'email', 'number', 'url', 'tel', 'password']),
   /** Maximum character length */
   maxLength: PropTypes.number,
   /** Minimum value (for number type) */
@@ -161,4 +162,3 @@ SettingsTextInput.propTypes = {
 };
 
 export default SettingsTextInput;
-

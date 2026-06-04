@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class UnpublishMavenIndexTaskDescriptor
     extends TaskDescriptorSupport
 {

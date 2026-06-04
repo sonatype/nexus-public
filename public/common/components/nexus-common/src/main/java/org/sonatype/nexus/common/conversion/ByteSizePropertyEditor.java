@@ -14,7 +14,7 @@ package org.sonatype.nexus.common.conversion;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.common.ByteSize;
+import org.sonatype.nexus.common.io.ByteSize;
 
 public class ByteSizePropertyEditor
     extends PropertyEditorSupport

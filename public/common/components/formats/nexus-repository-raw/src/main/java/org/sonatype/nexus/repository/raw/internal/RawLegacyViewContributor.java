@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.raw.internal;
 
 import java.util.regex.Pattern;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.httpbridge.LegacyViewConfiguration;
 import org.sonatype.nexus.repository.httpbridge.LegacyViewContributor;
 import org.springframework.stereotype.Component;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  * @since 3.7
  */
 @Component
-@Singleton
 public class RawLegacyViewContributor
     implements LegacyViewContributor
 {

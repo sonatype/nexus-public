@@ -17,8 +17,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 
@@ -49,7 +48,6 @@ import org.springframework.stereotype.Component;
  * SSL Certificate {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "ssl_Certificate")
 public class CertificateComponent
     extends DirectComponentSupport
@@ -58,7 +56,7 @@ public class CertificateComponent
 
   private final CertificateRetriever certificateRetriever;
 
-  @Inject
+  @Autowired
   public CertificateComponent(@Lazy final TrustStore trustStore, final CertificateRetriever certificateRetriever) {
     this.trustStore = checkNotNull(trustStore);
     this.certificateRetriever = checkNotNull(certificateRetriever);

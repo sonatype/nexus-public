@@ -26,8 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.api.rest.common.blobstore.BlobStoreResourceUtil;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreConnectionXO;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreQuotaResultXO;

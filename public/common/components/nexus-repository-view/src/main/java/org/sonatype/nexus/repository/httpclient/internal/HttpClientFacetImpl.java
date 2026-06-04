@@ -44,7 +44,7 @@ import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.RedirectStrategy;
@@ -102,7 +102,7 @@ public class HttpClientFacetImpl
   @VisibleForTesting
   BlockingHttpClient httpClient;
 
-  @Inject
+  @Autowired
   public HttpClientFacetImpl(
       final HttpClientManager httpClientManager,
       final List<AutoBlockConfiguration> autoBlockConfigurationList,

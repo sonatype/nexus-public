@@ -21,9 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -66,7 +65,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class RaptureWebResourceBundle
     implements WebResourceBundle
 {
@@ -92,7 +90,7 @@ public class RaptureWebResourceBundle
 
   public final static String PROPERTY_WEBRESOURCES_CACHEBUSTER = "nexus.webresources.cachebuster";
 
-  @Inject
+  @Autowired
   public RaptureWebResourceBundle(
       final ApplicationVersion applicationVersion,
       final Provider<HttpServletRequest> servletRequestProvider,

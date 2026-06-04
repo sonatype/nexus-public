@@ -14,7 +14,7 @@ package org.sonatype.nexus.rapture.internal.settings;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.capability.Condition;
@@ -41,7 +41,7 @@ public class SettingsCapability
 
   private final SessionTimeoutManager sessionTimeoutManager;
 
-  @Inject
+  @Autowired
   public SettingsCapability(
       final UiSettingsManager rapture,
       final SessionTimeoutManager sessionTimeoutManager)

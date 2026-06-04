@@ -74,6 +74,8 @@ export interface EntityTableProps<T> {
   clickable?: boolean;
   /** Aria label for the table */
   ariaLabel?: string;
+  /** Function to get data-testid for each row */
+  getRowTestId?: (item: T) => string;
 }
 
 /**
@@ -126,6 +128,7 @@ export function EntityTable<T>({
   className = '',
   clickable = true,
   ariaLabel = 'Data table',
+  getRowTestId,
 }: EntityTableProps<T>): JSX.Element {
   // Handle header click for sorting
   const handleHeaderClick = useCallback(
@@ -254,6 +257,7 @@ export function EntityTable<T>({
               tabIndex={isRowClickable ? 0 : undefined}
               role={isRowClickable ? 'button' : undefined}
               aria-label={isRowClickable ? `View ${key}` : undefined}
+              data-testid={getRowTestId ? getRowTestId(item) : undefined}
             >
               {columns.map((column) => (
                 <Table.Cell

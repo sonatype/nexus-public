@@ -22,10 +22,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -49,7 +47,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("File Blob Stores Path")
-@Singleton
 public class FileBlobStorePathValidator
     extends HealthCheck
 {
@@ -60,7 +57,7 @@ public class FileBlobStorePathValidator
 
   private final Provider<ApplicationDirectories> applicationDirectories;
 
-  @Inject
+  @Autowired
   public FileBlobStorePathValidator(
       final Provider<BlobStoreManager> blobStoreManager,
       final Provider<ApplicationDirectories> applicationDirectories)

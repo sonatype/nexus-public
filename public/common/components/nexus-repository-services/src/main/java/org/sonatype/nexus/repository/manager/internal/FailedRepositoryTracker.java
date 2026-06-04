@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Thread-safe: uses ConcurrentHashMap for all operations.
  */
 @Named
-@Singleton
 public class FailedRepositoryTracker
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

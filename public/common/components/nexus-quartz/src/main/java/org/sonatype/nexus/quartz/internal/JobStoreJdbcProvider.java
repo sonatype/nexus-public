@@ -14,15 +14,13 @@ package org.sonatype.nexus.quartz.internal;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.annotation.Priority;
 
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.quartz.impl.jdbcjobstore.HSQLDBDelegate;
 import org.quartz.impl.jdbcjobstore.JobStoreTX;
 import org.quartz.impl.jdbcjobstore.PostgreSQLDelegate;
@@ -49,8 +47,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 @ConditionalOnProperty(name = "nexus.quartz.jobstore.jdbc", havingValue = "true")
 @ManagedLifecycle(phase = SCHEMAS)
 @Component
-@Singleton
-@Priority(Integer.MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class JobStoreJdbcProvider
     extends LifecycleSupport
@@ -66,7 +62,7 @@ public class JobStoreJdbcProvider
 
   private final NodeAccess nodeAccess;
 
-  @Inject
+  @Autowired
   public JobStoreJdbcProvider(
       final ConnectionProvider connectionProvider,
       final NodeAccess nodeAccess,

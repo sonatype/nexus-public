@@ -82,16 +82,6 @@ public class NexusJavaMigration
   }
 
   @Override
-  public boolean isBaselineMigration() {
-    return false;
-  }
-
-  @Override
-  public boolean isUndo() {
-    return false;
-  }
-
-  @Override
   public void migrate(final Context context) throws Exception {
     dbMigrationStep.migrate(context.getConnection());
   }

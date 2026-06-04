@@ -12,22 +12,19 @@
  */
 package com.sonatype.nexus.ssl.plugin.tasks;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.1")
 @Component
-@Singleton
 public class TrustedCertificatesMigrationTaskDescriptor
     extends TaskDescriptorSupport
 {
   public static final String TYPE_ID = "trusted.certificates.migration";
 
-  @Inject
+  @Autowired
   public TrustedCertificatesMigrationTaskDescriptor() {
     super(TYPE_ID, TrustedCertificatesMigrationTask.class,
         "Migrate trusted certificates Task",

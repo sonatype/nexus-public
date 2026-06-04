@@ -13,16 +13,27 @@
 package org.sonatype.nexus.crypto.internal;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import javax.crypto.Cipher;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactoryImpl.PbeCipherImpl;
+import org.sonatype.nexus.crypto.internal.error.CipherException;
+import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
+import com.fasterxml.jackson.core.Base64Variants;
+import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -288,5 +299,158 @@ public class PbeCipherFactoryImplTest
     String phcString = "$PBKDF2WithHmacSHA256$iv=a6f7e545dc07ae8b,key_iteration=9500,key_len=256$c2FsdA==$dmFsdWU=";
     PbeCipher cipher = customFactory.create(encryptionKey, phcString);
     assertNotNull(cipher);
+  }
+
+  // --- HMAC integration tests ---
+
+  /**
+   * Builds a factory backed by real JDK crypto (no BouncyCastle dependency) with a fixed 16-byte
+   * AES key returned by the mock HashingHandler, so encrypt/decrypt can be exercised end-to-end.
+   */
+  private PbeCipherFactoryImpl createRealCryptoFactory(HashingHandler fixedHandler) throws Exception {
+    CryptoHelper cryptoHelper = mock(CryptoHelper.class);
+    when(cryptoHelper.createSecureRandom()).thenReturn(new SecureRandom());
+    when(cryptoHelper.createCipher("AES/CBC/PKCS5Padding"))
+        .thenAnswer(inv -> Cipher.getInstance("AES/CBC/PKCS5Padding"));
+    // getProvider() returns null → Mac.getInstance(alg, null) throws → falls back to default JCA
+    when(cryptoHelper.getProvider()).thenReturn(null);
+
+    HashingHandlerFactory hf = mock(HashingHandlerFactory.class);
+    when(hf.create(anyString(), any(), any())).thenReturn(fixedHandler);
+
+    return new PbeCipherFactoryImpl(cryptoHelper, hf, "PBKDF2WithHmacSHA256", null);
+  }
+
+  private HashingHandler createFixedKeyHandler() {
+    byte[] fixedKey = new byte[16];
+    Arrays.fill(fixedKey, (byte) 0x4b);
+    String keyBase64 = Base64Variants.getDefaultVariant().encode(fixedKey);
+    String saltBase64 = Base64Variants.getDefaultVariant().encode("test-salt-16b".getBytes());
+
+    EncryptedSecret hashResult = new EncryptedSecret(
+        "PBKDF2WithHmacSHA256", null, saltBase64, keyBase64,
+        ImmutableMap.of("key_iteration", "10000", "key_len", "128"));
+
+    HashingHandler handler = mock(HashingHandler.class);
+    when(handler.hash(any())).thenReturn(hashResult);
+    return handler;
+  }
+
+  @Test
+  void testEncryptThenDecrypt_WithHmac_RoundTrips() throws Exception {
+    HashingHandler fixedHandler = createFixedKeyHandler();
+    PbeCipherFactoryImpl f = createRealCryptoFactory(fixedHandler);
+
+    SecretEncryptionKey testKey = mock(SecretEncryptionKey.class);
+    when(testKey.getKey()).thenReturn("test-master-key");
+
+    byte[] plaintext = "hello-rate-limit".getBytes();
+    EncryptedSecret encrypted = f.create(testKey).encrypt(plaintext);
+
+    assertNotNull(encrypted.getAttributes().get("hmac"), "HMAC attribute must be present after encryption");
+
+    byte[] result = f.create(testKey, encrypted.toPhcString()).decrypt();
+    assertArrayEquals(plaintext, result);
+  }
+
+  @Test
+  void testDecrypt_WithoutHmac_BackwardCompatibility() throws Exception {
+    HashingHandler fixedHandler = createFixedKeyHandler();
+    PbeCipherFactoryImpl f = createRealCryptoFactory(fixedHandler);
+
+    SecretEncryptionKey testKey = mock(SecretEncryptionKey.class);
+    when(testKey.getKey()).thenReturn("test-master-key");
+
+    byte[] plaintext = "legacy-secret".getBytes();
+    EncryptedSecret encrypted = f.create(testKey).encrypt(plaintext);
+
+    // Strip HMAC to simulate a secret encrypted by the pre-HMAC code
+    Map<String, String> attrsWithoutHmac = new LinkedHashMap<>(encrypted.getAttributes());
+    attrsWithoutHmac.remove("hmac");
+    EncryptedSecret legacySecret = new EncryptedSecret(
+        encrypted.getAlgorithm(), encrypted.getVersion(),
+        encrypted.getSalt(), encrypted.getValue(), attrsWithoutHmac);
+
+    byte[] result = f.create(testKey, legacySecret.toPhcString()).decrypt();
+    assertArrayEquals(plaintext, result);
+  }
+
+  /**
+   * Verifies that {@code decrypt(byte[])} — the overload that accepts raw ciphertext bytes — can
+   * round-trip plaintext encrypted by {@code encrypt()}, even though it does NOT verify the HMAC
+   * attribute. This confirms the "caller is responsible for integrity" contract documented in the
+   * method Javadoc: callers who manage their own byte buffers (e.g. legacy MyBatis type handlers)
+   * can still decrypt ciphertext produced by the HMAC-aware {@code encrypt()} method, provided
+   * they reconstruct a cipher with the matching key and IV before calling this overload.
+   */
+  @Test
+  void testDecrypt_ByteArrayOverload_RoundTrips_NoHmacVerification() throws Exception {
+    HashingHandler fixedHandler = createFixedKeyHandler();
+    PbeCipherFactoryImpl f = createRealCryptoFactory(fixedHandler);
+
+    SecretEncryptionKey testKey = mock(SecretEncryptionKey.class);
+    when(testKey.getKey()).thenReturn("test-master-key");
+
+    byte[] plaintext = "raw-decrypt-test".getBytes();
+
+    // Use a fixed, known IV so the same value can be used for both encrypt and decrypt ciphers.
+    // factory.create(key, salt, iv, iterations) stores iv as iv.getBytes()
+    String knownIv = "0123456789abcdef"; // exactly 16 bytes when UTF-8 encoded
+    PbeCipher encCipher = f.create(testKey, "test-salt", knownIv, null);
+    EncryptedSecret encrypted = encCipher.encrypt(plaintext);
+
+    // Extract the raw AES-CBC ciphertext (the 'value' field of the PHC envelope)
+    byte[] rawCiphertext = fromBase64(encrypted.getValue());
+
+    // Re-create a cipher with the identical key/salt/IV — decrypt(byte[]) skips HMAC check
+    PbeCipher decCipher = f.create(testKey, "test-salt", knownIv, null);
+    byte[] result = decCipher.decrypt(rawCiphertext);
+
+    assertArrayEquals(plaintext, result, "decrypt(byte[]) must round-trip plaintext from encrypt()");
+  }
+
+  @Test
+  void testDecrypt_WithTamperedHmac_ThrowsCipherException() throws Exception {
+    HashingHandler fixedHandler = createFixedKeyHandler();
+    PbeCipherFactoryImpl f = createRealCryptoFactory(fixedHandler);
+
+    SecretEncryptionKey testKey = mock(SecretEncryptionKey.class);
+    when(testKey.getKey()).thenReturn("test-master-key");
+
+    byte[] plaintext = "secret-data".getBytes();
+    EncryptedSecret encrypted = f.create(testKey).encrypt(plaintext);
+
+    // Replace HMAC with an incorrect value
+    Map<String, String> tamperedAttrs = new LinkedHashMap<>(encrypted.getAttributes());
+    tamperedAttrs.put("hmac", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef");
+    EncryptedSecret tampered = new EncryptedSecret(
+        encrypted.getAlgorithm(), encrypted.getVersion(),
+        encrypted.getSalt(), encrypted.getValue(), tamperedAttrs);
+
+    PbeCipher decCipher = f.create(testKey, tampered.toPhcString());
+    assertThrows(CipherException.class, decCipher::decrypt);
+  }
+
+  @Test
+  void testDecrypt_WithTamperedIv_ThrowsCipherException() throws Exception {
+    HashingHandler fixedHandler = createFixedKeyHandler();
+    PbeCipherFactoryImpl f = createRealCryptoFactory(fixedHandler);
+
+    SecretEncryptionKey testKey = mock(SecretEncryptionKey.class);
+    when(testKey.getKey()).thenReturn("test-master-key");
+
+    byte[] plaintext = "secret-data".getBytes();
+    EncryptedSecret encrypted = f.create(testKey).encrypt(plaintext);
+
+    // Replace IV with a different value while keeping HMAC and ciphertext intact
+    Map<String, String> tamperedAttrs = new LinkedHashMap<>(encrypted.getAttributes());
+    tamperedAttrs.put("iv", "00000000000000000000000000000000"); // 16 zero bytes in hex
+    EncryptedSecret tampered = new EncryptedSecret(
+        encrypted.getAlgorithm(), encrypted.getVersion(),
+        encrypted.getSalt(), encrypted.getValue(), tamperedAttrs);
+
+    PbeCipher decCipher = f.create(testKey, tampered.toPhcString());
+    assertThrows(CipherException.class, decCipher::decrypt,
+        "IV tampering must be detected by HMAC verification");
   }
 }

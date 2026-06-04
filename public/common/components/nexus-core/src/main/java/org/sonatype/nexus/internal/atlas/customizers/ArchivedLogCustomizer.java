@@ -17,9 +17,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.internal.atlas.SupportZipGeneratorImpl;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
@@ -35,7 +33,6 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.ARC
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class ArchivedLogCustomizer
     implements SupportBundleCustomizer
 {
@@ -43,7 +40,7 @@ public class ArchivedLogCustomizer
 
   private final ApplicationDirectories applicationDirectories;
 
-  @Inject
+  @Autowired
   public ArchivedLogCustomizer(final ApplicationDirectories applicationDirectories) {
     this.applicationDirectories = checkNotNull(applicationDirectories);
   }

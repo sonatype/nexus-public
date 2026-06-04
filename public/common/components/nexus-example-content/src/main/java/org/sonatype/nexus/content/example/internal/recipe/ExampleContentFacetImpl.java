@@ -14,7 +14,7 @@ package org.sonatype.nexus.content.example.internal.recipe;
 
 import java.io.IOException;
 import java.util.Optional;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.example.ExampleContentFacet;
@@ -47,7 +47,7 @@ public class ExampleContentFacetImpl
 {
   private static final Iterable<HashAlgorithm> HASHING = ImmutableList.of(SHA256);
 
-  @Inject
+  @Autowired
   public ExampleContentFacetImpl(
       @Qualifier(ExampleFormat.NAME) final FormatStoreManager formatStoreManager)
   {

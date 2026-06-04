@@ -14,9 +14,7 @@ package org.sonatype.nexus.internal.security.secrets.upgrade;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.internal.security.secrets.task.SecretsMigrationTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * IV/Salt & custom encryption key)
  */
 @Component
-@Singleton
 public class SecretsMigrationStep_2_2
     implements DatabaseMigrationStep
 {
@@ -40,7 +37,7 @@ public class SecretsMigrationStep_2_2
 
   private final UpgradeTaskScheduler startupScheduler;
 
-  @Inject
+  @Autowired
   public SecretsMigrationStep_2_2(final UpgradeTaskScheduler startupScheduler) {
     this.startupScheduler = checkNotNull(startupScheduler);
   }

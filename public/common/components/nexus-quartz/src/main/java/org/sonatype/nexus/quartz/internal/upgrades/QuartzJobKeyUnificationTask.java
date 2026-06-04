@@ -82,23 +82,26 @@ public class QuartzJobKeyUnificationTask
     Instant startTime = Instant.now();
     Instant deadline = startTime.plus(waitTimeout);
 
-    int notMigrated;
-    boolean oldNodesRunning = true;
-
     log.info("Starting job key unification with timeout of {}", formatDuration(waitTimeout));
 
     // Keep migrating while: (1) tasks need migration OR (2) old nodes running (might create new tasks)
-    while ((notMigrated = migrateNonRunningTasks()) > 0 ||
-        (oldNodesRunning = oldNodesRunning())) {
+    while (true) {
+      int notMigrated = migrateNonRunningTasks();
+      boolean oldNodesRunning = oldNodesRunning();
+
+      if (notMigrated == 0 && !oldNodesRunning) {
+        break;
+      }
+
       CancelableHelper.checkCancellation();
 
-      // Check timeout
-      if (Instant.now().isAfter(deadline)) {
+      Instant now = Instant.now();
+      if (now.isAfter(deadline)) {
         throw new IllegalStateException(buildTimeoutMessage(notMigrated, oldNodesRunning));
       }
 
-      Duration elapsed = Duration.between(startTime, Instant.now());
-      Duration remaining = Duration.between(Instant.now(), deadline);
+      Duration elapsed = Duration.between(startTime, now);
+      Duration remaining = Duration.between(now, deadline);
 
       if (notMigrated > 0) {
         log.info("{} tasks still need migration, waiting {} (elapsed: {}, remaining: {})",
@@ -117,17 +120,17 @@ public class QuartzJobKeyUnificationTask
   }
 
   private String buildTimeoutMessage(final int notMigrated, final boolean oldNodesRunning) {
-    StringBuilder message = new StringBuilder("Timeout reached after " + formatDuration(waitTimeout) + ". ");
+    StringBuilder message = new StringBuilder("Timeout reached after " + formatDuration(waitTimeout) + ".");
 
     if (notMigrated > 0) {
-      message.append(notMigrated).append(" tasks still need migration (running or blocked). ");
+      message.append(" ").append(notMigrated).append(" tasks still need migration (running or blocked).");
     }
 
     if (oldNodesRunning) {
-      message.append("Old nodes still running in cluster. ");
+      message.append(" Old nodes still running in cluster.");
     }
 
-    message.append("Task will retry on next node startup.");
+    message.append(" Task will retry on next node startup.");
 
     return message.toString();
   }

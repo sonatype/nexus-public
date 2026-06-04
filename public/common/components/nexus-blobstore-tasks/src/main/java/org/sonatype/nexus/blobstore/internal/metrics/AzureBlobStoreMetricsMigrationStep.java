@@ -12,14 +12,12 @@
  */
 package org.sonatype.nexus.blobstore.internal.metrics;
 
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
  * Migration step to move metrics from properties files in the blob store to the DB
  */
 @Component
-@Singleton
 public class AzureBlobStoreMetricsMigrationStep
     extends BlobStoreMetricsDatabaseMigrationStepSupport
 {

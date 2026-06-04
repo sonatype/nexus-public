@@ -17,8 +17,7 @@ import javax.sql.DataSource;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
 import org.springframework.stereotype.Component;
 
@@ -31,14 +30,13 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
  * The DataSource access is deferred until getDatabaseId() is called (after STORAGE lifecycle has initialized).
  */
 @Component
-@Singleton
 public class DatabaseTypeDetector
 {
   private final DataStoreManager dataStoreManager;
 
   private volatile String databaseId;
 
-  @Inject
+  @Autowired
   public DatabaseTypeDetector(final DataStoreManager dataStoreManager) {
     this.dataStoreManager = checkNotNull(dataStoreManager);
   }

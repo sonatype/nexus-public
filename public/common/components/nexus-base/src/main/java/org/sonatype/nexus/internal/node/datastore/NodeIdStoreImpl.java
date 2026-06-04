@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.node.datastore;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -35,12 +33,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class NodeIdStoreImpl
     extends ConfigStoreSupport<NodeIdDAO>
     implements NodeIdStore
 {
-  @Inject
+  @Autowired
   public NodeIdStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

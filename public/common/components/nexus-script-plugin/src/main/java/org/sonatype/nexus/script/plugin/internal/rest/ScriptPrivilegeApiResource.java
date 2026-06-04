@@ -14,7 +14,7 @@ package org.sonatype.nexus.script.plugin.internal.rest;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -43,7 +43,7 @@ public class ScriptPrivilegeApiResource
     extends PrivilegeApiResourceSupport
     implements Resource, ScriptPrivilegeApiResourceDoc
 {
-  @Inject
+  @Autowired
   public ScriptPrivilegeApiResource(
       final SecuritySystem securitySystem,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)

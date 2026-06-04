@@ -26,9 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.s3.internal.ProducerConsumerUploader.ChunkReader.Chunk;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -72,7 +70,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.28
  */
 @ConditionalOnProperty(name = "nexus.s3.uploaderName", havingValue = "producerConsumerUploader", matchIfMissing = true)
-@Singleton
 @ManagedObject
 @ManagedLifecycle(phase = STORAGE)
 @Component
@@ -101,7 +98,7 @@ public class ProducerConsumerUploader
 
   private ExecutorService executorService;
 
-  @Inject
+  @Autowired
   public ProducerConsumerUploader(
       @Value("${nexus.s3.producerConsumerUploader.chunksize:10485760}") final int chunkSize,
       @Value("${nexus.s3.producerConsumerUploader.parallelism:0}") final int numberOfThreads,

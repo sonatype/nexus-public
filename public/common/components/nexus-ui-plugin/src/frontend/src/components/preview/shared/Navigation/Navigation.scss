@@ -1,0 +1,272 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+// Repository product brand color (per ux-standards navigation.md)
+$repository-primary: #138653;
+
+// Dimensions per spec: 240px expanded, 60px collapsed, 0.2s transition
+.guide-sidebar {
+  grid-area: global-sidebar !important;
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  height: 100%;
+  background-color: var(--color-background);
+  border-right: 1px solid var(--gray-6);
+  transition: width 0.2s ease-in-out;
+  overflow: hidden;
+  z-index: 100;
+
+  &--collapsed {
+    width: 60px;
+
+    .guide-sidebar__nav-content {
+      padding-left: var(--space-2);
+      padding-right: var(--space-2);
+    }
+
+    .guide-nav-item__text,
+    .guide-nav-item__external,
+    .guide-nav-section__children,
+    .guide-nav-item__toggle {
+      display: none;
+    }
+
+    .guide-nav-item__icon {
+      margin-right: 0;
+    }
+  }
+}
+
+// Navigation Container
+.guide-sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--gray-6);
+    border-radius: var(--radius-1);
+
+    &:hover {
+      background: var(--gray-8);
+    }
+  }
+}
+
+// Box p="4" + Flex direction="column" gap="2" handle layout via Radix props
+.guide-sidebar__nav-content {
+  display: block;
+}
+
+// Navigation Item - anchor wraps Flex; Flex handles padding/gap via Radix props
+.guide-nav-item {
+  display: block;
+  border-radius: var(--radius-2);
+  color: var(--gray-12) !important;
+  text-decoration: none !important;
+  font-size: var(--font-size-2);
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+
+  &:hover {
+    background-color: var(--gray-a3);
+    color: var(--gray-12) !important;
+
+    .guide-nav-item__icon {
+      color: var(--gray-12);
+    }
+  }
+
+  &--active {
+    background-color: $repository-primary;
+    color: white !important;
+    font-weight: 500;
+
+    .guide-nav-item__icon {
+      color: white;
+    }
+  }
+
+  &--expandable {
+    .guide-nav-item__link {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      text-decoration: none !important;
+      color: inherit !important;
+    }
+  }
+}
+
+.guide-nav-item__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-11);
+  transition: color 150ms ease;
+}
+
+.guide-nav-item__text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit !important;
+}
+
+.guide-nav-item__external {
+  color: var(--gray-11);
+  margin-left: auto;
+}
+
+.guide-nav-item__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--gray-11);
+  cursor: pointer;
+  border-radius: var(--radius-1);
+  transition: all 150ms ease;
+
+  &:hover {
+    background-color: var(--gray-a3);
+    color: var(--gray-12);
+  }
+}
+
+// Collapsible Section
+.guide-nav-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-nav-section__children {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-2);
+  max-height: 400px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--gray-6);
+    border-radius: var(--radius-1);
+  }
+}
+
+// Child Navigation Item
+.guide-nav-child {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5);
+  border-radius: var(--radius-2);
+  color: var(--gray-11) !important;
+  text-decoration: none !important;
+  font-size: var(--font-size-1);
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 150ms ease;
+  gap: var(--space-2);
+
+  &:hover {
+    background-color: var(--gray-a3);
+    color: var(--gray-12) !important;
+
+    .guide-nav-child__icon {
+      color: var(--gray-12);
+    }
+  }
+
+  &--active {
+    background-color: $repository-primary;
+    color: white !important;
+
+    .guide-nav-child__icon {
+      color: white;
+    }
+  }
+}
+
+.guide-nav-child__icon {
+  flex-shrink: 0;
+  color: var(--gray-11);
+  transition: color 150ms ease;
+}
+
+.guide-nav-child__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit !important;
+}
+
+
+// Loading Skeleton - Flex direction="column" gap="2" handles layout via Radix props
+.guide-sidebar__loading {
+  width: 100%;
+}
+
+.guide-sidebar__skeleton {
+  height: 40px;
+  background: linear-gradient(
+    90deg,
+    var(--gray-a3) 25%,
+    var(--gray-a4) 50%,
+    var(--gray-a3) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-2);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Radix Tooltip overrides
+.guide-sidebar {
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+  }
+}

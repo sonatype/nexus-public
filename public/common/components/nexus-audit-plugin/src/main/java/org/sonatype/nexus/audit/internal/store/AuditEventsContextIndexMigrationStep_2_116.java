@@ -17,15 +17,12 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * Adds {@code idx_audit_events_context} for repositories filtering change history by context (repository name).
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AuditEventsContextIndexMigrationStep_2_116
     implements DatabaseMigrationStep
 {

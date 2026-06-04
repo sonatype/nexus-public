@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.internal.task;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.scheduling.TaskSupport;
@@ -37,7 +37,7 @@ public class CleanupTask
 {
   private final CleanupService cleanupService;
 
-  @Inject
+  @Autowired
   public CleanupTask(final CleanupService cleanupService) {
     this.cleanupService = checkNotNull(cleanupService);
   }

@@ -30,6 +30,15 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class ValidationConfiguration
 {
+  /**
+   * Token class used to preload validation message interpolation.
+   */
+  static class PreloadToken
+  {
+    @NotNull(message = "{org.sonatype.nexus.validation.constraint.notnull}")
+    String empty;
+  }
+
   /*
    * For use by ValidationAspect
    */
@@ -48,12 +57,7 @@ public class ValidationConfiguration
     // FIXME: Install custom MessageInterpolator that can properly find/merge ValidationMessages.properties for bundles
 
     // exercise interpolator to preload elements (avoids issues later when TCCL might be different)
-    factory.getValidator().validate(new Object()
-    {
-      // minimal token message
-      @NotNull(message = "{org.sonatype.nexus.validation.constraint.notnull}")
-      String empty;
-    });
+    factory.getValidator().validate(new PreloadToken());
 
     return factory;
   }

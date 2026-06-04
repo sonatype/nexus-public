@@ -14,7 +14,7 @@ package org.sonatype.nexus.coreui.internal.branding;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.capability.Condition;
@@ -38,7 +38,7 @@ public class BrandingCapability
 
   private final Branding branding;
 
-  @Inject
+  @Autowired
   public BrandingCapability(final Branding branding) {
     this.branding = checkNotNull(branding);
   }

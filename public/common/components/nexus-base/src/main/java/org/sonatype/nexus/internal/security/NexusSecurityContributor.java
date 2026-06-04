@@ -16,8 +16,7 @@ import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.config.SecurityContributorSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +30,6 @@ import static org.sonatype.nexus.security.Roles.ANONYMOUS_ROLE_ID;
  * @since 3.0
  */
 @Component
-@Singleton
 public class NexusSecurityContributor
     extends SecurityContributorSupport
     implements SecurityContributor
@@ -102,7 +100,7 @@ public class NexusSecurityContributor
 
   private final boolean anonymousRoleEnabled;
 
-  @Inject
+  @Autowired
   public NexusSecurityContributor(
       @Value("${nexus.security.default.anonymous:true}") final boolean anonymousRoleEnabled)
   {

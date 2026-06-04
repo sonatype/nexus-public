@@ -19,9 +19,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.ContentDisposition;
 import org.sonatype.nexus.repository.maven.internal.MavenDefaultRepositoriesContributor;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * Upgrade to update contentDisposition of default maven repositories
  */
 @Component
-@Singleton
 public class MavenDefaultReposUpgrade_1_17
     implements DatabaseMigrationStep
 {
@@ -55,7 +52,7 @@ public class MavenDefaultReposUpgrade_1_17
 
   private final ObjectMapper mapper;
 
-  @Inject
+  @Autowired
   public MavenDefaultReposUpgrade_1_17(
       final @Nullable MavenDefaultRepositoriesContributor defaultRepositoriesContributor)
   {

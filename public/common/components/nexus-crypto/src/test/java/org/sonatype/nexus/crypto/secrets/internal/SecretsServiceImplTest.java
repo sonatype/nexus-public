@@ -698,22 +698,18 @@ public class SecretsServiceImplTest
 
   @Test
   public void testImportEncryptedWithWrongMigrationCipherPassword_throwsException() throws Exception {
-    // Create an encrypted value using a custom password
-    char[] secret = "my-secret".toCharArray();
-    String correctPassword = "correct-password";
+    // Use a pre-computed PHC string encrypted with "correct-password" that is guaranteed to produce
+    // a BadPaddingException when decrypted with "wrong-password". This avoids flakiness caused by
+    // AES/CBC/PKCS5Padding occasionally accepting garbage plaintext when the last decrypted byte
+    // happens to be a valid padding value (~6% probability with random salt/IV).
+    String encryptedValue = "$PBKDF2WithHmacSHA256$iv=84c16adb27f8da007fde02eef9aa48ed,key_iteration=10000," +
+        "key_len=256$5NHdiUyWT69sRwOVhqa54Q==$ybSDXqEmc2dGO+TGFdPKEw==";
     String wrongPassword = "wrong-password";
 
     when(databaseCheck.isAtLeast(anyString())).thenReturn(true);
     when(encryptionKeySource.getActiveKey()).thenReturn(Optional.empty());
 
-    // Encrypt with correct password
-    HashingHandlerFactory hashingHandlerFactory = new HashingHandlerFactoryImpl(cryptoHelper);
-    PbeCipherFactory cipherFactory =
-        new PbeCipherFactoryImpl(cryptoHelper, hashingHandlerFactory, "PBKDF2WithHmacSHA256", null);
-    SecretEncryptionKey correctKey = new SecretEncryptionKey(null, correctPassword);
-    String encryptedValue = cipherFactory.create(correctKey).encrypt(toBytes(secret)).toPhcString();
-
-    // Try to import with wrong password
+    // Try to import with wrong password - should always throw
     assertThrows(CipherException.class,
         () -> underTestSha256.importEncrypted("email", encryptedValue, "testUser", wrongPassword));
   }

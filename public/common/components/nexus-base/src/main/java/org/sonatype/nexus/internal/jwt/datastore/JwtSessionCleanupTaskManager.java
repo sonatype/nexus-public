@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.jwt.datastore;
 import java.time.Duration;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
@@ -39,7 +37,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Singleton
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtSessionCleanupTaskManager
     extends StateGuardLifecycleSupport
@@ -59,7 +56,7 @@ public class JwtSessionCleanupTaskManager
 
   private Optional<PeriodicJob> cleanupJob = Optional.empty();
 
-  @Inject
+  @Autowired
   public JwtSessionCleanupTaskManager(
       final PeriodicJobService periodicJobService,
       final JwtSessionRevocationService jwtSessionRevocationService)

@@ -36,8 +36,7 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +53,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.NEXUS_SECURITY_FIPS_ENA
  * @since 3.0
  */
 @Component
-@Singleton
 public class CryptoHelperImpl
     implements CryptoHelper
 {
@@ -62,7 +60,7 @@ public class CryptoHelperImpl
 
   private final Provider provider;
 
-  @Inject
+  @Autowired
   public CryptoHelperImpl(@Value(NEXUS_SECURITY_FIPS_ENABLED_NAMED_VALUE) final boolean nexusSecurityFipsEnabled) {
     this.provider = configureProvider(nexusSecurityFipsEnabled);
   }

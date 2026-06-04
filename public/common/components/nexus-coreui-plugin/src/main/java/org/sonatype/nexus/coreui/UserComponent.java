@@ -47,8 +47,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.RequiresUser;
@@ -65,7 +64,6 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
  * User {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_User")
 public class UserComponent
     extends DirectComponentSupport
@@ -79,7 +77,7 @@ public class UserComponent
 
   private ApplicationContext applicationContext;
 
-  @Inject
+  @Autowired
   public UserComponent(
       final SecuritySystem securitySystem,
       final AnonymousManager anonymousManager,

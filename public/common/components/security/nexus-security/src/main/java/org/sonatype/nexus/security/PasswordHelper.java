@@ -15,9 +15,7 @@ package org.sonatype.nexus.security;
 import java.nio.CharBuffer;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.PhraseService;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 import org.slf4j.Logger;
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Component;
 /**
  * Password encryption helper.
  */
-@Singleton
 @Component
 public class PasswordHelper
 {
@@ -41,7 +38,7 @@ public class PasswordHelper
 
   private final PhraseService phraseService;
 
-  @Inject
+  @Autowired
   public PasswordHelper(final MavenCipher mavenCipher, final PhraseService phraseService) {
     this.mavenCipher = checkNotNull(mavenCipher);
     this.phraseService = checkNotNull(phraseService);

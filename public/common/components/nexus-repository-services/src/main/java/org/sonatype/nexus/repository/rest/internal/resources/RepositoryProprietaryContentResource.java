@@ -17,8 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -57,7 +56,6 @@ import org.springframework.stereotype.Component;
  * @since 3.30
  */
 @Component
-@Singleton
 @Path(RepositoryProprietaryContentResource.RESOURCE_URI)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -70,7 +68,7 @@ public class RepositoryProprietaryContentResource
 
   private final AuthorizingRepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public RepositoryProprietaryContentResource(final AuthorizingRepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }

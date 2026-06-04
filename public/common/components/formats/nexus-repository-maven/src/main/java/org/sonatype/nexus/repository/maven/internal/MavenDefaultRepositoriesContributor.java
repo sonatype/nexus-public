@@ -16,9 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.WritePolicy;
@@ -43,7 +41,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class MavenDefaultRepositoriesContributor
     implements DefaultRepositoriesContributor
 {
@@ -61,7 +58,7 @@ public class MavenDefaultRepositoriesContributor
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public MavenDefaultRepositoriesContributor(@Lazy final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }

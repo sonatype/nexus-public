@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.security.realm;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.user.UserManager;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -27,14 +25,13 @@ import org.sonatype.nexus.common.Description;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-@Singleton
 @Component
 @Qualifier("MockRealmA")
 @Description("MockRealmA")
 public class MockRealmA
     extends AuthenticatingRealm
 {
-  @Inject
+  @Autowired
   public MockRealmA(@Qualifier("MockUserManagerA") UserManager userManager) {
     this.setAuthenticationTokenClass(UsernamePasswordToken.class);
   }

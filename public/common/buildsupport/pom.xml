@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-common-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <groupId>org.sonatype.nexus.common.buildsupport</groupId>
@@ -35,7 +35,6 @@
   <modules>
     <module>commons</module>
     <module>db</module>
-    <module>goodies</module>
     <module>groovy</module>
     <module>httpclient</module>
     <module>internal</module>

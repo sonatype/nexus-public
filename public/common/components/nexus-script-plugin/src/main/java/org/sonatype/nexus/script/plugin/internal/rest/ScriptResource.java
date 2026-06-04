@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.script.plugin.internal.rest;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -66,7 +65,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @Path(ScriptResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -86,7 +84,7 @@ public class ScriptResource
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public ScriptResource(
       final ScriptManager scriptManager,
       final SecurityHelper securityHelper,

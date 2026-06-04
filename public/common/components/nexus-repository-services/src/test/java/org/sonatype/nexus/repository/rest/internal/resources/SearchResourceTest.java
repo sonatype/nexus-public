@@ -27,6 +27,8 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.search.SearchRequest;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.SearchUtils;
@@ -48,7 +50,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
+@WithUser(permissions = {"nexus:uploader-metadata:read"})
 class SearchResourceTest
 {
   @Mock

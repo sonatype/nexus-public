@@ -29,12 +29,14 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,23 +47,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
-public class RawRepositoryAdapterTest
-
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class RawRepositoryAdapterTest
 {
   private RawRepositoryAdapter adapter;
 
   @Mock
   private RoutingRuleStore routingRuleStore;
 
-  @Before
-  public void setup() {
-    adapter = new RawRepositoryAdapter(routingRuleStore);
+  @BeforeEach
+  void setup() {
+    adapter = new RawRepositoryAdapter(routingRuleStore, true);
     BaseUrlHolder.set("http://nexus-url", "");
   }
 
   @Test
-  public void testAdapt_groupRepository() throws Exception {
+  void testAdapt_groupRepository() throws Exception {
     // No raw specific props so simple smoke test
     Repository repository = createRepository(new GroupType(), configuration -> {
       configuration.attributes("group").set("memberNames", Arrays.asList("a", "b"));
@@ -74,7 +76,7 @@ public class RawRepositoryAdapterTest
   }
 
   @Test
-  public void testAdapt_hostedRepository() throws Exception {
+  void testAdapt_hostedRepository() throws Exception {
     Repository repository = createRepository(new HostedType(), ContentDisposition.INLINE);
 
     RawHostedApiRepository hostedRepository = (RawHostedApiRepository) adapter.adapt(repository);
@@ -86,7 +88,7 @@ public class RawRepositoryAdapterTest
   }
 
   @Test
-  public void testAdapt_proxyRepository() throws Exception {
+  void testAdapt_proxyRepository() throws Exception {
     Repository repository = createRepository(new ProxyType(), ContentDisposition.INLINE);
 
     RawProxyApiRepository proxyRepository = (RawProxyApiRepository) adapter.adapt(repository);
@@ -98,6 +100,54 @@ public class RawRepositoryAdapterTest
     assertThat(proxyRepository.getNegativeCache(), notNullValue());
     assertThat(proxyRepository.getProxy(), notNullValue());
     assertThat(proxyRepository.getStorage(), notNullValue());
+  }
+
+  @Test
+  void testAdapt_proxyRepository_withQueryParamsForwardingEnabled() throws Exception {
+    Repository repository = createRepository(new ProxyType(), configuration -> {
+      NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+      raw.set("contentDisposition", ContentDisposition.INLINE.toString());
+      raw.set("forwardQueryParameters", true);
+      raw.set("excludedQueryParameters", Arrays.asList("api_key", "token"));
+      when(configuration.attributes("raw")).thenReturn(raw);
+    });
+
+    RawProxyApiRepository proxyRepository = (RawProxyApiRepository) adapter.adapt(repository);
+    assertRepository(proxyRepository, "proxy", true);
+    assertThat(proxyRepository.getRaw().getForwardQueryParameters(), is(true));
+    assertThat(proxyRepository.getRaw().getExcludedQueryParameters(), is(Arrays.asList("api_key", "token")));
+  }
+
+  @Test
+  void testAdapt_proxyRepository_withQueryParamsForwardingDisabled() throws Exception {
+    Repository repository = createRepository(new ProxyType(), configuration -> {
+      NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+      raw.set("contentDisposition", ContentDisposition.INLINE.toString());
+      raw.set("forwardQueryParameters", false);
+      raw.set("excludedQueryParameters", Arrays.asList());
+      when(configuration.attributes("raw")).thenReturn(raw);
+    });
+
+    RawProxyApiRepository proxyRepository = (RawProxyApiRepository) adapter.adapt(repository);
+    assertRepository(proxyRepository, "proxy", true);
+    assertThat(proxyRepository.getRaw().getForwardQueryParameters(), is(false));
+    assertThat(proxyRepository.getRaw().getExcludedQueryParameters(), is(Arrays.asList()));
+  }
+
+  @Test
+  void testAdapt_proxyRepository_withoutQueryParamsFields() throws Exception {
+    // Test backward compatibility - fields not present in config should default gracefully
+    Repository repository = createRepository(new ProxyType(), configuration -> {
+      NestedAttributesMap raw = new NestedAttributesMap("raw", newHashMap());
+      raw.set("contentDisposition", ContentDisposition.INLINE.toString());
+      // forwardQueryParameters and excludedQueryParameters not set
+      when(configuration.attributes("raw")).thenReturn(raw);
+    });
+
+    RawProxyApiRepository proxyRepository = (RawProxyApiRepository) adapter.adapt(repository);
+    assertRepository(proxyRepository, "proxy", true);
+    // Should handle missing fields gracefully (null or default values)
+    // Exact behavior depends on RawAttributes implementation
   }
 
   private static void assertRepository(
@@ -143,7 +193,7 @@ public class RawRepositoryAdapterTest
   }
 
   @Test
-  public void testAdapt_hostedRepository_normalizesNullContentDispositionToInline() throws Exception {
+  void testAdapt_hostedRepository_normalizesNullContentDispositionToInline() throws Exception {
     Repository repository = createRepositoryWithNullContentDisposition(new HostedType());
 
     RawHostedApiRepository hostedRepository = (RawHostedApiRepository) adapter.adapt(repository);
@@ -151,7 +201,7 @@ public class RawRepositoryAdapterTest
   }
 
   @Test
-  public void testAdapt_proxyRepository_normalizesNullContentDispositionToInline() throws Exception {
+  void testAdapt_proxyRepository_normalizesNullContentDispositionToInline() throws Exception {
     Repository repository = createRepositoryWithNullContentDisposition(new ProxyType());
 
     RawProxyApiRepository proxyRepository = (RawProxyApiRepository) adapter.adapt(repository);
@@ -159,7 +209,7 @@ public class RawRepositoryAdapterTest
   }
 
   @Test
-  public void testAdapt_groupRepository_normalizesNullContentDispositionToInline() throws Exception {
+  void testAdapt_groupRepository_normalizesNullContentDispositionToInline() throws Exception {
     Repository repository = createRepositoryWithNullContentDisposition(new GroupType());
 
     RawGroupApiRepository groupRepository = (RawGroupApiRepository) adapter.adapt(repository);

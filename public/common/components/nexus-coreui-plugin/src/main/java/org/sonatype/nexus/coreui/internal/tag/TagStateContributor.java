@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.tag;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -26,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class TagStateContributor
     implements StateContributor
 {
@@ -34,7 +31,7 @@ public class TagStateContributor
 
   private final Map<String, Object> state;
 
-  @Inject
+  @Autowired
   public TagStateContributor(
       @Value("${nexus.react.tags:true}") final boolean featureFlag)
   {

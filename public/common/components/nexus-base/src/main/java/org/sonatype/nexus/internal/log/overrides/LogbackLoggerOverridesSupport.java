@@ -22,7 +22,7 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.sonatype.goodies.common.FileReplacer;
+import org.sonatype.nexus.common.io.FileReplacer;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.io.SafeXml;
 import org.sonatype.nexus.common.log.LoggerLevel;

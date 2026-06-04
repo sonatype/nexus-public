@@ -14,9 +14,7 @@ package org.sonatype.nexus.datastore.h2;
 
 import java.io.File;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.27
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = TASKS)
 public class H2WebConsole
     extends StateGuardLifecycleSupport
@@ -52,7 +49,7 @@ public class H2WebConsole
 
   private Server h2Server;
 
-  @Inject
+  @Autowired
   public H2WebConsole(
       final ApplicationDirectories applicationDirectories,
       @Value("${nexus.h2.httpListenerEnabled:false}") final boolean httpListenerEnabled,

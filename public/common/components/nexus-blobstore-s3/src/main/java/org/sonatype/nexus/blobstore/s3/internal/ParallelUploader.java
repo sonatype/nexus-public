@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.s3.internal.ParallelUploader.ChunkReader.Chunk;
 
@@ -50,7 +48,6 @@ import software.amazon.awssdk.services.s3.model.UploadPartResponse;
  * @since 3.19
  */
 @ConditionalOnProperty(name = "nexus.s3.uploaderName", havingValue = "parallelUploader")
-@Singleton
 @Component
 @Qualifier("parallelUploader")
 public class ParallelUploader
@@ -59,7 +56,7 @@ public class ParallelUploader
 {
   private static final Chunk EMPTY_CHUNK = new ChunkReader.Chunk(0, new byte[0], 0);
 
-  @Inject
+  @Autowired
   public ParallelUploader(
       @Value("${nexus.s3.parallelRequests.chunksize:5242880}") final int chunkSize,
       @Value("${nexus.s3.parallelRequests.parallelism:0}") final int nThreads)

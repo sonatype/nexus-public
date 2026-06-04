@@ -14,7 +14,6 @@ package org.sonatype.nexus.siesta.internal;
 
 import java.util.List;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.ext.Provider;
 
 import org.sonatype.nexus.rest.ValidationErrorXO;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @Provider
 public class ValidationErrorsExceptionMapper
     extends ValidationExceptionMapperSupport<ValidationErrorsException>

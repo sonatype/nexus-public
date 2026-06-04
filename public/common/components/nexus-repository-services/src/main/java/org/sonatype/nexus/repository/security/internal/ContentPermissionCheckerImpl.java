@@ -20,9 +20,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPermission;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
@@ -55,7 +53,6 @@ import org.springframework.stereotype.Component;
  * </p>
  */
 @Component
-@Singleton
 public class ContentPermissionCheckerImpl
     implements ContentPermissionChecker
 {
@@ -65,7 +62,7 @@ public class ContentPermissionCheckerImpl
 
   private final SelectorManager selectorManager;
 
-  @Inject
+  @Autowired
   public ContentPermissionCheckerImpl(
       final SecurityHelper securityHelper,
       final SelectorManager selectorManager)

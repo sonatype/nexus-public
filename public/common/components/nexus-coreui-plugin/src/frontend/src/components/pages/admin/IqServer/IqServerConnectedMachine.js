@@ -16,7 +16,6 @@
  */
 import {assign, createMachine} from 'xstate';
 import Axios from 'axios';
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
 
 const IQ_CONFIG_URL = 'service/rest/v1/iq';
 const VERIFY_CONNECTION_URL = 'service/rest/v1/iq/verify-connection';
@@ -130,7 +129,13 @@ export default createMachine(
       verifyConnection: async () => {
         // Verify connection regardless of enabled status
         // The Connected page shows actual connection health, not whether IQ is enabled
-        return Axios.post(VERIFY_CONNECTION_URL);
+        const response = await Axios.post(VERIFY_CONNECTION_URL);
+        if (response.data && response.data.success === false) {
+          const error = new Error(response.data.reason || 'Connection verification failed');
+          error.response = {...response, data: {message: response.data.reason || 'Connection verification failed'}};
+          throw error;
+        }
+        return response;
       }
     }
   }

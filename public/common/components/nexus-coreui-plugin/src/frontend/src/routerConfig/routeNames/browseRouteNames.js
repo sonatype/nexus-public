@@ -16,6 +16,11 @@
  */
 
 export default {
+  // Preview-themed entries live in
+  // nexus-ui-plugin/src/frontend/src/components/preview/constants/RouteNames.ts
+  // under PREVIEW_* keys (PREVIEW_MALICIOUS_PACKAGES, PREVIEW_PROTECT,
+  // PREVIEW_MALWARERISK) and are merged in by this plugin's routeNames.js
+  // aggregator. Classic entries stay here.
   DIRECTORY: 'browse',
   BROWSE: {
     ROOT: 'browse.browse',
@@ -37,15 +42,7 @@ export default {
   },
   MALWARERISK: {
     ROOT: 'browse.malwarerisk',
-    TITLE: 'Malware Risk',
-  },
-  MALICIOUS_PACKAGES: {
-    ROOT: 'preview.browse.malicious-packages',
     TITLE: 'Malicious Packages',
-  },
-  PROTECT: {
-    ROOT: 'preview.browse.protect',
-    TITLE: 'Protect',
   },
   SEARCH: {
     ROOT: 'browse.search',
@@ -53,6 +50,7 @@ export default {
     UNIFIED: 'browse.search.unified',
     GENERIC: 'browse.search.generic',
     CUSTOM: 'browse.search.custom',
+    ALPINE: 'browse.search.alpine',
     APT: 'browse.search.apt',
     CARGO: 'browse.search.cargo',
     COCOAPODS: 'browse.search.cocoapods',
@@ -73,6 +71,7 @@ export default {
     R: 'browse.search.r',
     RAW: 'browse.search.raw',
     RUBYGEMS: 'browse.search.rubygems',
+    ANSIBLEGALAXY: 'browse.search.ansiblegalaxy',
     TERRAFORM: 'browse.search.terraform',
     YUM: 'browse.search.yum',
     SWIFT: 'browse.search.swift',

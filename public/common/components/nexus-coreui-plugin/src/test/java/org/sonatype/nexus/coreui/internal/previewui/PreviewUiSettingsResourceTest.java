@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui.internal.previewui;
 
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.kv.KeyValueStore;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
@@ -23,6 +22,7 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,10 +33,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_KEY;
 
-@ExtendWith(AuthenticationExtension.class)
+@ExtendWith({AuthenticationExtension.class, MockitoExtension.class})
 @WithUser
 class PreviewUiSettingsResourceTest
-    extends Test5Support
 {
   @Mock
   private KeyValueStore keyValueStore;

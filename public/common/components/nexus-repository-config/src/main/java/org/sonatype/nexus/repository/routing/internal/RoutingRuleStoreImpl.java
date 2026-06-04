@@ -16,10 +16,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
-import org.sonatype.nexus.common.entity.EntityId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
@@ -51,7 +48,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class RoutingRuleStoreImpl
     extends ConfigStoreSupport<RoutingRuleDAO>
     implements RoutingRuleStore
@@ -68,7 +64,7 @@ public class RoutingRuleStoreImpl
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public RoutingRuleStoreImpl(final DataSessionSupplier sessionSupplier, final EventManager eventManager) {
     super(sessionSupplier);
     this.eventManager = checkNotNull(eventManager);
@@ -140,14 +136,7 @@ public class RoutingRuleStoreImpl
   }
 
   private void postEvent(final RoutingRule rule) {
-    // trigger invalidation of routing rule cache
-    eventManager.post(new RoutingRuleInvalidatedEvent()
-    {
-      @Override
-      public EntityId getRoutingRuleId() {
-        return rule.id();
-      }
-    });
+    eventManager.post(new RoutingRuleInvalidatedEvent(rule.id()));
   }
 
   @VisibleForTesting

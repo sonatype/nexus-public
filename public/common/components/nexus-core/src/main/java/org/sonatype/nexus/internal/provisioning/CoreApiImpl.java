@@ -13,10 +13,9 @@
 package org.sonatype.nexus.internal.provisioning;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.CoreApi;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.common.entity.EntityHelper;
@@ -47,7 +46,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class CoreApiImpl
     implements CoreApi
 {
@@ -59,7 +57,7 @@ public class CoreApiImpl
 
   private final SecretsService secretsService;
 
-  @Inject
+  @Autowired
   public CoreApiImpl(
       final CapabilityRegistry capabilityRegistry,
       final HttpClientManager httpClientManager,

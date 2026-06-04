@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.app;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.common.app.BaseUrlManager;
@@ -37,7 +37,7 @@ public class BaseUrlCapability
 {
   private final BaseUrlManager baseUrlManager;
 
-  @Inject
+  @Autowired
   public BaseUrlCapability(final BaseUrlManager baseUrlManager) {
     this.baseUrlManager = checkNotNull(baseUrlManager);
   }

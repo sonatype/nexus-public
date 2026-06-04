@@ -21,7 +21,6 @@ import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -32,7 +31,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.24
  */
-@Singleton
 @org.springframework.stereotype.Component
 @Qualifier(DefaultBrowseNodeGenerator.NAME)
 public class DefaultBrowseNodeGenerator

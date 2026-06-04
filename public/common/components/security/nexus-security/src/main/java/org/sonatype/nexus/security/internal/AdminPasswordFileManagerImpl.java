@@ -17,9 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.slf4j.Logger;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class AdminPasswordFileManagerImpl
     implements AdminPasswordFileManager
 {
@@ -44,7 +41,7 @@ public class AdminPasswordFileManagerImpl
 
   private final File adminPasswordFile;
 
-  @Inject
+  @Autowired
   public AdminPasswordFileManagerImpl(final ApplicationDirectories applicationDirectories) {
     this.applicationDirectories = checkNotNull(applicationDirectories);
     adminPasswordFile = new File(applicationDirectories.getWorkDirectory(), FILENAME);

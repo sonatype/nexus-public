@@ -15,8 +15,6 @@ package org.sonatype.nexus.api.extdirect.selfhosted.s3;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory;
 import org.sonatype.nexus.blobstore.s3.internal.encryption.KMSEncrypter;
 import org.sonatype.nexus.blobstore.s3.internal.encryption.NoEncrypter;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.12
  */
 @Component
-@Singleton
 @DirectAction(action = "s3_S3")
 public class S3Component
     extends DirectComponentSupport

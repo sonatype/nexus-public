@@ -25,9 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
@@ -53,7 +51,6 @@ import org.springframework.stereotype.Component;
  * @since 3.41
  */
 @Component
-@Singleton
 public class DatastoreBlobReconciliationLogMigrator_1_11
     implements DatabaseMigrationStep
 {
@@ -80,7 +77,7 @@ public class DatastoreBlobReconciliationLogMigrator_1_11
 
   private final ApplicationDirectories applicationDirectories;
 
-  @Inject
+  @Autowired
   public DatastoreBlobReconciliationLogMigrator_1_11(final ApplicationDirectories applicationDirectories) {
     this.applicationDirectories = checkNotNull(applicationDirectories);
   }

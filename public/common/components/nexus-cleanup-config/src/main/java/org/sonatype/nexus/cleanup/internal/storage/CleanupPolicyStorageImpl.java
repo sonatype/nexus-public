@@ -14,9 +14,7 @@ package org.sonatype.nexus.cleanup.internal.storage;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyDeletedEvent;
@@ -38,14 +36,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class CleanupPolicyStorageImpl
     extends ConfigStoreSupport<CleanupPolicyDAO>
     implements CleanupPolicyStorage
 {
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public CleanupPolicyStorageImpl(final DataSessionSupplier sessionSupplier, final EventManager eventManager) {
     super(sessionSupplier);
     this.eventManager = checkNotNull(eventManager);

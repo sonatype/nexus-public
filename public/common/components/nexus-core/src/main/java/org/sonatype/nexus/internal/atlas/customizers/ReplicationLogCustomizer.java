@@ -20,8 +20,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.logging.task.TaskLogHome;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * Class to add replication v2 logs to support bundle
  */
 @Component
-@Singleton
 public class ReplicationLogCustomizer
     implements SupportBundleCustomizer
 {

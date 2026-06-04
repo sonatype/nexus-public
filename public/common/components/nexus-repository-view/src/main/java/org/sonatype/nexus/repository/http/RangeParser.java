@@ -17,8 +17,6 @@ import java.util.List;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Range;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +31,6 @@ import static java.util.Collections.singletonList;
  * @since 3.0
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 class RangeParser
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

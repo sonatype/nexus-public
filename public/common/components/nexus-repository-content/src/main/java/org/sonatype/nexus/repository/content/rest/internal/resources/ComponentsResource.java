@@ -17,10 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -36,9 +33,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -56,6 +56,10 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
@@ -67,13 +71,12 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
-import org.springframework.stereotype.Component;
+import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 
 /**
  * @since 3.24
  */
 @Component
-@Singleton
 @Path(ComponentsResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -95,7 +98,7 @@ public class ComponentsResource
 
   private final Set<ComponentsResourceExtension> componentsResourceExtensions;
 
-  @Inject
+  @Autowired
   public ComponentsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
       final MaintenanceService maintenanceService,
@@ -137,7 +140,8 @@ public class ComponentsResource
   public ComponentXO getComponentById(@PathParam("id") final String id) {
     RepositoryItemIDXO repositoryItemIDXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
-    return fromComponent(getComponent(repositoryItemIDXO, repository), repository);
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
+    return fromComponent(getComponent(repositoryItemIDXO, repository), repository, uploaderVisible);
   }
 
   private FluentComponent getComponent(final RepositoryItemIDXO repositoryItemIDXO, final Repository repository) {
@@ -191,15 +195,41 @@ public class ComponentsResource
     catch (IllegalOperationException e) {
       throw new WebApplicationMessageException(Status.BAD_REQUEST, e.getMessage());
     }
+    catch (BlobStoreWarmingUpException e) {
+      // Blob store connection pool is still initializing (temporary, retry-able)
+      log.info("Blob store '{}' warming up, returning 503", e.getBlobStoreName());
+      throw new WebApplicationMessageException(Status.SERVICE_UNAVAILABLE,
+          "\"Blob store warming up, please retry in a moment\"",
+          MediaType.APPLICATION_JSON);
+    }
+    catch (MissingBlobException e) {
+      // CRITICAL: Blob exists in metadata but missing from storage (data corruption, not retry-able)
+      log.error("BLOB DATA LOSS: Blob {} missing from storage - data corruption", e.getBlobRef());
+      throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
+          "\"Blob missing from storage - possible data corruption\"",
+          MediaType.APPLICATION_JSON);
+    }
+    catch (InvalidStateException e) {
+      // Generic invalid state (e.g., stopped repository - not retry-able)
+      log.warn("Invalid state: {}", e.getMessage());
+      throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
+          "\"" + e.getMessage() + "\"",
+          MediaType.APPLICATION_JSON);
+    }
   }
 
   private List<ComponentXO> toComponentXOs(final List<FluentComponent> components, final Repository repository) {
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     return components.stream()
-        .map(component -> fromComponent(component, repository))
+        .map(component -> fromComponent(component, repository, uploaderVisible))
         .collect(toList());
   }
 
-  private ComponentXO fromComponent(final FluentComponent component, final Repository repository) {
+  private ComponentXO fromComponent(
+      final FluentComponent component,
+      final Repository repository,
+      final boolean uploaderVisible)
+  {
     String externalId = toExternalId(internalComponentId(component)).getValue();
 
     ComponentXO componentXO = componentXOFactory.createComponentXO();
@@ -207,7 +237,7 @@ public class ComponentsResource
     componentXO.setAssets(component.assets()
         .stream()
         .filter(assetPermitted(repository))
-        .map(asset -> fromAsset(asset, repository, this.assetDescriptors))
+        .map(asset -> fromAsset(asset, repository, this.assetDescriptors, uploaderVisible))
         .collect(Collectors.toList()));
 
     componentXO.setGroup(component.namespace());

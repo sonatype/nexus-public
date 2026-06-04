@@ -13,8 +13,7 @@
 
 import React from 'react';
 import { Flex, Text } from '@radix-ui/themes';
-import { FormatIcon } from '../../super/settings/repository/repositories/components/FormatIcon';
-import { FORMAT_LABELS } from '../../super/settings/repository/repositories/types';
+import { FormatIcon, FORMAT_LABELS } from '@sonatype/nexus-ui-plugin';
 
 import './Badges.scss';
 

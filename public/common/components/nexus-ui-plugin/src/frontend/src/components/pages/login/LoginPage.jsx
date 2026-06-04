@@ -12,7 +12,7 @@
  */
 import React, { useState } from 'react';
 import { Theme, Card, Flex, Heading, Text, Box } from '@radix-ui/themes';
-import { ExtJS } from "@sonatype/nexus-ui-plugin";
+import { ExtJS } from '../../../interface/ExtJS';
 import UIStrings from "../../../constants/UIStrings";
 import LoginLayout from "../../layout/LoginLayout";
 import AnonymousAccess from "./AnonymousAccess";

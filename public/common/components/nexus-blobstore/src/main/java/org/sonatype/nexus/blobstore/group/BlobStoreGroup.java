@@ -30,7 +30,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.blobstore.MemoryBlobSession;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -61,7 +61,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.hash.HashCode;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -126,7 +126,7 @@ public class BlobStoreGroup
   // cache of located blobs that have not been soft deleted
   private Cache<BlobId, String> locatedBlobs;
 
-  @Inject
+  @Autowired
   public BlobStoreGroup(
       final BlobStoreManager blobStoreManager,
       final List<Provider<FillPolicy>> fillPolicyProvidersList,

@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import java.io.IOException;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -53,7 +53,7 @@ public class MavenMetadataRebuildFacetImpl
 
   private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
 
-  @Inject
+  @Autowired
   public MavenMetadataRebuildFacetImpl(final MetadataRebuilder metadataRebuilder) {
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }

@@ -12,13 +12,14 @@
  */
 
 import React from 'react';
-import {render, screen, waitFor} from '@testing-library/react';
+import {render, screen, waitFor, act} from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import {SearchCollapsibleNav} from './LeftNavigationMenuRadix';
+let transitionHookCallback = null;
 
 const mockSetFormats = jest.fn();
 const mockUseIsVisible = jest.fn(() => true);
+const mockUseIsPreviewUI = jest.fn(() => false);
 
 // Mock ExtJS global before tests
 beforeAll(() => {
@@ -36,12 +37,16 @@ afterAll(() => {
 });
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   useIsVisible: (...args) => mockUseIsVisible(...args),
-}));
-
-jest.mock('../super/search/unified/useRepositories', () => ({
+  useIsPreviewUI: (...args) => mockUseIsPreviewUI(...args),
+  useContextAwareRouteName: (name) => name,
+  NavItemBox: ({ name, text }) => <div data-testid={`nav-item-${name}`}>{text}</div>,
+  PreviewUIContext: {
+    Provider: ({ children }) => children,
+  },
   useRepositories: () => ({
-    availableFormats: new Set(['maven2', 'nuget', 'pub']),
+    availableFormats: new Set(['alpine', 'maven2', 'nuget', 'pub']),
     loading: false,
     repositories: [],
     formatCounts: {},
@@ -53,20 +58,36 @@ jest.mock('../super/search/unified/useRepositories', () => ({
 jest.mock('../../routerConfig/routeNames/routeNames', () => ({
   ROUTE_NAMES: {
     BROWSE: {
+      WELCOME: { ROOT: 'browse.welcome' },
       SEARCH: {
         ROOT: 'browse.search',
+        UNIFIED: 'browse.search.unified',
         GENERIC: 'browse.search.generic',
         CUSTOM: 'browse.search.custom',
+        ALPINE: 'browse.search.alpine',
         MAVEN: 'browse.search.maven',
         NUGET: 'browse.search.nuget',
         PUB: 'browse.search.pub',
       },
+      BROWSE: { ROOT: 'browse.browse' },
+      UPLOAD: { ROOT: 'browse.upload', LIST: 'browse.upload.list' },
+      TAGS: { ROOT: 'browse.tags' },
+      MALWARERISK: { ROOT: 'browse.malwarerisk' },
+    },
+    ADMIN: {
+      DIRECTORY: 'admin',
     },
   },
 }));
 
 jest.mock('../shared', () => ({
   Tooltip: ({children}) => children,
+}));
+
+jest.mock('../../hooks/useSideNavbarCollapsedState', () => () => [false, jest.fn()]);
+
+jest.mock('./useDefaultAdminRouteName', () => ({
+  useDefaultAdminRouteName: () => 'admin.system.api',
 }));
 
 jest.mock('@radix-ui/themes', () => ({
@@ -96,42 +117,105 @@ jest.mock('lucide-react', () => {
 });
 
 jest.mock('@uirouter/react', () => ({
-  useRouter: () => ({
-    globals: {
-      current: {name: 'browse.search.generic'},
-    },
-    stateRegistry: {
-      get: (name) => ({
-        data: {
-          visibilityRequirements: {
-            permissionToken: name,
-          },
-        },
-      }),
-    },
-  }),
   useIsActive: () => false,
   useSref: (name) => ({
     href: `#/${name}`,
     onClick: jest.fn(),
   }),
+  useTransitionHook: (hookName, criteria, callback) => {
+    transitionHookCallback = callback;
+  },
 }));
+
+import {SearchCollapsibleNav} from './LeftNavigationMenuRadix';
 
 describe('SearchCollapsibleNav', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    transitionHookCallback = null;
   });
 
   it('shows format routes from available repositories', async () => {
-    render(<SearchCollapsibleNav isCollapsed={false} />);
+    const {container} = render(<SearchCollapsibleNav isCollapsed={false} />);
+
+    // Simulate transition to a search route to expand the menu
+    act(() => {
+      if (transitionHookCallback) {
+        transitionHookCallback({to: () => ({name: 'browse.search.maven'})});
+      }
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Custom')).toBeInTheDocument();
     });
 
-    // Formats come from useRepositories mock which returns maven2, nuget, pub
+    // Formats come from useRepositories mock which returns alpine, maven2, nuget, pub
+    expect(screen.getByText('Alpine')).toBeInTheDocument();
     expect(screen.getByText('Maven')).toBeInTheDocument();
     expect(screen.getByText('NuGet')).toBeInTheDocument();
     expect(screen.getByText('Pub')).toBeInTheDocument();
+  });
+
+  it('auto-expands when navigating to a search route', async () => {
+    const {container} = render(<SearchCollapsibleNav isCollapsed={false} />);
+
+    // Initially should not be expanded (no expanded class)
+    const collapsible = container.querySelector('.search-collapsible');
+    expect(collapsible).not.toHaveClass('search-collapsible--expanded');
+
+    // Simulate transition to a search route
+    act(() => {
+      if (transitionHookCallback) {
+        transitionHookCallback({to: () => ({name: 'browse.search.maven'})});
+      }
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector('.search-collapsible')).toHaveClass('search-collapsible--expanded');
+    });
+  });
+
+  it('does not auto-expand when navigating to a non-search route', async () => {
+    const {container} = render(<SearchCollapsibleNav isCollapsed={false} />);
+
+    // Simulate transition to a non-search route
+    act(() => {
+      if (transitionHookCallback) {
+        transitionHookCallback({to: () => ({name: 'browse.welcome'})});
+      }
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector('.search-collapsible')).not.toHaveClass('search-collapsible--expanded');
+    });
+  });
+});
+
+describe('LeftNavigationMenuRadix', () => {
+  let LeftNavigationMenuRadix;
+
+  beforeAll(() => {
+    LeftNavigationMenuRadix = require('./LeftNavigationMenuRadix').default;
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('shouldShowApiNavItemInPreviewUI', () => {
+    mockUseIsPreviewUI.mockReturnValue(true);
+
+    render(<LeftNavigationMenuRadix />);
+
+    expect(screen.getByTestId('nav-item-preview.browse.api')).toBeInTheDocument();
+    expect(screen.getByText('API')).toBeInTheDocument();
+  });
+
+  it('shouldNotShowApiNavItemInClassicUI', () => {
+    mockUseIsPreviewUI.mockReturnValue(false);
+
+    render(<LeftNavigationMenuRadix />);
+
+    expect(screen.queryByTestId('nav-item-preview.browse.api')).not.toBeInTheDocument();
   });
 });

@@ -33,7 +33,11 @@ public class SnapshotItem
     RELEASE_SIG(SIGNATURE),
     PACKAGE_INDEX_GZ(GZIP),
     PACKAGE_INDEX_BZ2(BZIP),
-    PACKAGE_INDEX_XZ(XZ);
+    PACKAGE_INDEX_XZ(XZ),
+    METADATA_RAW(TEXT),
+    METADATA_GZ(GZIP),
+    METADATA_BZ2(BZIP),
+    METADATA_XZ(XZ);
 
     private final String mimeType;
 

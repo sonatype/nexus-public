@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.supportzip.ExportConfigData;
 import org.sonatype.nexus.supportzip.ImportData;
@@ -33,14 +31,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("emailConfigurationExport")
-@Singleton
 public class EmailConfigurationExport
     extends JsonExporter
     implements ExportConfigData, ImportData
 {
   private final EmailConfigurationStore store;
 
-  @Inject
+  @Autowired
   public EmailConfigurationExport(final EmailConfigurationStore store) {
     this.store = store;
   }

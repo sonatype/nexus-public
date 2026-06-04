@@ -30,6 +30,23 @@
 import { AxiosError } from 'axios';
 import { ApiError, FieldError, RestErrorResponse } from './types';
 
+const CONSTRAINT_MESSAGES: Record<string, string> = {
+  'org.sonatype.nexus.validation.constraint.name':
+    'Only letters, digits, hyphens (-), underscores (_), and dots (.) are allowed and may not start with underscore or dot.',
+  'org.sonatype.nexus.validation.constraint.case': 'Case must be the correct value.',
+  'org.sonatype.nexus.validation.constraint.portnumber': 'Port number must be within the valid range.',
+  'org.sonatype.nexus.validation.constraint.hostname': 'Hostname must be valid.',
+  'org.sonatype.nexus.validation.constraint.notnull': 'Must not be null.',
+};
+
+function resolveConstraintMessage(message: string): string {
+  const match = message.match(/^\{([^}]+)\}$/);
+  if (match) {
+    return CONSTRAINT_MESSAGES[match[1]] ?? message;
+  }
+  return message;
+}
+
 /**
  * Parse any error into a structured ApiError
  */
@@ -97,7 +114,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
   // Parse response based on status code
   switch (status) {
     case 400:
-      return parseBadRequest(data, requestId, error);
+      return parseBadRequest(status, data, requestId, error);
 
     case 401:
       return {
@@ -136,7 +153,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
       };
 
     case 422:
-      return parseBadRequest(data, requestId, error);
+      return parseBadRequest(status, data, requestId, error);
 
     case 500:
     case 502:
@@ -177,6 +194,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
  * Parse 400 Bad Request errors (validation errors)
  */
 function parseBadRequest(
+  httpStatus: number,
   data: RestErrorResponse | undefined | Array<{ id?: string; message?: string }>,
   requestId: string | undefined,
   error: AxiosError
@@ -190,18 +208,15 @@ function parseBadRequest(
   if (Array.isArray(data)) {
     for (const err of data) {
       if (err.message) {
+        const resolvedMessage = resolveConstraintMessage(err.message);
         const fieldName = err.id && err.id !== '*'
           ? err.id.replace('PARAMETER ', '')
           : null;
-        // Include field name in message for clarity (e.g., "docker: must not be null")
-        const displayMessage = fieldName
-          ? `${fieldName}: ${err.message}`
-          : err.message;
-        messages.push(displayMessage);
+        messages.push(resolvedMessage);
         if (fieldName) {
           fieldErrors.push({
             field: fieldName,
-            message: err.message,
+            message: resolvedMessage,
           });
         }
       }
@@ -211,13 +226,12 @@ function parseBadRequest(
   else if (data?.errors && Array.isArray(data.errors)) {
     for (const err of data.errors) {
       if (err.field || err.id) {
+        const resolvedMessage = resolveConstraintMessage(err.message || 'Invalid value');
         fieldErrors.push({
           field: err.field || err.id || 'unknown',
-          message: err.message || 'Invalid value',
+          message: resolvedMessage,
         });
-        if (err.message) {
-          messages.push(err.message);
-        }
+        messages.push(resolvedMessage);
       }
     }
   }
@@ -248,7 +262,7 @@ function parseBadRequest(
   }
 
   return {
-    status: 400,
+    status: httpStatus,
     message,
     code: 'VALIDATION_ERROR',
     fieldErrors: fieldErrors.length > 0 ? fieldErrors : undefined,

@@ -21,9 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -56,7 +54,6 @@ import org.springframework.stereotype.Component;
  * @since 3.10
  */
 @Component
-@Singleton
 public class RepositoryPermissionChecker
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -67,7 +64,7 @@ public class RepositoryPermissionChecker
 
   private final Map<String, Recipe> recipes;
 
-  @Inject
+  @Autowired
   public RepositoryPermissionChecker(
       final SecurityHelper securityHelper,
       final SelectorManager selectorManager,

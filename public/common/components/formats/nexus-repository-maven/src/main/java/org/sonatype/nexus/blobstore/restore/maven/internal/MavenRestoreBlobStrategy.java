@@ -17,9 +17,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.datastore.BaseRestoreBlobStrategy;
@@ -30,7 +28,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -41,7 +38,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenRestoreBlobStrategy
     extends BaseRestoreBlobStrategy<MavenRestoreBlobData>
 {
@@ -49,7 +45,7 @@ public class MavenRestoreBlobStrategy
 
   private final MavenPathParser mavenPathParser;
 
-  @Inject
+  @Autowired
   protected MavenRestoreBlobStrategy(
       final DryRunPrefix dryRunPrefix,
       final RepositoryManager repositoryManager,
@@ -87,9 +83,9 @@ public class MavenRestoreBlobStrategy
   }
 
   @Override
-  protected void createAssetFromBlob(final Blob assetBlob, final MavenRestoreBlobData data) throws IOException {
+  protected void createAssetFromData(final MavenRestoreBlobData data) throws IOException {
     MavenContentFacet mavenFacet = data.getRepository().facet(MavenContentFacet.class);
-    mavenFacet.put(data.getMavenPath(), new DetachedBlobPayload(assetBlob));
+    mavenFacet.put(data.getMavenPath(), data.createDetachedPayload());
   }
 
   @Override

@@ -41,25 +41,32 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  */
 public class AssetXOBuilder
 {
-  /**
-   * Build AssetXO from an eagerly-loaded asset with blob information.
-   * Uses the actual blob_created timestamp for the blobCreated field.
-   *
-   * @since 3.73
-   */
+  // Defaults uploaderVisible=true: used by ConfigurationResource for migration, which must include all data
   public static AssetXO fromEagerAsset(
       final Asset asset,
       final Repository repository,
       final Map<String, AssetXODescriptor> assetDescriptors)
   {
-    // For eager-loaded assets, use the actual blob_created timestamp
+    return fromEagerAsset(asset, repository, assetDescriptors, true);
+  }
+
+  /**
+   * Build AssetXO from an eagerly-loaded asset with blob information.
+   * Uses the actual blob_created timestamp for the blobCreated field.
+   */
+  public static AssetXO fromEagerAsset(
+      final Asset asset,
+      final Repository repository,
+      final Map<String, AssetXODescriptor> assetDescriptors,
+      final boolean uploaderVisible)
+  {
     Date blobCreated = asset.blob()
         .map(AssetBlob::blobCreated)
         .map(OffsetDateTime::toInstant)
         .map(Date::from)
         .orElseGet(() -> Date.from(asset.created().toInstant()));
 
-    return doFromAsset(asset, repository, assetDescriptors)
+    return doFromAsset(asset, repository, assetDescriptors, uploaderVisible)
         .blobCreated(blobCreated)
         .build();
   }
@@ -67,12 +74,13 @@ public class AssetXOBuilder
   public static AssetXO fromAsset(
       final Asset asset,
       final Repository repository,
-      final Map<String, AssetXODescriptor> assetDescriptors)
+      final Map<String, AssetXODescriptor> assetDescriptors,
+      final boolean uploaderVisible)
   {
     // For backward compatibility, use asset.created() for blobCreated
     Date blobCreated = Date.from(asset.created().toInstant());
 
-    return doFromAsset(asset, repository, assetDescriptors)
+    return doFromAsset(asset, repository, assetDescriptors, uploaderVisible)
         .blobCreated(blobCreated)
         .build();
   }
@@ -80,7 +88,8 @@ public class AssetXOBuilder
   private static AssetXO.AssetXOBuilder doFromAsset(
       final Asset asset,
       final Repository repository,
-      final Map<String, AssetXODescriptor> assetDescriptors)
+      final Map<String, AssetXODescriptor> assetDescriptors,
+      final boolean uploaderVisible)
   {
     String externalId = toExternalId(internalAssetId(asset)).getValue();
 
@@ -92,8 +101,8 @@ public class AssetXOBuilder
     String contentType = assetBlob.map(AssetBlob::contentType).orElse(null);
     String format = repository.getFormat().getValue();
 
-    String uploader = assetBlob.flatMap(AssetBlob::createdBy).orElse(null);
-    String uploaderIp = assetBlob.flatMap(AssetBlob::createdByIp).orElse(null);
+    String uploader = uploaderVisible ? assetBlob.flatMap(AssetBlob::createdBy).orElse(null) : null;
+    String uploaderIp = uploaderVisible ? assetBlob.flatMap(AssetBlob::createdByIp).orElse(null) : null;
     long fileSize = assetBlob.map(AssetBlob::blobSize).orElse(0L);
     String blobStoreName = assetBlob.map(AssetBlob::blobRef).map(blobRef -> blobRef.getStore()).orElse(null);
 

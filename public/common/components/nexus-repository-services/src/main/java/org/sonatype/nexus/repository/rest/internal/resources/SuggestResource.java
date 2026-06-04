@@ -32,8 +32,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -49,7 +48,6 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
  * Returns minimal component data to optimize response size and latency.
  */
 @Component
-@Singleton
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path(SuggestResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
@@ -70,7 +68,7 @@ public class SuggestResource
 
   private final SearchService searchService;
 
-  @Inject
+  @Autowired
   public SuggestResource(final SearchService searchService) {
     this.searchService = checkNotNull(searchService);
   }

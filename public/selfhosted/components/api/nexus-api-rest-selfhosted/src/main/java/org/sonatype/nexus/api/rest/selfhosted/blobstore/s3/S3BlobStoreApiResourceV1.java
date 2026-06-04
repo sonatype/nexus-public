@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.s3;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiUpdateValidation;
@@ -31,14 +30,13 @@ import org.springframework.stereotype.Component;
  * @since 3.24
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class S3BlobStoreApiResourceV1
     extends S3BlobStoreApiResource
 {
   static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
-  @Inject
+  @Autowired
   public S3BlobStoreApiResourceV1(
       final BlobStoreManager blobStoreManager,
       final S3BlobStoreApiUpdateValidation validation,

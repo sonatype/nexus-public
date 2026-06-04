@@ -17,9 +17,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -53,6 +56,12 @@ public abstract class AptSnapshotFacetSupport
     extends FacetSupport
     implements AptSnapshotFacet
 {
+  // Pre-compiled: matches <component>/binary-<arch>/Packages[.gz|.bz2|.xz]
+  // [^/]+ ensures exactly one path segment before binary-, preventing greedy
+  // matching across debian-installer sub-paths.
+  private static final Pattern PACKAGE_INDEX_PATTERN =
+      Pattern.compile("[^/]+/binary-[^/]+/Packages(\\.gz|\\.bz2|\\.xz)?$");
+
   @Override
   public boolean isSnapshotableFile(final String path) {
     return !path.endsWith(".deb") && !path.endsWith(".DEB");
@@ -110,11 +119,13 @@ public abstract class AptSnapshotFacetSupport
       releaseStream = snapshotItem.content.openInputStream();
     }
     else {
-      try (InputStream is = itemsByRole.get(SnapshotItem.Role.RELEASE_INLINE_INDEX).content.openInputStream()) {
-        if (is != null) {
-          ArmoredInputStream aIs = new ArmoredInputStream(is);
-          releaseStream = new AptFilterInputStream(aIs);
-        }
+      SnapshotItem inlineItem = itemsByRole.get(SnapshotItem.Role.RELEASE_INLINE_INDEX);
+      if (inlineItem != null) {
+        // Do NOT use try-with-resources here: releaseStream wraps the opened stream
+        // and must stay open until parseControlFile() finishes reading it.
+        // The finally block below closes releaseStream when done.
+        InputStream is = inlineItem.content.openInputStream();
+        releaseStream = new AptFilterInputStream(new ArmoredInputStream(is));
       }
     }
 
@@ -152,7 +163,52 @@ public abstract class AptSnapshotFacetSupport
       result.addAll(fetchByHashPackageItems(result, aptFacet));
     }
 
-    return result;
+    // Collect remaining metadata files discovered from the Release manifest.
+    // The Release file's SHA256/SHA1/MD5Sum sections enumerate every metadata file in the
+    // distribution. This picks up i18n/Translation-*, dep11/, source/, Contents-*, and any
+    // future Debian metadata types — without hardcoding file types or language codes.
+    result.addAll(fetchManifestMetadataItems(release, aptFacet));
+
+    return deduplicated(result);
+  }
+
+  private static List<SnapshotItem> deduplicated(final List<SnapshotItem> items) {
+    Set<String> seen = new HashSet<>();
+    List<SnapshotItem> unique = new ArrayList<>(items.size());
+    for (SnapshotItem item : items) {
+      if (seen.add(item.specifier.path)) {
+        unique.add(item);
+      }
+    }
+    return unique;
+  }
+
+  private List<SnapshotItem> fetchManifestMetadataItems(
+      final Release release,
+      final AptContentFacet aptFacet) throws IOException
+  {
+    String dist = aptFacet.getDistribution();
+    List<ContentSpecifier> specs = new ArrayList<>();
+
+    for (String relativePath : release.getManifestFiles()) {
+      if (isAlreadyHandled(relativePath)) {
+        continue;
+      }
+      String fullPath = aptFacet.isFlat()
+          ? relativePath
+          : String.format("dists/%s/%s", dist, relativePath);
+      specs.add(new ContentSpecifier(fullPath, AptFacetHelper.resolveMetadataRole(relativePath)));
+    }
+
+    return specs.isEmpty() ? Collections.emptyList() : fetchSnapshotItems(specs);
+  }
+
+  // package-private for direct unit testing of the regex logic
+  static boolean isAlreadyHandled(final String relativePath) {
+    if (relativePath.contains("/by-hash/")) {
+      return true;
+    }
+    return PACKAGE_INDEX_PATTERN.matcher(relativePath).matches();
   }
 
   /**
@@ -232,7 +288,12 @@ public abstract class AptSnapshotFacetSupport
       String hash = entry.getValue();
 
       if (algorithm == null || StringUtils.isBlank(hash)) {
-        continue; // Skip invalid entries
+        continue;
+      }
+
+      if (!hash.matches("[a-fA-F0-9]+")) {
+        log.warn("Skipping by-hash specifier: unexpected checksum format for algorithm {}", algorithm);
+        continue;
       }
 
       ContentSpecifier byHashSpec =

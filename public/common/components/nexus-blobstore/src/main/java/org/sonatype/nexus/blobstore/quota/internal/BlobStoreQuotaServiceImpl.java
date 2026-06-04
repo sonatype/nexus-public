@@ -17,9 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
@@ -42,7 +40,6 @@ import org.springframework.stereotype.Component;
  * @since 3.14
  */
 @Component
-@Singleton
 public class BlobStoreQuotaServiceImpl
     implements BlobStoreQuotaService
 {
@@ -50,7 +47,7 @@ public class BlobStoreQuotaServiceImpl
 
   private final Map<String, BlobStoreQuota> quotas;
 
-  @Inject
+  @Autowired
   public BlobStoreQuotaServiceImpl(final List<BlobStoreQuota> quotasList) {
     this.quotas = QualifierUtil.buildQualifierBeanMap(checkNotNull(quotasList));
   }

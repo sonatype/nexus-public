@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -36,14 +35,13 @@ import org.springframework.stereotype.Component;
  * Anonymous Security Settings {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_AnonymousSettings")
 public class AnonymousSettingsComponent
     extends DirectComponentSupport
 {
   private final AnonymousManager anonymousManager;
 
-  @Inject
+  @Autowired
   public AnonymousSettingsComponent(final AnonymousManager anonymousManager) {
     this.anonymousManager = checkNotNull(anonymousManager);
   }

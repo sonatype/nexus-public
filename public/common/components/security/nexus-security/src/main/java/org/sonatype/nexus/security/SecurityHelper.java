@@ -15,8 +15,6 @@ package org.sonatype.nexus.security;
 import java.util.Arrays;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 
 import org.apache.shiro.SecurityUtils;
@@ -41,7 +39,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class SecurityHelper
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

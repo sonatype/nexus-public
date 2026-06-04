@@ -27,9 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -75,13 +73,12 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
  * @since 3.26
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class MavenContentIndexPublisher
     extends MavenIndexPublisher
 {
   private final int browseAssetsPageSize;
 
-  @Inject
+  @Autowired
   public MavenContentIndexPublisher(
       @Value("${nexus.maven.index.publisher.browseAssetsPageSize:1000}") final int browseAssetsPageSize)
   {

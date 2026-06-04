@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -36,8 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,7 +45,6 @@ import org.springframework.stereotype.Component;
  * Also schedules all pypi groups for rebuilding due to a relocation of metadata.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BrowseNodeMigrationStep_1_36
     implements DatabaseMigrationStep
 {
@@ -73,7 +70,7 @@ public class BrowseNodeMigrationStep_1_36
 
   private final UpgradeTaskScheduler upgradeTaskScheduler;
 
-  @Inject
+  @Autowired
   public BrowseNodeMigrationStep_1_36(
       final List<Format> formats,
       final TaskScheduler ts,

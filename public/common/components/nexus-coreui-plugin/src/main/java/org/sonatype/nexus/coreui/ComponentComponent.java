@@ -22,8 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -57,7 +56,6 @@ import org.springframework.stereotype.Component;
  * Component {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Component")
 public class ComponentComponent
     extends DirectComponentSupport
@@ -72,7 +70,7 @@ public class ComponentComponent
 
   private final Map<String, AssetAttributeTransformer> formatTransformations;
 
-  @Inject
+  @Autowired
   public ComponentComponent(
       final RepositoryManager repositoryManager,
       final SelectorFactory selectorFactory,

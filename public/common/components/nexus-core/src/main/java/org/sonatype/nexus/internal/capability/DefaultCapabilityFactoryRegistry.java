@@ -14,9 +14,7 @@ package org.sonatype.nexus.internal.capability;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
@@ -44,7 +42,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Primary
 @Component
-@Singleton
 class DefaultCapabilityFactoryRegistry
     implements CapabilityFactoryRegistry, ApplicationContextAware
 {
@@ -60,7 +57,7 @@ class DefaultCapabilityFactoryRegistry
 
   private Map<String, String> capabilityByQualifier;
 
-  @Inject
+  @Autowired
   DefaultCapabilityFactoryRegistry(
       final List<CapabilityFactory> factoriesList,
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry)

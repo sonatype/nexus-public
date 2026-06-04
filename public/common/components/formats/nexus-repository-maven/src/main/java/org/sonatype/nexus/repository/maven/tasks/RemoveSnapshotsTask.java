@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -46,7 +46,7 @@ public class RemoveSnapshotsTask
 {
   private final Format maven2Format;
 
-  @Inject
+  @Autowired
   public RemoveSnapshotsTask(@Qualifier(Maven2Format.NAME) final Format maven2Format) {
     this.maven2Format = checkNotNull(maven2Format);
   }

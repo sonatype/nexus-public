@@ -209,8 +209,6 @@ public class HttpConditions
     final Response.Builder responseBuilder = new Response.Builder().status(Status.success(NOT_MODIFIED));
     Optional.ofNullable(response.getHeaders().get(HttpHeaders.ETAG))
         .ifPresent(eTag -> responseBuilder.header(HttpHeaders.ETAG, eTag));
-    Optional.ofNullable(response.getHeaders().get(NxrmHttpHeaders.PCCS_HASH))
-        .ifPresent(pccsHash -> responseBuilder.header(NxrmHttpHeaders.PCCS_HASH, pccsHash));
     return responseBuilder.build();
   }
 

@@ -15,9 +15,7 @@ package org.sonatype.nexus.coreui.internal.metrics;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
@@ -37,7 +35,6 @@ import static java.util.Objects.requireNonNull;
  * @since 3.87
  */
 @Component
-@Singleton
 public class BlobStoreMetricsStateContributor
     implements StateContributor
 {
@@ -55,7 +52,7 @@ public class BlobStoreMetricsStateContributor
 
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public BlobStoreMetricsStateContributor(
       final UpgradeTaskStore upgradeTaskStore,
       final TaskScheduler taskScheduler)

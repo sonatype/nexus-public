@@ -14,9 +14,7 @@ package org.sonatype.nexus.supportzip.datastore;
 
 import java.nio.file.Path;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
  * @since 3.30
  */
 @Component
-@Singleton
 public class RestoreHelper
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -41,7 +38,7 @@ public class RestoreHelper
 
   private final Path dbPath;
 
-  @Inject
+  @Autowired
   public RestoreHelper(final ApplicationDirectories applicationDirectories) {
     this.dbPath = checkNotNull(applicationDirectories).getWorkDirectory(DB_FOLDER_NAME, false).toPath();
   }

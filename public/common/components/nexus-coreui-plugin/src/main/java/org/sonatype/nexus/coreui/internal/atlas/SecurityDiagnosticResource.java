@@ -14,8 +14,7 @@ package org.sonatype.nexus.coreui.internal.atlas;
 
 import java.util.HashMap;
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -46,7 +45,6 @@ import org.springframework.stereotype.Component;
  * Renders security diagnostic information.
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Produces(MediaType.APPLICATION_JSON)
 public class SecurityDiagnosticResource
@@ -86,7 +84,7 @@ public class SecurityDiagnosticResource
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public SecurityDiagnosticResource(final SecuritySystem securitySystem) {
     this.securitySystem = checkNotNull(securitySystem);
   }

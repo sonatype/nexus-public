@@ -18,16 +18,12 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
+import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.OutboundRequestMetricRecorder;
-import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
@@ -46,6 +42,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -115,8 +114,7 @@ public abstract class ContentProxyFacetSupport
     }
 
     // Fall back to Last-Modified comparison if no ETag
-    boolean lastModifiedMatch = checkLastModifiedMatch(response, stale);
-    if (lastModifiedMatch) {
+    if (getEtagHeader(response) == null && checkLastModifiedMatch(response, stale)) {
       log.debug("ContentProxyFacetSupport: isNotModified - Last-Modified match, reusing cached blob");
       return true;
     }
@@ -129,19 +127,14 @@ public abstract class ContentProxyFacetSupport
    * Check if the response ETag matches the cached content's ETag.
    */
   private boolean checkETagMatch(final HttpResponse response, final Content stale) {
-    // Check for ETag header - try standard case first, then lowercase
-    // Azure Blob Storage, CDNs may return "etag" (lowercase) or "ETag" (standard)
-    // HTTP header names are case-insensitive per RFC 7230, but Apache HttpClient lookup is case-sensitive
-    Header etagHeader = response.getFirstHeader(HttpHeaders.ETAG);
-    if (etagHeader == null) {
-      etagHeader = response.getFirstHeader("etag");
-    }
+    Header etagHeader = getEtagHeader(response);
 
     if (etagHeader == null) {
       return false;
     }
 
     String responseEtag = ETagHeaderUtils.extract(etagHeader.getValue());
+
     String cachedEtag = stale.getAttributes().get(Content.CONTENT_ETAG, String.class);
 
     boolean match = cachedEtag != null && Objects.equals(responseEtag, cachedEtag);
@@ -151,6 +144,17 @@ public abstract class ContentProxyFacetSupport
         responseEtag, cachedEtag, match);
 
     return match;
+  }
+
+  private static Header getEtagHeader(final HttpResponse response) {
+    // Check for ETag header - try standard case first, then lowercase
+    // Azure Blob Storage, CDNs may return "etag" (lowercase) or "ETag" (standard)
+    // HTTP header names are case-insensitive per RFC 7230, but Apache HttpClient lookup is case-sensitive
+    Header etagHeader = response.getFirstHeader(HttpHeaders.ETAG);
+    if (etagHeader == null) {
+      etagHeader = response.getFirstHeader("etag");
+    }
+    return etagHeader;
   }
 
   /**

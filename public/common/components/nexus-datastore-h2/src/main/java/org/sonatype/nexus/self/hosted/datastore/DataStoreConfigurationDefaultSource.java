@@ -17,7 +17,6 @@ import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -36,7 +35,6 @@ import static org.sonatype.nexus.self.hosted.datastore.DataStoreConfigurationDef
 @Component
 @Qualifier(DEFAULT)
 @Order(DataStoreConfigurationSource.ORDER_DEFAULT_SOURCE)
-@Singleton
 public class DataStoreConfigurationDefaultSource
     implements DataStoreConfigurationSource
 {

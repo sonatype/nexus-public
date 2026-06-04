@@ -15,7 +15,7 @@ package org.sonatype.nexus.ssl;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

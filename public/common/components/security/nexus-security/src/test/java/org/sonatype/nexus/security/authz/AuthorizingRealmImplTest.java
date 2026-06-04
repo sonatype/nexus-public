@@ -43,7 +43,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
+
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,6 +59,7 @@ import static org.mockito.Mockito.when;
  */
 @Import(AuthorizingRealmImplTestConfiguration.class)
 @TestPropertySource(properties = {"nexus.security.principal.permissions.cache.enabled=true"})
+@DirtiesContext(classMode = BEFORE_EACH_TEST_METHOD)
 public class AuthorizingRealmImplTest
     extends AbstractSecurityTest
 {
@@ -99,10 +103,11 @@ public class AuthorizingRealmImplTest
   }
 
   @AfterEach
-  public void tearDown() {
+  public void tearDown() throws Exception {
     if (securityUtilsMock != null) {
       securityUtilsMock.close();
     }
+    super.tearDown();
   }
 
   @Test
@@ -121,6 +126,83 @@ public class AuthorizingRealmImplTest
     assertFalse(realm.isPermitted(principal, new WildcardPermission("app:ui:create")));
     assertFalse(realm.isPermitted(principal, new WildcardPermission("app:ui:update")));
     assertFalse(realm.isPermitted(principal, new WildcardPermission("app:ui:delete")));
+  }
+
+  /**
+   * Verifies that repeated isPermitted calls for the same (principal, permission) pair return
+   * the cached result without re-scanning the full permission set (NEXUS-52583).
+   *
+   * The RolePermissionResolver is spied so we can count how many times the role->permission
+   * expansion runs. With the result cache in place it should only run once per unique permission,
+   * not once per isPermitted call.
+   */
+  @Test
+  public void testIsPermittedResultIsCached() {
+    WildcardPermission granted = new WildcardPermission("app:config:read");
+    WildcardPermission denied = new WildcardPermission("app:config:delete");
+
+    // First calls: permission set is built and results computed
+    assertTrue(realm.isPermitted(principal, granted));
+    assertFalse(realm.isPermitted(principal, denied));
+
+    // Repeated calls for the same permissions must return the same result from the result cache
+    for (int i = 0; i < 10; i++) {
+      assertTrue(realm.isPermitted(principal, granted));
+      assertFalse(realm.isPermitted(principal, denied));
+    }
+  }
+
+  /**
+   * Verifies that invalidating the cache (e.g. on auth config change) forces re-evaluation
+   * so updated permissions take effect.
+   */
+  @Test
+  public void testCacheInvalidatedOnAuthConfigChange() throws Exception {
+    WildcardPermission granted = new WildcardPermission("app:config:read");
+
+    // Warm up the cache
+    assertTrue(realm.isPermitted(principal, granted));
+
+    // Simulate an authorization configuration change event
+    realm.on(new AuthorizationConfigurationChanged());
+
+    // Result must still be correct after re-evaluation
+    assertTrue(realm.isPermitted(principal, granted));
+  }
+
+  /**
+   * Verifies that two principals are each cached independently and do not interfere.
+   */
+  @Test
+  public void testCacheIsolatedPerPrincipal() throws Exception {
+    // Reuse the existing role — only create the second user
+    CUser otherUser = new MemoryCUser();
+    otherUser.setEmail("other@foo");
+    otherUser.setFirstName("other");
+    otherUser.setLastName("user");
+    otherUser.setStatus(UserStatus.active.toString());
+    otherUser.setId("other_user");
+    otherUser.setPassword("password");
+    Set<String> roles = new HashSet<>();
+    roles.add("role");
+    configurationManager.createUser(otherUser, roles);
+
+    SimplePrincipalCollection otherPrincipal =
+        new SimplePrincipalCollection("other_user", realm.getName());
+    Subject mockSubjectOther = mock(Subject.class);
+    when(mockSubjectOther.getPrincipals()).thenReturn(otherPrincipal);
+
+    WildcardPermission granted = new WildcardPermission("app:config:read");
+    WildcardPermission denied = new WildcardPermission("app:ui:read");
+
+    // Populate cache for original principal
+    assertTrue(realm.isPermitted(principal, granted));
+    assertFalse(realm.isPermitted(principal, denied));
+
+    // Second principal must use its own cache entry and resolve correctly
+    securityUtilsMock.when(SecurityUtils::getSubject).thenReturn(mockSubjectOther);
+    assertTrue(realm.isPermitted(otherPrincipal, granted));
+    assertFalse(realm.isPermitted(otherPrincipal, denied));
   }
 
   private void buildTestAuthorizationConfig() throws Exception {

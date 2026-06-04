@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.webhooks;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
@@ -42,7 +40,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(TYPE_ID)
-@Singleton
 public class RepositoryWebhookCapabilityDescriptor
     extends CapabilityDescriptorSupport<RepositoryWebhookCapabilityConfiguration>
     implements Taggable

@@ -21,9 +21,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.RepositoryContent;
@@ -45,7 +43,6 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 public class AssetPermissionChecker
 {
   private final RepositoryManager repositoryManager;
@@ -56,7 +53,7 @@ public class AssetPermissionChecker
 
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
-  @Inject
+  @Autowired
   public AssetPermissionChecker(
       final RepositoryManager repositoryManager,
       final ContentFacetFinder contentFacetFinder,

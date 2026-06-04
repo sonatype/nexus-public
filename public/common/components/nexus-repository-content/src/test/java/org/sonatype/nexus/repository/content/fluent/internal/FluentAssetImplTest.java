@@ -80,7 +80,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
-import static org.sonatype.nexus.repository.view.Content.CONTENT_PCCS_HASH;
 
 @ExtendWith(MockitoExtension.class)
 class FluentAssetImplTest
@@ -206,9 +205,7 @@ class FluentAssetImplTest
     NestedAttributesMap attributes = new NestedAttributesMap();
     attributes.child(Content.CONTENT).set(Content.CONTENT_LAST_MODIFIED, creationDate);
     String etag = "sha1-test";
-    String pccsHash = "pccs-hash-123";
     attributes.child(Content.CONTENT).set(Content.CONTENT_ETAG, etag);
-    attributes.child(Content.CONTENT).set(Content.CONTENT_PCCS_HASH, pccsHash);
     when(asset.attributes()).thenReturn(attributes);
     when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
     when(contentFacet.repository()).thenReturn(mockRepository);
@@ -222,7 +219,6 @@ class FluentAssetImplTest
       assertEquals("text", result.getContentType());
       assertEquals(creationDate, result.getAttributes().get(CONTENT_LAST_MODIFIED));
       assertEquals(etag, result.getAttributes().get(CONTENT_ETAG));
-      assertEquals(pccsHash, result.getAttributes().get(CONTENT_PCCS_HASH));
     }
   }
 
@@ -644,7 +640,6 @@ class FluentAssetImplTest
     contentAttributes.set(CacheInfo.class, cacheInfo);
     contentAttributes.set(CONTENT_LAST_MODIFIED, DateTime.now().toString());
     contentAttributes.set(CONTENT_ETAG, "etag");
-    contentAttributes.set(CONTENT_PCCS_HASH, "pccs-hash-value");
     when(content.getAttributes()).thenReturn(contentAttributes);
     when(asset.blob()).thenReturn(Optional.empty());
 

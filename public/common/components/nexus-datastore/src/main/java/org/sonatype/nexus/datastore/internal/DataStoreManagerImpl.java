@@ -20,11 +20,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -58,7 +55,6 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.lang.Integer.MAX_VALUE;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -70,8 +66,6 @@ import static org.sonatype.nexus.common.text.Strings2.lower;
  * @since 3.19
  */
 @Component
-@Singleton
-@Priority(MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ManagedLifecycle(phase = STORAGE)
 @ManagedObject
@@ -97,7 +91,7 @@ public class DataStoreManagerImpl
 
   private ApplicationContext applicationContext;
 
-  @Inject
+  @Autowired
   public DataStoreManagerImpl(
       final EventManager eventManager,
       final List<DataStoreDescriptor> dataStoreDescriptorsList,

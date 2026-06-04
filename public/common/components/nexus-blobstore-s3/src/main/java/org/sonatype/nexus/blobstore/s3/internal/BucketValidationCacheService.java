@@ -18,9 +18,8 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import org.slf4j.Logger;
@@ -30,10 +29,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.METHOD_NOT_ALLOWED_CODE;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.NO_SUCH_BUCKET_POLICY_CODE;
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
 
 @Component
-@Scope(SCOPE_SINGLETON)
 public class BucketValidationCacheService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -48,7 +45,7 @@ public class BucketValidationCacheService
 
   private final BucketOwnershipCheckFeatureFlag ownershipCheckFeatureFlag;
 
-  @Inject
+  @Autowired
   public BucketValidationCacheService(
       @Value("${nexus.blobstore.s3.bucket.validation.cache.ttl:60}") final int ttl,
       @Value("${nexus.blobstore.s3.bucket.validation.cache.maxSize:100}") final int maxSize,

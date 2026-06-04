@@ -16,8 +16,6 @@ import java.sql.Connection;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -30,7 +28,6 @@ import java.util.Optional;
  * sufficient as the same username can exist in multiple realms.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class JwtSessionAddUserSourceMigrationStep_2_104
     implements DatabaseMigrationStep
 {

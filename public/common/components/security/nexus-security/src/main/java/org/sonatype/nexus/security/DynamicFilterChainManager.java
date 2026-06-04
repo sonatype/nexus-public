@@ -18,12 +18,11 @@ import java.util.Optional;
 import javax.servlet.Filter;
 import javax.servlet.annotation.WebFilter;
 
-import org.sonatype.goodies.common.Loggers;
+import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.text.Strings2;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.web.filter.mgt.DefaultFilterChainManager;
 import org.apache.shiro.web.filter.mgt.FilterChainManager;
 import org.slf4j.Logger;
@@ -39,17 +38,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Component
-@Singleton
 class DynamicFilterChainManager
     extends DefaultFilterChainManager
 {
-  private static final Logger log = Loggers.getLogger(DynamicFilterChainManager.class);
+  private static final Logger log = LoggerFactory.getLogger(DynamicFilterChainManager.class);
 
   private final List<FilterChain> filterChains;
 
   private volatile boolean refreshChains;
 
-  @Inject
+  @Autowired
   public DynamicFilterChainManager(final List<FilterChain> filterChains) {
     this.filterChains = checkNotNull(filterChains);
   }

@@ -124,4 +124,17 @@ public interface SecretsService
    * @throws CipherException if encryption fails
    */
   String encryptPlaintextWithPassword(String plaintext, String customPassword) throws CipherException;
+
+  /**
+   * Encrypts raw bytes with the given password using the migration cipher.
+   * Prefer this over {@link #encryptPlaintextWithPassword(String, String)} when the caller holds
+   * secret material as a {@code byte[]} that can be explicitly zeroed after use, avoiding the
+   * creation of an intermediate {@code String} that lingers on the heap.
+   *
+   * @param plaintext the bytes to encrypt
+   * @param customPassword the password to use for encryption
+   * @return PHC format encrypted string
+   * @throws CipherException if encryption fails
+   */
+  String encryptBytesWithPassword(byte[] plaintext, String customPassword) throws CipherException;
 }

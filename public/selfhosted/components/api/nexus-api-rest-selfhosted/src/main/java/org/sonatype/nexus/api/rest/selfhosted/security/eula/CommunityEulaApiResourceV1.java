@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.eula;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
@@ -25,14 +24,13 @@ import org.springframework.stereotype.Component;
  * v1 api for community eula
  */
 @Component
-@Singleton
 @Path(CommunityEulaApiResourceV1.RESOURCE_URI)
 public class CommunityEulaApiResourceV1
     extends CommunityEulaApiResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/system/eula";
 
-  @Inject
+  @Autowired
   public CommunityEulaApiResourceV1(final GlobalKeyValueStore globalKeyValueStore) {
     super(globalKeyValueStore);
   }

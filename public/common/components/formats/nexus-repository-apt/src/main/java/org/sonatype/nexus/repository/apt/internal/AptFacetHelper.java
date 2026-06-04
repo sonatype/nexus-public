@@ -196,6 +196,22 @@ public class AptFacetHelper
     return StringUtils.prependIfMissing(path, BrowsePath.SLASH);
   }
 
+  /**
+   * Resolves the appropriate metadata Role for a manifest file path based on its extension.
+   */
+  public static SnapshotItem.Role resolveMetadataRole(final String path) {
+    if (path.endsWith(".gz")) {
+      return SnapshotItem.Role.METADATA_GZ;
+    }
+    else if (path.endsWith(".bz2")) {
+      return SnapshotItem.Role.METADATA_BZ2;
+    }
+    else if (path.endsWith(".xz")) {
+      return SnapshotItem.Role.METADATA_XZ;
+    }
+    return SnapshotItem.Role.METADATA_RAW;
+  }
+
   private AptFacetHelper() {
     // empty
   }

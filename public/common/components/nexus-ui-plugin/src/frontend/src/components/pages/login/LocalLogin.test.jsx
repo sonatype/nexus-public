@@ -22,19 +22,24 @@ import { RouteNames } from '../../../constants/RouteNames';
 const mockRequestSession = jest.fn();
 const mockWaitForNextPermissionChange = jest.fn().mockResolvedValue();
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    get waitForNextPermissionChange() {
-      return mockWaitForNextPermissionChange;
-    }
-  }
-}));
-
 jest.mock('../../../interface/ExtJS', () => ({
   __esModule: true,
   default: {
     get requestSession() {
       return mockRequestSession;
+    },
+    get waitForNextPermissionChange() {
+      return mockWaitForNextPermissionChange;
+    },
+    setDirtyStatus: jest.fn(),
+    fireEvent: jest.fn()
+  },
+  ExtJS: {
+    get requestSession() {
+      return mockRequestSession;
+    },
+    get waitForNextPermissionChange() {
+      return mockWaitForNextPermissionChange;
     },
     setDirtyStatus: jest.fn(),
     fireEvent: jest.fn()
@@ -464,6 +469,69 @@ describe('LocalLogin', () => {
         expect(mockWaitForNextPermissionChange).toHaveBeenCalled();
         expect(mockRouter.stateService.go).toHaveBeenCalledWith(RouteNames.MISSING_ROUTE);
       });
+    });
+  });
+
+  describe('rate limiting', () => {
+    it('shows rate limit callout when server responds with 429', async () => {
+      renderComponent();
+      await fillCredentials('admin', 'wrongpass');
+
+      const rateLimitError = new Error('Too Many Requests');
+      rateLimitError.response = { status: 429, headers: { 'retry-after': '30' }, data: {} };
+      mockRequestSession.mockRejectedValue(rateLimitError);
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          LoginPageStrings.ERRORS.RATE_LIMITED(30)
+        );
+      });
+    });
+
+    it('submit button is disabled while rate-limited', async () => {
+      renderComponent();
+      await fillCredentials('admin', 'wrongpass');
+
+      const rateLimitError = new Error('Too Many Requests');
+      rateLimitError.response = { status: 429, headers: { 'retry-after': '30' }, data: {} };
+      mockRequestSession.mockRejectedValue(rateLimitError);
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      expect(selectors.loginButton()).toBeDisabled();
+    });
+
+    it('typing in username field while rate-limited does NOT clear the callout', async () => {
+      renderComponent();
+      await fillCredentials('admin', 'wrongpass');
+
+      const rateLimitError = new Error('Too Many Requests');
+      rateLimitError.response = { status: 429, headers: { 'retry-after': '30' }, data: {} };
+      mockRequestSession.mockRejectedValue(rateLimitError);
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+
+      await userEvent.type(selectors.usernameInput(), 'x');
+
+      // Callout must remain visible — lockout is time-based, not input-based
+      expect(screen.getByRole('alert')).toBeInTheDocument();
     });
   });
 

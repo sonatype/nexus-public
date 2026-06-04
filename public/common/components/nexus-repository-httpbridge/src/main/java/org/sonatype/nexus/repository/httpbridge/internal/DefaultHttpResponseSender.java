@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
 import javax.servlet.ServletException;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
@@ -42,7 +41,6 @@ import org.slf4j.LoggerFactory;
  */
 @Component
 @Qualifier(DefaultHttpResponseSender.NEXUS_HTTP_RESPONSE_SENDER)
-@Singleton
 public class DefaultHttpResponseSender
     implements HttpResponseSender
 {

@@ -28,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 
 /**
  * Tests whether all assets under a component were last downloaded before the specified offset. If an asset has never
@@ -38,7 +36,6 @@ import org.springframework.context.annotation.Scope;
  */
 @org.springframework.stereotype.Component
 @Qualifier(LAST_DOWNLOADED_KEY)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class LastDownloadedCleanupEvaluator
     implements ComponentCleanupEvaluator
 {

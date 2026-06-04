@@ -15,7 +15,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign} from 'xstate';
-import {FormUtils, APIConstants} from '@sonatype/nexus-ui-plugin';
+import FormUtils from './FormUtils';
+import APIConstants from '../constants/APIConstants';
 import {mergeDeepRight} from 'ramda';
 import Axios from 'axios';
 

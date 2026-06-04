@@ -19,12 +19,10 @@ import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class BundleStateContributor
     implements StateContributor
 {
@@ -36,7 +34,7 @@ public class BundleStateContributor
 
   private final NexusEditionSelector nexusEditionSelector;
 
-  @Inject
+  @Autowired
   public BundleStateContributor(final NexusEditionSelector nexusEditionSelector) {
     this.nexusEditionSelector = nexusEditionSelector;
   }

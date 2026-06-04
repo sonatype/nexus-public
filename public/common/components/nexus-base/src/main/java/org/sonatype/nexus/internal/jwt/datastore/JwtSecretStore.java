@@ -21,8 +21,7 @@ import org.sonatype.nexus.security.jwt.JwtSecretChanged;
 import org.sonatype.nexus.security.jwt.SecretStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -36,13 +35,12 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtSecretStore
     extends ConfigStoreSupport<JwtSecretDAO>
     implements SecretStore
 {
-  @Inject
+  @Autowired
   public JwtSecretStore(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

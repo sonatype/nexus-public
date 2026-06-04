@@ -14,8 +14,7 @@ package org.sonatype.nexus.coreui;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,7 +46,6 @@ import org.springframework.stereotype.Component;
  * @since 3.19
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RealmSettingsResource.RESOURCE_PATH)
@@ -62,7 +60,7 @@ public class RealmSettingsResource
 
   private final List<String> authenticationRealms;
 
-  @Inject
+  @Autowired
   public RealmSettingsResource(
       final RealmManager realmManager,
       List<UserManager> userManagers)

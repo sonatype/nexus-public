@@ -20,7 +20,7 @@ import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -32,7 +32,7 @@ public class RepositoryWebhookTypeValidator
 {
   private final List<RepositoryWebhook> repositoryWebhooks;
 
-  @Inject
+  @Autowired
   public RepositoryWebhookTypeValidator(final List<RepositoryWebhook> repositoryWebhooks) {
     this.repositoryWebhooks = repositoryWebhooks;
   }

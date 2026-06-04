@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -54,7 +54,7 @@ public class RealmApiResource
 
   private final RealmManager realmManager;
 
-  @Inject
+  @Autowired
   public RealmApiResource(final RealmManager realmManager) {
     this.realmManager = checkNotNull(realmManager);
   }

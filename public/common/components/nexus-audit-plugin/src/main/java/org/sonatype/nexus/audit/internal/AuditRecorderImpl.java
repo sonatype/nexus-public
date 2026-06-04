@@ -14,9 +14,7 @@ package org.sonatype.nexus.audit.internal;
 
 import java.util.Date;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.AuditRecorder;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class AuditRecorderImpl
     implements AuditRecorder
 {
@@ -54,7 +51,7 @@ public class AuditRecorderImpl
 
   private volatile boolean enabled = false;
 
-  @Inject
+  @Autowired
   public AuditRecorderImpl(
       final EventManager eventManager,
       final NodeAccess nodeAccess,

@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.internal.content.service;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
@@ -37,9 +36,6 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
@@ -49,8 +45,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.empty;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -64,16 +58,10 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.streamContains;
 
-@RunWith(Parameterized.class)
 public class CleanupServiceImplTest
 {
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule().silent();
-
-  @Parameters
-  public static Collection<Boolean> data() {
-    return ImmutableList.of(Boolean.TRUE, Boolean.FALSE);
-  }
 
   private static final String POLICY_1_NAME = "policy1";
 
@@ -121,12 +109,6 @@ public class CleanupServiceImplTest
   private CleanupFeatureCheck cleanupFeatureCheck;
 
   private CleanupServiceImpl underTest;
-
-  private boolean useRetainCleanup;
-
-  public CleanupServiceImplTest(final Boolean useRetainCleanup) {
-    this.useRetainCleanup = useRetainCleanup;
-  }
 
   @Before
   public void setup() throws Exception {
@@ -206,20 +188,9 @@ public class CleanupServiceImplTest
   }
 
   @Test
-  public void skipPolicyWithExclusionIfNonPro() {
-    assumeFalse(useRetainCleanup);
-    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
-    when(cleanupPolicy1.getCriteria()).thenReturn(
-        ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1", "retain", "3", "sortBy", "version"));
-
-    underTest.cleanup(cancelledCheck);
-
-    verify(cleanupMethod, never()).run(repository1, Stream.of(component1, component2), cancelledCheck);
-  }
-
-  @Test
   public void skipPolicyWithExclusionIfUnsupportedFormat() {
-    assumeTrue(useRetainCleanup);
+    // Covers CleanupServiceImpl.shouldSkip(): policies with exclusion (retain)
+    // criteria must be skipped when the format does not support retain.
     when(cleanupFeatureCheck.isRetainSupported(any())).thenReturn(false);
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
     when(cleanupPolicy1.getCriteria()).thenReturn(
@@ -227,7 +198,8 @@ public class CleanupServiceImplTest
 
     underTest.cleanup(cancelledCheck);
 
-    verify(cleanupMethod, never()).run(repository1, Stream.of(component1, component2), cancelledCheck);
+    verify(cleanupMethod, never())
+        .run(eq(repository1), argThat(streamContains(component1, component2)), eq(cancelledCheck));
   }
 
   @Test

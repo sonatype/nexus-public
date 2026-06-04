@@ -40,6 +40,9 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     PASSWORD_LABEL: 'Password',
     CONTINUE_WITHOUT_LOGIN: 'Continue without login',
     INITIAL_PASSWORD_MESSAGE: 'To log in for the first time, use the generated admin password located at:',
+    ERRORS: {
+      RATE_LIMITED: jest.fn((s) => `Too many failed login attempts. Please wait ${s} second${s === 1 ? '' : 's'} before trying again.`),
+    },
   },
 }));
 
@@ -67,11 +70,14 @@ describe('LoginPageRadix', () => {
     adminPasswordFilePath: null,
     onboardingRequired: false,
     isCloudEnvironment: false,
+    rateLimitWarning: false,
+    isRateLimited: false,
+    secondsLeft: null,
   };
 
   beforeEach(() => {
-    useLoginPage.mockReturnValue(defaultHookReturn);
     jest.clearAllMocks();
+    useLoginPage.mockReturnValue(defaultHookReturn);
   });
 
   it('renders the sign-in heading', () => {
@@ -197,6 +203,77 @@ describe('LoginPageRadix', () => {
       useLoginPage.mockReturnValue({...defaultHookReturn, isSaving: true, data: {username: 'a', password: 'b'}});
       render(<LoginPageRadix />);
       expect(screen.getByRole('button', {name: /signing in/i})).toBeInTheDocument();
+    });
+  });
+
+  describe('rate limit warning', () => {
+    it('shows rate limit callout when rateLimitWarning is true', () => {
+      useLoginPage.mockReturnValue({...defaultHookReturn, rateLimitWarning: true, isRateLimited: true, secondsLeft: 30});
+      render(<LoginPageRadix />);
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    it('does not show rate limit callout when rateLimitWarning is false', () => {
+      render(<LoginPageRadix />);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('shows secondsLeft in the rate limit callout', () => {
+      useLoginPage.mockReturnValue({...defaultHookReturn, rateLimitWarning: true, isRateLimited: true, secondsLeft: 60});
+      render(<LoginPageRadix />);
+      expect(screen.getByText(/60 seconds/i)).toBeInTheDocument();
+    });
+
+    it('does not show saveError text when rateLimitWarning is true and saveError is null', () => {
+      useLoginPage.mockReturnValue({
+        ...defaultHookReturn,
+        rateLimitWarning: true,
+        isRateLimited: true,
+        secondsLeft: 30,
+        saveError: null,
+      });
+      render(<LoginPageRadix />);
+      expect(screen.queryByText('Invalid username or password')).not.toBeInTheDocument();
+    });
+
+    it('shows "1 second" (singular) when secondsLeft is 1', () => {
+      useLoginPage.mockReturnValue({...defaultHookReturn, rateLimitWarning: true, isRateLimited: true, secondsLeft: 1});
+      render(<LoginPageRadix />);
+      expect(screen.getByText(/1 second[^s]/i)).toBeInTheDocument();
+    });
+
+    it('submit button is disabled while rate-limited', () => {
+      useLoginPage.mockReturnValue({
+        ...defaultHookReturn,
+        rateLimitWarning: true,
+        isRateLimited: true,
+        secondsLeft: 30,
+        data: {username: 'admin', password: 'admin123'},
+      });
+      render(<LoginPageRadix />);
+      expect(screen.getByRole('button', {name: /^sign in$/i})).toBeDisabled();
+    });
+
+    it('submit button stays disabled when countdown expires but warning has not cleared', () => {
+      useLoginPage.mockReturnValue({
+        ...defaultHookReturn,
+        rateLimitWarning: true,
+        isRateLimited: false,
+        secondsLeft: null,
+        data: {username: 'admin', password: 'admin123'},
+      });
+      render(<LoginPageRadix />);
+      expect(screen.getByRole('button', {name: /^sign in$/i})).toBeDisabled();
+    });
+
+    it('submit button is enabled when not rate-limited and credentials are filled', () => {
+      useLoginPage.mockReturnValue({
+        ...defaultHookReturn,
+        isRateLimited: false,
+        data: {username: 'admin', password: 'admin123'},
+      });
+      render(<LoginPageRadix />);
+      expect(screen.getByRole('button', {name: /^sign in$/i})).not.toBeDisabled();
     });
   });
 

@@ -19,9 +19,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
@@ -42,14 +40,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("v2")
-@Singleton
 public class ApiKeyStoreV2Impl
     extends ConfigStoreSupport<ApiKeyV2DAO>
     implements ApiKeyStore
 {
   private final SecretsService secretsService;
 
-  @Inject
+  @Autowired
   public ApiKeyStoreV2Impl(
       final DataSessionSupplier sessionSupplier,
       final SecretsService secretsService)
@@ -68,6 +65,12 @@ public class ApiKeyStoreV2Impl
   @Override
   public Collection<ApiKeyInternal> browseByCreatedDate(final String domain, final OffsetDateTime date) {
     return dao().browseCreatedAfter(domain, date);
+  }
+
+  @Transactional
+  @Override
+  public Collection<ApiKeyInternal> browseAll(final int page, final int pageSize) {
+    return dao().browseAll(page * pageSize, pageSize);
   }
 
   @Transactional

@@ -17,9 +17,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.datastore.BaseRestoreBlobStrategy;
@@ -30,8 +28,6 @@ import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.debian.Utils;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -41,13 +37,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptRestoreBlobStrategy
     extends BaseRestoreBlobStrategy<DataStoreRestoreBlobData>
 {
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public AptRestoreBlobStrategy(
       final DryRunPrefix dryRunPrefix,
       final RepositoryManager repositoryManager)
@@ -71,15 +66,13 @@ public class AptRestoreBlobStrategy
   }
 
   @Override
-  protected void createAssetFromBlob(
-      final Blob assetBlob,
+  protected void createAssetFromData(
       final DataStoreRestoreBlobData data) throws IOException
   {
     String assetPath = getAssetPath(data);
-    Payload payload = new DetachedBlobPayload(assetBlob);
     data.getRepository()
         .facet(AptContentFacet.class)
-        .put(assetPath, payload);
+        .put(assetPath, data.createDetachedPayload());
   }
 
   @Override

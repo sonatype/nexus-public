@@ -13,9 +13,8 @@
 package org.sonatype.nexus.app;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.app.AbstractBaseUrlManager;
@@ -32,13 +31,12 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class BaseUrlManagerImpl
     extends AbstractBaseUrlManager
 {
   private volatile boolean force;
 
-  @Inject
+  @Autowired
   public BaseUrlManagerImpl(
       final Provider<HttpServletRequest> requestProvider,
       @Value("${org.sonatype.nexus.internal.app.BaseUrlManagerImpl.force:false}") final boolean force)

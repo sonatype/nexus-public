@@ -13,11 +13,8 @@
 package org.sonatype.nexus.security.privilege;
 
 import java.util.List;
-
-import jakarta.inject.Singleton;
-
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
@@ -41,7 +38,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(WildcardPrivilegeDescriptor.TYPE)
-@Singleton
 public class WildcardPrivilegeDescriptor
     extends PrivilegeDescriptorSupport<ApiPrivilegeWildcard, ApiPrivilegeWildcardRequest>
 {

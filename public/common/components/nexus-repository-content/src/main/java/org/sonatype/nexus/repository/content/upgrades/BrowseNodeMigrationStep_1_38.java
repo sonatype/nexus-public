@@ -19,18 +19,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BrowseNodeMigrationStep_1_38
     implements DatabaseMigrationStep
 {
@@ -38,7 +35,7 @@ public class BrowseNodeMigrationStep_1_38
 
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public BrowseNodeMigrationStep_1_38(final List<Format> formats) {
     this.formats = formats;
   }

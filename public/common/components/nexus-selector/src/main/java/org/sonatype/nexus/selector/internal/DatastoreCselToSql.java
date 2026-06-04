@@ -16,7 +16,6 @@ import org.sonatype.nexus.selector.CselToSql;
 import org.sonatype.nexus.selector.ParserVisitorSupport;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
-import jakarta.inject.Singleton;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.parser.*;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class DatastoreCselToSql
     extends ParserVisitorSupport
     implements CselToSql<SelectorSqlBuilder>

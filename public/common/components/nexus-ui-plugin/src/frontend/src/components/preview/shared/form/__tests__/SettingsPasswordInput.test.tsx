@@ -87,29 +87,36 @@ describe('SettingsPasswordInput', () => {
   });
 
   describe('visibility toggle', () => {
-    it('renders show password button', () => {
-      render(<SettingsPasswordInput {...defaultProps} />);
+    const propsWithValue = { ...defaultProps, value: 'secret123' };
+
+    it('shouldRenderShowPasswordButtonWhenValuePresent', () => {
+      render(<SettingsPasswordInput {...propsWithValue} />);
       expect(screen.getByRole('button', { name: 'Show password' })).toBeInTheDocument();
     });
 
-    it('toggles to text type when show password is clicked', () => {
+    it('shouldHideToggleButtonWhenValueIsEmpty', () => {
       render(<SettingsPasswordInput {...defaultProps} />);
+      expect(screen.queryByRole('button', { name: 'Show password' })).not.toBeInTheDocument();
+    });
+
+    it('shouldToggleToTextTypeWhenShowPasswordIsClicked', () => {
+      render(<SettingsPasswordInput {...propsWithValue} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
 
       expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
     });
 
-    it('changes button label after showing password', () => {
-      render(<SettingsPasswordInput {...defaultProps} />);
+    it('shouldChangeButtonLabelAfterShowingPassword', () => {
+      render(<SettingsPasswordInput {...propsWithValue} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
 
       expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument();
     });
 
-    it('toggles back to password type when hide is clicked', () => {
-      render(<SettingsPasswordInput {...defaultProps} />);
+    it('shouldToggleBackToPasswordTypeWhenHideIsClicked', () => {
+      render(<SettingsPasswordInput {...propsWithValue} />);
 
       // Show
       fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
@@ -161,9 +168,9 @@ describe('SettingsPasswordInput', () => {
   });
 
   describe('autoComplete', () => {
-    it('sets default autoComplete to current-password', () => {
+    it('sets default autoComplete to new-password', () => {
       render(<SettingsPasswordInput {...defaultProps} />);
-      expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
+      expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password');
     });
 
     it('allows custom autoComplete value', () => {
@@ -202,7 +209,7 @@ describe('SettingsPasswordInput', () => {
     });
 
     it('visibility toggle has appropriate aria-label', () => {
-      render(<SettingsPasswordInput {...defaultProps} />);
+      render(<SettingsPasswordInput {...defaultProps} value="secret" />);
       expect(screen.getByRole('button', { name: 'Show password' })).toBeInTheDocument();
     });
   });
@@ -215,4 +222,3 @@ describe('SettingsPasswordInput', () => {
     });
   });
 });
-

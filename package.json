@@ -12,7 +12,7 @@
     "@hashgraphonline/standards-sdk": "=0.0.63",
     "@nivo/line": "0.95.0",
     "autolinker": "=3.16.1",
-    "axios": "=1.15.0",
+    "axios": "=1.15.2",
     "brace-expansion": "=2.0.3",
     "babel-runtime/core-js": "=2.4.1",
     "core-js@^3": "=3.48.0",
@@ -21,6 +21,7 @@
     "form-data": "=4.0.4",
     "js-yaml": "=4.1.1",
     "lodash": "=4.17.23",
+    "minimatch": "=9.0.9",
     "node-gyp": "=12.0.0",
     "picomatch": "=4.0.4",
     "prismjs": "=1.30.0",
@@ -32,12 +33,16 @@
     "test-exclude": "=8.0.0",
     "tmp": "=0.2.4",
     "unset-value": "=2.0.1",
-    "victory-vendor": "=37.1.1"
+    "victory-vendor": "=37.1.1",
+    "tree-sitter": "portal:./public/common/components/nexus-ui-plugin/stubs/tree-sitter-stub",
+    "tree-sitter-json": "portal:./public/common/components/nexus-ui-plugin/stubs/tree-sitter-stub",
+    "web-tree-sitter": "portal:./public/common/components/nexus-ui-plugin/stubs/tree-sitter-stub",
+    "@tree-sitter-grammars/tree-sitter-yaml": "portal:./public/common/components/nexus-ui-plugin/stubs/tree-sitter-stub"
   },
   "dependencies": {
     "@react-hook/resize-observer": "^2.0.2",
     "@uirouter/react": "1.0.7",
-    "axios": "1.15.0",
+    "axios": "1.15.2",
     "core-js-pure": "3.47.0"
   },
   "devDependencies": {

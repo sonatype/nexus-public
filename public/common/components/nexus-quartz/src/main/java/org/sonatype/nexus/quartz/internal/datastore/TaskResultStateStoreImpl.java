@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
@@ -45,14 +43,13 @@ import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobD
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class TaskResultStateStoreImpl
     extends ConfigStoreSupport<QuartzDAO>
     implements TaskResultStateStore
 {
   protected Scheduler scheduler;
 
-  @Inject
+  @Autowired
   public TaskResultStateStoreImpl(final DataSessionSupplier sessionSupplier, @Lazy final Scheduler scheduler) {
     super(sessionSupplier);
     this.scheduler = checkNotNull(scheduler);

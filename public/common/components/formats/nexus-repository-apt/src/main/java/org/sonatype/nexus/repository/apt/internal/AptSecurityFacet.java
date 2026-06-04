@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.SecurityFacetSupport;
@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 public class AptSecurityFacet
     extends SecurityFacetSupport
 {
-  @Inject
+  @Autowired
   public AptSecurityFacet(
       final AptFormatSecurityContributor securityResource,
       @Qualifier("simple") final VariableResolverAdapter variableResolverAdapter,

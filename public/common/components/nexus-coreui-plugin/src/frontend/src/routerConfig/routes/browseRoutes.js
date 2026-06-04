@@ -25,6 +25,8 @@ const Welcome = lazyLoad(() => import('../../components/pages/user/Welcome/Welco
 const BrowseReactExt = lazyLoad(() => import('../../components/pages/browse/Browse/BrowseExt'));
 const MalwareRemediation = lazyLoad(() => import('../../components/pages/maliciousrisk/MalwareRemediation'));
 const SearchGenericExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchGenericExt'));
+const SearchAlpineExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchAlpineExt'));
+const SearchAnsiblegalaxyExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchAnsiblegalaxyExt'));
 const SearchAptExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchAptExt'));
 const SearchCargoExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchCargoExt'));
 const SearchCocoapodsExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchCocoapodsExt'));
@@ -131,6 +133,25 @@ export const browseRoutes = [
     },
   },
   {
+    name: BROWSE.SEARCH.ALPINE,
+    url: '/alpine/:keyword',
+    component: SearchAlpineExt,
+    data: {
+      visibilityRequirements: {
+        permissions: ['nexus:search:read'],
+        browseableFormat: 'alpine',
+      },
+      title: BROWSE.SEARCH.TITLE,
+    },
+    params: {
+      keyword: {
+        value: null,
+        raw: true,
+        dynamic: true,
+      },
+    },
+  },
+  {
     name: BROWSE.SEARCH.APT,
     url: '/apt/:keyword',
     component: SearchAptExt,
@@ -138,6 +159,25 @@ export const browseRoutes = [
       visibilityRequirements: {
         permissions: ['nexus:search:read'],
         browseableFormat: 'apt',
+      },
+      title: BROWSE.SEARCH.TITLE,
+    },
+    params: {
+      keyword: {
+        value: null,
+        raw: true,
+        dynamic: true,
+      },
+    },
+  },
+  {
+    name: BROWSE.SEARCH.ANSIBLEGALAXY,
+    url: '/ansiblegalaxy/:keyword',
+    component: SearchAnsiblegalaxyExt,
+    data: {
+      visibilityRequirements: {
+        permissions: ['nexus:search:read'],
+        browseableFormat: 'ansiblegalaxy',
       },
       title: BROWSE.SEARCH.TITLE,
     },

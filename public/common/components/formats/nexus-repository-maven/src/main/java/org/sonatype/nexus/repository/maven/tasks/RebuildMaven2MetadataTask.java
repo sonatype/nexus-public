@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.tasks;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -50,7 +50,7 @@ public class RebuildMaven2MetadataTask
 
   private final Format maven2Format;
 
-  @Inject
+  @Autowired
   public RebuildMaven2MetadataTask(
       @Qualifier(HostedType.NAME) final Type hostedType,
       @Qualifier(Maven2Format.NAME) final Format maven2Format)

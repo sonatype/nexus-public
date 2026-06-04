@@ -14,7 +14,6 @@ package org.sonatype.nexus.metrics;
 
 import java.lang.management.ManagementFactory;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -40,7 +39,6 @@ import org.springframework.stereotype.Component;
  */
 @Path("/metrics/threads")
 @Component
-@Singleton
 public class ThreadDumpResource
     implements Resource
 {

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -36,7 +36,7 @@ public class UniqueBlobStoreNameValidator
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public UniqueBlobStoreNameValidator(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }

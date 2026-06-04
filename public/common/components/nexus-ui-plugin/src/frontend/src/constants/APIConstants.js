@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-export default {
+const APIConstants = {
   EXT: {
     URL: 'service/extdirect',
     REPOSITORY: {
@@ -345,3 +345,9 @@ export default {
     ASC: 'asc',
   },
 };
+
+export default APIConstants;
+
+// Named re-export so consumers using `import { APIConstants } from '...'` get
+// the same dictionary as the default export under Babel CJS interop.
+export { APIConstants };

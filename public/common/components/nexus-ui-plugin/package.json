@@ -3,20 +3,29 @@
   "version": "0.1.0",
   "private": true,
   "main": "target/dist/index.js",
+  "module": "target/dist/index.js",
+  "types": "./index.d.ts",
+  "sideEffects": [
+    "**/*.scss",
+    "**/*.css"
+  ],
   "files": [
-    "target/dist"
+    "target/dist",
+    "index.d.ts",
+    "sidebar.scss"
   ],
   "scripts": {
     "build": "npm-run-all build-all",
-    "build-all": "npm-run-all lint format compile-js copy-scss copy-package-json",
-    "build-no-lint": "npm-run-all compile-js copy-scss copy-package-json",
+    "build-all": "npm-run-all lint format compile-js copy-scss copy-art copy-package-json",
+    "build-no-lint": "npm-run-all compile-js copy-scss copy-art copy-package-json",
     "check-format": "biome format --changed --no-errors-on-unmatched",
     "lint": "eslint",
     "format": "biome format --changed --write --no-errors-on-unmatched",
-    "watch": "npm-run-all copy-scss copy-package-json watch-js",
+    "watch": "npm-run-all copy-scss copy-art copy-package-json watch-js",
     "compile-js": "babel src/frontend/src --source-maps inline --out-dir target/dist --extensions '.js,.jsx,.ts,.tsx'",
     "watch-js": "babel src/frontend/src --out-dir target/dist --watch --verbose --extensions '.js,.jsx,.ts,.tsx'",
     "copy-scss": "cpx \"src/frontend/src/**/*.scss\" target/dist",
+    "copy-art": "cpx \"src/frontend/src/**/*.{png,svg}\" target/dist",
     "copy-package-json": "cpx package.json target/dist",
     "test": "npm-run-all check-format test-coverage",
     "test-no-lint": "npm-run-all test-coverage",
@@ -38,7 +47,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/themes": "^3.2.1",
     "@sonatype/react-shared-components": "14.0.3",
-    "axios": "1.15.0",
+    "axios": "1.15.2",
     "classnames": "2.3.1",
     "file-size": "1.0.0",
     "lucide-react": "^0.562.0",

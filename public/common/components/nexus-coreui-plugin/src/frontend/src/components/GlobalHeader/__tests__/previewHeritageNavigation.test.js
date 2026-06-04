@@ -31,7 +31,7 @@ describe('getHeritageEquivalent', () => {
     });
 
     it('maps cleanup policies page', () => {
-      expect(getHeritageEquivalent('preview/admin/repository/cleanuppolicies')).toBe('admin/repository/cleanuppolicies');
+      expect(getHeritageEquivalent('preview/admin/repository/cleanup-policies')).toBe('admin/repository/cleanuppolicies');
     });
 
     it('maps security pages', () => {

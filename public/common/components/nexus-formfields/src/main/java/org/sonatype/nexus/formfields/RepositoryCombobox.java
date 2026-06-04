@@ -16,8 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;

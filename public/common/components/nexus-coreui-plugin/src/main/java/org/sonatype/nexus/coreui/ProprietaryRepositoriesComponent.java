@@ -17,8 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -46,7 +45,6 @@ import org.springframework.stereotype.Component;
  * Proprietary Repositories Settings {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_ProprietaryRepositories")
 public class ProprietaryRepositoriesComponent
     extends DirectComponentSupport
@@ -58,7 +56,7 @@ public class ProprietaryRepositoriesComponent
 
   private final AuthorizingRepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public ProprietaryRepositoriesComponent(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     this.repositoryManager = checkNotNull(authorizingRepositoryManager);
   }

@@ -17,9 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.EncryptionKeyValidator;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.FixedEncryption;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
@@ -41,7 +39,6 @@ import org.springframework.stereotype.Component;
  * expected to be used in nexus
  */
 @Component
-@Singleton
 public class EncryptionKeySourceImpl
     implements EncryptionKeySource, EncryptionKeyValidator
 {
@@ -61,7 +58,7 @@ public class EncryptionKeySourceImpl
 
   private boolean pristine = true;
 
-  @Inject
+  @Autowired
   public EncryptionKeySourceImpl(
       @Nullable @Value("${" + SECRETS_FILE + ":#{null}}") final String secretsFilePath)
   {

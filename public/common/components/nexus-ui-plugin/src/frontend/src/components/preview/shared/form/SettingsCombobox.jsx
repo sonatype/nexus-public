@@ -11,49 +11,48 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Text } from '@radix-ui/themes';
-import { AlertCircle, ChevronDown } from 'lucide-react';
+import { Box, IconButton, Text, TextField, Tooltip } from '@radix-ui/themes';
+import { AlertCircle, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+
+const CHIP_TRUNCATE_LENGTH = 35;
+
+function HighlightMatch({ text, query }) {
+  if (!query) return <>{text}</>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="settings-combobox__match">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
 
 import './SettingsCombobox.scss';
 
-/**
- * Detect if dark mode is active by checking the document root attribute
- */
-function useIsDarkMode() {
-  const [isDark, setIsDark] = useState(
-    () => document.documentElement.getAttribute('data-theme') === 'dark'
-  );
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, []);
-  return isDark;
-}
 
 /**
  * SettingsCombobox - Text input with dropdown suggestions
- * 
- * Allows free-form text input while providing suggestions from a predefined list.
- * User can either select from suggestions or type a custom value.
- * 
- * @example
+ *
+ * Single mode: free-form text input with suggestion dropdown.
+ * Multiple mode: searchable multi-select with removable chips and grouped results.
+ *
+ * @example Single mode
+ * <SettingsCombobox name="domain" label="Domain" value={val} onChange={setVal} options={opts} />
+ *
+ * @example Multiple mode (GitHub label picker UX)
  * <SettingsCombobox
- *   name="domain"
- *   label="Domain"
- *   value={domain}
- *   onChange={setDomain}
- *   options={[
- *     { value: 'users', label: 'users' },
- *     { value: 'roles', label: 'roles' },
- *     { value: 'privileges', label: 'privileges' },
- *   ]}
- *   helpText="Application domain (e.g., users, roles)"
- *   allowCustom
+ *   name="privileges"
+ *   label="Privileges"
+ *   multiple
+ *   selectedValues={selected}
+ *   onMultiChange={setSelected}
+ *   options={opts}
+ *   groupBy={(opt) => opt.value.split('-').slice(0,3).join('-')}
+ *   placeholder="Search privileges..."
  * />
  */
 export function SettingsCombobox({
@@ -62,91 +61,177 @@ export function SettingsCombobox({
   value = '',
   onChange,
   onBlur,
+  onInputChange,
   options = [],
-  placeholder = 'Select or type...',
+  placeholder,
   helpText = '',
   error = '',
   required = false,
   disabled = false,
   className = '',
   allowCustom = true,
+  allowCustomValue = false,
+  multiple = false,
+  selectedValues = [],
+  onMultiChange,
+  groupBy,
+  chipLimit = 50,
+  hideEmptyMessage = false,
+  emptyMessage = null,
+  loading = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
+  const [inputValue, setInputValue] = useState(multiple ? '' : value);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [isTyping, setIsTyping] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
   const inputRef = useRef(null);
   const listRef = useRef(null);
   const containerRef = useRef(null);
-  const isDarkMode = useIsDarkMode();
+  const blurTimeoutRef = useRef(null);
 
+  const toggleGroupCollapse = useCallback((group) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  }, []);
+
+  const effectivePlaceholder = placeholder || (multiple ? 'Search...' : 'Select or type...');
   const inputId = `settings-combobox-${name}`;
   const listboxId = `settings-combobox-list-${name}`;
   const helpId = `settings-combobox-help-${name}`;
   const errorId = `settings-combobox-error-${name}`;
 
-  // Sync input value with external value
+  // Sync input value with external value (single mode only)
   useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+    if (!multiple) setInputValue(value);
+  }, [value, multiple]);
 
-  // Filter options based on input - only filter while actively typing,
-  // show all options when dropdown is opened by focus/click
-  const filteredOptions = isTyping
-    ? options.filter(option =>
-        option.value.toLowerCase().includes(inputValue.toLowerCase()) ||
-        option.label.toLowerCase().includes(inputValue.toLowerCase())
-      )
-    : options;
+  // Build selected set for O(1) lookups
+  const selectedSet = useMemo(
+    () => new Set(multiple ? selectedValues : []),
+    [multiple, selectedValues]
+  );
+
+  // Filter options based on input text
+  const filteredOptions = useMemo(() => {
+    const query = inputValue.toLowerCase();
+    return options.filter(option => {
+      if (!query) return true;
+      return (
+        option.value.toLowerCase().includes(query) ||
+        option.label.toLowerCase().includes(query) ||
+        (option.description && option.description.toLowerCase().includes(query))
+      );
+    });
+  }, [options, inputValue]);
+
+  // Group filtered options when groupBy is provided
+  const groupedOptions = useMemo(() => {
+    if (!groupBy) return null;
+    const groups = new Map();
+    for (const opt of filteredOptions) {
+      const key = groupBy(opt);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(opt);
+    }
+    return groups;
+  }, [filteredOptions, groupBy]);
+
+  // Flat list for keyboard navigation — excludes items in collapsed groups
+  const flatFilteredOptions = useMemo(() => {
+    if (!groupBy || !groupedOptions) return filteredOptions;
+    return Array.from(groupedOptions.entries())
+      .filter(([group]) => !collapsedGroups.has(group))
+      .flatMap(([, items]) => items);
+  }, [groupBy, groupedOptions, filteredOptions, collapsedGroups]);
+
+  // Multi-mode: toggle an option in selectedValues
+  const toggleOption = useCallback((optionValue) => {
+    if (!onMultiChange) return;
+    const next = selectedSet.has(optionValue)
+      ? selectedValues.filter((v) => v !== optionValue)
+      : [...selectedValues, optionValue];
+    onMultiChange(next);
+  }, [selectedValues, selectedSet, onMultiChange]);
+
+  const removeChip = useCallback((val) => {
+    if (!onMultiChange) return;
+    onMultiChange(selectedValues.filter((v) => v !== val));
+  }, [selectedValues, onMultiChange]);
+
+  // Look up label for a value
+  const optionLabelMap = useMemo(() => {
+    const m = new Map();
+    for (const o of options) m.set(o.value, o.label);
+    return m;
+  }, [options]);
 
   const handleInputChange = useCallback((e) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     setIsOpen(true);
-    setIsTyping(true);
     setHighlightedIndex(-1);
 
-    if (allowCustom && onChange) {
+    // Call onInputChange for search/filter callbacks (e.g., LDAP role search)
+    if (onInputChange) {
+      onInputChange(newValue);
+    }
+
+    if (!multiple && (allowCustom || allowCustomValue) && onChange) {
       onChange(newValue);
     }
-  }, [onChange, allowCustom]);
+  }, [onChange, onInputChange, allowCustom, allowCustomValue, multiple]);
 
   const handleSelectOption = useCallback((option) => {
-    setInputValue(option.value);
-    setIsOpen(false);
-    setIsTyping(false);
-    setHighlightedIndex(-1);
-    if (onChange) {
-      onChange(option.value);
-    }
-  }, [onChange]);
-
-  const handleInputBlur = useCallback((e) => {
-    // Delay close to allow click on option
-    setTimeout(() => {
+    if (multiple) {
+      // Cancel any pending blur timeout to keep dropdown open
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+        blurTimeoutRef.current = null;
+      }
+      toggleOption(option.value);
+      setInputValue('');
+      setHighlightedIndex(-1);
+      // Keep dropdown open and refocus
+      setIsOpen(true);
+      inputRef.current?.focus();
+    } else {
+      setInputValue(option.value);
       setIsOpen(false);
       setHighlightedIndex(-1);
-    }, 150);
-
-    if (onBlur) {
-      onBlur(e);
+      if (onChange) onChange(option.value);
     }
+  }, [onChange, multiple, toggleOption]);
+
+  const handleInputBlur = useCallback((e) => {
+    // Use timeout to allow clicking on options before closing
+    blurTimeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    }, 200);
+    if (onBlur) onBlur(e);
   }, [onBlur]);
 
   const handleInputFocus = useCallback(() => {
-    // Calculate if dropdown should open upward
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 220; // max-height (200px) + padding
-      setOpenUpward(spaceBelow < dropdownHeight && rect.top > dropdownHeight);
-    }
     setIsOpen(true);
-    setIsTyping(false); // Show all options when re-focusing
   }, []);
 
+  const handleInputClick = useCallback(() => {
+    if (!multiple && inputRef.current && inputValue) {
+      inputRef.current.select();
+    }
+    setIsOpen(true);
+  }, [inputValue, multiple]);
+
   const handleKeyDown = useCallback((e) => {
+    if (multiple && e.key === 'Backspace' && !inputValue && selectedValues.length > 0) {
+      removeChip(selectedValues[selectedValues.length - 1]);
+      return;
+    }
+
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         setIsOpen(true);
@@ -159,21 +244,21 @@ export function SettingsCombobox({
       case 'ArrowDown':
         e.preventDefault();
         setHighlightedIndex(prev =>
-          prev < filteredOptions.length - 1 ? prev + 1 : 0
+          prev < flatFilteredOptions.length - 1 ? prev + 1 : 0
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
         setHighlightedIndex(prev =>
-          prev > 0 ? prev - 1 : filteredOptions.length - 1
+          prev > 0 ? prev - 1 : flatFilteredOptions.length - 1
         );
         break;
       case 'Enter':
         e.preventDefault();
-        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
-          handleSelectOption(filteredOptions[highlightedIndex]);
-        } else if (filteredOptions.length === 1) {
-          handleSelectOption(filteredOptions[0]);
+        if (highlightedIndex >= 0 && highlightedIndex < flatFilteredOptions.length) {
+          handleSelectOption(flatFilteredOptions[highlightedIndex]);
+        } else if (!multiple && flatFilteredOptions.length === 1) {
+          handleSelectOption(flatFilteredOptions[0]);
         }
         break;
       case 'Escape':
@@ -187,14 +272,14 @@ export function SettingsCombobox({
       default:
         break;
     }
-  }, [isOpen, filteredOptions, highlightedIndex, handleSelectOption]);
+  }, [isOpen, flatFilteredOptions, highlightedIndex, handleSelectOption, multiple, inputValue, selectedValues, removeChip]);
 
   // Scroll highlighted option into view
   useEffect(() => {
     if (highlightedIndex >= 0 && listRef.current) {
-      const highlightedEl = listRef.current.children[highlightedIndex];
-      if (highlightedEl) {
-        highlightedEl.scrollIntoView({ block: 'nearest' });
+      const items = listRef.current.querySelectorAll('[role="option"]');
+      if (items[highlightedIndex]) {
+        items[highlightedIndex].scrollIntoView({ block: 'nearest' });
       }
     }
   }, [highlightedIndex]);
@@ -206,34 +291,127 @@ export function SettingsCombobox({
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const totalAvailable = options.length;
+
+  const renderOptionLabel = (option) => (
+    <span className="settings-combobox__option-content">
+      <span className="settings-combobox__option-label">
+        <HighlightMatch text={option.label} query={inputValue} />
+      </span>
+      {option.description && (
+        <span className="settings-combobox__option-desc">
+          <HighlightMatch text={option.description} query={inputValue} />
+        </span>
+      )}
+    </span>
+  );
+
+  const renderDropdownItems = () => {
+    if (groupedOptions) {
+      let flatIdx = 0;
+      const elements = [];
+      for (const [group, items] of groupedOptions) {
+        const isCollapsed = collapsedGroups.has(group);
+        elements.push(
+          <li
+            key={`group-${group}`}
+            className="settings-combobox__group-header"
+            role="presentation"
+            onClick={() => toggleGroupCollapse(group)}
+          >
+            {isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+            {group} ({items.length})
+          </li>
+        );
+        if (!isCollapsed) {
+          for (const option of items) {
+            const idx = flatIdx++;
+            const isSelected = selectedSet.has(option.value);
+            elements.push(
+              <li
+                key={option.value}
+                id={`${listboxId}-option-${idx}`}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => handleSelectOption(option)}
+                className={`settings-combobox__option ${highlightedIndex === idx ? 'settings-combobox__option--highlighted' : ''} ${isSelected ? 'settings-combobox__option--selected' : ''}`}
+              >
+                {multiple && (
+                  <span className={`settings-combobox__check ${isSelected ? 'settings-combobox__check--checked' : ''}`} aria-hidden="true">
+                    {isSelected ? '✓' : ''}
+                  </span>
+                )}
+                {renderOptionLabel(option)}
+              </li>
+            );
+          }
+        }
+      }
+      return elements;
+    }
+
+    return flatFilteredOptions.map((option, index) => {
+      const isSelected = selectedSet.has(option.value);
+      return (
+        <li
+          key={option.value}
+          id={`${listboxId}-option-${index}`}
+          role="option"
+          aria-selected={multiple ? isSelected : highlightedIndex === index}
+          onClick={() => handleSelectOption(option)}
+          className={`settings-combobox__option ${highlightedIndex === index ? 'settings-combobox__option--highlighted' : ''} ${isSelected || (!multiple && option.value === value) ? 'settings-combobox__option--selected' : ''}`}
+        >
+          {multiple && (
+            <span className={`settings-combobox__check ${isSelected ? 'settings-combobox__check--checked' : ''}`} aria-hidden="true">
+              {isSelected ? '✓' : ''}
+            </span>
+          )}
+          {renderOptionLabel(option)}
+        </li>
+      );
+    });
+  };
+
+  const showChips = multiple && selectedValues.length > 0;
+  const chipValues = selectedValues.length > chipLimit
+    ? selectedValues.slice(0, chipLimit) : selectedValues;
+  const overflowCount = selectedValues.length - chipValues.length;
+
   return (
     <Box
       ref={containerRef}
-      className={`settings-combobox ${error ? 'settings-combobox--error' : ''} ${className}`.trim()}
+      className={`settings-combobox ${multiple ? 'settings-combobox--multiple' : ''} ${error ? 'settings-combobox--error' : ''} ${className}`.trim()}
     >
       {label && (
         <label htmlFor={inputId} className="settings-combobox__label">
           {label}
           {required && <span className="settings-combobox__required">*</span>}
+          {multiple && selectedValues.length > 0 && (
+            <span className="settings-combobox__count">{selectedValues.length} selected</span>
+          )}
         </label>
       )}
+      {helpText && !error && (
+        <Text as="p" size="1" id={helpId} className="settings-combobox__help">
+          {helpText}
+        </Text>
+      )}
       <Box className="settings-combobox__wrapper">
-        <input
+        <TextField.Root
           ref={inputRef}
           id={inputId}
-          type="text"
           name={name}
           value={inputValue}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onClick={handleInputClick}
           onBlur={handleInputBlur}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           disabled={disabled}
           aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
           aria-invalid={!!error}
@@ -244,48 +422,85 @@ export function SettingsCombobox({
           role="combobox"
           autoComplete="off"
           data-testid={`combobox-${name}`}
+          color={error ? 'red' : undefined}
+          size="2"
+          pr="5"
           className="settings-combobox__input"
-        />
-        <ChevronDown
-          size={16}
-          className={`settings-combobox__chevron ${isOpen ? 'settings-combobox__chevron--open' : ''}`}
-          aria-hidden="true"
-        />
-        {isOpen && filteredOptions.length > 0 && (
+        >
+          <TextField.Slot side="right" className="settings-combobox__chevron-slot">
+            <ChevronDown
+              size={16}
+              className={`settings-combobox__chevron ${isOpen ? 'settings-combobox__chevron--open' : ''}`}
+              aria-hidden="true"
+            />
+          </TextField.Slot>
+        </TextField.Root>
+        {isOpen && (flatFilteredOptions.length > 0 || loading || (emptyMessage && !hideEmptyMessage) || (inputValue && !hideEmptyMessage)) && (
           <ul
             ref={listRef}
             id={listboxId}
             role="listbox"
-            className={`settings-combobox__listbox ${openUpward ? 'settings-combobox__listbox--upward' : ''}`}
-            style={{
-              backgroundColor: isDarkMode ? '#1c2128' : '#ffffff',
-              borderColor: isDarkMode ? '#444c56' : '#d1d5db',
-              color: isDarkMode ? '#e6edf3' : '#1f2937',
-              boxShadow: isDarkMode
-                ? '0 4px 12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-                : '0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05)',
-              ...(openUpward ? { bottom: '100%', top: 'auto', marginBottom: '4px', marginTop: 0 } : {}),
-            }}
+            aria-multiselectable={multiple || undefined}
+            className="settings-combobox__listbox"
           >
-            {filteredOptions.map((option, index) => (
-              <li
-                key={option.value}
-                id={`${listboxId}-option-${index}`}
-                role="option"
-                aria-selected={highlightedIndex === index}
-                onClick={() => handleSelectOption(option)}
-                className={`settings-combobox__option ${highlightedIndex === index ? 'settings-combobox__option--highlighted' : ''} ${option.value === value ? 'settings-combobox__option--selected' : ''}`}
-              >
-                {option.label}
+            {multiple && (
+              <li className="settings-combobox__counter" role="status" aria-live="polite">
+                {flatFilteredOptions.length} of {totalAvailable} matching
+                {selectedValues.length > 0 && ` · ${selectedValues.length} selected`}
               </li>
-            ))}
+            )}
+            {loading ? (
+              <li className="settings-combobox__empty settings-combobox__loading" role="option" aria-disabled="true">
+                <Loader2 size={16} className="settings-combobox__spinner" />
+                Searching...
+              </li>
+            ) : flatFilteredOptions.length > 0 ? renderDropdownItems() : (
+              !hideEmptyMessage && (
+                <li className="settings-combobox__empty" role="option" aria-disabled="true">
+                  {emptyMessage || <>No results matching &ldquo;{inputValue}&rdquo;</>}
+                </li>
+              )
+            )}
           </ul>
         )}
       </Box>
-      {helpText && !error && (
-        <Text as="p" size="1" id={helpId} className="settings-combobox__help">
-          {helpText}
-        </Text>
+      {showChips && (
+        <div className="settings-combobox__chips" data-testid={`combobox-chips-${name}`}>
+          {chipValues.map((val) => {
+            const fullLabel = optionLabelMap.get(val) || val;
+            const needsTruncation = fullLabel.length > CHIP_TRUNCATE_LENGTH;
+            const displayLabel = needsTruncation
+              ? fullLabel.slice(0, CHIP_TRUNCATE_LENGTH - 3) + '...'
+              : fullLabel;
+            const chip = (
+              <span key={val} className="settings-combobox__chip">
+                <span className="settings-combobox__chip-label">{displayLabel}</span>
+                {!disabled && (
+                  <IconButton
+                    type="button"
+                    variant="ghost"
+                    color="gray"
+                    size="1"
+                    className="settings-combobox__chip-remove"
+                    onClick={() => removeChip(val)}
+                    aria-label={`Remove ${fullLabel}`}
+                    tabIndex={-1}
+                  >
+                    ×
+                  </IconButton>
+                )}
+              </span>
+            );
+            return needsTruncation ? (
+              <Tooltip key={val} content={fullLabel}>{chip}</Tooltip>
+            ) : chip;
+          })}
+          {overflowCount > 0 && (
+            <span className="settings-combobox__chip settings-combobox__chip--overflow">
+              +{overflowCount} more
+            </span>
+          )}
+        </div>
       )}
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-combobox__error-text">
@@ -298,37 +513,45 @@ export function SettingsCombobox({
 }
 
 SettingsCombobox.propTypes = {
-  /** Field name for form submission */
   name: PropTypes.string.isRequired,
-  /** Label text displayed above input */
   label: PropTypes.string,
-  /** Current value */
   value: PropTypes.string,
-  /** Change handler (receives value) */
   onChange: PropTypes.func,
-  /** Blur handler */
   onBlur: PropTypes.func,
-  /** Array of options { value, label } */
+  /** Called when input text changes (for search/filter callbacks) */
+  onInputChange: PropTypes.func,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       value: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
+      description: PropTypes.string,
     })
   ),
-  /** Placeholder text */
   placeholder: PropTypes.string,
-  /** Help text displayed below input */
   helpText: PropTypes.string,
-  /** Error message */
   error: PropTypes.string,
-  /** Mark field as required */
   required: PropTypes.bool,
-  /** Disable input */
   disabled: PropTypes.bool,
-  /** Additional CSS class */
   className: PropTypes.string,
-  /** Allow custom values not in options */
   allowCustom: PropTypes.bool,
+  /** Allow typing custom values that aren't in the options list */
+  allowCustomValue: PropTypes.bool,
+  /** Enable multi-select mode with chips */
+  multiple: PropTypes.bool,
+  /** Selected values array (multiple mode) */
+  selectedValues: PropTypes.arrayOf(PropTypes.string),
+  /** Change handler for multiple mode (receives string[]) */
+  onMultiChange: PropTypes.func,
+  /** Group options by category: (option) => groupLabel */
+  groupBy: PropTypes.func,
+  /** Max chips to render before showing "+N more" */
+  chipLimit: PropTypes.number,
+  /** Hide "No results matching" message when options are empty */
+  hideEmptyMessage: PropTypes.bool,
+  /** Custom message to show when no results match (overrides default) */
+  emptyMessage: PropTypes.node,
+  /** Show loading spinner in dropdown */
+  loading: PropTypes.bool,
 };
 
 export default SettingsCombobox;

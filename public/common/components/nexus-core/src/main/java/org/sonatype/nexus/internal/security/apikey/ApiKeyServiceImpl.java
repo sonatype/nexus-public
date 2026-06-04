@@ -23,9 +23,7 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -55,7 +53,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 @ManagedLifecycle(phase = TASKS)
 @Component
-@Singleton
 public class ApiKeyServiceImpl
     extends StateGuardLifecycleSupport
     implements ApiKeyInternalService, EventAware
@@ -80,7 +77,7 @@ public class ApiKeyServiceImpl
 
   private volatile boolean onVersion = false;
 
-  @Inject
+  @Autowired
   public ApiKeyServiceImpl(
       @Qualifier("v1") final ApiKeyStore apiKeyStoreV1,
       @Qualifier("v2") final ApiKeyStore apiKeyStoreV2,
@@ -102,6 +99,14 @@ public class ApiKeyServiceImpl
   @Override
   protected void doStart() {
     secretMigrationComplete = kv.getBoolean(MIGRATION_COMPLETE).orElse(false);
+  }
+
+  @Override
+  public Collection<ApiKey> browseAll(final int page, final int pageSize) {
+    return callBrowse(store -> store.browseAll(page, pageSize)
+        .stream()
+        .map(ApiKey.class::cast)
+        .collect(Collectors.toList()));
   }
 
   @Override
@@ -154,7 +159,7 @@ public class ApiKeyServiceImpl
 
   @Override
   public char[] createApiKey(final String domain, final PrincipalCollection principals) {
-    char[] apiKey = makeApiKey(domain, principals);
+    char[] apiKey = makeApiKey(domain);
     try {
       modify(store -> store.persistApiKey(domain, principals, apiKey));
       return apiKey;
@@ -297,12 +302,12 @@ public class ApiKeyServiceImpl
     }
   }
 
-  private char[] makeApiKey(final String domain, final PrincipalCollection principals) {
+  private char[] makeApiKey(final String domain) {
     ApiKeyFactory factory = apiKeyFactories.get(domain);
     if (factory != null) {
-      return checkNotNull(factory.makeApiKey(principals));
+      return checkNotNull(factory.makeApiKey());
     }
-    return defaultApiKeyFactory.makeApiKey(principals);
+    return defaultApiKeyFactory.makeApiKey();
   }
 
   private boolean userExists(final PrincipalCollection principals) {

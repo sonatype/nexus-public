@@ -16,9 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -38,7 +36,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
  * Supports cluster-wide timeout updates via events and respects property file overrides.
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class SessionTimeoutManager
     extends StateGuardLifecycleSupport
@@ -54,7 +51,7 @@ public class SessionTimeoutManager
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public SessionTimeoutManager(
       final Optional<JwtHelper> jwtHelper,
       final Optional<NexusWebSessionManager> sessionManager,

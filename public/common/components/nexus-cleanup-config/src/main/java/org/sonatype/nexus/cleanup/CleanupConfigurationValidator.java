@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintViolation;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -58,7 +58,7 @@ public class CleanupConfigurationValidator
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
-  @Inject
+  @Autowired
   public CleanupConfigurationValidator(
       final ConstraintViolationFactory constraintViolationFactory,
       @Lazy final RepositoryManager repositoryManager,

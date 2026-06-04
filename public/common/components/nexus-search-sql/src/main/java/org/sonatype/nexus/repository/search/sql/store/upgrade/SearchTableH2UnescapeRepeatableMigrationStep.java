@@ -16,8 +16,6 @@ import java.sql.Connection;
 
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Component;
  * This is a repeatable migration - delete this file after it runs on your environment.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SearchTableH2UnescapeRepeatableMigrationStep
     implements RepeatableDatabaseMigrationStep
 {

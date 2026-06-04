@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.capability.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.condition.Conditions;
 import org.sonatype.nexus.common.event.EventManager;
@@ -20,12 +20,9 @@ import org.sonatype.nexus.internal.capability.ActivationConditionHandler;
 import org.sonatype.nexus.internal.capability.ActivationConditionHandlerFactory;
 import org.sonatype.nexus.internal.capability.DefaultCapabilityReference;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class ActivationConditionHandlerFactoryImpl
     implements ActivationConditionHandlerFactory
 {
@@ -33,7 +30,7 @@ public class ActivationConditionHandlerFactoryImpl
 
   private final Conditions conditions;
 
-  @Inject
+  @Autowired
   public ActivationConditionHandlerFactoryImpl(final EventManager eventManager, final Conditions conditions) {
     this.eventManager = eventManager;
     this.conditions = conditions;

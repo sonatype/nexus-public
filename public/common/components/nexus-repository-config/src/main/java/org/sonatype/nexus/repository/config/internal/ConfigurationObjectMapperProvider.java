@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.config.internal;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -37,7 +35,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier(ConfigurationObjectMapperProvider.NAME)
-@Singleton
 public class ConfigurationObjectMapperProvider
     implements FactoryBean<ObjectMapper>
 {
@@ -47,7 +44,7 @@ public class ConfigurationObjectMapperProvider
 
   private final List<ConfigurationObjectMapperCustomizer> customizers;
 
-  @Inject
+  @Autowired
   public ConfigurationObjectMapperProvider(final List<ConfigurationObjectMapperCustomizer> customizersList) {
     this.customizers = checkNotNull(customizersList);
   }

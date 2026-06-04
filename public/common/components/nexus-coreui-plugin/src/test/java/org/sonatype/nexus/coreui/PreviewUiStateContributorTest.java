@@ -15,12 +15,13 @@ package org.sonatype.nexus.coreui;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.kv.KeyValueStore;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -29,8 +30,8 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDBACK_DISABLED_KEY;
 
+@ExtendWith(MockitoExtension.class)
 class PreviewUiStateContributorTest
-    extends Test5Support
 {
   @Mock
   private KeyValueStore keyValueStore;
@@ -41,7 +42,7 @@ class PreviewUiStateContributorTest
   }
 
   @Test
-  void getStateIncludesDisableSwitchFeedback() {
+  public void getStateIncludesDisableSwitchFeedback() {
     when(keyValueStore.getBoolean("preview.ui.anonymous.enabled")).thenReturn(Optional.of(false));
     when(keyValueStore.getBoolean("preview.ui.loggedin.enabled")).thenReturn(Optional.of(true));
     when(keyValueStore.getBoolean("preview.ui.default.enabled")).thenReturn(Optional.of(false));
@@ -56,21 +57,21 @@ class PreviewUiStateContributorTest
   }
 
   @Test
-  void exposesPreviewAuditEnabledTrue() {
+  public void exposesPreviewAuditEnabledTrue() {
     PreviewUiStateContributor underTest = contributor(true);
 
     assertThat(underTest.getState().get("previewAuditEnabled"), is(true));
   }
 
   @Test
-  void exposesPreviewAuditEnabledFalse() {
+  public void exposesPreviewAuditEnabledFalse() {
     PreviewUiStateContributor underTest = contributor(false);
 
     assertThat(underTest.getState().get("previewAuditEnabled"), is(false));
   }
 
   @Test
-  void previewAuditEnabledIsNotReadFromKeyValueStore() {
+  public void previewAuditEnabledIsNotReadFromKeyValueStore() {
     // The audit flag is system-property only by design (NEXUS-52060) — KV store lookups for it
     // should never happen, so an admin cannot accidentally enable audit persistence via the
     // preview-ui settings page. Stub is lenient because the production code never issues this

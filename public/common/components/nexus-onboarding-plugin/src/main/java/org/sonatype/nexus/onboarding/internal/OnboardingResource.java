@@ -14,8 +14,7 @@ package org.sonatype.nexus.onboarding.internal;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -44,7 +43,6 @@ import org.springframework.stereotype.Component;
 /**
  * @since 3.17
  */
-@Singleton
 @Component
 @Path(OnboardingResource.RESOURCE_URI)
 public class OnboardingResource
@@ -62,7 +60,7 @@ public class OnboardingResource
 
   private final AdminPasswordFileManager adminPasswordFileManager;
 
-  @Inject
+  @Autowired
   public OnboardingResource(
       final OnboardingManager onboardingManager,
       final SecuritySystem securitySystem,

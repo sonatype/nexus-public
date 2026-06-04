@@ -17,9 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.SecurityApi;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class SecurityApiImpl
     implements SecurityApi
 {
@@ -54,7 +51,7 @@ public class SecurityApiImpl
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public SecurityApiImpl(final AnonymousManager anonymousManager, final SecuritySystem securitySystem) {
     this.anonymousManager = anonymousManager;
     this.securitySystem = securitySystem;

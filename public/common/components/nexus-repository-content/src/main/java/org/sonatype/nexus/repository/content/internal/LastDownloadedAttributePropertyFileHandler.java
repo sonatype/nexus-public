@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.content.internal;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * Update the asset last downloaded time in corresponding blob's '.properties' file.
  */
 @Component
-@Singleton
 public class LastDownloadedAttributePropertyFileHandler
     implements LastDownloadedAttributeHandler
 {
@@ -47,7 +44,7 @@ public class LastDownloadedAttributePropertyFileHandler
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public LastDownloadedAttributePropertyFileHandler(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
@@ -65,7 +62,7 @@ public class LastDownloadedAttributePropertyFileHandler
   public OffsetDateTime readLastDownloadedAttribute(final String blobstore, final Blob blob) {
     BlobStore blobStore = blobStoreManager.get(blobstore);
     if (blobStore == null) {
-      log.warn("Blob store not loaded {}", blobStore);
+      log.warn("Blob store not loaded {}", blobstore);
       return null;
     }
 
@@ -104,7 +101,7 @@ public class LastDownloadedAttributePropertyFileHandler
       BlobId blobId = assetBlob.blobRef().getBlobId();
       BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId);
       if (blobAttributes == null) {
-        log.warn("Could not get blob attributes for {}", blobId);
+        log.debug("Could not get blob attributes for {}, possibly due to concurrent access", blobId);
         return;
       }
 

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.SecurityContributor;
@@ -23,8 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,14 +31,13 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SecurityContributorMediator
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final SecurityConfigurationManagerImpl securityConfigurationManagerImpl;
 
-  @Inject
+  @Autowired
   public SecurityContributorMediator(final SecurityConfigurationManagerImpl securityConfigurationManagerImpl) {
     this.securityConfigurationManagerImpl = checkNotNull(securityConfigurationManagerImpl);
   }

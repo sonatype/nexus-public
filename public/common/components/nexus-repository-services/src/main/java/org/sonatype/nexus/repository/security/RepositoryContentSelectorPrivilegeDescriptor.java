@@ -16,8 +16,8 @@ import java.util.List;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.SelectorComboFormField;
@@ -37,8 +37,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.Permission;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +56,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_NAMED_
  */
 @Component
 @Qualifier(RepositoryContentSelectorPrivilegeDescriptor.TYPE)
-@Singleton
 public class RepositoryContentSelectorPrivilegeDescriptor
     extends
     RepositoryPrivilegeDescriptorSupport<ApiPrivilegeRepositoryContentSelector, ApiPrivilegeRepositoryContentSelectorRequest>
@@ -110,7 +108,7 @@ public class RepositoryContentSelectorPrivilegeDescriptor
 
   private static final String P_OPTIONS = "options";
 
-  @Inject
+  @Autowired
   public RepositoryContentSelectorPrivilegeDescriptor(
       @Lazy final RepositoryManager repositoryManager,
       @Lazy final SelectorManager selectorManager,

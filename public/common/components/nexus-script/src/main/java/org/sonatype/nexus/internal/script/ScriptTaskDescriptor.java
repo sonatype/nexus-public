@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.internal.script;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class ScriptTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -71,7 +69,7 @@ public class ScriptTaskDescriptor
 
   // TODO: this task may expose a lot of potential for misuse, and may need to be optional enabled by system property
 
-  @Inject
+  @Autowired
   public ScriptTaskDescriptor(
       final NodeAccess nodeAccess,
       @Value("${nexus.scripts.allowCreation:false}") final boolean allowCreation)

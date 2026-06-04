@@ -22,10 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,7 +31,6 @@ import org.springframework.stereotype.Component;
  * AssetBlobMigrationStep_2_18_1 which is now a no-op.
  */
 @Component
-@Scope(SCOPE_SINGLETON)
 public class AssetBlobMigrationStep_2_18_2
     implements DatabaseMigrationStep
 {

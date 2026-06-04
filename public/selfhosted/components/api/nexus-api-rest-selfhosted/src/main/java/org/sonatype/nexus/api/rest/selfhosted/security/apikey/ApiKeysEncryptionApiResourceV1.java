@@ -16,21 +16,19 @@ import javax.ws.rs.Path;
 
 import org.sonatype.nexus.crypto.apikey.ApiKeysReEncryptService;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 @Component
-@Singleton
 @Path(ApiKeysEncryptionApiResourceV1.RESOURCE_URI)
 public class ApiKeysEncryptionApiResourceV1
     extends ApiKeysEncryptionApiResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + RESOURCE_PATH;
 
-  @Inject
+  @Autowired
   public ApiKeysEncryptionApiResourceV1(final ApiKeysReEncryptService apiKeysReEncryptService) {
     super(apiKeysReEncryptService);
   }

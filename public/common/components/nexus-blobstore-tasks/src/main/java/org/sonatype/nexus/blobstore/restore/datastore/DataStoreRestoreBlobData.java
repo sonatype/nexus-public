@@ -18,6 +18,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
 /**
  * Simple structure for relevant data for a blob during metadata restoration
@@ -43,5 +44,13 @@ public class DataStoreRestoreBlobData
       return blobName;
     }
     return "/" + blobName;
+  }
+
+  /**
+   * Creates a {@link DetachedBlobPayload} that includes the source blobstore reference.
+   * This allows the ingest process to detect when a blob needs to be re-ingested into a different blobstore.
+   */
+  public DetachedBlobPayload createDetachedPayload() {
+    return new DetachedBlobPayload(getBlob(), getBlobStore());
   }
 }

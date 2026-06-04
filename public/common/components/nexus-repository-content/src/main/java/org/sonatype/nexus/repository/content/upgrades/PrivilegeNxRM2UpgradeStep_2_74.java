@@ -22,14 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(SCOPE_SINGLETON)
 public class PrivilegeNxRM2UpgradeStep_2_74
     implements DatabaseMigrationStep
 {

@@ -25,15 +25,12 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_NAME_KEY;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class HostedRepositoryApiRequestToConfigurationConverter<T extends HostedRepositoryApiRequest>
     extends AbstractRepositoryApiRequestToConfigurationConverter<T>
 {

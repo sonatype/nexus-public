@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import jakarta.inject.Singleton;
-
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.crypto.hash.DefaultHashService;
@@ -28,7 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("legacy")
-@Singleton
 public class LegacyNexusPasswordService
     implements PasswordService
 {

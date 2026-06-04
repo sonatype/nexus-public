@@ -1,0 +1,66 @@
+/*
+ * Sonatype Nexus (TM) Professional Version.
+ * Copyright (c) 2008-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/nexus/pro/attributions
+ * "Sonatype" and "Sonatype Nexus" are trademarks of Sonatype, Inc.
+ */
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.table-skeleton {
+  &__row {
+    // Keep normal table row styling
+  }
+
+  &__checkbox {
+    width: 16px;
+    height: 16px;
+    background-color: var(--gray-4);
+    border-radius: var(--radius-1, 4px);
+    animation: skeleton-pulse 2s ease-in-out infinite;
+  }
+
+  &__text {
+    height: 16px;
+    background-color: var(--gray-4);
+    border-radius: var(--radius-1, 4px);
+    animation: skeleton-pulse 2s ease-in-out infinite;
+
+    // Different widths for different content types
+    &--short {
+      width: 120px; // IP addresses are typically short
+    }
+
+    &--medium {
+      width: 140px; // Dates are medium length
+    }
+
+    &--long {
+      width: 200px; // Descriptions are longer
+    }
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    background-color: var(--gray-4);
+    border-radius: var(--radius-2, 6px);
+    animation: skeleton-pulse 2s ease-in-out infinite;
+  }
+
+  // Dark mode support
+  [data-theme='dark'] & {
+    &__checkbox,
+    &__text,
+    &__icon {
+      background-color: var(--gray-5);
+    }
+  }
+}

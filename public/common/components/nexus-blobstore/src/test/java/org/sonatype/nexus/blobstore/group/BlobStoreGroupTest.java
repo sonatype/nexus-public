@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 import javax.cache.Cache;
 import javax.cache.configuration.MutableConfiguration;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;

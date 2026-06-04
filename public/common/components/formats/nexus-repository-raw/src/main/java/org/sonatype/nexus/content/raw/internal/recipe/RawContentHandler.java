@@ -13,8 +13,6 @@
 package org.sonatype.nexus.content.raw.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * @since 3.24
  */
 @Component
-@Singleton
 public class RawContentHandler
     implements Handler
 {

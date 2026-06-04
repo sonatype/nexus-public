@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
@@ -52,8 +52,6 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -62,7 +60,6 @@ import org.springframework.stereotype.Component;
  * @since 3.4
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RepositoryManagerRESTAdapterImpl
     implements RepositoryManagerRESTAdapter
 {
@@ -78,7 +75,7 @@ public class RepositoryManagerRESTAdapterImpl
 
   private final Optional<RepositoryMetricsService> repositoryMetricsService;
 
-  @Inject
+  @Autowired
   public RepositoryManagerRESTAdapterImpl(
       final RepositoryManager repositoryManager,
       final ConfigurationStore configurationStore,

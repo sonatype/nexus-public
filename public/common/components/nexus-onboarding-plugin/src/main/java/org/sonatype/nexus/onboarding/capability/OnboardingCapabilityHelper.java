@@ -13,9 +13,7 @@
 package org.sonatype.nexus.onboarding.capability;
 
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 
@@ -23,12 +21,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class OnboardingCapabilityHelper
 {
   private final CapabilityRegistry capabilityRegistry;
 
-  @Inject
+  @Autowired
   public OnboardingCapabilityHelper(final CapabilityRegistry capabilityRegistry) {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
   }

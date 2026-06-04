@@ -24,7 +24,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Predicate;
@@ -47,6 +50,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreMigrationStateProvider;
+import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
+import org.sonatype.nexus.blobstore.api.BlobStoreWarmupConstants;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
@@ -57,6 +62,7 @@ import org.sonatype.nexus.blobstore.metrics.MonitoringBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.common.time.UTC;
@@ -73,7 +79,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
-import jakarta.inject.Inject;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,6 +90,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
@@ -97,7 +105,9 @@ import static com.google.common.cache.CacheLoader.from;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORARY_BLOB_ID_PREFIX;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
+import static org.sonatype.nexus.blobstore.api.OperationType.DOWNLOAD;
 import static org.sonatype.nexus.blobstore.api.OperationType.UPLOAD;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.metrics.MetricsConstants.NEXUS_METRICS_REGISTRY_NAME;
@@ -153,6 +163,8 @@ public class S3BlobStore
 
   public static final String TYPE_V1 = "s3/1";
 
+  public static final String REBUILD_DELETED_BLOB_INDEX_KEY = "rebuildDeletedBlobIndex";
+
   public static final String DIRECT_PATH_PREFIX = CONTENT_PREFIX + "/" + DIRECT_PATH_ROOT;
 
   private static final String FILE_V1 = "file/1";
@@ -177,6 +189,15 @@ public class S3BlobStore
 
   private ExecutorService executorService;
 
+  /**
+   * Tracks the timestamp (in milliseconds) when warmup failed after all retry attempts.
+   * When non-zero and within the TTL window (5 minutes), subsequent blob operations
+   * will throw BlobStoreWarmingUpException (HTTP 503).
+   * After the TTL expires, normal blob operations resume (allowing auto-recovery from transient failures).
+   * Volatile for thread-safe read/write without synchronization.
+   */
+  private volatile long warmupFailedAt = 0L;
+
   private static final String METRIC_NAME = "s3Blobstore";
 
   private final Timer existsTimer;
@@ -185,7 +206,7 @@ public class S3BlobStore
 
   private final Timer hardDeleteTimer;
 
-  @Inject
+  @Autowired
   public S3BlobStore(
       final AmazonS3Factory amazonS3Factory,
       final BlobIdLocationResolver blobIdLocationResolver,
@@ -241,6 +262,173 @@ public class S3BlobStore
     if (this.preferAsyncCleanup && executorService == null) {
       this.executorService = newFixedThreadPool(8,
           new NexusThreadFactory("s3-blobstore", "async-ops"));
+    }
+  }
+
+  /**
+   * Checks if warmup failed and throws BlobStoreWarmingUpException if within TTL window.
+   * This ensures blob operations return HTTP 503 instead of HTTP 500 when S3 is not ready.
+   * After the TTL (5 minutes) expires, operations proceed normally allowing auto-recovery
+   * from transient startup failures without requiring a full Nexus restart.
+   */
+  private void checkWarmupStatus() {
+    long failedAt = warmupFailedAt;
+    if (failedAt > 0) {
+      long elapsed = System.currentTimeMillis() - failedAt;
+      if (elapsed < BlobStoreWarmupConstants.WARMUP_FAILURE_TTL_MS) {
+        throw new BlobStoreWarmingUpException(getBlobStoreConfiguration().getName());
+      }
+    }
+  }
+
+  /**
+   * Resets the warmup failure state for testing purposes.
+   * This method should only be called from test code to clear the warmup failure timestamp
+   * after start() completes, allowing tests to proceed without BlobStoreWarmingUpException.
+   *
+   * Public visibility is required to allow test classes in different packages (e.g., ProS3BlobStore tests)
+   * to reset the warmup state.
+   */
+  @VisibleForTesting
+  public void resetWarmupStateForTesting() {
+    warmupFailedAt = 0L;
+  }
+
+  @Nullable
+  @Override
+  @Guarded(by = STARTED)
+  @Timed
+  @MonitoringBlobStoreMetrics(operationType = DOWNLOAD)
+  public Blob get(final BlobId blobId, final boolean includeDeleted) {
+    checkWarmupStatus();
+    return super.get(blobId, includeDeleted);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Blob create(final InputStream blobData, final Map<String, String> headers, @Nullable final BlobId blobId) {
+    checkWarmupStatus();
+    return super.create(blobData, headers, blobId);
+  }
+
+  /**
+   * Warm up the S3 connection pool synchronously during blob store startup.
+   *
+   * This method prevents two types of errors:
+   * 1. HTTP 500: Lazy S3 initialization causing first-request failures on Components API
+   * 2. HTTP 503: S3 connections not ready when repository operations occur
+   *
+   * The warmup establishes HTTP connections in the S3 client connection pool before any
+   * blob operations occur. This ensures repositories can immediately read/write without
+   * waiting for connection establishment.
+   *
+   * Timing: Typically 50-200ms, which is acceptable startup overhead to eliminate runtime errors.
+   *
+   * Timeout protection: Each warmup attempt has a configurable timeout (default 10s) to prevent
+   * Nexus startup from hanging if S3 is slow or unreachable. Retries up to 3 times with exponential backoff.
+   */
+  private void warmupS3ConnectionPool() {
+    String bucket = getConfiguredBucket();
+    long timeoutMs = SystemPropertiesHelper.getLong(
+        BlobStoreWarmupConstants.WARMUP_TIMEOUT_PROPERTY,
+        BlobStoreWarmupConstants.DEFAULT_WARMUP_TIMEOUT_MS);
+    long slowThreshold = SystemPropertiesHelper.getLong(
+        BlobStoreWarmupConstants.WARMUP_SLOW_THRESHOLD_PROPERTY,
+        BlobStoreWarmupConstants.DEFAULT_SLOW_THRESHOLD_MS);
+    long overallStartTime = System.currentTimeMillis();
+
+    ExecutorService warmupExecutor = Executors.newSingleThreadExecutor(
+        new ThreadFactoryBuilder()
+            .setNameFormat("s3-warmup-" + bucket + "-%d")
+            .setDaemon(true)
+            .build());
+
+    try {
+      for (int attempt = 1; attempt <= BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS; attempt++) {
+        long attemptStartTime = System.currentTimeMillis();
+        try {
+          log.info("Warming up S3 connection pool for bucket: {} (attempt {}/{}, timeout: {}ms)",
+              bucket, attempt, BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS, timeoutMs);
+
+          CompletableFuture<Boolean> warmupFuture = CompletableFuture.supplyAsync(() -> {
+            boolean exists = s3.doesBucketExist(bucket);
+            if (!exists) {
+              log.warn("S3 warmup: bucket {} does not exist - blob operations will fail", bucket);
+              throw new IllegalStateException("Bucket does not exist: " + bucket);
+            }
+            return exists;
+          }, warmupExecutor);
+
+          warmupFuture.orTimeout(timeoutMs, TimeUnit.MILLISECONDS).join();
+
+          long duration = System.currentTimeMillis() - attemptStartTime;
+          long overallDuration = System.currentTimeMillis() - overallStartTime;
+          log.info(
+              "S3 connection pool warmup COMPLETED for bucket: {} - blob store ready (duration: {}ms, overall: {}ms)",
+              bucket, duration, overallDuration);
+
+          // Log warning if warmup is unexpectedly slow
+          if (duration > slowThreshold) {
+            log.warn("S3 warmup for bucket {} took {}ms (threshold: {}ms) - check S3/network performance",
+                bucket, duration, slowThreshold);
+          }
+
+          return; // Success - exit retry loop
+        }
+        catch (java.util.concurrent.CompletionException e) {
+          long attemptDuration = System.currentTimeMillis() - attemptStartTime;
+
+          if (e.getCause() instanceof TimeoutException) {
+            log.warn("S3 warmup attempt {}/{} TIMEOUT after {}ms for bucket: {}",
+                attempt, BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS, attemptDuration, bucket);
+          }
+          else {
+            log.warn("S3 warmup attempt {}/{} failed for bucket: {} (duration: {}ms)",
+                attempt, BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS, bucket, attemptDuration, e.getCause());
+          }
+
+          // Exponential backoff before retry (1s, 2s, 3s)
+          if (attempt < BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS) {
+            long backoffMs = 1000L * attempt;
+            log.debug("Retrying S3 warmup for bucket {} after {}ms backoff", bucket, backoffMs);
+            try {
+              Thread.sleep(backoffMs);
+            }
+            catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+              log.warn("S3 warmup interrupted for bucket: {}", bucket);
+              return;
+            }
+          }
+        }
+        catch (Exception e) {
+          long attemptDuration = System.currentTimeMillis() - attemptStartTime;
+          log.warn("S3 warmup attempt {}/{} failed unexpectedly for bucket: {} (duration: {}ms)",
+              attempt, BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS, bucket, attemptDuration, e);
+
+          if (attempt < BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS) {
+            long backoffMs = 1000L * attempt;
+            try {
+              Thread.sleep(backoffMs);
+            }
+            catch (InterruptedException ie) {
+              Thread.currentThread().interrupt();
+              return;
+            }
+          }
+        }
+      }
+
+      // All attempts failed - mark warmup as failed so subsequent operations throw BlobStoreWarmingUpException
+      warmupFailedAt = System.currentTimeMillis();
+      long overallDuration = System.currentTimeMillis() - overallStartTime;
+      log.error(
+          "S3 warmup FAILED after {} attempts for bucket: {} (total duration: {}ms) - blob operations will return HTTP 503 for {} minutes",
+          BlobStoreWarmupConstants.WARMUP_MAX_ATTEMPTS, bucket, overallDuration,
+          BlobStoreWarmupConstants.WARMUP_FAILURE_TTL_MS / 60000);
+    }
+    finally {
+      warmupExecutor.shutdownNow();
     }
   }
 
@@ -424,11 +612,23 @@ public class S3BlobStore
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
     Blob sourceBlob = checkNotNull(get(blobId));
     String sourcePath = contentPath(sourceBlob.getId());
+    BlobId copyBlobId = createCopyBlobId(sourceBlob.getId());
     return create(headers, destination -> {
       copier.copy(s3, getConfiguredBucket(), sourcePath, destination);
       BlobMetrics metrics = sourceBlob.getMetrics();
       return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
-    }, null);
+    }, copyBlobId);
+  }
+
+  private BlobId createCopyBlobId(final BlobId sourceBlobId) {
+    String id = sourceBlobId.asUniqueString();
+    // Strip temporary prefix if present - the copy should be a regular blob
+    String uuid = id.startsWith(TEMPORARY_BLOB_ID_PREFIX)
+        ? id.substring(TEMPORARY_BLOB_ID_PREFIX.length())
+        : id;
+    // Preserve the date from the source blob for consistency
+    OffsetDateTime blobCreatedRef = sourceBlobId.getBlobCreatedRef();
+    return new BlobId(uuid, blobCreatedRef);
   }
 
   @Override
@@ -445,6 +645,7 @@ public class S3BlobStore
   @Guarded(by = STARTED)
   @Timed
   public Blob writeBlobProperties(final BlobId blobId, final Map<String, String> headers) {
+    checkWarmupStatus();
     S3Blob blob = (S3Blob) checkNotNull(get(blobId));
     String blobPath = contentPath(blob.getId());
     String attributePath = attributePath(blobId);
@@ -560,13 +761,95 @@ public class S3BlobStore
   @Override
   protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker, final Duration blobsOlderThan) {
     try {
-      doCompactWithDeletedBlobIndex(inUseChecker, blobsOlderThan);
+      S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
+      metadata.load();
+      boolean deletedBlobIndexRebuildRequired =
+          Boolean.parseBoolean(metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false"));
+
+      if (deletedBlobIndexRebuildRequired) {
+        doCompactWithoutDeletedBlobIndex(inUseChecker);
+
+        metadata.remove(REBUILD_DELETED_BLOB_INDEX_KEY);
+        metadata.store();
+      }
+      else {
+        doCompactWithDeletedBlobIndex(inUseChecker, blobsOlderThan);
+      }
     }
     catch (BlobStoreException | TaskInterruptedException e) {
       throw e;
     }
     catch (Exception e) {
       throw new BlobStoreException(e, null);
+    }
+  }
+
+  void doCompactWithoutDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
+    String blobStoreName = blobStoreConfiguration.getName();
+    log.info("Begin deleted blobs processing for blob store '{}' without deleted blob index", blobStoreName);
+
+    deletedBlobIndex.deleteAllRecords();
+
+    try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
+      AtomicInteger count = new AtomicInteger();
+
+      String contentPrefix = getContentPrefix();
+      s3.listObjectsWithPrefix(contentPrefix)
+          .filter(object -> isBlobStoreContent(object.key()))
+          .filter(object -> object.key().endsWith(BLOB_FILE_ATTRIBUTES_SUFFIX))
+          .forEach(object -> {
+            CancelableHelper.checkCancellation();
+            try {
+              S3AttributesLocation location = new S3AttributesLocation(object);
+              BlobId blobId = getBlobIdFromAttributeFilePath(location);
+
+              if (blobId != null) {
+                S3BlobAttributes attributes = new S3BlobAttributes(s3, getConfiguredBucket(), object.key());
+                if (maybeAddBlobToDeletedIndex(attributes, inUseChecker, blobId)) {
+                  count.incrementAndGet();
+                }
+              }
+            }
+            catch (Exception e) {
+              log.warn("Failed to load attributes for object {}: {}", object.key(), e.getMessage());
+            }
+          });
+
+      progressLogger.info("Rebuilt deletion index with {} soft-deleted blobs", count.get());
+    }
+  }
+
+  /**
+   * Check if blob should be processed during rebuild of deletion index.
+   * Similar to FileBlobStore's compactByAttributes logic.
+   * Side effects: blob may be compacted and if not a record is created in deletedBlobIndex
+   *
+   * @param attributes the blob attributes
+   * @param inUseChecker the in-use checker
+   * @param blobId the blob ID
+   * @return true if the blob should be recorded in the deletion index
+   * @throws IOException if attributes cannot be loaded
+   */
+  private boolean maybeAddBlobToDeletedIndex(
+      final S3BlobAttributes attributes,
+      @Nullable final BlobStoreUsageChecker inUseChecker,
+      final BlobId blobId) throws IOException
+  {
+    if (!attributes.load() || !attributes.isDeleted()) {
+      return false;
+    }
+
+    BlobSupport blob = liveBlobs.getIfPresent(blobId);
+    if (blob == null || blob.isStale()) {
+      if (!maybeCompactBlob(inUseChecker, blobId)) {
+        deletedBlobIndex.createRecord(blobId);
+        return true;
+      }
+      return false;
+    }
+    else {
+      deletedBlobIndex.createRecord(blobId);
+      return true;
     }
   }
 
@@ -588,8 +871,17 @@ public class S3BlobStore
         log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
           log.debug("Compacting...");
-          maybeCompactBlob(inUseChecker, blobId);
-          deletedBlobIndex.deleteRecord(blobId);
+          try {
+            maybeCompactBlob(inUseChecker, blobId);
+            deletedBlobIndex.deleteRecord(blobId);
+          }
+          catch (TaskInterruptedException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            log.warn("Failed to compact blob {} in blob store '{}': {}", blobId, blobStoreName, e.getMessage());
+            log.debug("Blob compaction failure details for {}", blobId, e);
+          }
         }
         else {
           log.debug("Still in use to deferring");
@@ -661,6 +953,12 @@ public class S3BlobStore
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
 
       deletedBlobIndex.init(this);
+
+      // Warm up S3 connection pool immediately after S3 client creation
+      // This prevents HTTP 500/503 errors on first repository access
+      log.info("Initializing S3 blob store '{}' with bucket: {}", getBlobStoreConfiguration().getName(),
+          getConfiguredBucket());
+      warmupS3ConnectionPool();
     }
     catch (S3Exception e) {
       throw buildException(e);
@@ -686,7 +984,13 @@ public class S3BlobStore
         .bucket(getConfiguredBucket())
         .delete(delete)
         .build();
-    return s3.deleteObjects(request).deleted().size() == paths.length;
+    DeleteObjectsResponse response = s3.deleteObjects(request);
+    if (!response.errors().isEmpty()) {
+      response.errors()
+          .forEach(error -> log.warn("Failed to delete S3 object '{}': {} - {}", error.key(), error.code(),
+              error.message()));
+    }
+    return response.deleted().size() == paths.length;
   }
 
   private void deleteQuietly(final String path) {

@@ -14,7 +14,7 @@ package org.sonatype.nexus.httpclient.internal;
 
 import org.sonatype.nexus.httpclient.HttpClientManager;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.springframework.beans.factory.FactoryBean;
@@ -33,7 +33,7 @@ public class HttpClientProvider
 {
   private final HttpClientManager httpClientManager;
 
-  @Inject
+  @Autowired
   public HttpClientProvider(final HttpClientManager httpClientManager) {
     this.httpClientManager = checkNotNull(httpClientManager);
   }

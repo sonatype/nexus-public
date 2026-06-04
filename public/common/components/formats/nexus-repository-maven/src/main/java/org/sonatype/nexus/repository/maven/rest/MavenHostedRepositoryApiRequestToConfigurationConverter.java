@@ -18,15 +18,12 @@ import org.sonatype.nexus.repository.rest.api.ContentDispositionHelper;
 import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenHostedRepositoryApiRequestToConfigurationConverter
     extends HostedRepositoryApiRequestToConfigurationConverter<MavenHostedRepositoryApiRequest>
 {

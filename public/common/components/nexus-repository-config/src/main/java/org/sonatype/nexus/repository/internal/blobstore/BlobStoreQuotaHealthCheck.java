@@ -17,10 +17,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
@@ -39,7 +37,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("Blob Stores Quota")
-@Singleton
 public class BlobStoreQuotaHealthCheck
     extends HealthCheck
 {
@@ -47,7 +44,7 @@ public class BlobStoreQuotaHealthCheck
 
   private final Provider<BlobStoreQuotaService> quotaServiceProvider;
 
-  @Inject
+  @Autowired
   public BlobStoreQuotaHealthCheck(
       final Provider<BlobStoreManager> blobStoreManagerProvider,
       final Provider<BlobStoreQuotaService> quotaServiceProvider)

@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
  *
  * @since 3.0
  */
-@Singleton
 @Component
 class HttpResponseSenderSelector
 {
@@ -43,7 +40,7 @@ class HttpResponseSenderSelector
 
   private final DefaultHttpResponseSender defaultHttpResponseSender;
 
-  @Inject
+  @Autowired
   public HttpResponseSenderSelector(
       final List<HttpResponseSender> responseSendersList,
       final DefaultHttpResponseSender defaultHttpResponseSender)

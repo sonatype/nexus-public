@@ -14,8 +14,6 @@ package org.sonatype.nexus.upgrade.internal;
 
 import java.sql.Connection;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
 import org.springframework.stereotype.Component;
@@ -32,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.38
  */
 @Component
-@Singleton
 public class DistributedEventsUpgrade
     implements RepeatableDatabaseMigrationStep
 {

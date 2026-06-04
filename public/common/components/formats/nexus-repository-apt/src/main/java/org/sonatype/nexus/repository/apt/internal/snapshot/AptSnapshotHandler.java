@@ -17,8 +17,6 @@ import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class AptSnapshotHandler
     implements Handler
 {

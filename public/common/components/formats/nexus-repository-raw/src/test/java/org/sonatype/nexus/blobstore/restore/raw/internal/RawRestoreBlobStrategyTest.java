@@ -14,6 +14,8 @@ package org.sonatype.nexus.blobstore.restore.raw.internal;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -21,14 +23,17 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -56,6 +61,8 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class RawRestoreBlobStrategyTest
@@ -91,6 +98,9 @@ public class RawRestoreBlobStrategyTest
   private AssetBlob assetBlob;
 
   @Mock
+  private BlobRef assetBlobRef;
+
+  @Mock
   private BlobMetrics blobMetrics;
 
   @Mock
@@ -111,6 +121,12 @@ public class RawRestoreBlobStrategyTest
   @Mock
   private FluentComponent component;
 
+  @Mock
+  private FluentBlobs assetBlobs;
+
+  @Mock
+  private Configuration repositoryConfiguration;
+
   private final DryRunPrefix dryRunPrefix = new DryRunPrefix("DRY RUN");
 
   private Properties properties;
@@ -121,6 +137,13 @@ public class RawRestoreBlobStrategyTest
   public void setup() {
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
 
+    when(repository.getConfiguration()).thenReturn(repositoryConfiguration);
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    Map<String, Object> storageAttributes = new HashMap<>();
+    storageAttributes.put(BLOB_STORE_NAME, TEST_BLOB_STORE_NAME);
+    attributes.put(STORAGE, storageAttributes);
+    when(repositoryConfiguration.getAttributes()).thenReturn(attributes);
+
     when(repository.optionalFacet(RawContentFacet.class)).thenReturn(of(rawContentFacet));
     when(repository.facet(RawContentFacet.class)).thenReturn(rawContentFacet);
     when(repository.facet(ContentFacet.class)).thenReturn(rawContentFacet);
@@ -129,8 +152,12 @@ public class RawRestoreBlobStrategyTest
     when(assets.path(anyString())).thenReturn(fluentAssetBuilder);
     when(fluentAssetBuilder.find()).thenReturn(Optional.of(asset));
 
+    when(rawContentFacet.blobs()).thenReturn(assetBlobs);
+    when(assetBlobs.blob(any(BlobRef.class))).thenReturn(Optional.of(blob));
+
     when(asset.component()).thenReturn(empty());
     when(asset.blob()).thenReturn(Optional.of(assetBlob));
+    when(assetBlob.blobRef()).thenReturn(assetBlobRef);
 
     when(blob.getId()).thenReturn(blobId);
     when(blob.getMetrics()).thenReturn(blobMetrics);

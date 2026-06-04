@@ -15,8 +15,6 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 import java.sql.Connection;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -26,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * Delete all tokens from the {@code distributed_auth_ticket_cache} table
  */
 @Component
-@Singleton
 public class DistributedAuthTicketMigrationStep_1_30
     implements DatabaseMigrationStep
 {

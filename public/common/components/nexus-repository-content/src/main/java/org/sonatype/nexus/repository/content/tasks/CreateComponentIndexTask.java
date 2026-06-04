@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.tasks;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.logging.task.TaskLogType;
 import org.sonatype.nexus.logging.task.TaskLogging;
@@ -46,7 +46,7 @@ public class CreateComponentIndexTask
 
   private final boolean disableTask;
 
-  @Inject
+  @Autowired
   public CreateComponentIndexTask(
       final CreateComponentIndexService createComponentIndexService,
       @Value("${" + DISABLE_CREATING_COMPONENT_INDEXES_TASK + ":false}") final boolean disableTask)

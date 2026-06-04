@@ -16,9 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -41,12 +39,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class ConfigurationStoreImpl
     extends ConfigStoreSupport<ConfigurationDAO>
     implements ConfigurationStore
 {
-  @Inject
+  @Autowired
   public ConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

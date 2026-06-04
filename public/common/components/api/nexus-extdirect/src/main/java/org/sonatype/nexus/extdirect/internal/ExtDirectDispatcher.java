@@ -14,9 +14,7 @@ package org.sonatype.nexus.extdirect.internal;
 
 import java.lang.reflect.InvocationTargetException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.model.Response;
 
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = SERVICES)
-@Singleton
 public class ExtDirectDispatcher
     extends SsmDispatcher
     implements ApplicationContextAware
@@ -50,7 +47,7 @@ public class ExtDirectDispatcher
 
   private ApplicationContext applicationContext;
 
-  @Inject
+  @Autowired
   public ExtDirectDispatcher(final ExtDirectExceptionHandler exceptionHandler) {
     this.exceptionHandler = checkNotNull(exceptionHandler);
   }

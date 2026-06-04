@@ -16,9 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rapture.StateContributor;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
 /**
  * @since 3.17
  */
-@Singleton
 @Component
 public class OnboardingStateContributor
     implements StateContributor
@@ -43,7 +40,7 @@ public class OnboardingStateContributor
 
   private boolean needsOnboarding = true;
 
-  @Inject
+  @Autowired
   public OnboardingStateContributor(
       final OnboardingConfiguration onboardingConfiguration,
       final OnboardingManager onboardingManager,

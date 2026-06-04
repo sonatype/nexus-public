@@ -312,6 +312,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchAnsiblegalaxy',
+      active: function() {
+        return NX.app.Application.bundleActive('nexus-repository-ansible-galaxy');
+      }
+    },
+    {
           id: 'NX.coreui.controller.SearchTerraform',
           active: function() {
               return NX.app.Application.bundleActive('nexus-repository-terraform');

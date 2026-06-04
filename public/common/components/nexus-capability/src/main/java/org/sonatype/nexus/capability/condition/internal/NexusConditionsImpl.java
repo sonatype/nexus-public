@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.NexusConditions;
 
@@ -27,13 +25,12 @@ import org.springframework.stereotype.Component;
  * @since capabilities 2.0
  */
 @Component
-@Singleton
 public class NexusConditionsImpl
     implements NexusConditions
 {
   private final NexusIsActiveCondition nexusIsActiveCondition;
 
-  @Inject
+  @Autowired
   public NexusConditionsImpl(final NexusIsActiveCondition nexusIsActiveCondition) {
     this.nexusIsActiveCondition = checkNotNull(nexusIsActiveCondition);
   }

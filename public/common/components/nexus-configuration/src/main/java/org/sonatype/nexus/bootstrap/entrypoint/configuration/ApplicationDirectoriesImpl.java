@@ -15,8 +15,7 @@ package org.sonatype.nexus.bootstrap.entrypoint.configuration;
 import java.io.File;
 
 import com.google.common.base.Throwables;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +29,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 2.8
  */
 @Component
-@Singleton
 public class ApplicationDirectoriesImpl
     implements ApplicationDirectories
 {
@@ -46,7 +44,7 @@ public class ApplicationDirectoriesImpl
 
   private final DirectoryHelper directoryHelper;
 
-  @Inject
+  @Autowired
   public ApplicationDirectoriesImpl(
       @Value("${karaf.base}") final String installDir,
       @Value("${karaf.data}") final String workDir,

@@ -18,9 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -56,7 +54,6 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class SecurityConfigurationImpl
     extends StateGuardLifecycleSupport
     implements SecurityConfiguration, TransactionalStore<DataSession<?>>
@@ -71,7 +68,7 @@ public class SecurityConfigurationImpl
 
   private final CUserStore userStore;
 
-  @Inject
+  @Autowired
   public SecurityConfigurationImpl(
       final DataSessionSupplier sessionSupplier,
       final CPrivilegeStore privilegeStore,

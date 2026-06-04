@@ -15,16 +15,12 @@ package org.sonatype.nexus.repository.content.tasks;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Scope(SCOPE_SINGLETON)
 public class CreateAssetBlobIndexTaskDescriptor
     extends TaskDescriptorSupport
 {

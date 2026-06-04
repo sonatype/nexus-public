@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.function.Function;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -92,42 +92,42 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   private boolean blobStoreValidation = true;
 
-  @Inject
+  @Autowired
   public void setHighAvailabilitySupportChecker(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
     this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
   }
 
-  @Inject
+  @Autowired
   public void setAuthorizingRepositoryManager(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
   }
 
-  @Inject
+  @Autowired
   public void setRepositoryManager(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }
 
-  @Inject
+  @Autowired
   public void setBlobStoreManager(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = blobStoreManager;
   }
 
-  @Inject
+  @Autowired
   public void setConvertersByFormat(final List<ApiRepositoryAdapter> convertersByFormatList) {
     this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
   }
 
-  @Inject
+  @Autowired
   public void setDefaultAdapter(final ApiRepositoryAdapter defaultAdapter) {
     this.defaultAdapter = checkNotNull(defaultAdapter);
   }
 
-  @Inject
+  @Autowired
   public void setRecipesByFormat(final List<Recipe> recipesByFormatList) {
     this.recipesByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(recipesByFormatList));
   }
 
-  @Inject
+  @Autowired
   public void setBlobStoreValidation(
       @Value("${nexus.api.validateBlobStore:true}") final boolean blobStoreValidation)
   {

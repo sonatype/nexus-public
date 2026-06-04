@@ -17,8 +17,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 
@@ -49,7 +48,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("groovy")
-@Singleton
 public class GroovyScriptEngineFactory // NOSONAR
     extends org.codehaus.groovy.jsr223.GroovyScriptEngineFactory
 {
@@ -59,7 +57,7 @@ public class GroovyScriptEngineFactory // NOSONAR
 
   private GroovyScriptEngine engine;
 
-  @Inject
+  @Autowired
   public GroovyScriptEngineFactory(
       final ApplicationDirectories applicationDirectories)
   {

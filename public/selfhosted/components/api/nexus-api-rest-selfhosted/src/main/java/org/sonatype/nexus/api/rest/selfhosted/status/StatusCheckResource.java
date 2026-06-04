@@ -24,8 +24,7 @@ import org.sonatype.nexus.rest.Resource;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.stereotype.Component;
@@ -36,7 +35,6 @@ import static org.sonatype.nexus.api.rest.selfhosted.status.StatusCheckResource.
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 @Component
-@Singleton
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 @Path(RESOURCE_PATH)
@@ -47,7 +45,7 @@ public class StatusCheckResource
 
   private final HealthCheckRegistry registry;
 
-  @Inject
+  @Autowired
   public StatusCheckResource(final HealthCheckRegistry registry) {
     this.registry = checkNotNull(registry);
   }

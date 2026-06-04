@@ -14,10 +14,8 @@ package org.sonatype.nexus.coreui.internal.repository;
 
 import java.util.Map;
 
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -30,13 +28,12 @@ import org.springframework.beans.factory.annotation.Value;
  * field based on whether the feature is enabled.
  */
 @Named
-@Singleton
 public class UrlEncodingModeStateContributor
     implements StateContributor
 {
   private final boolean urlEncodingModeEnabled;
 
-  @Inject
+  @Autowired
   public UrlEncodingModeStateContributor(
       @Value("${nexus.proxy.urlEncodingMode.enabled:false}") final boolean urlEncodingModeEnabled)
   {

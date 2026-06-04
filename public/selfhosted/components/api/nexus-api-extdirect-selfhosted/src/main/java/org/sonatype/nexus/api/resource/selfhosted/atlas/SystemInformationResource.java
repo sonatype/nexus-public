@@ -13,8 +13,7 @@
 package org.sonatype.nexus.api.resource.selfhosted.atlas;
 
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -36,7 +35,6 @@ import static org.sonatype.nexus.api.resource.selfhosted.atlas.SystemInformation
  * Renders system information. This is required for download of the report from the UI.
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class SystemInformationResource
     implements Resource
@@ -47,7 +45,7 @@ public class SystemInformationResource
 
   private final SystemInformationGenerator systemInformationGenerator;
 
-  @Inject
+  @Autowired
   public SystemInformationResource(final SystemInformationGenerator systemInformationGenerator) {
     this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
   }

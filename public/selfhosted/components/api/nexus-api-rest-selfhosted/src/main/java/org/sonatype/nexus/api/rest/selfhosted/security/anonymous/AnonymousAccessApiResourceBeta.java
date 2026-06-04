@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class AnonymousAccessApiResourceBeta
@@ -40,7 +38,7 @@ public class AnonymousAccessApiResourceBeta
 {
   static final String RESOURCE_URI = SecurityApiConstants.BETA_RESOURCE_URI + "anonymous";
 
-  @Inject
+  @Autowired
   public AnonymousAccessApiResourceBeta(
       final AnonymousManager anonymousManager,
       final RealmSecurityManager realmSecurityManager)

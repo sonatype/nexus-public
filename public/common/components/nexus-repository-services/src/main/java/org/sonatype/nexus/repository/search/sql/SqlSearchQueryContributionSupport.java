@@ -37,7 +37,7 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.TermCollection;
 import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -59,7 +59,7 @@ public abstract class SqlSearchQueryContributionSupport
 
   protected SearchMappingService mappingService;
 
-  @Inject
+  @Autowired
   public void init(final SearchMappingService mappingService) {
     this.mappingService = checkNotNull(mappingService);
   }

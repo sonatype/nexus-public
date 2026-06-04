@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 public class AuditLogCustomizer
     implements SupportBundleCustomizer
 {
@@ -47,7 +44,7 @@ public class AuditLogCustomizer
 
   private final LogManager logManager;
 
-  @Inject
+  @Autowired
   public AuditLogCustomizer(final LogManager logManager) {
     this.logManager = checkNotNull(logManager);
   }

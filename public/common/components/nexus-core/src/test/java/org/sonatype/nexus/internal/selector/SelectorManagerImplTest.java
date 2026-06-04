@@ -23,7 +23,7 @@ import java.util.Optional;
 import javax.cache.Cache;
 import javax.cache.configuration.Factory;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;

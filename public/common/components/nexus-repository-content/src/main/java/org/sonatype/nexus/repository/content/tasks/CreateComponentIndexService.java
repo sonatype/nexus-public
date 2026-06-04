@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.content.tasks;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationUtility;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * Service to remove the older component indexes on repository_id, namespace, name. And add new indexes on
  * repository_id, namespace, name AND version.
  */
-@Singleton
 @Component
 public class CreateComponentIndexService
 {
@@ -54,7 +51,7 @@ public class CreateComponentIndexService
 
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public CreateComponentIndexService(
       final DataSessionSupplier dataSessionSupplier,
       final DatabaseMigrationUtility databaseMigrationUtility,

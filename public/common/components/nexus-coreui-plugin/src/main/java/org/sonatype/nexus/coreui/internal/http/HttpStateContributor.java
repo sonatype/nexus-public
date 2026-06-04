@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.http;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
 import org.sonatype.nexus.rapture.StateContributor;
 
@@ -27,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class HttpStateContributor
     implements StateContributor
 {
@@ -39,7 +36,7 @@ public class HttpStateContributor
 
   private final String contextPath;
 
-  @Inject
+  @Autowired
   public HttpStateContributor(
       @Value("${nexus.react.httpSettings:true}") final Boolean featureFlag,
       @Value("${nexus-context-path:/}") final String contextPath,

@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -76,7 +76,7 @@ public class DatastoreDeadBlobFinder
 
   private BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public DatastoreDeadBlobFinder(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = blobStoreManager;
   }

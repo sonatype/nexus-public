@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
@@ -25,13 +23,12 @@ import org.springframework.stereotype.Component;
  *
  * @since 3.8
  */
-@Singleton
 @Component
 public class ComponentXOFactory
 {
   private final Set<ComponentXODecorator> componentXODecorators;
 
-  @Inject
+  @Autowired
   public ComponentXOFactory(final Set<ComponentXODecorator> componentXODecorators) {
     this.componentXODecorators = checkNotNull(componentXODecorators);
   }

@@ -14,8 +14,6 @@ package org.sonatype.nexus.common.time.internal;
 
 import java.time.OffsetDateTime;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.time.Clock;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class LocalClock
     implements Clock
 {

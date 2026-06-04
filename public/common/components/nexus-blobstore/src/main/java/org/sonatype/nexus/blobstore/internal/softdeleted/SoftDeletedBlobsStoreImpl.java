@@ -16,9 +16,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.softdeleted.BlobLocationUpdate;
 import org.sonatype.nexus.blobstore.api.softdeleted.SoftDeletedBlob;
@@ -36,12 +34,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class SoftDeletedBlobsStoreImpl
     extends ConfigStoreSupport<SoftDeletedBlobsDAO>
     implements SoftDeletedBlobsStore
 {
-  @Inject
+  @Autowired
   public SoftDeletedBlobsStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

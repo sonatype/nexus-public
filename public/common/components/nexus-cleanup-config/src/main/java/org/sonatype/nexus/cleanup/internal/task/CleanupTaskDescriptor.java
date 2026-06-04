@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.internal.task;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 import org.springframework.stereotype.Component;
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class CleanupTaskDescriptor
     extends TaskDescriptorSupport
 {

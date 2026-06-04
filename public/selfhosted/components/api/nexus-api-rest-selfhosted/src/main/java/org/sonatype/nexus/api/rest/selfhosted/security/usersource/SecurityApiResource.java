@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -45,7 +45,7 @@ public class SecurityApiResource
 
   private final Map<String, UserManager> userManagers;
 
-  @Inject
+  @Autowired
   public SecurityApiResource(final List<UserManager> userManagersList) {
     this.userManagers = QualifierUtil.buildQualifierBeanMap(userManagersList);
   }

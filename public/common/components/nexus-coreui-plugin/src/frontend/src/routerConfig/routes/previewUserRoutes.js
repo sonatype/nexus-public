@@ -16,17 +16,11 @@
  */
 
 import {UIView} from '@uirouter/react';
-import {lazyLoad} from './lazyLoad';
-
-const UserAccountPage = lazyLoad(() =>
-  import('../../components/super/settings/user-account/UserAccountPage')
-);
-const UserTokenPage = lazyLoad(() =>
-  import('../../components/super/pages/User/UserTokenPage')
-);
-const NuGetApiTokenPage = lazyLoad(() =>
-  import('../../components/super/pages/User/NuGetApiTokenPage')
-);
+import {
+  UserAccountPage,
+  UserTokenPage,
+  NuGetApiTokenPage,
+} from '@sonatype/nexus-ui-plugin';
 
 export const previewUserRoutes = [
   {

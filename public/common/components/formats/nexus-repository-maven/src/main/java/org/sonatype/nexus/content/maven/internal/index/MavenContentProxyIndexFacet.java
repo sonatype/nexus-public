@@ -14,7 +14,7 @@ package org.sonatype.nexus.content.maven.internal.index;
 
 import java.io.IOException;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
@@ -64,7 +64,7 @@ public class MavenContentProxyIndexFacet
 
   private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
 
-  @Inject
+  @Autowired
   public MavenContentProxyIndexFacet(
       final MavenIndexPublisher mavenIndexPublisher,
       final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider)

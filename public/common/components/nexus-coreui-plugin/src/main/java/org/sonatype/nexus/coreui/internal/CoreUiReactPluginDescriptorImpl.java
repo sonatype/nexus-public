@@ -15,13 +15,11 @@ package org.sonatype.nexus.coreui.internal;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.ui.UiPluginDescriptor;
 import org.sonatype.nexus.ui.UiUtil;
 
-import jakarta.annotation.Priority;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -32,9 +30,7 @@ import org.springframework.stereotype.Component;
  * @since 3.22
  */
 @Component
-@Singleton
-@Priority(Integer.MAX_VALUE - 100) // after nexus-rapture
-@Order(Ordered.HIGHEST_PRECEDENCE + 100)
+@Order(Ordered.HIGHEST_PRECEDENCE + 100) // after nexus-rapture
 public class CoreUiReactPluginDescriptorImpl
     implements UiPluginDescriptor
 {
@@ -44,7 +40,7 @@ public class CoreUiReactPluginDescriptorImpl
 
   private final List<String> styles;
 
-  @Inject
+  @Autowired
   public CoreUiReactPluginDescriptorImpl(final UiUtil uiUtil) {
     scripts = List.of(uiUtil.getPathForFile("nexus-coreui-bundle.js"));
     debugScripts = List.of(uiUtil.getPathForFile("nexus-coreui-bundle.debug.js"));

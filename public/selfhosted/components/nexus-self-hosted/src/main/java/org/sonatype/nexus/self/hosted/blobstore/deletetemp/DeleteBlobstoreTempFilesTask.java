@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.self.hosted.blobstore.deletetemp;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -35,7 +35,7 @@ public class DeleteBlobstoreTempFilesTask
 {
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public DeleteBlobstoreTempFilesTask(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }

@@ -25,9 +25,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -46,7 +44,6 @@ import org.springframework.stereotype.Component;
  */
 @ManagedLifecycle(phase = SERVICES)
 @Component
-@Singleton
 public class SystemInformationManagerImpl
     extends LifecycleSupport
     implements SystemInformationManager
@@ -63,7 +60,7 @@ public class SystemInformationManagerImpl
 
   private Cache<String, Map<String, Object>> localCache;
 
-  @Inject
+  @Autowired
   public SystemInformationManagerImpl(
       final SystemInformationGenerator systemInformationGenerator,
       final CacheHelper cacheHelper,

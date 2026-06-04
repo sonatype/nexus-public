@@ -18,8 +18,6 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
  * @since 3.87
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SoftDeletedBlobsIndexMigrationStep_2_48
     implements DatabaseMigrationStep
 {

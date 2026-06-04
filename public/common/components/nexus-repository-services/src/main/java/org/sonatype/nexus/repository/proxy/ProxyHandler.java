@@ -18,10 +18,13 @@ import java.io.UncheckedIOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
 import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.view.Context;
@@ -58,7 +61,7 @@ public class ProxyHandler
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  @Inject
+  @Autowired
   private NodeAccess nodeAccess;
 
   @Nonnull
@@ -92,8 +95,40 @@ public class ProxyHandler
     catch (RemoteBlockedIOException e) {
       return HttpResponses.notFound(e.getMessage());
     }
+    catch (BlobStoreWarmingUpException e) {
+      // Blob store connection pool is still initializing (temporary, retry-able)
+      log.info("Blob store '{}' warming up for {}, returning 503 to trigger client retry",
+          e.getBlobStoreName(), context.getRequest().getPath());
+      return HttpResponses.serviceUnavailable("Blob store warming up, please retry in a moment");
+    }
+    catch (MissingBlobException e) {
+      // CRITICAL: Blob exists in metadata but missing from storage (data corruption, not retry-able)
+      log.error("BLOB DATA LOSS: Blob {} missing from storage for {} - data corruption",
+          e.getBlobRef(), context.getRequest().getPath());
+      throw e; // Propagate as 500 error
+    }
+    catch (InvalidStateException e) {
+      // Generic invalid state (e.g., stopped repository - not retry-able)
+      log.warn("Invalid state for {}: {}",
+          context.getRequest().getPath(), e.getMessage());
+      throw e; // Propagate as 500 error
+    }
     catch (IOException | UncheckedIOException e) {
       return HttpResponses.badGateway();
+    }
+    catch (Exception e) {
+      // Walk the cause chain to find wrapped BlobStoreWarmingUpException (handles multi-level wrapping)
+      Throwable cause = e.getCause();
+      while (cause != null) {
+        if (cause instanceof BlobStoreWarmingUpException) {
+          log.info("Blob store '{}' warming up for {} (wrapped), returning 503 to trigger client retry",
+              ((BlobStoreWarmingUpException) cause).getBlobStoreName(),
+              context.getRequest().getPath());
+          return HttpResponses.serviceUnavailable("Blob store warming up, please retry in a moment");
+        }
+        cause = cause.getCause();
+      }
+      throw e;
     }
   }
 

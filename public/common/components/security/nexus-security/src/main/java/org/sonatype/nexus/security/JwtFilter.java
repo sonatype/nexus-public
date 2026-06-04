@@ -24,8 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.web.servlet.AdviceFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -44,7 +43,6 @@ import static org.sonatype.nexus.security.JwtHelper.JWT_COOKIE_NAME;
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 @WebFilter(filterName = JwtFilter.NAME)
 @Component
-@Singleton
 public class JwtFilter
     extends AdviceFilter
 {
@@ -54,7 +52,7 @@ public class JwtFilter
 
   private final List<JwtRefreshExemption> jwtExemptPaths;
 
-  @Inject
+  @Autowired
   public JwtFilter(
       final JwtHelper jwtHelper,
       final List<JwtRefreshExemption> jwtExemptPaths)

@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.view.handlers;
 import java.net.URL;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.text.Strings2;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class BrowseUnsupportedHandler
     implements Handler, org.sonatype.nexus.repository.BrowseUnsupportedHandler
 {
@@ -58,7 +55,7 @@ public class BrowseUnsupportedHandler
 
   private final Route route;
 
-  @Inject
+  @Autowired
   public BrowseUnsupportedHandler(final TemplateHelper templateHelper, final SecurityHandler securityHandler) {
     this.templateHelper = checkNotNull(templateHelper);
     checkNotNull(securityHandler);
@@ -107,6 +104,7 @@ public class BrowseUnsupportedHandler
       log.debug("Matching: {} {}", action, path);
       if (HttpMethods.GET.equals(action) || HttpMethods.HEAD.equals(action)) {
         path = Strings2.lower(path);
+
         return path.endsWith("/") || path.endsWith("/index.html") || path.endsWith("/index.htm");
       }
       return false;

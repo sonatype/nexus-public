@@ -17,8 +17,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.datastore.mybatis.handlers.ContentTypeHandler;
 
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * @since 3.20
  */
 @Component
-@Singleton
 public class BlobRefTypeHandler
     extends BaseTypeHandler<BlobRef>
     implements ContentTypeHandler<BlobRef>

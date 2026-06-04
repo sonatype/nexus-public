@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.rapture;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.rapture.settings.RaptureSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class UiSettingsManager
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

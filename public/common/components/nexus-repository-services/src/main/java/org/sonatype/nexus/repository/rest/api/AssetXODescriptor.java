@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Set;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 
 import org.springframework.stereotype.Component;
 
@@ -25,7 +23,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @FunctionalInterface
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public interface AssetXODescriptor
 {
   Set<String> listExposedAttributeKeys();

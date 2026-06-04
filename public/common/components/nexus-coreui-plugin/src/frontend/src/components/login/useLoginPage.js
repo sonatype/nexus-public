@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import {useCallback, useMemo} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import {ExtJS, useForm} from '@sonatype/nexus-ui-plugin';
 import {useRouter} from '@uirouter/react';
 import {createLoginFormMachine} from './loginFormMachine';
@@ -53,6 +53,30 @@ export default function useLoginPage() {
   }, [form.send, router, samlEnabled, oauth2Enabled, contextPrefix]);
 
   const isSsoRedirecting = form.state.context.isSsoRedirecting ?? false;
+  const rateLimitWarning = form.state.context.rateLimitWarning ?? false;
+  const retryAfterSeconds = form.state.context.retryAfterSeconds ?? null;
+
+  const [secondsLeft, setSecondsLeft] = useState(null);
+
+  useEffect(() => {
+    if (retryAfterSeconds == null) {
+      setSecondsLeft(null);
+      return;
+    }
+    setSecondsLeft(retryAfterSeconds);
+    const intervalId = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev !== null && prev <= 1) {
+          clearInterval(intervalId);
+          return null;
+        }
+        return prev !== null ? prev - 1 : null;
+      });
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [retryAfterSeconds]);
+
+  const isRateLimited = secondsLeft !== null;
 
   const handleContinueWithoutLogin = useCallback(() => {
     window.location.hash = '#browse/welcome';
@@ -64,6 +88,9 @@ export default function useLoginPage() {
     showSsoLogin,
     showAnonymousAccess,
     isSsoRedirecting,
+    rateLimitWarning,
+    secondsLeft,
+    isRateLimited,
     handleSsoLogin,
     handleContinueWithoutLogin,
     adminPasswordFilePath,

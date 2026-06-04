@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -42,7 +40,6 @@ import org.springframework.stereotype.Component;
  * DataStore {@link org.sonatype.nexus.extdirect.DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Datastore")
 public class DataStoreComponent
     extends DirectComponentSupport
@@ -62,7 +59,7 @@ public class DataStoreComponent
 
   private final boolean enabled;
 
-  @Inject
+  @Autowired
   public DataStoreComponent(
       final DataStoreManager dataStoreManager,
       final RepositoryManager repositoryManager,

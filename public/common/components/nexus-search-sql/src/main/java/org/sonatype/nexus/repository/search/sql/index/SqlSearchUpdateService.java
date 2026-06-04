@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.sql.index;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 
 import org.sonatype.nexus.repository.Repository;
@@ -32,14 +30,13 @@ import org.springframework.stereotype.Component;
  * Determines if a SQL table search index should be updated with common {@link SearchUpdateService} logic.
  */
 @Component
-@Singleton
 @Primary
 public class SqlSearchUpdateService
     implements SearchUpdateService
 {
   private final SearchStore searchTableStore;
 
-  @Inject
+  @Autowired
   public SqlSearchUpdateService(final SearchStore searchTableStore) {
     this.searchTableStore = checkNotNull(searchTableStore);
   }

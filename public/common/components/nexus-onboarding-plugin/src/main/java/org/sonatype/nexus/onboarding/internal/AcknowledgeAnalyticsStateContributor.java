@@ -16,9 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.35
  */
 @Component
-@Singleton
 public class AcknowledgeAnalyticsStateContributor
     implements StateContributor
 {
@@ -46,7 +43,7 @@ public class AcknowledgeAnalyticsStateContributor
 
   private final CapabilityRegistry capabilityRegistry;
 
-  @Inject
+  @Autowired
   public AcknowledgeAnalyticsStateContributor(
       final ApplicationVersion applicationVersion,
       final CapabilityRegistry capabilityRegistry)

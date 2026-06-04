@@ -13,8 +13,6 @@
 package org.sonatype.nexus.internal.httpclient;
 
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
-import jakarta.inject.Singleton;
 import javax.validation.Valid;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
@@ -41,8 +39,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier("memory")
-@Singleton
-@Priority(Integer.MIN_VALUE)
 @Order(Ordered.LOWEST_PRECEDENCE)
 @VisibleForTesting
 public class MemoryHttpClientConfigurationStore

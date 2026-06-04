@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class RepositoryViewSecurityContributor
     extends SecurityContributorSupport
     implements SecurityContributor

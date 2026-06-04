@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.content.maven.internal.search.Maven2ComponentFinder.SNAPSHOT_TIMESTAMP;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -61,7 +59,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenVersionNormalizer
     implements VersionNormalizer
 {

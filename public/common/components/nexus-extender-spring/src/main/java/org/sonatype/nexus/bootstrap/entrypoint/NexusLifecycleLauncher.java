@@ -29,9 +29,7 @@ import com.google.common.base.Strings;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Scope;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -47,7 +45,6 @@ import static org.sonatype.nexus.common.time.DateHelper.toDurationString;
  * Waits for Jetty to start and component scan to complete before launching the nexus lifecycle.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class NexusLifecycleLauncher
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

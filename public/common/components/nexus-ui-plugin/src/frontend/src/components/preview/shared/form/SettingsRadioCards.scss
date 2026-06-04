@@ -1,0 +1,150 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.settings-radio-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+
+  &__label {
+    display: block;
+    color: var(--gray-12, #1a1a1a);
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
+  }
+
+  &__required {
+    color: var(--red-9, #e5484d);
+    margin-left: var(--space-1, 4px);
+  }
+
+  &__group {
+    margin-top: var(--space-1, 4px);
+  }
+
+  &__card {
+    flex: 1;
+    padding: var(--space-4, 16px);
+    border: 1px solid var(--gray-6, #d1d1d6);
+    border-radius: var(--radius-3, 8px);
+    background: var(--color-background, #fff);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+
+    &:hover:not(&--disabled) {
+      border-color: var(--blue-8, #0091ff);
+      background: var(--blue-1, #fbfdff);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--blue-8, #0091ff);
+      box-shadow: 0 0 0 1px var(--blue-8, #0091ff);
+    }
+
+    &--selected {
+      border-color: var(--blue-8, #0091ff);
+      background: var(--blue-2, #f0f9ff);
+      border-width: 2px;
+      padding: calc(var(--space-4, 16px) - 1px); // Compensate for thicker border
+
+      // Add checkmark indicator in top-right corner
+      &::after {
+        content: '✓';
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--blue-9, #0081f1);
+        color: white;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 1;
+      }
+
+      [data-theme='dark'] & {
+        border-color: var(--blue-8, #0090ff);
+        background: var(--blue-3, #0d1f2d);
+
+        &::after {
+          background-color: var(--blue-9, #0090ff);
+        }
+      }
+    }
+
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: var(--gray-6, #d1d1d6);
+        background: var(--color-background, #fff);
+      }
+    }
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #19191b);
+      border-color: var(--gray-6, #3c3c43);
+
+      &:hover:not(&--disabled) {
+        border-color: var(--blue-8, #0090ff);
+        background: var(--blue-2, #0c1824);
+      }
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    color: var(--gray-9, #8b8b92);
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
+
+    .settings-radio-cards__card--selected & {
+      color: var(--blue-9, #0091ff);
+
+      [data-theme='dark'] & {
+        color: var(--blue-9, #0090ff);
+      }
+    }
+
+    .settings-radio-cards__card--disabled & {
+      color: var(--gray-7, #b0b0b8);
+    }
+  }
+
+  &__option-label {
+    color: var(--gray-12, #1a1a1a);
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
+  }
+
+  &__option-description {
+    color: var(--gray-11, #646469);
+    line-height: 1.5;
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #b0b0b8);
+    }
+  }
+}

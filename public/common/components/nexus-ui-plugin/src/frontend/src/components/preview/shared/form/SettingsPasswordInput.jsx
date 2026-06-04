@@ -13,14 +13,14 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Text } from '@radix-ui/themes';
+import { Box, IconButton, Text, TextField } from '@radix-ui/themes';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 import './SettingsPasswordInput.scss';
 
 /**
  * SettingsPasswordInput - Password input with visibility toggle
- * 
+ *
  * @example
  * <SettingsPasswordInput
  *   name="password"
@@ -40,14 +40,15 @@ export function SettingsPasswordInput({
   error = '',
   required = false,
   disabled = false,
-  autoComplete = 'current-password',
+  autoComplete = 'new-password',
   className = '',
   inputRef,
   onBlur,
   onFocus,
+  showToggle = true,
 }) {
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const inputId = `settings-input-${name}`;
   const helpId = `settings-help-${name}`;
   const errorId = `settings-error-${name}`;
@@ -70,8 +71,13 @@ export function SettingsPasswordInput({
           {required && <span className="settings-password-input__required">*</span>}
         </label>
       )}
-      <div className="settings-password-input__wrapper">
-        <input
+      {helpText && !error && (
+        <Text as="p" size="1" id={helpId} className="settings-password-input__help">
+          {helpText}
+        </Text>
+      )}
+      <Box className="settings-password-input__wrapper">
+        <TextField.Root
           ref={inputRef}
           id={inputId}
           name={name}
@@ -88,23 +94,24 @@ export function SettingsPasswordInput({
           aria-invalid={!!error}
           data-testid={`password-${name}`}
           className="settings-password-input__input"
+          size="2"
         />
-        <button
-          type="button"
-          className="settings-password-input__toggle"
-          onClick={toggleVisibility}
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
-          data-testid={`password-toggle-${name}`}
-          tabIndex={-1}
-        >
-          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </div>
-      {helpText && !error && (
-        <Text as="p" size="1" id={helpId} className="settings-password-input__help">
-          {helpText}
-        </Text>
-      )}
+        {showToggle && value && (
+          <IconButton
+            type="button"
+            variant="ghost"
+            color="gray"
+            size="1"
+            className="settings-password-input__toggle"
+            onClick={toggleVisibility}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            data-testid={`password-toggle-${name}`}
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </IconButton>
+        )}
+      </Box>
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-password-input__error">
           <AlertCircle size={14} />
@@ -126,9 +133,9 @@ SettingsPasswordInput.propTypes = {
   onChange: PropTypes.func,
   /** Placeholder text */
   placeholder: PropTypes.string,
-  /** Help text displayed below input */
+  /** Help text displayed between label and input */
   helpText: PropTypes.string,
-  /** Error message (replaces help text when present) */
+  /** Error message displayed below input (replaces help text when present) */
   error: PropTypes.string,
   /** Mark field as required */
   required: PropTypes.bool,
@@ -147,7 +154,8 @@ SettingsPasswordInput.propTypes = {
   onBlur: PropTypes.func,
   /** Focus handler */
   onFocus: PropTypes.func,
+  /** Show/hide visibility toggle button */
+  showToggle: PropTypes.bool,
 };
 
 export default SettingsPasswordInput;
-

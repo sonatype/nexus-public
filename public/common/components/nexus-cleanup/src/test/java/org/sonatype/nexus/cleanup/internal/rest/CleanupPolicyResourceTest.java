@@ -239,15 +239,15 @@ class CleanupPolicyResourceTest
             csvCleanupPreviewContentWriter,
             cleanupPolicyValidators);
 
-    // Test regex with URL-encoded curly braces (%7B and %7D)
-    // %7B6,%7D should be decoded to {6,}
+    // Test regex with curly braces (quantifiers)
+    // JAX-RS @QueryParam already decodes %7B6,%7D to {6,} before reaching the method
     Response response = underTest.previewContentCsv(
         "url-encoded-policy",
         repositoryName,
         null,
         null,
         null,
-        ".*-g[0-9a-f]%7B6,%7D.*",
+        ".*-g[0-9a-f]{6,}.*",
         null,
         null);
 
@@ -257,15 +257,15 @@ class CleanupPolicyResourceTest
     assertThat(contentDisposition, startsWith("attachment; filename=url-encoded-policy-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv"));
 
-    // Test regex with URL-encoded parentheses and pipes (%28, %29, %7C)
-    // %28jar%7Cwar%29 should be decoded to (jar|war)
+    // Test regex with parentheses and pipes
+    // JAX-RS @QueryParam already decodes %28/%29/%7C before reaching the method
     response = underTest.previewContentCsv(
         "encoded-parentheses",
         repositoryName,
         null,
         null,
         null,
-        ".*\\.%28jar%7Cwar%29$",
+        ".*\\.(jar|war)$",
         null,
         null);
 
@@ -275,15 +275,15 @@ class CleanupPolicyResourceTest
     assertThat(contentDisposition, startsWith("attachment; filename=encoded-parentheses-" + repositoryName));
     assertThat(contentDisposition, endsWith(".csv"));
 
-    // Test regex with mixed encoded and non-encoded characters
-    // [0-9]%7B3,5%7D should be decoded to [0-9]{3,5}
+    // Test regex with character class quantifier
+    // JAX-RS @QueryParam already decodes %7B3,5%7D to {3,5} before reaching the method
     response = underTest.previewContentCsv(
         "mixed-encoding",
         repositoryName,
         null,
         null,
         null,
-        "^[0-9]%7B3,5%7D\\.[a-z]+$",
+        "^[0-9]{3,5}\\.[a-z]+$",
         null,
         null);
 
@@ -333,11 +333,11 @@ class CleanupPolicyResourceTest
         csvCleanupPreviewContentWriter,
         cleanupPolicyValidators);
 
-    // Create policy with URL-encoded regex %7B6,%7D (which should be decoded to {6,})
+    // Create policy with regex containing curly braces (as JAX-RS delivers after decoding)
     CleanupPolicyXO policyXO = new CleanupPolicyXO();
     policyXO.setName("test-policy");
     policyXO.setFormat("docker");
-    policyXO.setCriteriaAssetRegex(".*-g[0-9a-f]%7B6,%7D.*");
+    policyXO.setCriteriaAssetRegex(".*-g[0-9a-f]{6,}.*");
 
     // Execute
     underTest.add(policyXO);
@@ -348,7 +348,7 @@ class CleanupPolicyResourceTest
 
     // Get the first captured criteria (the one used for storage)
     Map<String, String> capturedCriteria = criteriaCaptor.getAllValues().get(0);
-    // The regex should be decoded from %7B6,%7D to {6,}
+    // The regex should be preserved as-is (JAX-RS already decoded it)
     assertThat(capturedCriteria.get(REGEX_KEY), equalTo(".*-g[0-9a-f]{6,}.*"));
   }
 
@@ -392,11 +392,11 @@ class CleanupPolicyResourceTest
         csvCleanupPreviewContentWriter,
         cleanupPolicyValidators);
 
-    // Update policy with URL-encoded regex
+    // Update policy with regex containing curly braces (as JAX-RS delivers after decoding)
     CleanupPolicyXO policyXO = new CleanupPolicyXO();
     policyXO.setName("test-policy");
     policyXO.setFormat("docker");
-    policyXO.setCriteriaAssetRegex(".*%7B6,%7D.*");
+    policyXO.setCriteriaAssetRegex(".*{6,}.*");
 
     // Execute
     underTest.edit("test-policy", policyXO);
@@ -406,8 +406,103 @@ class CleanupPolicyResourceTest
     verify(existingPolicy).setCriteria(criteriaCaptor.capture());
 
     Map<String, String> capturedCriteria = criteriaCaptor.getValue();
-    // The regex should be decoded from %7B6,%7D to {6,}
+    // The regex should be preserved as-is (JAX-RS already decoded it)
     assertThat(capturedCriteria.get(REGEX_KEY), equalTo(".*{6,}.*"));
+  }
+
+  @Test
+  void testPreviewContentCsvWithPlusQuantifierInRegex() {
+    // The + regex quantifier should NOT be interpreted as a space.
+    // In a real HTTP scenario, JAX-RS @QueryParam already decodes the URL-encoded value,
+    // so the method receives a literal + character. The second URLDecoder.decode() in
+    // normalizeAndValidateRegex() interprets + as a space (application/x-www-form-urlencoded),
+    // which silently corrupts the regex pattern.
+    underTest =
+        new CleanupPolicyResource(
+            cleanupPolicyStorage,
+            formats,
+            List.of(),
+            cleanupPreviewHelper,
+            repositoryManager,
+            eventManager,
+            true,
+            csvCleanupPreviewContentWriter,
+            cleanupPolicyValidators);
+
+    // Simulate what JAX-RS delivers after decoding: a literal + in the regex
+    // This is the customer's regex: v2/myrepo/.*/[1-9][0-9]*\.[0-9]+\.[0-9]+
+    String regexWithPlus = "[0-9]+\\.[0-9]+";
+
+    Response response = underTest.previewContentCsv(
+        "plus-quantifier-policy",
+        repositoryName,
+        null,
+        null,
+        null,
+        regexWithPlus,
+        null,
+        null);
+
+    // The response should succeed (200) AND the regex should still contain +
+    assertThat(response.getStatus(), is(200));
+  }
+
+  @Test
+  void testAddPolicyWithPlusQuantifierInRegex() {
+    // NEXUS-51975: Verify that the + quantifier is preserved when creating a policy.
+    // The double URL-decoding in handleCriteria -> normalizeAndValidateRegex turns + into space.
+    Map<String, Boolean> configMap = new HashMap<>();
+    configMap.put(REGEX_KEY, true);
+    CleanupPolicyConfiguration mockConfig = mock(CleanupPolicyConfiguration.class);
+    when(mockConfig.getConfiguration()).thenReturn(configMap);
+
+    CleanupPolicyConfiguration defaultConfig = mock(CleanupPolicyConfiguration.class);
+    lenient().when(defaultConfig.getConfiguration()).thenReturn(configMap);
+
+    cleanupFormatConfigurationMap = Map.of(
+        "docker", mockConfig,
+        DefaultCleanupPolicyConfiguration.NAME, defaultConfig);
+    when(QualifierUtil.buildQualifierBeanMap(Mockito.<List<CleanupPolicyConfiguration>>any()))
+        .thenReturn(cleanupFormatConfigurationMap);
+
+    CleanupPolicy mockPolicy = mock(CleanupPolicy.class);
+    when(cleanupPolicyStorage.newCleanupPolicy()).thenReturn(mockPolicy);
+    when(cleanupPolicyStorage.add(any())).thenReturn(mockPolicy);
+    when(mockPolicy.getName()).thenReturn("test-policy");
+    when(mockPolicy.getFormat()).thenReturn("docker");
+    when(mockPolicy.getNotes()).thenReturn("");
+    when(mockPolicy.getCriteria()).thenReturn(new HashMap<>());
+
+    List<Format> mockFormats = List.of(mockFormat);
+    when(mockFormat.getValue()).thenReturn("docker");
+
+    underTest = new CleanupPolicyResource(
+        cleanupPolicyStorage,
+        mockFormats,
+        List.of(mockConfig, defaultConfig),
+        cleanupPreviewHelper,
+        repositoryManager,
+        eventManager,
+        true,
+        csvCleanupPreviewContentWriter,
+        cleanupPolicyValidators);
+
+    // Create policy with regex containing + quantifier (as JAX-RS would deliver it)
+    CleanupPolicyXO policyXO = new CleanupPolicyXO();
+    policyXO.setName("test-policy");
+    policyXO.setFormat("docker");
+    policyXO.setCriteriaAssetRegex("[0-9]+\\.[0-9]+");
+
+    // Execute
+    underTest.add(policyXO);
+
+    // Verify the stored regex still contains + (not a space)
+    ArgumentCaptor<Map<String, String>> criteriaCaptor = ArgumentCaptor.forClass(Map.class);
+    verify(mockPolicy, atLeastOnce()).setCriteria(criteriaCaptor.capture());
+
+    Map<String, String> capturedCriteria = criteriaCaptor.getAllValues().get(0);
+    // BUG: This currently FAILS because + is converted to space by URLDecoder.decode()
+    assertThat(capturedCriteria.get(REGEX_KEY), equalTo("[0-9]+\\.[0-9]+"));
   }
 
   @Test

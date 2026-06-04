@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.security.internal.rest;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class UserApiResourceBeta
@@ -38,7 +36,7 @@ public class UserApiResourceBeta
 {
   static final String RESOURCE_URI = SecurityApiConstants.BETA_RESOURCE_URI + "users/";
 
-  @Inject
+  @Autowired
   public UserApiResourceBeta(
       final SecuritySystem securitySystem)
   {

@@ -17,16 +17,12 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
 
 /**
  * Migration step for Node Heartbeat, activates the node-info table
  */
 @Component
-@Scope(SCOPE_SINGLETON)
 public class NodeHeartBeatMigrationStep_2_17_1
     implements DatabaseMigrationStep
 {

@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
@@ -69,7 +69,7 @@ import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG
 public class AptHostedMetadataFacet
     extends AptMetadataFacetSupport
 {
-  @Inject
+  @Autowired
   public AptHostedMetadataFacet(
       final ObjectMapper mapper,
       final Clock clock,

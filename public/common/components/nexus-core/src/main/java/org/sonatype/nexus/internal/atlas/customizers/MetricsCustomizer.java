@@ -19,9 +19,7 @@ import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
@@ -50,7 +48,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class MetricsCustomizer
     implements SupportBundleCustomizer
 {
@@ -66,7 +63,7 @@ public class MetricsCustomizer
 
   private final ObjectMapper metricsObjectMapper;
 
-  @Inject
+  @Autowired
   public MetricsCustomizer(final MetricRegistry metricRegistry, final HealthCheckRegistry healthCheckRegistry) {
     this.metricRegistry = checkNotNull(metricRegistry);
     this.healthCheckRegistry = checkNotNull(healthCheckRegistry);

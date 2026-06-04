@@ -18,9 +18,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.entity.EntityVersion;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -36,12 +34,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier(KeyStoreManagerImpl.NAME)
-@Singleton
 public class KeyStoreStorageManagerImpl
     extends ConfigStoreSupport<KeyStoreDAO>
     implements PersistentKeyStoreStorageManager
 {
-  @Inject
+  @Autowired
   public KeyStoreStorageManagerImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.types;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Type;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -27,7 +25,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(HostedType.NAME)
-@Singleton
 public class HostedType
     extends Type
 {

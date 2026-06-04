@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 
@@ -57,7 +57,7 @@ public class MultipartCopier
 
   private final int chunkSize;
 
-  @Inject
+  @Autowired
   public MultipartCopier(
       @Value("${nexus.s3.multipartupload.chunksize:5242880}") final int chunkSize)
   {

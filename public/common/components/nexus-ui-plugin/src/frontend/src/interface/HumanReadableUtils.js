@@ -23,7 +23,7 @@ import fileSize from 'file-size';
  *
  * Utility methods for creating human readable strings from data.
  */
-export default class HumanReadableUtils {
+class HumanReadableUtils {
   /**
    * Convert a size in bytes to a human readable string
    * @param bytes
@@ -37,3 +37,9 @@ export default class HumanReadableUtils {
     return fileSize(bytes).human(unitNotation);
   }
 }
+
+export default HumanReadableUtils;
+
+// Named re-export so consumers using `import { HumanReadableUtils } from '...'` get
+// the same class as the default export under Babel CJS interop.
+export { HumanReadableUtils };

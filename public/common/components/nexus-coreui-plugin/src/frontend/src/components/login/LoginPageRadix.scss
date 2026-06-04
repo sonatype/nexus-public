@@ -181,6 +181,7 @@ $nxrm-brand-hover: #008f68;
 
   &:disabled {
     cursor: not-allowed;
+    opacity: 0.5;
   }
 }
 

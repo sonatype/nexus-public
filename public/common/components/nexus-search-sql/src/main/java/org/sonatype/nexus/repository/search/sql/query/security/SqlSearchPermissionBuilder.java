@@ -47,8 +47,7 @@ import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,6 @@ import static org.sonatype.nexus.repository.search.sql.SqlSearchWildcardValidato
  * Appends the query parameters necessary for permission
  */
 @Component
-@Singleton
 public class SqlSearchPermissionBuilder
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -78,7 +76,7 @@ public class SqlSearchPermissionBuilder
 
   private final SearchContentSelectorSqlFilterGenerator contentSelectorFilterGenerator;
 
-  @Inject
+  @Autowired
   public SqlSearchPermissionBuilder(
       final RepositoryManager repositoryManager,
       final SecurityHelper securityHelper,

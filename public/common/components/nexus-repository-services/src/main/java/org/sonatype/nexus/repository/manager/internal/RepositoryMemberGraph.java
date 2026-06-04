@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -30,13 +30,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RepositoryMemberGraph
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -45,7 +42,7 @@ public class RepositoryMemberGraph
 
   private final Type groupType;
 
-  @Inject
+  @Autowired
   public RepositoryMemberGraph(final RepositoryManager repositoryManager, @Qualifier(GroupType.NAME) final Type type) {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.groupType = checkNotNull(type);

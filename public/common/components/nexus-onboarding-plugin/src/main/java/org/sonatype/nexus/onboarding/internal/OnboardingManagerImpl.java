@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingManager;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class OnboardingManagerImpl
     implements OnboardingManager
 {
@@ -44,7 +41,7 @@ public class OnboardingManagerImpl
 
   private final Set<OnboardingItem> onboardingItems;
 
-  @Inject
+  @Autowired
   public OnboardingManagerImpl(
       final Set<OnboardingItem> onboardingItems,
       final OnboardingConfiguration onboardingConfiguration)

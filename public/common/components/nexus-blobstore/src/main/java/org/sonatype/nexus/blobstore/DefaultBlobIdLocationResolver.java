@@ -19,8 +19,6 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.time.UTC;
 
 import org.springframework.context.annotation.Primary;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static java.util.UUID.randomUUID;
@@ -35,7 +33,6 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.TEMPORARY_BLOB_HEADER;
  */
 @Primary
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DefaultBlobIdLocationResolver
     implements BlobIdLocationResolver
 {

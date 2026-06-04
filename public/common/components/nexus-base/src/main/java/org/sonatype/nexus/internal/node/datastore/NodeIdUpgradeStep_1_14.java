@@ -15,11 +15,9 @@ package org.sonatype.nexus.internal.node.datastore;
 import java.sql.Connection;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,13 +27,12 @@ import org.slf4j.LoggerFactory;
  * node, or a cluster. Now a no-op {@see NodeIdInitializerimpl}
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class NodeIdUpgradeStep_1_14
     implements DatabaseMigrationStep
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  @Inject
+  @Autowired
   public NodeIdUpgradeStep_1_14() {
   }
 

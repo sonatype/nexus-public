@@ -13,8 +13,7 @@
 package org.sonatype.nexus.coreui.internal.roles;
 
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -41,7 +40,6 @@ import org.springframework.stereotype.Component;
  * REST resource for role-related UI operations.
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
@@ -53,7 +51,7 @@ public class RolesUIResource
 
   private final List<AuthorizationManager> authorizationManagers;
 
-  @Inject
+  @Autowired
   public RolesUIResource(final List<AuthorizationManager> authorizationManagers) {
     this.authorizationManagers = checkNotNull(authorizationManagers);
   }

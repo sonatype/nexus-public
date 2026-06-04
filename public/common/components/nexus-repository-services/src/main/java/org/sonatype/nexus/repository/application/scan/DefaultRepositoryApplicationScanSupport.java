@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.application.scan;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Qualifier(DefaultRepositoryApplicationScanSupport.DEFAULT)
-@Singleton
 public class DefaultRepositoryApplicationScanSupport
     implements RepositoryApplicationScanSupport
 {

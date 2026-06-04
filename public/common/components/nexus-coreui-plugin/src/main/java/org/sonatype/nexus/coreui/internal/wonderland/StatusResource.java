@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.coreui.internal.wonderland;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.rest.Resource;
 
@@ -35,7 +35,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @Path(StatusResource.RESOURCE_URI)
 public class StatusResource
     implements Resource
@@ -44,11 +43,19 @@ public class StatusResource
 
   public static final String RESOURCE_URI = "/wonderland/status";
 
+  private static final String CLOUD_EDITION_ID = "nexus-cloud-edition";
+
   private final ApplicationVersion applicationVersion;
 
-  @Inject
-  public StatusResource(final ApplicationVersion applicationVersion) {
+  private final NexusEditionSelector nexusEditionSelector;
+
+  @Autowired
+  public StatusResource(
+      final ApplicationVersion applicationVersion,
+      final NexusEditionSelector nexusEditionSelector)
+  {
     this.applicationVersion = checkNotNull(applicationVersion);
+    this.nexusEditionSelector = checkNotNull(nexusEditionSelector);
   }
 
   @GET
@@ -58,6 +65,7 @@ public class StatusResource
     StatusXO result = new StatusXO();
     result.setVersion(applicationVersion.getVersion());
     result.setEdition(applicationVersion.getEdition());
+    result.setIsCloud(CLOUD_EDITION_ID.equals(nexusEditionSelector.getCurrent().getId()));
     return result;
   }
 }

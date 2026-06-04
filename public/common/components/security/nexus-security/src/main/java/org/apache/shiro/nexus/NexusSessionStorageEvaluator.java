@@ -12,7 +12,7 @@
  */
 package org.apache.shiro.nexus;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 
@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 public class NexusSessionStorageEvaluator
     extends DefaultWebSessionStorageEvaluator
 {
-  @Inject
+  @Autowired
   @Value("${nexus.session.enabled:true}")
   private boolean sessionsEnabled;
 

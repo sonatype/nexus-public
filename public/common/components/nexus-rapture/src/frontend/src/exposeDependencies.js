@@ -14,18 +14,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import axios from 'axios';
-import * as rsc from '@sonatype/react-shared-components';
-import React from 'react';
-import {createRoot} from 'react-dom/client';
-import * as xstate from 'xstate';
-import * as luxon from 'luxon';
-
-export default function exposeDependencies() {
-  window.axios = axios;
-  window.react = React;
-  window.createRoot = createRoot;
-  window.xstate = xstate;
-  window.luxon = luxon;
-  window.rsc = rsc;
-}
+// window.createRoot is set by the implementation plugin bundle (nexus-coreui-plugin
+// or nexus-cloudui-plugin) which already bundles react-dom. This avoids duplicating
+// react and react-dom in both rapture and the plugin bundle.
+// See NX/view/SecondaryContainer.js for the sole consumer of window.createRoot.
+export default function exposeDependencies() {}

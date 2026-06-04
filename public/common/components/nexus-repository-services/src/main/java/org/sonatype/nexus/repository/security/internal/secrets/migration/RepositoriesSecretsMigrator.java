@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
@@ -51,7 +51,7 @@ public class RepositoriesSecretsMigrator
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public RepositoriesSecretsMigrator(final SecretsService secretsService, final RepositoryManager repositoryManager) {
     super(secretsService);
     this.repositoryManager = checkNotNull(repositoryManager);

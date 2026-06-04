@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.upgrades;
 
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -22,8 +22,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,13 +42,12 @@ import org.springframework.stereotype.Component;
  * and component_id for efficient ordered results.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ComponentIndexesMigrationStep_2_71
     implements DatabaseMigrationStep
 {
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public ComponentIndexesMigrationStep_2_71(final List<Format> formats) {
     this.formats = formats;
   }

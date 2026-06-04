@@ -12,7 +12,7 @@
  */
 package org.apache.shiro.nexus;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.apache.shiro.session.mgt.DefaultSessionManager;
 import org.apache.shiro.session.mgt.SessionManager;
@@ -29,7 +29,7 @@ public class TestSessionManager
 {
   private static final Logger log = LoggerFactory.getLogger(TestSessionManager.class);
 
-  @Inject
+  @Autowired
   public void configureProperties(
       @Value("${shiro.globalSessionTimeout:" + DEFAULT_GLOBAL_SESSION_TIMEOUT + "}") final long globalSessionTimeout)
   {

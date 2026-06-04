@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.Context;
@@ -35,7 +33,6 @@ import org.slf4j.LoggerFactory;
  */
 @Primary
 @Component
-@Singleton
 public class IndexHtmlForwardHandler
     implements Handler
 {

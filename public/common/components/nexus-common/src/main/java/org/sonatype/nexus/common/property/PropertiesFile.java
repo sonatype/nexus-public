@@ -18,7 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.sonatype.goodies.common.FileReplacer;
+import org.sonatype.nexus.common.io.FileReplacer;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;

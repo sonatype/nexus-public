@@ -29,8 +29,7 @@ import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 
 import jakarta.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -51,7 +50,6 @@ import static com.google.common.net.HttpHeaders.X_CONTENT_TYPE_OPTIONS;
 @Order(WebFilterPriority.WEB)
 @WebFilter("/*")
 @Component
-@Singleton
 public class EnvironmentFilter
     implements Filter
 {
@@ -64,7 +62,7 @@ public class EnvironmentFilter
 
   private final BaseUrlManager baseUrlManager;
 
-  @Inject
+  @Autowired
   public EnvironmentFilter(
       final ApplicationVersion applicationVersion,
       final BaseUrlManager baseUrlManager,

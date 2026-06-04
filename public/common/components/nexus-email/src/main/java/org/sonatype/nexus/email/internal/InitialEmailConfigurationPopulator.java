@@ -14,8 +14,6 @@ package org.sonatype.nexus.email.internal;
 
 import java.util.function.Function;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.email.EmailConfiguration;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,7 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("initial")
-@Singleton
 public class InitialEmailConfigurationPopulator
     implements Function<EmailConfiguration, EmailConfiguration>
 {

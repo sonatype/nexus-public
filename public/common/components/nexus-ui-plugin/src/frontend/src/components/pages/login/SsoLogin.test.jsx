@@ -13,11 +13,16 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS } from '../../../interface/ExtJS';
 import { useRouter } from '@uirouter/react';
 import SsoLogin from './SsoLogin';
 
-jest.mock('@sonatype/nexus-ui-plugin');
+jest.mock('../../../interface/ExtJS', () => ({
+  ExtJS: {
+    useState: jest.fn(),
+    state: jest.fn(),
+  },
+}));
 jest.mock('@uirouter/react');
 
 describe('SsoLogin', () => {

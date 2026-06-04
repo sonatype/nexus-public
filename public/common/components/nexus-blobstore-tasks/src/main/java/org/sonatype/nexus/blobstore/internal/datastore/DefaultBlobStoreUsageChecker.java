@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.internal.datastore;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -39,13 +37,12 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
  */
 @Primary
 @Component
-@Singleton
 public class DefaultBlobStoreUsageChecker
     implements BlobStoreUsageChecker
 {
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public DefaultBlobStoreUsageChecker(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }

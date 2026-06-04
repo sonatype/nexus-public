@@ -14,8 +14,6 @@ package org.sonatype.nexus.audit.protect;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
@@ -25,7 +23,6 @@ import com.google.common.eventbus.Subscribe;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class ProtectConfigAuditor
     extends AuditorSupport
     implements EventAware

@@ -20,7 +20,6 @@ import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -111,19 +110,6 @@ class PbeCipherImplTest
     byte[] decrypted = decryptCipher.decrypt();
 
     assertArrayEquals(largeInput.getBytes(), decrypted);
-  }
-
-  @Test
-  @Disabled("Flaky in Jenkins CI - passes locally but fails due to JVM crypto provider differences. " +
-      "See: https://issues.sonatype.org/browse/NEXUS-XXXXX for tracking.")
-  void testDecryptWithWrongKeyThrowsException() {
-    PbeCipherImpl cipher = new PbeCipherImpl(cryptoHelper, hashingHandler, secretKey, null, true, null);
-    EncryptedSecret encrypted = cipher.encrypt("Sensitive_data".getBytes());
-
-    SecretEncryptionKey wrongKey = new SecretEncryptionKey("wrong-key-id", "wrongPassword");
-    PbeCipherImpl decryptCipher = new PbeCipherImpl(cryptoHelper, hashingHandler, wrongKey, encrypted, true, null);
-
-    assertThrows(CipherException.class, decryptCipher::decrypt);
   }
 
   @Test

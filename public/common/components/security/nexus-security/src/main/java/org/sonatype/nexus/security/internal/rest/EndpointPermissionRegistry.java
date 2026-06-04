@@ -30,8 +30,7 @@ import org.sonatype.nexus.swagger.internal.SwaggerModel;
 import io.swagger.models.HttpMethod;
 import io.swagger.models.Operation;
 import io.swagger.models.Swagger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -48,7 +47,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Builds the UI-facing permission map from JAX-RS resources, merged with {@link PermissionMappingService} rows.
  */
 @Component
-@Singleton
 public class EndpointPermissionRegistry
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -69,7 +67,7 @@ public class EndpointPermissionRegistry
 
   private volatile boolean ready;
 
-  @Inject
+  @Autowired
   public EndpointPermissionRegistry(
       final PermissionMappingService permissionMappingService,
       final ObjectProvider<SwaggerModel> swaggerModelProvider)

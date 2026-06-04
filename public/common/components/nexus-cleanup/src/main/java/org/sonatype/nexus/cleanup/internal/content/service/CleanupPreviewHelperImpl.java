@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
@@ -61,7 +60,6 @@ import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
  * @since 3.29
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class CleanupPreviewHelperImpl
     implements CleanupPreviewHelper
 {
@@ -73,7 +71,7 @@ public class CleanupPreviewHelperImpl
 
   private final CleanupBrowseServiceFactory browseServiceFactory;
 
-  @Inject
+  @Autowired
   public CleanupPreviewHelperImpl(
       final CleanupPolicyStorage cleanupPolicyStorage,
       @Value("${nexus.cleanup.preview.timeout:60s}") final Duration previewTimeout,

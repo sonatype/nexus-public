@@ -1,0 +1,87 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.cert-view-dialog {
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 50;
+  }
+
+  &__content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 51;
+    background: var(--color-background);
+    border-radius: var(--radius-4);
+    border: 1px solid var(--gray-a6);
+    padding: var(--space-5);
+    width: min(520px, calc(100vw - 2rem));
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    box-shadow: var(--shadow-5);
+  }
+
+  &__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--gray-11);
+    cursor: pointer;
+    border-radius: var(--radius-2);
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--gray-a3);
+    }
+  }
+
+  &__details {
+    border: 1px solid var(--gray-a5);
+    border-radius: var(--radius-3);
+    padding: var(--space-4);
+  }
+
+  &__row {
+    padding: var(--space-1) 0;
+    border-bottom: 1px solid var(--gray-a3);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__label {
+    color: var(--gray-11);
+    flex-shrink: 0;
+    min-width: 160px;
+  }
+
+  &__value {
+    text-align: right;
+    word-break: break-word;
+  }
+
+  &__fingerprint {
+    background: var(--gray-a2);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    font-family: monospace;
+  }
+}

@@ -16,7 +16,6 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.app.ApplicationLicense;
 
-import jakarta.inject.Singleton;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
@@ -27,7 +26,6 @@ import static java.util.Collections.emptyMap;
  * CORE {@link ApplicationLicense}.
  */
 @Component
-@Singleton
 @ConditionalOnProperty(value = "nexus.edition", havingValue = "CORE", matchIfMissing = true)
 public class ApplicationLicenseImpl
     implements ApplicationLicense

@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingItemPriority;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class ConfigureAnonymousAccessItem
     implements OnboardingItem
 {
@@ -36,7 +33,7 @@ public class ConfigureAnonymousAccessItem
 
   private final AnonymousManager anonymousManager;
 
-  @Inject
+  @Autowired
   public ConfigureAnonymousAccessItem(final AnonymousManager anonymousManager) {
     this.anonymousManager = checkNotNull(anonymousManager);
   }

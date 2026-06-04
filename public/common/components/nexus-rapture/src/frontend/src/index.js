@@ -61,9 +61,7 @@ if (typeof window !== 'undefined' && !window.__nxExtJsDebugPatchedRapture) {
 console.info('[verify] rapture bundle from NEXUS_RESOURCE_DIRS loaded');
 
 import exposeDependencies from './exposeDependencies';
-import configureAxios from './configureAxios';
 import configureDebug from './configureDebug.js';
 
 exposeDependencies();
-configureAxios();
 configureDebug();

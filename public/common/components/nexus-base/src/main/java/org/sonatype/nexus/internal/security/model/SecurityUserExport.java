@@ -22,9 +22,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
@@ -49,14 +47,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("securityUserExport")
-@Singleton
 public class SecurityUserExport
     extends JsonExporter
     implements ExportSecurityData, ImportData
 {
   private final SecurityConfiguration configuration;
 
-  @Inject
+  @Autowired
   public SecurityUserExport(final SecurityConfiguration configuration) {
     this.configuration = configuration;
   }

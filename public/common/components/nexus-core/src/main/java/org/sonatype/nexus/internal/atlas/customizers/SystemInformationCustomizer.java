@@ -17,9 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.atlas.SystemInformationGenerator;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class SystemInformationCustomizer
     implements SupportBundleCustomizer
 {
@@ -50,7 +47,7 @@ public class SystemInformationCustomizer
 
   private final ObjectMapper objectMapper;
 
-  @Inject
+  @Autowired
   public SystemInformationCustomizer(final SystemInformationGenerator systemInformationGenerator) {
     this.systemInformationGenerator = checkNotNull(systemInformationGenerator);
     this.objectMapper = new ObjectMapper();

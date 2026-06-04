@@ -15,7 +15,7 @@ import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useCurrentStateAndParams, useRouter} from '@uirouter/react';
 import {TextField} from '@radix-ui/themes';
 import {Search as SearchIcon} from 'lucide-react';
-import {FormatBadge} from '../shared';
+import {FormatBadge} from '@sonatype/nexus-ui-plugin';
 import {ExtJS, useIsVisible, handleExtJsUnsavedChanges} from '@sonatype/nexus-ui-plugin';
 import {ROUTE_NAMES} from '../../routerConfig/routeNames/routeNames';
 import Axios from 'axios';

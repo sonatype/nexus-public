@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
@@ -27,11 +25,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.17
  */
 @Component
-@Singleton
 public class AptFormatSecurityContributor
     extends RepositoryFormatSecurityContributor
 {
-  @Inject
+  @Autowired
   public AptFormatSecurityContributor(@Qualifier(AptFormat.NAME) final Format format) {
     super(format);
   }

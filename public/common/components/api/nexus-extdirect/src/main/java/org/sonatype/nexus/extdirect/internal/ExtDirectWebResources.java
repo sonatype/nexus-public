@@ -15,9 +15,7 @@ package org.sonatype.nexus.extdirect.internal;
 import java.io.File;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.webresources.FileWebResource;
 import org.sonatype.nexus.webresources.WebResource;
@@ -35,13 +33,12 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class ExtDirectWebResources
     implements WebResourceBundle
 {
   private final ApplicationDirectories directories;
 
-  @Inject
+  @Autowired
   public ExtDirectWebResources(final ApplicationDirectories directories) {
     this.directories = checkNotNull(directories);
   }

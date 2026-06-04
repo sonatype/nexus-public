@@ -53,7 +53,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -89,7 +89,7 @@ public class AptContentFacetImpl
   @VisibleForTesting
   static final String CONFIG_KEY = "apt";
 
-  @Inject
+  @Autowired
   public AptContentFacetImpl(
       @Qualifier(AptFormat.NAME) final FormatStoreManager formatStoreManager)
   {

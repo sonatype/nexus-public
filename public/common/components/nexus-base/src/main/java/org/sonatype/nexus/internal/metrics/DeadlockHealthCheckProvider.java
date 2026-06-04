@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.metrics;
 
-import jakarta.inject.Singleton;
-
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.jvm.ThreadDeadlockHealthCheck;
 import org.springframework.beans.factory.FactoryBean;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("Thread Deadlock Detector")
-@Singleton
 public class DeadlockHealthCheckProvider
     implements FactoryBean<HealthCheck>
 {

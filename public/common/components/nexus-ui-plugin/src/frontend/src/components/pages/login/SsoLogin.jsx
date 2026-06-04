@@ -13,7 +13,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@radix-ui/themes';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS } from '../../../interface/ExtJS';
 import PropTypes from 'prop-types';
 import UIStrings from '../../../constants/UIStrings';
 import { useRouter } from '@uirouter/react';

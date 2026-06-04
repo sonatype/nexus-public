@@ -40,7 +40,7 @@
  *   LoadingState,
  *   ErrorState,
  *   HelpSection,
- * } from '@/components/shared';
+ * } from '.';
  * ```
  */
 
@@ -116,6 +116,26 @@ export {
   type ToastMessage,
 } from './Toast';
 
+// Tooltip - Renders inside Theme subtree for proper theme variable inheritance
+export {
+  Tooltip,
+  TooltipContainerProvider,
+  usePortalContainer,
+} from './Tooltip';
+
+// ThemeSwitcher - Icon-only toggle for dark/light mode
+export { ThemeSwitcher } from './ThemeSwitcher';
+
+// Badges - Format and type badges for repositories
+export {
+  FormatBadge,
+  type FormatBadgeProps,
+  FormatIcon,
+  type FormatIconProps,
+  FORMAT_LABELS,
+  FORMAT_LOGOS,
+} from './Badges';
+
 // ConfirmDialog - Modal confirmation dialog
 export { ConfirmDialog, type ConfirmDialogProps } from './ConfirmDialog';
 
@@ -138,3 +158,62 @@ export {
   SettingsButton,
   SettingsTransferList,
 } from './form';
+
+// SearchRadix - Global header search with autocomplete
+export { SearchRadix } from './SearchRadix';
+
+// Navigation Primitives - Reusable navigation components
+export {
+  NavItem,
+  type NavItemProps,
+  NavItemBox,
+  type NavItemBoxProps,
+  useRouteVisibility,
+  useContextAwareRouteName,
+  useIsPreviewUI,
+  PreviewUIContext,
+} from './Navigation';
+
+// SessionExpiry - Session expiration handling
+export {
+  SessionExpiryModal,
+  type SessionExpiryModalProps,
+  useSessionExpiry,
+  type UseSessionExpiryReturn,
+} from './SessionExpiry';
+
+// ErrorBoundary - Isolate crash-prone widgets so rest of page stays visible
+export { ErrorBoundary, type ErrorBoundaryProps } from './ErrorBoundary';
+
+// MetadataGrid - Two-column metadata display for profile pages
+export {
+  MetadataGrid,
+  type MetadataGridProps,
+  type MetadataGridItem,
+} from './MetadataGrid';
+
+// TablePagination - Page-based table pagination (Nexus One design)
+export {
+  TablePagination,
+  PAGE_SIZE_OPTIONS,
+  type TablePaginationProps,
+} from './TablePagination/TablePagination';
+
+// SortableTableHeader - Sortable column headers with aria-sort
+export {
+  SortableTableHeader,
+  TableHeader,
+  type SortDirection,
+} from './SortableTableHeader';
+
+// Modals - Reusable modal components
+export {
+  DeleteConfirmationModal,
+  type DeleteConfirmationModalProps,
+} from './modals';
+
+// DeepResearchLink - Link to Guide component page for deep research
+export {
+  DeepResearchLink,
+  type DeepResearchLinkProps,
+} from './DeepResearchLink';

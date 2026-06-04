@@ -23,9 +23,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
@@ -70,7 +68,6 @@ import static com.google.common.base.Preconditions.checkState;
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class SecurityConfigurationManagerImpl
     implements SecurityConfigurationManager, EventAware
 {
@@ -94,7 +91,7 @@ public class SecurityConfigurationManagerImpl
 
   private boolean firstTimeConfiguration = true;
 
-  @Inject
+  @Autowired
   public SecurityConfigurationManagerImpl(
       final SecurityConfigurationSource configurationSource,
       final SecurityConfigurationCleaner configCleaner,

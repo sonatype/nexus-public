@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.capability.condition.LogicalConditions;
 import org.sonatype.nexus.common.event.EventManager;
@@ -28,14 +26,13 @@ import org.springframework.stereotype.Component;
  * @since capabilities 2.0
  */
 @Component
-@Singleton
 public class LogicalConditionsImpl
     implements LogicalConditions
 {
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public LogicalConditionsImpl(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
   }

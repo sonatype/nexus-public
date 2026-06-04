@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.file;
 
 import java.util.Optional;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -58,7 +58,7 @@ public class FileBlobStoreResource
 
   private BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public FileBlobStoreResource(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }

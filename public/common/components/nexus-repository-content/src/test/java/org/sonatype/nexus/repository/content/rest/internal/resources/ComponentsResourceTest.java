@@ -53,16 +53,19 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import com.google.common.collect.ImmutableSet;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
@@ -72,7 +75,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -82,8 +86,10 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
-public class ComponentsResourceTest
+@ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
+@WithUser(permissions = {"nexus:uploader-metadata:read"})
+class ComponentsResourceTest
 {
   private static final String REPOSITORY_NAME = "test-repo";
 
@@ -137,8 +143,8 @@ public class ComponentsResourceTest
   @Spy
   private ComponentsResourceExtension componentsResourceExtension = new TestComponentsResourceExtension();
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     configureMockedRepository();
 
     underTest = new ComponentsResource(
@@ -154,7 +160,7 @@ public class ComponentsResourceTest
   // --- getComponents tests ---
 
   @Test
-  public void getComponents_returnsEmptyPageWhenNoComponents() {
+  void getComponents_returnsEmptyPageWhenNoComponents() {
     when(componentContinuation.isEmpty()).thenReturn(true);
 
     Page<ComponentXO> page = underTest.getComponents(null, REPOSITORY_NAME);
@@ -165,7 +171,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void getComponents_returnsPageWithComponents() {
+  void getComponents_returnsPageWithComponents() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
@@ -189,7 +195,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void getComponents_continuationTokenIsNullWhenFewerThanPageLimit() {
+  void getComponents_continuationTokenIsNullWhenFewerThanPageLimit() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
     when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
@@ -205,7 +211,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void getComponents_continuationTokenIsSetWhenExactlyPageLimit() {
+  void getComponents_continuationTokenIsSetWhenExactlyPageLimit() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
     when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
@@ -224,7 +230,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void getComponents_invokesExtensions() {
+  void getComponents_invokesExtensions() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(any(), eq(FORMAT_VALUE), eq(REPOSITORY_NAME))).thenReturn(true);
     when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
@@ -239,7 +245,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void getComponents_filtersAssetsByPermission() {
+  void getComponents_filtersAssetsByPermission() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
     // Deny asset-level permission
@@ -264,7 +270,7 @@ public class ComponentsResourceTest
   // --- getComponentById tests ---
 
   @Test
-  public void getComponentById_returnsComponent() {
+  void getComponentById_returnsComponent() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
     when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
@@ -285,19 +291,19 @@ public class ComponentsResourceTest
     assertThat(result.getFormat(), is(FORMAT_VALUE));
   }
 
-  @Test(expected = NotFoundException.class)
-  public void getComponentById_throwsNotFoundWhenComponentDoesNotExist() {
+  @Test
+  void getComponentById_throwsNotFoundWhenComponentDoesNotExist() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
         .thenReturn(Optional.empty());
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    underTest.getComponentById(encodedId);
+    assertThrows(NotFoundException.class, () -> underTest.getComponentById(encodedId));
   }
 
-  @Test(expected = NotFoundException.class)
-  public void getComponentById_throwsNotFoundWhenNotPermitted() {
+  @Test
+  void getComponentById_throwsNotFoundWhenNotPermitted() {
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(false);
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -306,11 +312,11 @@ public class ComponentsResourceTest
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    underTest.getComponentById(encodedId);
+    assertThrows(NotFoundException.class, () -> underTest.getComponentById(encodedId));
   }
 
   @Test
-  public void getComponentById_throwsUnprocessableEntityOnIllegalArgument() {
+  void getComponentById_throwsUnprocessableEntityOnIllegalArgument() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
         .thenThrow(new IllegalArgumentException("bad id"));
@@ -327,7 +333,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void getComponentById_setsIdCorrectly() {
+  void getComponentById_setsIdCorrectly() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
     when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
@@ -347,7 +353,7 @@ public class ComponentsResourceTest
   // --- deleteComponent tests ---
 
   @Test
-  public void deleteComponent_deletesExistingComponent() {
+  void deleteComponent_deletesExistingComponent() {
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -362,19 +368,19 @@ public class ComponentsResourceTest
     verify(maintenanceService).deleteComponent(repository, component);
   }
 
-  @Test(expected = NotFoundException.class)
-  public void deleteComponent_throwsNotFoundWhenComponentDoesNotExist() {
+  @Test
+  void deleteComponent_throwsNotFoundWhenComponentDoesNotExist() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
         .thenReturn(Optional.empty());
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    underTest.deleteComponent(encodedId);
+    assertThrows(NotFoundException.class, () -> underTest.deleteComponent(encodedId));
   }
 
-  @Test(expected = NotFoundException.class)
-  public void deleteComponent_throwsNotFoundWhenNotPermitted() {
+  @Test
+  void deleteComponent_throwsNotFoundWhenNotPermitted() {
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(false);
 
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -383,11 +389,11 @@ public class ComponentsResourceTest
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    underTest.deleteComponent(encodedId);
+    assertThrows(NotFoundException.class, () -> underTest.deleteComponent(encodedId));
   }
 
   @Test
-  public void deleteComponent_doesNotDeleteWhenComponentNotFound() {
+  void deleteComponent_doesNotDeleteWhenComponentNotFound() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(new DetachedEntityId(externalId)))
         .thenReturn(Optional.empty());
@@ -407,7 +413,7 @@ public class ComponentsResourceTest
   // --- uploadComponent tests ---
 
   @Test
-  public void uploadComponent_successfulUpload() throws Exception {
+  void uploadComponent_successfulUpload() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
 
@@ -420,7 +426,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void uploadComponent_acceptsMultipartWithBoundary() throws Exception {
+  void uploadComponent_acceptsMultipartWithBoundary() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn("multipart/form-data; boundary=----WebKitFormBoundary");
 
@@ -433,7 +439,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void uploadComponent_throwsBadRequestWhenContentTypeIsNull() throws Exception {
+  void uploadComponent_throwsBadRequestWhenContentTypeIsNull() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(null);
 
@@ -447,7 +453,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void uploadComponent_throwsBadRequestWhenContentTypeIsNotMultipart() throws Exception {
+  void uploadComponent_throwsBadRequestWhenContentTypeIsNotMultipart() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(MediaType.APPLICATION_JSON);
 
@@ -461,7 +467,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void uploadComponent_throwsBadRequestOnIllegalOperationException() throws Exception {
+  void uploadComponent_throwsBadRequestOnIllegalOperationException() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
     when(uploadManager.handle(repository, request))
@@ -477,7 +483,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void uploadComponent_propagatesIOException() throws Exception {
+  void uploadComponent_propagatesIOException() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
     when(uploadManager.handle(repository, request)).thenThrow(new IOException("Upload failed"));
@@ -494,7 +500,7 @@ public class ComponentsResourceTest
   // --- fromComponent / toComponentXOs tests (exercised through getComponentById) ---
 
   @Test
-  public void fromComponent_populatesAllFieldsCorrectly() {
+  void fromComponent_populatesAllFieldsCorrectly() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
     when(repositoryManagerRESTAdapter.findContainingGroups(REPOSITORY_NAME)).thenReturn(emptySet());
@@ -518,7 +524,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void fromComponent_invokesMultipleExtensions() {
+  void fromComponent_invokesMultipleExtensions() {
     ComponentsResourceExtension secondExtension = mock(ComponentsResourceExtension.class);
     when(secondExtension.updateComponentXO(any(), any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -548,7 +554,7 @@ public class ComponentsResourceTest
   }
 
   @Test
-  public void fromComponent_worksWithNoExtensions() {
+  void fromComponent_worksWithNoExtensions() {
     ComponentsResource resourceWithNoExtensions = new ComponentsResource(
         repositoryManagerRESTAdapter,
         maintenanceService,
@@ -577,7 +583,7 @@ public class ComponentsResourceTest
   // --- getComponent (private) error handling tested through getComponentById ---
 
   @Test
-  public void getComponent_throwsUnprocessableEntityForInvalidIdFormat() {
+  void getComponent_throwsUnprocessableEntityForInvalidIdFormat() {
     // When find throws IllegalArgumentException, the resource should wrap it as 422
     String externalId = toExternalId(COMPONENT_ID).getValue();
     when(fluentComponents.find(any(DetachedEntityId.class)))

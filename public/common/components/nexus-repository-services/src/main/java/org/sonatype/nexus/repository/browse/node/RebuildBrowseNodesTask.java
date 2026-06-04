@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.browse.node;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
@@ -48,7 +48,7 @@ public class RebuildBrowseNodesTask
 
   private final AtomicInteger totalRepositories = new AtomicInteger(0);
 
-  @Inject
+  @Autowired
   public RebuildBrowseNodesTask(
       final RebuildBrowseNodeService rebuildBrowseNodeService,
       final TaskResultStateStore taskResultStateStore)

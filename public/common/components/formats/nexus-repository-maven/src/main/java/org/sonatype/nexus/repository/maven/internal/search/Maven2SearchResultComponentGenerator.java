@@ -17,9 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
@@ -34,13 +32,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 /**
  * @since 3.14
  */
-@Singleton
 @Component
 @Qualifier(Maven2Format.NAME)
 public class Maven2SearchResultComponentGenerator
     extends SearchResultComponentGeneratorSupport
 {
-  @Inject
+  @Autowired
   public Maven2SearchResultComponentGenerator(
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final RepositoryManager repositoryManager,

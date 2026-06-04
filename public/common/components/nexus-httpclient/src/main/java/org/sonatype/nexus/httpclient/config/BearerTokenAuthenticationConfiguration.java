@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.httpclient.config;
 
+import java.util.List;
+
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.Secret;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -48,6 +51,12 @@ public class BearerTokenAuthenticationConfiguration
   @Override
   public Secret getSecret() {
     return getBearerToken();
+  }
+
+  @Override
+  @JsonIgnore
+  public List<String> getSecretFieldNames() {
+    return List.of("bearerTokenId");
   }
 
   @Override

@@ -15,10 +15,10 @@ package org.apache.shiro.nexus;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.UserIdMdcHelper;
@@ -50,7 +50,7 @@ public class NexusWebSecurityManager
 {
   private final Provider<EventManager> eventManager;
 
-  @Inject
+  @Autowired
   public NexusWebSecurityManager(
       final Provider<EventManager> eventManager,
       final Provider<CacheHelper> cacheHelper,

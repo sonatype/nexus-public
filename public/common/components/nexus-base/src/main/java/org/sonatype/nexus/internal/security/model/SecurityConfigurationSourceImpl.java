@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.security.model;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -44,7 +42,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 @Component
 @Qualifier("default")
 @ManagedLifecycle(phase = SCHEMAS)
-@Singleton
 public class SecurityConfigurationSourceImpl
     extends StateGuardLifecycleSupport
     implements SecurityConfigurationSource
@@ -53,7 +50,7 @@ public class SecurityConfigurationSourceImpl
 
   private SecurityConfigurationSource securityDefaults;
 
-  @Inject
+  @Autowired
   public SecurityConfigurationSourceImpl(
       final SecurityConfigurationImpl securityConfiguration,
       @Qualifier("static") @Nullable final SecurityConfigurationSource securityDefaults)

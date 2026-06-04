@@ -44,8 +44,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.web.util.WebUtils;
@@ -64,7 +63,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @WebServlet(urlPatterns = ViewServlet.MOUNT_POINT)
 @Component
-@Singleton
 public class ViewServlet
     extends HttpServlet
 {
@@ -89,7 +87,7 @@ public class ViewServlet
 
   private final DescriptionRenderer descriptionRenderer;
 
-  @Inject
+  @Autowired
   public ViewServlet(
       final RepositoryManager repositoryManager,
       final HttpResponseSenderSelector httpResponseSenderSelector,

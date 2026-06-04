@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.security.secrets;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -47,7 +45,6 @@ import org.springframework.stereotype.Component;
  * Implementation of {@link ReEncryptService}. It schedules a re-encryption task if one is not already running.
  */
 @Component
-@Singleton
 public class ReEncryptServiceImpl
     implements ReEncryptService
 {
@@ -68,7 +65,7 @@ public class ReEncryptServiceImpl
 
   private final Cooperation2 cooperation;
 
-  @Inject
+  @Autowired
   public ReEncryptServiceImpl(
       final KeyAccessValidator keyAccessValidator,
       final EncryptionKeyValidator encryptionKeyValidator,

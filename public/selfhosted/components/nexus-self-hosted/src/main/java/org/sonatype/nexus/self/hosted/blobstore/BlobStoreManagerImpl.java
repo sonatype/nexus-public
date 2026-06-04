@@ -15,10 +15,8 @@ package org.sonatype.nexus.self.hosted.blobstore;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
@@ -45,13 +43,12 @@ import org.springframework.stereotype.Component;
  * No overrides needed from the {@link BaseBlobStoreManager}, just annotations needed for DI.
  */
 @Component
-@Singleton
 @ManagedObject
 @ManagedLifecycle(phase = Phase.STORAGE)
 public class BlobStoreManagerImpl
     extends BaseBlobStoreManager
 {
-  @Inject
+  @Autowired
   public BlobStoreManagerImpl(
       final EventManager eventManager, // NOSONAR
       final BlobStoreConfigurationStore store,

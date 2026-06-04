@@ -20,9 +20,7 @@ import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import jakarta.inject.Inject;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +31,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Our S3 blob store implementation previously used the S3 expiration policy, this schedules compact tasks
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ScheduleS3CompactTasksMigrationStep
     implements RepeatableDatabaseMigrationStep
 {
@@ -49,7 +46,7 @@ public class ScheduleS3CompactTasksMigrationStep
 
   private final UpgradeTaskScheduler upgradeTaskScheduler;
 
-  @Inject
+  @Autowired
   public ScheduleS3CompactTasksMigrationStep(final UpgradeTaskScheduler upgradeTaskScheduler) {
     this.upgradeTaskScheduler = checkNotNull(upgradeTaskScheduler);
   }

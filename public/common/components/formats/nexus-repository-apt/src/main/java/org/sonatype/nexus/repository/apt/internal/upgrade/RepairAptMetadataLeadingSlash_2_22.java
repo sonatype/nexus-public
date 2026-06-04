@@ -21,8 +21,6 @@ import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,7 +29,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Start task to repair Apt metadata adding leading slash to Filename
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class RepairAptMetadataLeadingSlash_2_22
     implements DatabaseMigrationStep
 {

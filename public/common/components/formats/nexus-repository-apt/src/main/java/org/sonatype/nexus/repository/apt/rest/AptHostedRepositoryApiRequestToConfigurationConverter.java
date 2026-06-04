@@ -12,17 +12,15 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AptHostedRepositoryApiRequestToConfigurationConverter
     extends HostedRepositoryApiRequestToConfigurationConverter<AptHostedRepositoryApiRequest>
 {
@@ -30,8 +28,12 @@ public class AptHostedRepositoryApiRequestToConfigurationConverter
   public Configuration convert(final AptHostedRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
     configuration.attributes("apt").set("distribution", request.getApt().getDistribution());
-    configuration.attributes("aptSigning").set("keypair", request.getAptSigning().getKeypair());
-    configuration.attributes("aptSigning").set("passphrase", request.getAptSigning().getPassphrase());
+    if (request.getAptSigning() != null) {
+      if (!Strings2.isBlank(request.getAptSigning().getKeypair())) {
+        configuration.attributes("aptSigning").set("keypair", request.getAptSigning().getKeypair());
+      }
+      configuration.attributes("aptSigning").set("passphrase", request.getAptSigning().getPassphrase());
+    }
     return configuration;
   }
 }

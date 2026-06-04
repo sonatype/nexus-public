@@ -13,16 +13,17 @@
 package org.sonatype.nexus.repository.rest.internal.api;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -30,7 +31,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import java.util.HashMap;
+
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
@@ -66,7 +72,6 @@ import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
  * @since 3.29
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RepositoryInternalResource.RESOURCE_PATH)
@@ -82,6 +87,8 @@ public class RepositoryInternalResource
       "(All Repositories)");
 
   static final String ALL_FORMATS = "*";
+
+  private static final Set<String> ALLOWED_FACET_PACKAGES = Set.of("org.sonatype.nexus.", "com.sonatype.nexus.");
 
   private final List<Format> formats;
 
@@ -101,7 +108,7 @@ public class RepositoryInternalResource
 
   private final RepositoryMetricsService repositoryMetricsService;
 
-  @Inject
+  @Autowired
   public RepositoryInternalResource(
       final List<Format> formats,
       final RepositoryManager repositoryManager,
@@ -130,14 +137,25 @@ public class RepositoryInternalResource
       @QueryParam("type") final String type,
       @QueryParam("withAll") final boolean withAll,
       @QueryParam("withFormats") final boolean withFormats,
-      @QueryParam("format") final String formatParam)
+      @QueryParam("format") final String formatParam,
+      @QueryParam("facets") final String facetsParam)
   {
+    // Parse facets filter (comma-separated fully-qualified class names)
+    List<Class<? extends Facet>> facetClasses = parseFacets(facetsParam);
+    // Parse type filter (comma-separated, with ! prefix for exclusions)
+    List<String> typeIncludes = parseIncludes(type);
+    List<String> typeExcludes = parseExcludes(type);
+    // Parse format filter (comma-separated, with ! prefix for exclusions)
+    // ALL_FORMATS ("*") means no format filtering
+    final boolean allFormats = formatParam != null && formatParam.equals(ALL_FORMATS);
+    List<String> formatIncludes = allFormats ? Collections.emptyList() : parseIncludes(formatParam);
+    List<String> formatExcludes = allFormats ? Collections.emptyList() : parseExcludes(formatParam);
+
     List<RepositoryXO> repositories = repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse())
         .stream()
-        .filter(repository -> isBlank(type) || type.equals(repository.getType().getValue()))
-        .filter(repository -> isBlank(formatParam)
-            || formatParam.equals(ALL_FORMATS)
-            || formatParam.equals(repository.getFormat().getValue()))
+        .filter(repository -> matchesFilter(repository.getType().getValue(), typeIncludes, typeExcludes))
+        .filter(repository -> matchesFilter(repository.getFormat().getValue(), formatIncludes, formatExcludes))
+        .filter(repository -> facetClasses.isEmpty() || hasAnyFacet(repository, facetClasses))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());
@@ -159,6 +177,55 @@ public class RepositoryInternalResource
     return result;
   }
 
+  /**
+   * Parse comma-separated facet class names into Class objects.
+   */
+  @SuppressWarnings("unchecked")
+  private List<Class<? extends Facet>> parseFacets(final String facetsParam) {
+    if (isBlank(facetsParam)) {
+      return Collections.emptyList();
+    }
+    List<Class<? extends Facet>> result = new ArrayList<>();
+    for (String facetName : facetsParam.split(",")) {
+      String trimmed = facetName.trim();
+      if (!trimmed.isEmpty()) {
+        if (ALLOWED_FACET_PACKAGES.stream().noneMatch(trimmed::startsWith)) {
+          log.warn("Facet class name '{}' is not in an allowed package", trimmed);
+          continue;
+        }
+        try {
+          Class<?> clazz = Class.forName(trimmed);
+          if (Facet.class.isAssignableFrom(clazz)) {
+            result.add((Class<? extends Facet>) clazz);
+          }
+          else {
+            log.warn("Class {} is not a Facet", trimmed);
+          }
+        }
+        catch (ClassNotFoundException e) {
+          log.warn("Facet class not found: {}", trimmed);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Check if a repository has any of the specified facets.
+   */
+  private boolean hasAnyFacet(final Repository repository, final List<Class<? extends Facet>> facetClasses) {
+    for (Class<? extends Facet> facetClass : facetClasses) {
+      try {
+        repository.facet(facetClass);
+        return true;
+      }
+      catch (MissingFacetException e) {
+        // Facet not present, try next
+      }
+    }
+    return false;
+  }
+
   @GET
   @Path("/repository/{repositoryName}")
   @RequiresAuthentication
@@ -167,6 +234,32 @@ public class RepositoryInternalResource
         .map(repository -> convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter)
             .adapt(repository))
         .get();
+  }
+
+  /**
+   * Returns the signing passphrase for a repository (admin-only, internal endpoint).
+   * Used by the admin UI to populate password fields on edit without exposing secrets via public API.
+   */
+  @GET
+  @Path("/repository/{repositoryName}/signing-passphrase")
+  @RequiresAuthentication
+  public Map<String, String> getSigningPassphrase(@PathParam("repositoryName") final String repositoryName) {
+    Repository repository = authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName).get();
+    String format = repository.getFormat().getValue();
+    Map<String, String> result = new HashMap<>();
+
+    if ("apt".equals(format)) {
+      NestedAttributesMap attrs = repository.getConfiguration().attributes("aptSigning");
+      String passphrase = attrs.get("passphrase", String.class);
+      result.put("passphrase", passphrase);
+    }
+    else if ("yum".equals(format)) {
+      NestedAttributesMap attrs = repository.getConfiguration().attributes("yumSigning");
+      String passphrase = attrs.get("passphrase", String.class);
+      result.put("passphrase", passphrase);
+    }
+
+    return result;
   }
 
   @GET
@@ -259,6 +352,45 @@ public class RepositoryInternalResource
       }
     }
     return result;
+  }
+
+  private List<String> parseIncludes(String value) {
+    if (isBlank(value)) {
+      return Collections.emptyList();
+    }
+    List<String> result = new ArrayList<>();
+    for (String part : value.split(",")) {
+      String trimmed = part.trim().toLowerCase();
+      if (!trimmed.isEmpty() && !trimmed.startsWith("!")) {
+        result.add(trimmed);
+      }
+    }
+    return result;
+  }
+
+  private List<String> parseExcludes(String value) {
+    if (isBlank(value)) {
+      return Collections.emptyList();
+    }
+    List<String> result = new ArrayList<>();
+    for (String part : value.split(",")) {
+      String trimmed = part.trim().toLowerCase();
+      if (trimmed.startsWith("!") && trimmed.length() > 1) {
+        result.add(trimmed.substring(1));
+      }
+    }
+    return result;
+  }
+
+  private boolean matchesFilter(String value, List<String> includes, List<String> excludes) {
+    String lowerValue = value.toLowerCase();
+    if (!excludes.isEmpty() && excludes.contains(lowerValue)) {
+      return false;
+    }
+    if (!includes.isEmpty()) {
+      return includes.contains(lowerValue);
+    }
+    return true;
   }
 
   private boolean filterByFormats(RepositoryDetailXO repo, List<String> formats) {

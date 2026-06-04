@@ -68,6 +68,14 @@ Ext.define('NX.coreui.view.repository.facet.ProxyFacet', {
             }
           },
           {
+            xtype: 'displayfield',
+            itemId: 'remoteUrlOriginWarning',
+            value: '<span class="x-fa fa-exclamation-triangle"></span> ' +
+                'Remote URL has changed. Authentication credentials have been reset and must be re-entered.',
+            cls: 'nx-warning-text',
+            hidden: true
+          },
+          {
             xtype: 'checkbox',
             name: 'attributes.replication.preemptivePullEnabled',
             hidden: !isReplicationEnabled,

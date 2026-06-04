@@ -66,6 +66,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -143,6 +144,10 @@ class RepositoryUiServiceTest
 
   @Mock
   private Map<String, Object> storage;
+
+  private static final String REMOTE_URL_CHANGE_ERROR_MESSAGE =
+      "Remote URL has changed. " +
+          "Authentication credentials have been reset and must be re-entered.";
 
   @BeforeEach
   void setup() {
@@ -701,5 +706,409 @@ class RepositoryUiServiceTest
     catch (org.sonatype.nexus.repository.BadRequestException e) {
       assertThat(e.getMessage(), is("Recipe not found for repository: failed-repo"));
     }
+  }
+
+  @Test
+  void testRemoteUrlPathChangeBlocksWithPlaceholder() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with remoteUrl
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "username");
+    storedAuthentication.put("password", "secret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with only path changed - ANY URL change now triggers validation
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://repo.example.com/v2/"); // Different path = URL changed
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "username");
+    newAuthentication.put("password", "#~NXRM~PLACEHOLDER~PASSWORD~#"); // Placeholder = credential exfiltration
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should throw BadRequestException - ANY URL change with placeholder is blocked
+    org.sonatype.nexus.repository.BadRequestException exception = assertThrows(
+        org.sonatype.nexus.repository.BadRequestException.class,
+        () -> underTest.update(repositoryXO));
+    assertThat(exception.getMessage(), is(REMOTE_URL_CHANGE_ERROR_MESSAGE));
+  }
+
+  @Test
+  void testRemoteUrlPathChangeAllowedWithNewCredentials() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with remoteUrl
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "username");
+    storedAuthentication.put("password", "oldSecret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with path changed AND new credentials (legitimate change)
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://repo.example.com/v2/"); // Different path
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "username");
+    newAuthentication.put("password", "newSecret456"); // New credential = intentional change
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should NOT throw - user provided new credentials
+    underTest.update(repositoryXO);
+
+    // Verify new password was kept
+    assertThat(newAuthentication.get("password"), is("newSecret456"));
+  }
+
+  @Test
+  void testRemoteUrlHostChangeBlocksWithPlaceholder() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with remoteUrl and credentials
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "username");
+    storedAuthentication.put("password", "secret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with host changed AND placeholder (attack vector)
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://attacker.example.com/v1/"); // Different host
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "username");
+    newAuthentication.put("password", "#~NXRM~PLACEHOLDER~PASSWORD~#"); // Placeholder = credential exfiltration
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should throw BadRequestException
+    org.sonatype.nexus.repository.BadRequestException exception = assertThrows(
+        org.sonatype.nexus.repository.BadRequestException.class,
+        () -> underTest.update(repositoryXO));
+    assertThat(exception.getMessage(), is(REMOTE_URL_CHANGE_ERROR_MESSAGE));
+  }
+
+  @Test
+  void testRemoteUrlHostChangeAllowedWithNewCredentials() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with remoteUrl and credentials
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "username");
+    storedAuthentication.put("password", "oldSecret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with host changed AND new credentials (legitimate change)
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://new-repo.example.com/v1/"); // Different host
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "username");
+    newAuthentication.put("password", "newSecret456"); // New credential = intentional change
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should NOT throw - user provided new credentials
+    underTest.update(repositoryXO);
+
+    // Verify new password was kept
+    assertThat(newAuthentication.get("password"), is("newSecret456"));
+  }
+
+  @Test
+  void testRemoteUrlHostChangeAllowedWithEmptyCredentials() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with remoteUrl and credentials
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("password", "oldSecret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with host changed AND no authentication (user cleared it intentionally)
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://new-repo.example.com/v1/"); // Different host
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    // Empty authentication = no authentication for new repo
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should NOT throw - user intentionally cleared credentials
+    underTest.update(repositoryXO);
+  }
+
+  @Test
+  void testRemoteUrlSchemeChangeBlocksWithPlaceholder() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with https
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "username");
+    storedAuthentication.put("password", "secret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with scheme changed and placeholder
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "http://repo.example.com/v1/"); // http instead of https = URL changed
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "username");
+    newAuthentication.put("password", "#~NXRM~PLACEHOLDER~PASSWORD~#");
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should throw BadRequestException - URL changed with placeholder
+    org.sonatype.nexus.repository.BadRequestException exception = assertThrows(
+        org.sonatype.nexus.repository.BadRequestException.class,
+        () -> underTest.update(repositoryXO));
+    assertThat(exception.getMessage(), is(REMOTE_URL_CHANGE_ERROR_MESSAGE));
+  }
+
+  @Test
+  void testRemoteUrlPortChangeBlocksWithPlaceholder() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with default port
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "username");
+    storedAuthentication.put("password", "secret123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with different port and placeholder
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://repo.example.com:9443/v1/"); // Different port = URL changed
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "username");
+    newAuthentication.put("password", "#~NXRM~PLACEHOLDER~PASSWORD~#");
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should throw BadRequestException - URL changed with placeholder
+    org.sonatype.nexus.repository.BadRequestException exception = assertThrows(
+        org.sonatype.nexus.repository.BadRequestException.class,
+        () -> underTest.update(repositoryXO));
+    assertThat(exception.getMessage(), is(REMOTE_URL_CHANGE_ERROR_MESSAGE));
+  }
+
+  @Test
+  void testRemoteUrlHostChangeBlocksWithBearerTokenPlaceholder() {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with bearer token
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("type", "bearerToken");
+    storedAuthentication.put("bearerTokenId", "oldToken123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with host changed AND bearer token placeholder
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://attacker.example.com/v1/"); // Different host
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("type", "bearerToken");
+    newAuthentication.put("bearerTokenId", "#~NXRM~PLACEHOLDER~PASSWORD~#"); // Placeholder
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should throw BadRequestException
+    org.sonatype.nexus.repository.BadRequestException exception = assertThrows(
+        org.sonatype.nexus.repository.BadRequestException.class,
+        () -> underTest.update(repositoryXO));
+    assertThat(exception.getMessage(), is(REMOTE_URL_CHANGE_ERROR_MESSAGE));
+  }
+
+  @Test
+  void testRemoteUrlHostChangeAllowedWithNewBearerToken() throws Exception {
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+
+    // Stored proxy config with bearer token
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    Map<String, Object> storedProxy = new HashMap<>();
+    storedProxy.put("remoteUrl", "https://repo.example.com/v1/");
+    storedAttributes.put("proxy", storedProxy);
+    Map<String, Object> storedHttpclient = new HashMap<>();
+    Map<String, Object> storedAuthentication = new HashMap<>();
+    storedAuthentication.put("bearerTokenId", "oldToken123");
+    storedHttpclient.put("authentication", storedAuthentication);
+    storedAttributes.put("httpclient", storedHttpclient);
+
+    // New attributes with host changed AND new bearer token
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    Map<String, Object> newProxy = new HashMap<>();
+    newProxy.put("remoteUrl", "https://new-repo.example.com/v1/"); // Different host
+    newAttributes.put("proxy", newProxy);
+    Map<String, Object> newHttpclient = new HashMap<>();
+    Map<String, Object> newAuthentication = new HashMap<>();
+    newAuthentication.put("bearerTokenId", "newToken456"); // New token
+    newHttpclient.put("authentication", newAuthentication);
+    newAttributes.put("httpclient", newHttpclient);
+
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+
+    // Should NOT throw - user provided new bearer token
+    underTest.update(repositoryXO);
+
+    // Verify new token was kept
+    assertThat(newAuthentication.get("bearerTokenId"), is("newToken456"));
+  }
+
+  @Test
+  void testNoProxyAttributesNoValidation() throws Exception {
+    Map<String, Map<String, Object>> storedAttributes = new HashMap<>();
+    storedAttributes.put("storage", Map.of("blobStoreName", "default"));
+
+    when(configuration.getAttributes()).thenReturn(storedAttributes);
+    when(configuration.copy()).thenReturn(configuration);
+
+    Map<String, Map<String, Object>> newAttributes = new HashMap<>();
+    newAttributes.put("storage", Map.of("blobStoreName", "default"));
+
+    when(repositoryXO.getName()).thenReturn("test");
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getRoutingRuleId()).thenReturn(null);
+    when(repositoryXO.getAttributes()).thenReturn(newAttributes);
+
+    underTest.update(repositoryXO);
+  }
+
+  @Test
+  void testIsRemoteUrlChangedDetectsChange() {
+    Map<String, Map<String, Object>> oldAttrs = Map.of("proxy", Map.of("remoteUrl", "https://old.example.com/v1/"));
+    Map<String, Map<String, Object>> newAttrs = Map.of("proxy", Map.of("remoteUrl", "https://new.example.com/v1/"));
+
+    assertThat(RepositoryUiService.isRemoteUrlChanged(oldAttrs, newAttrs), is(true));
+  }
+
+  @Test
+  void testIsRemoteUrlChangedSameUrl() {
+    Map<String, Map<String, Object>> oldAttrs = Map.of("proxy", Map.of("remoteUrl", "https://example.com/v1/"));
+    Map<String, Map<String, Object>> newAttrs = Map.of("proxy", Map.of("remoteUrl", "https://example.com/v1/"));
+
+    assertThat(RepositoryUiService.isRemoteUrlChanged(oldAttrs, newAttrs), is(false));
+  }
+
+  @Test
+  void testIsRemoteUrlChangedDifferentPath() {
+    Map<String, Map<String, Object>> oldAttrs = Map.of("proxy", Map.of("remoteUrl", "https://example.com/v1/"));
+    Map<String, Map<String, Object>> newAttrs = Map.of("proxy", Map.of("remoteUrl", "https://example.com/v2/"));
+
+    assertThat(RepositoryUiService.isRemoteUrlChanged(oldAttrs, newAttrs), is(true));
+  }
+
+  @Test
+  void testIsRemoteUrlChangedNoProxyAttributes() {
+    Map<String, Map<String, Object>> oldAttrs = Map.of("storage", Map.of("blobStoreName", "default"));
+    Map<String, Map<String, Object>> newAttrs = Map.of("storage", Map.of("blobStoreName", "default"));
+
+    assertThat(RepositoryUiService.isRemoteUrlChanged(oldAttrs, newAttrs), is(false));
   }
 }

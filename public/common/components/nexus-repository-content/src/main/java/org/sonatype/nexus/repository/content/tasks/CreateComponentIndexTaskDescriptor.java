@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.tasks;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class CreateComponentIndexTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -39,7 +36,7 @@ public class CreateComponentIndexTaskDescriptor
 
   public static final String VISIBLE_FLAG_VALUE = "${nexus.component.index.task.visible:false}";
 
-  @Inject
+  @Autowired
   public CreateComponentIndexTaskDescriptor(
       @Value(EXPOSED_FLAG_VALUE) final boolean exposed,
       @Value(VISIBLE_FLAG_VALUE) final boolean visible)

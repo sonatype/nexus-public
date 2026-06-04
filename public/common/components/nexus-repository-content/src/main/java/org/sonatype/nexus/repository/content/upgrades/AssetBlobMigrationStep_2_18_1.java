@@ -19,9 +19,6 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
-
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,7 +30,6 @@ import org.springframework.stereotype.Component;
  * customers that go to the 3.86.1 release and then 3.87 or any other future release
  */
 @Component
-@Scope(SCOPE_SINGLETON)
 public class AssetBlobMigrationStep_2_18_1
     implements DatabaseMigrationStep
 {

@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 
+import org.apache.commons.fileupload.FileItemHeaders;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadBase;
@@ -98,6 +99,13 @@ class HttpPartIteratorAdapter
     @Override
     public boolean isFormField() {
       return next.isFormField();
+    }
+
+    @Nullable
+    @Override
+    public String getHeader(final String name) {
+      FileItemHeaders headers = next.getHeaders();
+      return headers != null ? headers.getHeader(name) : null;
     }
   }
 

@@ -37,6 +37,10 @@ export default {
     CONNECTION_FAILED: 'Connection failed. Please check your network connection.',
     AUTHENTICATION_FAILED: 'An error occurred during authentication',
     USERNAME_REQUIRED: 'Username is required',
-    PASSWORD_REQUIRED: 'Password is required'
+    PASSWORD_REQUIRED: 'Password is required',
+    RATE_LIMITED: (seconds) =>
+      seconds != null
+        ? `Too many failed login attempts. Please wait ${seconds} second${seconds === 1 ? '' : 's'} before trying again.`
+        : `Too many failed login attempts. Please try again later.`
   }
 };

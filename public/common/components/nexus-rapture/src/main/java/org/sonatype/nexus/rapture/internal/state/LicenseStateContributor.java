@@ -19,9 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ApplicationLicense;
 import org.sonatype.nexus.common.app.ApplicationLicense.Attributes;
 import org.sonatype.nexus.rapture.StateContributor;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class LicenseStateContributor
     implements StateContributor
 {
@@ -49,7 +46,7 @@ public class LicenseStateContributor
 
   private final ApplicationLicense applicationLicense;
 
-  @Inject
+  @Autowired
   public LicenseStateContributor(final ApplicationLicense applicationLicense) {
     this.applicationLicense = checkNotNull(applicationLicense);
   }

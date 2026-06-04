@@ -13,11 +13,8 @@
 package org.sonatype.nexus.datastore.mybatis;
 
 import java.util.List;
-
-import jakarta.inject.Singleton;
-
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.datastore.DataStoreDescriptor;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -33,7 +30,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *
  * @since 3.19
  */
-@Singleton
 @Component
 @Qualifier(MyBatisDataStoreDescriptor.NAME)
 public class MyBatisDataStoreDescriptor

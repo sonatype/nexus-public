@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.maven;
 
 import java.util.Collection;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder;
@@ -24,12 +24,9 @@ import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.utils.httpclient.UserAgentGenerator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenProxyRequestHeaderSupport
 {
   private static final String ANALYTICS_CAPABILITY = "analytics-configuration";
@@ -38,7 +35,7 @@ public class MavenProxyRequestHeaderSupport
 
   private final UserAgentGenerator userAgentGenerator;
 
-  @Inject
+  @Autowired
   public MavenProxyRequestHeaderSupport(
       final CapabilityRegistry capabilityRegistry,
       final UserAgentGenerator userAgentGenerator)

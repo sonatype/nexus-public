@@ -15,9 +15,7 @@ package org.sonatype.nexus.upgrade.datastore.internal;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
  * Stores auditable db upgrade events until after startup when auditing is enabled
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = TASKS)
 public class PostStartupUpgradeAuditor
     extends StateGuardLifecycleSupport
@@ -40,7 +37,7 @@ public class PostStartupUpgradeAuditor
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public PostStartupUpgradeAuditor(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
   }

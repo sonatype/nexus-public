@@ -12,9 +12,13 @@
  */
 package org.sonatype.nexus.repository.raw;
 
+import java.util.List;
+
 import javax.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -25,12 +29,40 @@ public class RawAttributes
   @NotEmpty
   private final String contentDisposition;
 
+  @ApiModelProperty(value = "Whether to forward query parameters to the upstream repository",
+      example = "true")
+  @JsonInclude(Include.NON_NULL)
+  private final Boolean forwardQueryParameters;
+
+  @ApiModelProperty(value = "List of query parameter names to exclude from forwarding (case-insensitive)",
+      example = "[\"apiKey\", \"token\"]")
+  @JsonInclude(Include.NON_EMPTY)
+  private final List<String> excludedQueryParameters;
+
   @JsonCreator
-  public RawAttributes(@JsonProperty("contentDisposition") final String contentDisposition) {
+  public RawAttributes(
+      @JsonProperty("contentDisposition") final String contentDisposition,
+      @JsonProperty("forwardQueryParameters") final Boolean forwardQueryParameters,
+      @JsonProperty("excludedQueryParameters") final List<String> excludedQueryParameters)
+  {
     this.contentDisposition = contentDisposition;
+    this.forwardQueryParameters = forwardQueryParameters;
+    this.excludedQueryParameters = excludedQueryParameters;
+  }
+
+  public RawAttributes(final String contentDisposition) {
+    this(contentDisposition, null, null);
   }
 
   public String getContentDisposition() {
     return contentDisposition;
+  }
+
+  public Boolean getForwardQueryParameters() {
+    return forwardQueryParameters;
+  }
+
+  public List<String> getExcludedQueryParameters() {
+    return excludedQueryParameters;
   }
 }

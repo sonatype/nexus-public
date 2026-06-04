@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.onboarding;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +20,11 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class OnboardingConfiguration
 {
   private boolean enabled;
 
-  @Inject
+  @Autowired
   public OnboardingConfiguration(
       @Value("${nexus.onboarding.enabled:true}") final boolean enabled)
   {

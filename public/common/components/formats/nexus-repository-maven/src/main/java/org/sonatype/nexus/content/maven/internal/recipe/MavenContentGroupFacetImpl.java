@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sonatype.nexus.common.collect.AttributesMap;
@@ -38,7 +38,10 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
@@ -72,6 +75,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -107,7 +111,17 @@ public class MavenContentGroupFacetImpl
 
   private final ArchetypeCatalogMerger archetypeCatalogMerger;
 
-  @Inject
+  // Sentinel meaning the cached value has not yet been computed or was invalidated by doUpdate().
+  @VisibleForTesting
+  static final int UNINITIALIZED = Integer.MIN_VALUE;
+
+  // Cached minimum metadataMaxAge (seconds) across proxy leaf members.
+  // UNINITIALIZED until first getCached() call (state is STARTED by then, so leafMembers() is safe).
+  // Reset to UNINITIALIZED by doUpdate() so the next getCached() recomputes after member changes.
+  @VisibleForTesting
+  volatile int minProxyMetadataMaxAgeSeconds = UNINITIALIZED;
+
+  @Autowired
   public MavenContentGroupFacetImpl(
       final RepositoryManager repositoryManager,
       final ConstraintViolationFactory constraintViolationFactory,
@@ -121,8 +135,14 @@ public class MavenContentGroupFacetImpl
   }
 
   @Override
+  protected void doUpdate(final Configuration configuration) throws Exception {
+    super.doUpdate(configuration);
+    minProxyMetadataMaxAgeSeconds = UNINITIALIZED;
+  }
+
+  @Override
   protected void cleanupOrphanedGroupAssets(final Set<String> removedMemberNames) {
-    log.info("Deleting ALL orphaned Maven assets for removed members: {}", removedMemberNames);
+    log.info("Deleting ALL orphaned Maven assets for removed members : {}", removedMemberNames);
 
     try {
       ContentFacet contentFacet = getRepository().facet(ContentFacet.class);
@@ -218,6 +238,19 @@ public class MavenContentGroupFacetImpl
 
     if (asset.isStale(cacheController)) {
       log.trace("Cache stale hit for {}", path);
+      return null;
+    }
+
+    // The group's own cacheController has infinite TTL (-1) and never expires by age.
+    // Honour the minimum metadataMaxAge of proxy members so cached merged metadata
+    // is not served beyond the TTL that the proxies themselves would enforce.
+    // Value is computed lazily here (state is STARTED at this point) and cached until doUpdate().
+    int proxyTtl = minProxyMetadataMaxAgeSeconds;
+    if (proxyTtl == UNINITIALIZED) {
+      minProxyMetadataMaxAgeSeconds = proxyTtl = computeMinProxyMetadataMaxAgeSeconds();
+    }
+    if (proxyTtl >= 0 && asset.isStale(new CacheController(proxyTtl, null))) {
+      log.trace("Cache stale for proxy member metadataMaxAge={}s: {}", proxyTtl, path);
       return null;
     }
 
@@ -321,12 +354,28 @@ public class MavenContentGroupFacetImpl
   }
 
   /**
+   * Returns the minimum {@code metadataMaxAge} in seconds across all proxy leaf members,
+   * or {@code -1} if no proxy member has a finite TTL. Used to enforce proxy TTLs on the
+   * group's merged metadata cache, which otherwise has an infinite TTL.
+   */
+  @VisibleForTesting
+  int computeMinProxyMetadataMaxAgeSeconds() {
+    return leafMembers().stream()
+        .flatMap(member -> member.optionalFacet(ProxyFacet.class).stream())
+        .mapToInt(proxy -> (int) Math.min(
+            proxy.getConfiguration().getMetadataMaxAge().getSeconds(), Integer.MAX_VALUE))
+        .filter(seconds -> seconds >= 0)
+        .min()
+        .orElse(-1);
+  }
+
+  /**
    * Verifies that merge is handled.
    */
   private void checkMergeHandled(final MavenPath mavenPath) {
     checkArgument(
         getRepository().facet(MavenContentFacet.class).getMavenPathParser().isRepositoryMetadata(mavenPath)
-            || mavenPath.getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME),
+            || mavenPath.main().getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME),
         "Not handled by Maven2GroupFacet merge: %s",
         mavenPath);
   }

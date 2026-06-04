@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import javax.validation.ConstraintViolation;
 import javax.validation.ValidationException;
@@ -59,7 +59,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
   private boolean hidden = false;
 
-  @Inject
+  @Autowired
   public void installComponents(final Provider<CapabilityRegistry> capabilityRegistry) {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
   }
@@ -113,7 +113,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
   private Provider<Validator> validatorProvider;
 
-  @Inject
+  @Autowired
   public void installValidationComponents(final Provider<Validator> validatorProvider) {
     checkState(this.validatorProvider == null);
     this.validatorProvider = checkNotNull(validatorProvider);
@@ -234,7 +234,7 @@ public abstract class CapabilityDescriptorSupport<ConfigT>
 
   private TemplateHelper templateHelper;
 
-  @Inject
+  @Autowired
   public void setTemplateHelper(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
   }

@@ -31,9 +31,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -52,7 +51,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
  */
 @Component
 @ManagedLifecycle(phase = SECURITY)
-@Singleton
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtHelper
     extends StateGuardLifecycleSupport
@@ -84,7 +82,7 @@ public class JwtHelper
     this(expirySeconds, contextPath, secretStoreProvider, true);
   }
 
-  @Inject
+  @Autowired
   public JwtHelper(
       @Value("${nexus.jwt.expiry:1800}") final int expirySeconds,
       @Value("${nexus-context-path:#{null}}") final String contextPath,

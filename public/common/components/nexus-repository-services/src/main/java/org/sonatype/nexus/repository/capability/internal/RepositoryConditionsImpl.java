@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.capability.internal;
 
 import java.util.function.Supplier;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.capability.RepositoryConditions;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class RepositoryConditionsImpl
     implements RepositoryConditions
 {
@@ -39,7 +36,7 @@ public class RepositoryConditionsImpl
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public RepositoryConditionsImpl(
       final EventManager eventManager,
       final RepositoryManager repositoryManager)

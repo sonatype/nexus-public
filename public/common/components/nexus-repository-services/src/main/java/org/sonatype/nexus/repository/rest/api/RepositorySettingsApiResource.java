@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Produces;
@@ -50,7 +50,7 @@ public class RepositorySettingsApiResource
 
   private final ApiRepositoryAdapter defaultAdapter;
 
-  @Inject
+  @Autowired
   public RepositorySettingsApiResource(
       final AuthorizingRepositoryManager authorizingRepositoryManager,
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,

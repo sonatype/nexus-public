@@ -31,8 +31,7 @@ import org.sonatype.nexus.repository.http.HttpMethods;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -59,7 +58,6 @@ import org.slf4j.LoggerFactory;
     "/service/local/*"
 })
 @Component
-@Singleton
 public class ExhaustRequestFilter
     implements Filter
 {
@@ -67,7 +65,7 @@ public class ExhaustRequestFilter
 
   private final Pattern exhaustForAgentsPattern;
 
-  @Inject
+  @Autowired
   public ExhaustRequestFilter(
       @Value("${nexus.view.exhaustForAgents:Apache-Maven.*|Apache Ivy.*}") final String exhaustForAgents)
   {

@@ -12,25 +12,23 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.20
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AptProxyRepositoryApiRequestToConfigurationConverter
     extends ProxyRepositoryApiRequestToConfigurationConverter<AptProxyRepositoryApiRequest>
 {
-  @Inject
+  @Autowired
   public AptProxyRepositoryApiRequestToConfigurationConverter(final RoutingRuleStore routingRuleStore) {
     super(routingRuleStore);
   }
@@ -46,7 +44,9 @@ public class AptProxyRepositoryApiRequestToConfigurationConverter
 
     // Add signing configuration if provided (optional for proxy repos)
     if (request.getAptSigning() != null) {
-      configuration.attributes(AptSigningFacet.CONFIG_KEY).set("keypair", request.getAptSigning().getKeypair());
+      if (!Strings2.isBlank(request.getAptSigning().getKeypair())) {
+        configuration.attributes(AptSigningFacet.CONFIG_KEY).set("keypair", request.getAptSigning().getKeypair());
+      }
       configuration.attributes(AptSigningFacet.CONFIG_KEY).set("passphrase", request.getAptSigning().getPassphrase());
     }
 

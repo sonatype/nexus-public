@@ -30,9 +30,6 @@ import javax.annotation.Nullable;
 import javax.ws.rs.BadRequestException;
 
 import org.sonatype.nexus.common.QualifierUtil;
-import org.sonatype.nexus.rest.ValidationErrorsException;
-import org.sonatype.nexus.common.time.DateHelper;
-import org.sonatype.nexus.repository.cache.CacheAttributeUtils;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.security.AssetPermissionChecker;
 import org.sonatype.nexus.repository.content.store.AssetStore;
@@ -47,15 +44,16 @@ import org.sonatype.nexus.repository.search.SortDirection;
 import org.sonatype.nexus.repository.search.sql.SearchResult;
 import org.sonatype.nexus.repository.search.sql.SqlSearchResultDecorator;
 import org.sonatype.nexus.repository.search.sql.index.SqlSearchEventHandler;
+import org.sonatype.nexus.repository.search.sql.internal.AssetSearchResultImpl;
 import org.sonatype.nexus.repository.search.sql.query.security.SqlSearchPermissionException;
 import org.sonatype.nexus.repository.search.sql.query.security.UnknownRepositoriesException;
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +62,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
-import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
@@ -72,7 +69,6 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
  */
 @Named("sql")
 @Component
-@Singleton
 public class SqlSearchService
     implements SearchService
 {
@@ -100,7 +96,7 @@ public class SqlSearchService
 
   private static final long CALM_POLL_INTERVAL_MS = 100;
 
-  @Inject
+  @Autowired
   public SqlSearchService(
       final SearchStore searchStore,
       final SqlSearchSortUtil sqlSearchSortUtil,
@@ -428,7 +424,7 @@ public class SqlSearchService
    * Auto-enable includeNullBlobs for NuGet format to handle V2 metadata-only assets
    * NuGet V2 proxy creates asset records without associated blobs when caching metadata from remote feeds
    */
-  private boolean shouldIncludeNullBlobs(String format) {
+  private boolean shouldIncludeNullBlobs(final String format) {
     return "nuget".equalsIgnoreCase(format);
   }
 
@@ -452,37 +448,7 @@ public class SqlSearchService
       final String repositoryName,
       final SearchResult componentInfo)
   {
-    AssetSearchResult searchResult = new AssetSearchResult();
-
-    searchResult.setId(InternalIds.toExternalId(InternalIds.internalAssetId(asset)).getValue());
-    searchResult.setPath(asset.path());
-    searchResult.setRepository(repositoryName);
-    searchResult.setFormat(componentInfo.format());
-    searchResult.setAttributes(asset.attributes().backing());
-    searchResult.setBlobCreated(DateHelper.toDate(asset.created()));
-
-    asset.blob().ifPresent(blob -> {
-      searchResult.setLastModified(DateHelper.toDate(blob.blobCreated()));
-      searchResult.getAttributes().put(CHECKSUM, blob.checksums());
-      searchResult.setContentType(blob.contentType());
-      searchResult.setChecksum(blob.checksums());
-      searchResult.setFileSize(blob.blobSize());
-      searchResult.setBlobUpdated(DateHelper.toDate(blob.blobCreated()));
-      if (blob.blobRef() != null) {
-        searchResult.setBlobRef(blob.blobRef().toString());
-      }
-      blob.createdBy().ifPresent(searchResult::setUploader);
-      blob.createdByIp().ifPresent(searchResult::setUploaderIp);
-    });
-    asset.lastDownloaded()
-        .map(DateHelper::toDate)
-        .ifPresent(searchResult::setLastDownloaded);
-
-    // Extract lastVerified from cache attributes (only for proxy/group repos)
-    CacheAttributeUtils.extractLastVerifiedAsOptional(asset.attributes().backing())
-        .ifPresent(searchResult::setLastVerified);
-
-    return searchResult;
+    return new AssetSearchResultImpl(asset, asset.blob(), componentInfo.format(), repositoryName);
   }
 
   private static class ComponentSearchResultPage

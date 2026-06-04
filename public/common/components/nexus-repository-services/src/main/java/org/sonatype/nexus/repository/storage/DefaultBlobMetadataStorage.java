@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
  */
 @Primary
 @Component
-@Singleton
 public class DefaultBlobMetadataStorage
     implements BlobMetadataStorage
 {

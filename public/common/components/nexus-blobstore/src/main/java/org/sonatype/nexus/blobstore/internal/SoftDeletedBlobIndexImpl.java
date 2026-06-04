@@ -16,8 +16,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -39,7 +38,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 @Primary
-@Priority(Integer.MAX_VALUE)
 @Component
 @Qualifier("default")
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -52,7 +50,7 @@ public class SoftDeletedBlobIndexImpl
 
   protected String blobStoreName;
 
-  @Inject
+  @Autowired
   public SoftDeletedBlobIndexImpl(final SoftDeletedBlobsStore softDeletedBlobsStore) {
     this.softDeletedBlobsStore = checkNotNull(softDeletedBlobsStore);
   }

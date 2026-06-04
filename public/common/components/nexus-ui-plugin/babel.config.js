@@ -14,14 +14,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+const isTest = process.env.NODE_ENV === 'test';
+
 module.exports = {
   presets: [
     '@babel/preset-react',
     [
       '@babel/preset-env',
       {
-        // see https://help.sonatype.com/repomanager3/system-requirements#SystemRequirements-WebBrowser
-        targets: 'last 1 Chrome version, last 1 Firefox version, Firefox ESR, last 1 Safari version, ie >= 11, last 1 Edge version'
+        // IE 11 dropped per NEXUS-52389; targets match published system requirements.
+        targets: 'last 1 Chrome version, last 1 Firefox version, Firefox ESR, last 1 Safari version, last 1 Edge version',
+        modules: isTest ? 'auto' : false
       }
     ],
     '@babel/preset-typescript'

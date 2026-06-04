@@ -14,7 +14,6 @@ package org.sonatype.nexus.siesta;
 
 import java.util.List;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -30,7 +29,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Path("/echo")
 public class EchoResource
     implements Resource

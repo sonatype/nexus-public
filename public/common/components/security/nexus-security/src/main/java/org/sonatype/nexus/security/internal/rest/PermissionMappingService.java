@@ -21,8 +21,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
-
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +36,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * rows that the registry merges in via {@code applyManualMappings}.
  */
 @Component
-@Singleton
 public class PermissionMappingService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

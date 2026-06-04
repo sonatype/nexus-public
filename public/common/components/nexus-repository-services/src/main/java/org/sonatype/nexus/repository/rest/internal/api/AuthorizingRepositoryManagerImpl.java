@@ -15,8 +15,7 @@ package org.sonatype.nexus.repository.rest.internal.api;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ValidationException;
 
 import org.sonatype.nexus.repository.Repository;
@@ -49,7 +48,6 @@ import org.springframework.stereotype.Component;
  * @since 3.20
  */
 @Component
-@Singleton
 public class AuthorizingRepositoryManagerImpl
     implements AuthorizingRepositoryManager
 {
@@ -61,7 +59,7 @@ public class AuthorizingRepositoryManagerImpl
 
   private final RepositoryCacheInvalidationService repositoryCacheInvalidationService;
 
-  @Inject
+  @Autowired
   public AuthorizingRepositoryManagerImpl(
       final RepositoryManager repositoryManager,
       final RepositoryPermissionChecker repositoryPermissionChecker,

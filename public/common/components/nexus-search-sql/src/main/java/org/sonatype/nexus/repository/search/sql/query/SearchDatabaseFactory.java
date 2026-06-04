@@ -16,8 +16,7 @@ import java.util.Optional;
 
 import org.sonatype.nexus.repository.rest.sql.SearchField;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Primary;
@@ -31,7 +30,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Primary
-@Singleton
 public class SearchDatabaseFactory
     implements SearchDatabase
 {
@@ -41,7 +39,7 @@ public class SearchDatabaseFactory
 
   private SearchDatabase delegate;
 
-  @Inject
+  @Autowired
   public SearchDatabaseFactory(
       final DatabaseTypeDetector databaseTypeDetector,
       final ApplicationContext context)

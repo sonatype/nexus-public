@@ -28,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "status", propOrder = {
     "edition",
-    "version"
+    "version",
+    "isCloud"
 })
 @XmlRootElement(name = "status")
 public class StatusXO
@@ -40,6 +41,10 @@ public class StatusXO
   @XmlElement(required = true)
   @JsonProperty("version")
   private String version;
+
+  @XmlElement(required = true)
+  @JsonProperty("isCloud")
+  private boolean isCloud;
 
   public String getEdition() {
     return edition;
@@ -55,5 +60,13 @@ public class StatusXO
 
   public void setVersion(final String version) {
     this.version = version;
+  }
+
+  public boolean getIsCloud() {
+    return isCloud;
+  }
+
+  public void setIsCloud(final boolean isCloud) {
+    this.isCloud = isCloud;
   }
 }

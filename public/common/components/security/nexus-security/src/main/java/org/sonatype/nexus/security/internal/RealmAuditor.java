@@ -14,9 +14,7 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class RealmAuditor
     extends AuditorSupport
     implements EventAware
@@ -42,7 +39,7 @@ public class RealmAuditor
 
   private final RealmManager realmManager;
 
-  @Inject
+  @Autowired
   public RealmAuditor(final RealmManager realmManager) {
     this.realmManager = realmManager;
   }

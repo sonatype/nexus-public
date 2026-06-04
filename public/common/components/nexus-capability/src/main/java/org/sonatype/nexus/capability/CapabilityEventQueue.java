@@ -16,8 +16,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Priority;
-
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -27,6 +25,8 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,8 +36,8 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * An event broadcasting queue for Capability state change events. These are handled asynchronously to avoid the
  * capability registry from holding a lock while event handlers are performing other actions.
  */
-@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = Phase.CAPABILITIES)
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
 public class CapabilityEventQueue
     extends StateGuardLifecycleSupport

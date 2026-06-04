@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Named;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -48,7 +48,7 @@ public class DockerRepositoryNameValidator
   /**
    * Constructor with dependency injection for full validation logic including existing repository exemption.
    */
-  @Inject
+  @Autowired
   public DockerRepositoryNameValidator(final RepositoryManager repositoryManager) {
     this.repositoryManager = repositoryManager;
   }

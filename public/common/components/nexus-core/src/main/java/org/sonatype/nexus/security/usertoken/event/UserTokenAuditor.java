@@ -13,9 +13,7 @@
 package org.sonatype.nexus.security.usertoken.event;
 
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.event.EventAware;
@@ -29,14 +27,13 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-@Singleton
 public class UserTokenAuditor
     extends AuditorSupport
     implements EventAware
 {
   public static final String DOMAIN = "userToken";
 
-  @Inject
+  @Autowired
   public UserTokenAuditor() {
     registerType(UserTokenEvent.class, CREATED_TYPE);
     registerType(UserTokenDeletedEvent.class, DELETED_TYPE);

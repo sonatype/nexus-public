@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.metadata.AptMetadataRebuildSchedulerFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
@@ -50,7 +48,6 @@ import org.springframework.stereotype.Component;
  * @since 3.31
  */
 @Component
-@Singleton
 public class AptHostedHandler
     implements Handler
 {

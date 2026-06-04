@@ -17,14 +17,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import static java.util.Objects.requireNonNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,13 +36,12 @@ import org.springframework.stereotype.Component;
  * @since 3.87
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AssetTableIndexesMigrationStep_2_32
     implements DatabaseMigrationStep
 {
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public AssetTableIndexesMigrationStep_2_32(final List<Format> formats) {
     this.formats = requireNonNull(formats);
   }

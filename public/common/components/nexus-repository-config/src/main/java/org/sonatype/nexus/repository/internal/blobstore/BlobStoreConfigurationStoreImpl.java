@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.internal.blobstore;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -37,12 +35,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class BlobStoreConfigurationStoreImpl
     extends ConfigStoreSupport<BlobStoreConfigurationDAO>
     implements BlobStoreConfigurationStore
 {
-  @Inject
+  @Autowired
   public BlobStoreConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

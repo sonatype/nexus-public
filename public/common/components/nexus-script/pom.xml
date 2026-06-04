@@ -20,17 +20,13 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <artifactId>nexus-script</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
   <dependencies>
-    <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>goodies-i18n</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>

@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.servlet.ServletHelper;
@@ -30,8 +30,7 @@ import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResource.Prepareable;
 import org.sonatype.nexus.webresources.WebResourceService;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +56,6 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
  */
 @Order(WebFilterPriority.WEB_RESOURCES)
 @WebServlet("/*")
-@Singleton
 @Component
 public class WebResourceServlet
     extends HttpServlet
@@ -72,7 +70,7 @@ public class WebResourceServlet
 
   private static final String INDEX_PATH = "/index.html";
 
-  @Inject
+  @Autowired
   public WebResourceServlet(
       final WebResourceService webResources,
       final XFrameOptions xframeOptions,

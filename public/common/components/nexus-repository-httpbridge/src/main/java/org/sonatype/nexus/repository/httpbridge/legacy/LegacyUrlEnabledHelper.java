@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.legacy;
 
 import java.util.Collection;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
@@ -26,7 +24,6 @@ import static org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.cap
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class LegacyUrlEnabledHelper
 {
   private final boolean supportLegacyContent = SystemPropertiesHelper
@@ -34,7 +31,7 @@ public class LegacyUrlEnabledHelper
 
   private final CapabilityRegistry capabilities;
 
-  @Inject
+  @Autowired
   public LegacyUrlEnabledHelper(final CapabilityRegistry capabilities) {
     this.capabilities = checkNotNull(capabilities);
   }

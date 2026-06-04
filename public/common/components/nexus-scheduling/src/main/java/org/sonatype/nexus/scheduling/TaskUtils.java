@@ -16,10 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.scheduling.spi.TaskResultStateStore;
 import org.slf4j.Logger;
@@ -39,7 +37,6 @@ import javax.ws.rs.core.Response;
  * @since 3.29
  */
 @Component
-@Singleton
 public class TaskUtils
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -48,7 +45,7 @@ public class TaskUtils
 
   private final TaskResultStateStore taskResultStateStore;
 
-  @Inject
+  @Autowired
   public TaskUtils(
       final Provider<TaskScheduler> taskSchedulerProvider,
       final TaskResultStateStore taskResultStateStoreProvider)

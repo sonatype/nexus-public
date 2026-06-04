@@ -20,9 +20,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
@@ -38,7 +36,6 @@ import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORI
 import static org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
 import org.springframework.stereotype.Component;
 
-@Singleton
 @Component
 public class BrowseStateContributor
     implements StateContributor
@@ -51,7 +48,7 @@ public class BrowseStateContributor
 
   private static final long DEFAULT_REBUILDING_REPOSITORIES_CACHE_TTL = 60;
 
-  @Inject
+  @Autowired
   public BrowseStateContributor(
       final BrowseNodeConfiguration browseNodeConfiguration,
       final TaskScheduler taskScheduler,

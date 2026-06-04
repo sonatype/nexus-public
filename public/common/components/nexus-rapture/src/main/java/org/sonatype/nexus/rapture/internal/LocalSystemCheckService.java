@@ -29,8 +29,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +44,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * @since 3.16
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class LocalSystemCheckService
     extends StateGuardLifecycleSupport
@@ -65,7 +63,7 @@ public class LocalSystemCheckService
 
   private PeriodicJob metricsWritingJob;
 
-  @Inject
+  @Autowired
   public LocalSystemCheckService(
       final PeriodicJobService jobService,
       final HealthCheckRegistry registry,

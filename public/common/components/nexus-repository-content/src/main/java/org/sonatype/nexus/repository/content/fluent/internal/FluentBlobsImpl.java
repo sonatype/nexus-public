@@ -180,8 +180,19 @@ public class FluentBlobsImpl
     }
     else if (payload instanceof DetachedBlobPayload) {
       DetachedBlobPayload detachedBlobPayload = (DetachedBlobPayload) payload;
-      Map<HashAlgorithm, HashCode> hashes = hashes(payload, hashing);
-      return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, blobStore.get());
+      BlobStore sourceBlobStore = detachedBlobPayload.getSourceBlobStore();
+      BlobStore targetBlobStore = blobStore.get();
+
+      // If source blobstore is null (backward compatibility) or matches the target, re-attach in place
+      if (sourceBlobStore == null || isSameBlobStore(sourceBlobStore, targetBlobStore)) {
+        Map<HashAlgorithm, HashCode> hashes = hashes(payload, hashing);
+        return new AttachableBlob(detachedBlobPayload.getBlob(), hashes, true, targetBlobStore);
+      }
+      // Source blobstore differs from target - fall through to re-ingest the blob into the correct blobstore
+      log.debug("Blob {} is in blobstore '{}' but repository uses '{}', re-ingesting into correct blobstore",
+          detachedBlobPayload.getBlob().getId(),
+          sourceBlobStore.getBlobStoreConfiguration().getName(),
+          targetBlobStore.getBlobStoreConfiguration().getName());
     }
     try (InputStream in = payload.openInputStream()) {
       return ingest(in, cleanupContentType(payload.getContentType()), headers, hashing);
@@ -198,8 +209,10 @@ public class FluentBlobsImpl
     String contentType = srcBlob.getHeaders().get(CONTENT_TYPE_HEADER);
 
     if (destination.getBlobStoreConfiguration().getName().equals(srcStore.getBlobStoreConfiguration().getName())) {
-      Blob blob = destination.copy(srcBlob.getId(), tempHeaders(srcBlob.getHeaders(), contentType));
-      return new TempBlob(blob, hashes, false, srcStore);
+      // Re-attach the blob in place rather than using copy()
+      // S3 does not allow copying an object to itself without changing properties
+      // Using AttachableBlob avoids the S3 "copy to itself" error while preserving the blob UUID
+      return new AttachableBlob(srcBlob, hashes, false, srcStore);
     }
 
     try (InputStream in = srcBlob.getInputStream()) {
@@ -274,5 +287,11 @@ public class FluentBlobsImpl
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  private static boolean isSameBlobStore(final BlobStore source, final BlobStore target) {
+    return source.getBlobStoreConfiguration()
+        .getName()
+        .equals(target.getBlobStoreConfiguration().getName());
   }
 }

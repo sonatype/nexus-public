@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Format;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,7 +23,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(RawFormat.NAME)
-@Singleton
 public class RawFormat
     extends Format
 {

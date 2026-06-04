@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.status;
 
-import org.sonatype.goodies.common.Loggers;
+import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
@@ -32,7 +32,7 @@ public abstract class HealthCheckComponentSupport
   }
 
   protected Logger createLogger() {
-    return Loggers.getLogger(this);
+    return LoggerFactory.getLogger(getClass());
   }
 
 }

@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.search;
 
 import java.util.List;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 
@@ -37,7 +35,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("maven2")
-@Singleton
 public class MavenSearchMappings
     implements SearchMappings
 {

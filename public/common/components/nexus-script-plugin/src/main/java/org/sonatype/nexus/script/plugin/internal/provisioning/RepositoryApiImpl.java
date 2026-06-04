@@ -14,9 +14,7 @@ package org.sonatype.nexus.script.plugin.internal.provisioning;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class RepositoryApiImpl
     implements RepositoryApi
 {
@@ -56,7 +53,7 @@ public class RepositoryApiImpl
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
+  @Autowired
   public RepositoryApiImpl(final RepositoryManager repositoryManager, final BlobStoreManager blobStoreManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.blobStoreManager = checkNotNull(blobStoreManager);

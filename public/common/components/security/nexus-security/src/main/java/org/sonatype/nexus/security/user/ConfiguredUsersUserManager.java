@@ -25,8 +25,7 @@ import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 
 import com.google.common.collect.Sets;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -38,7 +37,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * For example if your users generally come from an external Realm (LDAP) you could see which users have had roles
  * added to them.
  */
-@Singleton
 @Component
 @Qualifier(ConfiguredUsersUserManager.SOURCE)
 @Description("All Users with Roles")
@@ -51,7 +49,7 @@ public class ConfiguredUsersUserManager
 
   private final SecurityConfigurationManager configuration;
 
-  @Inject
+  @Autowired
   public ConfiguredUsersUserManager(
       final EventManager eventManager,
       @Lazy final SecuritySystem securitySystem,

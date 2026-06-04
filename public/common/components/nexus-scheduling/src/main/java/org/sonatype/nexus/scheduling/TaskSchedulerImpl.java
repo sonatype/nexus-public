@@ -19,10 +19,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -46,7 +44,6 @@ import org.springframework.stereotype.Component;
  *
  * @since 3.0
  */
-@Singleton
 @Component
 public class TaskSchedulerImpl
     implements TaskScheduler
@@ -63,7 +60,7 @@ public class TaskSchedulerImpl
 
   protected final boolean changeRepoBlobstoreTaskEnabled;
 
-  @Inject
+  @Autowired
   public TaskSchedulerImpl(
       final EventManager eventManager,
       @Lazy final TaskFactory taskFactory,

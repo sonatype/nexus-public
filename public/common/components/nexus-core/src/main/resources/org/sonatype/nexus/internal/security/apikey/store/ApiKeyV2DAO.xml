@@ -13,7 +13,7 @@
     Eclipse Foundation. All other trademarks are the property of their respective owners.
 
 -->
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.sonatype.nexus.internal.security.apikey.store.ApiKeyV2DAO">
 
   <resultMap id="ApiKeyV2DataResultMap" type="ApiKeyV2Data">
@@ -139,6 +139,14 @@
        AND username = #{username}
        AND access_key = #{accessKey};
   </update>
+
+  <select id="browseAll" resultMap="ApiKeyV2DataResultMap">
+    SELECT *
+      FROM api_key_v2
+    ORDER BY created
+     LIMIT #{limit}
+    OFFSET #{skip};
+  </select>
 
   <select id="browsePaginated" resultMap="ApiKeyV2DataResultMap">
     SELECT *

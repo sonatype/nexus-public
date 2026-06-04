@@ -52,7 +52,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -125,7 +125,7 @@ public abstract class ContentFacetSupport
     this.formatStoreManager = checkNotNull(formatStoreManager);
   }
 
-  @Inject
+  @Autowired
   @VisibleForTesting
   protected final void setDependencies(final ContentFacetDependencies dependencies) {
     this.dependencies = checkNotNull(dependencies);

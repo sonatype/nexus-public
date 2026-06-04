@@ -17,9 +17,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
@@ -42,7 +40,6 @@ import org.springframework.stereotype.Component;
  *
  * @since 3.14
  */
-@Singleton
 @Component
 public class CleanupPolicyEventHandler
     implements EventAware, Asynchronous
@@ -51,7 +48,7 @@ public class CleanupPolicyEventHandler
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public CleanupPolicyEventHandler(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }

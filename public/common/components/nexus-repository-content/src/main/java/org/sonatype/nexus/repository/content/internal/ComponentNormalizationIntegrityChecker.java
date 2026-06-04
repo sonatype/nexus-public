@@ -18,9 +18,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
@@ -46,7 +44,6 @@ import org.springframework.stereotype.Component;
  * NormalizeComponentVersionTask to run after startup is complete.
  */
 @Component
-@Singleton
 public class ComponentNormalizationIntegrityChecker
     implements DatabaseIntegrityChecker
 {
@@ -76,7 +73,7 @@ public class ComponentNormalizationIntegrityChecker
 
   private final DatabaseMigrationUtility databaseMigrationUtility;
 
-  @Inject
+  @Autowired
   public ComponentNormalizationIntegrityChecker(
       final List<Format> formats,
       final TaskScheduler taskScheduler,
@@ -99,6 +96,7 @@ public class ComponentNormalizationIntegrityChecker
     alterFormats(connection);
 
     Set<Format> formatsNeedingNormalization = formats.stream()
+        .filter(format -> managersByFormat.containsKey(format.getValue()))
         .filter(format -> !managersByFormat.get(format.getValue())
             .componentStore(DEFAULT_DATASTORE_NAME)
             .browseUnnormalized(1, null)
@@ -144,8 +142,8 @@ public class ComponentNormalizationIntegrityChecker
     String tableName = format(TABLE_NAME, formatName).toUpperCase();
 
     if (!databaseMigrationUtility.tableExists(connection, tableName)) {
-      log.debug("{} component table not found", formatName);
-      throw new SQLException("Unable to repair " + tableName + " because it wasn't yet created");
+      log.warn("{} component table not found, skipping normalization check", formatName);
+      return;
     }
 
     if (!databaseMigrationUtility.columnExists(connection, tableName, COLUMN_NAME)) {

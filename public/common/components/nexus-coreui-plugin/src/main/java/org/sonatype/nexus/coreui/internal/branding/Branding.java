@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Matcher;
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.springframework.stereotype.Component;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class Branding
     implements StateContributor
 {

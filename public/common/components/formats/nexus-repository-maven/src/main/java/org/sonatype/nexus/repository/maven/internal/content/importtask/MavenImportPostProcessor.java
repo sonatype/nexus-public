@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.content.importtask;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -35,7 +33,6 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.29
  */
-@Singleton
 @Component
 @Qualifier(Maven2Format.NAME)
 public class MavenImportPostProcessor

@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.supportzip.ExportSecurityData;
@@ -34,14 +32,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("privilegeExport")
-@Singleton
 public class PrivilegeExport
     extends JsonExporter
     implements ExportSecurityData, ImportData
 {
   private final SecurityConfiguration configuration;
 
-  @Inject
+  @Autowired
   public PrivilegeExport(final SecurityConfiguration configuration) {
     this.configuration = configuration;
   }

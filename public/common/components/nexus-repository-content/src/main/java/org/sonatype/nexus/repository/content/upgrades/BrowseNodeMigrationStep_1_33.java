@@ -15,14 +15,12 @@ package org.sonatype.nexus.repository.content.upgrades;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +29,6 @@ import org.slf4j.LoggerFactory;
  * Change node_id and parent_id to BIGINT to mitigate sequence exhaustion
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BrowseNodeMigrationStep_1_33
     implements DatabaseMigrationStep
 {
@@ -39,7 +36,7 @@ public class BrowseNodeMigrationStep_1_33
 
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public BrowseNodeMigrationStep_1_33(final List<Format> formats) {
     this.formats = formats;
   }

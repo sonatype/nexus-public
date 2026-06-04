@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.supportzip.ExportConfigData;
@@ -34,14 +32,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("blobStoreConfigurationExport")
-@Singleton
 public class BlobStoreConfigurationExport
     extends JsonExporter
     implements ExportConfigData, ImportData
 {
   private final BlobStoreConfigurationStore configurationStore;
 
-  @Inject
+  @Autowired
   public BlobStoreConfigurationExport(final BlobStoreConfigurationStore configurationStore) {
     this.configurationStore = configurationStore;
   }

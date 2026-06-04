@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 import java.io.IOException;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -48,7 +48,7 @@ public class RawContentFacetImpl
     extends ContentFacetSupport
     implements RawContentFacet
 {
-  @Inject
+  @Autowired
   public RawContentFacetImpl(
       @Qualifier(RawFormat.NAME) final FormatStoreManager formatStoreManager)
   {

@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.node;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -42,7 +41,6 @@ import org.springframework.stereotype.Component;
 @Produces(APPLICATION_JSON)
 @Path(NodeIdApiResource.PATH)
 @Component
-@Singleton
 public class NodeIdApiResource
     implements Resource, NodeIdApiResourceDoc
 {
@@ -54,7 +52,7 @@ public class NodeIdApiResource
 
   private final NodeAccess nodeAccess;
 
-  @Inject
+  @Autowired
   public NodeIdApiResource(final NodeIdStore nodeIdStore, final NodeAccess nodeAccess) {
     this.nodeIdStore = nodeIdStore;
     this.nodeAccess = nodeAccess;

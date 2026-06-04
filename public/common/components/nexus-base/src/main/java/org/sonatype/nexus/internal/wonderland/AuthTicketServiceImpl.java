@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.wonderland;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class AuthTicketServiceImpl
     implements AuthTicketService
 {
@@ -45,7 +42,7 @@ public class AuthTicketServiceImpl
 
   private final AuthTicketCache authTicketCache;
 
-  @Inject
+  @Autowired
   public AuthTicketServiceImpl(
       final AuthTicketGenerator authTicketGenerator,
       final AuthTicketCache authTicketCache)

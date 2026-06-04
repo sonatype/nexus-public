@@ -62,7 +62,6 @@ import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
-import static org.sonatype.nexus.repository.view.Content.CONTENT_PCCS_HASH;
 
 /**
  * {@link FluentAsset} implementation.
@@ -88,6 +87,12 @@ public class FluentAssetImpl
 
   private static final int downloadMaxRetryDelayMs = SystemPropertiesHelper.getInteger(
       "nexus.asset.download.maxRetryDelayMs", DEFAULT_DOWNLOAD_MAX_RETRY_DELAY_MS);
+
+  /**
+   * @deprecated legacy field used by Nexus before 3.93 for PCCS.
+   */
+  @Deprecated
+  private static final String CONTENT_PCCS_HASH = "pccs_hash";
 
   private final ContentFacetSupport facet;
 
@@ -273,15 +278,16 @@ public class FluentAssetImpl
     AttributesMap contentHeaders = attributes(CONTENT);
 
     Object lastModified = contentHeaders.get(CONTENT_LAST_MODIFIED);
-    if (lastModified == null && (repository().getType() instanceof GroupType)) {
+    if (lastModified == null && repository().getType() instanceof GroupType) {
       lastModified = blob.getMetrics().getCreationTime();
     }
 
     contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(lastModified));
     contentAttributes.set(CONTENT_ETAG, Optional.ofNullable(contentHeaders.get(CONTENT_ETAG))
         .orElseGet(blob.getMetrics()::getSha1Hash));
+
     Optional.ofNullable(contentHeaders.get(CONTENT_PCCS_HASH, String.class))
-        .ifPresent(contentPCCSHash -> contentAttributes.set(CONTENT_PCCS_HASH, contentPCCSHash));
+        .ifPresent(pccsHash -> contentAttributes.set(CONTENT_PCCS_HASH, pccsHash));
   }
 
   private void setupHostedContentAttributes(final AttributesMap contentAttributes, final Blob blob) {
@@ -320,7 +326,7 @@ public class FluentAssetImpl
    * @return the delay in milliseconds, capped at downloadMaxRetryDelayMs
    */
   private long calculateRetryDelay(final int attempt) {
-    long exponentialDelay = downloadRetryDelayMs * (1L << (attempt - 1));
+    long exponentialDelay = downloadRetryDelayMs * (1L << attempt - 1);
     return Math.min(exponentialDelay, downloadMaxRetryDelayMs);
   }
 
@@ -449,6 +455,7 @@ public class FluentAssetImpl
     if (contentAttributes.contains(CONTENT_PCCS_HASH)) {
       headerBuilder.put(CONTENT_PCCS_HASH, contentAttributes.get(CONTENT_PCCS_HASH, String.class));
     }
+
     Map<String, String> contentHeaders = headerBuilder.build();
     if (!contentHeaders.isEmpty()) {
       attributes.withAttribute(CONTENT, contentHeaders);

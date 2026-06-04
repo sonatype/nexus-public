@@ -18,6 +18,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class UpgradeTaskData
 {
+  /**
+   * Configuration key used to mark a task as non-blocking. When set to {@code "false"} in the task configuration map,
+   * the upgrade task queue will not wait for this task to complete before starting the next queued task.
+   */
+  public static final String BLOCK_QUEUE_KEY = "upgrade.task.blockQueue";
+
   private Integer id;
 
   private String taskId;
@@ -75,4 +81,5 @@ public class UpgradeTaskData
   public void setTaskId(final String taskId) {
     this.taskId = taskId;
   }
+
 }

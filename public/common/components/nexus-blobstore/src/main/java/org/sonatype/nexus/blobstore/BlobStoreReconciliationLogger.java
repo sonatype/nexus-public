@@ -28,9 +28,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
@@ -49,7 +47,6 @@ import org.springframework.stereotype.Component;
  * stored at &lt;blobstore root&gt;/reconciliation/%date.log
  */
 @Component
-@Singleton
 public class BlobStoreReconciliationLogger
 {
   public static final String BLOBSTORE = "blobstore-reconciliation-path";
@@ -64,7 +61,7 @@ public class BlobStoreReconciliationLogger
 
   protected final BlobIdLocationResolver blobIdLocationResolver;
 
-  @Inject
+  @Autowired
   public BlobStoreReconciliationLogger(
       final ApplicationDirectories applicationDirectories,
       final BlobIdLocationResolver blobIdLocationResolver)

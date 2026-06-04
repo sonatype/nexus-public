@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.content.browse.capability;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import jakarta.inject.Singleton;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -27,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Component
-@Singleton
 public class BrowseTrimService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

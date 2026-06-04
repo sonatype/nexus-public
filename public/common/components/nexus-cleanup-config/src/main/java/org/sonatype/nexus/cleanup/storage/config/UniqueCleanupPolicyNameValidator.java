@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.storage.config;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
@@ -35,7 +35,7 @@ public class UniqueCleanupPolicyNameValidator
 {
   private CleanupPolicyStorage cleanupPolicyStorage;
 
-  @Inject
+  @Autowired
   public UniqueCleanupPolicyNameValidator(final CleanupPolicyStorage cleanupPolicyStorage) {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
   }

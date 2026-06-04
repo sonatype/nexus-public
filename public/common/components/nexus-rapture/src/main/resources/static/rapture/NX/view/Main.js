@@ -31,7 +31,8 @@ Ext.define('NX.view.Main', {
     'Ext.button.Button',
     'NX.view.UpgradeAlert',
     'NX.view.UpgradeModal',
-    'NX.view.CEBanners'
+    'NX.view.CEBanners',
+    'NX.view.TelemetryWarningBanner'
   ],
 
   layout: 'border',
@@ -52,6 +53,10 @@ Ext.define('NX.view.Main', {
         items: [
           {
             xtype: 'nx-header-panel'
+          },
+          {
+            xtype: 'nx-telemetry-warning-banner',
+            hidden: false
           }
         ],
         region: 'north',

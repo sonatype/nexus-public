@@ -14,7 +14,6 @@ package org.sonatype.nexus.security;
 
 import java.util.Collection;
 
-import jakarta.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Component;
  */
 @WebFilter("/service/rapture/session")
 @Component
-@Singleton
 public class CookieFilter
     extends AdviceFilter
 {

@@ -19,9 +19,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -46,7 +44,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "rapture_State")
 public class StateComponent
     extends DirectComponentSupport
@@ -59,7 +56,7 @@ public class StateComponent
 
   private final List<StateContributor> stateContributors;
 
-  @Inject
+  @Autowired
   public StateComponent(@Lazy final List<StateContributor> stateContributors, final NodeAccess nodeAccess) {
     this.stateContributors = checkNotNull(stateContributors);
     // special key on serverId hints UI event listeners to ignore serverId changes

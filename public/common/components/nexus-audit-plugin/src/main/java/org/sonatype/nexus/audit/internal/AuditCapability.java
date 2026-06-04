@@ -17,11 +17,10 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.audit.AuditRecorder;
 import org.sonatype.nexus.audit.internal.AuditCapability.Configuration;
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
@@ -73,7 +72,7 @@ public class AuditCapability
 
   private final AuditRecorder auditRecorder;
 
-  @Inject
+  @Autowired
   public AuditCapability(final AuditRecorder auditRecorder) {
     this.auditRecorder = checkNotNull(auditRecorder);
   }
@@ -122,7 +121,6 @@ public class AuditCapability
   @AvailabilityVersion(from = "1.0")
   @Component
   @Qualifier(AuditCapability.TYPE_ID)
-  @Singleton
   public static class Descriptor
       extends CapabilityDescriptorSupport<Configuration>
       implements Taggable

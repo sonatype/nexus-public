@@ -20,7 +20,7 @@ import org.sonatype.nexus.security.AbstractSecurityTest.BaseSecurityConfiguratio
 import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,10 +42,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 class RealmManagerImplAuthorizingRealmTest
     extends AbstractSecurityTest
 {
-  @Inject
+  @Autowired
   private RealmSecurityManager realmSecurityManager;
 
-  @Inject
+  @Autowired
   private RealmManager underTest;
 
   @BeforeEach

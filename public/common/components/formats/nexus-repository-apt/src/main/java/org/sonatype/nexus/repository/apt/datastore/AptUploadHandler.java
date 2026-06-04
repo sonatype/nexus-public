@@ -18,9 +18,7 @@ import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.apt.AptUploadHandlerSupport;
@@ -55,12 +53,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.31
  */
 @Qualifier(AptFormat.NAME)
-@Singleton
 @Component
 public class AptUploadHandler
     extends AptUploadHandlerSupport
 {
-  @Inject
+  @Autowired
   public AptUploadHandler(
       @Qualifier("simple") final VariableResolverAdapter variableResolverAdapter,
       final ContentPermissionChecker contentPermissionChecker,

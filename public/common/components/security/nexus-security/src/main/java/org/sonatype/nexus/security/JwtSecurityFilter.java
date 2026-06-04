@@ -30,8 +30,7 @@ import org.sonatype.nexus.security.jwt.JwtVerificationException;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.session.mgt.SimpleSession;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
@@ -59,7 +58,6 @@ import static org.sonatype.nexus.security.JwtHelper.USER_SESSION_ID;
  */
 @WebFilter("/*")
 @ConditionalOnProperty(value = JWT_ENABLED, havingValue = "true")
-@Singleton
 public class JwtSecurityFilter
     extends SecurityFilter
 {
@@ -71,7 +69,7 @@ public class JwtSecurityFilter
 
   private static final Logger log = LoggerFactory.getLogger(JwtSecurityFilter.class);
 
-  @Inject
+  @Autowired
   public JwtSecurityFilter(
       final WebSecurityManager webSecurityManager,
       final FilterChainResolver filterChainResolver,

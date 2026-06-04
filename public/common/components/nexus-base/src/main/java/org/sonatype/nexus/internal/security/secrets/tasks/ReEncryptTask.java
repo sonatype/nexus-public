@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.security.secrets.tasks;
 import java.time.Duration;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.crypto.secrets.SecretData;
@@ -50,7 +50,7 @@ public class ReEncryptTask
 
   private final long delayTimeMs;
 
-  @Inject
+  @Autowired
   public ReEncryptTask(
       final SecretsService secretsService,
       final SecretsStore secretsStore,

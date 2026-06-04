@@ -14,6 +14,8 @@ package org.sonatype.nexus.blobstore.restore.maven.internal;
 
 import java.io.ByteArrayInputStream;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -21,16 +23,19 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -58,6 +63,8 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PR
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class MavenRestoreBlobStrategyTest
@@ -94,6 +101,9 @@ public class MavenRestoreBlobStrategyTest
   private AssetBlob assetBlob;
 
   @Mock
+  private BlobRef assetBlobRef;
+
+  @Mock
   private BlobMetrics blobMetrics;
 
   @Mock
@@ -126,6 +136,12 @@ public class MavenRestoreBlobStrategyTest
   @Mock
   private FluentComponent component;
 
+  @Mock
+  private FluentBlobs assetBlobs;
+
+  @Mock
+  private Configuration repositoryConfiguration;
+
   Properties properties;
 
   byte[] blobBytes = "blobbytes".getBytes();
@@ -143,12 +159,23 @@ public class MavenRestoreBlobStrategyTest
 
     when(repositoryManager.get(REPO_NAME)).thenReturn(repository);
 
+    when(repository.getConfiguration()).thenReturn(repositoryConfiguration);
+    Map<String, Map<String, Object>> attributes = new HashMap<>();
+    Map<String, Object> storageAttributes = new HashMap<>();
+    storageAttributes.put(BLOB_STORE_NAME, TEST_BLOB_STORE_NAME);
+    attributes.put(STORAGE, storageAttributes);
+    when(repositoryConfiguration.getAttributes()).thenReturn(attributes);
+
     when(contentFacet.assets()).thenReturn(assets);
     when(assets.path(nullable(String.class))).thenReturn(fluentAssetBuilder);
     when(fluentAssetBuilder.find()).thenReturn(Optional.of(asset));
 
+    when(contentFacet.blobs()).thenReturn(assetBlobs);
+    when(assetBlobs.blob(any(BlobRef.class))).thenReturn(Optional.of(blob));
+
     when(asset.component()).thenReturn(empty());
     when(asset.blob()).thenReturn(Optional.of(assetBlob));
+    when(assetBlob.blobRef()).thenReturn(assetBlobRef);
 
     when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
     when(repository.optionalFacet(MavenContentFacet.class)).thenReturn(Optional.of(mavenFacet));

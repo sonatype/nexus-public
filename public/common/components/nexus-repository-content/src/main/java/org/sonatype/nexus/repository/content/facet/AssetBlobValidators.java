@@ -16,9 +16,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.24
  */
 @Component
-@Singleton
 public class AssetBlobValidators
 {
   private final Map<String, MimeRulesSource> mimeRulesSources;
@@ -44,7 +41,7 @@ public class AssetBlobValidators
 
   private final DefaultContentValidator defaultContentValidator;
 
-  @Inject
+  @Autowired
   public AssetBlobValidators(
       final List<MimeRulesSource> mimeRulesSourcesList,
       final List<ContentValidator> contentValidatorsList,

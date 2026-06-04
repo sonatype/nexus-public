@@ -23,9 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
@@ -45,7 +43,6 @@ import org.springframework.stereotype.Component;
  * Masks sensitive data passed as JVM arguments.
  */
 @Component
-@Singleton
 public class JvmLogCustomizer
     implements SupportBundleCustomizer
 {
@@ -58,7 +55,7 @@ public class JvmLogCustomizer
 
   private final ApplicationDirectories applicationDirectories;
 
-  @Inject
+  @Autowired
   public JvmLogCustomizer(final LogManager logManager, final ApplicationDirectories applicationDirectories) {
     this.logManager = checkNotNull(logManager);
     this.applicationDirectories = checkNotNull(applicationDirectories);

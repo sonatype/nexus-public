@@ -16,10 +16,9 @@ package org.sonatype.nexus.blobstore.s3.internal.capability;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.capability.CapabilityDescriptorSupport;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.capability.Tag;
@@ -37,7 +36,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
 @Qualifier(CustomS3RegionCapabilityDescriptor.TYPE_ID)
-@Singleton
 @AvailabilityVersion(from = "2.4")
 public class CustomS3RegionCapabilityDescriptor
     extends CapabilityDescriptorSupport<CustomS3RegionCapabilityConfiguration>

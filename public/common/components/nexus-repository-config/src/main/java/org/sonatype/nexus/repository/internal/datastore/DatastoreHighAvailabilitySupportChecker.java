@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.internal.datastore;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 
@@ -24,11 +22,10 @@ import com.google.common.collect.ImmutableList;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class DatastoreHighAvailabilitySupportChecker
     extends HighAvailabilitySupportChecker
 {
-  @Inject
+  @Autowired
   public DatastoreHighAvailabilitySupportChecker(final NodeAccess nodeAccess) {
     super(nodeAccess);
   }
@@ -59,6 +56,8 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("terraform")
         .add("swift")
         .add("pub")
+        .add("ansiblegalaxy")
+        .add("alpine")
         .build();
   }
 }

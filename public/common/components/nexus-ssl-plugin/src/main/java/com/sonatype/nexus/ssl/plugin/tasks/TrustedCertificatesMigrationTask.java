@@ -12,7 +12,7 @@
  */
 package com.sonatype.nexus.ssl.plugin.tasks;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -40,7 +40,7 @@ public class TrustedCertificatesMigrationTask
 {
   private final TrustedCertificateMigrationService trustedCertificateMigrationService;
 
-  @Inject
+  @Autowired
   public TrustedCertificatesMigrationTask(final TrustedCertificateMigrationService trustedCertificateMigrationService) {
     this.trustedCertificateMigrationService = checkNotNull(trustedCertificateMigrationService);
   }

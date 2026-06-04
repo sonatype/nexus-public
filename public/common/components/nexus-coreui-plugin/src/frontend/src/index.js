@@ -27,9 +27,15 @@ import GoogleBlobStoreActions from './components/pages/admin/BlobStores/Google/G
 import FileBlobStoreWarning from './components/pages/admin/BlobStores/File/FileBlobStoreWarning';
 import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';
 import CommunityDiscoverOnboarding from './components/pages/onboarding/CommunityDiscoverOnboarding';
+import TelemetryWarningBanner from './components/shared/telemetry/TelemetryWarningBanner';
 import './styles/extjs.scss';
+import { configureAxios, configureDebugLogging, exposeCreateRoot } from '@sonatype/nexus-ui-plugin';
 
 enforceHashRouting();
+
+configureAxios();
+configureDebugLogging();
+exposeCreateRoot();
 
 window.BlobStoreTypes = {
   ...window.BlobStoreTypes,
@@ -55,4 +61,5 @@ window.ReactComponents = {
   ...window.ReactComponents,
   CommunityEulaOnboarding,
   CommunityDiscoverOnboarding,
+  TelemetryWarningBanner,
 };

@@ -12,13 +12,11 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.app.VersionComparator;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import org.springframework.context.annotation.Primary;
@@ -32,7 +30,6 @@ import org.springframework.context.annotation.Primary;
 @Component
 @Qualifier(DefaultBrowseNodeComparator.NAME)
 @Primary
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DefaultBrowseNodeComparator
     implements BrowseNodeComparator
 {
@@ -46,7 +43,7 @@ public class DefaultBrowseNodeComparator
 
   public static final int NODE_PRIORITY_ASSET = 3;
 
-  @Inject
+  @Autowired
   public DefaultBrowseNodeComparator(final VersionComparator versionComparator) {
     this.versionComparator = versionComparator;
   }

@@ -13,12 +13,13 @@
 package org.sonatype.nexus.scheduling.internal.upgrade.datastore;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
@@ -48,6 +49,7 @@ import org.springframework.beans.factory.annotation.Value;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.scheduling.internal.upgrade.datastore.UpgradeTaskData.BLOCK_QUEUE_KEY;
 import org.springframework.stereotype.Component;
 
 /**
@@ -58,7 +60,6 @@ import org.springframework.stereotype.Component;
  * executing the queue. Uses events to identify when a task changes state.
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = TASKS)
 public class QueuingUpgradeTaskScheduler
     extends StateGuardLifecycleSupport
@@ -76,7 +77,7 @@ public class QueuingUpgradeTaskScheduler
 
   private final UpgradeTaskStore upgradeTaskStore;
 
-  @Inject
+  @Autowired
   public QueuingUpgradeTaskScheduler(
       final PeriodicJobService periodicJobService,
       final TaskScheduler taskScheduler,
@@ -98,6 +99,14 @@ public class QueuingUpgradeTaskScheduler
 
   @Override
   public void schedule(final TaskConfiguration configuration) {
+    upgradeTaskStore.insert(new UpgradeTaskData(configuration.getId(), configuration.asMap()));
+  }
+
+  @Override
+  public void schedule(final TaskConfiguration configuration, final boolean blockQueue) {
+    if (!blockQueue) {
+      configuration.setBoolean(BLOCK_QUEUE_KEY, false);
+    }
     upgradeTaskStore.insert(new UpgradeTaskData(configuration.getId(), configuration.asMap()));
   }
 
@@ -147,10 +156,10 @@ public class QueuingUpgradeTaskScheduler
     TaskInfo taskInfo = event.getTaskInfo();
 
     if (event instanceof TaskEventStoppedFailed && upgradeTaskStore.markFailed(taskInfo.getId()) > 0) {
-      log.error("Upgrade task failed: {}. Queue will be restarted on startup.", taskInfo.getName());
+      log.warn("Upgrade task did not complete: {}. Will retry on next startup.", taskInfo.getName());
     }
     else if (event instanceof TaskEventStoppedCanceled && upgradeTaskStore.markCanceled(taskInfo.getId()) > 0) {
-      log.error("Upgrade task cancelled: {}. Queue will be restarted on startup.", taskInfo.getName());
+      log.warn("Upgrade task cancelled: {}. Will retry on next startup.", taskInfo.getName());
       // Nexus could be shutting down and the task scheduler is canceling running jobs
     }
     else if (event instanceof TaskEventStoppedDone && upgradeTaskStore.deleteByTaskId(taskInfo.getId()) > 0) {
@@ -163,12 +172,18 @@ public class QueuingUpgradeTaskScheduler
   protected void maybeStartQueue() {
     try {
       cooperation.on(() -> {
-        Optional<UpgradeTaskData> next = upgradeTaskStore.next();
-        if (!next.isPresent()) {
-          return null;
-        }
-        if (notRunningAndNotDone(next.get())) {
-          scheduleTask(next.get());
+        List<UpgradeTaskData> tasks = upgradeTaskStore.browse().collect(Collectors.toList());
+        for (UpgradeTaskData task : tasks) {
+          boolean blockQueue = isBlockQueue(task);
+          if (notRunningAndNotDone(task)) {
+            scheduleTask(task);
+            if (blockQueue) {
+              return null;
+            }
+          }
+          if (blockQueue) {
+            return null;
+          }
         }
         return null;
       })
@@ -213,6 +228,14 @@ public class QueuingUpgradeTaskScheduler
       log.error("Failed to restart upgrade task: {}", taskName, e);
       return null;
     }
+  }
+
+  private boolean isBlockQueue(final UpgradeTaskData task) {
+    Map<String, String> config = task.getConfiguration();
+    if (config == null) {
+      return true;
+    }
+    return Boolean.parseBoolean(config.getOrDefault(BLOCK_QUEUE_KEY, Boolean.TRUE.toString()));
   }
 
   private boolean notRunningAndNotDone(final UpgradeTaskData upgradetask) {

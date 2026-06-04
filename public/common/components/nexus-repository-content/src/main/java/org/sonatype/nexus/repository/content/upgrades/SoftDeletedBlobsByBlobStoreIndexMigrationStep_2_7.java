@@ -18,8 +18,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +26,6 @@ import org.slf4j.LoggerFactory;
  * Migration step to create an index for idx_soft_deleted_blobs_by_source_blob_store_name_record_id
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SoftDeletedBlobsByBlobStoreIndexMigrationStep_2_7
     implements DatabaseMigrationStep
 {

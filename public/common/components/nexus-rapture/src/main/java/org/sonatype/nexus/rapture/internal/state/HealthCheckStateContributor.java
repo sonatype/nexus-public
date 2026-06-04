@@ -16,9 +16,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.systemchecks.NodeSystemCheckResult;
 import org.sonatype.nexus.systemchecks.SystemCheckService;
@@ -37,7 +35,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 public class HealthCheckStateContributor
     implements StateContributor
 {
@@ -48,7 +45,7 @@ public class HealthCheckStateContributor
 
   private SystemCheckService systemCheckService;
 
-  @Inject
+  @Autowired
   public HealthCheckStateContributor(final SystemCheckService systemCheckService) {
     this.systemCheckService = checkNotNull(systemCheckService);
   }

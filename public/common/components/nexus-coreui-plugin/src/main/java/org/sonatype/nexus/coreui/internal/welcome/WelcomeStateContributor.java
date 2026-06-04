@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.welcome;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.rapture.StateContributor;
 
@@ -29,7 +27,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class WelcomeStateContributor
     implements StateContributor
 {
@@ -41,7 +38,7 @@ public class WelcomeStateContributor
 
   private final Boolean featureFlag;
 
-  @Inject
+  @Autowired
   public WelcomeStateContributor(
       @Value("${nexus.react.welcome:true}") final Boolean featureFlag,
       final NodeAccess nodeAccess)

@@ -22,9 +22,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.LegacyCipherFactory;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
@@ -43,7 +41,6 @@ import org.springframework.stereotype.Component;
  * @deprecated
  */
 @Component
-@Singleton
 @Deprecated
 public class LegacyCipherFactoryImpl
     implements LegacyCipherFactory
@@ -52,7 +49,7 @@ public class LegacyCipherFactoryImpl
 
   private final CryptoHelper cryptoHelper;
 
-  @Inject
+  @Autowired
   public LegacyCipherFactoryImpl(final CryptoHelper cryptoHelper) {
     this.cryptoHelper = checkNotNull(cryptoHelper);
   }

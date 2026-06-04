@@ -13,10 +13,8 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.repository.ETagHeaderUtils;
-import org.sonatype.nexus.repository.http.NxrmHttpHeaders;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -27,16 +25,15 @@ import com.google.common.net.HttpHeaders;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.repository.date.DateTimeUtils.formatDateTime;
-import org.springframework.stereotype.Component;
 
 /**
  * A format-neutral content handler for decorating response using {@link Content#getAttributes()} provided attributes.
  *
  * @since 3.0
  */
-@Singleton
 @Component
 public class ContentHeadersHandler
     implements Handler
@@ -58,9 +55,9 @@ public class ContentHeadersHandler
       if (etag != null) {
         response.getHeaders().replace(HttpHeaders.ETAG, ETagHeaderUtils.quote(etag));
       }
-      final String PCCSHash = content.getAttributes().get(Content.CONTENT_PCCS_HASH, String.class);
-      if (PCCSHash != null) {
-        response.getHeaders().replace(NxrmHttpHeaders.PCCS_HASH, PCCSHash);
+      final String vary = content.getAttributes().get(Content.CONTENT_VARY, String.class);
+      if (vary != null) {
+        response.getHeaders().replace(HttpHeaders.VARY, vary);
       }
     }
     return response;

@@ -12,10 +12,10 @@
  */
 package org.sonatype.nexus.internal.script;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.common.script.ScriptService;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskSupport;
@@ -51,7 +51,7 @@ public class ScriptTask
 
   private String source;
 
-  @Inject
+  @Autowired
   public ScriptTask(final ScriptService scripts) {
     this.scripts = checkNotNull(scripts);
   }

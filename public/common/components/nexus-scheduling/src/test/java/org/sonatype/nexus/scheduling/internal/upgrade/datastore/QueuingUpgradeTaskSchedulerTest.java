@@ -38,6 +38,10 @@ import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedFailed;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +50,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
@@ -77,6 +82,9 @@ public class QueuingUpgradeTaskSchedulerTest
 
   private static final Map<String, String> TASK_CONFIG = ImmutableMap.of("a", "b");
 
+  private static final Map<String, String> NON_BLOCKING_TASK_CONFIG =
+      ImmutableMap.of("a", "b", UpgradeTaskData.BLOCK_QUEUE_KEY, "false");
+
   @Mock
   private PeriodicJobService periodicJobService;
 
@@ -105,6 +113,8 @@ public class QueuingUpgradeTaskSchedulerTest
 
   private UpgradeTaskStore upgradeTaskStore;
 
+  private ListAppender<ILoggingEvent> logCaptor;
+
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME).access(UpgradeTaskDAO.class);
 
@@ -126,10 +136,15 @@ public class QueuingUpgradeTaskSchedulerTest
 
     underTest = new QueuingUpgradeTaskScheduler(periodicJobService, taskScheduler, upgradeTaskStore, true,
         Duration.ofSeconds(0), localCooperationSelector, distributedCooperationSelector);
+
+    logCaptor = new ListAppender<>();
+    logCaptor.start();
+    ((Logger) LoggerFactory.getLogger(QueuingUpgradeTaskScheduler.class)).addAppender(logCaptor);
   }
 
   @After
   public void stop() {
+    ((Logger) LoggerFactory.getLogger(QueuingUpgradeTaskScheduler.class)).detachAppender(logCaptor);
     // the default behavior is to use the distributed impl, so we should have selected it and see nothing be done with
     // the local impl
     verifyNoInteractions(localCooperationSelector);
@@ -320,6 +335,14 @@ public class QueuingUpgradeTaskSchedulerTest
     UpgradeTaskData task = upgradeTaskStore.browse().findFirst().orElse(null);
     assertThat(task, notNullValue());
     assertThat(task.getStatus(), is("canceled"));
+
+    // Verify the log message is WARN (not ERROR) — cancellation is an expected, retriable state
+    boolean warnLogged = logCaptor.list.stream()
+        .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("Will retry on next startup"));
+    assertThat(warnLogged, is(true));
+    boolean errorLogged = logCaptor.list.stream()
+        .anyMatch(e -> e.getLevel() == Level.ERROR && e.getFormattedMessage().contains("Will retry on next startup"));
+    assertThat(errorLogged, is(false));
   }
 
   /*
@@ -343,6 +366,155 @@ public class QueuingUpgradeTaskSchedulerTest
     UpgradeTaskData task = upgradeTaskStore.browse().findFirst().orElse(null);
     assertThat(task, notNullValue());
     assertThat(task.getStatus(), is("failed"));
+
+    // Verify the log message is WARN (not ERROR) — failure is an expected, retriable state
+    boolean warnLogged = logCaptor.list.stream()
+        .anyMatch(e -> e.getLevel() == Level.WARN && e.getFormattedMessage().contains("Will retry on next startup"));
+    assertThat(warnLogged, is(true));
+    boolean errorLogged = logCaptor.list.stream()
+        .anyMatch(e -> e.getLevel() == Level.ERROR && e.getFormattedMessage().contains("Will retry on next startup"));
+    assertThat(errorLogged, is(false));
+  }
+
+  /*
+   * Verify that a non-blocking task that is running does not prevent the next task in the queue from starting.
+   */
+  @Test
+  public void testMaybeStartQueue_nonBlockingRunningTask_doesNotBlockNextTask() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    TaskInfo taskInfo2 = mock(TaskInfo.class);
+    when(taskInfo2.getId()).thenReturn(TASK_ID_2);
+    when(taskScheduler.submit(any())).thenReturn(taskInfo2);
+
+    // First task is non-blocking and currently running
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID, NON_BLOCKING_TASK_CONFIG));
+    when(taskScheduler.getTaskById(TASK_ID)).thenReturn(taskInfo);
+    when(taskScheduler.toExternalTaskState(taskInfo))
+        .thenReturn(new ExternalTaskState(TaskState.RUNNING, null, null, null, null, null));
+
+    // Second task is queued behind it
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID_2, TASK_CONFIG));
+
+    underTest.maybeStartQueue();
+
+    // The second task must have been submitted despite the first still running
+    verify(taskScheduler).submit(any());
+    // getTaskById is called twice for TASK_ID_2: once in notRunningAndNotDone, once in scheduleTask
+    verify(taskScheduler, times(2)).getTaskById(TASK_ID_2);
+  }
+
+  /*
+   * Verify that a pending non-blocking task is scheduled AND the next task is also scheduled
+   * in the same maybeStartQueue call (they start concurrently).
+   */
+  @Test
+  public void testMaybeStartQueue_pendingNonBlockingTask_schedulesNextTaskToo() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    TaskInfo taskInfo2 = mock(TaskInfo.class);
+    when(taskInfo2.getId()).thenReturn(TASK_ID_2);
+
+    // First task is non-blocking and pending (not yet started)
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID, NON_BLOCKING_TASK_CONFIG));
+    when(taskScheduler.submit(any())).thenReturn(taskInfo).thenReturn(taskInfo2);
+
+    // Second task is queued behind it
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID_2, TASK_CONFIG));
+
+    underTest.maybeStartQueue();
+
+    // Both tasks must have been submitted in the same maybeStartQueue call
+    verify(taskScheduler, times(2)).submit(any());
+  }
+
+  /*
+   * Verify that a blocking task that is running prevents the next task in the queue from starting.
+   */
+  @Test
+  public void testMaybeStartQueue_blockingRunningTask_blocksNextTask() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    // First task is blocking (default) and currently running
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID, TASK_CONFIG));
+    when(taskScheduler.getTaskById(TASK_ID)).thenReturn(taskInfo);
+    when(taskScheduler.toExternalTaskState(taskInfo))
+        .thenReturn(new ExternalTaskState(TaskState.RUNNING, null, null, null, null, null));
+
+    // Second task is queued behind it
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID_2, TASK_CONFIG));
+
+    underTest.maybeStartQueue();
+
+    // The second task must NOT have been touched
+    verify(taskScheduler, never()).getTaskById(TASK_ID_2);
+    verify(taskScheduler, never()).submit(any());
+  }
+
+  /*
+   * Verify that a pending blocking task is scheduled but the next task is NOT scheduled
+   * in the same maybeStartQueue call.
+   */
+  @Test
+  public void testMaybeStartQueue_pendingBlockingTask_doesNotScheduleNextTask() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    // First task is blocking (default) and pending
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID, TASK_CONFIG));
+    when(taskScheduler.submit(any())).thenReturn(taskInfo);
+
+    // Second task is queued behind it
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID_2, TASK_CONFIG));
+
+    underTest.maybeStartQueue();
+
+    // Only the first task must have been submitted — second must not be touched
+    verify(taskScheduler, times(1)).submit(any());
+    verify(taskScheduler, never()).getTaskById(TASK_ID_2);
+  }
+
+  /*
+   * Verify that a non-blocking task in OK (done) state does not prevent the next task in the queue from starting.
+   */
+  @Test
+  public void testMaybeStartQueue_nonBlockingDoneTask_doesNotBlockNextTask() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    TaskInfo taskInfo2 = mock(TaskInfo.class);
+    when(taskInfo2.getId()).thenReturn(TASK_ID_2);
+    when(taskScheduler.submit(any())).thenReturn(taskInfo2);
+
+    // First task is non-blocking and already done (OK)
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID, NON_BLOCKING_TASK_CONFIG));
+    when(taskScheduler.getTaskById(TASK_ID)).thenReturn(taskInfo);
+    when(taskScheduler.toExternalTaskState(taskInfo))
+        .thenReturn(new ExternalTaskState(TaskState.OK, null, null, null, null, null));
+
+    // Second task is queued behind it
+    upgradeTaskStore.insert(new UpgradeTaskData(TASK_ID_2, TASK_CONFIG));
+
+    underTest.maybeStartQueue();
+
+    // The second task must have been submitted despite the first being done
+    verify(taskScheduler).submit(any());
+    verify(taskScheduler, times(2)).getTaskById(TASK_ID_2);
+  }
+
+  /*
+   * Verify that schedule(config, false) stamps blockQueue=false into the stored configuration.
+   */
+  @Test
+  public void testSchedule_withBlockQueueFalse_stampsFlag() throws Exception {
+    startQueuingUpgradeTaskScheduler();
+
+    TaskConfiguration realConfig = new TaskConfiguration();
+    realConfig.setId(TASK_ID);
+
+    underTest.schedule(realConfig, false);
+
+    UpgradeTaskData stored = upgradeTaskStore.browse().findFirst().orElse(null);
+    assertThat(stored, notNullValue());
+    assertThat(stored.getConfiguration().get(UpgradeTaskData.BLOCK_QUEUE_KEY), is("false"));
   }
 
   private void mockCooperation() {

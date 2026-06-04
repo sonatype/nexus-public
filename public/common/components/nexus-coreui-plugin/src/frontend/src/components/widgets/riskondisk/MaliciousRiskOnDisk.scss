@@ -19,6 +19,17 @@ $card-width: 1016px;
 .risk-on-disk-alert {
   max-width: $card-width;
 
+  .nx-collapsible-items__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
   &:hover .nx-collapsible-items__trigger {
     background-color: var(--nx-color-alert-error-background);
   }

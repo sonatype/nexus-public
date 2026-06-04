@@ -32,40 +32,68 @@
 
 import React from 'react';
 import {UIView} from '@uirouter/react';
-import {Permissions} from '@sonatype/nexus-ui-plugin';
+import {
+  Permissions,
+  withFeatureGate,
+  SettingsPageLayoutRadix,
+  SettingsHubPage,
+  SonatypeTestHub,
+  SonatypeInternalTestDashboard,
+  SonatypeInternalTestMalwareDefense,
+  SonatypeInternalTestSearchFw,
+  SonatypeInternalTestSearchHc,
+  MalwareDashboardScenarioPage,
+  // Raw (ungated) page components from preview. These get wrapped with
+  // withFeatureGate below so each section shows ComingSoonPage in
+  // production when its feature flag is off.
+  RepositoriesPage as RepositoriesPageRaw,
+  RepositoryProfilePage as RepositoryProfilePageRaw,
+  BlobStoresPage as BlobStoresPageRaw,
+  ContentSelectorsPage as ContentSelectorsPageRaw,
+  CleanupPoliciesPage as CleanupPoliciesPageRaw,
+  RoutingRulesPage as RoutingRulesPageRaw,
+  DataStorePage as DataStorePageRaw,
+  ProprietaryPage as ProprietaryPageRaw,
+  PrivilegesPage as PrivilegesPageRaw,
+  RolesPage as RolesPageRaw,
+  UsersPage as UsersPageRaw,
+  AnonymousPage as AnonymousPageRaw,
+  CrowdPage as CrowdPageRaw,
+  LdapPage as LdapPageRaw,
+  OAuth2Page as OAuth2PageRaw,
+  RealmsPage as RealmsPageRaw,
+  SamlPage as SamlPageRaw,
+  SslCertificatesPage as SslCertificatesPageRaw,
+  UserTokensPage as UserTokensPageRaw,
+  LogsPage as LogsPageRaw,
+  LoggingConfigPage as LoggingConfigPageRaw,
+  SystemInfoPage as SystemInfoPageRaw,
+  MetricHealthPage as MetricHealthPageRaw,
+  SupportRequestPage as SupportRequestPageRaw,
+  SupportZipPage as SupportZipPageRaw,
+  TasksPage as TasksPageRaw,
+  CapabilitiesPage as CapabilitiesPageRaw,
+  PreviewUiSettingsPage,
+  EmailPage as EmailPageRaw,
+  HttpPage as HttpPageRaw,
+  LicensingPage as LicensingPageRaw,
+  NodesPage as NodesPageRaw,
+  UpgradePage as UpgradePageRaw,
+  UsagePage,
+  UserAccountPage as UserAccountPageRaw,
+  IqServerPage as IqServerPageRaw,
+} from '@sonatype/nexus-ui-plugin';
 import {lazyLoad} from './lazyLoad';
-import { withFeatureGate } from '../../components/super/shared/FeatureGate';
 
-const SettingsPageLayoutRadix = lazyLoad(() => import('../../components/super/shared/SettingsPageLayoutRadix'));
-const SettingsHubPage = lazyLoad(() => import('../../components/super/settings/SettingsHubPage'));
+const IpAllowListPage = lazyLoad(() => import('@sonatype/nexus-ui-plugin').then(m => ({ default: m.IpAllowList })));
 
-// SONATYPE INTERNAL — tree-shaken out in production (requires __SONATYPE_INTERNAL__ define)
-const SonatypeTestHub = lazyLoad(() =>
-  import('../../components/super/sonatype-internal/SonatypeTestHub')
-);
-const SonatypeInternalTestDashboard = lazyLoad(() =>
-  import('../../components/super/sonatype-internal/test-dashboard/MalwareDashboardTestPage')
-    .then((m) => ({ default: m.default }))
-);
-const SonatypeInternalTestScenario = lazyLoad(() =>
-  import('../../components/super/sonatype-internal/test-dashboard/MalwareDashboardTestPage')
-    .then((m) => {
-      const ScenarioPage = ({ transition }) => {
-        const id = transition?.params?.().scenarioId ?? 'A';
-        return React.createElement(m.MalwareDashboardScenarioPage, { scenarioId: id });
-      };
-      return { default: ScenarioPage };
-    })
-);
-const SonatypeInternalTestMalwareDefense = lazyLoad(() =>
-  import('../../components/super/sonatype-internal/test-malware-defense/MalwareDefenseTestPage')
-);
-const SonatypeInternalTestSearchFw = lazyLoad(() =>
-  import('../../components/super/sonatype-internal/test-search-fw/SearchFirewallTestPage')
-);
-const SonatypeInternalTestSearchHc = lazyLoad(() =>
-  import('../../components/super/sonatype-internal/test-search-hc/SearchHealthCheckTestPage')
-);
+// Sonatype-internal scenario route wraps MalwareDashboardScenarioPage with
+// a transition-param unwrapper. The named export from ui-plugin is the
+// underlying (non-default) export from MalwareDashboardTestPage.
+const SonatypeInternalTestScenario = ({ transition }) => {
+  const id = transition?.params?.().scenarioId ?? 'A';
+  return React.createElement(MalwareDashboardScenarioPage, { scenarioId: id });
+};
 
 const sonatypeInternalRoutes = [
   // Hub — index of all test pages
@@ -112,19 +140,10 @@ const sonatypeInternalRoutes = [
 ];
 
 // =============================================================================
-// PLACEHOLDER COMPONENTS - All show ComingSoonPage with specific descriptions
+// FEATURE-GATED PAGES
+// Each gated page wraps the ui-plugin export with ComingSoonPage in
+// production. Raw (ungated) components are imported above as <Name>Raw.
 // =============================================================================
-
-// Repository Section - WIP pages wrapped with FeatureGate (Coming Soon in production)
-const RepositoriesPageRaw = lazyLoad(() => import('../../components/super/settings/repository/repositories/RepositoriesPage'));
-// Profile is a sub-route of repositories — gated with the same repository.repositories flag
-const RepositoryProfilePageRaw = lazyLoad(() => import('../../components/super/settings/repository/profile/RepositoryProfilePage'));
-const BlobStoresPageRaw = lazyLoad(() => import('../../components/super/settings/repository/blob-stores/BlobStoresPage'));
-const ContentSelectorsPageRaw = lazyLoad(() => import('../../components/super/settings/repository/selectors/ContentSelectorsPage'));
-const CleanupPoliciesPageRaw = lazyLoad(() => import('../../components/super/settings/repository/cleanup/CleanupPoliciesPage'));
-const RoutingRulesPageRaw = lazyLoad(() => import('../../components/super/settings/repository/routing/RoutingRulesPage'));
-const DataStorePageRaw = lazyLoad(() => import('../../components/super/settings/repository/datastore/DataStorePage'));
-const ProprietaryPageRaw = lazyLoad(() => import('../../components/super/settings/repository/proprietary/ProprietaryPage'));
 
 // Repository - Gated (Coming Soon in production, WIP accessible in dev only)
 const RepositoriesPage = withFeatureGate(RepositoriesPageRaw, 'repository.repositories', 'Repositories');
@@ -136,20 +155,7 @@ const RoutingRulesPage = withFeatureGate(RoutingRulesPageRaw, 'repository.routin
 const DataStorePage = withFeatureGate(DataStorePageRaw, 'repository.datastore', 'Data Store');
 const ProprietaryPage = withFeatureGate(ProprietaryPageRaw, 'repository.proprietary', 'Proprietary');
 
-// Security Section - WIP pages wrapped with FeatureGate (Coming Soon in production)
-const PrivilegesPageRaw = lazyLoad(() => import('../../components/super/settings/security/privileges/PrivilegesPage'));
-const RolesPageRaw = lazyLoad(() => import('../../components/super/settings/security/roles/RolesPage'));
-const UsersPageRaw = lazyLoad(() => import('../../components/super/settings/security/users/UsersPage'));
-const AnonymousPageRaw = lazyLoad(() => import('../../components/super/settings/security/anonymous/AnonymousPage'));
-const CrowdPageRaw = lazyLoad(() => import('../../components/super/settings/security/crowd/CrowdPage'));
-const LdapPageRaw = lazyLoad(() => import('../../components/super/settings/security/ldap/LdapPage'));
-const OAuth2PageRaw = lazyLoad(() => import('../../components/super/settings/security/oauth2/OAuth2Page'));
-const RealmsPageRaw = lazyLoad(() => import('../../components/super/settings/security/realms/RealmsPage'));
-const SamlPageRaw = lazyLoad(() => import('../../components/super/settings/security/saml/SamlPage'));
-const SslCertificatesPageRaw = lazyLoad(() => import('../../components/super/settings/security/sslcertificates/SslCertificatesPage'));
-const UserTokensPageRaw = lazyLoad(() => import('../../components/super/settings/security/user-tokens/UserTokensPage'));
-
-// Security - Gated (Coming Soon in production, WIP accessible in dev only)
+// Security - Gated
 const PrivilegesPage = withFeatureGate(PrivilegesPageRaw, 'security.privileges', 'Privileges');
 const RolesPage = withFeatureGate(RolesPageRaw, 'security.roles', 'Roles');
 const UsersPage = withFeatureGate(UsersPageRaw, 'security.users', 'Users');
@@ -162,15 +168,7 @@ const SamlPage = withFeatureGate(SamlPageRaw, 'security.saml', 'SAML');
 const SslCertificatesPage = withFeatureGate(SslCertificatesPageRaw, 'security.sslcertificates', 'SSL Certificates');
 const UserTokensPage = withFeatureGate(UserTokensPageRaw, 'security.usertokens', 'User Tokens');
 
-// Support Section - WIP pages wrapped with FeatureGate (Coming Soon in production)
-const LogsPageRaw = lazyLoad(() => import('../../components/super/settings/support/logs/LogsPage'));
-const LoggingConfigPageRaw = lazyLoad(() => import('../../components/super/settings/support/logging-config/LoggingConfigPage'));
-const SystemInfoPageRaw = lazyLoad(() => import('../../components/super/settings/support/system-info/SystemInfoPage'));
-const MetricHealthPageRaw = lazyLoad(() => import('../../components/super/settings/support/metric-health/MetricHealthPage'));
-const SupportRequestPageRaw = lazyLoad(() => import('../../components/super/settings/support/support-request/SupportRequestPage'));
-const SupportZipPageRaw = lazyLoad(() => import('../../components/super/settings/support/support-zip/SupportZipPage'));
-
-// Support - Gated (Coming Soon in production, WIP accessible in dev only)
+// Support - Gated
 const LogsPage = withFeatureGate(LogsPageRaw, 'support.logs', 'Logs');
 const LoggingConfigPage = withFeatureGate(LoggingConfigPageRaw, 'support.logging', 'Logging Configuration');
 const SystemInfoPage = withFeatureGate(SystemInfoPageRaw, 'support.systeminfo', 'System Information');
@@ -178,18 +176,7 @@ const MetricHealthPage = withFeatureGate(MetricHealthPageRaw, 'support.metrics',
 const SupportRequestPage = withFeatureGate(SupportRequestPageRaw, 'support.supportrequest', 'Support Request');
 const SupportZipPage = withFeatureGate(SupportZipPageRaw, 'support.supportzip', 'Support ZIP');
 
-// System Section - WIP pages wrapped with FeatureGate (Coming Soon in production)
-const TasksPageRaw = lazyLoad(() => import('../../components/super/settings/system/tasks/TasksPage'));
-const CapabilitiesPageRaw = lazyLoad(() => import('../../components/super/settings/system/capabilities/CapabilitiesPage'));
-const PreviewUiSettingsPage = lazyLoad(() => import('../../components/super/settings/system/preview-ui/PreviewUiSettingsPage'));
-const EmailPageRaw = lazyLoad(() => import('../../components/super/settings/system/email/EmailPage'));
-const HttpPageRaw = lazyLoad(() => import('../../components/super/settings/system/http/HttpPage'));
-const LicensingPageRaw = lazyLoad(() => import('../../components/super/settings/system/licensing/LicensingPage'));
-const NodesPageRaw = lazyLoad(() => import('../../components/super/settings/system/nodes/NodesPage'));
-const UpgradePageRaw = lazyLoad(() => import('../../components/super/settings/system/upgrade/UpgradePage'));
-const UsagePage = lazyLoad(() => import('../../components/super/settings/system/usage/UsagePage'));
-
-// System - Gated (Coming Soon in production, WIP accessible in dev only)
+// System - Gated
 const TasksPage = withFeatureGate(TasksPageRaw, 'system.tasks', 'Tasks');
 const CapabilitiesPage = withFeatureGate(CapabilitiesPageRaw, 'system.capabilities', 'Capabilities');
 const EmailPage = withFeatureGate(EmailPageRaw, 'system.emailserver', 'Email Server');
@@ -198,13 +185,7 @@ const LicensingPage = withFeatureGate(LicensingPageRaw, 'system.licensing', 'Lic
 const NodesPage = withFeatureGate(NodesPageRaw, 'system.nodes', 'Nodes');
 const UpgradePage = withFeatureGate(UpgradePageRaw, 'system.upgrade', 'Upgrade');
 
-// User Section - WIP pages wrapped with FeatureGate (Coming Soon in production)
-const UserAccountPageRaw = lazyLoad(() => import('../../components/super/settings/user-account/UserAccountPage'));
-
-// IQ Server - WIP pages wrapped with FeatureGate (Coming Soon in production)
-const IqServerPageRaw = lazyLoad(() => import('../../components/super/settings/system/iq-server/IqServerPage'));
-
-// User Account, IQ Server - Gated (Coming Soon in production, WIP accessible in dev only)
+// User Account, IQ Server - Gated
 const UserAccountPage = withFeatureGate(UserAccountPageRaw, 'useraccount', 'User Account');
 const IqServerPage = withFeatureGate(IqServerPageRaw, 'iqserver', 'IQ Server');
 
@@ -416,7 +397,7 @@ export const previewAdminRoutes = [
   },
   {
     name: 'preview.admin.repository.cleanuppolicies',
-    url: '/cleanuppolicies',
+    url: '/cleanup-policies',
     abstract: true,
     component: UIView,
     data: { title: 'Cleanup Policies' },
@@ -441,8 +422,9 @@ export const previewAdminRoutes = [
   },
   {
     name: 'preview.admin.repository.routingrules',
-    url: '/routingrules',
+    url: '/routing-rules',
     abstract: true,
+    redirectTo: 'preview.admin.repository.routingrules.list',
     component: UIView,
     data: { title: 'Routing Rules' },
   },
@@ -686,7 +668,7 @@ export const previewAdminRoutes = [
   },
   {
     name: 'preview.admin.security.usertoken',
-    url: '/usertoken',
+    url: '/user-tokens',
     component: UserTokensPage,
     data: { title: 'User Tokens' },
   },
@@ -707,6 +689,18 @@ export const previewAdminRoutes = [
     url: '/crowd',
     component: CrowdPage,
     data: { title: 'Atlassian Crowd' },
+  },
+  {
+    name: 'preview.admin.security.ip-allowlist',
+    url: '/ip-allowlist',
+    component: IpAllowListPage,
+    data: {
+      title: 'IP Allow List',
+      visibilityRequirements: {
+        requiresPermission: 'nexus:settings:read',
+        editions: ['PRO'],
+      },
+    },
   },
 
   // =============================================================================

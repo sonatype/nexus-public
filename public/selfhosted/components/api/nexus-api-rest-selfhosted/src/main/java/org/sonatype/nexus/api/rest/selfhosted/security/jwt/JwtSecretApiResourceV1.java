@@ -22,8 +22,7 @@ import javax.ws.rs.core.Response;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.jwt.SecretStore;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -49,7 +48,6 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Produces(APPLICATION_JSON)
 @Path(PATH)
 @Component
-@Singleton
 public class JwtSecretApiResourceV1
     implements Resource, JwtSecretApiResourceDoc
 {
@@ -59,7 +57,7 @@ public class JwtSecretApiResourceV1
 
   private final SecretStore secretStore;
 
-  @Inject
+  @Autowired
   public JwtSecretApiResourceV1(final SecretStore secretStore) {
     this.secretStore = checkNotNull(secretStore);
   }

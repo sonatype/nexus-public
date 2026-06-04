@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.internal.debian;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,35 @@ public class Release
 
   public Optional<String> getDescription() {
     return getValue("Description");
+  }
+
+  /**
+   * Returns the list of relative file paths from the Release file manifest.
+   * Tries SHA256, then SHA1, then MD5Sum — all sections list the same paths.
+   * Returns an empty list if none of the hash sections are present.
+   */
+  public List<String> getManifestFiles() {
+    String fieldValue = index.getField("SHA256")
+        .map(f -> f.value)
+        .orElseGet(() -> index.getField("SHA1")
+            .map(f -> f.value)
+            .orElseGet(() -> index.getField("MD5Sum")
+                .map(f -> f.value)
+                .orElse("")));
+
+    if (fieldValue.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<String> paths = new ArrayList<>();
+    fieldValue.lines()
+        .map(String::trim)
+        .filter(line -> !line.isEmpty())
+        .map(line -> line.split("\\s+"))
+        .filter(parts -> parts.length >= 3)
+        .map(parts -> parts[2])
+        .forEach(paths::add);
+    return paths;
   }
 
   private Optional<String> getValue(final String name) {

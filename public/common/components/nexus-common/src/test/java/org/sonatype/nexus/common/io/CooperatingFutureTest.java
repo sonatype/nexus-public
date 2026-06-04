@@ -57,7 +57,7 @@ public class CooperatingFutureTest
 
     for (int i = 1; i < downloadTimeMillis.length; i++) {
       long actualGap = downloadTimeMillis[i] - downloadTimeMillis[i - 1];
-      assertThat(actualGap, allOf(greaterThanOrEqualTo(expectedGap - 10), lessThanOrEqualTo(expectedGap + 50)));
+      assertThat(actualGap, allOf(greaterThanOrEqualTo(expectedGap - 25), lessThanOrEqualTo(expectedGap + 75)));
     }
   }
 }

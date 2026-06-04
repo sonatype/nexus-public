@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.StringTextFormField;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class ExternalMetadataTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -38,7 +35,7 @@ public class ExternalMetadataTaskDescriptor
 
   private static final String NAME = "Retrieve external blobstore metadata";
 
-  @Inject
+  @Autowired
   public ExternalMetadataTaskDescriptor(
       @Value("${external.blobstore.metadata:false}") final boolean visibleExposed)
   {

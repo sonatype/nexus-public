@@ -1,0 +1,43 @@
+/*
+ * Sonatype Nexus (TM) Professional Version.
+ * Copyright (c) 2008-present Sonatype, Inc. All rights reserved.
+ * Includes the third-party code listed at http://links.sonatype.com/products/nexus/pro/attributions
+ * "Sonatype" and "Sonatype Nexus" are trademarks of Sonatype, Inc.
+ */
+
+.empty-state {
+  padding: var(--space-8, 64px) var(--space-5, 24px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gray-a6);
+  border-radius: var(--radius-3);
+  background: var(--color-panel-solid, #fff);
+  min-height: 200px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+
+  [data-theme='dark'] & {
+    background: var(--gray-1, #111113);
+    border-color: var(--gray-a6);
+  }
+
+  &__heading {
+    display: block;
+    margin-bottom: var(--space-2, 8px);
+    color: var(--gray-12);
+  }
+
+  &__description {
+    display: inline-block;
+    margin-bottom: 0;
+  }
+
+  &__actions {
+    justify-content: center;
+    margin-top: var(--space-4, 16px);
+  }
+}

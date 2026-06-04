@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.Map;
 import java.util.Objects;
 import javax.validation.constraints.NotBlank;
 
@@ -44,6 +45,8 @@ public class ComponentXO
   private String lastBlobUpdated;
 
   private String groupingKey;
+
+  private Map<String, Object> attributes;
 
   public String getId() {
     return id;
@@ -101,6 +104,14 @@ public class ComponentXO
 
   public void setLastBlobUpdated(String lastBlobUpdated) {
     this.lastBlobUpdated = lastBlobUpdated;
+  }
+
+  public Map<String, Object> getAttributes() {
+    return attributes;
+  }
+
+  public void setAttributes(Map<String, Object> attributes) {
+    this.attributes = attributes;
   }
 
   private void setGroupingKey() {

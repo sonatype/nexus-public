@@ -24,7 +24,7 @@ import {loginRoutes} from "./routes/loginRoutes";
 import {previewAdminRoutes, sonatypeInternalTestRoutes} from './routes/previewAdminRoutes';
 import {previewBrowseRoutes} from './routes/previewBrowseRoutes';
 import {previewUserRoutes} from './routes/previewUserRoutes';
-import {MissingRoutePage} from '../components/super/pages/MissingRoutePage/MissingRoutePage';
+import {MissingRoutePage} from '@sonatype/nexus-ui-plugin';
 
 export function getRouter() {
   const initialRoute = getInitialRoute();

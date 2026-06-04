@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.repository.recipe.RouterBuilder;
@@ -64,17 +64,17 @@ public abstract class RecipeSupport
         '}';
   }
 
-  @Inject
+  @Autowired
   public void setHighAvailabilitySupportChecker(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
     this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
   }
 
-  @Inject
+  @Autowired
   public void setBrowseUnsupportedHandler(final BrowseUnsupportedHandler browseUnsupportedHandler) {
     this.browseUnsupportedHandler = checkNotNull(browseUnsupportedHandler);
   }
 
-  @Inject
+  @Autowired
   public void setDatabaseCheck(final DatabaseCheck databaseCheck) {
     this.databaseCheck = databaseCheck;
   }

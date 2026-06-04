@@ -18,8 +18,6 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Component;
  * from MyBatis createSchema() which could cause lock contention on startup.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class JwtSessionIndexMigrationStep_2_103
     implements DatabaseMigrationStep
 {

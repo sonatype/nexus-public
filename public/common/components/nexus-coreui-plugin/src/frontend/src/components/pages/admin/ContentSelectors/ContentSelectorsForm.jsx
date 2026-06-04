@@ -30,7 +30,7 @@ import {Section} from '@sonatype/nexus-ui-plugin';
 import ContentSelectorsPreview from './ContentSelectorsPreview';
 import UIStrings from '../../../../constants/UIStrings';
 import { isEmpty } from 'ramda';
-import { DeleteConfirmationModal } from '../../../shared/modals/DeleteConfirmationModal';
+import { DeleteConfirmationModal } from '@sonatype/nexus-ui-plugin';
 
 export default function ContentSelectorsForm({service, onDone}) {
   const stateMachine = useActor(service);

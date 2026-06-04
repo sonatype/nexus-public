@@ -32,5 +32,5 @@ export default function SystemNotices () {
     {recoveryModeEnabled ? <RecoveryModeAlert /> : <UpgradeAlert />}
 
     <LicenseExpiryAlert />
-  </NxSystemNotice.Container>
+  </NxSystemNotice.Container>;
 }

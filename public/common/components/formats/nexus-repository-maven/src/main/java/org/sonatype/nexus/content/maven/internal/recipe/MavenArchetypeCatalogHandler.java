@@ -13,8 +13,6 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.25
  */
 @Component
-@Singleton
 public class MavenArchetypeCatalogHandler
     implements Handler
 {

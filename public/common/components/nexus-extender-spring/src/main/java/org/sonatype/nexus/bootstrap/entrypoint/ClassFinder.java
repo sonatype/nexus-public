@@ -15,7 +15,6 @@ package org.sonatype.nexus.bootstrap.entrypoint;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -34,7 +33,6 @@ import static org.sonatype.nexus.bootstrap.entrypoint.ClassFilter.ClassType.INTE
  * aren't something generally managed by DI
  */
 @Component
-@Singleton
 public class ClassFinder
 {
   private static final Logger LOG = LoggerFactory.getLogger(ClassFinder.class);

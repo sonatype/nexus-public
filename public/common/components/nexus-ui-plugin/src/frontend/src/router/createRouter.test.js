@@ -25,6 +25,9 @@ describe('createRouter - onBefore - validate permissions and configuration on ea
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Default: user has no permissions (NavigationUtils calls NX.Permissions.check directly)
+    global.NX.Permissions.check.mockReturnValue(false);
+
     ExtJS.hasUser = jest.fn().mockReturnValue(false);
     // Default to anonymous access disabled
     ExtJS.state = jest.fn().mockReturnValue({

@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
@@ -39,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID_KEY;
@@ -74,12 +76,16 @@ public class AmazonS3FactoryTest
 
   private SecretsFactory secretsFactory = mock(SecretsFactory.class);
 
-  private AmazonS3Factory amazonS3Factory = new AmazonS3Factory(-1, null, false, "", secretsFactory);
+  @Mock
+  private SharedS3CredentialsProvider defaultSharedProvider;
+
+  private AmazonS3Factory amazonS3Factory;
 
   private MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
 
   @Before
   public void setup() {
+    amazonS3Factory = new AmazonS3Factory(-1, null, false, "", secretsFactory, defaultSharedProvider);
     s3ClientMockedStatic = mockStatic(S3Client.class);
     s3ClientMockedStatic.when(S3Client::builder).thenReturn(s3ClientBuilder);
 
@@ -89,7 +95,7 @@ public class AmazonS3FactoryTest
 
     when(s3ClientBuilder.httpClient(any(SdkHttpClient.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.serviceConfiguration(any(S3Configuration.class))).thenReturn(s3ClientBuilder);
-    when(s3ClientBuilder.credentialsProvider(any(StaticCredentialsProvider.class))).thenReturn(s3ClientBuilder);
+    when(s3ClientBuilder.credentialsProvider(any(AwsCredentialsProvider.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.forcePathStyle(anyBoolean())).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.endpointOverride(any(URI.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
@@ -140,7 +146,7 @@ public class AmazonS3FactoryTest
   @Test
   public void cloudWatchMetricsAreEnabledWhenSet() {
     final String givenNamespace = "some-namepace";
-    amazonS3Factory = new AmazonS3Factory(-1, null, true, givenNamespace, secretsFactory);
+    amazonS3Factory = new AmazonS3Factory(-1, null, true, givenNamespace, secretsFactory, defaultSharedProvider);
 
     amazonS3Factory.create(config);
 
@@ -157,6 +163,38 @@ public class AmazonS3FactoryTest
 
     verify(s3ClientBuilder).region(Region.US_WEST_2);
     verify(s3ClientBuilder).forcePathStyle(true);
+  }
+
+  @Test
+  public void sharedCredentialsProviderIsUsedForS3ClientWhenNoExplicitKeys() {
+    AwsCredentialsProvider sharedProvider = mock(AwsCredentialsProvider.class);
+    amazonS3Factory = new AmazonS3Factory(-1, null, false, "", secretsFactory, sharedProvider);
+    when(s3ClientBuilder.credentialsProvider(sharedProvider)).thenReturn(s3ClientBuilder);
+
+    amazonS3Factory.create(config);
+
+    verify(s3ClientBuilder).credentialsProvider(sharedProvider);
+  }
+
+  @Test
+  public void sharedCredentialsProviderIsNotUsedWhenExplicitKeysConfigured() {
+    AwsCredentialsProvider sharedProvider = mock(AwsCredentialsProvider.class);
+    amazonS3Factory = new AmazonS3Factory(-1, null, false, "", secretsFactory, sharedProvider);
+
+    Secret accessKeyMock = mock(Secret.class);
+    when(secretsFactory.from("_1")).thenReturn(accessKeyMock);
+    when(accessKeyMock.decrypt()).thenReturn("secretAccessKey".toCharArray());
+    config.getAttributes().get("s3").put(ACCESS_KEY_ID_KEY, "accessKeyId");
+    config.getAttributes().get("s3").put(SECRET_ACCESS_KEY_KEY, "_1");
+
+    amazonS3Factory.create(config);
+
+    verify(s3ClientBuilder, never()).credentialsProvider(sharedProvider);
+    verify(s3ClientBuilder).credentialsProvider(any(StaticCredentialsProvider.class));
+    // Verify the shared IMDS provider is never resolved — the presigner receives a
+    // SharedS3CredentialsProvider wrapper around the explicit StaticCredentialsProvider,
+    // not the shared IMDS singleton. Both resolve credentials through the explicit key chain.
+    verify(sharedProvider, never()).resolveCredentials();
   }
 
   @Test

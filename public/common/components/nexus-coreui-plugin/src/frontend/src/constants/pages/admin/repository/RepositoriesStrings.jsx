@@ -214,6 +214,21 @@ export default {
                 }
             }
         },
+        ALPINE: {
+            CAPTION: 'Alpine Settings',
+            SIGNING: {
+                CAPTION: 'RSA Signing',
+                KEY: {
+                    LABEL: 'Signing Key',
+                    SUBLABEL: 'RSA private key for APKINDEX signing (PEM format)',
+                    PLACEHOLDER: '-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----'
+                },
+                PASSPHRASE: {
+                    LABEL: 'Passphrase',
+                    SUBLABEL: 'Passphrase to access RSA signing key (leave empty if key has no passphrase)'
+                }
+            }
+        },
       NPM: {
         REMOVE_QUARANTINED: {
           LABEL: 'Remove Quarantined Versions',
@@ -221,6 +236,36 @@ export default {
           DESCR: 'Remove quarantined versions from the package metadata',
           WARNING: 'This feature requires IQ Server Release 134 or higher'
         },
+      },
+      RAW: {
+        QUERY_PARAMS: {
+          CAPTION: 'Query Parameter Forwarding',
+          SUBLABEL: 'Control how query parameters are forwarded to the upstream repository.',
+          CHECKBOX: 'Forward query parameters to upstream',
+          DESCRIPTION: 'Query parameter forwarding is disabled. All query parameters will be stripped from upstream requests.',
+          DESCRIPTION_ENABLED: 'Query parameters from client requests will be forwarded to the upstream repository. You can exclude specific parameters below.',
+          CACHING_WARNING_TITLE: 'Caching Behavior',
+          CACHING_WARNING_CONTENT: 'When query parameter forwarding is enabled, each unique combination of query parameters is cached as a separate asset. This may increase storage usage.',
+          EXAMPLES_TITLE: 'Example query parameters:',
+          EXAMPLES: [
+            'Versioning: ?version=1.2.3',
+            'Pagination: ?page=1&limit=10',
+            'Cache busting: ?v=20260313',
+            'API filters: ?format=json&include_metadata=true'
+          ],
+          USE_CASES_TITLE: 'Common use cases:',
+          USE_CASES: [
+            'Proxying REST APIs that use query parameters for filtering',
+            'VS Code extension marketplace with version parameters',
+            'CDN resources with cache-busting query strings',
+            'GitHub/GitLab release downloads with filter parameters'
+          ],
+          EXCLUSION_LABEL: 'Excluded Parameters',
+          EXCLUSION_SUBLABEL: 'Query parameters to exclude from forwarding (case-insensitive)',
+          EXCLUSION_PLACEHOLDER: 'Enter parameter name (e.g., api_key)',
+          ADD_EXCLUSION: 'Add excluded parameter',
+          REMOVE_EXCLUSION: 'Remove excluded parameter'
+        }
       },
       LEARN_MORE: 'Learn more',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',

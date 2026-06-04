@@ -21,8 +21,6 @@ import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +33,6 @@ import static org.sonatype.nexus.repository.RepositoryTaskSupport.REPOSITORY_NAM
  * Fixes any mismatch between the repository the blob is currently in and the Bucket.repo-name in the properties file
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BlobRepositoryMismatchMigrationStep_2_106
     implements DatabaseMigrationStep
 {
@@ -59,7 +56,7 @@ public class BlobRepositoryMismatchMigrationStep_2_106
     TaskConfiguration taskConfiguration = upgradeTaskScheduler
         .createTaskConfigurationInstance(BlobRepositoryMismatchTaskDescriptor.TYPE_ID);
     taskConfiguration.setString(REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES);
-    upgradeTaskScheduler.schedule(taskConfiguration);
+    upgradeTaskScheduler.schedule(taskConfiguration, false);
     log.info("Scheduled blob repository mismatch task for all repositories");
   }
 }

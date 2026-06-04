@@ -15,7 +15,7 @@ package org.sonatype.nexus.selfhosted.internal.jvm;
 import java.time.Duration;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
@@ -51,7 +51,7 @@ public class JvmMonitoringService
 
   private PeriodicJob monitoringJob;
 
-  @Inject
+  @Autowired
   public JvmMonitoringService(
       final PeriodicJobService periodicJobService,
       final List<JvmMonitor> monitors,

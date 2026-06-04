@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-selfhosted-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <groupId>org.sonatype.nexus.selfhosted.assemblies</groupId>
@@ -41,7 +41,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-all</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -49,7 +49,7 @@
         <groupId>org.sonatype.nexus.common.assemblies</groupId>
         <artifactId>nexus-common-assemblies-parent</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -57,7 +57,7 @@
         <groupId>org.sonatype.nexus.common.components</groupId>
         <artifactId>nexus-common-components-parent</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -65,7 +65,7 @@
         <groupId>org.sonatype.nexus.selfhosted.components</groupId>
         <artifactId>nexus-selfhosted-components-parent</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -74,7 +74,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.selfhosted.assemblies</groupId>
         <artifactId>nexus-repository-core</artifactId>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
       </dependency>
 
     </dependencies>

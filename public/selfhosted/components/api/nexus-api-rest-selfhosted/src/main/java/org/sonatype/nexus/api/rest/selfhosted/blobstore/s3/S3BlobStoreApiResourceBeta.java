@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.s3;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.api.rest.common.blobstore.s3.S3BlobStoreApiUpdateValidation;
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class S3BlobStoreApiResourceBeta
@@ -43,7 +41,7 @@ public class S3BlobStoreApiResourceBeta
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/s3";
 
-  @Inject
+  @Autowired
   public S3BlobStoreApiResourceBeta(
       final BlobStoreManager blobStoreManager,
       final S3BlobStoreApiUpdateValidation validation,

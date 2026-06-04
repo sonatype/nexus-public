@@ -17,21 +17,18 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import static java.util.Objects.requireNonNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * Creates index for last_updated on each asset table.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AssetMigrationStep_1_12
     implements DatabaseMigrationStep
 {
@@ -40,7 +37,7 @@ public class AssetMigrationStep_1_12
 
   private final List<Format> formats;
 
-  @Inject
+  @Autowired
   public AssetMigrationStep_1_12(final List<Format> formats) {
     this.formats = requireNonNull(formats);
   }

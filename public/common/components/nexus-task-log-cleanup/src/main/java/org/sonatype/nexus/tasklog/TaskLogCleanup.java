@@ -19,9 +19,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.Iterator;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.logging.task.TaskLogHome;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -41,7 +39,6 @@ import org.springframework.stereotype.Component;
  * @since 3.5
  */
 @Component
-@Singleton
 public class TaskLogCleanup
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -50,7 +47,7 @@ public class TaskLogCleanup
 
   private String taskLogHome;
 
-  @Inject
+  @Autowired
   public TaskLogCleanup(
       @Value("${nexus.tasks.log.cleanup.numberOfDays:30}") final Integer numberOfDays)
   {

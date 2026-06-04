@@ -29,47 +29,68 @@ import org.sonatype.nexus.scheduling.schedule.Once;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.Weekly;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 import org.apache.commons.lang3.StringUtils;
 
 /**
  * Task transfer object for REST APIs.
- *
- * @since 3.6
  */
+@ApiModel(description = "Represents a task in Nexus Repository Manager")
 public class TaskXO
 {
+  @ApiModelProperty(value = "The unique identifier of the task")
   private String id;
 
+  @ApiModelProperty(value = "The name of the task", example = "Compact blob store")
   private String name;
 
+  @ApiModelProperty(value = "The type identifier of the task", example = "blobstore.compact")
   private String type;
 
+  @ApiModelProperty(value = "A human-readable message describing the task", example = "Admin - Compact blob store")
   private String message;
 
+  @ApiModelProperty(value = "The current state of the task", example = "WAITING")
   private String currentState;
 
+  @ApiModelProperty(value = "The result of the last run", example = "OK")
   private String lastRunResult;
 
+  @ApiModelProperty(value = "The next scheduled run time (ISO 8601 format)")
   private Date nextRun;
 
+  @ApiModelProperty(value = "The last run start time (ISO 8601 format)")
   private Date lastRun;
 
+  @ApiModelProperty(value = "The schedule type", example = "manual")
   private String schedule;
 
+  @ApiModelProperty(value = "Task-specific configuration properties")
   private Map<String, String> properties;
 
+  @ApiModelProperty(value = "Whether the task is enabled", example = "true")
   private boolean enabled;
 
+  @ApiModelProperty(value = "Email address to send notifications to", example = "admin@example.com")
   private String alertEmail;
 
+  @ApiModelProperty(value = "Condition for sending notifications", example = "FAILURE")
   private TaskNotificationCondition notificationCondition;
 
+  @ApiModelProperty(value = "The start date for scheduled tasks (ISO 8601 format)")
   private Date startDate;
 
+  @ApiModelProperty(
+      value = "Days of the week/month for recurring schedules (1=Sunday, 7=Saturday, 999=last day of month)",
+      example = "[1, 4]")
   private Integer[] recurringDays;
 
+  @ApiModelProperty(value = "Cron expression for advanced schedules", example = "0 0 12 * * ?")
   private String cronExpression;
 
+  @ApiModelProperty(value = "Time zone offset for cron schedules", example = "+00:00")
   private String timeZoneOffset;
 
   public static TaskXO fromTaskInfo(final TaskInfo taskInfo, ExternalTaskState externalTaskState) {

@@ -21,7 +21,7 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.db.DatabaseCheck;

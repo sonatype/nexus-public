@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.httpclient.config;
 
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -71,6 +73,13 @@ public abstract class AuthenticationConfiguration
   }
 
   public abstract Secret getSecret();
+
+  /**
+   * Returns the field names that contain secret values in the JSON representation.
+   * Used for placeholder detection when validating authentication changes.
+   */
+  @JsonIgnore
+  public abstract List<String> getSecretFieldNames();
 
   public AuthenticationConfiguration copy() {
     try {

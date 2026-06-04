@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.maven.rest;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
  * @since 3.77
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenGroupRepositoryApiRequestToConfigurationConverter
     extends GroupRepositoryApiRequestToConfigurationConverter<MavenGroupRepositoryApiRequest>
 {

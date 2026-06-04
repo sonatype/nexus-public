@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.internal.blobstore.secrets.migration;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -49,7 +49,7 @@ public class BlobStoreConfigSecretsMigrator
 
   private final SecretsService secretsService;
 
-  @Inject
+  @Autowired
   public BlobStoreConfigSecretsMigrator(final BlobStoreManager blobStoreManager, final SecretsService secretsService) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.secretsService = checkNotNull(secretsService);

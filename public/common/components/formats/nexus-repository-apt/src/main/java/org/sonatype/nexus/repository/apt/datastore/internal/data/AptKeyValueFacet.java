@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.content.kv.KeyValue;
 import org.sonatype.nexus.repository.content.kv.KeyValueFacetSupport;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +46,7 @@ public class AptKeyValueFacet
 
   private final static String CATEGORY = StringUtils.EMPTY;
 
-  @Inject
+  @Autowired
   public AptKeyValueFacet(
       @Qualifier(AptFormat.NAME) FormatStoreManager formatStoreManager,
       @Value("${nexus.apt.paging.size:100}") final int limit)

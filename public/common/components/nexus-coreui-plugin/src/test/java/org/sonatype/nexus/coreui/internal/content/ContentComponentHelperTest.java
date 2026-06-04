@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui.internal.content;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,13 +101,15 @@ public class ContentComponentHelperTest
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
-        repositoryManager);
+        repositoryManager,
+        Collections.emptyList());
 
     AssetXO assetXO = underTest.toAssetXO(
         "maven-hosted",
         "maven-hosted",
         "maven2",
-        createAsset());
+        createAsset(),
+        true);
     assertThat(((Map) assetXO.getAttributes().get("content")).containsKey("last_modified"), is(false));
   }
 
@@ -121,13 +124,15 @@ public class ContentComponentHelperTest
         List.of(componentFinder),
         assetPermissionChecker,
         selectorFactory,
-        repositoryManager);
+        repositoryManager,
+        Collections.emptyList());
 
     AssetXO assetXO = underTest.toAssetXO(
         "maven-hosted",
         "maven-hosted",
         "maven2",
-        createAsset());
+        createAsset(),
+        true);
     Map<String, Object> contentMap = (Map<String, Object>) assetXO.getAttributes().get("content");
     assertThat(contentMap.containsKey("last_modified"), is(true));
     assertThat(contentMap.get("last_modified"), is("2023-11-13T16:00:20.450+02:00"));

@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -36,7 +35,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 public class SelectorFactory
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -47,7 +45,7 @@ public class SelectorFactory
 
   private final CselToSql cselToSql;
 
-  @Inject
+  @Autowired
   public SelectorFactory(final ConstraintViolationFactory constraintViolationFactory, final CselToSql cselToSql) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
     this.cselToSql = checkNotNull(cselToSql);

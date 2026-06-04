@@ -16,8 +16,7 @@ import java.sql.Connection;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -45,7 +44,6 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @ManagedLifecycle(phase = STORAGE)
 public class DatabaseCheckImpl
     extends StateGuardLifecycleSupport
@@ -61,7 +59,7 @@ public class DatabaseCheckImpl
 
   private boolean postgresql = false;
 
-  @Inject
+  @Autowired
   public DatabaseCheckImpl(final DataStoreManager dataStoreManager) {
     this.dataStoreManager = checkNotNull(dataStoreManager);
   }

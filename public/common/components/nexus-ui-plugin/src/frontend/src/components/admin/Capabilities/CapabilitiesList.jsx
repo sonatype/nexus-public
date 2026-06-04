@@ -41,10 +41,8 @@ import { AdminRouteNames } from '../../../constants/admin/AdminRouteNames';
 import ListMachineUtils from '../../../interface/ListMachineUtils';
 import './CapabilitiesList.scss';
 
-import {
-  ExtJS,
-  Permissions
-} from '../../../index';
+import ExtJS from '../../../interface/ExtJS';
+import Permissions from '../../../constants/Permissions';
 import { RouteNames } from '../../../constants/RouteNames';
 
 const ADMIN = RouteNames.ADMIN;

@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.common.log;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,12 +24,11 @@ import org.springframework.stereotype.Component;
  * @since 3.6
  */
 @Component
-@Singleton
 public class DryRunPrefix
 {
   private final String prefix;
 
-  @Inject
+  @Autowired
   public DryRunPrefix(
       @Value("${nexus.log.dryrun.prefix:::DRY RUN:: }") final String prefix)
   {

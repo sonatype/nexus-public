@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
@@ -38,14 +36,13 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-@Singleton
 public class AssetBlobRefFormatCheck
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   private final Map<String, FormatStoreManager> formatStoreManagers;
 
-  @Inject
+  @Autowired
   public AssetBlobRefFormatCheck(final List<FormatStoreManager> formatStoreManagersList) {
     this.formatStoreManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatStoreManagersList));
   }

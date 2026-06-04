@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.common.text.Strings2;
@@ -58,7 +58,7 @@ public class RoleNotContainSelfValidator
     this.message = constraintAnnotation.message();
   }
 
-  @Inject
+  @Autowired
   public RoleNotContainSelfValidator(final SecuritySystem securitySystem) throws NoSuchAuthorizationManagerException {
     this.authorizationManager = checkNotNull(securitySystem).getAuthorizationManager(AuthorizationManagerImpl.SOURCE);
   }

@@ -41,7 +41,7 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Primary;
@@ -97,7 +97,7 @@ public class GroupFacetImpl
 
   protected CacheController cacheController;
 
-  @Inject
+  @Autowired
   public GroupFacetImpl(
       final RepositoryManager repositoryManager,
       final ConstraintViolationFactory constraintViolationFactory,

@@ -12,10 +12,9 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
-import java.util.Objects;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -27,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.15
  */
-public class SearchFilter
+public record SearchFilter(String property, String value, @Nullable FilterOperator operator)
 {
   /**
    * Logical operator for combining this filter with others.
@@ -37,12 +36,6 @@ public class SearchFilter
     AND,
     OR
   }
-
-  private final String property;
-
-  private final String value;
-
-  private final FilterOperator operator;
 
   /**
    * Creates a SearchFilter using the global conjunction flag from SearchRequest.
@@ -56,10 +49,9 @@ public class SearchFilter
    *
    * @param operator the logical operator (AND/OR), or null to use global conjunction flag
    */
-  public SearchFilter(final String property, final String value, @Nullable final FilterOperator operator) {
-    this.property = checkNotNull(property);
-    this.value = checkNotNull(value);
-    this.operator = operator;
+  public SearchFilter {
+    checkNotNull(property);
+    checkNotNull(value);
   }
 
   public String getProperty() {
@@ -76,33 +68,5 @@ public class SearchFilter
    */
   public Optional<FilterOperator> getOperator() {
     return Optional.ofNullable(operator);
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    SearchFilter that = (SearchFilter) o;
-    return Objects.equals(property, that.property) &&
-        Objects.equals(value, that.value) &&
-        operator == that.operator;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(property, value, operator);
-  }
-
-  @Override
-  public String toString() {
-    return "SearchFilter{" +
-        "property='" + property + '\'' +
-        ", value='" + value + '\'' +
-        ", operator=" + operator +
-        '}';
   }
 }

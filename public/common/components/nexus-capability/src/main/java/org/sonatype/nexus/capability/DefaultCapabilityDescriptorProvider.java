@@ -15,9 +15,7 @@ package org.sonatype.nexus.capability;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 
@@ -28,14 +26,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @Primary
 @Component
-@Singleton
 public class DefaultCapabilityDescriptorProvider
 {
   private final Map<String, CapabilityDescriptor> descriptors;
 
   private final DatabaseCheck databaseCheck;
 
-  @Inject
+  @Autowired
   public DefaultCapabilityDescriptorProvider(
       final List<CapabilityDescriptor> descriptorsList,
       final DatabaseCheck databaseCheck)

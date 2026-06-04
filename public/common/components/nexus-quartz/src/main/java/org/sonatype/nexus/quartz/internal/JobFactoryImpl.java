@@ -14,7 +14,6 @@ package org.sonatype.nexus.quartz.internal;
 
 import javax.annotation.Nullable;
 
-import jakarta.inject.Singleton;
 import org.quartz.Job;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -34,7 +33,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.0
  */
 @Component
-@Singleton
 public class JobFactoryImpl
     implements JobFactory, ApplicationContextAware
 {

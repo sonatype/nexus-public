@@ -15,8 +15,7 @@ package org.sonatype.nexus.scheduling.internal.resources;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotAllowedException;
 import javax.ws.rs.NotFoundException;
@@ -53,7 +52,6 @@ import org.springframework.stereotype.Component;
  * @since 3.6
  */
 @Component
-@Singleton
 @Path(TasksApiResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 public class TasksApiResource
@@ -67,7 +65,7 @@ public class TasksApiResource
 
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public TasksApiResource(final TaskScheduler taskScheduler) {
     this.taskScheduler = checkNotNull(taskScheduler);
   }

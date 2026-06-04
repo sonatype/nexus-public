@@ -13,10 +13,8 @@
 package org.sonatype.nexus.internal.security;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.ClientInfo;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class AuthenticationEventSubscriber
     implements EventAware
 {
@@ -43,7 +40,7 @@ public class AuthenticationEventSubscriber
 
   private final Provider<ClientInfoProvider> clientInfoProvider;
 
-  @Inject
+  @Autowired
   public AuthenticationEventSubscriber(
       final Provider<EventManager> eventManager,
       final Provider<ClientInfoProvider> clientInfoProvider)

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
@@ -50,7 +50,7 @@ public class EmailConfigurationApiResource
 
   private final EmailManager emailManager;
 
-  @Inject
+  @Autowired
   public EmailConfigurationApiResource(EmailManager emailManager) {
     this.emailManager = emailManager;
   }

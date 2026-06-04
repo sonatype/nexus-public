@@ -17,9 +17,7 @@ import java.io.InputStream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.InvalidContentException;
@@ -41,7 +39,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenContentValidator
     implements ContentValidator
 {
@@ -49,7 +46,7 @@ public class MavenContentValidator
 
   private final DefaultContentValidator defaultContentValidator;
 
-  @Inject
+  @Autowired
   public MavenContentValidator(final DefaultContentValidator defaultContentValidator) {
     this.defaultContentValidator = checkNotNull(defaultContentValidator);
   }

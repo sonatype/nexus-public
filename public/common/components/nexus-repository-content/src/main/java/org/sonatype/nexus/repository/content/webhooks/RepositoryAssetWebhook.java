@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.content.webhooks;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -40,7 +38,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class RepositoryAssetWebhook
     extends RepositoryWebhook
 {
@@ -50,7 +47,7 @@ public class RepositoryAssetWebhook
 
   private final InitiatorProvider initiatorProvider;
 
-  @Inject
+  @Autowired
   public RepositoryAssetWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.initiatorProvider = checkNotNull(initiatorProvider);

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.content.example.internal.recipe;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
 import org.sonatype.nexus.content.example.ExampleContentFacet;
@@ -68,7 +68,7 @@ public abstract class ExampleRecipeSupport
     super(type, format);
   }
 
-  @Inject
+  @Autowired
   public final void setDependencies(
       final Provider<ExampleSecurityFacet> securityFacet,
       final Provider<ConfigurableViewFacet> viewFacet,

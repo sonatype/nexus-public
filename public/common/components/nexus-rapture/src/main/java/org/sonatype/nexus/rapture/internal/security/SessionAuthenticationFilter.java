@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.rapture.internal.security;
 
+import javax.annotation.Nullable;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
@@ -19,16 +20,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.security.authc.AuthRateLimitedEvent;
+import org.sonatype.nexus.security.authc.AuthRateLimiterService;
+import org.sonatype.nexus.security.authc.RateLimitResult;
+import org.sonatype.nexus.security.authc.SsoDetector;
 
-import jakarta.inject.Singleton;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
+
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -45,7 +53,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 @WebFilter(filterName = SessionAuthenticationFilter.NAME)
 @Order(WebFilterPriority.AUTHENTICATION)
 @Component
-@Singleton
 @ConditionalOnProperty(name = SESSION_ENABLED, havingValue = "true")
 public class SessionAuthenticationFilter
     extends AuthenticatingFilter
@@ -59,6 +66,18 @@ public class SessionAuthenticationFilter
   public static final String P_PASSWORD = "password";
 
   public static final String DELETE_METHOD = "DELETE";
+
+  @Autowired(required = false)
+  @Nullable
+  private AuthRateLimiterService rateLimiterService;
+
+  @Autowired(required = false)
+  @Nullable
+  private SsoDetector ssoDetector;
+
+  @Autowired(required = false)
+  @Nullable
+  private EventManager eventManager;
 
   /**
    * Allow if authenticated or if logout request.
@@ -136,6 +155,10 @@ public class SessionAuthenticationFilter
       final ServletResponse response) throws Exception
   {
     log.debug("Success: token={}, subject={}", token, subject);
+    if (rateLimiterService != null) {
+      // Use token principal to match the key used in checkAndRecord (onLoginFailure)
+      rateLimiterService.recordSuccess(token.getPrincipal().toString());
+    }
     return true;
   }
 
@@ -147,6 +170,29 @@ public class SessionAuthenticationFilter
       final ServletResponse response)
   {
     log.debug("Failure: token={}", token, e);
+    if (rateLimiterService != null && (ssoDetector == null || !ssoDetector.isSsoEnabled())) {
+      String username = token.getPrincipal().toString();
+      // IP is captured for audit trail only; rate-limit decisions are username-only (OWASP-aligned)
+      String clientIp = WebUtils.toHttp(request).getRemoteAddr();
+      RateLimitResult limitResult = rateLimiterService.checkAndRecord(username);
+      if (limitResult != null) {
+        log.debug("Rate limiting login attempt for user '{}'", username);
+        if (eventManager != null) {
+          eventManager.post(
+              new AuthRateLimitedEvent(username, limitResult.attemptCount(), limitResult.retryAfterSeconds(),
+                  clientIp, "UI"));
+        }
+        try {
+          HttpServletResponse httpResponse = WebUtils.toHttp(response);
+          httpResponse.setHeader("Retry-After", String.valueOf(limitResult.retryAfterSeconds()));
+          httpResponse.sendError(429, "Too many authentication attempts");
+        }
+        catch (IOException ex) {
+          log.error("Failed to send 429 response", ex);
+        }
+        return false;
+      }
+    }
     denied(response);
     return false;
   }

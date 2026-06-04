@@ -15,7 +15,7 @@ package org.sonatype.nexus.cleanup.internal.content.method;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -33,8 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -43,7 +41,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DeleteCleanupMethod
     implements CleanupMethod
 {
@@ -51,7 +48,7 @@ public class DeleteCleanupMethod
 
   private final DatabaseCheck databaseCheck;
 
-  @Inject
+  @Autowired
   public DeleteCleanupMethod(final DatabaseCheck databaseCheck) {
     this.databaseCheck = checkNotNull(databaseCheck);
   }

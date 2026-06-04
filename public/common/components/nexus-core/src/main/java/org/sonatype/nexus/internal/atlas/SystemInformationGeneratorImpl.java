@@ -28,10 +28,9 @@ import java.util.Properties;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Iso8601Date;
+import org.sonatype.nexus.common.time.Iso8601Date;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
@@ -54,7 +53,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class SystemInformationGeneratorImpl
     implements SystemInformationGenerator
 {
@@ -80,7 +78,7 @@ public class SystemInformationGeneratorImpl
   private static final List<String> SENSITIVE_CREDENTIALS_KEYS =
       List.of("sun.java.command", "INSTALL4J_ADD_VM_PARAMS");
 
-  @Inject
+  @Autowired
   public SystemInformationGeneratorImpl(
       final ApplicationDirectories applicationDirectories,
       final NexusProperties nexusProperties,

@@ -18,8 +18,6 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
  * the migration may have run when the tables did not exist.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SearchTableIndexesMigrationStep_2_77
     implements DatabaseMigrationStep
 {

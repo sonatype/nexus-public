@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.script.plugin.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.script.ScriptManager;
 
 import com.codahale.metrics.health.HealthCheck;
@@ -28,7 +26,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("Scripting")
-@Singleton
 public class ScriptPluginHealthCheck
     extends HealthCheck
 {
@@ -41,7 +38,7 @@ public class ScriptPluginHealthCheck
 
   private final ScriptManager scriptManager;
 
-  @Inject
+  @Autowired
   public ScriptPluginHealthCheck(final ScriptManager scriptManager) {
     this.scriptManager = scriptManager;
   }

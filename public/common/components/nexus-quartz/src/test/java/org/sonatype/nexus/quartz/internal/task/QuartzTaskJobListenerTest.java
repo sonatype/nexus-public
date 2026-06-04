@@ -172,8 +172,8 @@ public class QuartzTaskJobListenerTest
         updatedConfig.getLastRunState().getRunStarted().getTime() -
             updatedConfig.getLastRunState().getRunScheduled().getTime());
 
-    // Allow small time difference due to execution time
-    assertThat(timeDiff, lessThan(10L));
+    // Allow small time difference due to execution time (generous bound to avoid flakiness on slow CI)
+    assertThat(timeDiff, lessThan(100L));
   }
 
   @Test

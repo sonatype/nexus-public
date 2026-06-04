@@ -27,8 +27,7 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.siesta.ComponentContainer;
 import org.sonatype.nexus.siesta.SiestaResourceMethodFinder;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
@@ -44,7 +43,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class ComponentContainerImpl
     extends HttpServletDispatcher
     implements ComponentContainer
@@ -55,7 +53,7 @@ public class ComponentContainerImpl
 
   private final ApplicationContext context;
 
-  @Inject
+  @Autowired
   public ComponentContainerImpl(final ResteasyDeployment deployment, final ApplicationContext context) {
     this.deployment = deployment;
     // Register RESTEasy with JAX-RS as early as possible

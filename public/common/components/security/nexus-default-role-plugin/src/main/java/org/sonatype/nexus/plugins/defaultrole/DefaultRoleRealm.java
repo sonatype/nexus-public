@@ -13,8 +13,6 @@
 package org.sonatype.nexus.plugins.defaultrole;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 
 import org.apache.shiro.authc.AuthenticationException;
@@ -37,7 +35,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(DefaultRoleRealm.NAME)
-@Singleton
 @Description("Default Role Realm")
 public class DefaultRoleRealm
     extends AuthorizingRealm

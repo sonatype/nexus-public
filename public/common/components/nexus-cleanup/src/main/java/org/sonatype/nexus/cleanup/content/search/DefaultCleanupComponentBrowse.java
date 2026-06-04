@@ -22,9 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.AssetCleanupEvaluator;
 import org.sonatype.nexus.cleanup.datastore.search.criteria.ComponentCleanupEvaluator;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
@@ -50,7 +48,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @org.springframework.stereotype.Component
 @Primary
-@Singleton
 public class DefaultCleanupComponentBrowse
     implements CleanupComponentBrowse
 {
@@ -60,7 +57,7 @@ public class DefaultCleanupComponentBrowse
 
   private final Map<String, ComponentCleanupEvaluator> componentCriteria;
 
-  @Inject
+  @Autowired
   public DefaultCleanupComponentBrowse(
       final List<ComponentCleanupEvaluator> componentCriteriaList,
       final List<AssetCleanupEvaluator> assetCriteriaList)

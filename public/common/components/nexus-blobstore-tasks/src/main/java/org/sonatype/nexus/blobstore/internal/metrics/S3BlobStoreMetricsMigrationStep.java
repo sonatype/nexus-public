@@ -20,9 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  */
 @ManagedLifecycle(phase = UPGRADE)
 @Component
-@Singleton
 public class S3BlobStoreMetricsMigrationStep
     extends BlobStoreMetricsDatabaseMigrationStepSupport
 {
@@ -60,7 +57,7 @@ public class S3BlobStoreMetricsMigrationStep
 
   private Set<String> namesToMigrate;
 
-  @Inject
+  @Autowired
   public S3BlobStoreMetricsMigrationStep(
       final GlobalKeyValueStore kv,
       final ObjectMapper objectMapper,

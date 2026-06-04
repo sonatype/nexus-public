@@ -36,7 +36,6 @@ import org.sonatype.nexus.common.app.WebFilterPriority;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import jakarta.inject.Singleton;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -50,7 +49,6 @@ import org.slf4j.LoggerFactory;
 @Order(WebFilterPriority.WEB)
 @WebFilter("/*")
 @Component
-@Singleton
 public class HeaderPatternFilter
     implements Filter
 {

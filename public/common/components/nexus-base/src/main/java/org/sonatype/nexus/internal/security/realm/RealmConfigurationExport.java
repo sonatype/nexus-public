@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.supportzip.ExportSecurityData;
 import org.sonatype.nexus.supportzip.ImportData;
@@ -33,14 +31,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("realmConfigurationExport")
-@Singleton
 public class RealmConfigurationExport
     extends JsonExporter
     implements ExportSecurityData, ImportData
 {
   private final RealmConfigurationStoreImpl configuration;
 
-  @Inject
+  @Autowired
   public RealmConfigurationExport(final RealmConfigurationStoreImpl configuration) {
     this.configuration = configuration;
   }

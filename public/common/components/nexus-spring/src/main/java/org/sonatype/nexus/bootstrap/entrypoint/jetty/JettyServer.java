@@ -41,8 +41,7 @@ import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.text.Strings2;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.eclipse.jetty.ee8.servlet.FilterHolder;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
@@ -62,7 +61,6 @@ import org.springframework.stereotype.Component;
 /**
  * Jetty server.
  */
-@Singleton
 @Component
 public class JettyServer
 {
@@ -79,7 +77,7 @@ public class JettyServer
 
   private ConnectorManager connectorManager;
 
-  @Inject
+  @Autowired
   public JettyServer(
       final NexusProperties nexusPropeties,
       final ShutdownDelegate shutdownDelegate)

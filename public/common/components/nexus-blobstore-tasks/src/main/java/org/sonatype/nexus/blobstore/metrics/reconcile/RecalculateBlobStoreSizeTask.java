@@ -27,7 +27,7 @@ import org.sonatype.nexus.logging.task.TaskLogging;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -47,7 +47,7 @@ public class RecalculateBlobStoreSizeTask
 
   private static final int CANCEL_CHECK_INTERVAL = 300;
 
-  @Inject
+  @Autowired
   public RecalculateBlobStoreSizeTask(final BlobStoreManager blobStoreManager) {
     super(blobStoreManager);
   }

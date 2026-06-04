@@ -12,8 +12,6 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.log.LogConfigurationCustomizer;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.springframework.stereotype.Component;
@@ -23,7 +21,6 @@ import org.springframework.stereotype.Component;
  *
  * @since 2.7
  */
-@Singleton
 @Component
 public class LogConfigurationCustomizerImpl
     implements LogConfigurationCustomizer

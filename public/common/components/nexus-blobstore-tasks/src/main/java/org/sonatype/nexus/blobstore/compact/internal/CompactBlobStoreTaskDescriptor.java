@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.compact.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
@@ -32,7 +30,6 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class CompactBlobStoreTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -42,7 +39,7 @@ public class CompactBlobStoreTaskDescriptor
 
   public static final String BLOBS_OLDER_THAN_FIELD_ID = "blobsOlderThan";
 
-  @Inject
+  @Autowired
   public CompactBlobStoreTaskDescriptor(
       @Value("${nexus.tasks.compactBlobstore.enabled:true}") final boolean visible)
   {

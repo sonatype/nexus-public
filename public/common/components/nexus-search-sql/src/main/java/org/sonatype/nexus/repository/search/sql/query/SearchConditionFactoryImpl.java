@@ -14,8 +14,7 @@ package org.sonatype.nexus.repository.search.sql.query;
 
 import org.sonatype.nexus.repository.search.sql.ExpressionGroup;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Primary;
@@ -31,7 +30,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Primary
-@Singleton
 public class SearchConditionFactoryImpl
     implements SearchConditionFactory
 {
@@ -41,7 +39,7 @@ public class SearchConditionFactoryImpl
 
   private SearchConditionFactory delegate;
 
-  @Inject
+  @Autowired
   public SearchConditionFactoryImpl(
       final DatabaseTypeDetector databaseTypeDetector,
       final ApplicationContext context)

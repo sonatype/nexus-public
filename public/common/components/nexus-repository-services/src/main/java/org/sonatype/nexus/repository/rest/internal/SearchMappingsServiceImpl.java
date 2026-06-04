@@ -16,9 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -33,7 +31,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class SearchMappingsServiceImpl
     implements SearchMappingsService
 {
@@ -43,7 +40,7 @@ public class SearchMappingsServiceImpl
 
   private final Collection<SearchMapping> searchMappings;
 
-  @Inject
+  @Autowired
   public SearchMappingsServiceImpl(final List<SearchMappings> searchMappingsList) {
     this.searchMappings = collectMappings(QualifierUtil.buildQualifierBeanMap(checkNotNull(searchMappingsList)));
   }

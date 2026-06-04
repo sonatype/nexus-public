@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.quota;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
@@ -21,15 +21,22 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
 import org.springframework.beans.factory.annotation.Value;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.createQuotaCheckJob;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.createQuotaCheckJob;
+
 /**
+ * Checks blob store quota usage on a periodic basis.
+ * <p>
+ * Must be prototype-scoped because each instance maintains state specific to a single blob store
+ * ({@link #blobStore} and {@link #quotaCheckingJob}). If singleton-scoped, concurrent blob store
+ * initialization would fail since {@link #setBlobStore(BlobStore)} guards against re-initialization.
+ *
  * @since 3.41
  */
 @Component
@@ -47,7 +54,7 @@ public class BlobStoreQuotaUsageChecker
 
   protected PeriodicJob quotaCheckingJob;
 
-  @Inject
+  @Autowired
   public BlobStoreQuotaUsageChecker(
       final PeriodicJobService jobService,
       @Value("${nexus.blobstore.quota.warnIntervalSeconds:60}") final int quotaCheckInterval,

@@ -17,8 +17,6 @@ import java.util.Optional;
 
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Component;
  * Related to NEXUS-50484 - Admin Token Auditing and Governance
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ApiKeyCreatorTrackingMigrationStep_2_108
     implements DatabaseMigrationStep
 {

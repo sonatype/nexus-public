@@ -16,12 +16,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
@@ -59,7 +58,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_HttpSettings")
 public class HttpSettingsComponent
     extends DirectComponentSupport
@@ -68,7 +66,7 @@ public class HttpSettingsComponent
 
   private final SecretsService secretsService;
 
-  @Inject
+  @Autowired
   public HttpSettingsComponent(final HttpClientManager httpClientManager, final SecretsService secretsService) {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.secretsService = checkNotNull(secretsService);

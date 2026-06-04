@@ -15,9 +15,7 @@ package org.sonatype.nexus.coreui;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -28,13 +26,12 @@ import org.springframework.stereotype.Component;
  * API feature flag
  */
 @Component
-@Singleton
 public class ApiDocsStateContributor
     implements StateContributor
 {
   private final boolean enabled;
 
-  @Inject
+  @Autowired
   public ApiDocsStateContributor(
       @Value("${nexus.admin.system.apidocs.enabled:true}") final boolean enabled)
   {

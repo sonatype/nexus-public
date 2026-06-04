@@ -19,8 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,7 +37,6 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class DirectoryHelperTest
-    extends TestSupport
 {
   @Rule
   public TemporaryFolder temporaryFolder = TemporaryFolder.builder().assureDeletion().build();

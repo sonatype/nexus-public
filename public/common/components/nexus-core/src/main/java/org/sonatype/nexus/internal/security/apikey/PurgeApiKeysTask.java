@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.scheduling.Cancelable;
@@ -41,7 +41,7 @@ public class PurgeApiKeysTask
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public PurgeApiKeysTask(final ApiKeyInternalService store, final EventManager eventManager) {
     this.apiKeyService = checkNotNull(store);
     this.eventManager = checkNotNull(eventManager);

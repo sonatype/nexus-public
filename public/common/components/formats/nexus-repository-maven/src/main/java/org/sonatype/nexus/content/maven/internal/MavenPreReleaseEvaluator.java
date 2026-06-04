@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.content.maven.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -29,7 +27,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @org.springframework.stereotype.Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenPreReleaseEvaluator
     implements PreReleaseEvaluator
 {

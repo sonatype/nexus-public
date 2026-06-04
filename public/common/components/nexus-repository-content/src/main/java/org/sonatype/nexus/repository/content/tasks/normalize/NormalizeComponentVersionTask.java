@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
@@ -70,7 +70,7 @@ public class NormalizeComponentVersionTask
 
   private final boolean disableTask;
 
-  @Inject
+  @Autowired
   public NormalizeComponentVersionTask(
       final List<NormalizationPriorityService> priorityServices,
       final VersionNormalizerService versionNormalizerService,

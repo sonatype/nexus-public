@@ -15,8 +15,7 @@ package org.sonatype.nexus.internal.security.secrets;
 import org.sonatype.nexus.crypto.secrets.EncryptionKeyValidator;
 
 import com.codahale.metrics.health.HealthCheck;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @ConditionalOnProperty(name = "nexus.health.check.encryption", havingValue = "true", matchIfMissing = true)
 @Component
 @Qualifier("Default Secret Encryption Key")
-@Singleton
 public class DefaultEncryptionKeyHealthCheck
     extends HealthCheck
 {
@@ -39,7 +37,7 @@ public class DefaultEncryptionKeyHealthCheck
 
   private final EncryptionKeyValidator encryptionKeyValidator;
 
-  @Inject
+  @Autowired
   public DefaultEncryptionKeyHealthCheck(final EncryptionKeyValidator encryptionKeyValidator) {
     this.encryptionKeyValidator = checkNotNull(encryptionKeyValidator);
   }

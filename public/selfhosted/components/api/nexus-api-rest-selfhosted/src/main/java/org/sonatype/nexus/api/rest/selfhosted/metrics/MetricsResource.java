@@ -15,8 +15,7 @@ package org.sonatype.nexus.api.rest.selfhosted.metrics;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -44,7 +43,6 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
  */
 @Path("/metrics/data")
 @Component
-@Singleton
 public class MetricsResource
     implements Resource
 {
@@ -54,7 +52,7 @@ public class MetricsResource
 
   private final ObjectMapper mapper;
 
-  @Inject
+  @Autowired
   public MetricsResource(final MetricRegistry registry, final JsonMapper mapper) {
     this.registry = registry;
 

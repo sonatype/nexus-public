@@ -17,7 +17,7 @@ import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
 import { AuditLogPage } from '../AuditLogPage';
-import type { AuditLogResponse, AuditEvent } from '../audit.types';
+import type { AuditLogResponse, AuditEvent } from '@sonatype/nexus-ui-plugin/src/frontend/src/utils/audit/audit.types';
 
 jest.mock('../../../../shared/FilterSidebar', () => {
   const React = require('react');
@@ -83,27 +83,25 @@ jest.mock('@uirouter/react', () => ({
   useCurrentStateAndParams: () => ({ params: {} }),
 }));
 
-// Mock useRepositoriesApi
-jest.mock('../../../../super/settings/repository/repositories/useRepositoriesApi', () => ({
-  useRepositoriesApi: () => ({
-    fetchRepositories: jest.fn().mockResolvedValue([]),
-  }),
-}));
-
-// Mock the useAuditLogApi hook
+// Mock @sonatype/nexus-ui-plugin to provide mocked hooks
+// This single mock handles both useRepositoriesApi and useAuditLogApi
 const mockRefetch = jest.fn();
-let mockData: AuditLogResponse | null = null;
-let mockLoading = false;
-let mockError: string | null = null;
 
-jest.mock('../useAuditLogApi', () => ({
-  useAuditLogApi: () => ({
-    data: mockData,
-    loading: mockLoading,
-    error: mockError,
-    refetch: mockRefetch,
-  }),
-}));
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const actual = jest.requireActual('@sonatype/nexus-ui-plugin');
+  return {
+    ...actual,
+    useRepositoriesApi: () => ({
+      fetchRepositories: jest.fn().mockResolvedValue([]),
+    }),
+    useAuditLogApi: jest.fn(),
+  };
+});
+
+// Import after mock to get the mocked version
+import { useAuditLogApi } from '@sonatype/nexus-ui-plugin';
+
+const mockUseAuditLogApi = useAuditLogApi as jest.Mock;
 
 // Test data
 const mockAuditEvents: AuditEvent[] = [
@@ -167,9 +165,13 @@ function renderWithTheme(component: React.ReactElement) {
 describe('AuditLogPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockData = mockPaginatedResponse;
-    mockLoading = false;
-    mockError = null;
+    // Set up the default mock implementation
+    mockUseAuditLogApi.mockReturnValue({
+      data: mockPaginatedResponse,
+      loading: false,
+      error: null,
+      refetch: mockRefetch,
+    });
   });
 
   describe('Component Rendering', () => {
@@ -179,11 +181,10 @@ describe('AuditLogPage', () => {
       expect(screen.getByRole('heading', { name: 'Audit Log' })).toBeInTheDocument();
     });
 
-    it('should render refresh and export buttons', () => {
+    it('should render refresh button', () => {
       renderWithTheme(<AuditLogPage />);
 
       expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /export csv/i })).toBeInTheDocument();
     });
 
     it('should render audit events table with correct columns', () => {
@@ -232,7 +233,7 @@ describe('AuditLogPage', () => {
     it('should render reset filters button', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByRole('button', { name: /clear all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reset filters/i })).toBeInTheDocument();
     });
 
     it('should render category filter checkboxes', () => {
@@ -304,8 +305,12 @@ describe('AuditLogPage', () => {
 
   describe('Loading State', () => {
     it('should show loading spinner when loading', () => {
-      mockLoading = true;
-      mockData = null;
+      mockUseAuditLogApi.mockReturnValue({
+        data: null,
+        loading: true,
+        error: null,
+        refetch: mockRefetch,
+      });
 
       renderWithTheme(<AuditLogPage />);
 
@@ -313,8 +318,12 @@ describe('AuditLogPage', () => {
     });
 
     it('should not show table while loading', () => {
-      mockLoading = true;
-      mockData = null;
+      mockUseAuditLogApi.mockReturnValue({
+        data: null,
+        loading: true,
+        error: null,
+        refetch: mockRefetch,
+      });
 
       renderWithTheme(<AuditLogPage />);
 
@@ -324,8 +333,12 @@ describe('AuditLogPage', () => {
 
   describe('Error State', () => {
     it('should display error message when error occurs', () => {
-      mockError = 'Failed to fetch audit events';
-      mockData = null;
+      mockUseAuditLogApi.mockReturnValue({
+        data: null,
+        loading: false,
+        error: 'Failed to fetch audit events',
+        refetch: mockRefetch,
+      });
 
       renderWithTheme(<AuditLogPage />);
 
@@ -335,15 +348,20 @@ describe('AuditLogPage', () => {
 
   describe('Empty State', () => {
     it('should display empty state when no events found', () => {
-      mockData = {
-        items: [],
-        pagination: {
-          totalItems: 0,
-          totalPages: 0,
-          currentPage: 1,
-          itemsPerPage: 20,
+      mockUseAuditLogApi.mockReturnValue({
+        data: {
+          items: [],
+          pagination: {
+            totalItems: 0,
+            totalPages: 0,
+            currentPage: 1,
+            itemsPerPage: 20,
+          },
         },
-      };
+        loading: false,
+        error: null,
+        refetch: mockRefetch,
+      });
 
       renderWithTheme(<AuditLogPage />);
 
@@ -351,15 +369,20 @@ describe('AuditLogPage', () => {
     });
 
     it('should show clear filters button in empty state when filters active', async () => {
-      mockData = {
-        items: [],
-        pagination: {
-          totalItems: 0,
-          totalPages: 0,
-          currentPage: 1,
-          itemsPerPage: 20,
+      mockUseAuditLogApi.mockReturnValue({
+        data: {
+          items: [],
+          pagination: {
+            totalItems: 0,
+            totalPages: 0,
+            currentPage: 1,
+            itemsPerPage: 20,
+          },
         },
-      };
+        loading: false,
+        error: null,
+        refetch: mockRefetch,
+      });
 
       renderWithTheme(<AuditLogPage />);
 
@@ -377,32 +400,32 @@ describe('AuditLogPage', () => {
     it('should display pagination info', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByText(/Showing 1-20 of 100 events/)).toBeInTheDocument();
+      expect(screen.getByText('of 100')).toBeInTheDocument();
     });
 
     it('should render previous and next buttons', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByRole('button', { name: 'Previous' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Previous page' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Next page' })).toBeInTheDocument();
     });
 
     it('should disable previous button on first page', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
     });
 
     it('should enable next button when more pages exist', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByRole('button', { name: 'Next' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Next page' })).not.toBeDisabled();
     });
 
     it('should display page info', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+      expect(screen.getByText('of 5')).toBeInTheDocument();
     });
   });
 
@@ -479,23 +502,6 @@ describe('AuditLogPage', () => {
     });
   });
 
-  describe('CSV Export', () => {
-    it('should have export CSV button', () => {
-      renderWithTheme(<AuditLogPage />);
-
-      expect(screen.getByRole('button', { name: /export csv/i })).toBeInTheDocument();
-    });
-
-    it('should allow clicking export button without error', async () => {
-      renderWithTheme(<AuditLogPage />);
-
-      const exportButton = screen.getByRole('button', { name: /export csv/i });
-      await userEvent.click(exportButton);
-
-      expect(exportButton).toBeInTheDocument();
-    });
-  });
-
   describe('Accessibility', () => {
     it('should have accessible table structure', () => {
       renderWithTheme(<AuditLogPage />);
@@ -515,7 +521,7 @@ describe('AuditLogPage', () => {
     it('should have aria labels for filter bar and main content', () => {
       renderWithTheme(<AuditLogPage />);
 
-      expect(screen.getByRole('complementary', { name: /filter bar/i })).toBeInTheDocument();
+      expect(screen.getByTestId('filter-sidebar')).toBeInTheDocument();
       expect(screen.getByRole('main', { name: /page content/i })).toBeInTheDocument();
     });
 

@@ -17,9 +17,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.mybatis.AbstractBytesTypeHandler;
 
 import org.quartz.JobDataMap;
@@ -32,11 +30,10 @@ import org.springframework.stereotype.Component;
  * See also org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
  */
 @Component
-@Singleton
 public class QuartzJobDataTypeHandler
     extends AbstractBytesTypeHandler<JobDataMap>
 {
-  @Inject
+  @Autowired
   public QuartzJobDataTypeHandler() {
     super(JobDataMap::new);
   }

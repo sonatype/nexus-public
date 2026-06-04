@@ -35,8 +35,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Iterables;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -47,7 +46,6 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * Store for the single table search implementation.
  */
 @Component
-@Singleton
 public class SearchStore
     extends ConfigStoreSupport<SearchTableDAO>
 {
@@ -55,7 +53,7 @@ public class SearchStore
 
   private final int assetSaveBatchSize;
 
-  @Inject
+  @Autowired
   public SearchStore(
       final DataSessionSupplier sessionSupplier,
       @Value("${nexus.content.deleteBatchSize:1000}") final int deleteBatchSize,

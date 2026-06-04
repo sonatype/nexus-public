@@ -15,8 +15,6 @@ package org.sonatype.nexus.content.maven.internal.search.table;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.content.utils.SearchComponentPathFilter;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
@@ -26,7 +24,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenSearchComponentPathFilter
     implements SearchComponentPathFilter
 {

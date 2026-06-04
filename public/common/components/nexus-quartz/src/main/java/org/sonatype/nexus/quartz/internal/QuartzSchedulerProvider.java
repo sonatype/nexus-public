@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.quartz.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
@@ -66,7 +66,7 @@ public class QuartzSchedulerProvider
 
   private volatile BulkReadScheduler scheduler;
 
-  @Inject
+  @Autowired
   public QuartzSchedulerProvider(
       final NodeAccess nodeAccess,
       final Provider<JobStore> jobStore,

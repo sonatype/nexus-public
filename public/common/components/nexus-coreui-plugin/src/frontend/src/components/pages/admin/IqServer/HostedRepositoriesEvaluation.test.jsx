@@ -104,6 +104,7 @@ describe('HostedRepositoriesEvaluation', () => {
 
   beforeEach(() => {
     useRouter.mockReturnValue(mockRouter);
+    useCurrentStateAndParams.mockReturnValue({params: {}});
     useMachine.mockReturnValue([mockMachineState, mockSend]);
     mockStateService.go.mockClear();
     mockStateService.href.mockClear();

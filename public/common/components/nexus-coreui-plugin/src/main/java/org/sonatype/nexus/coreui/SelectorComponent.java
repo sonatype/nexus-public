@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -55,7 +54,6 @@ import org.springframework.stereotype.Component;
  * Selector {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Selector")
 public class SelectorComponent
     extends DirectComponentSupport
@@ -72,7 +70,7 @@ public class SelectorComponent
 
   private final SelectorConfigurationStore store;
 
-  @Inject
+  @Autowired
   public SelectorComponent(
       final SelectorManager selectorManager,
       final ConstraintViolationFactory constraintViolationFactory,

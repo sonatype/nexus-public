@@ -124,7 +124,7 @@ class SecurityContributorTest
     assertNotNull(manager.readPrivilege("priv4"));
     assertNotNull(manager.readPrivilege("priv5"));
 
-    assertThat(privs, hasSize(10));
+    assertThat(privs, hasSize(11));
   }
 
   private static List<String> privilegeListToStringList(final List<CPrivilege> privs) {

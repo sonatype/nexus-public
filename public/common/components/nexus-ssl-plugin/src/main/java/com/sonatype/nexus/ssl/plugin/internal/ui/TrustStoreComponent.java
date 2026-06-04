@@ -18,8 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 
@@ -50,14 +49,13 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "ssl_TrustStore")
 public class TrustStoreComponent
     extends DirectComponentSupport
 {
   private final TrustStore trustStore;
 
-  @Inject
+  @Autowired
   public TrustStoreComponent(@Lazy final TrustStore trustStore) {
     this.trustStore = checkNotNull(trustStore);
   }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.capability.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.condition.Conditions;
@@ -22,12 +22,9 @@ import org.sonatype.nexus.internal.capability.ValidityConditionHandler;
 import org.sonatype.nexus.internal.capability.ValidityConditionHandlerFactory;
 
 import org.springframework.context.annotation.Lazy;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class ValidityConditionHandlerFactoryImpl
     implements ValidityConditionHandlerFactory
 {
@@ -37,7 +34,7 @@ public class ValidityConditionHandlerFactoryImpl
 
   private final Conditions conditions;
 
-  @Inject
+  @Autowired
   public ValidityConditionHandlerFactoryImpl(
       final EventManager eventManager,
       @Lazy final CapabilityRegistry capabilityRegistry,

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -19,9 +20,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.ui.UiPluginDescriptor;
 import org.sonatype.nexus.ui.UiUtil;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.annotation.Priority;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -32,9 +31,7 @@ import org.springframework.stereotype.Component;
  * @since 3.25
  */
 @Component
-@Singleton
-@Order(Ordered.HIGHEST_PRECEDENCE)
-@Priority(Integer.MAX_VALUE) // always load first
+@Order(Ordered.HIGHEST_PRECEDENCE) // always load first
 public class UiReactPluginDescriptorImpl
     implements UiPluginDescriptor
 {
@@ -42,13 +39,10 @@ public class UiReactPluginDescriptorImpl
 
   private final List<String> debugScripts;
 
-  private final List<String> styles;
-
-  @Inject
+  @Autowired
   public UiReactPluginDescriptorImpl(final UiUtil uiUtil) {
     scripts = List.of(uiUtil.getPathForFile("nexus-rapture-bundle.js"));
     debugScripts = List.of(uiUtil.getPathForFile("nexus-rapture-bundle.debug.js"));
-    styles = List.of(uiUtil.getPathForFile("nexus-rapture-bundle.css"));
   }
 
   @Override
@@ -65,6 +59,6 @@ public class UiReactPluginDescriptorImpl
   @Nullable
   @Override
   public List<String> getStyles() {
-    return styles;
+    return Collections.emptyList();
   }
 }

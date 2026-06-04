@@ -19,9 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.db.DatabaseCheck;
@@ -61,7 +59,6 @@ import org.springframework.stereotype.Component;
 
 @Component("default")
 @Primary
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class SecretsServiceImpl
     implements SecretsFactory, SecretsService, EventAware
@@ -104,7 +101,7 @@ public class SecretsServiceImpl
 
   private final SecretEncryptionKey defaultKey;
 
-  @Inject
+  @Autowired
   public SecretsServiceImpl(
       final LegacyCipherFactory legacyCipherFactory,
       final MavenCipher mavenCipher,
@@ -374,6 +371,28 @@ public class SecretsServiceImpl
     }
     catch (Exception e) {
       throw new CipherException("Failed to encrypt plaintext with custom password", e);
+    }
+  }
+
+  @Override
+  public String encryptBytesWithPassword(
+      final byte[] plaintext,
+      final String customPassword) throws CipherException
+  {
+    checkNotNull(plaintext, "plaintext cannot be null");
+    checkNotNull(customPassword, "customPassword cannot be null");
+
+    if (customPassword.isEmpty()) {
+      throw new CipherException("Custom password cannot be empty");
+    }
+
+    try {
+      SecretEncryptionKey exportKey = new SecretEncryptionKey(null, customPassword);
+      PbeCipherFactory.PbeCipher cipher = cipherFactory.create(exportKey);
+      return cipher.encrypt(plaintext).toPhcString();
+    }
+    catch (Exception e) {
+      throw new CipherException("Failed to encrypt bytes with custom password", e);
     }
   }
 

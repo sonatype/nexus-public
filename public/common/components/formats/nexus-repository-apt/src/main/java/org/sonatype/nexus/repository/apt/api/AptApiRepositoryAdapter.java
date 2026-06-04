@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
 public class AptApiRepositoryAdapter
     extends SimpleApiRepositoryAdapter
 {
-  @Inject
+  @Autowired
   public AptApiRepositoryAdapter(final RoutingRuleStore routingRuleStore) {
     super(routingRuleStore);
   }

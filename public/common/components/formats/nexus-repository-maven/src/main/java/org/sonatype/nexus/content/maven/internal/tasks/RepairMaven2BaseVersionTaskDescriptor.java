@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.content.maven.internal.tasks;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class RepairMaven2BaseVersionTaskDescriptor
     extends TaskDescriptorSupport
 {

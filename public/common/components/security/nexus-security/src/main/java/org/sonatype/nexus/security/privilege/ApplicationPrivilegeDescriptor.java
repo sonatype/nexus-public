@@ -14,11 +14,10 @@ package org.sonatype.nexus.security.privilege;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.SetOfCheckboxesFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
@@ -46,7 +45,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(ApplicationPrivilegeDescriptor.TYPE)
-@Singleton
 public class ApplicationPrivilegeDescriptor
     extends PrivilegeDescriptorSupport<ApiPrivilegeApplication, ApiPrivilegeApplicationRequest>
 {
@@ -86,7 +84,7 @@ public class ApplicationPrivilegeDescriptor
 
   private static final String P_OPTIONS = "options";
 
-  @Inject
+  @Autowired
   public ApplicationPrivilegeDescriptor(
       @Value(REACT_PRIVILEGES_NAMED_VALUE) final boolean isReactPrivileges)
   {

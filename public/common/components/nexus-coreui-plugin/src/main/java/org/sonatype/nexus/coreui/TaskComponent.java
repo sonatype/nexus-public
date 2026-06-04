@@ -27,9 +27,8 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.Validator;
 import javax.validation.constraints.NotEmpty;
@@ -97,7 +96,6 @@ import static org.sonatype.nexus.scheduling.TaskState.OK;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @DirectAction(action = "coreui_Task")
 public class TaskComponent
     extends DirectComponentSupport
@@ -125,7 +123,7 @@ public class TaskComponent
 
   private final TaskUtils taskUtils;
 
-  @Inject
+  @Autowired
   public TaskComponent(
       final TaskScheduler taskScheduler,
       final Provider<Validator> validatorProvider,

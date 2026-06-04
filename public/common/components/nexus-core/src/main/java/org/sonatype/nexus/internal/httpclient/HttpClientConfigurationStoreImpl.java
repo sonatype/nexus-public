@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
@@ -32,12 +30,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @Primary
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class HttpClientConfigurationStoreImpl
     extends ConfigStoreSupport<HttpClientConfigurationDAO>
     implements HttpClientConfigurationStore
 {
-  @Inject
+  @Autowired
   public HttpClientConfigurationStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

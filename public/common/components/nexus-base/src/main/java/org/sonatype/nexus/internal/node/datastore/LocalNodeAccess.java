@@ -16,9 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.node.NodeAccessSupport;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -38,7 +36,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("local")
-@Singleton
 public class LocalNodeAccess
     extends NodeAccessSupport
 {
@@ -48,7 +45,7 @@ public class LocalNodeAccess
 
   private Map<String, String> memberAliases = Collections.emptyMap();
 
-  @Inject
+  @Autowired
   public LocalNodeAccess(final NodeIdStore nodeIdStore) {
     this.nodeIdStore = checkNotNull(nodeIdStore);
   }

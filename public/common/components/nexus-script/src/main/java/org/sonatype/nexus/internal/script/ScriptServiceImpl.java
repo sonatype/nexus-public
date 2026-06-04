@@ -17,8 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
@@ -45,7 +44,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class ScriptServiceImpl
     implements ScriptService
 {
@@ -63,7 +61,7 @@ public class ScriptServiceImpl
 
   private final boolean allowOnlyGroovy;
 
-  @Inject
+  @Autowired
   public ScriptServiceImpl(
       final ScriptEngineManager engineManager,
       final GlobalComponentLookupHelper lookupHelper,

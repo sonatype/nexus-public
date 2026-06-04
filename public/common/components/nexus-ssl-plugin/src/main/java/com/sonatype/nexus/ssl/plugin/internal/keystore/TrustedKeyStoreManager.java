@@ -19,8 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
@@ -39,14 +38,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *
  */
 @Component
-@Singleton
 public class TrustedKeyStoreManager
 {
   private final CryptoHelper crypto;
 
   private final KeyStoreManagerConfiguration config;
 
-  @Inject
+  @Autowired
   public TrustedKeyStoreManager(
       final CryptoHelper crypto,
       @Qualifier("ssl") KeyStoreManagerConfiguration config)

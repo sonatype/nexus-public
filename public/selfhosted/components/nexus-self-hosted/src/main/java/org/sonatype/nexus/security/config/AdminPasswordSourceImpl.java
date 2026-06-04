@@ -16,17 +16,14 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.UUID;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.text.Strings2;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AdminPasswordSourceImpl
     implements AdminPasswordSource
 {
@@ -34,7 +31,7 @@ public class AdminPasswordSourceImpl
 
   private final AdminPasswordFileManager adminPasswordFileManager;
 
-  @Inject
+  @Autowired
   public AdminPasswordSourceImpl(
       final AdminPasswordFileManager adminPasswordFileManager)
   {

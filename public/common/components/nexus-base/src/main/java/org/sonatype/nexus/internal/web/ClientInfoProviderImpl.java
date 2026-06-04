@@ -13,9 +13,8 @@
 package org.sonatype.nexus.internal.web;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class ClientInfoProviderImpl
     implements ClientInfoProvider
 {
@@ -44,7 +42,7 @@ public class ClientInfoProviderImpl
 
   private final ThreadLocal<String> userId = new ThreadLocal<>();
 
-  @Inject
+  @Autowired
   public ClientInfoProviderImpl(@Context final Provider<HttpServletRequest> httpRequestProvider) {
     this.httpRequestProvider = checkNotNull(httpRequestProvider);
   }

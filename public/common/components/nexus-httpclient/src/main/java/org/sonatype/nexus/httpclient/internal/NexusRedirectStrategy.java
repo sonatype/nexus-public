@@ -18,8 +18,6 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import jakarta.inject.Singleton;
-
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -73,7 +71,6 @@ import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP;
  */
 @Component
 @Qualifier("default")
-@Singleton
 public class NexusRedirectStrategy
     extends DefaultRedirectStrategy
 {

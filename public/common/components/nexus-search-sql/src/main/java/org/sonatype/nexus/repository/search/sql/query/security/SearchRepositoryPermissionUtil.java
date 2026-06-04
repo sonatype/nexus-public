@@ -19,9 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -45,7 +43,6 @@ import org.springframework.stereotype.Component;
  * Checks repositories for 'BROWSE' permissions, fetches active content selectors for specified repositories.
  */
 @Component
-@Singleton
 public class SearchRepositoryPermissionUtil
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -56,7 +53,7 @@ public class SearchRepositoryPermissionUtil
 
   private final SelectorManager selectorManager;
 
-  @Inject
+  @Autowired
   public SearchRepositoryPermissionUtil(
       final RepositoryManager repositoryManager,
       final SecurityHelper securityHelper,

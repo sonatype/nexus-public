@@ -17,9 +17,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.concurrent.Mutex;
 import org.sonatype.nexus.wonderland.AuthTicketCache;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class LocalAuthTicketCache
     implements AuthTicketCache
 {
@@ -52,7 +49,7 @@ public class LocalAuthTicketCache
 
   private final Duration expireAfter;
 
-  @Inject
+  @Autowired
   public LocalAuthTicketCache(@Value(EXPIRE_VALUE) final Duration expireAfter) {
     this.expireAfter = checkNotNull(expireAfter);
     log.debug("Expire after: {}", expireAfter);

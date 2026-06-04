@@ -12,12 +12,10 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  * @since 3.6
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BrowseNodeConfiguration
 {
   private final boolean automaticRebuild;
@@ -39,7 +36,7 @@ public class BrowseNodeConfiguration
 
   private final int maxHtmlNodes;
 
-  @Inject
+  @Autowired
   public BrowseNodeConfiguration(
       @Value("${nexus.browse.component.tree.automaticRebuild:true}") final boolean automaticRebuild,
       @Value("${nexus.browse.component.tree.rebuildPageSize:1000}") final int rebuildPageSize,

@@ -22,7 +22,7 @@ import TestUtils from "@sonatype/nexus-ui-plugin/src/frontend/src/interface/Test
 import {maliciousRiskOnDiskResponse, maliciousRiskOnDiskResponseWithCount0} from "./MaliciousRiskOnDisk.testdata";
 import MaliciousRiskOnDisk from "./MaliciousRiskOnDisk";
 import FeatureFlags from '../../../constants/FeatureFlags';
-import MaliciousRiskStrings from "../../../constants/pages/maliciousrisk/MaliciousRiskStrings";
+import MaliciousRiskStrings from '../../../../../../../nexus-ui-plugin/src/frontend/src/components/preview/constants/pages/maliciousrisk/MaliciousRiskStrings';
 import { helperFunctions } from "../SystemStatusAlerts/CELimits/UsageHelper";
 
 const {
@@ -221,6 +221,61 @@ describe('MaliciousRiskOnDisk', () => {
     expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
     userEvent.click(toggleButton);
     expect(toggleButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('renders the toggle button with proper structure (title first, caret icon last)', async () => {
+    const isAdmin = true;
+    const isProEdition = true;
+
+    await renderView(isAdmin, isProEdition);
+
+    const toggleButton = screen.getAllByRole('button')[0];
+
+    // Verify toggle button has the collapsible trigger class
+    expect(toggleButton).toHaveClass('nx-collapsible-items__trigger');
+
+    // Get the children elements
+    const titleElement = toggleButton.querySelector('.risk-on-disk-alert-title');
+    const toggleElement = toggleButton.querySelector('.risk-on-disk-toggle');
+
+    // Verify both elements exist
+    expect(titleElement).toBeInTheDocument();
+    expect(toggleElement).toBeInTheDocument();
+
+    // Verify the order: title should come before toggle icon
+    // Compare the DOM positions using compareDocumentPosition
+    // Node.DOCUMENT_POSITION_FOLLOWING = 4 means titleElement precedes toggleElement
+    const position = titleElement.compareDocumentPosition(toggleElement);
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('renders the caret icon inside the toggle element', async () => {
+    const isAdmin = true;
+    const isProEdition = true;
+
+    await renderView(isAdmin, isProEdition);
+
+    const toggleElement = screen.getAllByRole('button')[0].querySelector('.risk-on-disk-toggle');
+    const caretIcon = toggleElement.querySelector('.fa-caret-right');
+
+    expect(caretIcon).toBeInTheDocument();
+  });
+
+  it('applies expanded class to caret icon when expanded', async () => {
+    const isAdmin = true;
+    const isProEdition = true;
+
+    await renderView(isAdmin, isProEdition);
+
+    const toggleButton = screen.getAllByRole('button')[0];
+    const caretIcon = toggleButton.querySelector('.fa-caret-right');
+
+    // Initially expanded
+    expect(caretIcon).toHaveClass('expanded');
+
+    // Click to collapse
+    userEvent.click(toggleButton);
+    expect(caretIcon).not.toHaveClass('expanded');
   });
 
   it('does not render the banner if cookie "MALWARE_BANNER" is close', async () => {

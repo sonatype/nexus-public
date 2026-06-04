@@ -29,7 +29,8 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
     'NX.I18n',
     'NX.coreui.util.RepositoryUrls',
     'NX.ext.button.Button',
-    'NX.view.info.DependencySnippetPanel'
+    'NX.view.info.DependencySnippetPanel',
+    'NX.coreui.view.component.AssetAttributes'
   ],
   dockedItems: {
     xtype: 'nx-actions',
@@ -72,6 +73,19 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
     {
       xtype: 'nx-info-dependency-snippet-panel',
       reference: 'dependencySnippetPanel'
+    },
+    {
+      xtype: 'panel',
+      ui: 'nx-inset',
+      title: 'Attributes',
+      collapsible: true,
+      manageHeight: false,
+      items: [
+        {
+          xtype: 'nx-coreui-component-assetattributes',
+          reference: 'attributesPanel'
+        }
+      ]
     }
   ],
   autoScroll: true,
@@ -80,9 +94,13 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
   setModel: function(componentModel) {
     var me = this,
         summary = this.summary,
-        componentName = Ext.htmlEncode(componentModel.get('name'));
+        componentName = Ext.htmlEncode(componentModel.get('name')),
+        attributesPanel = this.lookup('attributesPanel');
 
     this.componentModel = componentModel;
+
+    console.log("=== COMPONENT INFO DEBUG === ComponentModel:", componentModel);
+    console.log("=== COMPONENT INFO DEBUG === Attributes panel found:", attributesPanel);
 
     summary[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(componentModel.get('repositoryName'));
     summary[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(componentModel.get('format'));
@@ -91,6 +109,13 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
     summary[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(componentModel.get('version'));
 
     me.showInfo();
+
+    if (attributesPanel) {
+      console.log("=== COMPONENT INFO DEBUG === Setting attributes panel model");
+      attributesPanel.setAssetModel(componentModel);
+    } else {
+      console.error("=== COMPONENT INFO DEBUG === Attributes panel NOT FOUND!");
+    }
 
     Ext.tip.QuickTipManager.unregister(me.down('title').getId());
     Ext.tip.QuickTipManager.register({

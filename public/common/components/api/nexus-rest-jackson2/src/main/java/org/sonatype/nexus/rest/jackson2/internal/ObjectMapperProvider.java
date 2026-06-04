@@ -13,8 +13,6 @@
 package org.sonatype.nexus.rest.jackson2.internal;
 
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapDeserializer;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapSerializer;
@@ -39,7 +37,6 @@ import org.slf4j.LoggerFactory;
  */
 @Component
 @Qualifier("siesta")
-@Singleton
 public class ObjectMapperProvider
     implements Provider<ObjectMapper>, FactoryBean<ObjectMapper>
 {

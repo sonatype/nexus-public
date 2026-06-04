@@ -17,8 +17,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
@@ -58,7 +57,6 @@ import org.springframework.stereotype.Component;
  *
  * @since ssl 1.0
  */
-@Singleton
 @Component
 public class CertificateRetriever
 {
@@ -68,7 +66,7 @@ public class CertificateRetriever
 
   private final TrustStore trustStore;
 
-  @Inject
+  @Autowired
   public CertificateRetriever(final HttpClientManager httpClientManager, @Lazy final TrustStore trustStore) {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.trustStore = checkNotNull(trustStore);

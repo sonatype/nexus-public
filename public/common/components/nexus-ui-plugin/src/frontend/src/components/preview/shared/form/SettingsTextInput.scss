@@ -15,6 +15,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
 
   &__label {
     font-size: var(--font-size-sm);
@@ -29,50 +30,6 @@
     color: var(--color-error);
   }
 
-  &__input {
-    width: 100%;
-    max-width: 400px;
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--font-size-sm);
-    font-family: var(--font-family-base);
-    color: var(--color-text);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    outline: none;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-
-    &::placeholder {
-      color: var(--color-text-tertiary);
-    }
-
-    &:hover:not(:disabled):not(:read-only) {
-      border-color: var(--color-neutral-400);
-    }
-
-    &:focus {
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px var(--color-selection);
-    }
-
-    &:disabled {
-      background-color: var(--color-surface-secondary);
-      color: var(--color-text-tertiary);
-      cursor: not-allowed;
-    }
-
-    &:read-only {
-      background-color: var(--color-surface-secondary);
-    }
-  }
-
-  &--error &__input {
-    border-color: var(--color-error);
-
-    &:focus {
-      box-shadow: 0 0 0 2px var(--color-error-bg);
-    }
-  }
 
   &__help {
     color: var(--color-text-secondary);

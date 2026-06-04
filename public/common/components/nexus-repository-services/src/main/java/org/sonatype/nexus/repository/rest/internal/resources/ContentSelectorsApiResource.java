@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -68,7 +68,7 @@ public class ContentSelectorsApiResource
 
   private final EventManager eventManager;
 
-  @Inject
+  @Autowired
   public ContentSelectorsApiResource(
       final SelectorFactory selectorFactory,
       final SelectorManager selectorManager,

@@ -14,7 +14,7 @@ package org.sonatype.nexus.content.maven.internal;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.security.AssetVariableResolverSupport;
@@ -28,8 +28,6 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -40,13 +38,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class MavenVariableResolverAdapter
     extends AssetVariableResolverSupport
 {
   private final MavenPathParser mavenPathParser;
 
-  @Inject
+  @Autowired
   public MavenVariableResolverAdapter(@Qualifier(Maven2Format.NAME) final MavenPathParser mavenPathParser) {
     this.mavenPathParser = checkNotNull(mavenPathParser);
   }

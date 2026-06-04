@@ -144,13 +144,48 @@ class RepositoryInternalResourceTest
     when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
     when(repositoryManager.browse()).thenReturn(repositories);
 
-    List<RepositoryXO> response = underTest.getRepositories(null, false, false, null);
+    List<RepositoryXO> response = underTest.getRepositories(null, false, false, null, null);
 
     assertThat(response.get(0).getName(), is(sortedRepositories.get(0).getName()));
     assertThat(response.get(1).getName(), is(sortedRepositories.get(1).getName()));
     assertThat(response.get(2).getName(), is(sortedRepositories.get(2).getName()));
     assertThat(response.get(3).getName(), is(sortedRepositories.get(3).getName()));
     assertThat(response.get(4).getName(), is(sortedRepositories.get(4).getName()));
+  }
+
+  @Test
+  void testGetRepositoriesWithCommaSeparatedFormatFilter() {
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Format nuget = new Format("nuget")
+    {
+    };
+    Format npm = new Format("npm")
+    {
+    };
+
+    Repository mavenProxyRepository =
+        mockRepository("maven-central", maven2, proxyType, "http://localhost:8081/repository/maven-central/", true,
+            Map.of(HttpClientFacet.class, mockHttpFacet("Ready to Connect", null)));
+    Repository nugetProxyRepository =
+        mockRepository("nuget.org-proxy", nuget, proxyType, "http://localhost:8081/repository/nuget.org-proxy/", true,
+            Map.of(HttpClientFacet.class, mockHttpFacet("Ready to Connect", null)));
+    Repository npmHostedRepository =
+        mockRepository("npm-hosted", npm, hostedType, "http://localhost:8081/repository/npm-hosted/", true,
+            Map.of());
+
+    List<Repository> repositories = List.of(mavenProxyRepository, nugetProxyRepository, npmHostedRepository);
+
+    when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
+    when(repositoryManager.browse()).thenReturn(repositories);
+
+    // Filter by comma-separated format list: maven2,nuget (should exclude npm)
+    List<RepositoryXO> response = underTest.getRepositories(null, false, false, "maven2,nuget", null);
+
+    assertThat(response.size(), is(2));
+    assertThat(response.get(0).getName(), is("maven-central"));
+    assertThat(response.get(1).getName(), is("nuget.org-proxy"));
   }
 
   @Test

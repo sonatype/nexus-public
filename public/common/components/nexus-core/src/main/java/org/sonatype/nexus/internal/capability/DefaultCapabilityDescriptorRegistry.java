@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.capability;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
 import org.sonatype.nexus.capability.CapabilityDescriptorRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
@@ -31,7 +29,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @Primary
 @Component
-@Singleton
 class DefaultCapabilityDescriptorRegistry
     implements CapabilityDescriptorRegistry
 {
@@ -39,7 +36,7 @@ class DefaultCapabilityDescriptorRegistry
 
   private final Set<CapabilityDescriptor> dynamicDescriptors;
 
-  @Inject
+  @Autowired
   DefaultCapabilityDescriptorRegistry(final DefaultCapabilityDescriptorProvider defaultCapabilityDescriptorProvider) {
     this.defaultCapabilityDescriptorProvider = checkNotNull(defaultCapabilityDescriptorProvider);
     this.dynamicDescriptors = new CopyOnWriteArraySet<CapabilityDescriptor>();

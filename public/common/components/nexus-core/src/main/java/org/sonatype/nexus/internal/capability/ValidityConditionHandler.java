@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class ValidityConditionHandler
 
   private Condition validityCondition;
 
-  @Inject
+  @Autowired
   public ValidityConditionHandler(
       final EventManager eventManager,
       final CapabilityRegistry capabilityRegistry,

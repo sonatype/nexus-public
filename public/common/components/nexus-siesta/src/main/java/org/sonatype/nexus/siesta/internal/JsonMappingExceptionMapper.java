@@ -15,7 +15,6 @@ package org.sonatype.nexus.siesta.internal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -33,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.19
  */
 @Component
-@Singleton
 public class JsonMappingExceptionMapper
     extends ExceptionMapperSupport<JsonMappingException>
 {

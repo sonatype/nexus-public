@@ -17,9 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.encoding.EncodingUtil;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -43,7 +41,6 @@ import org.springframework.stereotype.Component;
  * @since 3.6
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Browse")
 public class BrowseComponent
     extends DirectComponentSupport
@@ -60,7 +57,7 @@ public class BrowseComponent
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public BrowseComponent(
       final BrowseNodeConfiguration browseNodeConfiguration,
       final BrowseNodeQueryService browseNodeQueryService,

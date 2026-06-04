@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.authz;
 import java.util.Collection;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
 import org.apache.shiro.authz.AuthorizationException;
@@ -46,7 +46,7 @@ public class ExceptionCatchingModularRealmAuthorizer
     super(realms);
   }
 
-  @Inject
+  @Autowired
   public ExceptionCatchingModularRealmAuthorizer(
       final Collection<Realm> realms,
       final Provider<RolePermissionResolver> rolePermissionResolverProvider)

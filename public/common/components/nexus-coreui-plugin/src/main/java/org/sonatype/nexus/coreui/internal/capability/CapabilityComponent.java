@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -69,7 +68,6 @@ import org.springframework.stereotype.Component;
  * Capabilities {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "capability_Capability")
 public class CapabilityComponent
     extends DirectComponentSupport
@@ -87,7 +85,7 @@ public class CapabilityComponent
       SchedulerCapabilityDescriptor.TYPE_ID,
       StorageSettingsCapabilityDescriptor.TYPE_ID);
 
-  @Inject
+  @Autowired
   public CapabilityComponent(
       final CapabilityDescriptorRegistry capabilityDescriptorRegistry,
       final CapabilityRegistry capabilityRegistry)

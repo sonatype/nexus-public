@@ -22,9 +22,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Properties;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
@@ -43,7 +41,6 @@ import org.springframework.stereotype.Component;
  * @since 3.30
  */
 @Component
-@Singleton
 public class MetadataDatabase
     implements SupportBundleCustomizer
 {
@@ -55,7 +52,7 @@ public class MetadataDatabase
 
   private final DataStoreManager dataStoreManager;
 
-  @Inject
+  @Autowired
   public MetadataDatabase(final DataStoreManager dataStoreManager) {
     this.dataStoreManager = checkNotNull(dataStoreManager);
   }

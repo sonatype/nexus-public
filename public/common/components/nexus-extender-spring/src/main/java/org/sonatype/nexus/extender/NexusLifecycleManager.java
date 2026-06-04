@@ -18,7 +18,10 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Priority;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.sonatype.nexus.common.PrecedenceConstants;
+import org.springframework.core.annotation.Order;
 
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -29,8 +32,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -48,7 +50,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  * <p>
  * Components are managed during their appropriate phase in order of their priority.
  */
-@Singleton
 @Component
 public class NexusLifecycleManager
     extends ManagedLifecycleManager
@@ -63,7 +64,7 @@ public class NexusLifecycleManager
 
   private final ApplicationContext context;
 
-  @Inject
+  @Autowired
   public NexusLifecycleManager(
       @Value(STARTUP_TASKS_DELAY_SECONDS_VALUE) final int timeToDelay,
       final ApplicationContext context)
@@ -201,11 +202,11 @@ public class NexusLifecycleManager
     final int target = targetPhase.ordinal();
 
     List<Lifecycle> lifecycles = new ArrayList<>(context.getBeansOfType(Lifecycle.class).values());
-    // Make sure the lifecycles are processed in priority order, ideally could utilize spring's @Order annotation
+    // Make sure the lifecycles are processed in order (lower @Order value = higher precedence = first)
     lifecycles.sort((o1, o2) -> {
-      int priority1 = getPriority(o1.getClass());
-      int priority2 = getPriority(o2.getClass());
-      return -Integer.compare(priority1, priority2);
+      int order1 = getOrder(o1.getClass());
+      int order2 = getOrder(o2.getClass());
+      return Integer.compare(order1, order2);
     });
 
     log.info("Indexing lifecycle managed components up to phase {}", targetPhase);
@@ -220,13 +221,15 @@ public class NexusLifecycleManager
     return lifecyclesInPhase;
   }
 
-  private static int getPriority(final Class<?> clazz) {
-    Priority priorityAnnotation = getAnnotation(Priority.class, clazz);
-    // 0 is lowest priority, default value
-    return priorityAnnotation != null ? priorityAnnotation.value() : 0;
+  @VisibleForTesting
+  static int getOrder(final Class<?> clazz) {
+    Order orderAnnotation = getAnnotation(Order.class, clazz);
+    // Use DEFAULT_PRECEDENCE (0) for unannotated components to preserve historical ordering
+    return orderAnnotation != null ? orderAnnotation.value() : PrecedenceConstants.DEFAULT_PRECEDENCE;
   }
 
-  private static <A extends Annotation> A getAnnotation(final Class<A> annotation, final Class<?> clazz) {
+  @VisibleForTesting
+  static <A extends Annotation> A getAnnotation(final Class<A> annotation, final Class<?> clazz) {
     Class<?> impl = clazz.toString().contains("$$SpringCGLIB$$") ? clazz.getSuperclass() : clazz;
     return impl.getAnnotation(annotation);
   }

@@ -25,7 +25,7 @@ import {useState} from "react";
 
 const {EXT: {URL, SMALL_PAGE_SIZE}, SORT_DIRECTIONS: {ASC}} = APIConstants;
 
-export default class ExtAPIUtils {
+class ExtAPIUtils {
   static useExtMachine(action, method, options = {}) {
     const defaultResult = options.defaultResult || [];
 
@@ -222,3 +222,10 @@ export default class ExtAPIUtils {
     }
   }
 }
+
+export default ExtAPIUtils;
+
+// Named re-export so consumers using `import { ExtAPIUtils } from '...'` get
+// the same class as the default export under Babel CJS interop.
+export { ExtAPIUtils };
+

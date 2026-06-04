@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.siesta.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
@@ -51,7 +51,7 @@ public class AuthorizationExceptionMapper
 
   private final Provider<HttpServletRequest> httpRequestProvider;
 
-  @Inject
+  @Autowired
   public AuthorizationExceptionMapper(final Provider<HttpServletRequest> httpRequestProvider) {
     this.httpRequestProvider = checkNotNull(httpRequestProvider);
   }
@@ -64,11 +64,24 @@ public class AuthorizationExceptionMapper
       return Response.status(Status.FORBIDDEN).build();
     }
 
+    // UI requests get 403 to avoid browser's native auth dialog
+    // (WWW-Authenticate on 401 triggers it)
+    if (isUiRequest()) {
+      return Response.status(Status.FORBIDDEN).build();
+    }
+
     return buildUnauthorizedResponse();
   }
 
-  // Determines if subject is authenticated, including anonymous per Nexus documentation
-  // "the anonymous user is considered logged in"
+  private boolean isUiRequest() {
+    HttpServletRequest request = httpRequestProvider.get();
+    return "true".equals(request.getHeader("X-Nexus-UI"));
+  }
+
+  /**
+   * Determines if subject is authenticated, including anonymous per Nexus documentation:
+   * "the anonymous user is considered logged in"
+   */
   private boolean isAuthenticatedUser(final Subject subject) {
     return subject.getPrincipal() != null &&
         (subject.isAuthenticated() || AnonymousHelper.isAnonymous(subject));

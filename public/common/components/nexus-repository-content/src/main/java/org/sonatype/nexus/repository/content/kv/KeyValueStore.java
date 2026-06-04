@@ -23,7 +23,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.ibatis.annotations.Param;
 
 public class KeyValueStore<T extends KeyValueDAO>
@@ -32,7 +32,7 @@ public class KeyValueStore<T extends KeyValueDAO>
   private static final int DELETE_BATCH_SIZE_DEFAULT =
       SystemPropertiesHelper.getInteger("nexus.content.deleteBatchSize", 1000);
 
-  @Inject
+  @Autowired
   public KeyValueStore(
       final DataSessionSupplier sessionSupplier,
       final String contentStoreName,

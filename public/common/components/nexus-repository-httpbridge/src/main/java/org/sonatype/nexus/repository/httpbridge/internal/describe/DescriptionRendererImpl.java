@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.internal.describe;
 
 import java.net.URL;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class DescriptionRendererImpl
     implements DescriptionRenderer
 {
@@ -46,7 +43,7 @@ public class DescriptionRendererImpl
 
   private final URL template;
 
-  @Inject
+  @Autowired
   public DescriptionRendererImpl(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
     objectMapper = new ObjectMapper();

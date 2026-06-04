@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.content.raw.internal.browse;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.content.browse.AssetPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.springframework.stereotype.Component;
@@ -24,7 +22,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *
  * @since 3.26
  */
-@Singleton
 @Component
 @Qualifier(RawFormat.NAME)
 public class RawBrowseNodeGenerator

@@ -20,7 +20,7 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,7 +47,7 @@ public class FormatStoreManager
     this.formatClassPrefix = checkNotNull(formatClassPrefix);
   }
 
-  @Inject
+  @Autowired
   void setFormatStoreFactories(final Map<String, FormatStoreFactory> formatStoreFactories) {
     this.formatStoreFactories = checkNotNull(formatStoreFactories);
   }

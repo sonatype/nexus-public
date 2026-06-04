@@ -12,12 +12,9 @@
  */
 package org.sonatype.nexus.coreui.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.rapture.UiPluginDescriptor;
 import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 
-import jakarta.annotation.Priority;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -28,9 +25,7 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
-@Priority(Integer.MAX_VALUE - 100) // after nexus-rapture
-@Order(Ordered.HIGHEST_PRECEDENCE + 100)
+@Order(Ordered.HIGHEST_PRECEDENCE + 100) // after nexus-rapture
 public class UiPluginDescriptorImpl
     extends UiPluginDescriptorSupport
 {

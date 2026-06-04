@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfigurationStore;
 import org.sonatype.nexus.supportzip.ExportConfigData;
@@ -34,14 +32,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("selectorConfigurationExport")
-@Singleton
 public class SelectorConfigurationExport
     extends JsonExporter
     implements ExportConfigData, ImportData
 {
   private final SelectorConfigurationStore store;
 
-  @Inject
+  @Autowired
   public SelectorConfigurationExport(final SelectorConfigurationStore store) {
     this.store = store;
   }

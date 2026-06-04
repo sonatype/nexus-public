@@ -16,8 +16,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.data.AptKeyValueFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
@@ -48,7 +46,6 @@ import org.slf4j.LoggerFactory;
  * - Flat: metadata at root level (e.g., /Release)
  */
 @Component
-@Singleton
 public class AptProxyMetadataHandler
     implements Handler
 {

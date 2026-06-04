@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.log.overrides.datastore;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -34,12 +32,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 @ConditionalOnProperty(name = DATASTORE_CLUSTERED_ENABLED, havingValue = "true")
 public class LoggingOverridesStore
     extends ConfigStoreSupport<LoggingOverridesDAO>
 {
-  @Inject
+  @Autowired
   protected LoggingOverridesStore(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

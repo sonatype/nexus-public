@@ -13,7 +13,7 @@
 
 import React, {useState, useEffect} from 'react';
 import {DropdownMenu, Flex, IconButton, Text} from '@radix-ui/themes';
-import {Tooltip, usePortalContainer} from '../shared';
+import {Tooltip, usePortalContainer} from '@sonatype/nexus-ui-plugin';
 import {HelpCircle, ExternalLink} from 'lucide-react';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 

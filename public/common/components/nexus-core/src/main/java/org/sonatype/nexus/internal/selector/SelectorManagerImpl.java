@@ -27,10 +27,9 @@ import java.util.stream.Collectors;
 import javax.cache.Cache;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -89,7 +88,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = SERVICES)
 public class SelectorManagerImpl
     extends StateGuardLifecycleSupport
@@ -116,7 +114,7 @@ public class SelectorManagerImpl
 
   private Cache<String, User> userCache;
 
-  @Inject
+  @Autowired
   public SelectorManagerImpl(
       final SelectorConfigurationStore store,
       final SecuritySystem securitySystem,

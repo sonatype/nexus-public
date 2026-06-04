@@ -22,7 +22,7 @@ import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 import org.sonatype.nexus.webhooks.GlobalWebhook;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +44,7 @@ public class GlobalWebhookTypeValidator
 
   private final CapabilityRegistry capabilityRegistry;
 
-  @Inject
+  @Autowired
   public GlobalWebhookTypeValidator(
       final List<GlobalWebhook> globalWebhooks,
       final CapabilityRegistry capabilityRegistry)

@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.webhooks;
 
 import java.util.Date;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.InitiatorProvider;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Format;
@@ -41,7 +39,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class GlobalRepositoryWebhook
     extends GlobalWebhook
 {
@@ -51,7 +48,7 @@ public class GlobalRepositoryWebhook
 
   private final InitiatorProvider initiatorProvider;
 
-  @Inject
+  @Autowired
   public GlobalRepositoryWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.initiatorProvider = checkNotNull(initiatorProvider);

@@ -35,8 +35,7 @@ import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -55,7 +54,6 @@ import org.springframework.stereotype.Component;
  * Privilege {@link DirectComponent}
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Privilege")
 public class PrivilegeComponent
     extends DirectComponentSupport
@@ -64,7 +62,7 @@ public class PrivilegeComponent
 
   private final List<PrivilegeDescriptor> privilegeDescriptors;
 
-  @Inject
+  @Autowired
   public PrivilegeComponent(
       final SecuritySystem securitySystem,
       final List<PrivilegeDescriptor> privilegeDescriptors)

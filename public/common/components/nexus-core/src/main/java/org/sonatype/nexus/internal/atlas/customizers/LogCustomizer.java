@@ -17,8 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
@@ -45,7 +44,6 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class LogCustomizer
     implements SupportBundleCustomizer
 {
@@ -55,7 +53,7 @@ public class LogCustomizer
 
   private final ApplicationDirectories applicationDirectories;
 
-  @Inject
+  @Autowired
   public LogCustomizer(final LogManager logManager, final ApplicationDirectories applicationDirectories) {
     this.logManager = checkNotNull(logManager);
     this.applicationDirectories = checkNotNull(applicationDirectories);

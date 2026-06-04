@@ -20,16 +20,12 @@ import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
 /**
  * Triggers the creation of the search index for single node instances after the removal of ElasticSearch.
  */
 @Component
-@Scope(SCOPE_PROTOTYPE)
 public class ReindexSearchTableUpgradeStep
     extends SearchIndexUpgrade
     implements RepeatableDatabaseMigrationStep

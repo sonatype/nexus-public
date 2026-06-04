@@ -21,8 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.nexus.repository.rest.SearchMapping;
@@ -44,7 +43,6 @@ import org.springframework.stereotype.Component;
  * @since 3.6.1
  */
 @Component
-@Singleton
 public class SearchResultFilterUtils
 {
   private static final String EMPTY_PARAM = "";
@@ -53,7 +51,7 @@ public class SearchResultFilterUtils
 
   private final Map<String, SearchMapping> mappingsByAttribute;
 
-  @Inject
+  @Autowired
   public SearchResultFilterUtils(final SearchUtils searchUtils, final List<SearchMapping> mappings) {
     this.searchUtils = checkNotNull(searchUtils);
     this.mappingsByAttribute = checkNotNull(mappings).stream()

@@ -12,6 +12,11 @@
  */
 package org.sonatype.nexus.repository.raw;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.SimpleApiRepositoryAdapter;
@@ -21,9 +26,12 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE;
 
 /**
  * Adapter to expose raw specific repository configuration for the repositories REST API.
@@ -37,9 +45,15 @@ public class RawRepositoryAdapter
 {
   private static final String RAW = "raw";
 
-  @Inject
-  public RawRepositoryAdapter(final RoutingRuleStore routingRuleStore) {
+  private final boolean rawQueryParamsForwardingEnabled;
+
+  @Autowired
+  public RawRepositoryAdapter(
+      final RoutingRuleStore routingRuleStore,
+      @Value(RAW_QUERYPARAMS_FORWARDING_ENABLED_NAMED_VALUE) final boolean rawQueryParamsForwardingEnabled)
+  {
     super(routingRuleStore);
+    this.rawQueryParamsForwardingEnabled = rawQueryParamsForwardingEnabled;
   }
 
   @Override
@@ -76,12 +90,20 @@ public class RawRepositoryAdapter
     };
   }
 
+  @SuppressWarnings("unchecked")
   private RawAttributes createRawAttributes(final Repository repository) {
-    String disposition = repository.getConfiguration().attributes(RAW).get("contentDisposition", String.class);
+    NestedAttributesMap rawAttributes = repository.getConfiguration().attributes(RAW);
+
     // Normalize null to INLINE - legacy repos with null serve inline at handler level
-    if (disposition == null) {
-      disposition = ContentDisposition.INLINE.name();
+    String disposition = Optional.ofNullable(rawAttributes.get("contentDisposition", String.class))
+        .orElse(ContentDisposition.INLINE.name());
+
+    if (!rawQueryParamsForwardingEnabled) {
+      return new RawAttributes(disposition);
     }
-    return new RawAttributes(disposition);
+    Boolean forwardQueryParameters = rawAttributes.get("forwardQueryParameters", Boolean.class);
+    List<String> excludedQueryParameters =
+        rawAttributes.get("excludedQueryParameters", List.class, Collections.emptyList());
+    return new RawAttributes(disposition, forwardQueryParameters, excludedQueryParameters);
   }
 }

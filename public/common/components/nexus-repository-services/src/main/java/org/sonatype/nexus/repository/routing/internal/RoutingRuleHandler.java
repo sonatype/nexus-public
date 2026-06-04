@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.routing.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
@@ -34,7 +32,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 public class RoutingRuleHandler
     implements Handler, org.sonatype.nexus.repository.routing.RoutingRuleHandler
 {
@@ -44,7 +41,7 @@ public class RoutingRuleHandler
 
   private final RoutingRuleHelper routingRuleHelper;
 
-  @Inject
+  @Autowired
   public RoutingRuleHandler(final RoutingRuleHelper routingRuleHelper) {
     this.routingRuleHelper = checkNotNull(routingRuleHelper);
   }

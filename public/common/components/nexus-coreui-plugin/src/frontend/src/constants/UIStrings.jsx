@@ -53,7 +53,7 @@ import UpgradeAlertStrings from './UpgradeAlertStrings';
 import UpgradeTriggerModalStrings from './UpgradeTriggerModalStrings';
 import ZDUMarketingModalStrings from './ZDUMarketingModalStrings';
 import RecoveryModeAlertStrings from './RecoveryModeAlertStrings';
-import MaliciousRiskStrings  from "./pages/maliciousrisk/MaliciousRiskStrings";
+import MaliciousRiskStrings from '../../../../../nexus-ui-plugin/src/frontend/src/components/preview/constants/pages/maliciousrisk/MaliciousRiskStrings';
 import SearchStrings from './pages/browse/search/SearchStrings';
 import UpgradeStrings from "./pages/admin/system/UpgradeStrings";
 import PreviewUiStrings from "./pages/admin/system/PreviewUiStrings";
@@ -63,6 +63,7 @@ import AdminSystemDirectoryStrings from './pages/admin/system/AdminSystemDirecto
 import AdminSupportDirectoryStrings from './pages/admin/system/AdminSupportDirectoryStrings';
 import AdminDirectoryStrings from './pages/admin/system/AdminDirectoryStrings';
 import OAuth2Strings from "./pages/admin/security/OAuth2Strings";
+import TelemetryStrings from './pages/telemetry/TelemetryStrings';
 
 export default {
   ...UIStrings,
@@ -121,6 +122,9 @@ export default {
 
   // admin/riskvisualizer
   ...MaliciousRiskStrings,
+
+  // telemetry
+  ...TelemetryStrings,
 
   // user
   ...AccountStrings,

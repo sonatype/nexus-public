@@ -292,27 +292,52 @@ function seedRestData(authState, permissions) {
 /**
  * Bootstrap the application from REST endpoints.
  *
- * Fetches auth state and permissions in parallel, then seeds window.NX globals.
- * Returns a promise that resolves when seeding is complete.
+ * Awaits only auth/state so React can render immediately. Permissions are
+ * fetched in parallel but resolved asynchronously — the app seeds with an
+ * empty permission set first, then updates window.__nxRestBootstrap.permissions
+ * once the fetch completes (NEXUS-52583: getPermissions can take 20s on cold
+ * cache; blocking render on it produces a blank screen for that entire period).
  *
  * On failure (e.g., 401 not authenticated), seeds with empty/anonymous state
  * so the app can still render (and redirect to login if needed).
  */
 export async function bootstrapFromREST() {
-  try {
-    const [authState, permissions] = await Promise.all([
-      fetchAuthAndState(),
-      fetchPermissions(),
-    ]);
+  // Start permissions fetch immediately (parallel) but do NOT await it yet
+  const permissionsPromise = fetchPermissions();
 
+  try {
+    const authState = await fetchAuthAndState();
+
+    // Seed with empty permissions so React renders right away
     if (authState) {
-      seedRestData(authState, permissions);
+      seedRestData(authState, new Set());
     } else {
       seedRestData(
         { user: null, edition: null, version: null, stateValues: {} },
         new Set()
       );
     }
+
+    // Update permissions asynchronously once the slow fetch completes
+    permissionsPromise
+      .then((permissions) => {
+        if (window.__nxRestBootstrap) {
+          window.__nxRestBootstrap.permissions = permissions;
+          window.__nxRestBootstrap.checkPermission = (permission) =>
+            checkPermission(permissions, permission);
+          console.info(
+            `[RestBootstrap] Permissions updated asynchronously: ${permissions.size} entries`
+          );
+          // Notify any React components that rendered with the empty initial set so they
+          // can re-check permissions now that the real set is available.
+          window.dispatchEvent(
+            new CustomEvent('nx-rest-permissions-loaded', {detail: {count: permissions.size}})
+          );
+        }
+      })
+      .catch((e) => {
+        console.warn('[RestBootstrap] Async permissions fetch failed:', e);
+      });
   } catch (error) {
     console.error('[RestBootstrap] Bootstrap failed:', error);
     seedRestData(

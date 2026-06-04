@@ -1,0 +1,292 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.tasks-list {
+  display: flex;
+  gap: var(--space-4);
+
+  &__sidebar {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  &__filter-badge {
+    padding: 0 var(--space-3);
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &--loading {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__alert {
+    margin-bottom: var(--space-2);
+  }
+
+  &__search-container {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  &__search-input {
+    max-width: 400px;
+  }
+
+  &__clear-btn {
+    background: transparent;
+    border: none;
+    padding: var(--space-1);
+    cursor: pointer;
+    color: var(--gray-9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-1);
+    transition: color 0.15s ease, background-color 0.15s ease;
+
+    &:hover {
+      color: var(--gray-11);
+      background: var(--gray-4);
+    }
+  }
+
+  &__count {
+    padding: var(--space-2) 0;
+  }
+
+  &__count-text {
+    color: var(--gray-11);
+  }
+
+  &__empty {
+    padding: var(--space-6);
+    text-align: center;
+    background: var(--gray-3);
+    border-radius: var(--radius-3);
+    color: var(--gray-11);
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-surface);
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-3);
+    overflow: hidden;
+  }
+
+  &__header-cell {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    font-weight: 600;
+    font-size: var(--font-size-2);
+    color: var(--gray-11);
+    background: var(--gray-3);
+    border-bottom: 1px solid var(--gray-6);
+    white-space: nowrap;
+
+    &--sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background: var(--gray-4);
+      }
+    }
+  }
+
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: var(--accent-3);
+    }
+
+    &--disabled {
+      opacity: 0.6;
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--gray-6);
+    }
+  }
+
+  &__cell {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-2);
+    color: var(--gray-12);
+    vertical-align: middle;
+  }
+
+  // Action buttons - show only on row hover
+  &__actions {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--gray-10);
+    cursor: pointer;
+    border-radius: var(--radius-2);
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: var(--gray-4);
+      color: var(--gray-12);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &--run:hover {
+      background: var(--green-3);
+      color: var(--green-11);
+    }
+
+    &--stop:hover {
+      background: var(--yellow-3);
+      color: var(--yellow-11);
+    }
+
+    &--delete:hover {
+      background: var(--red-3);
+      color: var(--red-11);
+    }
+  }
+
+  // Status icons
+  &__status-icon {
+    flex-shrink: 0;
+
+    &--running {
+      color: var(--blue-9);
+      animation: tasks-spin 1.5s linear infinite;
+    }
+
+    &--ok {
+      color: var(--green-9);
+    }
+
+    &--waiting {
+      color: var(--gray-9);
+    }
+
+    &--blocked {
+      color: var(--yellow-9);
+    }
+
+    &--error {
+      color: var(--red-9);
+    }
+  }
+
+  // Running status badge with pulse animation
+  &__status-badge--running {
+    animation: tasks-pulse 2s ease-in-out infinite;
+  }
+
+  &__summary {
+    padding: var(--space-3) 0;
+    transition: opacity 0.15s ease;
+  }
+}
+
+// Show actions on row hover
+.tasks-list .entity-table__row:hover .tasks-list__actions {
+  opacity: 1;
+}
+
+// Sort icon styles
+.sort-icon {
+  color: var(--accent-9);
+  flex-shrink: 0;
+
+  &--inactive {
+    color: var(--gray-8);
+    opacity: 0.5;
+  }
+}
+
+@keyframes tasks-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tasks-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// Dark mode adjustments
+:root[data-theme="dark"] {
+  .tasks-list {
+    &__empty {
+      background: var(--gray-4);
+    }
+
+    &__table {
+      background: var(--gray-2);
+    }
+
+    &__header-cell {
+      background: var(--gray-4);
+
+      &--sortable:hover {
+        background: var(--gray-5);
+      }
+    }
+
+    &__row:hover {
+      background: var(--accent-4);
+    }
+
+    &__action-btn:hover {
+      background: var(--gray-5);
+    }
+
+    &__clear-btn:hover {
+      background: var(--gray-5);
+    }
+  }
+}

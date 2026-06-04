@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
@@ -63,7 +62,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.0
  */
 @Component
-@Singleton
 public class JmxCustomizer
     implements SupportBundleCustomizer
 {
@@ -80,7 +78,7 @@ public class JmxCustomizer
   private static final List<String> SENSITIVE_FIELD_NAMES =
       asList("password", "secret", "token", "sign", "auth", "cred", "key", "pass");
 
-  @Inject
+  @Autowired
   public JmxCustomizer(@Qualifier("platform") final MBeanServer server) {
     this.server = checkNotNull(server);
     this.objectMapper = new ObjectMapper();

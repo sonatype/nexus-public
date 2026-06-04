@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -34,7 +34,7 @@ public class AbstractHostedRepositoriesApiResource<T extends HostedRepositoryApi
 {
   protected HostedRepositoryApiRequestToConfigurationConverter<T> configurationConverter;
 
-  @Inject
+  @Autowired
   public void setConfigurationConverter(
       final HostedRepositoryApiRequestToConfigurationConverter<T> configurationConverter)
   {

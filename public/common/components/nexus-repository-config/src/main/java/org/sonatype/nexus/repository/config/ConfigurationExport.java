@@ -20,9 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
@@ -45,7 +43,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("configurationExport")
-@Singleton
 public class ConfigurationExport
     extends JsonExporter
     implements ExportConfigData, ImportData
@@ -54,7 +51,7 @@ public class ConfigurationExport
 
   private final RoutingRuleStore routingRuleStore;
 
-  @Inject
+  @Autowired
   public ConfigurationExport(final ConfigurationStore configurationStore, final RoutingRuleStore routingRuleStore) {
     this.configurationStore = checkNotNull(configurationStore);
     this.routingRuleStore = checkNotNull(routingRuleStore);

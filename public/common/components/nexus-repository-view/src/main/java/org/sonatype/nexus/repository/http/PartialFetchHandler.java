@@ -16,9 +16,7 @@ import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Payload;
@@ -42,13 +40,12 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class PartialFetchHandler
     implements Handler
 {
   private final RangeParser rangeParser;
 
-  @Inject
+  @Autowired
   public PartialFetchHandler(final RangeParser rangeParser) {
     this.rangeParser = checkNotNull(rangeParser);
   }

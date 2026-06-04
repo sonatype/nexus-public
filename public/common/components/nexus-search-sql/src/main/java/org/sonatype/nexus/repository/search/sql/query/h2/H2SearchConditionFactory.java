@@ -19,8 +19,7 @@ import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryConditionGro
 import org.sonatype.nexus.repository.search.sql.query.h2.H2SearchConditionBuilder.ConditionType;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -35,13 +34,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Lazy
 @Qualifier("h2")
 @Component
-@Singleton
 public class H2SearchConditionFactory
     implements SearchConditionFactory
 {
   private final H2SearchDB db;
 
-  @Inject
+  @Autowired
   public H2SearchConditionFactory(final H2SearchDB db) {
     this.db = checkNotNull(db);
   }

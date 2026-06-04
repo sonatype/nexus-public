@@ -17,8 +17,7 @@ import java.util.Map;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.EXTJS_CAPABILITIES_NAME
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_CAPABILITIES_ENABLED;
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_CAPABILITIES_NAMED_VALUE;
 
-@Singleton
 @Component
 public class CapabilitiesPagesStateContributor
     implements StateContributor
@@ -36,7 +34,7 @@ public class CapabilitiesPagesStateContributor
 
   private final boolean isReactCapabilitiesEnabled;
 
-  @Inject
+  @Autowired
   public CapabilitiesPagesStateContributor(
       @Value(EXTJS_CAPABILITIES_NAMED_VALUE) final boolean isExtjsCapabilitiesEnabled,
       @Value(REACT_CAPABILITIES_NAMED_VALUE) final boolean isReactCapabilitiesEnabled)

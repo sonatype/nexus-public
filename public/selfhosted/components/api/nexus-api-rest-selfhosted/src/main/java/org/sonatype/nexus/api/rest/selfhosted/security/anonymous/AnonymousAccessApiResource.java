@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -49,7 +49,7 @@ public class AnonymousAccessApiResource
 
   private final RealmSecurityManager realmSecurityManager;
 
-  @Inject
+  @Autowired
   public AnonymousAccessApiResource(
       final AnonymousManager anonymousManager,
       final RealmSecurityManager realmSecurityManager)

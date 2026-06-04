@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.siesta;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -27,7 +26,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Path("/errors")
 public class ErrorsResource
     implements Resource

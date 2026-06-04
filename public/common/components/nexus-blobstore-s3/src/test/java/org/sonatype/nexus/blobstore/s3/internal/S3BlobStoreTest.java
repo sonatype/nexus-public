@@ -13,6 +13,9 @@
 package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -45,6 +48,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaUsageChecker;
 import org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.S3Blob;
 import org.sonatype.nexus.blobstore.s3.internal.datastore.DatastoreS3BlobStoreMetricsService;
 import org.sonatype.nexus.common.log.DryRunPrefix;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -78,8 +82,10 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -170,6 +176,9 @@ public class S3BlobStoreTest
     // Individual tests can override this behavior as needed
     when(s3.getObject(anyString(), anyString()))
         .thenAnswer(invocation -> getResponseInputStream(attributesContents));
+
+    // Mock bucket existence check for warmup - by default bucket exists
+    when(s3.doesBucketExist(anyString())).thenReturn(true);
   }
 
   @Test
@@ -943,5 +952,232 @@ public class S3BlobStoreTest
     // Regular BlobRef should use get(BlobId) which doesn't check existence
     // getObjectMetadata should NOT be called for regular BlobRef
     verify(s3, never()).getObjectMetadata(anyString(), anyString());
+  }
+
+  /**
+   * NEXUS-51514: a single blob deletion failure during compaction must not abort the entire run.
+   * Compaction should log the error and continue to process remaining blobs.
+   */
+  @Test
+  public void testCompact_continuesPastSingleDeleteFailure_NEXUS_51514() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId1 = new BlobId(UUID.randomUUID().toString());
+    BlobId blobId2 = new BlobId(UUID.randomUUID().toString());
+    BlobId blobId3 = new BlobId(UUID.randomUUID().toString());
+
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(3);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(blobId1, blobId2, blobId3));
+
+    DeleteObjectsResponse successResponse = DeleteObjectsResponse.builder()
+        .deleted(
+            DeletedObject.builder().key("key1").build(),
+            DeletedObject.builder().key("key2").build())
+        .build();
+
+    S3Exception s3Exception = (S3Exception) S3Exception.builder()
+        .message("One or more objects could not be deleted")
+        .statusCode(200)
+        .build();
+
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenReturn(successResponse) // blob1 succeeds
+        .thenThrow(s3Exception) // blob2 fails
+        .thenReturn(successResponse); // blob3 succeeds
+
+    blobStore.compact(null, Duration.ZERO);
+
+    // blob1 and blob3 were processed successfully
+    verify(deletedBlobIndex).deleteRecord(blobId1);
+    verify(deletedBlobIndex).deleteRecord(blobId3);
+
+    // blob2 failed — its record stays in the index for retry on the next compaction run
+    verify(deletedBlobIndex, never()).deleteRecord(blobId2);
+  }
+
+  @Test
+  public void testCompact_continuesWhenBatchDeleteReturnsPartialFailure() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(blobId));
+
+    DeleteObjectsResponse partialFailureResponse = DeleteObjectsResponse.builder()
+        .deleted(DeletedObject.builder().key("key1").build())
+        .errors(software.amazon.awssdk.services.s3.model.S3Error.builder()
+            .key("key2")
+            .code("AccessDenied")
+            .message("Access Denied")
+            .build())
+        .build();
+
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class))).thenReturn(partialFailureResponse);
+
+    blobStore.compact(null, Duration.ZERO);
+
+    // batchDelete returned false (partial failure), but deleteRecord is still called
+    // since the compaction loop calls it unconditionally after maybeCompactBlob
+    verify(deletedBlobIndex).deleteRecord(blobId);
+    verify(s3).deleteObjects(any(DeleteObjectsRequest.class));
+  }
+
+  @Test
+  public void testCompact_taskCancellationPropagatesDuringBlobDeletion() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class)))
+        .thenReturn(Stream.of(blobId));
+
+    when(s3.deleteObjects(any(DeleteObjectsRequest.class)))
+        .thenThrow(new TaskInterruptedException("task cancelled", true));
+
+    assertThrows(TaskInterruptedException.class,
+        () -> blobStore.compact(null, Duration.ZERO));
+  }
+
+  @Test
+  public void testCompact_usesDoCompactWithoutDeletedBlobIndexWhenRebuildRequired() throws Exception {
+    // Setup: create blob store and mock metadata with rebuildDeletedBlobIndex=true
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    // Mock metadata file exists with rebuildDeletedBlobIndex=true
+    Properties metadataProps = new Properties();
+    metadataProps.setProperty("type", "s3/1");
+    metadataProps.setProperty(S3BlobStore.REBUILD_DELETED_BLOB_INDEX_KEY, "true");
+    String metadataContent = propertiesToString(metadataProps);
+
+    ResponseInputStream<GetObjectResponse> metadataStream = getResponseInputStream(metadataContent);
+    when(s3.getObject("mybucket", "myPrefix/metadata.properties")).thenReturn(metadataStream);
+    when(s3.doesObjectExist("mybucket", "myPrefix/metadata.properties")).thenReturn(true);
+
+    // Mock that there are no existing deleted blob records (since we're rebuilding)
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(0);
+
+    // Mock some S3 objects to simulate blobs
+    S3Object blob1 = S3Object.builder()
+        .key("myPrefix/content/12345678-1234-1234-1234-123456789abc.properties")
+        .build();
+    when(s3.listObjectsWithPrefix(anyString())).thenReturn(Stream.of(blob1));
+
+    // Mock blob attributes
+    Properties attrProps = new Properties();
+    attrProps.setProperty("type", "s3/1");
+    attrProps.setProperty("size", "100");
+    String attrContent = propertiesToString(attrProps);
+    ResponseInputStream<GetObjectResponse> attrStream = getResponseInputStream(attrContent);
+    when(s3.getObject("mybucket", "myPrefix/content/12345678-1234-1234-1234-123456789abc.properties"))
+        .thenReturn(attrStream);
+    when(s3.getObjectMetadata("mybucket", "myPrefix/content/12345678-1234-1234-1234-123456789abc.properties"))
+        .thenReturn(HeadObjectResponse.builder().build());
+
+    // Call compact
+    blobStore.compact(null, Duration.ZERO);
+
+    // Verify that deletedBlobIndex.deleteAllRecords was called (doCompactWithoutDeletedBlobIndex behavior)
+    verify(deletedBlobIndex).deleteAllRecords();
+
+    // Verify that metadata.properties was stored
+    verify(s3, atLeastOnce()).putObject(
+        argThat(req -> req.key().endsWith("metadata.properties")),
+        any(RequestBody.class));
+
+    // Verify the normal path (with deleted blob index) was NOT used
+    verify(deletedBlobIndex, never()).getRecordsBefore(any(OffsetDateTime.class));
+  }
+
+  @Test
+  public void testCompact_usesDoCompactWithDeletedBlobIndexWhenRebuildNotRequired() throws Exception {
+    // Setup: create blob store and mock metadata with rebuildDeletedBlobIndex=false (default)
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    // Mock metadata file exists with rebuildDeletedBlobIndex=false (or not set)
+    Properties metadataProps = new Properties();
+    metadataProps.setProperty("type", "s3/1");
+    // rebuildDeletedBlobIndex is not set or is false, so normal path is used
+    String metadataContent = propertiesToString(metadataProps);
+
+    ResponseInputStream<GetObjectResponse> metadataStream = getResponseInputStream(metadataContent);
+    when(s3.getObject("mybucket", "myPrefix/metadata.properties")).thenReturn(metadataStream);
+    when(s3.doesObjectExist("mybucket", "myPrefix/metadata.properties")).thenReturn(true);
+
+    // Mock deleted blob index has records
+    BlobId blobId = new BlobId(UUID.randomUUID().toString());
+    when(deletedBlobIndex.count(any(OffsetDateTime.class))).thenReturn(1);
+    when(deletedBlobIndex.getRecordsBefore(any(OffsetDateTime.class))).thenReturn(Stream.of(blobId));
+
+    // Mock blob is not in cache (stale), so it should be compacted
+    // We need to spy on the blobStore to control liveBlobs behavior
+
+    // Call compact
+    blobStore.compact(null, Duration.ZERO);
+
+    // Verify that normal compaction logic was used (deletedBlobIndex.getRecordsBefore was called)
+    // This is the behavior of doCompactWithDeletedBlobIndex
+    verify(deletedBlobIndex).getRecordsBefore(any(OffsetDateTime.class));
+  }
+
+  @Test
+  public void testDoCompactWithoutDeletedBlobIndex_rebuildsIndexFromS3() throws Exception {
+    // Setup: create blob store directly and use reflection to call doCompactWithoutDeletedBlobIndex
+    MockBlobStoreConfiguration cfg = new MockBlobStoreConfiguration();
+    cfg.setAttributes(new HashMap<>(Map.of("s3", new HashMap<>(Map.of("bucket", "mybucket", "prefix", "myPrefix")))));
+    blobStore.init(cfg);
+    blobStore.start();
+
+    // Mock deleted blob index deleteAllRecords is called
+    doNothing().when(deletedBlobIndex).deleteAllRecords();
+
+    // Mock some S3 objects to simulate blobs with attributes
+    S3Object blob1 = S3Object.builder()
+        .key("myPrefix/content/12345678-1234-1234-1234-123456789abc.properties")
+        .build();
+    S3Object blob2 = S3Object.builder()
+        .key("myPrefix/content/22345678-1234-1234-1234-123456789abc.properties")
+        .build();
+    when(s3.listObjectsWithPrefix(anyString())).thenReturn(Stream.of(blob1, blob2));
+
+    // Mock blob attributes for deleted blobs
+    Properties attrProps = new Properties();
+    attrProps.setProperty("type", "s3/1");
+    attrProps.setProperty("size", "100");
+    attrProps.setProperty("@deleted", "true"); // Mark as deleted
+    String attrContent = propertiesToString(attrProps);
+    when(s3.getObject(anyString(), contains(".properties")))
+        .thenAnswer(inv -> getResponseInputStream(attrContent));
+    when(s3.getObjectMetadata(anyString(), anyString())).thenReturn(HeadObjectResponse.builder().build());
+
+    // Call doCompactWithoutDeletedBlobIndex directly
+    blobStore.doCompactWithoutDeletedBlobIndex(null);
+
+    // Verify that deleteAllRecords was called
+    verify(deletedBlobIndex).deleteAllRecords();
+
+    // Verify that listObjectsWithPrefix was called to scan S3 for blob attributes
+    verify(s3).listObjectsWithPrefix(anyString());
+  }
+
+  /**
+   * Convert Properties to String content for testing.
+   */
+  private String propertiesToString(Properties props) throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    props.store(outputStream, null);
+    return outputStream.toString("UTF-8");
   }
 }

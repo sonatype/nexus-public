@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Map;
 import java.util.Optional;
 import org.sonatype.nexus.onboarding.OnboardingItem;
@@ -33,7 +33,7 @@ public abstract class CommunityOnboardingItem
 
   protected final GlobalKeyValueStore globalKeyValueStore;
 
-  @Inject
+  @Autowired
   public CommunityOnboardingItem(
       final ApplicationVersion applicationVersion,
       final GlobalKeyValueStore globalKeyValueStore)

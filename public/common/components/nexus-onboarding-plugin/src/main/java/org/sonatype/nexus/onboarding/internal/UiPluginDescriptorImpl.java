@@ -12,13 +12,11 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.rapture.UiPluginDescriptor;
 import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 
-import jakarta.annotation.Priority;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -29,13 +27,11 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
-@Priority(Integer.MAX_VALUE - 300) // after nexus-proui-plugin
-@Order(Ordered.HIGHEST_PRECEDENCE + 300)
+@Order(Ordered.HIGHEST_PRECEDENCE + 300) // after nexus-proui-plugin
 public class UiPluginDescriptorImpl
     extends UiPluginDescriptorSupport
 {
-  @Inject
+  @Autowired
   public UiPluginDescriptorImpl() {
     super("nexus-onboarding-plugin");
     setNamespace("NX.onboarding");

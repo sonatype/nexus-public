@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
@@ -27,12 +25,11 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class SecretsStoreImpl
     extends ConfigStoreSupport<SecretsDAO>
     implements SecretsStore
 {
-  @Inject
+  @Autowired
   public SecretsStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier, SecretsDAO.class);
   }

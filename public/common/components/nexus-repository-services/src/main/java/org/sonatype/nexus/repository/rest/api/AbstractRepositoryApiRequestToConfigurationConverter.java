@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
@@ -30,7 +30,7 @@ public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T ext
 {
   protected ConfigurationStore configurationStore;
 
-  @Inject
+  @Autowired
   public void setConfigurationStore(final ConfigurationStore configurationStore) {
     this.configurationStore = checkNotNull(configurationStore);
   }

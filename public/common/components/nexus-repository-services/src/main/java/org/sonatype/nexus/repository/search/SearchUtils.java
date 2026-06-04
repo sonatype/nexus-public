@@ -20,9 +20,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.common.QualifierUtil;
@@ -46,7 +44,6 @@ import static java.util.stream.StreamSupport.stream;
  * @since 3.38
  */
 @Component
-@Singleton
 public class SearchUtils
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -67,7 +64,7 @@ public class SearchUtils
 
   private final Set<String> assetSearchParamValues;
 
-  @Inject
+  @Autowired
   public SearchUtils(
       final RepositoryManagerRESTAdapter repoAdapter,
       final List<SearchMappings> searchMappingsList)

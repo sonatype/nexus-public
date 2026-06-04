@@ -140,6 +140,22 @@ public interface KeyValueDAO
       @Param("created") OffsetDateTime created);
 
   /**
+   * Sets the created date for the specified key of a particular category. Useful when using the kv table as a cache
+   * like structure.
+   *
+   * @param repositoryId the repository for the scope
+   * @param category the storage category
+   * @param key the key for the data
+   * @param created the new created date
+   * @return the number of records updated
+   */
+  int setCreatedDateForKey(
+      @Param("repositoryId") int repositoryId,
+      @Param("category") String category,
+      @Param("key") String key,
+      @Param("created") OffsetDateTime created);
+
+  /**
    * Remove the data associated with the specific category and key.
    *
    * @param repositoryId the repository for the scope

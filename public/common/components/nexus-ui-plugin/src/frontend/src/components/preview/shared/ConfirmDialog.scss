@@ -28,12 +28,13 @@
     width: 90vw;
     max-width: 500px;
     max-height: 85vh;
-    padding: var(--space-5);
-    background-color: var(--color-panel-solid);
-    border-radius: var(--radius-3);
-    box-shadow: var(--shadow-6);
+    padding: var(--space-5, 20px);
+    background-color: var(--color-panel-solid, #fff);
+    border-radius: var(--radius-3, 8px);
+    box-shadow: 0 16px 70px rgba(0, 0, 0, 0.2);
     animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 1001;
+    font-family: var(--default-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 
     &:focus {
       outline: none;
@@ -50,65 +51,66 @@
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: var(--radius-2);
+    border-radius: var(--radius-2, 6px);
     flex-shrink: 0;
 
     &--danger {
-      background-color: var(--red-3);
-      color: var(--red-11);
+      background-color: var(--red-3, #ffe5e5);
+      color: var(--red-11, #cd2b31);
     }
 
     &--warning {
-      background-color: var(--amber-3);
-      color: var(--amber-11);
+      background-color: var(--amber-3, #fff3d0);
+      color: var(--amber-11, #ad5700);
     }
   }
 
   &__title {
-    font-size: var(--font-size-4);
-    font-weight: var(--font-weight-medium);
-    color: var(--gray-12);
+    font-size: var(--font-size-4, 16px);
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--gray-12, #1c2024);
     margin: 0;
   }
 
   &__message {
-    color: var(--gray-11);
+    color: var(--gray-11, #60646c);
     line-height: 1.5;
+    white-space: pre-line;
   }
 
   &__actions {
-    margin-top: var(--space-2);
+    margin-top: var(--space-2, 8px);
   }
 
   &__button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-2);
-    font-size: var(--font-size-2);
-    font-weight: var(--font-weight-medium);
+    gap: var(--space-2, 8px);
+    padding: 8px 16px;
+    border-radius: var(--radius-2, 6px);
+    font-size: var(--font-size-2, 14px);
+    font-weight: var(--font-weight-medium, 500);
     line-height: 1;
     cursor: pointer;
     transition: all 150ms ease;
     border: none;
 
     &:focus-visible {
-      outline: 2px solid var(--accent-9);
+      outline: 2px solid var(--accent-9, #30a46c);
       outline-offset: 2px;
     }
 
     &--cancel {
-      background-color: var(--gray-3);
-      color: var(--gray-12);
+      background-color: var(--gray-3, #f0f0f3);
+      color: var(--gray-12, #1c2024);
 
       &:hover {
-        background-color: var(--gray-4);
+        background-color: var(--gray-4, #e8e8ec);
       }
 
       &:active {
-        background-color: var(--gray-5);
+        background-color: var(--gray-5, #e0e1e6);
       }
     }
 
@@ -116,26 +118,28 @@
       color: white;
 
       &.confirm-dialog__button--danger {
-        background-color: var(--red-9);
+        background-color: var(--red-9, #e5484d);
 
         &:hover {
-          background-color: var(--red-10);
+          background-color: var(--red-10, #dc3d43);
         }
 
         &:active {
-          background-color: var(--red-11);
+          background-color: var(--red-11, #cd2b31);
         }
       }
 
       &.confirm-dialog__button--warning {
-        background-color: var(--amber-9);
+        background-color: var(--amber-9, #ffc53d);
+        color: var(--amber-12, #4f3422);
 
         &:hover {
-          background-color: var(--amber-10);
+          background-color: var(--amber-10, #ffba18);
         }
 
         &:active {
-          background-color: var(--amber-11);
+          background-color: var(--amber-11, #ad5700);
+          color: white;
         }
       }
     }

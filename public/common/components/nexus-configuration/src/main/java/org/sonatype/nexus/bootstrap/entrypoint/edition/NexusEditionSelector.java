@@ -16,20 +16,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
-
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(SCOPE_SINGLETON)
 public class NexusEditionSelector
 {
   private final List<NexusEdition> editions;
 
-  @Inject
+  @Autowired
   public NexusEditionSelector(final List<NexusEdition> editions) {
     this.editions = new ArrayList<>(editions);
     this.editions.sort(Comparator.comparingInt(NexusEdition::getPriority));

@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.lifecycle;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -43,7 +42,6 @@ import org.springframework.stereotype.Component;
  */
 @Path(ManagedLifecycleResource.RESOURCE_URI)
 @Component
-@Singleton
 public class ManagedLifecycleResource
     implements Resource, ManagedLifecycleResourceDoc
 {
@@ -53,7 +51,7 @@ public class ManagedLifecycleResource
 
   private final ManagedLifecycleManager lifecycleManager;
 
-  @Inject
+  @Autowired
   public ManagedLifecycleResource(final ManagedLifecycleManager lifecycleManager) {
     this.lifecycleManager = checkNotNull(lifecycleManager);
   }

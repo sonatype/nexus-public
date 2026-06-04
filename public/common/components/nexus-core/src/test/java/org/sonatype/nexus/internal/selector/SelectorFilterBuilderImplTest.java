@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.selector;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.selector.CselSelector;

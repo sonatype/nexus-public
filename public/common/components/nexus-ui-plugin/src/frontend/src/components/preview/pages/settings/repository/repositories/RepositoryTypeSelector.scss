@@ -1,0 +1,188 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.repository-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100%;
+
+  &__search {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    flex-shrink: 0;
+
+    // Remove top/bottom padding from SearchHeader in this context
+    .search-header {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    // Hide format dropdown when using SearchHeader component
+    .search-header__format-dropdown {
+      display: none;
+    }
+
+    // Make search input take full width without dropdown
+    .search-header__search-input {
+      flex: 1;
+      max-width: none;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-3);
+    padding-bottom: var(--space-6);
+
+    &--types {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+    }
+  }
+
+  &__format-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-2);
+    background: var(--color-surface);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-3);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    appearance: none;
+    font: inherit;
+    color: inherit;
+
+    &:hover {
+      border-color: var(--blue-9);
+      background: var(--gray-2);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-2);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &--selected {
+      border-color: var(--blue-9);
+      background: var(--blue-3);
+      box-shadow: 0 0 0 1px var(--blue-9);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-a8);
+      outline-offset: 2px;
+    }
+  }
+
+  &__format-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  &__format-label {
+    text-align: center;
+  }
+
+  &__card {
+    text-align: left;
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--gray-5);
+    border-radius: var(--radius-3);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+
+    &:hover {
+      border-color: var(--blue-9);
+      background: var(--gray-2);
+    }
+
+    &--selected {
+      border-color: var(--blue-9);
+      background: var(--blue-3);
+      box-shadow: 0 0 0 1px var(--blue-9);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent-a8);
+      outline-offset: 2px;
+    }
+  }
+
+  &__back-link {
+    background: none;
+    border: none;
+    color: var(--accent-9);
+    padding: 0;
+    font-size: var(--font-size-2);
+    cursor: pointer;
+    margin-bottom: var(--space-2);
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--accent-11);
+    }
+  }
+
+  &__type-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-3);
+    flex-shrink: 0;
+
+    &--proxy {
+      background: var(--blue-3);
+      color: var(--blue-11);
+    }
+    &--hosted {
+      background: var(--green-3);
+      color: var(--green-11);
+    }
+    &--group {
+      background: var(--purple-3);
+      color: var(--purple-11);
+    }
+  }
+}
+
+:root[data-theme="dark"] {
+  .repository-type-selector {
+    &__format-card,
+    &__card {
+      background: var(--gray-3);
+
+      &:hover {
+        background: var(--gray-4);
+      }
+    }
+
+    &__format-card--selected,
+    &__card--selected {
+      background: var(--blue-3);
+    }
+  }
+}

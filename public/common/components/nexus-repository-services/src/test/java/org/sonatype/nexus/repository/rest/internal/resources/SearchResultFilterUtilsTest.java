@@ -43,6 +43,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.rest.internal.resources.SearchResultFilterUtils.getValueFromAssetMap;
 import org.junit.runner.RunWith;
@@ -133,7 +134,7 @@ public class SearchResultFilterUtilsTest
 
   @Test
   public void testGetValueFromAssetMap_EmptyMap() {
-    runGetValueFromAssetMapTest(new AssetSearchResult(), "assets.attributes.checksum.sha1", null);
+    runGetValueFromAssetMapTest(mock(), "assets.attributes.checksum.sha1", null);
   }
 
   @Test
@@ -286,15 +287,15 @@ public class SearchResultFilterUtilsTest
       final String sha1,
       final Map<String, Object> formatAttributes)
   {
-    AssetSearchResult asset = new AssetSearchResult();
-    asset.setPath(name);
-    asset.setFormat(format);
-    asset.setChecksum(of("sha1", sha1));
-    asset.setId(UUID.randomUUID().toString());
-    asset.setRepository(repositoryName);
+    AssetSearchResult asset = mock();
+    when(asset.getPath()).thenReturn(name);
+    when(asset.getFormat()).thenReturn(format);
+    when(asset.getChecksum()).thenReturn(of("sha1", sha1));
+    when(asset.getId()).thenReturn(UUID.randomUUID().toString());
+    when(asset.getRepository()).thenReturn(repositoryName);
     Map<String, Object> attributes = of("cache", of("last_verified", 1234), "checksum", of("sha1", sha1), format,
         formatAttributes);
-    asset.setAttributes(attributes);
+    when(asset.getAttributes()).thenReturn(attributes);
     return asset;
   }
 }

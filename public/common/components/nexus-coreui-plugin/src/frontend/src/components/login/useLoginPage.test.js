@@ -15,12 +15,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import {renderHook, act} from '@testing-library/react';
+import {renderHook, act, waitFor} from '@testing-library/react';
 import useLoginPage from './useLoginPage';
 
 let mockStateValues = {};
 const mockAssign = jest.fn();
 const mockRequestSession = jest.fn();
+const mockSave = jest.fn();
 
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   const actual = jest.requireActual('@sonatype/nexus-ui-plugin');
@@ -44,6 +45,18 @@ jest.mock('@uirouter/react', () => ({
     },
   }),
 }));
+
+jest.mock('./loginFormMachine', () => {
+  const actual = jest.requireActual('./loginFormMachine');
+  return {
+    ...actual,
+    createLoginFormMachine: () => {
+      return actual.createLoginFormMachine().withConfig({
+        services: {save: (...args) => mockSave(...args)},
+      });
+    },
+  };
+});
 
 describe('useLoginPage', () => {
   const originalLocation = window.location;
@@ -113,34 +126,33 @@ describe('useLoginPage', () => {
   });
 
   describe('login via form machine', () => {
-    it('calls requestSession on submit with valid credentials', async () => {
-      mockRequestSession.mockResolvedValue({response: {status: 200}});
+    it('calls login endpoint on submit with valid credentials', async () => {
+      mockSave.mockImplementationOnce(async () => {
+        window.location.hash = '#browse/welcome';
+        return {username: 'admin'};
+      });
       setupStates();
       const {result} = renderHook(() => useLoginPage());
 
       act(() => result.current.field('username').onChange('admin'));
       act(() => result.current.field('password').onChange('admin123'));
+      act(() => result.current.submit());
 
-      await act(async () => {
-        result.current.submit();
-      });
-
-      expect(mockRequestSession).toHaveBeenCalledWith('admin', 'admin123');
+      await waitFor(() => expect(window.location.hash).toBe('#browse/welcome'));
     });
 
     it('sets saveError on failed login', async () => {
-      mockRequestSession.mockRejectedValue(new Error('Unauthorized'));
+      mockSave.mockRejectedValueOnce(
+        Object.assign(new Error('Authentication failed'), {response: {status: 401, data: ''}})
+      );
       setupStates();
       const {result} = renderHook(() => useLoginPage());
 
       act(() => result.current.field('username').onChange('bad'));
       act(() => result.current.field('password').onChange('bad'));
+      act(() => result.current.submit());
 
-      await act(async () => {
-        result.current.submit();
-      });
-
-      expect(result.current.saveError).toBe('Invalid username or password');
+      await waitFor(() => expect(result.current.saveError).toBe('Invalid username or password'));
     });
   });
 
@@ -228,6 +240,30 @@ describe('useLoginPage', () => {
       setupStates({anonymousUsername: false});
       const {result} = renderHook(() => useLoginPage());
       expect(result.current.showAnonymousAccess).toBe(false);
+    });
+  });
+
+  describe('rate limit countdown', () => {
+    it('isRateLimited is false and secondsLeft is null by default', () => {
+      setupStates();
+      const {result} = renderHook(() => useLoginPage());
+      expect(result.current.isRateLimited).toBe(false);
+      expect(result.current.secondsLeft).toBeNull();
+    });
+
+    it('isRateLimited becomes true and secondsLeft is set after a 429 response', async () => {
+      mockSave.mockRejectedValueOnce(
+        Object.assign(new Error('Rate limit exceeded'), {response: {status: 429, retryAfter: 30}})
+      );
+      setupStates();
+      const {result} = renderHook(() => useLoginPage());
+
+      act(() => result.current.field('username').onChange('admin'));
+      act(() => result.current.field('password').onChange('admin123'));
+      act(() => result.current.submit());
+
+      await waitFor(() => expect(result.current.isRateLimited).toBe(true));
+      expect(result.current.secondsLeft).toBe(30);
     });
   });
 

@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.content.browse;
 
 import java.util.function.Consumer;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodeFailedException;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodeService;
@@ -27,7 +25,6 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 public class RebuildBrowseNodeServiceImpl
     implements RebuildBrowseNodeService
 {

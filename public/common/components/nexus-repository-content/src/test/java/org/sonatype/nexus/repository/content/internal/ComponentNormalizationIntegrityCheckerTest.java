@@ -45,7 +45,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.String.format;
-import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -150,10 +149,11 @@ public class ComponentNormalizationIntegrityCheckerTest
   }
 
   @Test
-  public void checkAndRepairFailsIfTableIsMissing() throws SQLException {
+  public void checkAndRepairSkipsIfTableIsMissing() throws SQLException {
     mockTableMissing();
 
-    assertThrows(SQLException.class, () -> checker.checkAndRepair(connection));
+    // Should complete without throwing - missing table is skipped gracefully
+    checker.checkAndRepair(connection);
   }
 
   @Test
@@ -199,6 +199,9 @@ public class ComponentNormalizationIntegrityCheckerTest
 
   private void mockTableMissing() throws SQLException {
     when(databaseMigrationUtility.tableExists(connection, MAVEN2_TABLE.toUpperCase())).thenReturn(false);
+    when(databaseMigrationUtility.tableExists(connection, RAW_TABLE.toUpperCase())).thenReturn(false);
+    mockHasNormalizedData(mavenComponentStore);
+    mockHasNormalizedData(rawComponentStore);
   }
 
   private void mockTableAndColumnExists() throws SQLException {

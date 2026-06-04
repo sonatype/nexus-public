@@ -14,13 +14,10 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class GoogleBlobStoreMigrationStep_2_5
     implements DatabaseMigrationStep
 {

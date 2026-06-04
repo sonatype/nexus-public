@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.repository.webhooks.RepositoryWebhook;
@@ -36,7 +34,6 @@ import org.springframework.stereotype.Component;
  * Webhook {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Webhook")
 public class WebhookComponent
     extends DirectComponentSupport
@@ -44,7 +41,7 @@ public class WebhookComponent
 
   private final WebhookService webhookService;
 
-  @Inject
+  @Autowired
   public WebhookComponent(final WebhookService webhookService) {
     this.webhookService = webhookService;
   }

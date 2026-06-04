@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.92.3-01</version>
+    <version>3.93.0-06</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-all</artifactId>
@@ -35,7 +35,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-commons</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -43,15 +43,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-db</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
-        <scope>import</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.sonatype.nexus.common.buildsupport</groupId>
-        <artifactId>nexus-common-buildsupport-goodies</artifactId>
-        <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -59,7 +51,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-groovy</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -67,7 +59,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-httpclient</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -75,7 +67,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-internal</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -83,7 +75,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-jetty</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -91,7 +83,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-jruby</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -99,7 +91,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-logging</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -107,7 +99,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-maven</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -115,7 +107,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-metrics</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -123,7 +115,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-other</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -131,7 +123,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-rest</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -139,7 +131,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-security</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -147,7 +139,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-spring</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -155,7 +147,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-testing</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
 
@@ -163,7 +155,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-ui</artifactId>
         <type>pom</type>
-        <version>3.92.3-01</version>
+        <version>3.93.0-06</version>
         <scope>import</scope>
       </dependency>
     </dependencies>

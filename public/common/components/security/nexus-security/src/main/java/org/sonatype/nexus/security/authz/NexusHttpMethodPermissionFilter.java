@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.authz;
 
-import jakarta.inject.Singleton;
 import javax.servlet.annotation.WebFilter;
 
 import org.apache.shiro.web.filter.authz.HttpMethodPermissionFilter;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
  */
 @WebFilter(filterName = NexusHttpMethodPermissionFilter.NAME)
 @Component
-@Singleton
 public class NexusHttpMethodPermissionFilter
     extends HttpMethodPermissionFilter
 {

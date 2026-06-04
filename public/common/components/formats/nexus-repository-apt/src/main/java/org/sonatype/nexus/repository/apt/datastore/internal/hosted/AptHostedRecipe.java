@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.repository.apt.datastore.internal.hosted;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.RecipeSupport;
@@ -59,79 +57,78 @@ import org.springframework.stereotype.Component;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(AptHostedRecipe.NAME)
-@Singleton
 public class AptHostedRecipe
     extends RecipeSupport
 {
   public static final String NAME = "apt-hosted";
 
-  @Inject
+  @Autowired
   Provider<AptSecurityFacet> securityFacet;
 
-  @Inject
+  @Autowired
   Provider<AptSigningFacet> aptSigningFacet;
 
-  @Inject
+  @Autowired
   Provider<ConfigurableViewFacet> viewFacet;
 
-  @Inject
+  @Autowired
   Provider<AptContentFacet> aptContentFacet;
 
-  @Inject
+  @Autowired
   Provider<AptHostedFacet> aptHostedFacet;
 
-  @Inject
+  @Autowired
   Provider<BrowseFacet> browseFacet;
 
-  @Inject
+  @Autowired
   Provider<AptLastAssetMaintenanceFacet> maintenanceFacet;
 
-  @Inject
+  @Autowired
   Provider<AptHostedSnapshotFacet> hostedSnapshotFacet;
 
-  @Inject
+  @Autowired
   Provider<AptKeyValueFacet> aptKeyValueFacet;
 
-  @Inject
+  @Autowired
   Provider<AptHostedMetadataFacet> aptHostedMetadataFacet;
 
-  @Inject
+  @Autowired
   Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
 
-  @Inject
+  @Autowired
   TimingHandler timingHandler;
 
-  @Inject
+  @Autowired
   SecurityHandler securityHandler;
 
-  @Inject
+  @Autowired
   ExceptionHandler exceptionHandler;
 
-  @Inject
+  @Autowired
   HandlerContributor handlerContributor;
 
-  @Inject
+  @Autowired
   ConditionalRequestHandler conditionalRequestHandler;
 
-  @Inject
+  @Autowired
   PartialFetchHandler partialFetchHandler;
 
-  @Inject
+  @Autowired
   ContentHeadersHandler contentHeadersHandler;
 
-  @Inject
+  @Autowired
   LastDownloadedHandler lastDownloadedHandler;
 
-  @Inject
+  @Autowired
   AptSnapshotHandler snapshotHandler;
 
-  @Inject
+  @Autowired
   AptHostedHandler hostedHandler;
 
-  @Inject
+  @Autowired
   Provider<SearchFacet> searchFacet;
 
-  @Inject
+  @Autowired
   public AptHostedRecipe(
       @Qualifier(HostedType.NAME) final Type type,
       @Qualifier(AptFormat.NAME) final Format format)

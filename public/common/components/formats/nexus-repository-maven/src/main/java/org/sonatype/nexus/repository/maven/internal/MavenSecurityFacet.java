@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.SecurityFacetSupport;
@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 public class MavenSecurityFacet
     extends SecurityFacetSupport
 {
-  @Inject
+  @Autowired
   public MavenSecurityFacet(
       final MavenFormatSecurityContributor securityContributor,
       @Qualifier(Maven2Format.NAME) final VariableResolverAdapter variableResolverAdapter,

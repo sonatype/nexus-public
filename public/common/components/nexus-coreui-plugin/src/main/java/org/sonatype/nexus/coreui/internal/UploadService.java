@@ -15,8 +15,7 @@ package org.sonatype.nexus.coreui.internal;
 import java.io.IOException;
 import java.util.Collection;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.7
  */
 @Component
-@Singleton
 public class UploadService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -52,7 +50,7 @@ public class UploadService
 
   private static final String HELM_FORMAT = "helm";
 
-  @Inject
+  @Autowired
   public UploadService(
       final RepositoryManager repositoryManager,
       final UploadManager uploadManager,

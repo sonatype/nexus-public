@@ -49,9 +49,8 @@ import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.AlwaysMatcher;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -65,103 +64,102 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(AptProxyRecipe.NAME)
-@Singleton
 public class AptProxyRecipe
     extends RecipeSupport
 {
   public static final String NAME = "apt-proxy";
 
-  @Inject
+  @Autowired
   Provider<AptSecurityFacet> securityFacet;
 
-  @Inject
+  @Autowired
   Provider<ConfigurableViewFacet> viewFacet;
 
-  @Inject
+  @Autowired
   Provider<HttpClientFacet> httpClientFacet;
 
-  @Inject
+  @Autowired
   Provider<NegativeCacheFacet> negativeCacheFacet;
 
-  @Inject
+  @Autowired
   Provider<AptProxyFacet> proxyFacet;
 
-  @Inject
+  @Autowired
   Provider<AptProxySnapshotFacet> proxySnapshotFacet;
 
-  @Inject
+  @Autowired
   Provider<PurgeUnusedFacet> purgeUnusedFacet;
 
   @Qualifier(AptFormat.NAME)
-  @Inject
+  @Autowired
   Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet;
 
-  @Inject
+  @Autowired
   Provider<AptContentFacet> aptContentFacet;
 
-  @Inject
+  @Autowired
   Provider<SearchFacet> searchFacet;
 
-  @Inject
+  @Autowired
   Provider<BrowseFacet> browseFacet;
 
   @Qualifier(AptFormat.NAME)
-  @Inject
+  @Autowired
   Provider<AptKeyValueFacet> keyValueFacet;
 
   @Qualifier(AptFormat.NAME + "-proxy")
-  @Inject
+  @Autowired
   Provider<AptProxyMetadataFacet> proxyMetadataFacet;
 
-  @Inject
+  @Autowired
   Provider<AptSigningFacet> signingFacet;
 
-  @Inject
+  @Autowired
   Provider<AptMetadataRebuildSchedulerFacet> aptMetadataRebuildSchedulerFacet;
 
-  @Inject
+  @Autowired
   ExceptionHandler exceptionHandler;
 
-  @Inject
+  @Autowired
   TimingHandler timingHandler;
 
-  @Inject
+  @Autowired
   SecurityHandler securityHandler;
 
-  @Inject
+  @Autowired
   NegativeCacheHandler negativeCacheHandler;
 
-  @Inject
+  @Autowired
   PartialFetchHandler partialFetchHandler;
 
-  @Inject
+  @Autowired
   ProxyHandler proxyHandler;
 
-  @Inject
+  @Autowired
   ConditionalRequestHandler conditionalRequestHandler;
 
-  @Inject
+  @Autowired
   ContentHeadersHandler contentHeadersHandler;
 
-  @Inject
+  @Autowired
   AptSnapshotHandler snapshotHandler;
 
-  @Inject
+  @Autowired
   AptDistributionValidationHandler distributionValidationHandler;
 
-  @Inject
+  @Autowired
   AptProxyMetadataHandler proxyMetadataHandler;
 
-  @Inject
+  @Autowired
   LastDownloadedHandler lastDownloadedHandler;
 
-  @Inject
+  @Autowired
   RoutingRuleHandler routingRuleHandler;
 
-  @Inject
+  @Autowired
   HandlerContributor handlerContributor;
 
-  @Inject
+  @Autowired
   public AptProxyRecipe(@Qualifier(ProxyType.NAME) final Type type, @Qualifier(AptFormat.NAME) final Format format) {
     super(type, format);
   }

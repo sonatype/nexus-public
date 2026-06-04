@@ -43,7 +43,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
@@ -73,7 +73,7 @@ public class UserApiResource
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public UserApiResource(
       final SecuritySystem securitySystem)
   {

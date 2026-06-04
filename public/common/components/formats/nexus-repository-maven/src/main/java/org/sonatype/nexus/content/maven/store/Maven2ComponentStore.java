@@ -21,7 +21,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE;
@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENA
 public class Maven2ComponentStore
     extends ComponentStore<Maven2ComponentDAO>
 {
-  @Inject
+  @Autowired
   public Maven2ComponentStore(
       final DataSessionSupplier sessionSupplier,
       @Value(DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean clustered,

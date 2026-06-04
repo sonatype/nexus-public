@@ -12,8 +12,7 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.net.ssl.SSLContext;
 
 import org.sonatype.nexus.httpclient.SSLContextSelector;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class HttpContextAttributeSSLContextSelector
     implements SSLContextSelector
 {
@@ -42,7 +40,7 @@ public class HttpContextAttributeSSLContextSelector
 
   private final TrustStore trustStore;
 
-  @Inject
+  @Autowired
   public HttpContextAttributeSSLContextSelector(@Lazy final TrustStore trustStore) {
     this.trustStore = checkNotNull(trustStore);
   }

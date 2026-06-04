@@ -15,8 +15,6 @@ package org.sonatype.nexus.blobstore.internal.metrics;
 import java.sql.Connection;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.stereotype.Component;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
  * Original functionality was moved to the repeatable S3BlobStoreMetricsMigrationStep.
  */
 @Component
-@Singleton
 public class S3BlobStoreMetricsMigrationStep_2_20
     implements DatabaseMigrationStep
 {

@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -54,7 +53,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLE
  * REST API for querying audit events across all domains.
  */
 @Component
-@Singleton
 @ConditionalOnProperty(name = PREVIEW_UI_AUDIT_ENABLED, havingValue = "true")
 @Path("/internal/ui/audit-log")
 @Produces(APPLICATION_JSON)
@@ -111,7 +109,7 @@ public class AuditLogResource
       "malware.removal",
       "firewall.quarantine");
 
-  @Inject
+  @Autowired
   public AuditLogResource(final AuditEventStore auditEventStore) {
     this.auditEventStore = auditEventStore;
   }

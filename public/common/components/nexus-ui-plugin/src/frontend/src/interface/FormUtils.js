@@ -227,20 +227,12 @@ export default class FormUtils {
         clearDeleteError: assign({
           deleteError: null,
         }),
-        logSaveError: (_, event) => {
-          if (event.data?.message) {
-            console.log(`Save Error: ${event.data?.message}`);
-          }
-        },
+        logSaveError: () => {},
         logSaveSuccess: () => ExtJS.showSuccessMessage(UIStrings.SAVE_SUCCESS),
         logDeleteSuccess: () => {
           // Intentionally left blank for users to override
         },
-        logDeleteError: (_, event) => {
-          if (event.data?.message) {
-            console.log(`Delete Error: ${event.data?.message}`);
-          }
-        },
+        logDeleteError: () => {},
         onDeleteError: assign({
           deleteError: (_, event) => {
             const message = event.data?.message || event.data?.response?.data?.message;
@@ -254,10 +246,7 @@ export default class FormUtils {
             return message ? `${message}` : null;
           }
         }),
-        logLoadError: (_, event) => {
-          if (event.data?.message) {
-            console.log(`Load Error: ${event.data?.message}`);
-          }
+        logLoadError: () => {
           ExtJS.showErrorMessage(UIStrings.ERROR.LOAD_ERROR);
         },
         clearLoadError: assign({
@@ -643,3 +632,7 @@ export default class FormUtils {
     return any(it => state.matches(it), states);
   }
 }
+
+// Named re-export so consumers using `import { FormUtils } from '...'` get the
+// same class as the default export under Babel CJS interop.
+export { FormUtils };

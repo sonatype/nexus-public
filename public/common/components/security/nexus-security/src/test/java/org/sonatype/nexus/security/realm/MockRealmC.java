@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.security.realm;
 
-import jakarta.inject.Singleton;
-
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -27,7 +25,6 @@ import org.sonatype.nexus.common.Description;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-@Singleton
 @Component
 @Qualifier("MockRealmC")
 @Description("MockRealmC")

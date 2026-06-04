@@ -24,8 +24,7 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirector
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.common.wonderland.DownloadService;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -41,7 +40,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier("default")
-@Singleton
 public class DownloadServiceImpl
     implements DownloadService
 {
@@ -59,7 +57,7 @@ public class DownloadServiceImpl
 
   private final AuthTicketService authTickets;
 
-  @Inject
+  @Autowired
   public DownloadServiceImpl(
       final ApplicationDirectories applicationDirectories,
       final AuthTicketService authTicketService)

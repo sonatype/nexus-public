@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.collect.AttributeKey;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -34,7 +32,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.0
  */
 @Component
-@Singleton
 public class TimingHandler
     implements Handler
 {
@@ -44,7 +41,7 @@ public class TimingHandler
 
   private final Handler meteringHandler;
 
-  @Inject
+  @Autowired
   public TimingHandler(@Qualifier("nexus.analytics.meteringHandler") @Nullable final Handler meteringHandler) {
     this.meteringHandler = meteringHandler;
   }

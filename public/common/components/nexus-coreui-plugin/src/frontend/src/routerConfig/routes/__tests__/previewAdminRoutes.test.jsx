@@ -12,10 +12,8 @@
  */
 
 import { UIView } from '@uirouter/react';
-import { Permissions } from '@sonatype/nexus-ui-plugin';
+import { Permissions, PREVIEW_FEATURE_FLAGS, SETTINGS_SECTIONS } from '@sonatype/nexus-ui-plugin';
 import { previewAdminRoutes } from '../previewAdminRoutes';
-import { SETTINGS_SECTIONS } from '../../../components/super/settings/settingsConfig';
-import { PREVIEW_FEATURE_FLAGS } from '../../../config/previewFeatureFlags';
 
 describe('previewAdminRoutes', () => {
   it('defines preview.admin as the abstract admin route container', () => {
@@ -60,12 +58,22 @@ describe('previewAdminRoutes', () => {
     expect(ungatedCards.length).toBeGreaterThan(0);
 
     ungatedCards.forEach((card) => {
-      // Build route name prefix from the card path (handles both single-segment
-      // paths like 'iq' and multi-segment paths like 'repository/repositories')
-      const routeNamePrefix = `preview.admin.${card.path.replace(/\//g, '.')}`;
-      const leafRoutes = previewAdminRoutes.filter(
+      // Build route name prefix from the card path — strip hyphens because
+      // internal route names use concatenated segments (e.g. 'cleanuppolicies')
+      // while URL slugs use hyphens (e.g. '/cleanup-policies').
+      // Also try singular form for paths ending in 's' (e.g. user-tokens → usertoken).
+      const normalized = card.path.replace(/\//g, '.').replace(/-/g, '');
+      const routeNamePrefix = `preview.admin.${normalized}`;
+      let leafRoutes = previewAdminRoutes.filter(
         (route) => route.name.startsWith(routeNamePrefix) && route.component && !route.abstract,
       );
+
+      if (leafRoutes.length === 0 && normalized.endsWith('s')) {
+        const singular = `preview.admin.${normalized.slice(0, -1)}`;
+        leafRoutes = previewAdminRoutes.filter(
+          (route) => route.name.startsWith(singular) && route.component && !route.abstract,
+        );
+      }
 
       expect(leafRoutes.length).toBeGreaterThan(0);
       leafRoutes.forEach((route) => {

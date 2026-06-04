@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.common.cooperation2.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Selector;
 
@@ -26,13 +24,12 @@ import org.springframework.stereotype.Component;
  */
 @Primary
 @Component
-@Singleton
 public class DefaultCooperation2Selector
     implements Cooperation2Selector
 {
   private Cooperation2Factory cooperation2Factory;
 
-  @Inject
+  @Autowired
   public DefaultCooperation2Selector(final Cooperation2Factory cooperation2Factory) {
     this.cooperation2Factory = cooperation2Factory;
   }

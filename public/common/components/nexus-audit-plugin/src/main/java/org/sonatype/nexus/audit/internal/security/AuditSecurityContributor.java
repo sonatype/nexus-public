@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.audit.internal.security;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.config.SecurityContributorSupport;
@@ -26,7 +24,6 @@ import static org.apache.commons.lang3.StringUtils.capitalize;
  * Audit log security configuration.
  */
 @Component
-@Singleton
 public class AuditSecurityContributor
     extends SecurityContributorSupport
     implements SecurityContributor

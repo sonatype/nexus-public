@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.authc;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
@@ -48,7 +48,7 @@ public class NexusAuthenticationFilter
 
   private List<AuthenticationTokenFactory> factories = Lists.newArrayList();
 
-  @Inject
+  @Autowired
   public void install(@Nullable final List<AuthenticationTokenFactory> factories) {
     this.factories = factories == null ? List.of() : factories;
   }

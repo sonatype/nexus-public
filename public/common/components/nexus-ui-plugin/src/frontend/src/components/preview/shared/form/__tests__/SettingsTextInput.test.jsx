@@ -16,13 +16,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SettingsTextInput } from '../SettingsTextInput';
 
-// Mock Radix UI components
-jest.mock('@radix-ui/themes', () => ({
-  Box: ({ children, className }) => <div className={className}>{children}</div>,
-  Text: ({ children, className, as: Tag = 'span', id }) => <Tag className={className} id={id}>{children}</Tag>,
-}));
-
-// Mock lucide-react
+// @radix-ui/themes is in transformIgnorePatterns — no mock needed
 jest.mock('lucide-react', () => ({
   AlertCircle: () => <span data-testid="alert-icon">!</span>,
 }));
@@ -205,6 +199,19 @@ describe('SettingsTextInput', () => {
       'aria-describedby', 
       'settings-error-test-input'
     );
+  });
+
+  it('required asterisk has aria-hidden', () => {
+    const { container } = render(<SettingsTextInput {...defaultProps} label="Name" required />);
+    const asterisk = container.querySelector('.settings-text-input__required');
+    expect(asterisk).toHaveAttribute('aria-hidden', 'true');
+    expect(asterisk).toHaveTextContent('*');
+  });
+
+  it('accepts password type', () => {
+    render(<SettingsTextInput {...defaultProps} type="password" />);
+    const input = document.querySelector('input[type="password"]');
+    expect(input).toBeInTheDocument();
   });
 });
 

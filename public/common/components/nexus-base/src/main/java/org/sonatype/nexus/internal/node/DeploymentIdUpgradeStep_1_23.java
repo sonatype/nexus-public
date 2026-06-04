@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.node;
 
 import java.sql.Connection;
 import java.util.Optional;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.node.datastore.NodeIdStore;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
@@ -22,12 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DeploymentIdUpgradeStep_1_23
     implements DatabaseMigrationStep
 {
@@ -37,7 +34,7 @@ public class DeploymentIdUpgradeStep_1_23
 
   private final DeploymentIdStore deploymentIdStore;
 
-  @Inject
+  @Autowired
   public DeploymentIdUpgradeStep_1_23(final DeploymentIdStore deploymentIdStore, final NodeIdStore nodeIdStore) {
     this.nodeIdStore = checkNotNull(nodeIdStore);
     this.deploymentIdStore = checkNotNull(deploymentIdStore);

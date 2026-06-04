@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
@@ -43,7 +42,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = SERVICES)
-@Singleton
 public class ExtDirectExceptionHandler
 {
   private static final Logger log = LoggerFactory.getLogger(ExtDirectExceptionHandler.class);

@@ -15,8 +15,7 @@ package org.sonatype.nexus.coreui;
 import java.io.IOException;
 import java.util.Arrays;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -46,7 +45,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 @Path(UploadResource.RESOURCE_PATH)
 public class UploadResource
     implements Resource
@@ -59,7 +57,7 @@ public class UploadResource
 
   private ObjectMapper objectMapper;
 
-  @Inject
+  @Autowired
   public UploadResource(
       final UploadService uploadService,
       final ObjectMapper objectMapper)

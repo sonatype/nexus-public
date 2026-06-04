@@ -16,7 +16,6 @@ import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContribution;
 import org.sonatype.nexus.repository.search.sql.SqlSearchQueryContributionSupport;
 import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("default")
-@Singleton
 public class DefaultSqlSearchQueryContribution
     extends SqlSearchQueryContributionSupport
 {

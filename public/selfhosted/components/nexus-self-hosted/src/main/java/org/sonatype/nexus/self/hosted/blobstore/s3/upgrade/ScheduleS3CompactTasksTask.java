@@ -32,7 +32,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -57,7 +57,7 @@ public class ScheduleS3CompactTasksTask
 
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public ScheduleS3CompactTasksTask(
       final BlobStoreManager blobstoreManager,
       final TaskScheduler taskScheduler)

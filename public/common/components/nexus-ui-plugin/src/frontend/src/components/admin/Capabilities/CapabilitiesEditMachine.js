@@ -98,12 +98,10 @@ const CapabilitiesEditMachine = FormUtils.buildFormMachine({
         setDeleteError: assign({
           deleteError: (_, event) => event.data?.message || 'An error occurred deleting the capability.',
         }),
-        // override to avoid toast showing
-        logLoadError: (_, event) => {
-          if (event.data?.message) {
-            console.log(`Load Error: ${event.data?.message}`);
-          }
-        },
+        // Override base logLoadError: this machine surfaces load errors via the
+        // loadError state rendered inline in CapabilitiesEdit, so the generic
+        // toast notification would double-report the same failure.
+        logLoadError: () => {},
         validate: assign({
           validationErrors: ({ data, capabilityType, isTouched }) => {
             const fullErrors = {};

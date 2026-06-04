@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.file;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class FileBlobStoreApiResourceBeta
@@ -40,7 +38,7 @@ public class FileBlobStoreApiResourceBeta
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/file";
 
-  @Inject
+  @Autowired
   public FileBlobStoreApiResourceBeta(final BlobStoreManager blobStoreManager) {
     super(blobStoreManager);
   }

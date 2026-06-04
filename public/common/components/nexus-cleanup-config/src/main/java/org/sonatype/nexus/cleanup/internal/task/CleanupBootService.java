@@ -17,9 +17,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -40,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.14
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = TASKS)
 public class CleanupBootService
     extends LifecycleSupport
@@ -53,7 +50,7 @@ public class CleanupBootService
 
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public CleanupBootService(final TaskScheduler taskScheduler) {
     this.taskScheduler = checkNotNull(taskScheduler);
   }

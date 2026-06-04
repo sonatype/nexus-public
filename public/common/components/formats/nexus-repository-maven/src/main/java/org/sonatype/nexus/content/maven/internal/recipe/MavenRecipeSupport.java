@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet;
@@ -150,122 +150,122 @@ public abstract class MavenRecipeSupport
         .handler(conditionalRequestHandler);
   }
 
-  @Inject
+  @Autowired
   public void setArchetypeCatalogHandler(final MavenArchetypeCatalogHandler archetypeCatalogHandler) {
     this.archetypeCatalogHandler = checkNotNull(archetypeCatalogHandler);
   }
 
-  @Inject
+  @Autowired
   public void setBrowseFacet(final Provider<BrowseFacet> browseFacet) {
     this.browseFacet = checkNotNull(browseFacet);
   }
 
-  @Inject
+  @Autowired
   public void setConditionalRequestHandler(final ConditionalRequestHandler conditionalRequestHandler) {
     this.conditionalRequestHandler = checkNotNull(conditionalRequestHandler);
   }
 
-  @Inject
+  @Autowired
   public void setContentDispositionHandler(final ContentDispositionHandler contentDispositionHandler) {
     this.contentDispositionHandler = checkNotNull(contentDispositionHandler);
   }
 
-  @Inject
+  @Autowired
   public void setContentHeadersHandler(final ContentHeadersHandler contentHeadersHandler) {
     this.contentHeadersHandler = checkNotNull(contentHeadersHandler);
   }
 
-  @Inject
+  @Autowired
   public void setExceptionHandler(final ExceptionHandler exceptionHandler) {
     this.exceptionHandler = checkNotNull(exceptionHandler);
   }
 
-  @Inject
+  @Autowired
   public void setHandlerContributor(final HandlerContributor handlerContributor) {
     this.handlerContributor = checkNotNull(handlerContributor);
   }
 
-  @Inject
+  @Autowired
   public void setLastDownloadedHandler(final LastDownloadedHandler lastDownloadedHandler) {
     this.lastDownloadedHandler = checkNotNull(lastDownloadedHandler);
   }
 
-  @Inject
+  @Autowired
   public void setMavenArchetypeCatalogFacet(final Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet) {
     this.mavenArchetypeCatalogFacet = checkNotNull(mavenArchetypeCatalogFacet);
   }
 
-  @Inject
+  @Autowired
   public void setMavenContentFacet(final Provider<MavenContentFacet> mavenContentFacet) {
     this.mavenContentFacet = checkNotNull(mavenContentFacet);
   }
 
-  @Inject
+  @Autowired
   public void setMavenContentHandler(final MavenContentHandler mavenContentHandler) {
     this.mavenContentHandler = checkNotNull(mavenContentHandler);
   }
 
-  @Inject
+  @Autowired
   public void setMavenMaintenanceFacet(final Provider<MavenMaintenanceFacet> mavenMaintenanceFacet) {
     this.mavenMaintenanceFacet = checkNotNull(mavenMaintenanceFacet);
   }
 
-  @Inject
+  @Autowired
   public void setMavenMetadataRebuildFacet(final Provider<MavenMetadataRebuildFacet> mavenMetadataRebuildFacet) {
     this.mavenMetadataRebuildFacet = checkNotNull(mavenMetadataRebuildFacet);
   }
 
-  @Inject
+  @Autowired
   public void setMavenMetadataRebuildHandler(final MavenMetadataRebuildHandler mavenMetadataRebuildHandler) {
     this.mavenMetadataRebuildHandler = checkNotNull(mavenMetadataRebuildHandler);
   }
 
-  @Inject
+  @Autowired
   public void setMavenPathParser(final MavenPathParser mavenPathParser) {
     this.mavenPathParser = checkNotNull(mavenPathParser);
   }
 
-  @Inject
+  @Autowired
   public void setPartialFetchHandler(final PartialFetchHandler partialFetchHandler) {
     this.partialFetchHandler = checkNotNull(partialFetchHandler);
   }
 
-  @Inject
+  @Autowired
   public void setRemoveSnapshotsFacet(final Provider<RemoveSnapshotsFacet> removeSnapshotsFacet) {
     this.removeSnapshotsFacet = checkNotNull(removeSnapshotsFacet);
   }
 
-  @Inject
+  @Autowired
   public void setRoutingHandler(final RoutingRuleHandler routingHandler) {
     this.routingHandler = checkNotNull(routingHandler);
   }
 
-  @Inject
+  @Autowired
   public void setSearchFacet(final Provider<SearchFacet> searchFacet) {
     this.searchFacet = checkNotNull(searchFacet);
   }
 
-  @Inject
+  @Autowired
   public void setSecurityFacet(final Provider<MavenSecurityFacet> securityFacet) {
     this.securityFacet = checkNotNull(securityFacet);
   }
 
-  @Inject
+  @Autowired
   public void setSecurityHandler(final SecurityHandler securityHandler) {
     this.securityHandler = checkNotNull(securityHandler);
   }
 
-  @Inject
+  @Autowired
   public void setTimingHandler(final TimingHandler timingHandler) {
     this.timingHandler = checkNotNull(timingHandler);
   }
 
-  @Inject
+  @Autowired
   public void setVersionPolicyHandler(final VersionPolicyHandler versionPolicyHandler) {
     this.versionPolicyHandler = checkNotNull(versionPolicyHandler);
   }
 
-  @Inject
+  @Autowired
   public void setViewFacet(final Provider<ConfigurableViewFacet> viewFacet) {
     this.viewFacet = checkNotNull(viewFacet);
   }

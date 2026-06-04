@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.internal;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -30,14 +31,22 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -75,10 +84,29 @@ public class LastDownloadedAttributePropertyFileHandlerTest
 
   private OffsetDateTime assetLastDownloaded = OffsetDateTime.now();
 
+  private Logger handlerLogger;
+
+  private ListAppender<ILoggingEvent> logAppender;
+
+  private Level originalLogLevel;
+
   @Before
   public void setup() {
     configureHappyPath();
     underTest = new LastDownloadedAttributePropertyFileHandler(blobStoreManager);
+
+    handlerLogger = (Logger) LoggerFactory.getLogger(LastDownloadedAttributePropertyFileHandler.class);
+    originalLogLevel = handlerLogger.getLevel();
+    logAppender = new ListAppender<>();
+    logAppender.start();
+    handlerLogger.addAppender(logAppender);
+    handlerLogger.setLevel(Level.DEBUG);
+  }
+
+  @After
+  public void tearDown() {
+    handlerLogger.detachAppender(logAppender);
+    handlerLogger.setLevel(originalLogLevel);
   }
 
   @Test
@@ -111,6 +139,41 @@ public class LastDownloadedAttributePropertyFileHandlerTest
     verify(blobStore, never()).setBlobAttributes(blobId, blobAttributes);
 
     assertNull(blobMetrics.getLastDownloaded());
+  }
+
+  @Test
+  public void shouldLogDebugNotWarnWhenBlobAttributesNullDuringConcurrentAccess() {
+    when(asset.lastDownloaded()).thenReturn(Optional.of(assetLastDownloaded));
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(null);
+
+    underTest.writeLastDownloadedAttribute(asset);
+
+    verify(blobStore, never()).setBlobAttributes(blobId, blobAttributes);
+
+    List<ILoggingEvent> logs = logAppender.list;
+    boolean hasDebugLog = logs.stream()
+        .anyMatch(e -> e.getLevel() == Level.DEBUG
+            && e.getFormattedMessage().contains("Could not get blob attributes"));
+    boolean hasWarnLog = logs.stream()
+        .anyMatch(e -> e.getLevel() == Level.WARN
+            && e.getFormattedMessage().contains("Could not get blob attributes"));
+
+    assertTrue("Expected DEBUG log when blob attributes are null", hasDebugLog);
+    assertFalse("Should NOT log at WARN level when blob attributes are null during concurrent access", hasWarnLog);
+  }
+
+  @Test
+  public void shouldLogWarnWithBlobStoreNameWhenBlobStoreNotLoaded() {
+    when(blobStoreManager.get("unknown-store")).thenReturn(null);
+
+    underTest.readLastDownloadedAttribute("unknown-store", blob);
+
+    List<ILoggingEvent> logs = logAppender.list;
+    boolean hasWarnWithName = logs.stream()
+        .anyMatch(e -> e.getLevel() == Level.WARN
+            && e.getFormattedMessage().contains("unknown-store"));
+
+    assertTrue("Expected WARN log containing the blob store name", hasWarnWithName);
   }
 
   private void configureHappyPath() {

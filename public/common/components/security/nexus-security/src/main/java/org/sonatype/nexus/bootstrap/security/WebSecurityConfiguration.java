@@ -16,7 +16,7 @@ import java.util.Collection;
 
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authc.FirstSuccessfulModularRealmAuthenticator;

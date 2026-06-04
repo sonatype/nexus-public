@@ -72,7 +72,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -244,7 +244,7 @@ public abstract class ProxyFacetSupport
    * @param threadsPerKey limits the threads waiting under each key
    * @since 3.4
    */
-  @Inject
+  @Autowired
   protected void configureCooperation(
       final Cooperation2Factory cooperationFactory,
       @Value("${nexus.proxy.cooperation.enabled:true}") final boolean cooperationEnabled,
@@ -259,35 +259,35 @@ public abstract class ProxyFacetSupport
         .threadsPerKey(threadsPerKey);
   }
 
-  @Inject
+  @Autowired
   protected void configureUrlEscapeRules(
       @Nullable @Value("${nexus.proxy.url.escape.rules:#{null}}") final String urlEscapeRulesConfig)
   {
     this.escapeHelper = new EscapeHelper(urlEscapeRulesConfig);
   }
 
-  @Inject
+  @Autowired
   protected void configureUrlEncodingMode(
       @Value("${nexus.proxy.urlEncodingMode.enabled:false}") final boolean enabled)
   {
     this.urlEncodingModeEnabled = enabled;
   }
 
-  @Inject
+  @Autowired
   @Nullable
   private ThrottlerInterceptor throttlerInterceptor;
 
-  @Inject
+  @Autowired
   @Nullable
   private GracePeriodInterceptor gracePeriodInterceptor;
 
-  @Inject
+  @Autowired
   @Nullable
   private FirewallHeaderProvider firewallHeaderProvider;
 
   private AntiSsrfService antiSsrfService;
 
-  @Inject
+  @Autowired
   protected void configureAntiSsrfService(final AntiSsrfService antiSsrfService) {
     this.antiSsrfService = checkNotNull(antiSsrfService);
   }

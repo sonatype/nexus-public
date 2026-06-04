@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.httpclient;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 public interface HttpDefaultsCustomizer
     extends HttpClientPlan.Customizer

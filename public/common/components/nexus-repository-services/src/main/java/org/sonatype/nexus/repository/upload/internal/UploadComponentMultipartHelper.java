@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -53,7 +52,6 @@ import org.springframework.stereotype.Component;
  * @since 3.16
  */
 @Component
-@Singleton
 public class UploadComponentMultipartHelper
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -62,7 +60,7 @@ public class UploadComponentMultipartHelper
 
   private final TempBlobFactory tempBlobFactory;
 
-  @Inject
+  @Autowired
   public UploadComponentMultipartHelper(final AntiCsrfHelper antiCsrfHelper, final TempBlobFactory tempBlobFactory) {
     this.antiCsrfHelper = antiCsrfHelper;
     this.tempBlobFactory = checkNotNull(tempBlobFactory);

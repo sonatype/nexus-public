@@ -18,7 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.StringJoiner;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
@@ -30,12 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class BrowseNodeMigrationStep_2_3
     implements DatabaseMigrationStep
 {
@@ -51,7 +48,7 @@ public class BrowseNodeMigrationStep_2_3
       "FROM repository R, " + CONTENT_REPOSITORY_TABLE + " C " +
       "WHERE R.id = C.config_repository_id";
 
-  @Inject
+  @Autowired
   public BrowseNodeMigrationStep_2_3(
       final TaskScheduler taskScheduler,
       final UpgradeTaskScheduler upgradeTaskScheduler)

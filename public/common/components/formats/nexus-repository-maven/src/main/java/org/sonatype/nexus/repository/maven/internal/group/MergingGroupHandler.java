@@ -20,9 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.IOCall;
@@ -54,7 +52,6 @@ import org.springframework.stereotype.Component;
  *
  * @since 3.0
  */
-@Singleton
 @Component
 public class MergingGroupHandler
     extends GroupHandler
@@ -64,7 +61,7 @@ public class MergingGroupHandler
 
   private Cooperation2 metadataCooperation;
 
-  @Inject
+  @Autowired
   public MergingGroupHandler(
       @Value("${nexus.maven.group.cooperation.enabled:true}") final boolean cooperationEnabled,
       @Value("${nexus.maven.group.cooperation.majorTimeout:0s}") final Duration majorTimeout,

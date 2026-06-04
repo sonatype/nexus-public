@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
-import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
@@ -22,7 +21,9 @@ import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.sonatype.nexus.repository.Repository;
 
@@ -36,8 +37,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link RawHostedRepositoryApiRequestToConfigurationConverter}.
  */
+@ExtendWith(MockitoExtension.class)
 class RawHostedRepositoryApiRequestToConfigurationConverterTest
-    extends Test5Support
 {
   @Mock
   private ConfigurationStore configurationStore;

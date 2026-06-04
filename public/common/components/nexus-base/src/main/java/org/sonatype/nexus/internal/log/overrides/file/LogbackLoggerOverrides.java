@@ -18,9 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.internal.log.overrides.LogbackLoggerOverridesSupport;
@@ -39,14 +37,13 @@ import org.springframework.stereotype.Component;
  * @since 2.7
  */
 @Component
-@Singleton
 public class LogbackLoggerOverrides
     extends LogbackLoggerOverridesSupport
     implements LoggerOverrides
 {
   private final Map<String, LoggerLevel> loggerLevels = new HashMap<>();
 
-  @Inject
+  @Autowired
   public LogbackLoggerOverrides(final ApplicationDirectories applicationDirectories) {
     super(applicationDirectories);
   }

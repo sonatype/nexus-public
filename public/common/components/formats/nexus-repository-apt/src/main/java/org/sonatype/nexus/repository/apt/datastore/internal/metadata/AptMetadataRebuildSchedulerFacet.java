@@ -46,7 +46,7 @@ import org.sonatype.nexus.scheduling.schedule.Once;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -91,7 +91,7 @@ public class AptMetadataRebuildSchedulerFacet
    * @param minorTimeout cooperation minor timeout
    * @param threadsPerKey cooperation threads per key
    */
-  @Inject
+  @Autowired
   protected AptMetadataRebuildSchedulerFacet(
       final TaskScheduler taskScheduler,
       final Cooperation2Factory cooperationFactory,

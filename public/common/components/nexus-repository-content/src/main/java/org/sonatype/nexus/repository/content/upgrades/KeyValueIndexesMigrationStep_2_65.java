@@ -15,12 +15,10 @@ package org.sonatype.nexus.repository.content.upgrades;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.Format;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,11 +30,10 @@ import org.springframework.stereotype.Component;
  * @since 3.87
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class KeyValueIndexesMigrationStep_2_65
     extends KeyValueIndexesMigrationStepSupport
 {
-  @Inject
+  @Autowired
   public KeyValueIndexesMigrationStep_2_65(final List<Format> formats) {
     super(formats.stream()
         .map(Format::getValue)

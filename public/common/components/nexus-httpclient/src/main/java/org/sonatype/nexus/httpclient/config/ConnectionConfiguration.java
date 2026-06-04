@@ -14,7 +14,7 @@ package org.sonatype.nexus.httpclient.config;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 /**
  * Connection configuration.

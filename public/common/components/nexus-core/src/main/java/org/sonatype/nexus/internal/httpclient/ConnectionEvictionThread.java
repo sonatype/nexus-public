@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.httpclient;
 
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.conn.HttpClientConnectionManager;

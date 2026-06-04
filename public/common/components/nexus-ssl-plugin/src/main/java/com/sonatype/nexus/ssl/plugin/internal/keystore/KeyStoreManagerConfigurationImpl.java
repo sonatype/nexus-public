@@ -12,12 +12,11 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.app.FeatureFlags;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfigurationSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier(KeyStoreManagerImpl.NAME)
-@Singleton
 public class KeyStoreManagerConfigurationImpl
     extends KeyStoreManagerConfigurationSupport
 {
@@ -49,7 +47,7 @@ public class KeyStoreManagerConfigurationImpl
   // unobfuscate(new long[]{0xD39F439CFB22319FL, 0xE48AAB6E5D073A6BL, 0xA14EE96195DA105AL}).toCharArray(); /* =>
   // "Xw5JCuS5aDZ14oZG" */
 
-  @Inject
+  @Autowired
   public KeyStoreManagerConfigurationImpl(
       @Value(CPREFIX + ".keyStoreType:JKS}") final String keyStoreType,
       @Value(CPREFIX + ".keyAlgorithm:RSA}") final String keyAlgorithm,

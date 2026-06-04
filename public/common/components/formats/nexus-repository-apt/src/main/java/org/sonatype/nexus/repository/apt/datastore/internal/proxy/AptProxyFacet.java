@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.proxy.metadata.AptProxyMetadataFacet;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
@@ -152,28 +153,36 @@ public class AptProxyFacet
     HttpClient httpClient = httpClientFacet.getHttpClient();
     CacheController cacheController = cacheControllerHolder.getMetadataCacheController();
     CacheInfo cacheInfo = cacheController.current();
-    Content oldVersion = facet(AptContentFacet.class).get(spec.path).orElse(null);
+    Content oldVersion;
+    try {
+      oldVersion = facet(AptContentFacet.class).get(spec.path).orElse(null);
+    }
+    catch (MissingBlobException e) {
+      // Treat a missing blob as a cache miss so we fetch fresh from upstream
+      log.debug("Cached blob missing for {}, fetching fresh from upstream", spec.path);
+      oldVersion = null;
+    }
 
     String encodedPath = getEscapeHelper().uriSegments(spec.path);
     URI fetchUri = proxyFacet.getRemoteUrl().resolve(encodedPath);
     HttpGet getRequest = buildFetchRequest(oldVersion, fetchUri);
 
     HttpResponse response = httpClient.execute(getRequest);
-    StatusLine status = response.getStatusLine();
-
-    if (status.getStatusCode() == HttpStatus.SC_OK) {
-      HttpEntity entity = response.getEntity();
-      Content fetchedContent = new Content(new HttpEntityPayload(response, entity));
-      AttributesMap contentAttrs = fetchedContent.getAttributes();
-      contentAttrs.set(Content.CONTENT_LAST_MODIFIED, getDateHeader(response, HttpHeaders.LAST_MODIFIED));
-      contentAttrs.set(Content.CONTENT_ETAG, getQuotedStringHeader(response, HttpHeaders.ETAG));
-      contentAttrs.set(CacheInfo.class, cacheInfo);
-      Content storedContent =
-          facet(AptContentFacet.class).put(spec.path, fetchedContent).markAsCached(fetchedContent).download();
-      return Optional.of(new SnapshotItem(spec, storedContent));
-    }
-
     try {
+      StatusLine status = response.getStatusLine();
+
+      if (status.getStatusCode() == HttpStatus.SC_OK) {
+        HttpEntity entity = response.getEntity();
+        Content fetchedContent = new Content(new HttpEntityPayload(response, entity));
+        AttributesMap contentAttrs = fetchedContent.getAttributes();
+        contentAttrs.set(Content.CONTENT_LAST_MODIFIED, getDateHeader(response, HttpHeaders.LAST_MODIFIED));
+        contentAttrs.set(Content.CONTENT_ETAG, getQuotedStringHeader(response, HttpHeaders.ETAG));
+        contentAttrs.set(CacheInfo.class, cacheInfo);
+        Content storedContent =
+            facet(AptContentFacet.class).put(spec.path, fetchedContent).markAsCached(fetchedContent).download();
+        return Optional.of(new SnapshotItem(spec, storedContent));
+      }
+
       if (status.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
         checkState(oldVersion != null, "Received 304 without conditional GET (bad server?) from %s", fetchUri);
         doIndicateVerified(oldVersion, cacheInfo, spec.path);

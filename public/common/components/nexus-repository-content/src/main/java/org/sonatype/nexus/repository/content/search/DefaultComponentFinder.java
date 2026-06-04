@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.content.search;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -35,7 +33,6 @@ import static java.util.Optional.empty;
  * @since 3.26
  */
 @Component
-@Singleton
 @Qualifier("default")
 public class DefaultComponentFinder
     implements ComponentFinder

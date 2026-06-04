@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.config.internal.datastore;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.repository.MissingRepositoryException;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * Repository configuration subscriber on DB events like CREATE/UPDATE/DELETE.
  */
 @Component
-@Singleton
 public class ConfigurationSubscriber
     implements EventAware
 {
@@ -43,7 +40,7 @@ public class ConfigurationSubscriber
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public ConfigurationSubscriber(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }

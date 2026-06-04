@@ -15,16 +15,22 @@ package org.sonatype.nexus.coreui;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.RoutingRulePreviewXO;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
@@ -37,6 +43,8 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +64,9 @@ class RoutingRulesResourceTest
 
   @Mock
   RepositoryPermissionChecker repositoryPermissionChecker;
+
+  @Mock
+  RepositoryManager repositoryManager;
 
   private RoutingRule rule1 = routingRule("rule1");
 
@@ -167,6 +178,31 @@ class RoutingRulesResourceTest
     assertXO(xos.get(2), "rule3", 0);
   }
 
+  @Test
+  void testGetRoutingRulesPreview_AllHandlesMissingGroupRepositories() {
+    Repository proxyRepository = repository("repository1", new ProxyType());
+
+    when(repositoryManager.browse()).thenReturn(List.of(proxyRepository));
+    when(routingRuleStore.list()).thenReturn(List.of());
+
+    RoutingRulePreviewXO preview = underTest.getRoutingRulesPreview("*", "all");
+
+    assertThat(preview.getChildren().size(), is(1));
+    assertThat(preview.getChildren().get(0).getRepository(), is("repository1"));
+  }
+
+  @Test
+  void testGetRoutingRulesPreview_GroupsHandlesMissingGroupRepositories() {
+    Repository proxyRepository = repository("repository1", new ProxyType());
+
+    when(repositoryManager.browse()).thenReturn(List.of(proxyRepository));
+    when(routingRuleStore.list()).thenReturn(List.of());
+
+    RoutingRulePreviewXO preview = underTest.getRoutingRulesPreview("*", "groups");
+
+    assertThat(preview.getChildren(), empty());
+  }
+
   private static RoutingRule routingRule(final String name) {
     RoutingRuleData routingRule = new RoutingRuleData().name(name).mode(RoutingMode.ALLOW).matchers(List.of(".*"));
     EntityId entityId = new DetachedEntityId(name);
@@ -177,6 +213,19 @@ class RoutingRulesResourceTest
   private static Repository repository(final String name) {
     Repository repository = mock(Repository.class);
     when(repository.getName()).thenReturn(name);
+    return repository;
+  }
+
+  private static Repository repository(final String name, final org.sonatype.nexus.repository.Type type) {
+    Repository repository = mock(Repository.class);
+    lenient().when(repository.getName()).thenReturn(name);
+    Configuration configuration = mock(Configuration.class);
+    lenient().when(repository.getType()).thenReturn(type);
+    lenient().when(repository.getFormat()).thenReturn(new Format("maven2")
+    {
+    });
+    lenient().when(repository.getConfiguration()).thenReturn(configuration);
+    lenient().when(repository.optionalFacet(any())).thenReturn(Optional.empty());
     return repository;
   }
 

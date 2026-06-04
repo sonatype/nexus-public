@@ -13,9 +13,7 @@
 package org.sonatype.nexus.crypto.secrets;
 
 import java.util.Base64;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory;
 import org.sonatype.nexus.crypto.internal.PbeCipherFactory.PbeCipher;
 import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeyList.SecretEncryptionKey;
@@ -27,7 +25,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class EncryptDecryptService
     implements EncryptDecrypt<String, String, String>
 {
@@ -37,7 +34,7 @@ public class EncryptDecryptService
 
   private String secret = "changeme";
 
-  @Inject
+  @Autowired
   public EncryptDecryptService(final PbeCipherFactory pbeCipherFactory) {
     this.pbeCipherFactory = checkNotNull(pbeCipherFactory);
   }

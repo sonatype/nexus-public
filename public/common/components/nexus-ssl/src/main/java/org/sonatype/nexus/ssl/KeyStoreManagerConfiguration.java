@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.ssl;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 /**
  * {@link KeyStoreManager} configuration.

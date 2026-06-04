@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.time.Clock;
@@ -131,7 +131,7 @@ public class AptProxyMetadataFacet
       .thenComparing(PackageEntry::architecture)
       .thenComparing(PackageEntry::filename);
 
-  @Inject
+  @Autowired
   public AptProxyMetadataFacet(
       final ObjectMapper mapper,
       final Clock clock,

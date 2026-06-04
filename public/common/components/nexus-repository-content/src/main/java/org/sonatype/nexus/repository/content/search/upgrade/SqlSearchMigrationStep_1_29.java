@@ -15,15 +15,12 @@ package org.sonatype.nexus.repository.content.search.upgrade;
 import java.sql.Connection;
 import java.util.Optional;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * For SQL Search, change the column created to last_updated and trigger a re-index
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SqlSearchMigrationStep_1_29
     extends SearchIndexUpgrade
 {

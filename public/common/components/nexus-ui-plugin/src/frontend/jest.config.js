@@ -112,8 +112,11 @@ module.exports = {
 
   // A map from regular expressions to module names that allow to stub out resources with a single module
   moduleNameMapper: {
+    // Resolve @sonatype/nexus-ui-plugin to source to avoid broken relative paths in target/dist
+    '^@sonatype/nexus-ui-plugin$': '<rootDir>/src/index.js',
     '\\.(scss|css)$': '<rootDir>/__jest__/styleMock.js',
-    '\\.(png|svg)$': '<rootDir>/__jest__/imgMock.js'
+    '\\.(png|svg)$': '<rootDir>/__jest__/imgMock.js',
+    '^fflate$': '<rootDir>/__jest__/fflate.js'
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -201,6 +204,9 @@ module.exports = {
   transform: {
     '\\.[jt]sx?$': ['babel-jest', { configFile: './babel.config.js' }]
   },
+
+  // Ignore compiled dist directory when resolving modules
+  modulePathIgnorePatterns: ['<rootDir>/../../target/dist'],
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   transformIgnorePatterns: ['/node_modules/(?!@sonatype/react-shared-components|pretty-bytes|@react-hook|@nivo|d3-|internmap)'],

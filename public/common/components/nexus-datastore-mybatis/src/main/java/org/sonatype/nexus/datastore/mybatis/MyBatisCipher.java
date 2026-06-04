@@ -27,8 +27,7 @@ import org.sonatype.nexus.crypto.secrets.internal.EncryptionKeySourceImpl;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -46,13 +45,12 @@ import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 final class MyBatisCipher
     implements PbeCipher
 {
   private final PbeCipherFactory.PbeCipher pbeCipher;
 
-  @Inject
+  @Autowired
   MyBatisCipher(
       @Value("${nexus.mybatis.cipher.password:changeme}") final String password,
       @Value("${nexus.mybatis.cipher.salt:changeme}") final String salt,

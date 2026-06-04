@@ -26,9 +26,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
@@ -106,8 +105,6 @@ import static org.sonatype.nexus.repository.CleanupDryRunEvent.FINISHED_AT_IN_MI
 import static org.sonatype.nexus.repository.CleanupDryRunEvent.STARTED_AT_IN_MILLISECONDS;
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -115,7 +112,6 @@ import java.util.regex.PatternSyntaxException;
  * @since 3.29
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RESOURCE_URI)
@@ -152,7 +148,7 @@ public class CleanupPolicyResource
 
   private final Collection<CleanupPolicyRequestValidator> cleanupPolicyValidators;
 
-  @Inject
+  @Autowired
   public CleanupPolicyResource(
       final CleanupPolicyStorage cleanupPolicyStorage,
       final List<Format> formats,
@@ -499,11 +495,15 @@ public class CleanupPolicyResource
   }
 
   /**
-   * Normalizes and validates a regex pattern by decoding any URL-encoded characters.
-   * This ensures that patterns like %7B6,%7D are converted to {6,} before storage.
+   * Validates a regex pattern.
    *
-   * @param regex the regex pattern to normalize
-   * @return the normalized regex pattern
+   * Note: URL decoding is NOT performed here because JAX-RS {@code @QueryParam} already
+   * decodes URL-encoded values before they reach the resource method. A second decode via
+   * {@code URLDecoder} would corrupt regex patterns containing the {@code +} quantifier
+   * (decoded as space in application/x-www-form-urlencoded). See NEXUS-51975.
+   *
+   * @param regex the regex pattern to validate
+   * @return the validated regex pattern
    * @throws ValidationErrorsException if the regex is invalid
    */
   private String normalizeAndValidateRegex(final String regex) {
@@ -511,25 +511,16 @@ public class CleanupPolicyResource
       return regex;
     }
 
-    // Decode the regex to handle URL-encoded characters
-    String decodedRegex = URLDecoder.decode(regex, StandardCharsets.UTF_8);
-
-    // Validate that the decoded regex is a valid pattern
     try {
-      Pattern.compile(decodedRegex);
+      Pattern.compile(regex);
     }
     catch (PatternSyntaxException e) {
-      log.warn("Invalid regex pattern after decoding: {}", decodedRegex, e);
+      log.warn("Invalid regex pattern: {}", regex, e);
       throw new ValidationErrorsException("criteriaAssetRegex",
           "Invalid regex pattern: " + e.getMessage());
     }
 
-    // Log if we decoded something (for debugging)
-    if (!regex.equals(decodedRegex)) {
-      log.debug("Normalized regex from '{}' to '{}'", regex, decodedRegex);
-    }
-
-    return decodedRegex;
+    return regex;
   }
 
   private static Long toSeconds(final Long days) {

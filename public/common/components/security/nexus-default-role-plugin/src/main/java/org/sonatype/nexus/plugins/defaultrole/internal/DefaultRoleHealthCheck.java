@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.plugins.defaultrole.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.realm.RealmManager;
@@ -34,7 +32,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("DefaultRoleRealm")
-@Singleton
 public class DefaultRoleHealthCheck
     extends HealthCheck
 {
@@ -44,7 +41,7 @@ public class DefaultRoleHealthCheck
 
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public DefaultRoleHealthCheck(
       final RealmManager realmManager,
       final DefaultRoleRealm defaultRoleRealm,

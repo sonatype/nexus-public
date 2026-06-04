@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
@@ -46,7 +46,7 @@ public class RepositoriesApiResource
 
   private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
-  @Inject
+  @Autowired
   public RepositoriesApiResource(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
   }

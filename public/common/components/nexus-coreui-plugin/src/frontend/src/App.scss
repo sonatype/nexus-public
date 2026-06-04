@@ -18,7 +18,7 @@
 @import './styles/theme-variables.css';
 
 /* Import design tokens for Radix UI components */
-@import './styles/design-tokens.css';
+@import '../../../../nexus-ui-plugin/src/frontend/src/styles/design-tokens.css';
 
 /* ==========================================================================
  * Radix Tooltip Styling
@@ -53,6 +53,7 @@ a.nxrm-internal-link:hover {
   background-color: var(--color-background);
   color: var(--color-text);
   height: 100vh;
+  overflow: hidden;
   display: grid;
   
   // Make Radix Theme wrapper transparent to grid - it sits between grid container and items
@@ -105,7 +106,14 @@ a.nxrm-internal-link:hover {
       display: flex;
       flex-direction: column;
       width: 100%;
-      overflow: auto;
+
+      // Scroll is intentionally delegated to .nxrm-main-content (overflow: auto above).
+      // Removing overflow: auto here prevents a double-scroll container that caused
+      // the Radix slate-1 background to bleed below short-content pages.
+
+      // Override Radix's own background (slate-1 = #fcfcfd, slightly blue-tinted)
+      // with our warm gray so the area below short pages matches the form background
+      background-color: var(--color-background);
 
       // Use Radix accent scale (from Theme accentColor="blue") for design tokens
       --color-primary: var(--accent-9);
@@ -252,4 +260,15 @@ a.nxrm-internal-link:hover {
  */
 body:has(.nxrm-page) > .x-toast {
   display: none !important;
+}
+
+// Lock <body> when the Preview UI shell is active so tall pages can't leak scroll
+// up to <html>. .nxrm-page { overflow: hidden } alone doesn't propagate to the
+// root; without this, scrolling past the end of .nxrm-main-content reveals blank
+// space below .nxrm-page on tall forms (NEXUS-51231).
+// !important is required because ExtJS/Rapture sets `body.style.overflow = 'auto'`
+// at runtime, and inline styles beat stylesheet rules without it.
+body:has(.nxrm-page) {
+  overflow: hidden !important;
+  height: 100vh;
 }

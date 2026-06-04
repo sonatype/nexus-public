@@ -17,7 +17,6 @@ import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.inject.Singleton;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 
@@ -39,7 +38,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class SslCertificateAuditor
     extends AuditorSupport
     implements EventAware

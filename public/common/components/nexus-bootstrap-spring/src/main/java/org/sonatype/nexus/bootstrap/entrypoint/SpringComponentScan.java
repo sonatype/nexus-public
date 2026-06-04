@@ -17,14 +17,12 @@ import java.util.regex.Pattern;
 import org.sonatype.nexus.bootstrap.application.JavaxProviderDefaultListableBeanFactory;
 
 import jakarta.inject.Named;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.annotation.FullyQualifiedAnnotationBeanNameGenerator;
-import org.springframework.context.annotation.Scope;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
@@ -40,7 +38,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * a scan and refreshes a children context including the scanned components.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class SpringComponentScan
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

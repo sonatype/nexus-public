@@ -27,8 +27,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -45,7 +44,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENA
  * Serves the merged permission map for the Preview UI API module.
  */
 @Component
-@Singleton
 @Produces(APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path(ApiPermissionsResource.RESOURCE_PATH)
@@ -59,7 +57,7 @@ public class ApiPermissionsResource
 
   private final EndpointPermissionRegistry registry;
 
-  @Inject
+  @Autowired
   public ApiPermissionsResource(final EndpointPermissionRegistry registry) {
     this.registry = checkNotNull(registry);
   }

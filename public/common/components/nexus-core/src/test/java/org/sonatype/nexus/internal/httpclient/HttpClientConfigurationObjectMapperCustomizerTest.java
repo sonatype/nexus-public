@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.httpclient;
 
 import java.util.Map;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.kv.KeyValueStore;

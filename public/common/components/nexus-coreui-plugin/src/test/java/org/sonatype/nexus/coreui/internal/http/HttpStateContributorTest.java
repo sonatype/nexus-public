@@ -14,7 +14,7 @@ package org.sonatype.nexus.coreui.internal.http;
 
 import java.util.Map;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.httpclient.HttpDefaultsCustomizer;
 
 import org.junit.Before;

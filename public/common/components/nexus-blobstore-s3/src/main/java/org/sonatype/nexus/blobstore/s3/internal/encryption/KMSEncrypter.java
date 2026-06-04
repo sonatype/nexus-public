@@ -22,8 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.empty;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -35,7 +33,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(KMSEncrypter.ID)
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class KMSEncrypter
     implements S3Encrypter
 {

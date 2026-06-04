@@ -23,8 +23,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +37,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * @since 3.0
  */
 @Component
-@Singleton
 public class PeriodicJobServiceImpl
     extends StateGuardLifecycleSupport
     implements PeriodicJobService
@@ -49,7 +47,7 @@ public class PeriodicJobServiceImpl
 
   private int threadPoolSize;
 
-  @Inject
+  @Autowired
   public PeriodicJobServiceImpl(@Value("${nexus.periodicJob.threadPoolSize:10}") final int threadPoolSize) {
     String errorMsg =
         String.format("PeriodicJobServiceImpl's configurable threadPool must be a positive integer, (%d) is not valid.",

@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.node;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.common.node.NodeAccess;
 
@@ -30,13 +28,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Primary
-@Singleton
 public class SimpleDeploymentAccess
     implements DeploymentAccess
 {
   private final DeploymentIdStore deploymentIdStore;
 
-  @Inject
+  @Autowired
   public SimpleDeploymentAccess(final DeploymentIdStore deploymentIdStore) {
     this.deploymentIdStore = checkNotNull(deploymentIdStore);
   }

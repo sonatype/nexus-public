@@ -15,8 +15,6 @@ package org.sonatype.nexus.common.cooperation2.datastore;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
 import org.sonatype.nexus.common.cooperation2.datastore.internal.LocalCooperation2;
@@ -32,7 +30,6 @@ import org.slf4j.LoggerFactory;
  */
 @Component
 @Qualifier("local")
-@Singleton
 public class DefaultCooperation2Factory
     implements Cooperation2Factory
 {

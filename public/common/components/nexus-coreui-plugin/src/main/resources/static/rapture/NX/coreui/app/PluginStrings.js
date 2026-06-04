@@ -138,6 +138,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchGitLfs_Group: 'Git LFS Repositories',
     SearchYum_Group: 'Yum Repositories',
     SearchTerraform_Group: 'Terraform Repositories',
+    SearchAnsiblegalaxy_Group: 'Ansible Galaxy Repositories',
     SearchSwift_Group: 'Swift Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
     SearchCriteria_SHA1_FieldLabel: 'SHA-1',
@@ -183,6 +184,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchTerraform_Provider_FieldLabel: 'Provider',
     SearchTerraform_Namespace_FieldLabel: 'Namespace',
     SearchTerraform_Name_FieldLabel: 'Name',
+    SearchAnsiblegalaxy_Namespace_FieldLabel: 'Namespace',
+    SearchAnsiblegalaxy_Name_FieldLabel: 'Name',
+    SearchAnsiblegalaxy_Version_FieldLabel: 'Version',
     SearchSwift_Scope_FieldLabel: 'Scope',
     SearchGolang_Group: 'Go Repositories',
     SearchGolang_License_FieldLabel: 'License',
@@ -261,6 +265,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchYum_Text: 'Yum',
     SearchYum_Description: 'Search for components in Yum repositories',
 
+    // Browse -> Search -> Alpine
+    SearchAlpine_Text: 'Alpine',
+    SearchAlpine_Description: 'Search for components in Alpine repositories',
+
     // Browse -> Search -> Apt
     SearchApt_Text: 'Apt',
     SearchApt_Description: 'Search for components in Apt repositories',
@@ -314,6 +322,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Terraform
     SearchTerraform_Text: 'Terraform',
     SearchTerraform_Description: 'Search for components in Terraform repositories',
+
+    // Browse -> Search -> Ansible Galaxy
+    SearchAnsiblegalaxy_Text: 'Ansible Galaxy',
+    SearchAnsiblegalaxy_Description: 'Search for components in Ansible Galaxy repositories',
 
     // Browse -> Search -> Swift
     SearchSwift_Text: 'Swift',
@@ -465,6 +477,31 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Raw_ContentDisposition_Inline: 'Inline',
     Repository_Facet_Raw_ContentDisposition_Attachment: 'Attachment',
     Repository_Facet_Raw_ContentDisposition_Warning: 'Serving content inline allows uploaded HTML to render on a trusted Nexus URL, which can be exploited for phishing attacks against other users.',
+    Repository_Facet_RawProxy_QueryParams_Title: 'Query Parameter Forwarding',
+    Repository_Facet_RawProxy_QueryParams_Checkbox: 'Forward query parameters to upstream',
+    Repository_Facet_RawProxy_QueryParams_Description: 'Query parameter forwarding is disabled. All query parameters will be stripped from upstream requests.',
+    Repository_Facet_RawProxy_QueryParams_DescriptionEnabled: 'Query parameters from client requests will be forwarded to the upstream repository. You can exclude specific parameters below.',
+    Repository_Facet_RawProxy_QueryParams_CachingWarningTitle: 'Caching Impact',
+    Repository_Facet_RawProxy_QueryParams_CachingWarning: 'Each unique combination of query parameters will be cached as a separate asset. This may increase storage usage and reduce cache hit rates.',
+    Repository_Facet_RawProxy_QueryParams_InfoTitle: 'About Query Parameter Forwarding',
+    Repository_Facet_RawProxy_QueryParams_InfoDescription:
+      '<p>When enabled, query parameters from client requests are forwarded to the upstream repository. You can exclude specific parameters (e.g., authentication tokens) from being forwarded.</p>' +
+      '<p><strong>Example query parameters:</strong></p>' +
+      '<ul>' +
+      '<li>Versioning: ?version=1.2.3</li>' +
+      '<li>Pagination: ?page=1&limit=10</li>' +
+      '<li>Cache busting: ?v=20260313</li>' +
+      '<li>API filters: ?format=json&include_metadata=true</li>' +
+      '</ul>' +
+      '<p><strong>Common use cases:</strong></p>' +
+      '<ul>' +
+      '<li>Proxying REST APIs that use query parameters for filtering</li>' +
+      '<li>VS Code extension marketplace with version parameters</li>' +
+      '<li>CDN resources with cache-busting query strings</li>' +
+      '<li>GitHub/GitLab release downloads with filter parameters</li>' +
+      '</ul>',
+    Repository_Facet_RawProxy_QueryParams_ExcludedLabel: 'Excluded Parameters',
+    Repository_Facet_RawProxy_QueryParams_ExcludedHelp: 'Comma-separated list of parameter names to exclude from forwarding (case-insensitive). Example: api_key, access_token, auth',
     Repository_Facet_YumSigningFacet_Title: 'Yum Settings',
     Repository_Facet_YumSigningFacet_Hint: '<em style="font-size: 12px">Verifying of Yum repodata files can use GPG keys. ' +
         'Read our <a href="http://links.sonatype.com/products/nxrm3/docs/gpg-signatures-for-yum-proxy-group" target="_blank">documentation</a>' +
@@ -472,6 +509,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_YumSigningFacet_GPG_Keypair_FieldLabel: 'Signing Key',
     Repository_Facet_YumSigningFacet_GPG_Keypair_HelpText: 'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor <Name or ID>)',
     Repository_Facet_YumSigningFacet_GPG_Passphrase_FieldLabel: 'Passphrase',
+    Repository_Facet_AlpineSigningFacet_Title: 'Signing',
+    Repository_Facet_AlpineSigningFacet_Keypair_FieldLabel: 'Signing Key',
+    Repository_Facet_AlpineSigningFacet_Keypair_HelpText: 'RSA private key in PKCS#8 format (PEM encoded). Used to sign APKINDEX files. Generate with: openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt',
+    Repository_Facet_AlpineSigningFacet_Passphrase_FieldLabel: 'Passphrase',
     Repository_Facet_StorageFacet_Title: 'Storage',
     Repository_Facet_StorageFacetHosted_Title: 'Hosted',
     Repository_Facet_RoutingRuleFacet_Title: 'Routing Rule',
@@ -530,6 +571,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ComposerFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo.packagist.org',
     Repository_Facet_ProxyFacet_Conan_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://center.conan.io',
     Repository_Facet_PubFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pub.dev',
+    Repository_Facet_AnsibleGalaxyFacet_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://galaxy.ansible.com',
     Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus Repository truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
     Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus Repository truststore to connect to external systems',

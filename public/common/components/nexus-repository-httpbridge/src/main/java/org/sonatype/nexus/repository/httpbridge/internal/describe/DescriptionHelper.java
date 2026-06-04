@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.httpbridge.internal.describe;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.collect.StringMultimap;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class DescriptionHelper
 {
   public void describeRequest(final Description desc, final Request request) {

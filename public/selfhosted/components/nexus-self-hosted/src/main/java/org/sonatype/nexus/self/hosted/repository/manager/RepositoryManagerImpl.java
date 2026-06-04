@@ -31,9 +31,8 @@ import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEn
 import org.sonatype.nexus.repository.manager.internal.RepositoryAdminSecurityContributor;
 import org.sonatype.nexus.repository.manager.internal.RepositoryFactory;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -45,7 +44,6 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.REPOSITORIES;
  * No overrides needed, only annotations for DI.
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = REPOSITORIES)
 @ManagedObject(
     domain = "org.sonatype.nexus.repository.manager",
@@ -54,7 +52,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.REPOSITORIES;
 public class RepositoryManagerImpl
     extends BaseRepositoryManager<BlobStoreManager>
 {
-  @Inject
+  @Autowired
   public RepositoryManagerImpl(
       final EventManager eventManager,
       final ConfigurationStore store,

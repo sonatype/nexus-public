@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.privilege;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.security.SecuritySystem;
@@ -35,7 +35,7 @@ public class UniquePrivilegeIdValidator
 {
   private final SecuritySystem securitySystem;
 
-  @Inject
+  @Autowired
   public UniquePrivilegeIdValidator(final SecuritySystem securitySystem) {
     this.securitySystem = checkNotNull(securitySystem);
   }

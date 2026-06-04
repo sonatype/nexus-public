@@ -32,6 +32,7 @@ const mockState = jest.fn(() => ({
 }));
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
     useStatus: (...args) => mockUseStatus(...args),
     useUser: (...args) => mockUseUser(...args),

@@ -29,8 +29,7 @@ import org.sonatype.nexus.repository.httpbridge.internal.describe.DescriptionHel
 import org.sonatype.nexus.repository.httpbridge.internal.describe.DescriptionRenderer;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,7 +42,6 @@ import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
  * @since 3.7
  */
 @Component
-@Singleton
 @WebServlet(urlPatterns = {"/content/groups/*", "/content/repositories/*", "/content/sites/*",
     "/service/local/repositories/*", "/service/local/repo_groups/*", "/service/local/nuget/*"})
 public class LegacyViewServlet
@@ -53,7 +51,7 @@ public class LegacyViewServlet
 
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public LegacyViewServlet(
       final RepositoryManager repositoryManager,
       final HttpResponseSenderSelector httpResponseSenderSelector,

@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.previewui;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -32,7 +30,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENA
  * When false, the Preview UI Settings page is hidden from the legacy admin UI. Defaults to true.
  */
 @Component
-@Singleton
 public class PreviewUiEnabledStateContributor
     implements StateContributor
 {
@@ -40,7 +37,7 @@ public class PreviewUiEnabledStateContributor
 
   private final Map<String, Object> state;
 
-  @Inject
+  @Autowired
   public PreviewUiEnabledStateContributor(
       @Value(PREVIEW_UI_SETTINGS_ENABLED_NAMED_VALUE) final Boolean featureFlag)
   {

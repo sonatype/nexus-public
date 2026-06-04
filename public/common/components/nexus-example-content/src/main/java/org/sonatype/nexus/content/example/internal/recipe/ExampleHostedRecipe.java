@@ -13,9 +13,7 @@
 package org.sonatype.nexus.content.example.internal.recipe;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -41,13 +39,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(ExampleHostedRecipe.NAME)
-@Singleton
 public class ExampleHostedRecipe
     extends ExampleRecipeSupport
 {
   public static final String NAME = "example-hosted";
 
-  @Inject
+  @Autowired
   public ExampleHostedRecipe(
       @Qualifier(HostedType.NAME) final Type type,
       @Qualifier(ExampleFormat.NAME) final Format format)

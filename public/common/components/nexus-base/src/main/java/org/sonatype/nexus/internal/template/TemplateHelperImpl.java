@@ -18,9 +18,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.EscapeHelper;
@@ -42,7 +40,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class TemplateHelperImpl
     implements TemplateHelper
 {
@@ -52,7 +49,7 @@ public class TemplateHelperImpl
 
   private final VelocityEngine velocityEngine;
 
-  @Inject
+  @Autowired
   public TemplateHelperImpl(
       final ApplicationVersion applicationVersion,
       final VelocityEngine velocityEngine)

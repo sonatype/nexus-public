@@ -1,0 +1,224 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.upload-form-page {
+  min-height: 100%;
+  background: var(--color-background);
+
+  &__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    min-height: 60vh;
+    text-align: center;
+  }
+
+  &__loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: var(--gray-a3);
+    border-radius: 50%;
+    margin-bottom: var(--space-2);
+  }
+
+  &__error {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-5) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  &__back {
+    color: var(--gray-11);
+    padding: 0;
+    font-size: 14px;
+
+    &:hover {
+      color: var(--accent-9);
+      background: transparent;
+    }
+
+    svg {
+      transition: transform 0.2s ease;
+    }
+
+    &:hover svg {
+      transform: translateX(-2px);
+    }
+  }
+
+  // Asset card within the Assets section
+  &__asset {
+    padding: var(--space-4);
+    background: var(--gray-a2);
+    border-radius: 12px;
+    margin-bottom: var(--space-4);
+    border: 1px solid var(--gray-a3);
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: var(--gray-a5);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__asset-header {
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--gray-a4);
+  }
+
+  &__asset-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--accent-9);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+  }
+
+  &__asset-separator {
+    opacity: 0.5;
+  }
+
+  &__add-asset {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// Upload form wrapper - use SettingsForm standard layout (padding + max-width)
+.upload-form {
+  padding: var(--space-4) var(--space-6);
+
+  &__footer-check {
+    color: var(--green-9);
+  }
+}
+
+// Dark mode
+:root[data-theme='dark'],
+.dark {
+  .upload-form-page {
+    background: var(--color-background);
+
+    &__asset {
+      background: var(--gray-a3);
+      border-color: var(--gray-a4);
+    }
+  }
+
+}
+
+// Upload repository list page layout
+.upload-list-page {
+  min-width: 0;
+  box-sizing: border-box;
+
+  &__outer {
+    min-width: 0;
+  }
+
+  &__grid {
+    min-width: 0;
+  }
+
+  &__sidebar {
+    overflow: visible;
+    min-width: 0;
+  }
+
+  &__actions-bar {
+    width: 100%;
+  }
+
+  &__filter-input-wrapper {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  &__filter-input {
+    width: 100%;
+  }
+
+  &__sort-trigger {
+    width: 180px;
+    flex-shrink: 0;
+  }
+}
+
+// Upload filter sidebar
+.upload-filter-sidebar {
+  &__clear-row {
+    cursor: pointer;
+  }
+
+  &__clear-icon {
+    color: var(--blue-11);
+  }
+
+  &__clear-label {
+    font-weight: 500;
+  }
+
+  &__show-more {
+    align-self: flex-start;
+  }
+
+  &__sort-label {
+    font-weight: 600;
+    font-size: var(--font-size-2);
+  }
+}
+
+// Upload repository table
+.upload-repository-table {
+  &__scroll-wrapper {
+    overflow-x: auto;
+  }
+
+  &__row {
+    cursor: pointer;
+  }
+
+  &__actions-cell {
+    text-align: right;
+  }
+}
+
+// Upload repository list
+.upload-repository-list {
+  width: 100%;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .upload-form-page {
+    &__error {
+      padding: var(--space-4);
+    }
+  }
+}

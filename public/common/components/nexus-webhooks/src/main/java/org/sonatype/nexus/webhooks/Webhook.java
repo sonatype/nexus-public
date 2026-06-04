@@ -15,10 +15,8 @@ package org.sonatype.nexus.webhooks;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.collect.ImmutableSet;
@@ -47,7 +45,7 @@ public abstract class Webhook
 
   protected final Set<SubscriptionImpl> subscriptions = new CopyOnWriteArraySet<>();
 
-  @Inject
+  @Autowired
   public void setEventManager(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
   }

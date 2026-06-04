@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.common.OID;
+import org.sonatype.nexus.common.text.OID;
 import org.sonatype.nexus.common.text.Plural;
 import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
 import org.sonatype.nexus.upgrade.plan.DependencySource.UnresolvedDependencyAware;

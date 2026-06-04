@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.repository.internal.search.index.task;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.i18n.I18N;
-import org.sonatype.goodies.i18n.MessageBundle;
+import org.sonatype.nexus.common.i18n.I18N;
+import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class SearchUpdateTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -38,7 +36,7 @@ public class SearchUpdateTaskDescriptor
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  @Inject
+  @Autowired
   public SearchUpdateTaskDescriptor() {
     super(TYPE_ID,
         SearchUpdateTask.class,

@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Email;
@@ -42,14 +41,13 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Email")
 public class EmailComponent
     extends DirectComponentSupport
 {
   private final EmailManager emailManager;
 
-  @Inject
+  @Autowired
   public EmailComponent(final EmailManager emailManager) {
     this.emailManager = checkNotNull(emailManager);
   }

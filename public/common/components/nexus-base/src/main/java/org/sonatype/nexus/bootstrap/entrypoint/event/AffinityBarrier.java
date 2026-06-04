@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

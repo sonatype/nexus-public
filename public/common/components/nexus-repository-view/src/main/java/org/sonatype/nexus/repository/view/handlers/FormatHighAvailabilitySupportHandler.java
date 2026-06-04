@@ -13,9 +13,7 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -31,13 +29,12 @@ import org.springframework.stereotype.Component;
  * @since 3.17
  */
 @Component
-@Singleton
 public class FormatHighAvailabilitySupportHandler
     implements Handler
 {
   private HighAvailabilitySupportChecker highAvailabilitySupportChecker;
 
-  @Inject
+  @Autowired
   public FormatHighAvailabilitySupportHandler(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
     this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
   }

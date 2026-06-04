@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.security.SecuritySystem;
@@ -42,7 +42,7 @@ public class RolesExistValidator
 {
   private final AuthorizationManager authorizationManager;
 
-  @Inject
+  @Autowired
   public RolesExistValidator(final SecuritySystem securitySystem) throws NoSuchAuthorizationManagerException {
     this.authorizationManager = checkNotNull(securitySystem).getAuthorizationManager(AuthorizationManagerImpl.SOURCE);
   }

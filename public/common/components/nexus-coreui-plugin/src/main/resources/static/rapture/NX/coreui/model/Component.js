@@ -31,6 +31,7 @@ Ext.define('NX.coreui.model.Component', {
     {name: 'group', type: 'string'},
     {name: 'name', type: 'string'},
     {name: 'version', type: 'string'},
-    {name: 'format', type: 'string', sortType: 'asUCText'}
+    {name: 'format', type: 'string', sortType: 'asUCText'},
+    {name: 'attributes', type: 'auto' /*object*/}
   ]
 });

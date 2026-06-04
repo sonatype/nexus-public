@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.content.handlers;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
@@ -44,7 +42,6 @@ import org.springframework.stereotype.Component;
  */
 @Primary
 @Component
-@Singleton
 public class LastDownloadedHandler
     implements org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 {
@@ -54,12 +51,12 @@ public class LastDownloadedHandler
 
   private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
 
-  @Inject
+  @Autowired
   public LastDownloadedHandler(final GlobalRepositorySettings globalSettings) {
     this.globalSettings = checkNotNull(globalSettings);
   }
 
-  @Inject
+  @Autowired
   public void injectExtraDependencies(final LastDownloadedAttributeHandler lastDownloadedPropertyHandler) {
     this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedPropertyHandler);
   }

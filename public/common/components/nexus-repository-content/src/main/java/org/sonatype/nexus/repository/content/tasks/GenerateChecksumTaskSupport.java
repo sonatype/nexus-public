@@ -18,7 +18,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -71,7 +71,7 @@ public abstract class GenerateChecksumTaskSupport
 
   private MessageDigest messageDigest;
 
-  @Inject
+  @Autowired
   public void init(
       @Value("${nexus.calculateChecksums.bufferSize:32768}") final int bufferSize,
       final BlobStoreManager blobStoreManager) throws NoSuchAlgorithmException

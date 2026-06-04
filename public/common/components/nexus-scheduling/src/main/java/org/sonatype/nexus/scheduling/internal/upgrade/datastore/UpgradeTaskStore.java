@@ -21,18 +21,16 @@ import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class UpgradeTaskStore
     extends ConfigStoreSupport<UpgradeTaskDAO>
 {
-  @Inject
+  @Autowired
   public UpgradeTaskStore(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier, UpgradeTaskDAO.class);
   }

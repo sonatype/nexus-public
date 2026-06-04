@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 
-import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.concurrent.Mutex;
 import org.sonatype.nexus.common.app.BaseUrlManager;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
@@ -92,7 +92,7 @@ public class QuartzTaskJob
 
   private Task task;
 
-  @Inject
+  @Autowired
   public QuartzTaskJob(
       final EventManager eventManager,
       final Provider<QuartzSchedulerSPI> scheduler,

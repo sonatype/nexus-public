@@ -13,8 +13,6 @@
 package org.sonatype.nexus.audit.internal;
 
 import java.util.Map;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditDataRecordedEvent;
 import org.sonatype.nexus.audit.internal.GlobalAuditWebhook.AuditWebhookPayload.Audit;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class GlobalAuditWebhook
     extends GlobalWebhook
 {

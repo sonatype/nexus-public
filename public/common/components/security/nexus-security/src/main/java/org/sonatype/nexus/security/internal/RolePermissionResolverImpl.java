@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.internal;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -21,9 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
@@ -56,7 +55,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class RolePermissionResolverImpl
     implements RolePermissionResolver
 {
@@ -82,7 +80,7 @@ public class RolePermissionResolverImpl
    */
   private final Cache<String, String> roleNotFoundCache;
 
-  @Inject
+  @Autowired
   public RolePermissionResolverImpl(
       final SecurityConfigurationManager configuration,
       final List<PrivilegeDescriptor> privilegeDescriptors,
@@ -183,6 +181,117 @@ public class RolePermissionResolverImpl
     rolePermissionsCache.put(roleString, permissions);
 
     return permissions;
+  }
+
+  /**
+   * Batch variant of {@link #resolvePermissionsInRole} that fetches an entire set of role IDs
+   * in a single DB round-trip per BFS level instead of one query per role.
+   *
+   * With a flat role hierarchy (no nested roles) the 400 individual readRole() calls that
+   * previously drove the 20-second cold-login path become a single readRoles() batch call
+   * (NEXUS-52583).
+   */
+  public Collection<Permission> resolvePermissionsForRoles(final Collection<String> roleIds) {
+    if (roleIds == null || roleIds.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    final Set<Permission> allPermissions = new LinkedHashSet<>();
+    Set<String> currentLevel = new HashSet<>(roleIds);
+    final Set<String> processedRoleIds = new HashSet<>();
+
+    while (!currentLevel.isEmpty()) {
+      Set<String> toFetch = new HashSet<>();
+      Set<String> nextLevel = new HashSet<>();
+
+      for (String roleId : currentLevel) {
+        if (!processedRoleIds.add(roleId)) {
+          continue;
+        }
+        if (roleNotFoundCache.getIfPresent(roleId) != null) {
+          log.trace("Role {} found in NFC, role check skipped", roleId);
+          continue;
+        }
+        Collection<Permission> cached = rolePermissionsCache.getIfPresent(roleId);
+        if (cached != null) {
+          allPermissions.addAll(cached);
+        }
+        else {
+          toFetch.add(roleId);
+        }
+      }
+
+      if (toFetch.isEmpty()) {
+        break;
+      }
+
+      // One DB round-trip for all roles at this BFS level
+      List<CRole> roles = configuration.readRoles(toFetch);
+
+      // One DB round-trip for all privileges referenced by the fetched roles.
+      // Warms permissionsCache so the per-role permission() calls below are cache hits.
+      warmPrivilegeCacheForRoles(roles);
+
+      Set<String> foundIds = new HashSet<>();
+
+      for (CRole role : roles) {
+        foundIds.add(role.getId());
+        Set<String> childRoles = role.getRoles();
+        nextLevel.addAll(childRoles);
+        Set<Permission> rolePerms = new LinkedHashSet<>();
+        for (String privilegeId : role.getPrivileges()) {
+          Permission perm = permission(privilegeId);
+          if (perm != null) {
+            rolePerms.add(perm);
+          }
+        }
+        allPermissions.addAll(rolePerms);
+        // Leaf roles have no children so their full permission set is known after this
+        // iteration. Caching them lets other principals sharing the same roles skip DB
+        // round-trips on their next cold-login path.
+        if (childRoles.isEmpty()) {
+          rolePermissionsCache.put(role.getId(), Collections.unmodifiableSet(rolePerms));
+        }
+      }
+
+      for (String id : toFetch) {
+        if (!foundIds.contains(id)) {
+          roleNotFoundCache.put(id, "");
+          log.trace("Caching missing role in NFC: {}", id);
+        }
+      }
+
+      currentLevel = nextLevel;
+    }
+
+    return allPermissions;
+  }
+
+  /**
+   * Pre-warms {@link #permissionsCache} for every privilege ID referenced by the given roles
+   * using a single {@code readPrivileges} batch call instead of one {@code readPrivilege} call
+   * per ID. Privilege IDs already present in the cache are excluded from the batch request.
+   * After this method returns, subsequent {@link #permission(String)} calls for those IDs are
+   * guaranteed cache hits (NEXUS-52583).
+   */
+  private void warmPrivilegeCacheForRoles(final List<CRole> roles) {
+    Set<String> uncached = new HashSet<>();
+    for (CRole role : roles) {
+      for (String privId : role.getPrivileges()) {
+        if (permissionsCache.getIfPresent(privId) == null) {
+          uncached.add(privId);
+        }
+      }
+    }
+    if (uncached.isEmpty()) {
+      return;
+    }
+    for (CPrivilege privilege : configuration.readPrivileges(uncached)) {
+      PrivilegeDescriptor desc = descriptor(privilege.getType());
+      if (desc != null) {
+        permissionsCache.put(privilege.getId(), desc.createPermission(privilege));
+      }
+    }
   }
 
   /**

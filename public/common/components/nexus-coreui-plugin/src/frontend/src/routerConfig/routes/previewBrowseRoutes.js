@@ -21,110 +21,58 @@
  * Unimplemented formats show the ComingSoonPage placeholder.
  */
 
-import React from 'react';
 import {UIView} from '@uirouter/react';
-import {Permissions} from '@sonatype/nexus-ui-plugin';
+import {
+  Permissions,
+  // Preview UI page components (pre-lazied in nexus-ui-plugin)
+  HealthReportPage,
+  FirewallReportPage,
+  WelcomeSuper,
+  ProtectHub,
+  MalwareRemediationWizard,
+  MaliciousPackagesPage,
+  MalwareRiskPageSuper,
+  BrowsePage,
+  RepositoryProfilePage,
+  TagsPage,
+  TagDetailPage,
+  UploadPage,
+  UploadFormPage,
+  ApiPage,
+  RemediatePage,
+  GASearchPage,
+  GADetailPage,
+  GenericSearchPage,
+  CustomSearchPage,
+  NpmSearchPage,
+  NpmDetailPage,
+  NuGetSearchPage,
+  NuGetDetailPage,
+  DockerSearchPage,
+  DockerDetailPage,
+  PyPISearchPage,
+  PyPIDetailPage,
+  HelmSearchPage,
+  HelmDetailPage,
+  GolangSearchPage,
+  GolangDetailPage,
+  RawSearchPage,
+  RawDetailPage,
+  YumSearchPage,
+  YumDetailPage,
+  AptSearchPage,
+  AptDetailPage,
+  RubyGemsSearchPage,
+  RubyGemsDetailPage,
+  UnifiedSearchPage,
+  AssetDetailPage,
+  ComingSoonPage,
+} from '@sonatype/nexus-ui-plugin';
 import {lazyLoad} from './lazyLoad';
-import ComingSoonPage from '../../components/super/shared/ComingSoonPage';
 import FeatureFlags from '../../constants/FeatureFlags';
 
-const HealthReportPage = lazyLoad(() => import('../../components/shared/security/HealthReportPage'));
-const FirewallReportPage = lazyLoad(() => import('../../components/shared/security/FirewallReportPage'));
-
-// SUPER UI components (Radix-based implementations)
-const WelcomeSuper = lazyLoad(() => import('../../components/super/pages/Welcome/Welcome'));
-
-const ProtectHub = lazyLoad(() => import('../../components/super/pages/Protect/ProtectHub'));
-const MalwareRemediationWizard = lazyLoad(() => import('../../components/super/pages/MalwareRisk/MalwareRemediationWizard'));
-const MaliciousPackagesPage = lazyLoad(() => import('../../components/super/pages/MaliciousPackages/MaliciousPackagesPage'));
-const MalwareRiskPageSuper = lazyLoad(() => import('../../components/super/pages/MalwareRisk/MalwareRiskPageSuper'));
-
-// Browse Page - SUPER UI implementation (Radix-based) - IMPLEMENTED ✅
-const BrowsePage = lazyLoad(() => import('../../components/super/browse/BrowsePage'));
-
-// Repository Profile - reused in both Browse and Settings contexts
-const RepositoryProfilePage = lazyLoad(() => import('../../components/super/settings/repository/profile/RepositoryProfilePage'));
-
-// Tags Page - SUPER UI implementation (Radix-based) - IMPLEMENTED ✅
-const TagsPage = lazyLoad(() => import('../../components/super/tags/TagsPageRadix'));
-const TagDetailPage = lazyLoad(() => import('../../components/super/tags/TagDetailPage'));
-
-// Upload Page - SUPER UI implementation (Radix-based) - IMPLEMENTED ✅
-const UploadPage = lazyLoad(() => import('../../components/super/upload/UploadPage'));
-const UploadFormPage = lazyLoad(() => import('../../components/super/upload/UploadFormContainer'));
-
-// API Page - Swagger UI from Settings promoted to Browse (no sidebar) - IMPLEMENTED ✅
-const ApiPage = lazyLoad(() => import('../../components/super/settings/system/api/ApiPage'));
-
-// Audit Log Page - SUPER UI implementation (Radix-based) - IMPLEMENTED ✅
+// Audit Log Page lives in coreui (not relocated to preview subtree).
 const AuditLogPage = lazyLoad(() => import('../../components/pages/admin/audit/AuditLogPage'));
-
-// Remediate Page - SUPER UI implementation (Radix-based) - IMPLEMENTED ✅
-const RemediatePage = lazyLoad(() => import('../../components/super/pages/RemediatePage'));
-
-// =============================================================================
-// IMPLEMENTED SEARCH PAGES
-// =============================================================================
-
-// GA Search (Maven) - COMPLETE ✅
-const GASearchPage = lazyLoad(() => import('../../components/super/search/results/GASearchPage'));
-const GADetailPage = lazyLoad(() => import('../../components/super/search/details/GADetailPage'));
-
-// Generic Search - COMPLETE ✅
-const GenericSearchPage = lazyLoad(() => import('../../components/super/search/generic/GenericSearchPage'));
-
-// Custom Search - COMPLETE ✅
-const CustomSearchPage = lazyLoad(() => import('../../components/super/search/custom/CustomSearchPage'));
-
-// npm Search - COMPLETE ✅
-const NpmSearchPage = lazyLoad(() => import('../../components/super/search/npm/NpmSearchPage'));
-const NpmDetailPage = lazyLoad(() => import('../../components/super/search/npm/NpmDetailPage'));
-
-// NuGet Search - COMPLETE ✅
-const NuGetSearchPage = lazyLoad(() => import('../../components/super/search/nuget/NuGetSearchPage'));
-const NuGetDetailPage = lazyLoad(() => import('../../components/super/search/nuget/NuGetDetailPage'));
-
-// Docker Search - COMPLETE ✅
-const DockerSearchPage = lazyLoad(() => import('../../components/super/search/docker/DockerSearchPage'));
-const DockerDetailPage = lazyLoad(() => import('../../components/super/search/docker/DockerDetailPage'));
-
-// PyPI Search - COMPLETE ✅
-const PyPISearchPage = lazyLoad(() => import('../../components/super/search/pypi/PyPISearchPage'));
-const PyPIDetailPage = lazyLoad(() => import('../../components/super/search/pypi/PyPIDetailPage'));
-
-// Helm Search - COMPLETE ✅
-const HelmSearchPage = lazyLoad(() => import('../../components/super/search/helm/HelmSearchPage'));
-const HelmDetailPage = lazyLoad(() => import('../../components/super/search/helm/HelmDetailPage'));
-
-// Golang Search - COMPLETE ✅
-const GolangSearchPage = lazyLoad(() => import('../../components/super/search/golang/GolangSearchPage'));
-const GolangDetailPage = lazyLoad(() => import('../../components/super/search/golang/GolangDetailPage'));
-
-// Raw Search - COMPLETE ✅
-const RawSearchPage = lazyLoad(() => import('../../components/super/search/raw/RawSearchPage'));
-const RawDetailPage = lazyLoad(() => import('../../components/super/search/raw/RawDetailPage'));
-
-// Yum Search - COMPLETE ✅
-const YumSearchPage = lazyLoad(() => import('../../components/super/search/yum/YumSearchPage'));
-const YumDetailPage = lazyLoad(() => import('../../components/super/search/yum/YumDetailPage'));
-
-// Apt Search - COMPLETE ✅
-const AptSearchPage = lazyLoad(() => import('../../components/super/search/apt/AptSearchPage'));
-const AptDetailPage = lazyLoad(() => import('../../components/super/search/apt/AptDetailPage'));
-
-// RubyGems Search - COMPLETE ✅
-const RubyGemsSearchPage = lazyLoad(() => import('../../components/super/search/rubygems/RubyGemsSearchPage'));
-const RubyGemsDetailPage = lazyLoad(() => import('../../components/super/search/rubygems/RubyGemsDetailPage'));
-
-// =============================================================================
-// UNIFIED SEARCH PAGE - Single page for ALL formats
-// =============================================================================
-const UnifiedSearchPage = lazyLoad(() => import('../../components/super/search/unified/UnifiedSearchPage'));
-
-// =============================================================================
-// ASSET DETAIL PAGE - Unified asset detail with Component Tags
-// =============================================================================
-const AssetDetailPage = lazyLoad(() => import('../../components/super/browse/asset-detail/AssetDetailPage'));
 
 export const previewBrowseRoutes = [
   // =============================================================================
@@ -797,6 +745,15 @@ export const previewBrowseRoutes = [
   // =============================================================================
   // COMING SOON SEARCH FORMATS
   // =============================================================================
+
+  // Alpine - COMING SOON
+  {
+    name: 'preview.browse.search.alpine',
+    url: '/alpine/:keyword',
+    component: () => <ComingSoonPage featureName="Alpine Search" description="Alpine APK package search is being migrated to the new Radix UI design." />,
+    params: {keyword: {value: null, raw: true, dynamic: true}},
+    data: {title: 'Alpine Search'},
+  },
 
   // Cargo - COMING SOON
   {

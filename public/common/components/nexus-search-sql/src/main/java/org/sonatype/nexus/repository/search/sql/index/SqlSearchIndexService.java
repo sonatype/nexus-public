@@ -28,8 +28,7 @@ import org.sonatype.nexus.repository.content.search.SearchEventHandler;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.search.sql.SearchAssetRecord;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +53,6 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toInternal
  * @see SqlSearchEventHandler
  */
 @Component
-@Singleton
 public class SqlSearchIndexService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -63,7 +61,7 @@ public class SqlSearchIndexService
 
   private final SearchStore searchStore;
 
-  @Inject
+  @Autowired
   public SqlSearchIndexService(
       final SearchRecordProducer searchTableDataProducer,
       final SearchStore searchStore)

@@ -14,8 +14,7 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import static org.sonatype.nexus.repository.rest.api.RepositorySettingsApiResourceV1.RESOURCE_URI;
@@ -27,14 +26,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class RepositorySettingsApiResourceV1
     extends RepositorySettingsApiResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/repositorySettings";
 
-  @Inject
+  @Autowired
   public RepositorySettingsApiResourceV1(
       final AuthorizingRepositoryManager authorizingRepositoryManager,
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,

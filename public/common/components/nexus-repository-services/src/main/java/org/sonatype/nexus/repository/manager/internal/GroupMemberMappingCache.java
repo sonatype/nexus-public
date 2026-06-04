@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +52,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.16
  */
-@Singleton
 @Component
 public class GroupMemberMappingCache
     implements EventAware, Asynchronous

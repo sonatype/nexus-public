@@ -23,7 +23,6 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,13 +30,11 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.FILTER_CONDITION_FIELD_ID;
 import static org.sonatype.nexus.repository.search.sql.store.upgrade.task.ReIndexSearchFilterByPatternTask.TYPE_ID;
-import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
 /**
  * Schedules a reindex task which filters components that contains underscores for namespace or version fields.
  */
 @Component
-@Scope(SCOPE_PROTOTYPE)
 public class ReIndexSearchRecordsWithUnderscoreMigrationStep_2_105
     implements DatabaseMigrationStep
 {

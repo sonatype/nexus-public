@@ -14,9 +14,7 @@ package org.sonatype.nexus.tasklog;
 
 import java.util.Date;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -36,7 +34,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Singleton
 public class TaskLogCleanupQuartz
     extends StateGuardLifecycleSupport
 {
@@ -44,7 +41,7 @@ public class TaskLogCleanupQuartz
 
   private final String taskLogCleanupCron;
 
-  @Inject
+  @Autowired
   public TaskLogCleanupQuartz(
       final TaskScheduler taskScheduler,
       @Value("${nexus.tasks.log.cleanup.cron:0 0 0 * * ?}") final String taskLogCleanupCron)

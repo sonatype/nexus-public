@@ -14,9 +14,7 @@ package org.sonatype.nexus.cache.internal;
 
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.cache.CacheManager;
 import org.sonatype.nexus.cache.NexusCache;
@@ -32,13 +30,12 @@ import org.springframework.stereotype.Component;
  * @param <V> the type of value
  */
 @Component
-@Singleton
 public class LocalCacheManager<K, V>
     implements CacheManager<K, V>
 {
   private final CacheHelper cacheHelper;
 
-  @Inject
+  @Autowired
   public LocalCacheManager(final CacheHelper cacheHelper) {
     this.cacheHelper = checkNotNull(cacheHelper);
   }

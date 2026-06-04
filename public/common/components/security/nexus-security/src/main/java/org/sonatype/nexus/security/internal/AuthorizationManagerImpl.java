@@ -18,9 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -66,7 +64,6 @@ import static org.sonatype.nexus.security.internal.DefaultRealmConstants.DEFAULT
  */
 @Component
 @Qualifier(DEFAULT_USER_SOURCE)
-@Singleton
 @Primary
 public class AuthorizationManagerImpl
     implements AuthorizationManager, EventAware
@@ -81,7 +78,7 @@ public class AuthorizationManagerImpl
 
   private final List<PrivilegeDescriptor> privilegeDescriptors;
 
-  @Inject
+  @Autowired
   public AuthorizationManagerImpl(
       final SecurityConfigurationManager configuration,
       final EventManager eventManager,

@@ -14,7 +14,7 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.time.LocalDate;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
@@ -58,7 +58,7 @@ public class PurgeUnusedSnapshotsFacetImpl
 
   private final int findUnusedLimit;
 
-  @Inject
+  @Autowired
   public PurgeUnusedSnapshotsFacetImpl(
       @Qualifier(GroupType.NAME) final Type groupType,
       @Qualifier(HostedType.NAME) final Type hostedType,

@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class ContentSelectorsApiResourceBeta
@@ -42,7 +40,7 @@ public class ContentSelectorsApiResourceBeta
 {
   static final String RESOURCE_URI = SecurityApiConstants.BETA_RESOURCE_URI + "content-selectors";
 
-  @Inject
+  @Autowired
   public ContentSelectorsApiResourceBeta(
       final SelectorFactory selectorFactory,
       final SelectorManager selectorManager,

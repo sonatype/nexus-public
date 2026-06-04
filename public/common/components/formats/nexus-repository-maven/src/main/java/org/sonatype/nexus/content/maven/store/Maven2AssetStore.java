@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.transaction.Transactional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE;
@@ -28,7 +28,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENA
 public class Maven2AssetStore
     extends AssetStore<Maven2AssetDAO>
 {
-  @Inject
+  @Autowired
   public Maven2AssetStore(
       final DataSessionSupplier sessionSupplier,
       @Value(DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE) final boolean clustered,

@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.cleanup.internal.storage.CleanupPolicyData;
 import org.sonatype.nexus.supportzip.ExportConfigData;
 import org.sonatype.nexus.supportzip.ImportData;
@@ -33,14 +31,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("cleanupPolicyExport")
-@Singleton
 public class CleanupPolicyExport
     extends JsonExporter
     implements ExportConfigData, ImportData
 {
   private final CleanupPolicyStorage policyStorage;
 
-  @Inject
+  @Autowired
   public CleanupPolicyExport(final CleanupPolicyStorage policyStorage) {
     this.policyStorage = policyStorage;
   }

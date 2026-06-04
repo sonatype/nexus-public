@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.manager.internal;
 import java.util.Arrays;
 import java.util.List;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.security.config.MutableSecurityContributor;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class RepositoryAdminSecurityContributor
     extends MutableSecurityContributor
 {

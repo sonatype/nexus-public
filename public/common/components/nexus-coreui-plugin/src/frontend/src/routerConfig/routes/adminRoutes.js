@@ -49,7 +49,8 @@ const Api = lazyLoad(() => import('../../components/pages/admin/Api/Api'));
 const HTTP = lazyLoad(() => import('../../components/pages/admin/Http/Http'));
 const Licensing = lazyLoad(() => import('../../components/pages/admin/Licensing/Licensing'));
 const Upgrade = lazyLoad(() => import('../../components/pages/admin/Upgrade/Upgrade'));
-const PreviewUiSettings = lazyLoad(() => import('../../components/pages/admin/PreviewUiSettings/PreviewUiSettings'));
+
+const PreviewUiSettings = lazyLoad(() => import('@sonatype/nexus-ui-plugin').then(m => ({ default: m.PreviewUiSettings })));
 const NodesExt = lazyLoad(() => import('../../components/pages/admin/Nodes/NodesExt'));
 const TasksExtJSWrapper = lazyLoad(() => import('../../components/pages/admin/Tasks/TasksExtJSWrapper'));
 const Capabilities = lazyLoad(() => import('../../components/pages/admin/Capabilities/Capabilities'));

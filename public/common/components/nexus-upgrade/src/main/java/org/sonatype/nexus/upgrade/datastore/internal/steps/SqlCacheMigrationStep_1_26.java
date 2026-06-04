@@ -15,8 +15,6 @@ package org.sonatype.nexus.upgrade.datastore.internal.steps;
 import java.sql.Connection;
 import java.util.Optional;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
  * This is a placeholder for a removed migration step
  */
 @Component
-@Singleton
 public class SqlCacheMigrationStep_1_26
     implements DatabaseMigrationStep
 {

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Format;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptFormat
     extends Format
 {

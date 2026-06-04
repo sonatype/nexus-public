@@ -17,7 +17,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
 import java.util.Optional;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,15 +26,12 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * Convert REPLICATION_ONLY write policy to DENY.
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class ConvertReplicationToDenyStep_1_37
     implements DatabaseMigrationStep
 {
@@ -46,7 +43,7 @@ public class ConvertReplicationToDenyStep_1_37
 
   private static final String UPDATE_ATTRIBUTES_BY_ID = "UPDATE repository SET attributes = ? WHERE id = ?;";
 
-  @Inject
+  @Autowired
   public ConvertReplicationToDenyStep_1_37(
       final DatabaseCheck databaseCheck)
   {

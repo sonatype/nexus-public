@@ -13,8 +13,7 @@
 package org.sonatype.nexus.api.rest.selfhosted.formats;
 
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -41,7 +40,6 @@ import org.springframework.stereotype.Component;
  * @since 3.10
  */
 @Component
-@Singleton
 @Path(UploadDefinitionResource.BASE_PATH)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -54,7 +52,7 @@ public class UploadDefinitionResource
 
   private final UploadManager uploadManager;
 
-  @Inject
+  @Autowired
   public UploadDefinitionResource(final UploadManager uploadManager) {
     this.uploadManager = checkNotNull(uploadManager);
   }

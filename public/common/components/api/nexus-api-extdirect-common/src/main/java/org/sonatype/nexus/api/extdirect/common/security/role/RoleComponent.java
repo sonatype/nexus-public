@@ -14,8 +14,7 @@ package org.sonatype.nexus.api.extdirect.common.security.role;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -49,7 +48,6 @@ import org.springframework.stereotype.Component;
  * Role {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Role")
 public class RoleComponent
     extends DirectComponentSupport
@@ -58,7 +56,7 @@ public class RoleComponent
 
   private final List<AuthorizationManager> authorizationManagers;
 
-  @Inject
+  @Autowired
   public RoleComponent(final SecuritySystem securitySystem, final List<AuthorizationManager> authorizationManagers) {
     this.securitySystem = checkNotNull(securitySystem);
     this.authorizationManagers = checkNotNull(authorizationManagers);

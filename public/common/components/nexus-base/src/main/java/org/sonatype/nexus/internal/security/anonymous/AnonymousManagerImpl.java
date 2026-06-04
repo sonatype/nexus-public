@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.internal.security.anonymous;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.concurrent.Mutex;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -44,7 +43,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.0
  */
 @Component
-@Singleton
 @ManagedObject
 public class AnonymousManagerImpl
     implements AnonymousManager, EventAware
@@ -61,7 +59,7 @@ public class AnonymousManagerImpl
 
   private AnonymousConfiguration configuration;
 
-  @Inject
+  @Autowired
   public AnonymousManagerImpl(
       final EventManager eventManager,
       final AnonymousConfigurationStore store,

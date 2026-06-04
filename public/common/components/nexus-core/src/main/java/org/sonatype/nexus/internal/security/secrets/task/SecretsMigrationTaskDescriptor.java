@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.secrets.task;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Component;
  */
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class SecretsMigrationTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -39,7 +36,7 @@ public class SecretsMigrationTaskDescriptor
 
   private static final String VISIBLE_FLAG_VALUE = "${nexus.secrets.migration.visible:false}";
 
-  @Inject
+  @Autowired
   public SecretsMigrationTaskDescriptor(
       @Value(EXPOSED_FLAG_VALUE) final boolean exposed,
       @Value(VISIBLE_FLAG_VALUE) final boolean visible)

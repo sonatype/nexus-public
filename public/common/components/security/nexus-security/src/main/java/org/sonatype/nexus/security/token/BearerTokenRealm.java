@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.token;
 
 import java.util.Optional;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
@@ -73,7 +73,7 @@ public abstract class BearerTokenRealm
     setAuthenticationCachingEnabled(true);
   }
 
-  @Inject
+  @Autowired
   protected void setRequestProvider(final Provider<HttpServletRequest> requestProvider) {
     this.requestProvider = checkNotNull(requestProvider);
   }

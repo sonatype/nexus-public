@@ -20,7 +20,7 @@ import org.sonatype.nexus.security.config.SecurityContributorThreadedTest.Securi
 
 import edu.umd.cs.mtc.MultithreadedTestCase;
 import edu.umd.cs.mtc.TestFramework;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,13 +84,13 @@ public class SecurityContributorThreadedTest
 
   private int expectedPrivilegeCount = 0;
 
-  @Inject
+  @Autowired
   private List<SecurityContributor> testContributors;
 
-  @Inject
+  @Autowired
   private List<MutableTestSecurityContributor> mutableTestContributors;
 
-  @Inject
+  @Autowired
   private EventManager eventManager;
 
   @BeforeEach
@@ -105,13 +105,13 @@ public class SecurityContributorThreadedTest
 
     initializeInjectedContributors();
 
-    // test the lookup, make sure we have 200
-    assertEquals(200, testContributors.size());
+    // test the lookup: 100 static + 100 dynamic + 1 UploaderMetadataSecurityContributor
+    assertEquals(201, testContributors.size());
 
     this.expectedPrivilegeCount = this.manager.listPrivileges().size();
 
-    // 100 static items with 3 privs each + 100 dynamic items + 2 from default config
-    assertEquals((100 * 3) + 100 + 2, expectedPrivilegeCount);
+    // 100 static items with 3 privs each + 100 dynamic items + 2 from default config + 1 uploader-metadata
+    assertEquals((100 * 3) + 100 + 3, expectedPrivilegeCount);
   }
 
   private void initializeInjectedContributors() {

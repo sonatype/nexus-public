@@ -23,9 +23,7 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
@@ -54,7 +52,6 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
-@Singleton
 public class CleanupServiceImpl
     implements CleanupService
 {
@@ -82,7 +79,7 @@ public class CleanupServiceImpl
 
   private final CleanupFeatureCheck cleanupFeatureCheck;
 
-  @Inject
+  @Autowired
   public CleanupServiceImpl(
       final RepositoryManager repositoryManager,
       final CleanupPolicyStorage cleanupPolicyStorage,

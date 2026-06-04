@@ -12,7 +12,7 @@
  */
 
 .settings-select {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   gap: var(--space-1, 4px);
 
@@ -32,13 +32,40 @@
   &__wrapper {
     position: relative;
     width: 100%;
-    max-width: 400px;
   }
 
-  // Radix Select Trigger (the button that shows selected value)
-  &__trigger {
+  // Radix Select Trigger (the button that shows selected value).
+  // Descendant selector raises specificity to (0,2,0) so these rules beat
+  // Radix's `.rt-SelectTrigger` (0,1,0), which otherwise wins on source order.
+  & &__trigger {
     width: 100%;
     min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-3, 12px);
+    position: relative; // Anchors the absolutely-positioned chevron
+
+    // Ensure the internal Radix chevron is on the right
+    & > span:last-child,
+    .rt-SelectTriggerIcon {
+      position: absolute !important;
+      right: var(--space-3, 12px) !important;
+      left: auto !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+    }
+
+    // Ensure text doesn't overlap the chevron
+    & > span:first-child,
+    .rt-SelectTriggerInner {
+      padding-right: var(--space-8, 32px) !important;
+      text-align: left !important;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   // Radix Select Content (the dropdown)

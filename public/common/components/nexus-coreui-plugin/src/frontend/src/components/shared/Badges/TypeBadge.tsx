@@ -14,7 +14,7 @@
 import React from 'react';
 import { Badge, Flex } from '@radix-ui/themes';
 import { Cloud, Database, FolderSync, LucideIcon } from 'lucide-react';
-import { TYPE_LABELS } from '../../super/settings/repository/repositories/types';
+import { TYPE_LABELS } from '@sonatype/nexus-ui-plugin';
 
 import './Badges.scss';
 

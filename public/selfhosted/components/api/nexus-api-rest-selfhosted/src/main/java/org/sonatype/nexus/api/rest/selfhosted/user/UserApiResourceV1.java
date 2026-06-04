@@ -18,22 +18,20 @@ import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(UserApiResourceV1.RESOURCE_URI)
 public class UserApiResourceV1
     extends UserApiResource
 {
   static final String RESOURCE_URI = SecurityApiConstants.V1_RESOURCE_URI + "users/";
 
-  @Inject
+  @Autowired
   public UserApiResourceV1(
       final SecuritySystem securitySystem,
       final AdminPasswordFileManager adminPasswordFileManager)

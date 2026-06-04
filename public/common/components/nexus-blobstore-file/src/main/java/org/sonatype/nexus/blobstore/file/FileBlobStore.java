@@ -88,7 +88,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.AgeFileFilter;
 import org.apache.commons.lang3.time.DateUtils;
@@ -203,7 +203,7 @@ public class FileBlobStore
 
   private int blobAttributesRetryDelayMs;
 
-  @Inject
+  @Autowired
   public FileBlobStore(
       final BlobIdLocationResolver blobIdLocationResolver,
       final FileOperations fileOperations,
@@ -512,19 +512,36 @@ public class FileBlobStore
     }
   }
 
+  /**
+   * Creates a BlobId for copying. If the source blob is a temporary blob, strips the temporary prefix
+   * to ensure the copy is a regular blob with a path based on date rather than in the temp directory.
+   * The UUID is preserved to maintain consistency with any references that may exist.
+   */
+  private BlobId createCopyBlobId(final BlobId sourceBlobId) {
+    String id = sourceBlobId.asUniqueString();
+    // Strip temporary prefix if present - the copy should be a regular blob
+    String uuid = id.startsWith(TEMPORARY_BLOB_ID_PREFIX)
+        ? id.substring(TEMPORARY_BLOB_ID_PREFIX.length())
+        : id;
+    // Preserve the date from the source blob for consistency
+    OffsetDateTime blobCreatedRef = sourceBlobId.getBlobCreatedRef();
+    return new BlobId(uuid, blobCreatedRef);
+  }
+
   @Override
   @Guarded(by = STARTED)
   @Timed
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
     Blob sourceBlob = checkNotNull(get(blobId));
     Path sourcePath = contentPath(sourceBlob.getId());
+    BlobId copyBlobId = createCopyBlobId(sourceBlob.getId());
     if (supportsHardLinkCopy) {
       try {
         return create(headers, destination -> {
           fileOperations.hardLink(sourcePath, destination);
           BlobMetrics metrics = sourceBlob.getMetrics();
           return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
-        }, null);
+        }, copyBlobId);
       }
       catch (BlobStoreException e) {
         supportsHardLinkCopy = false;
@@ -538,7 +555,7 @@ public class FileBlobStore
       fileOperations.copy(sourcePath, destination);
       BlobMetrics metrics = sourceBlob.getMetrics();
       return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
-    }, null);
+    }, copyBlobId);
   }
 
   @Override
@@ -983,8 +1000,17 @@ public class FileBlobStore
         log.debug("Next available record for compaction: {}", blobId);
         if (Objects.isNull(blob) || blob.isStale()) {
           log.debug("Compacting...");
-          maybeCompactBlob(inUseChecker, blobId);
-          blobDeletionIndex.deleteRecord(blobId);
+          try {
+            maybeCompactBlob(inUseChecker, blobId);
+            blobDeletionIndex.deleteRecord(blobId);
+          }
+          catch (TaskInterruptedException e) {
+            throw e;
+          }
+          catch (Exception e) {
+            log.warn("Failed to compact blob {} in blob store '{}': {}", blobId, blobStoreName, e.getMessage());
+            log.debug("Blob compaction failure details for {}", blobId, e);
+          }
         }
         else {
           log.debug("Still in use to deferring");

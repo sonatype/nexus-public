@@ -16,9 +16,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -39,7 +37,6 @@ import org.springframework.stereotype.Component;
  * </ul>
  */
 @Component
-@Singleton
 public class PasswordValidator
 {
   /**
@@ -55,7 +52,7 @@ public class PasswordValidator
 
   private final String errorMessage;
 
-  @Inject
+  @Autowired
   public PasswordValidator(
       @Nullable @Value("${nexus.password.validator:#{null}}") final String passwordValidator,
       @Nullable @Value("${nexus.password.validator.message:#{null}}") final String errorMessage)

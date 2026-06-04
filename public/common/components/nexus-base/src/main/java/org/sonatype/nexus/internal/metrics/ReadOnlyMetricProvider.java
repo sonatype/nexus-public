@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.internal.metrics;
 
-import jakarta.inject.Singleton;
-
 import com.codahale.metrics.Metric;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Qualifier("readonly")
-@Singleton
 public class ReadOnlyMetricProvider
     implements FactoryBean<Metric>
 {

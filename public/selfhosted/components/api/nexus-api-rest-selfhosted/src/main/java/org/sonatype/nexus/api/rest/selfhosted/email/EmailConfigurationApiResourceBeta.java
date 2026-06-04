@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.email.EmailManager;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class EmailConfigurationApiResourceBeta
@@ -40,7 +38,7 @@ public class EmailConfigurationApiResourceBeta
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/email";
 
-  @Inject
+  @Autowired
   public EmailConfigurationApiResourceBeta(final EmailManager emailManager) {
     super(emailManager);
   }

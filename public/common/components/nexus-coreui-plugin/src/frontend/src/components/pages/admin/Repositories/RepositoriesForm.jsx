@@ -33,7 +33,7 @@ import UIStrings from '../../../../constants/UIStrings';
 import './Repositories.scss';
 
 import RepositoriesFormMachine from './RepositoriesFormMachine';
-import {DeleteConfirmationModal} from '../../../shared/modals/DeleteConfirmationModal';
+import {DeleteConfirmationModal} from '@sonatype/nexus-ui-plugin';
 
 import {getFacets} from './RepositoryFormConfig';
 

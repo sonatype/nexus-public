@@ -14,7 +14,6 @@ package org.sonatype.nexus.siesta.internal;
 
 import org.sonatype.nexus.rest.ExceptionMapperSupport;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @Provider
 public class WebappExceptionMapper
     extends ExceptionMapperSupport<WebApplicationException>

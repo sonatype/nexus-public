@@ -11,7 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import * as ToastPrimitive from '@radix-ui/react-toast';
 import { CheckCircle2, XCircle, AlertCircle, Info, X } from 'lucide-react';
 import './Toast.scss';
@@ -153,7 +154,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             }}
           />
         ))}
-        <ToastPrimitive.Viewport className="toast-viewport" />
+        {typeof document !== 'undefined' && createPortal(
+          <ToastPrimitive.Viewport className="toast-viewport" />,
+          document.body
+        )}
       </ToastPrimitive.Provider>
     </ToastContext.Provider>
   );

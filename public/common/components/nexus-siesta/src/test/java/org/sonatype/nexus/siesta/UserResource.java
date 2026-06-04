@@ -14,7 +14,6 @@ package org.sonatype.nexus.siesta;
 
 import java.util.List;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -35,7 +34,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Path("/user")
 public class UserResource
     implements Resource

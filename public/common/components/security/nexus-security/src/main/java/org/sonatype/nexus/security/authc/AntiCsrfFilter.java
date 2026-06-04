@@ -20,8 +20,7 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.web.filter.authc.AuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  */
 @WebFilter(filterName = AntiCsrfFilter.NAME)
 @Component
-@Singleton
 public class AntiCsrfFilter
     extends AuthenticationFilter
 {
@@ -44,7 +42,7 @@ public class AntiCsrfFilter
 
   private final AntiCsrfHelper csrfHelper;
 
-  @Inject
+  @Autowired
   public AntiCsrfFilter(final AntiCsrfHelper csrfHelper) {
     this.csrfHelper = csrfHelper;
   }

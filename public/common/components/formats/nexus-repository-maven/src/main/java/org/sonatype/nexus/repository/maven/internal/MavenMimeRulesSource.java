@@ -13,9 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.mime.MimeRule;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -34,7 +32,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier(Maven2Format.NAME)
-@Singleton
 public class MavenMimeRulesSource
     implements MimeRulesSource
 {
@@ -82,7 +79,7 @@ public class MavenMimeRulesSource
 
   private final Maven2MavenPathParser mavenPathParser;
 
-  @Inject
+  @Autowired
   public MavenMimeRulesSource(final Maven2MavenPathParser mavenPathParser) {
     this.mavenPathParser = checkNotNull(mavenPathParser);
   }

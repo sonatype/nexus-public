@@ -15,9 +15,7 @@ package com.sonatype.nexus.ssl.plugin.tasks;
 import java.security.cert.Certificate;
 import java.util.Collection;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import com.sonatype.nexus.ssl.plugin.internal.keystore.TrustedSSLCertificateStore;
 
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
@@ -38,7 +36,6 @@ import static com.sonatype.nexus.ssl.plugin.internal.TrustStoreImpl.TRUSTED_CERT
  * Service to migrate trusted certificates from key_store_data to trusted_ssl_certificate.
  */
 @Lazy
-@Singleton
 @Component
 public class TrustedCertificateMigrationService
 {
@@ -50,7 +47,7 @@ public class TrustedCertificateMigrationService
 
   private final GlobalKeyValueStore globalKeyValueStore;
 
-  @Inject
+  @Autowired
   public TrustedCertificateMigrationService(
       @Qualifier("ssl") final KeyStoreManager keyStoreManager,
       final TrustedSSLCertificateStore trustedSSLCertificateStore,

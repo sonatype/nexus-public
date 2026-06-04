@@ -15,20 +15,18 @@ package org.sonatype.nexus.self.hosted.blobstore.s3.upgrade;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class ScheduleS3CompactTasksTaskDescriptor
     extends TaskDescriptorSupport
 {
   public static final String TYPE_ID = "s3.compact.task.scheduling.migration";
 
-  @Inject
+  @Autowired
   public ScheduleS3CompactTasksTaskDescriptor(
       @Value("${s3.compact.task.scheduling.exposed:false}") final boolean exposed)
   {

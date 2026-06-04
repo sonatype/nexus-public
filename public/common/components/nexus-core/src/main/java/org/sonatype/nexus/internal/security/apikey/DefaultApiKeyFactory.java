@@ -12,51 +12,29 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
-import org.sonatype.nexus.crypto.RandomBytesGenerator;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 
-import org.apache.shiro.subject.PrincipalCollection;
-import org.springframework.context.annotation.Primary;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Default {@link ApiKeyFactory} that creates random UUID.
- *
- * @since 3.0
+ * Default {@link ApiKeyFactory} that creates random UUID v4 API keys.
+ * <p>
+ * Uses {@link java.security.SecureRandom} internally through {@link UUID#randomUUID()}.
+ * This provides 122 bits of entropy from a cryptographically secure random source.
  */
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class DefaultApiKeyFactory
     implements ApiKeyFactory
 {
-  protected final Logger log = LoggerFactory.getLogger(getClass());
-
-  private final RandomBytesGenerator randomBytesGenerator;
-
-  @Inject
-  public DefaultApiKeyFactory(final RandomBytesGenerator randomBytesGenerator) {
-    this.randomBytesGenerator = checkNotNull(randomBytesGenerator);
-  }
-
   @Override
-  public char[] makeApiKey(final PrincipalCollection principals) {
-    final String salt = new BigInteger(randomBytesGenerator.generate(4)).toString(32);
-    final byte[] code = ("~nexus~default~" + principals + salt).getBytes(StandardCharsets.UTF_8);
-    final String apiKey = UUID.nameUUIDFromBytes(code).toString();
+  public char[] makeApiKey() {
+    final String apiKey = UUID.randomUUID().toString();
     return apiKey.toCharArray();
   }
 }

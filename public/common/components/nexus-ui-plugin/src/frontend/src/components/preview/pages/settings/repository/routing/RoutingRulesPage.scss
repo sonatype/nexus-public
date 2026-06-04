@@ -1,0 +1,44 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.routing-rules-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--color-background, #fff);
+
+  [data-theme='dark'] & {
+    background: var(--gray-1, #111113);
+  }
+
+  &__alerts {
+    margin-bottom: var(--space-4);
+    flex-shrink: 0;
+
+    // Fix: Ensure SettingsAlert displays horizontally in routing rules page
+    // Radix Box has display: block by default, we need flex for proper layout
+    .settings-alert {
+      display: flex;
+      align-items: flex-start;
+    }
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+    // Parent layout (settings-layout-radix__content) handles scrolling
+  }
+}

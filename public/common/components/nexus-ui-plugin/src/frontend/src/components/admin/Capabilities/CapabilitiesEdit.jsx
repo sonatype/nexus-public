@@ -38,7 +38,7 @@ import { AdminRouteNames } from '../../../constants/admin/AdminRouteNames';
 import DynamicFormField from '../../widgets/DynamicFormField/DynamicFormField';
 import CapabilitiesEditDeleteModal from './CapabilitiesEditDeleteModal';
 import './Capabilities.scss';
-import { ExtJS } from '../../../index';
+import ExtJS from '../../../interface/ExtJS';
 import classNames from 'classnames';
 import './CapabilitiesEdit.scss';
 
@@ -177,7 +177,7 @@ export default function CapabilitiesEdit() {
                 <NxTile.Subsection data-testid='form-fields'>
                   {capabilityType.formFields.map(field => (
                     <DynamicFormField
-                      key={field.id}
+                      key={`${capabilityType.id}-${field.id}`}
                       id={field.id}
                       current={current}
                       initialValue={capability?.properties?.[field.id] ?? field.initialValue}

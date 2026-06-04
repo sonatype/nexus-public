@@ -17,8 +17,6 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
@@ -26,10 +24,11 @@ import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,7 +40,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptContentValidator
     implements ContentValidator
 {
@@ -53,7 +51,7 @@ public class AptContentValidator
 
   private final DefaultContentValidator defaultContentValidator;
 
-  @Inject
+  @Autowired
   public AptContentValidator(final DefaultContentValidator defaultContentValidator) {
     this.defaultContentValidator = checkNotNull(defaultContentValidator);
   }
@@ -68,9 +66,14 @@ public class AptContentValidator
       @Nullable final String declaredContentType) throws IOException
   {
     String name = contentName;
-    // if name is Packages without extension - it's plain/text
+    // Append .txt only for extension-less metadata files (Packages, Release, InRelease, etc.)
+    // so the default validator can confirm they are plain text. Files with extensions like
+    // Release.gpg or Packages.gz must not be renamed — the extension already conveys the type.
     if (name != null && Objects.equals(declaredContentType, TEXT_PLAIN)) {
-      name += TXT;
+      String baseName = name.contains("/") ? name.substring(name.lastIndexOf('/') + 1) : name;
+      if (!baseName.contains(".")) {
+        name += TXT;
+      }
     }
     return defaultContentValidator.determineContentType(
         strictContentTypeValidation, contentSupplier, mimeRulesSource, name, declaredContentType);

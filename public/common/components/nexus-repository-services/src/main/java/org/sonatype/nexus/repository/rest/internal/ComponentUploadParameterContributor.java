@@ -16,9 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.swagger.ParameterContributor;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.8
  */
 @Component
-@Singleton
 public class ComponentUploadParameterContributor
     extends ParameterContributor<FormParameter>
 {
@@ -43,7 +40,7 @@ public class ComponentUploadParameterContributor
 
   private static final List<String> PATHS = ImmutableList.of(V1_API_PREFIX + "/components");
 
-  @Inject
+  @Autowired
   public ComponentUploadParameterContributor(final UploadManager uploadManager) {
     super(HTTP_METHODS, PATHS, transformUploadDefinitions(uploadManager.getAvailableDefinitions()));
   }

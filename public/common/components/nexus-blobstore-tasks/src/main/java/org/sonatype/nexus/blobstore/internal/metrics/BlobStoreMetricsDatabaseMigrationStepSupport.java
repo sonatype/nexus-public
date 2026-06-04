@@ -16,7 +16,7 @@ import java.sql.Connection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
@@ -51,7 +51,7 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
     this.blobStoreType = checkNotNull(blobStoreType);
   }
 
-  @Inject
+  @Autowired
   public final void initDependencies(
       final BlobStoreMetricsStore metricsStore,
       final BlobStoreConfigurationStore blobStoreConfigurationStore,

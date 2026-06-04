@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.search.sql.index;
 
 import java.util.Collection;
-import javax.annotation.Priority;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -28,7 +27,7 @@ import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 
 import com.google.common.base.Stopwatch;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Primary;
@@ -47,7 +46,6 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * The {@link SearchFacet} implementation for the SQL Table search.
  */
 @Primary
-@Priority(Integer.MAX_VALUE)
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -61,7 +59,7 @@ public class SqlSearchFacetImpl
 
   private final int batchSize;
 
-  @Inject
+  @Autowired
   public SqlSearchFacetImpl(
       final SearchStore store,
       final SqlSearchIndexService sqlSearchIndexService,

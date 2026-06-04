@@ -558,10 +558,11 @@ export default FormUtils.buildFormMachine({
 
       return postResponse.data.data;
     },
-    async waitAndRedirect({ savedComponentName }) {
+    async waitAndRedirect({ savedComponentName, repoSettings }) {
       await Utils.timeoutPromise(SUBMIT_MASK_SUCCESS_VISIBLE_TIME_MS);
 
-      window.location.hash = `browse/search/generic=${encodeURIComponent(`keyword="${savedComponentName}"`)}`;
+      const searchCriteria = `keyword="${savedComponentName}" AND repository_name=${repoSettings.name}`;
+      window.location.hash = `browse/search/generic=${encodeURIComponent(searchCriteria)}`;
     }
   }
 });

@@ -14,7 +14,7 @@ package org.sonatype.nexus.internal.httpclient.handlers;
 
 import java.util.function.Supplier;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
 import org.sonatype.nexus.crypto.secrets.SecretsFactory;

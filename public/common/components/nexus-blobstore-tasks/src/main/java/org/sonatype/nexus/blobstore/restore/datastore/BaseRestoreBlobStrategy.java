@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -25,21 +25,25 @@ import javax.annotation.Nonnull;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.handlers.LastDownloadedAttributeHandler;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
 /**
  * Provides the common logic for metadata restoration from a blob. Subclasses will implement the format-specific
@@ -62,7 +66,7 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
   }
 
-  @Inject
+  @Autowired
   public void injectDependencies(final LastDownloadedAttributeHandler lastDownloadedAttributeHandler) {
     this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedAttributeHandler);
   }
@@ -94,52 +98,33 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
 
     try {
       ContentFacet contentFacet = restoreData.getRepository().facet(ContentFacet.class);
-      Optional<FluentAsset> asset = contentFacet.assets().path(assetPath).find();
-
+      String sourceBlobStoreName = resolveSourceBlobStoreName(restoreData.getRepository());
       OffsetDateTime lastDownloadedAttribute =
           lastDownloadedAttributeHandler.readLastDownloadedAttribute(blobStoreName, blob);
       if (lastDownloadedAttribute != null) {
         restoreData.setLastDownloaded(lastDownloadedAttribute);
       }
 
-      if (asset.isPresent()) {
-        FluentAsset fluentAsset = asset.get();
-        fluentAsset.lastDownloaded().ifPresent(restoreData::setLastDownloaded);
-
-        if (shouldDeleteAsset(restoreData, fluentAsset)) {
-          log.info(
-              "{} Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
-              logPrefix, blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
-          if (!isDryRun) {
-            fluentAsset.delete();
-          }
-        }
-        else if (isRestoreDataMoreRecent(restoreData, fluentAsset)) {
-          log.info(
-              "{} Deleting asset as more recent blob will be restored, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
-              logPrefix, blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
-
-          if (!isDryRun) {
-            fluentAsset.delete();
-          }
-        }
-        else {
-          log.info(
-              "Skipping as asset already exists, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
-              blobStoreName, repoName, fluentAsset.path(), blobName, blob.getId());
-          return;
-        }
+      Optional<FluentAsset> asset = contentFacet.assets().path(assetPath).find();
+      if (asset.isPresent() && !shouldRestoreAsset(restoreData, asset.get(), blobStoreName, sourceBlobStoreName,
+          contentFacet, logPrefix, repoName, blobName, isDryRun)) {
+        return;
       }
 
       if (!isDryRun) {
-        createAssetFromBlob(blob, restoreData);
-        // try to apply lastDownloaded field to created asset
-        if (restoreData.hasLastDownloaded()) {
-          Optional<FluentAsset> createdAsset = contentFacet.assets().path(assetPath).find();
-          if (createdAsset.isPresent()) {
-            FluentAsset fluentAsset = createdAsset.get();
+        BlobId originalBlobId = blob.getId();
+        createAssetFromData(restoreData);
+
+        // Check if blob was re-ingested into a different blobstore
+        Optional<FluentAsset> createdAsset = contentFacet.assets().path(assetPath).find();
+        if (createdAsset.isPresent()) {
+          FluentAsset fluentAsset = createdAsset.get();
+          // try to apply lastDownloaded field to created asset
+          if (restoreData.hasLastDownloaded()) {
             fluentAsset.lastDownloaded(restoreData.getLastDownloaded());
           }
+          // Check if the asset's blob differs from the original - indicates re-ingest into correct blobstore
+          softDeleteOriginalBlobIfReIngested(fluentAsset, originalBlobId, blobStore, sourceBlobStoreName, assetPath);
         }
       }
 
@@ -154,6 +139,92 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
   }
 
   /**
+   * Extracted to method for testability and clarity.
+   */
+  protected String resolveSourceBlobStoreName(final Repository repository) {
+    return repository.getConfiguration()
+        .getAttributes()
+        .get(STORAGE)
+        .get(BLOB_STORE_NAME)
+        .toString();
+  }
+
+  /**
+   * Determines if an existing asset should be restored based on:
+   * 1. Whether the asset is orphaned
+   * 2. Whether the blob needs to be re-ingested into the correct blobstore
+   * 3. Whether the existing blob is newer than the one being restored
+   *
+   * @return true if restoration should proceed, false if we should skip
+   */
+  protected boolean shouldRestoreAsset(
+      final T restoreData,
+      final FluentAsset asset,
+      final String blobStoreName,
+      final String sourceBlobStoreName,
+      final ContentFacet contentFacet,
+      final String logPrefix,
+      final String repoName,
+      final String blobName,
+      final boolean isDryRun)
+  {
+    asset.lastDownloaded().ifPresent(restoreData::setLastDownloaded);
+    // Check if the asset has a blob that exists physically in the blobstore
+    boolean assetHasPhysicalBlob = assetHasPhysicalBlob(asset, contentFacet);
+
+    Blob blob = restoreData.getBlob();
+
+    // Check if asset is orphaned - delete and restore
+    if (shouldDeleteAsset(restoreData, asset)) {
+      log.info(
+          "{} Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
+          logPrefix, blobStoreName, repoName, asset.path(), blobName, blob.getId());
+      if (!isDryRun) {
+        asset.delete();
+      }
+      return true;
+    }
+
+    // Check if existing asset has a newer or equal blob - skip only if blob exists physically
+    if (!isRestoreDataMoreRecent(restoreData, asset)) {
+      if (!assetHasPhysicalBlob) {
+        // Asset has no physical blob - this means the blob was never properly attached
+        // or was deleted. We should proceed with restoration, not skip.
+        log.debug(
+            "{} Asset has no physical blob, proceeding with restoration: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
+            logPrefix, blobStoreName, repoName, asset.path(), blobName, blob.getId());
+      }
+      else {
+        // Asset has a physical blob that is newer/equal - skip
+        log.info(
+            "Skipping as asset already exists with newer/equal blob, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
+            blobStoreName, repoName, asset.path(), blobName, blob.getId());
+        return false;
+      }
+    }
+
+    // Check if blob is in the wrong blobstore - re-ingest regardless of timestamp
+    if (!blobStoreName.equals(sourceBlobStoreName)) {
+      log.info(
+          "{} Deleting asset to re-ingest blob from wrong blobstore '{}' into correct blobstore '{}', repository: {}, path: {}, blob name: {}, blob id: {}",
+          logPrefix, blobStoreName, sourceBlobStoreName, repoName, asset.path(), blobName, blob.getId());
+      if (!isDryRun) {
+        asset.delete();
+      }
+      return true;
+    }
+
+    // Asset has older blob - delete and restore
+    log.info(
+        "{} Deleting asset to restore more recent blob, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
+        logPrefix, blobStoreName, repoName, asset.path(), blobName, blob.getId());
+    if (!isDryRun) {
+      asset.delete();
+    }
+    return true;
+  }
+
+  /**
    * Determines if metadata can be restored
    */
   protected abstract boolean canAttemptRestore(@Nonnull final T data);
@@ -161,7 +232,7 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
   /**
    * Create the metadata asset
    */
-  protected abstract void createAssetFromBlob(final Blob assetBlob, final T data) throws IOException;
+  protected abstract void createAssetFromData(final T data) throws IOException;
 
   protected boolean shouldDeleteAsset(
       final T restoreData,
@@ -169,6 +240,31 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
   {
     return isComponentRequired(restoreData)
         && isOrphanedAsset(restoreData, asset);
+  }
+
+  /**
+   * Verifies if the asset has a blob that exists physically in the blobstore.
+   * This check is needed to distinguish between:
+   * - Asset has no blob reference (should proceed with restoration)
+   * - Asset has a blob reference but it doesn't exist physically (should proceed with restoration)
+   * - Asset has a blob reference that exists physically and is newer/equal (should skip)
+   */
+  private boolean assetHasPhysicalBlob(final FluentAsset asset, final ContentFacet contentFacet) {
+    return asset
+        .blob()
+        .map(AssetBlob::blobRef)
+        .map(blobRef -> {
+          try {
+            // get() with includeDeleted=true to include soft-deleted blobs
+            return contentFacet.blobs().blob(blobRef).isPresent();
+          }
+          catch (Exception e) {
+            log.debug("Error verifying blob {} exists in blobstore, assuming not present",
+                blobRef.getBlobId(), e);
+            return false;
+          }
+        })
+        .orElse(false);
   }
 
   /**
@@ -181,7 +277,7 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
         .map(blobCreated -> {
           DateTime dateTime = restoreData.getBlob().getMetrics().getCreationTime();
           Instant instant = Instant.ofEpochMilli(dateTime.getMillis());
-          OffsetDateTime restoredBlob = OffsetDateTime.ofInstant(instant, ZoneId.of(dateTime.getZone().getID()));
+          OffsetDateTime restoredBlob = OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
           return blobCreated.isBefore(restoredBlob);
         })
         .orElse(false);
@@ -226,4 +322,40 @@ public abstract class BaseRestoreBlobStrategy<T extends DataStoreRestoreBlobData
    * https://issues.sonatype.org/browse/NEXUS-18350
    */
   protected abstract boolean isComponentRequired(final T data);
+
+  /**
+   * Soft-deletes the original blob if it was re-ingested into a different blobstore.
+   * This happens when reconcile finds a blob in the wrong blobstore (e.g., after a partial repository move).
+   */
+  private void softDeleteOriginalBlobIfReIngested(
+      final FluentAsset asset,
+      final BlobId originalBlobId,
+      final BlobStore sourceBlobStore,
+      final String sourceBlobStoreName,
+      final String assetPath)
+  {
+    asset.blob().ifPresent(assetBlob -> {
+      BlobRef assetBlobRef;
+      try {
+        assetBlobRef = assetBlob.blobRef();
+      }
+      catch (UnsupportedOperationException e) {
+        // blobRef() may not be supported by all blob implementations
+        return;
+      }
+      if (assetBlobRef == null) {
+        return;
+      }
+      // If the asset's blob is different from the original, the blob was re-ingested
+      if (!originalBlobId.equals(assetBlobRef.getBlobId())) {
+        log.info("Blob {} was re-ingested into blobstore '{}', soft-deleting original from '{}'",
+            originalBlobId, assetBlobRef.getStore(), sourceBlobStoreName);
+        // Mark the original blob as deleted
+        BlobAttributes blobAttributes = sourceBlobStore.getBlobAttributes(originalBlobId);
+        if (blobAttributes != null && !blobAttributes.isDeleted()) {
+          sourceBlobStore.delete(originalBlobId, "Re-ingested into correct blobstore during reconcile");
+        }
+      }
+    });
+  }
 }

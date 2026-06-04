@@ -14,8 +14,6 @@ package org.sonatype.nexus.internal.capability.node;
 
 import java.util.Collections;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.capability.CapabilityBooterSupport;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.springframework.stereotype.Component;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class NodeCapabilitiesBooter
     extends CapabilityBooterSupport
 {

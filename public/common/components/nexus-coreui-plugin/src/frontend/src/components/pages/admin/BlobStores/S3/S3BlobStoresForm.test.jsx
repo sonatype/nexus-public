@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {render, screen, waitForElementToBeRemoved, within} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -170,42 +170,41 @@ describe('BlobStoresForm-S3', () => {
       chooseBlobStoreType('s3');
 
       // Check for required fields - This relies on the submit button already being clicked so errors are already displaying
-      userEvent.type(selectors.queryName(), 'test');
+      fireEvent.change(selectors.queryName(), {target: {value: 'test'}});
       expect(selectors.queryName()).toHaveValue('test');
 
-      userEvent.type(selectors.queryBucket(), 'bucket');
+      fireEvent.change(selectors.queryBucket(), {target: {value: 'bucket'}});
       expect(selectors.queryBucket()).toHaveValue('bucket');
       expect(selectors.queryFormError()).not.toBeInTheDocument();
 
       // Check that the access key id field requires a secret access key
-      userEvent.type(selectors.queryAccessKeyId(), 'someAccessKey');
+      fireEvent.change(selectors.queryAccessKeyId(), {target: {value: 'someAccessKey'}});
       expect(selectors.queryAccessKeyId()).toHaveValue('someAccessKey');
       userEvent.click(selectors.querySubmitButton());
       expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
-      userEvent.type(selectors.querySecretAccessKey(), 'SomeSecretAccessKey');
+      fireEvent.change(selectors.querySecretAccessKey(), {target: {value: 'SomeSecretAccessKey'}});
       expect(selectors.querySecretAccessKey()).toHaveValue('SomeSecretAccessKey');
       expect(selectors.queryFormError()).not.toBeInTheDocument();
 
       // Check that the endpoint URL is required and must be a valid URL
-      userEvent.type(selectors.queryEndpointURL(), 'invalidUrl');
+      fireEvent.change(selectors.queryEndpointURL(), {target: {value: 'invalidUrl'}});
       expect(selectors.queryEndpointURL()).toHaveValue('invalidUrl');
       userEvent.click(selectors.querySubmitButton());
       expect(selectors.queryFormError(TestUtils.VALIDATION_ERRORS_MESSAGE)).toBeInTheDocument();
 
-      userEvent.clear(selectors.queryEndpointURL());
+      fireEvent.change(selectors.queryEndpointURL(), {target: {value: ''}});
       expect(selectors.queryEndpointURL()).toHaveValue('');
-      userEvent.type(selectors.queryEndpointURL(), 'http://www.fakeurl.com');
+      fireEvent.change(selectors.queryEndpointURL(), {target: {value: 'http://www.fakeurl.com'}});
       expect(selectors.queryEndpointURL()).toHaveValue('http://www.fakeurl.com');
       expect(selectors.queryFormError()).not.toBeInTheDocument();
 
       // Check maximum connection pool size validation errors
-      userEvent.type(selectors.queryMaxConnectionPoolSize(), '0');
+      fireEvent.change(selectors.queryMaxConnectionPoolSize(), {target: {value: '0'}});
       expect(selectors.queryMaxConnectionPoolSize()).toHaveAccessibleErrorMessage('The minimum value for this field is 1');
-      userEvent.clear(selectors.queryMaxConnectionPoolSize());
-      userEvent.type(selectors.queryMaxConnectionPoolSize(), '2000000000');
+      fireEvent.change(selectors.queryMaxConnectionPoolSize(), {target: {value: '2000000000'}});
       expect(selectors.queryMaxConnectionPoolSize()).toHaveAccessibleErrorMessage('The maximum value for this field is 1000000000');
-      userEvent.clear(selectors.queryMaxConnectionPoolSize());
+      fireEvent.change(selectors.queryMaxConnectionPoolSize(), {target: {value: ''}});
       expect(selectors.queryMaxConnectionPoolSize()).not.toHaveAccessibleErrorMessage(expect.anything());
 
       // Enable the soft quota section
@@ -235,7 +234,7 @@ describe('BlobStoresForm-S3', () => {
       expect(selectors.removeReplicationBucketButtons()[0]).toBeInTheDocument();
       userEvent.selectOptions(selectors.queryReplicationBucketRegionSelects()[0], 'us-west-2');
       expect(selectors.queryReplicationBucketRegionSelects()[0]).toHaveValue('us-west-2');
-      userEvent.type(selectors.queryReplicationBucketBucketNames()[0], 'test-replication-bucket');
+      fireEvent.change(selectors.queryReplicationBucketBucketNames()[0], {target: {value: 'test-replication-bucket'}});
       expect(selectors.queryReplicationBucketBucketNames()[0]).toHaveValue('test-replication-bucket');
       expect(selectors.removeReplicationBucketButtons()).toHaveLength(1);
 
@@ -266,21 +265,20 @@ describe('BlobStoresForm-S3', () => {
       chooseBlobStoreType('s3');
 
       // Set the form values
-      userEvent.type(selectors.queryName(), 'test');
-      userEvent.type(selectors.queryBucket(), 'bucket');
-      userEvent.type(selectors.queryEndpointURL(), 'http://www.fakeurl.com');
-      userEvent.type(selectors.queryMaxConnectionPoolSize(), '1');
-      userEvent.type(selectors.queryAccessKeyId(), 'someAccessKey');
-      userEvent.type(selectors.querySecretAccessKey(), 'SomeSecretAccessKey');
+      fireEvent.change(selectors.queryName(), {target: {value: 'test'}});
+      fireEvent.change(selectors.queryBucket(), {target: {value: 'bucket'}});
+      fireEvent.change(selectors.queryEndpointURL(), {target: {value: 'http://www.fakeurl.com'}});
+      fireEvent.change(selectors.queryMaxConnectionPoolSize(), {target: {value: '1'}});
+      fireEvent.change(selectors.queryAccessKeyId(), {target: {value: 'someAccessKey'}});
+      fireEvent.change(selectors.querySecretAccessKey(), {target: {value: 'SomeSecretAccessKey'}});
       userEvent.click(selectors.queryReplicationBuckets());
       userEvent.click(selectors.addReplicationBucketButton());
       userEvent.selectOptions(selectors.queryReplicationBucketRegionSelects()[0], 'us-west-2');
-      userEvent.type(selectors.queryReplicationBucketBucketNames()[0], 'test-replication-bucket');
+      fireEvent.change(selectors.queryReplicationBucketBucketNames()[0], {target: {value: 'test-replication-bucket'}});
       userEvent.click(selectors.softQuota.queryEnabled());
-      userEvent.type(selectors.softQuota.queryLimit(), '1');
+      fireEvent.change(selectors.softQuota.queryLimit(), {target: {value: '1'}});
 
       userEvent.click(selectors.querySubmitButton());
-      await waitForElementToBeRemoved(selectors.querySavingMask());
 
       const request = {
         name: 'test',
@@ -306,7 +304,7 @@ describe('BlobStoresForm-S3', () => {
         }
       };
 
-      expect(axios.post).toHaveBeenCalledWith('service/rest/v1/blobstores/s3', request);
+      await waitFor(() => expect(axios.post).toHaveBeenCalledWith('service/rest/v1/blobstores/s3', request));
     });
 
     it('PRO - creates a new S3 blob store', async () => {
@@ -318,21 +316,20 @@ describe('BlobStoresForm-S3', () => {
 
       chooseBlobStoreType('s3');
 
-      userEvent.type(selectors.queryName(), 'test');
-      userEvent.type(selectors.queryBucket(), 'bucket');
+      fireEvent.change(selectors.queryName(), {target: {value: 'test'}});
+      fireEvent.change(selectors.queryBucket(), {target: {value: 'bucket'}});
 
       expect(selectors.queryPreSigned()).not.toBeChecked();
       userEvent.click(selectors.queryPreSigned());
       expect(selectors.queryPreSigned()).toBeChecked();
 
       userEvent.click(selectors.querySubmitButton());
-      await waitForElementToBeRemoved(selectors.querySavingMask());
 
-      expect(axios.post).toHaveBeenCalledWith('service/rest/v1/blobstores/s3', expect.objectContaining({
+      await waitFor(() => expect(axios.post).toHaveBeenCalledWith('service/rest/v1/blobstores/s3', expect.objectContaining({
         bucketConfiguration: expect.objectContaining({
           preSignedUrlEnabled: true
         })
-      }));
+      })));
     });
   });
 

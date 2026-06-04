@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.realm;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.security.role.ExternalRoleMappedTest;
 import org.sonatype.nexus.security.role.RoleIdentifier;
@@ -47,7 +47,7 @@ public class MockRealm
 
   private final UserManager userManager;
 
-  @Inject
+  @Autowired
   public MockRealm(@Qualifier("Mock") UserManager userManager) {
     this.userManager = userManager;
   }

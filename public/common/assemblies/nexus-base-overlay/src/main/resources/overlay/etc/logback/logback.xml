@@ -144,6 +144,10 @@
   <logger name="software.amazon.awssdk.auth.credentials" level="ERROR"/>
   <logger name="software.amazon.awssdk.regions" level="ERROR"/>
 
+  <!-- Suppress noisy INFO output from the PortEx library used during IQ Server
+       Firewall scanning of PE binaries (DLL/EXE) in Docker layers. See NEXUS-52197. -->
+  <logger name="com.github.katjahahn" level="WARN"/>
+
   <include file="${karaf.data}/etc/logback/logback-tasklogfile-appender-override.xml" optional="true"/>
 
   <root level="${root.level:-INFO}">

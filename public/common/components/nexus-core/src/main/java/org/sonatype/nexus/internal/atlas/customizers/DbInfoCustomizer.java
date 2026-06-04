@@ -15,9 +15,7 @@ package org.sonatype.nexus.internal.atlas.customizers;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.internal.support.DbDiagnostics;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
@@ -37,7 +35,6 @@ import org.springframework.stereotype.Component;
  *
  */
 @Component
-@Singleton
 public class DbInfoCustomizer
     implements SupportBundleCustomizer
 {
@@ -45,7 +42,7 @@ public class DbInfoCustomizer
 
   private final DbDiagnostics dbDiagnostics;
 
-  @Inject
+  @Autowired
   public DbInfoCustomizer(final DbDiagnostics dbDiagnostics) {
     this.dbDiagnostics = checkNotNull(dbDiagnostics);
   }

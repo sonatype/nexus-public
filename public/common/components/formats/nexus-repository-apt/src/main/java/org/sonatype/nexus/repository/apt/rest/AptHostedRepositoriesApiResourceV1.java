@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
@@ -25,14 +24,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class AptHostedRepositoriesApiResourceV1
     extends AptHostedRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceV1.RESOURCE_URI + "/apt/hosted";
 
-  @Inject
+  @Autowired
   public void setConfigurationConverter(
       final AptHostedRepositoryApiRequestToConfigurationConverter configurationConverter)
   {

@@ -16,9 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -53,7 +51,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.1
  */
 @Component
-@Singleton
 public class RepositoryAuditor
     extends AuditorSupport
     implements EventAware
@@ -66,7 +63,7 @@ public class RepositoryAuditor
 
   private final ApiRepositoryAdapter defaultAdapter;
 
-  @Inject
+  @Autowired
   public RepositoryAuditor(
       final List<ApiRepositoryAdapter> convertersByFormatList,
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter)

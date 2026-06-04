@@ -15,10 +15,9 @@ package org.sonatype.nexus.internal.httpclient;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
 
@@ -49,7 +48,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("shared")
-@Singleton
 public class SharedHttpClientConnectionManager
     extends PoolingHttpClientConnectionManager
     implements Lifecycle
@@ -62,7 +60,7 @@ public class SharedHttpClientConnectionManager
 
   private ConnectionEvictionThread evictionThread;
 
-  @Inject
+  @Autowired
   public SharedHttpClientConnectionManager(
       final List<SSLContextSelector> sslContextSelectors,
       @Value("${nexus.httpclient.connectionpool.size:20}") final int connectionPoolSize,

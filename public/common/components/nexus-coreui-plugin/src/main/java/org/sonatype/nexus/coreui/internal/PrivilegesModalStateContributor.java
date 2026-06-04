@@ -13,9 +13,7 @@
 package org.sonatype.nexus.coreui.internal;
 
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -25,14 +23,13 @@ import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_MODAL_
 import static org.sonatype.nexus.common.app.FeatureFlags.REACT_PRIVILEGES_MODAL_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
-@Singleton
 @Component
 public class PrivilegesModalStateContributor
     implements StateContributor
 {
   private final boolean isPrivilegesModalEnabled;
 
-  @Inject
+  @Autowired
   public PrivilegesModalStateContributor(
       @Value(REACT_PRIVILEGES_MODAL_NAMED_VALUE) final boolean isPrivilegesModalEnabled)
   {

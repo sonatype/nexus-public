@@ -12,20 +12,42 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SettingsForm } from '../SettingsForm';
 
 // Mock Radix UI components
-jest.mock('@radix-ui/themes', () => ({
-  Box: ({ children, className }) => <div className={className}>{children}</div>,
-  Flex: ({ children, className, gap, justify }) => (
-    <div className={className} data-gap={gap} data-justify={justify}>{children}</div>
-  ),
-  ScrollArea: ({ children, className }) => <div className={className}>{children}</div>,
-  Heading: ({ children, className, as: Tag = 'h1' }) => <Tag className={className}>{children}</Tag>,
-  Text: ({ children, className, as: Tag = 'span' }) => <Tag className={className}>{children}</Tag>,
-}));
+jest.mock('@radix-ui/themes', () => {
+  const AlertDialogRoot = ({ children, open }) => open ? <div data-testid="alert-dialog">{children}</div> : null;
+  const AlertDialogContent = ({ children }) => <div>{children}</div>;
+  const AlertDialogTitle = ({ children }) => <h2>{children}</h2>;
+  const AlertDialogDescription = ({ children }) => <p>{children}</p>;
+  const AlertDialogCancel = ({ children }) => children;
+  const AlertDialogAction = ({ children }) => children;
+
+  return {
+    Box: ({ children, className }) => <div className={className}>{children}</div>,
+    Flex: ({ children, className, gap, justify }) => (
+      <div className={className} data-gap={gap} data-justify={justify}>{children}</div>
+    ),
+    ScrollArea: ({ children, className }) => <div className={className}>{children}</div>,
+    Heading: ({ children, className, as: Tag = 'h1' }) => <Tag className={className}>{children}</Tag>,
+    Text: ({ children, className, as: Tag = 'span' }) => <Tag className={className}>{children}</Tag>,
+    Button: ({ children, onClick, disabled, variant, color }) => (
+      <button onClick={onClick} disabled={disabled} data-variant={variant} data-color={color}>{children}</button>
+    ),
+    Spinner: () => <span data-testid="spinner" />,
+    Theme: ({ children }) => <div>{children}</div>,
+    AlertDialog: {
+      Root: AlertDialogRoot,
+      Content: AlertDialogContent,
+      Title: AlertDialogTitle,
+      Description: AlertDialogDescription,
+      Cancel: AlertDialogCancel,
+      Action: AlertDialogAction,
+    },
+  };
+});
 
 // Mock child components
 jest.mock('../SettingsButton', () => ({
@@ -70,7 +92,6 @@ describe('SettingsForm', () => {
   it('renders error alert when error prop is provided', () => {
     render(<SettingsForm {...defaultProps} error="Something went wrong" />);
     
-    expect(screen.getByTestId('alert-error')).toBeInTheDocument();
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
   });
 
@@ -145,11 +166,65 @@ describe('SettingsForm', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('calls onCancel when cancel button is clicked', () => {
+  it('calls onCancel directly when form is pristine', () => {
     const onCancel = jest.fn();
-    render(<SettingsForm {...defaultProps} onCancel={onCancel} />);
+    render(<SettingsForm {...defaultProps} onCancel={onCancel} pristine={true} />);
     
     fireEvent.click(screen.getByText('Discard'));
+    
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows discard dialog by default when dirty (confirmDiscard defaults to true)', async () => {
+    const onCancel = jest.fn();
+    render(<SettingsForm {...defaultProps} onCancel={onCancel} pristine={false} />);
+    
+    fireEvent.click(screen.getByText('Discard'));
+    
+    await waitFor(() => {
+      expect(screen.getByText(/your changes will be lost/i)).toBeInTheDocument();
+    });
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('calls onCancel directly when dirty but confirmDiscard is explicitly false', () => {
+    const onCancel = jest.fn();
+    render(<SettingsForm {...defaultProps} onCancel={onCancel} pristine={false} confirmDiscard={false} />);
+    
+    fireEvent.click(screen.getByText('Discard'));
+    
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows discard dialog when dirty and confirmDiscard is true', async () => {
+    const onCancel = jest.fn();
+    render(
+      <SettingsForm {...defaultProps} onCancel={onCancel} pristine={false} confirmDiscard />
+    );
+    
+    fireEvent.click(screen.getByText('Discard'));
+    
+    await waitFor(() => {
+      expect(screen.getByText(/your changes will be lost/i)).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /stay/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('calls onCancel when Leave is clicked in discard dialog', async () => {
+    const onCancel = jest.fn();
+    render(
+      <SettingsForm {...defaultProps} onCancel={onCancel} pristine={false} confirmDiscard />
+    );
+    
+    fireEvent.click(screen.getByText('Discard'));
+    
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    });
+    
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
     
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
@@ -157,7 +232,13 @@ describe('SettingsForm', () => {
   it('shows unsaved changes message when not pristine', () => {
     render(<SettingsForm {...defaultProps} pristine={false} />);
     
-    expect(screen.getByText('You have unsaved changes')).toBeInTheDocument();
+    expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
+  });
+
+  it('hides unsaved changes message when noDirtyTracking is true', () => {
+    render(<SettingsForm {...defaultProps} pristine={false} noDirtyTracking />);
+    
+    expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument();
   });
 
   it('hides actions when showActions is false', () => {

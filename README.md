@@ -33,7 +33,7 @@ Sonatype Nexus Repository Pro customers can contact our world-class support team
 
 ## Build Requirements
 
-Builds use Apache Maven and require Java 21. Apache Maven wrapper scripts are included in the source tree.
+Builds use Apache Maven and require Java 25. Apache Maven wrapper scripts are included in the source tree.
 
 ## Building From Source
 

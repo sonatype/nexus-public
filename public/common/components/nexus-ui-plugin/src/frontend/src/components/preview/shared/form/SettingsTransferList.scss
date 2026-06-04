@@ -59,43 +59,16 @@
   }
 
   &__search {
-    position: relative;
     padding: var(--space-2);
     border-bottom: 1px solid var(--color-border);
   }
 
-  &__search-icon {
-    position: absolute;
-    left: var(--space-4);
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--color-text-tertiary);
-    pointer-events: none;
-  }
-
-  &__search-input {
-    width: 100%;
-    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-8);
-    font-size: var(--font-size-xs);
-    font-family: var(--font-family-base);
-    color: var(--color-text);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    outline: none;
-
-    &::placeholder {
-      color: var(--color-text-tertiary);
-    }
-
-    &:focus {
-      border-color: var(--color-primary);
-    }
-  }
-
   &__items {
     flex: 1;
+    min-height: 120px;
+    max-height: 260px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: var(--space-1);
   }
 
@@ -130,47 +103,10 @@
   &__empty {
     padding: var(--space-4);
     text-align: center;
-    color: var(--color-text-tertiary);
-    font-size: var(--font-size-sm);
   }
 
   &__controls {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--space-1);
     padding: var(--space-2);
-  }
-
-  &__button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-
-    &:hover:not(:disabled) {
-      background-color: var(--color-surface-hover);
-      border-color: var(--color-neutral-400);
-      color: var(--color-text);
-    }
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
-    }
   }
 
   &__help {

@@ -12,20 +12,18 @@
  */
 package org.sonatype.nexus.capability.condition.internal;
 
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.capability.condition.ConditionSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.springframework.core.annotation.Order;
 
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,9 +33,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = CAPABILITIES)
-@Priority(Integer.MIN_VALUE) // nexus is considered active at the end of this phase
-@Order
-@Singleton
+@Order(Ordered.LOWEST_PRECEDENCE) // nexus is considered active at the end of this phase
 public class NexusIsActiveCondition
     extends ConditionSupport
     implements Lifecycle
@@ -48,7 +44,7 @@ public class NexusIsActiveCondition
     bind();
   }
 
-  @Inject
+  @Autowired
   public NexusIsActiveCondition(final Provider<EventManager> eventManager) {
     super(eventManager, false);
     bind();

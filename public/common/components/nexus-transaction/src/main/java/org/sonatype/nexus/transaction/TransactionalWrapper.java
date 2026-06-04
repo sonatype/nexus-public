@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.transaction;
 
-import org.sonatype.goodies.common.Loggers;
+import org.slf4j.LoggerFactory;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.slf4j.Logger;
@@ -24,7 +24,7 @@ import org.slf4j.Logger;
  */
 final class TransactionalWrapper
 {
-  private static final Logger log = Loggers.getLogger(TransactionalWrapper.class);
+  private static final Logger log = LoggerFactory.getLogger(TransactionalWrapper.class);
 
   private final Transactional spec;
 

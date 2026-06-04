@@ -12,15 +12,17 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
@@ -47,7 +49,6 @@ import org.springframework.stereotype.Component;
  * Default implementation for {@link PbeCipherFactory} . provides a simple cipher supporting PHC string format
  */
 @Component
-@Singleton
 public class PbeCipherFactoryImpl
     implements PbeCipherFactory
 {
@@ -59,7 +60,7 @@ public class PbeCipherFactoryImpl
 
   private final Integer configuredSecretsIterations;
 
-  @Inject
+  @Autowired
   public PbeCipherFactoryImpl(
       final CryptoHelper cryptoHelper,
       final HashingHandlerFactory hashingHandlerFactory,
@@ -157,13 +158,19 @@ public class PbeCipherFactoryImpl
   static class PbeCipherImpl
       implements PbeCipher
   {
+    private static final Logger log = LoggerFactory.getLogger(PbeCipherImpl.class);
+
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
 
     private static final String KEY_ALGORITHM = "AES";
 
+    private static final String HMAC_ALGORITHM = "HmacSHA256";
+
     private static final int IV_SIZE = 16;
 
     private static final String IV_PHC = "iv";
+
+    private static final String HMAC_PHC = "hmac";
 
     private final CryptoHelper cryptoHelper;
 
@@ -210,21 +217,62 @@ public class PbeCipherFactoryImpl
       EncryptedSecret encryptedSecretHash = hashingHandler.hash(secretEncryptionKey.getKey().toCharArray());
 
       String saltBase64 = encryptedSecretHash.getSalt();
-      SecretKey secretKey = new SecretKeySpec(fromBase64(encryptedSecretHash.getValue()), KEY_ALGORITHM);
+      byte[] derivedKey = fromBase64(encryptedSecretHash.getValue());
+      SecretKey secretKey = new SecretKeySpec(derivedKey, KEY_ALGORITHM);
       AlgorithmParameterSpec paramSpec = new IvParameterSpec(this.iv); // NOSONAR
       byte[] encrypted = transform(Cipher.ENCRYPT_MODE, secretKey, paramSpec, bytes);
+      // ROLLBACK RISK: Secrets encrypted with this method include an 'hmac' PHC attribute that
+      // did not exist in previous releases. Rolling back to an older version will cause
+      // decrypt() failures for any secret re-encrypted after this upgrade, because old code
+      // does not know how to handle the 'hmac' field and will likely reject the ciphertext.
+      // Before rolling back, ensure all encrypted secrets have been re-decrypted with old code
+      // or accept that re-encryption from plaintext sources will be required.
+      byte[] hmac = computeHmac(derivedKey, this.iv, encrypted);
 
       return new EncryptedSecret(encryptedSecretHash.getAlgorithm(), null, saltBase64, toBase64(encrypted),
           ImmutableMap.of(IV_PHC, Hex.toHexString(this.iv),
               KEY_ITERATION_PHC, encryptedSecretHash.getAttributes().get(KEY_ITERATION_PHC),
-              KEY_LEN_PHC, encryptedSecretHash.getAttributes().get(KEY_LEN_PHC)));
+              KEY_LEN_PHC, encryptedSecretHash.getAttributes().get(KEY_LEN_PHC),
+              HMAC_PHC, Hex.toHexString(hmac)));
     }
 
     @Override
     public byte[] decrypt() throws CipherException {
-      return decrypt(fromBase64(storedEncryptedSecret.getValue()));
+      byte[] encrypted = fromBase64(storedEncryptedSecret.getValue());
+      EncryptedSecret encryptedSecretHash = hashingHandler.hash(secretEncryptionKey.getKey().toCharArray());
+      // NOTE: derivedKey is used for both AES-CBC encryption and HMAC-SHA256 authentication.
+      // Key reuse across algorithms is a known trade-off; the two operations are structurally
+      // independent (encrypt-then-MAC), so there is no practical cross-domain attack for this
+      // configuration. A future improvement would be to derive separate sub-keys via HKDF.
+      byte[] derivedKey = fromBase64(encryptedSecretHash.getValue());
+
+      String storedHmac = storedEncryptedSecret.getAttributes().get(HMAC_PHC);
+      if (storedHmac != null) {
+        byte[] expectedHmac = computeHmac(derivedKey, iv, encrypted);
+        if (!MessageDigest.isEqual(expectedHmac, Hex.decode(storedHmac))) {
+          throw new CipherException("HMAC verification failed - invalid password or corrupted data");
+        }
+      }
+
+      SecretKey secretKey = new SecretKeySpec(derivedKey, KEY_ALGORITHM);
+      AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv); // NOSONAR
+      return transform(Cipher.DECRYPT_MODE, secretKey, paramSpec, encrypted);
     }
 
+    /**
+     * Decrypts a raw ciphertext byte array using the configured key and IV.
+     *
+     * <p>
+     * <strong>Note:</strong> This overload does NOT perform HMAC verification because the
+     * caller supplies the raw ciphertext directly (without a stored PHC envelope). The caller
+     * is responsible for verifying integrity before invoking this method.
+     * </p>
+     *
+     * @deprecated Prefer {@link #decrypt()} which reads from the stored PHC envelope and performs
+     *             HMAC verification automatically. Only use this overload when you have a raw ciphertext
+     *             with no PHC envelope and have already verified integrity by other means.
+     */
+    @Deprecated
     @Override
     public byte[] decrypt(byte[] encrypted) throws CipherException {
       EncryptedSecret encryptedSecretHash = hashingHandler.hash(secretEncryptionKey.getKey().toCharArray());
@@ -233,6 +281,27 @@ public class PbeCipherFactoryImpl
       AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv); // NOSONAR
 
       return transform(Cipher.DECRYPT_MODE, secretKey, paramSpec, encrypted);
+    }
+
+    private byte[] computeHmac(final byte[] key, final byte[] iv, final byte[] ciphertext) throws CipherException {
+      try {
+        Mac mac;
+        try {
+          mac = Mac.getInstance(HMAC_ALGORITHM, cryptoHelper.getProvider());
+        }
+        catch (Exception e) {
+          log.warn("BouncyCastle provider unavailable for HMAC computation, falling back to default JCE provider: {}",
+              e.getMessage());
+          mac = Mac.getInstance(HMAC_ALGORITHM);
+        }
+        mac.init(new SecretKeySpec(key, HMAC_ALGORITHM));
+        mac.update(iv);
+        return mac.doFinal(ciphertext);
+      }
+      catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
+        throw new CipherException("Failed to compute HMAC", e);
+      }
     }
 
     private byte[] generateRandomBytes(final int size) {

@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.security.apikey.upgrade;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
@@ -59,7 +59,7 @@ public class ApiKeyToSecretsTask
 
   private final int synchronizationDelayMs;
 
-  @Inject
+  @Autowired
   public ApiKeyToSecretsTask(
       @Qualifier("v1") final ApiKeyStoreImpl apiKeyStoreV1,
       @Qualifier("v2") final ApiKeyStoreV2Impl apiKeyStoreV2,

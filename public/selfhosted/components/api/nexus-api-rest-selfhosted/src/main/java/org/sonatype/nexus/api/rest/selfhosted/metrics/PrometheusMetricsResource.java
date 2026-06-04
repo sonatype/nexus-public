@@ -17,8 +17,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Set;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -37,13 +36,12 @@ import org.springframework.stereotype.Component;
 
 @Path("/metrics/prometheus")
 @Component
-@Singleton
 public class PrometheusMetricsResource
     implements Resource
 {
   private final CacheControl cacheControl = new CacheControl();
 
-  @Inject
+  @Autowired
   public PrometheusMetricsResource(final MetricRegistry registry) {
     // Export to Prometheus
     new DropwizardExports(registry).register();

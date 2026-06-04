@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.raw;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
@@ -28,7 +26,6 @@ import org.springframework.stereotype.Component;
  * @since 3.25
  */
 @Component
-@Singleton
 public class ContentDispositionHandler
     implements Handler
 {

@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { lazy } from 'react';
-import { MissingRoutePage } from '../../components/super/pages/MissingRoutePage/MissingRoutePage';
+import { MissingRoutePage } from '@sonatype/nexus-ui-plugin';
 
 /**
  * Creates a lazy-loaded component with proper chunk naming for debugging.

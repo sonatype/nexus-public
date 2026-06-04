@@ -17,17 +17,13 @@ import java.sql.Connection;
 import org.sonatype.nexus.repository.content.search.upgrade.SearchIndexUpgrade;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-
-import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
 /**
  * Triggers the recreation of the search index for H2 instances due to a table schema change introduced by
  * {@link SearchTablePathsColumnJsonMigrationStep_2_102}.
  */
 @Component
-@Scope(SCOPE_PROTOTYPE)
 public class ReindexH2SearchTableUpgradeStep
     extends SearchIndexUpgrade
     implements RepeatableDatabaseMigrationStep

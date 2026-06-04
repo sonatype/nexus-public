@@ -19,6 +19,7 @@ import CleanupPoliciesStrings from "./admin/CleanupPoliciesStrings";
 import CapabilitiesStrings from "./admin/CapabilitiesStrings";
 import TasksStrings from "./admin/TasksStrings";
 import LoginPageStrings from "./LoginPageStrings";
+import WelcomeStrings from "./WelcomeStrings";
 
 /**
  * @since 3.21
@@ -123,5 +124,6 @@ export default {
   ...CleanupPoliciesStrings,
   ...CapabilitiesStrings,
   ...TasksStrings,
-  ...LoginPageStrings
+  ...LoginPageStrings,
+  ...WelcomeStrings
 };

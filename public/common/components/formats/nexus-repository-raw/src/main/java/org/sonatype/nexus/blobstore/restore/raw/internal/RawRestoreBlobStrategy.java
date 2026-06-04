@@ -16,9 +16,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.datastore.BaseRestoreBlobStrategy;
@@ -27,7 +25,6 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.view.payloads.DetachedBlobPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
@@ -38,13 +35,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("raw")
-@Singleton
 public class RawRestoreBlobStrategy
     extends BaseRestoreBlobStrategy<DataStoreRestoreBlobData>
 {
   private final RepositoryManager repositoryManager;
 
-  @Inject
+  @Autowired
   public RawRestoreBlobStrategy(
       final DryRunPrefix dryRunPrefix,
       final RepositoryManager repositoryManager)
@@ -67,9 +63,9 @@ public class RawRestoreBlobStrategy
   }
 
   @Override
-  protected void createAssetFromBlob(final Blob assetBlob, final DataStoreRestoreBlobData data) throws IOException {
+  protected void createAssetFromData(final DataStoreRestoreBlobData data) throws IOException {
     RawContentFacet rawContentFacet = data.getRepository().facet(RawContentFacet.class);
-    rawContentFacet.put(data.getBlobName(), new DetachedBlobPayload(assetBlob));
+    rawContentFacet.put(data.getBlobName(), data.createDetachedPayload());
   }
 
   @Override

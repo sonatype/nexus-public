@@ -77,7 +77,8 @@ public class S3PropertiesFileTest
 
     String text = new String(requestBodyArgumentCaptor.getValue().contentStreamProvider().newStream().readAllBytes());
 
-    assertThat(text, containsString("testProperty=newValue\n"));
+    // Normalize line endings for cross-platform compatibility (Windows uses \r\n)
+    assertThat(text, containsString("testProperty=newValue" + System.lineSeparator()));
     assertThat(requestBodyArgumentCaptor.getValue().optionalContentLength().orElse(null), is((long) text.length()));
     assertThat(putObjectRequestCaptor.getValue().metadata(), not(hasKey(TEMPORARY_BLOB_HEADER)));
   }
@@ -106,7 +107,8 @@ public class S3PropertiesFileTest
     RequestBody requestBody = requestBodyArgumentCaptor.getValue();
     String text = new String(requestBody.contentStreamProvider().newStream().readAllBytes());
 
-    assertThat(text, containsString("BlobStore.temporary-blob=true\n"));
+    // Normalize line endings for cross-platform compatibility (Windows uses \r\n)
+    assertThat(text, containsString("BlobStore.temporary-blob=true" + System.lineSeparator()));
     assertThat(requestBody.contentLength(), is((long) text.length()));
     assertThat(putObjectRequest.metadata(), hasEntry(TEMPORARY_BLOB_HEADER, "true"));
   }

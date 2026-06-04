@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.apt.internal.cleanup;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.repository.apt.AptFormat;
 
@@ -33,7 +31,6 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY
  */
 @Component
 @Qualifier(AptFormat.NAME)
-@Singleton
 public class AptCleanupPolicyConfiguration
     implements CleanupPolicyConfiguration
 {

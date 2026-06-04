@@ -96,16 +96,6 @@ export {
   type ErrorStateProps,
 } from './ErrorState';
 
-// ErrorBoundary - Isolate crash-prone widgets so rest of page stays visible
-export { ErrorBoundary, type ErrorBoundaryProps } from './ErrorBoundary';
-
-// MetadataGrid - Two-column metadata display for profile pages
-export {
-  MetadataGrid,
-  type MetadataGridProps,
-  type MetadataGridItem,
-} from './MetadataGrid';
-
 // HelpSection - Contextual help
 export {
   HelpSection,
@@ -113,19 +103,10 @@ export {
   type DocLink,
 } from './HelpSection';
 
-// TablePagination - Page-based table pagination (Nexus One design)
-export {
-  TablePagination,
-  PAGE_SIZE_OPTIONS,
-  type TablePaginationProps,
-} from './TablePagination/TablePagination';
-
-// SortableTableHeader - Sortable column headers with aria-sort
-export {
-  SortableTableHeader,
-  TableHeader,
-  type SortDirection,
-} from './SortableTableHeader';
+// The following components were moved to preview/shared in nexus-ui-plugin
+// (NEXUS-51698). Import them from '@sonatype/nexus-ui-plugin' instead:
+//   ErrorBoundary, MetadataGrid, TablePagination, SortableTableHeader,
+//   TableHeader, DeleteConfirmationModal, DeepResearchLink
 
 // Badges
 export { FormatBadge, type FormatBadgeProps } from './Badges/FormatBadge';
@@ -138,33 +119,12 @@ export {
   hasUnsavedChanges,
 } from './hooks';
 
-// Toast - Viewport-fixed notification system (available but not yet in use)
-// Keeping for future implementation - requires app-level provider
-export {
-  ToastProvider,
-  useToast,
-  type ToastType,
-  type ToastMessage,
-} from './Toast';
-
 // Tooltip - Renders inside Theme subtree for proper theme variable inheritance
 export {
   Tooltip,
   TooltipContainerProvider,
   usePortalContainer,
 } from './Tooltip/TooltipContainerContext';
-
-// Modals - Reusable modal components
-export {
-  DeleteConfirmationModal,
-  type DeleteConfirmationModalProps,
-} from './modals';
-
-// DeepResearchLink - Link to Guide component page for deep research
-export {
-  DeepResearchLink,
-  type DeepResearchLinkProps,
-} from './DeepResearchLink';
 
 // SessionExpiryModal - User-friendly session expiration handling
 export {

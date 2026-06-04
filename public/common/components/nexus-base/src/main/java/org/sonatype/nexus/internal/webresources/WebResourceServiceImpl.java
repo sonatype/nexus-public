@@ -26,8 +26,7 @@ import org.sonatype.nexus.webresources.WebResourceBundle;
 import org.sonatype.nexus.webresources.WebResourceService;
 
 import com.google.common.collect.Maps;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +38,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 2.8
  */
-@Singleton
 @Component
 public class WebResourceServiceImpl
     implements WebResourceService
@@ -52,7 +50,7 @@ public class WebResourceServiceImpl
 
   private final Map<String, WebResource> resourcePaths;
 
-  @Inject
+  @Autowired
   public WebResourceServiceImpl(
       final DevModeResources devModeResources,
       final MimeSupport mimeSupport,

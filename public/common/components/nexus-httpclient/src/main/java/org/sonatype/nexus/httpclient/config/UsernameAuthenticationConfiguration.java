@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.httpclient.config;
 
+import java.util.List;
+
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.Secret;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -57,6 +61,12 @@ public class UsernameAuthenticationConfiguration
   @Override
   public Secret getSecret() {
     return getPassword();
+  }
+
+  @Override
+  @JsonIgnore
+  public List<String> getSecretFieldNames() {
+    return List.of("password");
   }
 
   @Override

@@ -17,9 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.supportzip.FileContentSourceSupport;
@@ -48,7 +46,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 public class InstallConfigurationCustomizer
     implements SupportBundleCustomizer
 {
@@ -62,7 +59,7 @@ public class InstallConfigurationCustomizer
 
   private final String NEXUS_PROPERTIES = "nexus.properties";
 
-  @Inject
+  @Autowired
   public InstallConfigurationCustomizer(final ApplicationDirectories applicationDirectories) {
     this.applicationDirectories = checkNotNull(applicationDirectories);
   }

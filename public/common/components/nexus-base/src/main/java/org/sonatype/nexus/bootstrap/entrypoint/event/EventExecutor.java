@@ -23,10 +23,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
@@ -63,7 +62,6 @@ import static org.sonatype.nexus.bootstrap.entrypoint.event.EventManagerImpl.HOS
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Singleton
 public class EventExecutor
     extends LifecycleSupport
     implements Executor
@@ -91,7 +89,7 @@ public class EventExecutor
 
   private volatile boolean asyncProcessing;
 
-  @Inject
+  @Autowired
   public EventExecutor(
       @Value("${nexus.event.affinityEnabled:true}") final boolean affinityEnabled,
       @Value("${nexus.event.affinityCacheSize:1000}") final int affinityCacheSize,

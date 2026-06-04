@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.coreui.internal.UploadService;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -35,14 +33,13 @@ import org.springframework.stereotype.Component;
  * Upload {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Upload")
 public class UploadComponent
     extends DirectComponentSupport
 {
   private final UploadService uploadService;
 
-  @Inject
+  @Autowired
   public UploadComponent(final UploadService uploadService) {
     this.uploadService = checkNotNull(uploadService);
   }

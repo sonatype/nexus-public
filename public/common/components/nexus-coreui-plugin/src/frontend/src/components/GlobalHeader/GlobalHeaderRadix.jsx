@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {Flex, Box, IconButton, Button, Dialog, Text, Popover, TextArea, Heading} from '@radix-ui/themes';
-import {Tooltip} from '../shared';
+import {Tooltip} from '@sonatype/nexus-ui-plugin';
 import {RefreshCw, Repeat, Menu} from 'lucide-react';
 import {ExtJS, handleExtJsUnsavedChanges, restClient} from '@sonatype/nexus-ui-plugin';
 import {useRouter} from '@uirouter/react';

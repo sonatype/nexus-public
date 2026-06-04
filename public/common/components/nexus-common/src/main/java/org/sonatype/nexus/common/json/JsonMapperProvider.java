@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.common.json;
 
-import javax.annotation.Priority;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,19 +25,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Provider for the default configuration of {@link JsonMapper}. Marked with a sub-zero priority to prioritize
- * existing {@link ObjectMapper} providers.<br/>
+ * Provider for the default configuration of {@link JsonMapper}. Uses {@link Primary @Primary} and
+ * {@link Qualifier @Qualifier("default")} for DI selection among {@link ObjectMapper} providers.<br/>
  *
  * Reminder, if customization is required, use {@link JsonMapper#copy()} to create a local copy before customization.
  */
 @Component
 @Qualifier(JsonMapperProvider.DEFAULT)
-@Priority(-1)
-@Order
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class JsonMapperProvider
     implements FactoryBean<JsonMapper>

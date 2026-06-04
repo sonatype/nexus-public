@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.content.example.internal.recipe;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributor;
 import org.springframework.stereotype.Component;
@@ -26,11 +24,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @since 3.24
  */
 @Component
-@Singleton
 public class ExampleFormatSecurityContributor
     extends RepositoryFormatSecurityContributor
 {
-  @Inject
+  @Autowired
   public ExampleFormatSecurityContributor(@Qualifier(ExampleFormat.NAME) final Format format) {
     super(format);
   }

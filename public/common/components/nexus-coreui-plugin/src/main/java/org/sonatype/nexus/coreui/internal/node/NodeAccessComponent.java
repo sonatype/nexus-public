@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.node;
 
 import java.util.List;
 import java.util.Map.Entry;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 
@@ -33,14 +31,13 @@ import org.springframework.stereotype.Component;
  * NodeAccessComponent {@link DirectComponentSupport}.
  */
 @Component
-@Singleton
 @DirectAction(action = "node_NodeAccess")
 public class NodeAccessComponent
     extends DirectComponentSupport
 {
   private final NodeAccess nodeAccess;
 
-  @Inject
+  @Autowired
   public NodeAccessComponent(final NodeAccess nodeAccess) {
     this.nodeAccess = checkNotNull(nodeAccess);
   }

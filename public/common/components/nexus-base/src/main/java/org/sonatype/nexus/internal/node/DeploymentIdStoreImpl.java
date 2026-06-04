@@ -13,9 +13,7 @@
 package org.sonatype.nexus.internal.node;
 
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.Transactional;
@@ -24,7 +22,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class DeploymentIdStoreImpl
     extends ConfigStoreSupport<DeploymentIdDAO>
     implements DeploymentIdStore
@@ -33,7 +30,7 @@ public class DeploymentIdStoreImpl
 
   private Optional<String> deploymentId;
 
-  @Inject
+  @Autowired
   public DeploymentIdStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

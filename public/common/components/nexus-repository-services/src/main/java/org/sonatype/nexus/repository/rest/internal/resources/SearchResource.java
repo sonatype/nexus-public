@@ -61,11 +61,11 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.springframework.stereotype.Component;
+import org.apache.shiro.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -76,12 +76,12 @@ import static org.sonatype.nexus.repository.search.SearchUtils.CONTINUATION_TOKE
 import static org.sonatype.nexus.repository.search.SearchUtils.SORT_DIRECTION;
 import static org.sonatype.nexus.repository.search.SearchUtils.SORT_FIELD;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 
 /**
  * @since 3.4
  */
 @Component
-@Singleton
 @Path(SearchResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
@@ -114,7 +114,7 @@ public class SearchResource
 
   private int pageSize = 50;
 
-  @Inject
+  @Autowired
   public SearchResource(
       final SearchUtils searchUtils,
       final SearchResultFilterUtils searchResultFilterUtils,
@@ -152,9 +152,10 @@ public class SearchResource
     // Get asset parameters to filter assets within components
     MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
 
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     List<ComponentXO> componentXOs = response.getSearchResults()
         .stream()
-        .map(componentHit -> this.toComponent(componentHit, repositoryNames, assetParams))
+        .map(componentHit -> this.toComponent(componentHit, repositoryNames, assetParams, uploaderVisible))
         // Filter out components with no assets when asset parameters are specified
         .filter(component -> assetParams.isEmpty() ||
             (component.getAssets() != null && !component.getAssets().isEmpty()))
@@ -215,11 +216,12 @@ public class SearchResource
         tryExtractRepositoryFromSearch(searchUtils.getComponentSearchFilters(uriInfo));
 
     // Filter Assets by the criteria
+    boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     List<AssetXO> assets = response.getSearchResults()
         .stream()
         .flatMap(component -> searchResultFilterUtils.filterComponentAssets(component, assetParams))
         .map(asset -> AssetXO.from(asset, searchUtils.getRepository(repositoryNames.apply(asset.getRepository())),
-            assetDescriptors))
+            assetDescriptors, uploaderVisible))
         .collect(toList());
 
     return new Page<>(assets, response.getContinuationToken());
@@ -262,7 +264,8 @@ public class SearchResource
   private ComponentXO toComponent(
       final ComponentSearchResult componentHit,
       final Function<String, String> repositoryAccessMap,
-      final MultivaluedMap<String, String> assetParams)
+      final MultivaluedMap<String, String> assetParams,
+      final boolean uploaderVisible)
   {
     ComponentXO componentXO = componentXOFactory.createComponentXO();
     Repository repository = searchUtils.getRepository(repositoryAccessMap.apply(componentHit.getRepositoryName()));
@@ -274,9 +277,8 @@ public class SearchResource
     componentXO.setRepository(componentHit.getRepositoryName());
     componentXO.setFormat(componentHit.getFormat());
 
-    // Filter assets based on asset parameters if provided
     List<AssetXO> assets = searchResultFilterUtils.filterComponentAssets(componentHit, assetParams)
-        .map(asset -> AssetXO.from(asset, repository, assetDescriptors))
+        .map(asset -> AssetXO.from(asset, repository, assetDescriptors, uploaderVisible))
         .collect(toList());
     componentXO.setAssets(assets);
     for (SearchResourceExtension searchResourceExtension : searchResourceExtensions) {

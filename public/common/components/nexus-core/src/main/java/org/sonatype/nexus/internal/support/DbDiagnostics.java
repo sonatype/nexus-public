@@ -29,7 +29,7 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.datastore.api.DataStore;
@@ -37,8 +37,6 @@ import org.sonatype.nexus.datastore.api.DataStoreManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -49,7 +47,6 @@ import static java.util.stream.Collectors.toMap;
  *
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class DbDiagnostics
 {
   private static final Logger log = LoggerFactory.getLogger(DbDiagnostics.class);
@@ -66,7 +63,7 @@ public class DbDiagnostics
 
   private static final String MICROSECONDS = " microseconds";
 
-  @Inject
+  @Autowired
   public DbDiagnostics(ApplicationDirectories directories, final DataStoreManager dataStoreManager) {
     this.directories = checkNotNull(directories);
     this.dataStoreManager = checkNotNull(dataStoreManager);

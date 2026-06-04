@@ -14,7 +14,7 @@ package org.sonatype.nexus.crypto.internal;
 
 import java.security.SecureRandom;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.RandomBytesGenerator;
@@ -41,7 +41,7 @@ public class RandomBytesGeneratorImpl
 
   private final SecureRandom random;
 
-  @Inject
+  @Autowired
   public RandomBytesGeneratorImpl(final CryptoHelper crypto) {
     this.random = checkNotNull(crypto).createSecureRandom();
   }

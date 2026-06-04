@@ -19,12 +19,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
-import org.sonatype.goodies.common.Mutex;
+import org.sonatype.nexus.common.concurrent.Mutex;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -70,9 +68,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @ManagedLifecycle(phase = SERVICES)
-@Priority(Integer.MAX_VALUE) // make sure this starts early
-@Order(Ordered.HIGHEST_PRECEDENCE)
-@Singleton
+@Order(Ordered.HIGHEST_PRECEDENCE) // make sure this starts early
 public class HttpClientManagerImpl
     extends StateGuardLifecycleSupport
     implements HttpClientManager, EventAware
@@ -103,7 +99,7 @@ public class HttpClientManagerImpl
 
   private HttpClientConfiguration configuration;
 
-  @Inject
+  @Autowired
   public HttpClientManagerImpl(
       final EventManager eventManager,
       final HttpClientConfigurationStore store,

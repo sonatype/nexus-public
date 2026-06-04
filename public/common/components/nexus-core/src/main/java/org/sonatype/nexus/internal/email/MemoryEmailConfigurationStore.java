@@ -13,9 +13,6 @@
 package org.sonatype.nexus.internal.email;
 
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.email.EmailConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,8 +32,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier("memory")
-@Singleton
-@Priority(Integer.MIN_VALUE)
 @Order(Ordered.LOWEST_PRECEDENCE)
 @VisibleForTesting
 public class MemoryEmailConfigurationStore

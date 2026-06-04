@@ -19,7 +19,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Throwables;
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * @since 2.7
  */
 @Component
-@Singleton
 public class DevModeResources
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

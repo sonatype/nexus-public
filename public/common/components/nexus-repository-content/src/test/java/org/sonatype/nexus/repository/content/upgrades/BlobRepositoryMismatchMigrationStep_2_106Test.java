@@ -60,6 +60,6 @@ public class BlobRepositoryMismatchMigrationStep_2_106Test
 
     verify(upgradeTaskScheduler).createTaskConfigurationInstance("repository.blob.mismatch.task");
     verify(taskConfiguration).setString("repositoryName", "*");
-    verify(upgradeTaskScheduler).schedule(taskConfiguration);
+    verify(upgradeTaskScheduler).schedule(taskConfiguration, false);
   }
 }

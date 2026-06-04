@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.content.raw.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.director.ContentDirector;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -25,7 +23,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("raw")
-@Singleton
 public class RawContentDirector
     implements ContentDirector
 {

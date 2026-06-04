@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import static org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1.RESOURCE_URI;
@@ -24,14 +23,13 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class RepositoriesApiResourceV1
     extends RepositoriesApiResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/repositories";
 
-  @Inject
+  @Autowired
   public RepositoriesApiResourceV1(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     super(authorizingRepositoryManager);
   }

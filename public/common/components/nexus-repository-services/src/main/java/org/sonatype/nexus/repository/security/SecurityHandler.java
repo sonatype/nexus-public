@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.security;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
@@ -37,7 +35,6 @@ import org.slf4j.LoggerFactory;
  * @since 3.0
  */
 @Component
-@Singleton
 public class SecurityHandler
     implements org.sonatype.nexus.repository.view.handlers.SecurityHandler
 {
@@ -54,7 +51,7 @@ public class SecurityHandler
 
   private final Handler loginsCounterHandler;
 
-  @Inject
+  @Autowired
   public SecurityHandler(
       @Qualifier("nexus.analytics.loginsCounterHandler") @Nullable final Handler loginsCounterHandler)
   {

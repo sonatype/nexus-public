@@ -21,9 +21,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.mime.MimeSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -43,12 +41,11 @@ import org.springframework.stereotype.Component;
  */
 @Deprecated
 @Component
-@Singleton
 public class HardLinkHelper
 {
   private final MimeSupport mimeSupport;
 
-  @Inject
+  @Autowired
   public HardLinkHelper(final MimeSupport mimeSupport) {
     this.mimeSupport = checkNotNull(mimeSupport);
   }

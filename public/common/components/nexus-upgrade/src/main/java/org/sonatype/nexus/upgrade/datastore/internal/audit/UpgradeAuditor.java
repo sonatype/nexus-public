@@ -14,9 +14,7 @@ package org.sonatype.nexus.upgrade.datastore.internal.audit;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
@@ -36,7 +34,6 @@ import org.springframework.stereotype.Component;
  * Captures events for audit logging database migrations.
  */
 @Component
-@Singleton
 public class UpgradeAuditor
     extends AuditorSupport
     implements EventAware, EventAware.Asynchronous
@@ -61,7 +58,7 @@ public class UpgradeAuditor
 
   private final String nexusVersion;
 
-  @Inject
+  @Autowired
   public UpgradeAuditor(final ApplicationVersion applicationVersion) {
     nexusVersion = checkNotNull(applicationVersion).getVersion();
 

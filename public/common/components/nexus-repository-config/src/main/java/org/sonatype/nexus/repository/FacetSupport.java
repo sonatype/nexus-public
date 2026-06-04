@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.event.EventBus;
@@ -58,7 +58,7 @@ public abstract class FacetSupport
 
   protected RepositoryAttributeService repositoryAttributeService;
 
-  @Inject
+  @Autowired
   public void installDependencies(final EventManager eventManager) {
     this.eventManager = checkNotNull(eventManager);
   }

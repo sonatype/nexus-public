@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Component;
 
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class RoutingRulesApiResourceBeta
@@ -35,7 +33,7 @@ public class RoutingRulesApiResourceBeta
 {
   static final String RESOURCE_URI = BETA_API_PREFIX + "/routing-rules";
 
-  @Inject
+  @Autowired
   public RoutingRulesApiResourceBeta(
       final RoutingRuleStore routingRuleStore,
       final RoutingRuleHelper routingRuleHelper)

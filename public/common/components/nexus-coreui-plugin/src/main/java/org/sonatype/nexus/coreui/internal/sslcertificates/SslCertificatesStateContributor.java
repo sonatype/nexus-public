@@ -14,9 +14,7 @@ package org.sonatype.nexus.coreui.internal.sslcertificates;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
@@ -26,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class SslCertificatesStateContributor
     implements StateContributor
 {
@@ -34,7 +31,7 @@ public class SslCertificatesStateContributor
 
   private final Map<String, Object> state;
 
-  @Inject
+  @Autowired
   public SslCertificatesStateContributor(
       @Value("${nexus.react.sslCertificates:true}") final Boolean featureFlag)
   {

@@ -14,7 +14,7 @@ package org.sonatype.nexus.scheduling.constraints;
 
 import java.util.Date;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -41,7 +41,7 @@ public class CronExpressionValidator
 {
   private final ScheduleFactory scheduleFactory;
 
-  @Inject
+  @Autowired
   public CronExpressionValidator(final TaskScheduler taskScheduler) {
     checkNotNull(taskScheduler);
     this.scheduleFactory = taskScheduler.getScheduleFactory();

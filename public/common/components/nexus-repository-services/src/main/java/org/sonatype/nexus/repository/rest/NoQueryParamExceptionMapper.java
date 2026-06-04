@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.rest;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.rest.ExceptionMapperSupport;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Component;
  * @since 3.14
  */
 @Component
-@Singleton
 public class NoQueryParamExceptionMapper
     extends ExceptionMapperSupport<NoQueryParamException>
 {

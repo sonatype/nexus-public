@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
@@ -54,7 +54,7 @@ public class HttpSecretsMigrator
 
   private final HttpClientManager httpClientManager;
 
-  @Inject
+  @Autowired
   public HttpSecretsMigrator(
       final HttpClientManager httpClientManager,
       final SecretsService secretsService)

@@ -16,8 +16,7 @@ import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -41,7 +40,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(LoggingConfigurationResource.RESOURCE_PATH)
@@ -58,7 +56,7 @@ public class LoggingConfigurationResource
 
   private LogManager logManager;
 
-  @Inject
+  @Autowired
   public LoggingConfigurationResource(final LogManager logManager) {
     this.logManager = checkNotNull(logManager);
   }

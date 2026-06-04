@@ -14,7 +14,7 @@ package org.sonatype.nexus.bootstrap.entrypoint.event;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -28,8 +28,6 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -40,7 +38,6 @@ import static org.sonatype.nexus.common.event.EventBusFactory.reentrantEventBus;
 @Component
 @ManagedLifecycle(phase = EVENTS)
 @ManagedObject(typeClass = EventManager.class)
-@Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class EventManagerImpl
     extends LifecycleSupport
     implements EventManager
@@ -54,7 +51,7 @@ public class EventManagerImpl
 
   private final EventBus asyncBus;
 
-  @Inject
+  @Autowired
   public EventManagerImpl(final EventExecutor eventExecutor, final List<EventAware> eventListeners) {
     this.eventExecutor = checkNotNull(eventExecutor);
 

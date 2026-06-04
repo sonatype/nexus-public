@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
@@ -34,7 +34,7 @@ public class UniqueSelectorNameValidator
 {
   private final SelectorManager selectorManager;
 
-  @Inject
+  @Autowired
   public UniqueSelectorNameValidator(final SelectorManager selectorManager) {
     this.selectorManager = checkNotNull(selectorManager);
   }

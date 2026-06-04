@@ -22,8 +22,7 @@ import org.sonatype.nexus.rest.Resource;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.stereotype.Component;
@@ -38,7 +37,6 @@ import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
  * @since 3.20
  */
 @Component
-@Singleton
 @Path(HealthCheckResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 public class HealthCheckResource
@@ -50,7 +48,7 @@ public class HealthCheckResource
 
   private HealthCheckRegistry registry;
 
-  @Inject
+  @Autowired
   public HealthCheckResource(final HealthCheckRegistry registry) {
     this.registry = checkNotNull(registry);
   }

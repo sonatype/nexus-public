@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.maven.application.scan;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.application.scan.RepositoryApplicationScanSupport;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -24,7 +22,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Qualifier(Maven2Format.NAME + "-" + HostedType.NAME)
-@Singleton
 public class Maven2HostedRepositoryApplicationScanSupport
     implements RepositoryApplicationScanSupport
 {

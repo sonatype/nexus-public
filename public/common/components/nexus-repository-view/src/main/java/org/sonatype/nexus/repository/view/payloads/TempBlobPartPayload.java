@@ -35,11 +35,14 @@ public class TempBlobPartPayload
 
   private final boolean isFormField;
 
+  private final PartPayload sourcePayload;
+
   public TempBlobPartPayload(final PartPayload payload, final TempBlob tempBlob) throws IOException {
     super(tempBlob, checkNotNull(payload).getContentType());
     this.name = payload.getName();
     this.fieldName = payload.getFieldName();
     this.isFormField = payload.isFormField();
+    this.sourcePayload = payload;
   }
 
   /**
@@ -56,6 +59,7 @@ public class TempBlobPartPayload
     this.fieldName = checkNotNull(fieldName);
     this.name = name;
     this.isFormField = isFormField;
+    this.sourcePayload = null;
   }
 
   @Nullable
@@ -72,5 +76,11 @@ public class TempBlobPartPayload
   @Override
   public boolean isFormField() {
     return isFormField;
+  }
+
+  @Nullable
+  @Override
+  public String getHeader(final String name) {
+    return sourcePayload != null ? sourcePayload.getHeader(name) : null;
   }
 }

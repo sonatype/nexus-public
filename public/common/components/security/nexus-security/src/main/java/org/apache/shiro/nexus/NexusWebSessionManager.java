@@ -12,9 +12,7 @@
  */
 package org.apache.shiro.nexus;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.FeatureFlags;
 
 import org.apache.shiro.session.Session;
@@ -35,7 +33,6 @@ import org.springframework.stereotype.Component;
  * This session manager predates the more recent JWT session management in org.sonatype.nexus.security. It's used
  * in for single node deployments typically, however it is not used for Pro deployments using SAML (HA or not).
  */
-@Singleton
 @Component
 public class NexusWebSessionManager
     extends DefaultWebSessionManager
@@ -46,7 +43,7 @@ public class NexusWebSessionManager
 
   private static final ThreadLocal<Boolean> requestIsHttps = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
-  @Inject
+  @Autowired
   public void configureProperties(
       @Value("${shiro.globalSessionTimeout:" + DEFAULT_GLOBAL_SESSION_TIMEOUT + "}") final long globalSessionTimeout,
       @Value("${nexus.sessionCookieName:" + DEFAULT_NEXUS_SESSION_COOKIE_NAME + "}") final String sessionCookieName,

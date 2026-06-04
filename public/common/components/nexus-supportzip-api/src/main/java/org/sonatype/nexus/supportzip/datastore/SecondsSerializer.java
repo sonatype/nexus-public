@@ -14,7 +14,7 @@ package org.sonatype.nexus.supportzip.datastore;
 
 import java.io.IOException;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;

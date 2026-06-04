@@ -15,8 +15,6 @@ package org.sonatype.nexus.content.maven.internal.browse;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
@@ -59,7 +57,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
  *
  * @since 3.26
  */
-@Singleton
 @org.springframework.stereotype.Component
 @Qualifier(Maven2Format.NAME)
 public class Maven2BrowseNodeGenerator

@@ -14,8 +14,6 @@ package org.sonatype.nexus.self.hosted.blobstore.file;
 
 import java.util.function.Supplier;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.DefaultBlobStoreProvider;
 
@@ -33,7 +31,6 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class DefaultFileDefaultBlobStoreProvider
     implements DefaultBlobStoreProvider
 {

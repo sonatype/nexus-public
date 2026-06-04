@@ -13,8 +13,7 @@
 package org.sonatype.nexus.coreui;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -70,7 +69,6 @@ import org.springframework.stereotype.Component;
  * @since 3.0
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Blobstore")
 public class BlobStoreComponent
     extends DirectComponentSupport
@@ -97,7 +95,7 @@ public class BlobStoreComponent
 
   private final BlobStoreTaskService blobStoreTaskService;
 
-  @Inject
+  @Autowired
   public BlobStoreComponent(
       final BlobStoreManager blobStoreManager,
       final BlobStoreConfigurationStore store,

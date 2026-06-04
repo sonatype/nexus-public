@@ -13,7 +13,7 @@
 package org.sonatype.nexus.internal.security.secrets.task;
 
 import java.util.List;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.logging.task.TaskLogType;
 import org.sonatype.nexus.logging.task.TaskLogging;
@@ -38,7 +38,7 @@ public class SecretsMigrationTask
 {
   private final List<SecretsMigrator> migrators;
 
-  @Inject
+  @Autowired
   public SecretsMigrationTask(final List<SecretsMigrator> migrators) {
     this.migrators = checkNotNull(migrators);
   }

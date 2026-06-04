@@ -13,11 +13,8 @@
 package org.sonatype.nexus.content.raw.internal.recipe;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Priority;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -55,9 +52,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 @AvailabilityVersion(from = "1.0")
 @Component
 @Qualifier(RawProxyRecipe.NAME)
-@Priority(Integer.MAX_VALUE)
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@Singleton
 public class RawProxyRecipe
     extends RawRecipeSupport
 {
@@ -77,7 +72,7 @@ public class RawProxyRecipe
 
   private final RoutingRuleHandler routingRuleHandler;
 
-  @Inject
+  @Autowired
   public RawProxyRecipe(
       @Qualifier(ProxyType.NAME) final Type type,
       @Qualifier(RawFormat.NAME) final Format format,

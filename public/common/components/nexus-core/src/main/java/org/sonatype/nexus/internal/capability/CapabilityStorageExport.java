@@ -17,9 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemData;
@@ -36,14 +34,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("capabilityStorageExport")
-@Singleton
 public class CapabilityStorageExport
     extends JsonExporter
     implements ExportConfigData, ImportData
 {
   private final CapabilityStorage capabilityStorage;
 
-  @Inject
+  @Autowired
   public CapabilityStorageExport(final CapabilityStorage capabilityStorage) {
     this.capabilityStorage = capabilityStorage;
   }

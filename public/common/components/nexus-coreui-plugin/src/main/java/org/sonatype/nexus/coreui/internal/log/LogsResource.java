@@ -18,8 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -51,7 +50,6 @@ import org.springframework.stereotype.Component;
  * @since 3.3
  */
 @Component
-@Singleton
 @Path(LogsResource.RESOURCE_URI)
 public class LogsResource
     implements Resource
@@ -64,7 +62,7 @@ public class LogsResource
 
   private final LogManager logManager;
 
-  @Inject
+  @Autowired
   public LogsResource(final LogManager logManager) {
     this.logManager = checkNotNull(logManager);
   }

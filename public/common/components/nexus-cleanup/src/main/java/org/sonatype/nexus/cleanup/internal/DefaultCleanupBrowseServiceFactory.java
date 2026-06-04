@@ -19,20 +19,18 @@ import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.content.search.DefaultCleanupComponentBrowse;
 import org.sonatype.nexus.repository.Format;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Lazy
 @Component
-@Singleton
 public class DefaultCleanupBrowseServiceFactory
     implements CleanupBrowseServiceFactory
 {
   private final DefaultCleanupComponentBrowse defaultCleanupComponentBrowse;
 
-  @Inject
+  @Autowired
   public DefaultCleanupBrowseServiceFactory(final DefaultCleanupComponentBrowse defaultCleanupComponentBrowse) {
     this.defaultCleanupComponentBrowse = Objects.requireNonNull(defaultCleanupComponentBrowse);
   }

@@ -26,7 +26,6 @@ import org.sonatype.nexus.security.authc.NexusAuthenticationEvent;
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Singleton;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Component;
  * @since 3.22
  */
 @Component
-@Singleton
 public class NexusAuthenticationEventAuditor
     extends AuditorSupport
     implements EventAware, EventAware.Asynchronous

@@ -16,7 +16,7 @@
  */
 import {assign, Machine} from 'xstate';
 import Axios from 'axios';
-import {APIConstants} from '@sonatype/nexus-ui-plugin';
+import { APIConstants } from '../constants/APIConstants';
 
 const getPublicAPI = () => APIConstants?.REST?.PUBLIC || {};
 

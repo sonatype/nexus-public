@@ -12,9 +12,7 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.ssl.KeyStoreManagerConfiguration;
 import org.sonatype.nexus.ssl.KeyStoreStorageFactory;
@@ -31,13 +29,12 @@ import org.springframework.stereotype.Component;
 @Lazy
 @Component
 @Qualifier(KeyStoreManagerImpl.NAME)
-@Singleton
 public class KeyStoreManagerImpl
     extends org.sonatype.nexus.ssl.KeyStoreManagerImpl
 {
   public static final String NAME = "ssl";
 
-  @Inject
+  @Autowired
   public KeyStoreManagerImpl(
       final CryptoHelper crypto,
       @Qualifier(NAME) final KeyStoreStorageFactory storageFactory,

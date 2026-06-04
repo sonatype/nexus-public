@@ -15,9 +15,7 @@ package org.sonatype.nexus.coreui;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.kv.KeyValueStore;
 import org.sonatype.nexus.rapture.StateContributor;
 
@@ -50,7 +48,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDB
  * previewAuditEnabled is system-property only (no KV store entry).
  */
 @Component
-@Singleton
 public class PreviewUiStateContributor
     implements StateContributor
 {
@@ -76,7 +73,7 @@ public class PreviewUiStateContributor
 
   private final boolean auditEnabled;
 
-  @Inject
+  @Autowired
   public PreviewUiStateContributor(
       final KeyValueStore keyValueStore,
       @Value(PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE) final boolean defaultAnonymousEnabled,

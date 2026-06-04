@@ -17,7 +17,7 @@ import javax.validation.ConstraintValidatorContext;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +30,7 @@ public class RoleExistsStringValidator
 {
   private final AuthorizationManager authorizationManager;
 
-  @Inject
+  @Autowired
   public RoleExistsStringValidator(final AuthorizationManager authorizationManager) {
     this.authorizationManager = authorizationManager;
   }

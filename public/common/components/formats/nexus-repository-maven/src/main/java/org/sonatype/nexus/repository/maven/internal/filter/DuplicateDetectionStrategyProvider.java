@@ -14,8 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.filter;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.maven.index.reader.Record;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +28,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Provides the configured record duplicate detection strategy. Defaults to
  * {@link BloomFilterDuplicateDetectionStrategy}
  */
-@Singleton
 @Component
 public class DuplicateDetectionStrategyProvider
     implements FactoryBean<DuplicateDetectionStrategy<Record>>
@@ -44,7 +42,7 @@ public class DuplicateDetectionStrategyProvider
 
   private final int maxDiskSizeGb;
 
-  @Inject
+  @Autowired
   public DuplicateDetectionStrategyProvider(
       final ApplicationDirectories applicationDirectories,
       @Value("${nexus.maven.duplicate.detection.strategy:BLOOM}") final String strategy,

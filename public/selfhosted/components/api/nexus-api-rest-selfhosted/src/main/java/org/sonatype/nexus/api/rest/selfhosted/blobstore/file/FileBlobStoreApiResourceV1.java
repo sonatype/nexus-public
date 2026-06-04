@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.file;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
@@ -28,14 +27,13 @@ import org.springframework.stereotype.Component;
  * @since 3.24
  */
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 public class FileBlobStoreApiResourceV1
     extends FileBlobStoreResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
 
-  @Inject
+  @Autowired
   public FileBlobStoreApiResourceV1(final BlobStoreManager blobStoreManager) {
     super(blobStoreManager);
   }

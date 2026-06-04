@@ -21,8 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.security.JwtHelper;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.JWT_ENABLED;
 @WebFilter(filterName = JwtAuthenticationFilter.NAME)
 @Order(WebFilterPriority.AUTHENTICATION)
 @Component
-@Singleton
 @ConditionalOnProperty(name = JWT_ENABLED, havingValue = "true")
 public class JwtAuthenticationFilter
     extends SessionAuthenticationFilter
@@ -53,7 +51,7 @@ public class JwtAuthenticationFilter
 
   private final JwtHelper jwtHelper;
 
-  @Inject
+  @Autowired
   public JwtAuthenticationFilter(final JwtHelper jwtHelper) {
     this.jwtHelper = checkNotNull(jwtHelper);
   }

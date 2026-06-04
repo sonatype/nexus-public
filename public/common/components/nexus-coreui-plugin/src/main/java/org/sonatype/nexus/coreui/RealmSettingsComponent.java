@@ -14,8 +14,7 @@ package org.sonatype.nexus.coreui;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -42,7 +41,6 @@ import org.springframework.stereotype.Component;
  * Realm Security Settings {@link DirectComponentSupport}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_RealmSettings")
 public class RealmSettingsComponent
     extends DirectComponentSupport
@@ -52,7 +50,7 @@ public class RealmSettingsComponent
 
   private ApplicationContext applicationContext;
 
-  @Inject
+  @Autowired
   public RealmSettingsComponent(final RealmManager realmManager) {
     this.realmManager = checkNotNull(realmManager);
   }

@@ -14,9 +14,7 @@ package org.sonatype.nexus.script.plugin.internal;
 
 import java.util.List;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.script.Script;
@@ -33,12 +31,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("mybatis")
-@Singleton
 public class ScriptStoreImpl
     extends ConfigStoreSupport<ScriptDAO>
     implements ScriptStore
 {
-  @Inject
+  @Autowired
   public ScriptStoreImpl(final DataSessionSupplier sessionSupplier) {
     super(sessionSupplier);
   }

@@ -41,6 +41,7 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,8 +81,8 @@ public class AptSnapshotFacetSupportTest
     underTest = new TestableAptSnapshotFacetSupport();
     underTest.attach(repository);
 
-    when(repository.facet(AptContentFacet.class)).thenReturn(contentFacet);
-    when(contentFacet.getTempBlob(any(InputStream.class), anyString())).thenReturn(tempBlob);
+    lenient().when(repository.facet(AptContentFacet.class)).thenReturn(contentFacet);
+    lenient().when(contentFacet.getTempBlob(any(InputStream.class), anyString())).thenReturn(tempBlob);
   }
 
   @Test
@@ -150,6 +151,263 @@ public class AptSnapshotFacetSupportTest
         path -> assertThat("Path should start with snapshot prefix", path, startsWith("/snapshots/my-snapshot-id/")));
   }
 
+  @Test
+  public void testCreateSnapshot_NonFlatRepo_IncludesManifestMetadata() throws IOException {
+    when(contentFacet.isFlat()).thenReturn(false);
+    when(contentFacet.getDistribution()).thenReturn("bookworm");
+    when(selector.getArchitectures(any(Release.class))).thenReturn(Arrays.asList("amd64"));
+    when(selector.getComponents(any(Release.class))).thenReturn(Arrays.asList("main"));
+
+    underTest.createSnapshot("test-snapshot", selector);
+
+    verify(contentFacet, atLeastOnce()).findOrCreateMetadataAsset(eq(tempBlob), pathCaptor.capture());
+    List<String> capturedPaths = pathCaptor.getAllValues();
+
+    assertThat("Should include Translation-en from manifest",
+        capturedPaths, hasItem(containsString("i18n/Translation-en")));
+    assertThat("Should include Translation-en.gz from manifest",
+        capturedPaths, hasItem(containsString("i18n/Translation-en.gz")));
+    assertThat("Should include DEP-11 metadata from manifest",
+        capturedPaths, hasItem(containsString("dep11/Components-amd64.yml.gz")));
+  }
+
+  @Test
+  public void testCreateSnapshot_NonFlatRepo_FiltersOutByHashPathsFromManifest() throws Exception {
+    // by-hash paths listed in the Release manifest should be filtered by isAlreadyHandled()
+    // and must not be added again as separate manifest metadata items.
+    TestableWithByHashInManifest facetWithByHash = new TestableWithByHashInManifest();
+    facetWithByHash.attach(repository);
+
+    when(contentFacet.isFlat()).thenReturn(false);
+    when(contentFacet.getDistribution()).thenReturn("bookworm");
+    when(selector.getArchitectures(any(Release.class))).thenReturn(Arrays.asList("amd64"));
+    when(selector.getComponents(any(Release.class))).thenReturn(Arrays.asList("main"));
+
+    facetWithByHash.createSnapshot("test-snapshot", selector);
+
+    verify(contentFacet, atLeastOnce()).findOrCreateMetadataAsset(eq(tempBlob), pathCaptor.capture());
+    List<String> capturedPaths = pathCaptor.getAllValues();
+
+    // The by-hash hash "differenthash123" only appears in the manifest, NOT as a step-4 checksum.
+    // If isAlreadyHandled() works correctly, this path must not appear in the snapshot at all.
+    assertThat("By-hash path from Release manifest should be filtered out and not collected",
+        capturedPaths, not(hasItem(containsString("by-hash/SHA256/differenthash123"))));
+
+    // Non-by-hash manifest items should still be collected
+    assertThat("Translation-en listed in manifest should still be included",
+        capturedPaths, hasItem(containsString("main/i18n/Translation-en")));
+  }
+
+  @Test
+  public void testCreateSnapshot_FlatRepo_ManifestItems_HaveNoDistsPrefix() throws IOException {
+    // For flat repositories, manifest file paths are used as-is (no "dists/{dist}/" prefix).
+    when(contentFacet.isFlat()).thenReturn(true);
+    when(contentFacet.getDistribution()).thenReturn("focal");
+
+    underTest.createSnapshot("test-snapshot", selector);
+
+    verify(contentFacet, atLeastOnce()).findOrCreateMetadataAsset(eq(tempBlob), pathCaptor.capture());
+    List<String> capturedPaths = pathCaptor.getAllValues();
+
+    // Manifest items must not have a "dists/focal/" segment injected for flat repos
+    assertThat("Flat repo snapshot paths must not contain dists/ prefix",
+        capturedPaths, not(hasItem(containsString("dists/focal/"))));
+  }
+
+  @Test
+  public void testCreateSnapshot_NonFlatRepo_DoesNotDoubleCollectPackageIndexes() throws IOException {
+    when(contentFacet.isFlat()).thenReturn(false);
+    when(contentFacet.getDistribution()).thenReturn("bookworm");
+    when(selector.getArchitectures(any(Release.class))).thenReturn(Arrays.asList("amd64"));
+    when(selector.getComponents(any(Release.class))).thenReturn(Arrays.asList("main"));
+
+    underTest.createSnapshot("test-snapshot", selector);
+
+    verify(contentFacet, atLeastOnce()).findOrCreateMetadataAsset(eq(tempBlob), pathCaptor.capture());
+    List<String> capturedPaths = pathCaptor.getAllValues();
+
+    long packagesCount = capturedPaths.stream()
+        .filter(p -> p.endsWith("/Packages"))
+        .count();
+    assertThat("Packages should be collected exactly once (not double-counted from manifest)",
+        packagesCount, is(1L));
+  }
+
+  @Test
+  public void testCreateSnapshot_NonFlatRepo_CollectsDebianInstallerPackages() throws IOException {
+    // debian-installer Packages paths look like main/debian-installer/binary-amd64/Packages.gz
+    // The old regex (.*) greedily matched across the debian-installer sub-path and treated them
+    // as already-handled regular package indexes, so they were silently dropped.
+    // The fixed regex ([^/]+) stops at the first slash and no longer matches these paths.
+    when(contentFacet.isFlat()).thenReturn(false);
+    when(contentFacet.getDistribution()).thenReturn("bookworm");
+    when(selector.getArchitectures(any(Release.class))).thenReturn(Arrays.asList("amd64"));
+    when(selector.getComponents(any(Release.class))).thenReturn(Arrays.asList("main"));
+
+    underTest.createSnapshot("test-snapshot", selector);
+
+    verify(contentFacet, atLeastOnce()).findOrCreateMetadataAsset(eq(tempBlob), pathCaptor.capture());
+    List<String> capturedPaths = pathCaptor.getAllValues();
+
+    assertThat("debian-installer Packages.gz must be collected from the Release manifest",
+        capturedPaths, hasItem(containsString("debian-installer/binary-amd64/Packages.gz")));
+  }
+
+  @Test
+  public void testCreateSnapshot_NonFlatRepo_SkipsByHashForInvalidChecksumFormat() throws Exception {
+    // A checksum value containing non-hex characters (e.g. "/") must be rejected before
+    // being used in a by-hash path — otherwise it would silently produce a malformed path.
+    TestableWithInvalidChecksum facetWithInvalidChecksum = new TestableWithInvalidChecksum();
+    facetWithInvalidChecksum.attach(repository);
+
+    when(contentFacet.isFlat()).thenReturn(false);
+    when(contentFacet.getDistribution()).thenReturn("bookworm");
+    when(selector.getArchitectures(any(Release.class))).thenReturn(Arrays.asList("amd64"));
+    when(selector.getComponents(any(Release.class))).thenReturn(Arrays.asList("main"));
+
+    facetWithInvalidChecksum.createSnapshot("test-snapshot", selector);
+
+    verify(contentFacet, atLeastOnce()).findOrCreateMetadataAsset(eq(tempBlob), pathCaptor.capture());
+    List<String> capturedPaths = pathCaptor.getAllValues();
+
+    assertThat("No by-hash path should be created for an invalid checksum format",
+        capturedPaths, not(hasItem(containsString("by-hash/SHA256/invalid"))));
+  }
+
+  // --- isAlreadyHandled() direct tests ---
+
+  @Test
+  void isAlreadyHandled_regularComponentPackagesGz_returnsTrue() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/binary-amd64/Packages.gz"), is(true));
+  }
+
+  @Test
+  void isAlreadyHandled_regularComponentPackagesNoExtension_returnsTrue() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/binary-amd64/Packages"), is(true));
+  }
+
+  @Test
+  void isAlreadyHandled_regularComponentPackagesBz2_returnsTrue() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("universe/binary-i386/Packages.bz2"), is(true));
+  }
+
+  @Test
+  void isAlreadyHandled_debianInstallerPackagesGz_returnsFalse() {
+    // Two path segments before binary- — must NOT be filtered
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/debian-installer/binary-amd64/Packages.gz"),
+        is(false));
+  }
+
+  @Test
+  void isAlreadyHandled_byHashPath_returnsTrue() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/binary-amd64/by-hash/SHA256/abc123"),
+        is(true));
+  }
+
+  @Test
+  void isAlreadyHandled_translationFile_returnsFalse() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/i18n/Translation-en.gz"), is(false));
+  }
+
+  @Test
+  void isAlreadyHandled_sourcesFile_returnsFalse() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/source/Sources.gz"), is(false));
+  }
+
+  @Test
+  void isAlreadyHandled_dep11File_returnsFalse() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("main/dep11/Components-amd64.yml.gz"), is(false));
+  }
+
+  @Test
+  void isAlreadyHandled_contentsFile_returnsFalse() {
+    assertThat(AptSnapshotFacetSupport.isAlreadyHandled("Contents-amd64.gz"), is(false));
+  }
+
+  /**
+   * Variant whose Release content includes a by-hash entry in the SHA256 section.
+   * Used to verify that isAlreadyHandled() filters those paths from the manifest step.
+   */
+  private static class TestableWithByHashInManifest
+      extends AptSnapshotFacetSupport
+  {
+    @Override
+    protected List<SnapshotItem> fetchSnapshotItems(List<ContentSpecifier> specs) throws IOException {
+      return specs.stream().map(spec -> {
+        Content content;
+
+        if (spec.role == SnapshotItem.Role.RELEASE_INDEX) {
+          // Release manifest contains a by-hash entry ("differenthash123") that must be filtered,
+          // plus a regular metadata file (Translation-en) that must be kept.
+          String releaseContent = "SHA256:\n" +
+              " abc123456789 12345 main/binary-amd64/Packages\n" +
+              " differenthash123 98765 main/binary-amd64/by-hash/SHA256/differenthash123\n" +
+              " mno012345678 2048 main/i18n/Translation-en\n";
+          content = new Content(new StringPayload(releaseContent, "text/plain"));
+        }
+        else if (spec.role.name().startsWith("PACKAGE_INDEX") && !spec.path.contains("by-hash")) {
+          content = new Content(new StringPayload("Package content for " + spec.path, "text/plain"));
+
+          Asset asset = mock(Asset.class);
+          AssetBlob assetBlob = mock(AssetBlob.class);
+          Map<String, String> checksums = new HashMap<>();
+          // Step-4 by-hash uses "abc123456789", NOT "differenthash123" — confirming they are distinct.
+          checksums.put("SHA256", "abc123456789");
+          checksums.put("MD5", "def456789012");
+
+          lenient().when(asset.hasBlob()).thenReturn(true);
+          lenient().when(asset.blob()).thenReturn(Optional.of(assetBlob));
+          lenient().when(assetBlob.checksums()).thenReturn(checksums);
+          content.getAttributes().set(Asset.class, asset);
+        }
+        else {
+          content = new Content(new StringPayload("Content for " + spec.path, "text/plain"));
+        }
+
+        return new SnapshotItem(spec, content);
+      }).toList();
+    }
+  }
+
+  /**
+   * Provides a package item whose checksum has an invalid hex format (contains "/").
+   * Used to verify that the hex-format guard in fetchByHashItems rejects it.
+   */
+  private static class TestableWithInvalidChecksum
+      extends AptSnapshotFacetSupport
+  {
+    @Override
+    protected List<SnapshotItem> fetchSnapshotItems(List<ContentSpecifier> specs) throws IOException {
+      return specs.stream().map(spec -> {
+        Content content;
+
+        if (spec.role == SnapshotItem.Role.RELEASE_INDEX) {
+          String releaseContent = "SHA256:\n" +
+              " abc123456789 12345 main/binary-amd64/Packages\n";
+          content = new Content(new StringPayload(releaseContent, "text/plain"));
+        }
+        else if (spec.role.name().startsWith("PACKAGE_INDEX") && !spec.path.contains("by-hash")) {
+          content = new Content(new StringPayload("Package content for " + spec.path, "text/plain"));
+
+          Asset asset = mock(Asset.class);
+          AssetBlob assetBlob = mock(AssetBlob.class);
+          Map<String, String> checksums = new HashMap<>();
+          checksums.put("SHA256", "invalid/hash"); // non-hex — must be rejected
+
+          lenient().when(asset.hasBlob()).thenReturn(true);
+          lenient().when(asset.blob()).thenReturn(Optional.of(assetBlob));
+          lenient().when(assetBlob.checksums()).thenReturn(checksums);
+          content.getAttributes().set(Asset.class, asset);
+        }
+        else {
+          content = new Content(new StringPayload("Content for " + spec.path, "text/plain"));
+        }
+
+        return new SnapshotItem(spec, content);
+      }).toList();
+    }
+  }
+
   private static class TestableAptSnapshotFacetSupport
       extends AptSnapshotFacetSupport
   {
@@ -159,12 +417,16 @@ public class AptSnapshotFacetSupportTest
         Content content;
 
         if (spec.role == SnapshotItem.Role.RELEASE_INDEX) {
-          // Create release content with package file checksums
+          // Create release content with package file checksums and additional metadata
           String releaseContent = "SHA256:\n" +
               " abc123456789 12345 main/binary-amd64/Packages\n" +
               " def456789012 6789 main/binary-amd64/Packages.gz\n" +
               " ghi789012345 1234 main/binary-amd64/Packages.bz2\n" +
-              " jkl012345678 5678 main/binary-amd64/Packages.xz\n";
+              " jkl012345678 5678 main/binary-amd64/Packages.xz\n" +
+              " mno012345678 2048 main/i18n/Translation-en\n" +
+              " pqr012345678 1024 main/i18n/Translation-en.gz\n" +
+              " stu012345678 4096 main/dep11/Components-amd64.yml.gz\n" +
+              " vwx012345678 8192 main/debian-installer/binary-amd64/Packages.gz\n";
           content = new Content(new StringPayload(releaseContent, "text/plain"));
         }
         else if (spec.role.name().startsWith("PACKAGE_INDEX") && !spec.path.contains("by-hash")) {

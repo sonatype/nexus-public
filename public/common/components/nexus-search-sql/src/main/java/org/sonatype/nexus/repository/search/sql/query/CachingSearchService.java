@@ -29,9 +29,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheStats;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.context.annotation.Primary;
@@ -72,7 +71,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Named("caching")
 @Primary
-@Singleton
 public class CachingSearchService
     implements SearchService, EventAware
 {
@@ -88,7 +86,7 @@ public class CachingSearchService
 
   private final boolean enabled;
 
-  @Inject
+  @Autowired
   public CachingSearchService(
       @Named("sql") final SearchService delegate,
       @Value("${nexus.search.cache.enabled:true}") final boolean enabled,

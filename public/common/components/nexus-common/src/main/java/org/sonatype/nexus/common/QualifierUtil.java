@@ -101,9 +101,9 @@ public final class QualifierUtil
   }
 
   private static int getOrder(final Class<?> clazz) {
-    Order priorityAnnotation = AnnotationUtils.getAnnotation(clazz, Order.class);
-    // 0 is lowest priority, default value
-    return priorityAnnotation != null ? priorityAnnotation.value() : 0;
+    Order orderAnnotation = AnnotationUtils.getAnnotation(clazz, Order.class);
+    // Use DEFAULT_PRECEDENCE (0) for unannotated components to preserve historical ordering
+    return orderAnnotation != null ? orderAnnotation.value() : PrecedenceConstants.DEFAULT_PRECEDENCE;
   }
 
   /**

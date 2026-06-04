@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -40,15 +40,12 @@ import static org.apache.commons.lang3.StringUtils.replace;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
 
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
  * Utility class for forming a sort expression based on a search field's column mapping
  */
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SqlSearchSortUtil
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -63,7 +60,7 @@ public class SqlSearchSortUtil
 
   private final Map<String, SearchField> aliasToColumn;
 
-  @Inject
+  @Autowired
   public SqlSearchSortUtil(final SearchDatabase searchDatabase, final List<SearchMappings> searchMappings) {
     this.searchDatabase = checkNotNull(searchDatabase);
     this.aliasToColumn = checkNotNull(searchMappings).stream()

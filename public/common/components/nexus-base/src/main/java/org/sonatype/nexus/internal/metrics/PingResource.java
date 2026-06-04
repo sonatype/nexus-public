@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.internal.metrics;
 
-import jakarta.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
  */
 @Path("/metrics/ping")
 @Component
-@Singleton
 public class PingResource
     implements Resource
 {

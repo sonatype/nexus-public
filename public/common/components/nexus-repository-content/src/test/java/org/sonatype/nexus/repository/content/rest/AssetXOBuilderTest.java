@@ -66,7 +66,7 @@ public class AssetXOBuilderTest
 
   @Test
   public void blobCreatedExists() {
-    AssetXO assetXO = AssetXOBuilder.fromAsset(anAsset(), repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(anAsset(), repository, null, false);
 
     assertThat(assetXO.getId(), notNullValue());
     assertThat(assetXO.getPath(), is("/nameOne"));
@@ -81,7 +81,7 @@ public class AssetXOBuilderTest
     OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
-    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     // Should use asset.created() timestamp
     assertThat(assetXO.getBlobCreated().toInstant().toEpochMilli(),
@@ -95,7 +95,7 @@ public class AssetXOBuilderTest
     OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
-    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     // Should use blob.blobCreated() timestamp, not asset.created()
     assertThat(assetXO.getBlobCreated().toInstant().toEpochMilli(),
@@ -113,7 +113,7 @@ public class AssetXOBuilderTest
     asset.setCreated(assetCreated);
     // No blob set
 
-    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     // Should fall back to asset.created() when blob is missing
     assertThat(assetXO.getBlobCreated().toInstant().toEpochMilli(),
@@ -127,7 +127,7 @@ public class AssetXOBuilderTest
     OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
-    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     assertThat(assetXO.getId(), notNullValue());
     assertThat(assetXO.getPath(), is(ASSET_PATH));
@@ -146,7 +146,7 @@ public class AssetXOBuilderTest
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated,
         "default@051ae249-9d2d-4807-85d0-9c920198b3b7@2025-11-13T09:31");
 
-    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobStoreName(), is("default"));
   }
@@ -160,7 +160,7 @@ public class AssetXOBuilderTest
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated,
         "test-blob@14c05db1-4329-4733-a5de-2ee6fa5c46c2@2025-11-17T07:55");
 
-    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobStoreName(), is("test-blob"));
   }
@@ -171,7 +171,7 @@ public class AssetXOBuilderTest
     OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
-    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobUpdated(), notNullValue());
     assertThat(assetXO.getBlobUpdated().toInstant().toEpochMilli(),
@@ -184,7 +184,7 @@ public class AssetXOBuilderTest
     OffsetDateTime blobCreated = OffsetDateTime.now().minusHours(1);
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated);
-    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobUpdated(), notNullValue());
     assertThat(assetXO.getBlobUpdated().toInstant().toEpochMilli(),
@@ -198,7 +198,7 @@ public class AssetXOBuilderTest
     String blobRefString = "test-blob@14c05db1-4329-4733-a5de-2ee6fa5c46c2@2025-11-17T07:55";
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated, blobRefString);
-    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobRef(), is(blobRefString));
   }
@@ -210,7 +210,7 @@ public class AssetXOBuilderTest
     String blobRefString = "test-blob@14c05db1-4329-4733-a5de-2ee6fa5c46c2@2025-11-17T07:55";
 
     Asset asset = anAssetWithTimestamps(assetCreated, blobCreated, blobRefString);
-    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromEagerAsset(asset, repository, null, false);
 
     assertThat(assetXO.getBlobRef(), is(blobRefString));
   }
@@ -234,7 +234,7 @@ public class AssetXOBuilderTest
     // Add cache attributes with last_verified
     asset.attributes("cache").set("last_verified", lastVerifiedTimestamp);
 
-    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     assertThat(assetXO.getLastVerified(), notNullValue());
     assertThat(assetXO.getLastVerified().getTime(), is(lastVerifiedTimestamp));
@@ -243,11 +243,53 @@ public class AssetXOBuilderTest
   @Test
   public void fromAsset_lastVerifiedNullWhenNotPresent() {
     Asset asset = anAsset();
-    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
 
     // Should not throw exception when cache.last_verified is not present
     // This is normal for hosted repos
     assertThat(assetXO.getLastVerified(), is(nullValue()));
+  }
+
+  @Test
+  public void fromAsset_uploaderFieldsPresent_whenVisible() {
+    OffsetDateTime now = OffsetDateTime.now();
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(now);
+
+    AssetBlobData blob = new AssetBlobData();
+    blob.setAssetBlobId(1);
+    blob.setBlobCreated(now);
+    blob.setCreatedBy("testuser");
+    blob.setCreatedByIp("192.168.1.1");
+    asset.setAssetBlob(blob);
+
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, true);
+
+    assertThat(assetXO.getUploader(), is("testuser"));
+    assertThat(assetXO.getUploaderIp(), is("192.168.1.1"));
+  }
+
+  @Test
+  public void fromAsset_uploaderFieldsNull_whenNotVisible() {
+    OffsetDateTime now = OffsetDateTime.now();
+    AssetData asset = new AssetData();
+    asset.setAssetId(AN_ASSET_ID);
+    asset.setPath(ASSET_PATH);
+    asset.setCreated(now);
+
+    AssetBlobData blob = new AssetBlobData();
+    blob.setAssetBlobId(1);
+    blob.setBlobCreated(now);
+    blob.setCreatedBy("testuser");
+    blob.setCreatedByIp("192.168.1.1");
+    asset.setAssetBlob(blob);
+
+    AssetXO assetXO = AssetXOBuilder.fromAsset(asset, repository, null, false);
+
+    assertThat(assetXO.getUploader(), is(nullValue()));
+    assertThat(assetXO.getUploaderIp(), is(nullValue()));
   }
 
   private Asset anAsset() {

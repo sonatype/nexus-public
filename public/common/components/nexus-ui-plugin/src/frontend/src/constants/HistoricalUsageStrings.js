@@ -24,7 +24,10 @@ export default {
     MENU_DESCRIPTION: 'Monitor historical usage trends.',
     TITLE: 'Historical Usage',
     USAGE_DATA_UPDATE_FREQUENCY: 'Storage usage metrics may take up to 72 hours to update. Recent repository activity, such as publishing, downloading, or deleting components, may not appear immediately.',
-    DESCRIPTION: <>Monitor your repository usage trends over time. <NxTextLink external
+    USAGE_DATA_STORAGE_EXPLANATION: <>
+      <strong>Note:</strong> This value may differ from the sum of individual repository storage totals. The storage usage includes: version history retained for 45 days after deletion, overwritten file versions retained for 30 days, and tenant access logs from the past 90 days.
+    </>,
+    DESCRIPTION: <>Monitor your storage usage trends over time. <NxTextLink external
                                                                                href="http://links.sonatype.com/products/nxrm3/license/historical-usage">Learn
       how usage is calculated</NxTextLink></>,
     MONTH: 'Month',

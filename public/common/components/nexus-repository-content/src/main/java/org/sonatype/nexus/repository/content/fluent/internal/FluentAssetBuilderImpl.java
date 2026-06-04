@@ -30,7 +30,6 @@ import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
-import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -56,6 +55,8 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.EXTERNAL_ETAG_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.EXTERNAL_LAST_MODIFIED_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
+import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
 
 /**
  * {@link FluentAssetBuilder} implementation.
@@ -187,7 +188,7 @@ public class FluentAssetBuilderImpl
   private Asset updateAssetAttributes(final Asset asset) {
     if (attributes != null && !attributes.isEmpty()) {
       AttributeChangeSet changeSet = new AttributeChangeSet();
-      attributes.forEach((key, value) -> changeSet.attributes(AttributeOperation.OVERLAY, key, value));
+      attributes.forEach((key, value) -> changeSet.attributes(value instanceof Map ? OVERLAY : SET, key, value));
       facet.stores().assetStore
           .updateAssetAttributes(asset, changeSet);
     }

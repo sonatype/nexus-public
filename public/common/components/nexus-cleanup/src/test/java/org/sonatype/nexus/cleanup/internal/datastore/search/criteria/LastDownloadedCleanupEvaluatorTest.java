@@ -41,7 +41,8 @@ class LastDownloadedCleanupEvaluatorTest
   void testPredicateShouldCleanupWhenLastDownloadedBeforeCutTime() {
     OffsetDateTime now = OffsetDateTime.now();
     OffsetDateTime oldDownloadTime = now.minusDays(2);
-    String value = String.valueOf(OffsetDateTime.now().toEpochSecond() - oldDownloadTime.toEpochSecond());
+    // Use the same 'now' reference to avoid timing drift between two OffsetDateTime.now() calls
+    String value = String.valueOf(now.toEpochSecond() - oldDownloadTime.toEpochSecond());
 
     Asset asset = createMockAssetWithLastDownloaded(oldDownloadTime);
     Component component = createMockComponent();

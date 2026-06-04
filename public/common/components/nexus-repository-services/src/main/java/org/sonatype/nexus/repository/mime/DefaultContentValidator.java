@@ -19,9 +19,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.MimeSupport;
@@ -47,7 +45,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Primary
 @Component
 @Qualifier(DefaultContentValidator.NAME)
-@Singleton
 public class DefaultContentValidator
     implements ContentValidator
 {
@@ -61,7 +58,7 @@ public class DefaultContentValidator
 
   private final MimeSupport mimeSupport;
 
-  @Inject
+  @Autowired
   public DefaultContentValidator(final MimeSupport mimeSupport) {
     this.mimeSupport = checkNotNull(mimeSupport);
   }

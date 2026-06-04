@@ -21,7 +21,6 @@ import org.sonatype.nexus.repository.rest.sql.SearchField;
 import org.sonatype.nexus.repository.search.sql.query.SearchDatabase;
 import org.sonatype.nexus.repository.search.sql.query.h2.H2SearchColumn.Type;
 
-import jakarta.inject.Singleton;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -37,7 +36,6 @@ import static org.sonatype.nexus.repository.rest.sql.SearchField.*;
 @Lazy
 @Qualifier("h2")
 @Component
-@Singleton
 public class H2SearchDB
     implements SearchDatabase
 {

@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.swagger.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.rest.Component;
 
 /**
@@ -22,7 +20,6 @@ import org.sonatype.nexus.rest.Component;
  * @since 3.3
  */
 @org.springframework.stereotype.Component
-@Singleton
 public class SwaggerSerializers
     extends io.swagger.jaxrs.listing.SwaggerSerializers
     implements Component

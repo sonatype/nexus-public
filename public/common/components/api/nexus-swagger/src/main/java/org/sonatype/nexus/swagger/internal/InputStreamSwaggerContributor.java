@@ -20,7 +20,6 @@ import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.Swagger;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 
 /**
  * SwaggerContributor that post-processes the Swagger model to fix the InputStream model definition.
@@ -28,7 +27,6 @@ import jakarta.inject.Singleton;
  * This fixes all endpoints that reference #/definitions/InputStream (e.g., POST /v1/system/license).
  */
 @Named
-@Singleton
 public class InputStreamSwaggerContributor
     implements SwaggerContributor
 {

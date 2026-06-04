@@ -21,8 +21,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
@@ -35,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Singleton
 public class CsvCleanupPreviewContentWriter
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

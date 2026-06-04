@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.event.EventManager;
@@ -52,7 +52,7 @@ public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
     this.format = extractFormat(daoClass);
   }
 
-  @Inject
+  @Autowired
   protected void setDependencies(final ContentFacetFinder contentFacetFinder, final EventManager eventManager) {
     this.contentFacetFinder = checkNotNull(contentFacetFinder);
     this.eventManager = checkNotNull(eventManager);

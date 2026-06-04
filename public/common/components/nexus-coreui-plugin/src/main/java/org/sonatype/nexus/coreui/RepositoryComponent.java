@@ -15,8 +15,7 @@ package org.sonatype.nexus.coreui;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -47,14 +46,13 @@ import org.springframework.stereotype.Component;
  * Repository {@link DirectComponent}.
  */
 @Component
-@Singleton
 @DirectAction(action = "coreui_Repository")
 public class RepositoryComponent
     extends DirectComponentSupport
 {
   private final RepositoryUiService repositoryUiService;
 
-  @Inject
+  @Autowired
   public RepositoryComponent(final RepositoryUiService repositoryUiService) {
     this.repositoryUiService = checkNotNull(repositoryUiService);
   }

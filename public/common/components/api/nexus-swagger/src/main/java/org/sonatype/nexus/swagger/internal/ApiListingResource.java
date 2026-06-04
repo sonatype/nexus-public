@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.swagger.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Path;
@@ -34,7 +33,6 @@ import org.springframework.stereotype.Component;
  * @since 3.3
  */
 @Component
-@Singleton
 @Path("/swagger.{type:json|yaml}")
 public class ApiListingResource
     extends io.swagger.jaxrs.listing.ApiListingResource
@@ -42,7 +40,7 @@ public class ApiListingResource
 {
   private final SwaggerModel swaggerModel;
 
-  @Inject
+  @Autowired
   public ApiListingResource(final SwaggerModel swaggerModel) { // NOSONAR
     this.swaggerModel = checkNotNull(swaggerModel);
   }

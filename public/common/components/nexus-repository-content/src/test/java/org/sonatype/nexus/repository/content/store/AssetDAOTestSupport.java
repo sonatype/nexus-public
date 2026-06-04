@@ -909,7 +909,7 @@ public abstract class AssetDAOTestSupport
     generateSingleRepository(UUID.fromString(entityId.getValue()));
     repositoryId = generatedRepositories().get(0).repositoryId;
 
-    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+    OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
 
     // Create assets with specific blob_created timestamps in non-sequential order
     OffsetDateTime oldest = now.minusDays(10); // Apr 16 2021 equivalent

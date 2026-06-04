@@ -13,8 +13,7 @@
 package org.sonatype.nexus.coreui.internal.wonderland;
 
 import java.io.IOException;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -47,7 +46,6 @@ import org.springframework.stereotype.Component;
  * @since 2.8
  */
 @Component
-@Singleton
 @Path(SupportZipConstants.WONDERLAND_DOWNLOAD_RESOURCE_URI)
 public class DownloadResource
     implements Resource
@@ -58,7 +56,7 @@ public class DownloadResource
 
   private final AuthTicketService authTicketService;
 
-  @Inject
+  @Autowired
   public DownloadResource(final DownloadService downloadService, final AuthTicketService authTicketService) {
     this.downloadService = checkNotNull(downloadService);
     this.authTicketService = checkNotNull(authTicketService);

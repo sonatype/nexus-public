@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Component;
  */
 @Api(hidden = true)
 @Component
-@Singleton
 @Path(RESOURCE_URI)
 @Deprecated
 public class RepositoriesApiResourceBeta
@@ -44,7 +42,7 @@ public class RepositoriesApiResourceBeta
   @Deprecated
   public static final String RESOURCE_URI = BETA_API_PREFIX + "/repositories";
 
-  @Inject
+  @Autowired
   public RepositoriesApiResourceBeta(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     super(authorizingRepositoryManager);
   }

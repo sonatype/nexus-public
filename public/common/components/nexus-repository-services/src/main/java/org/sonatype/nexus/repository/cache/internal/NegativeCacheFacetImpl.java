@@ -22,7 +22,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
@@ -37,7 +37,7 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Status;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -93,7 +93,7 @@ public class NegativeCacheFacetImpl
 
   private Cache<NegativeCacheKey, Status> cache;
 
-  @Inject
+  @Autowired
   public NegativeCacheFacetImpl(final CacheHelper cacheHelper) {
     this.cacheHelper = checkNotNull(cacheHelper);
   }

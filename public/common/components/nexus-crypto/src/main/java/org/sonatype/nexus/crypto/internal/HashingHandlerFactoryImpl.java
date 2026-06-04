@@ -17,8 +17,7 @@ import org.sonatype.nexus.crypto.HashingHandler;
 import org.sonatype.nexus.crypto.internal.error.CipherException;
 import org.sonatype.nexus.crypto.secrets.EncryptedSecret;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,7 +29,6 @@ import static org.sonatype.nexus.crypto.internal.EncryptionHelper.fromBase64;
  * format
  */
 @Component
-@Singleton
 public class HashingHandlerFactoryImpl
     implements HashingHandlerFactory
 {
@@ -48,7 +46,7 @@ public class HashingHandlerFactoryImpl
 
   private final CryptoHelper cryptoHelper;
 
-  @Inject
+  @Autowired
   public HashingHandlerFactoryImpl(final CryptoHelper cryptoHelper) {
     this.cryptoHelper = checkNotNull(cryptoHelper);
   }

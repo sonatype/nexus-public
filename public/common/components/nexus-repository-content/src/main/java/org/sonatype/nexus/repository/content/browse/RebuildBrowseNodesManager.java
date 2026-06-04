@@ -16,9 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -45,7 +43,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ManagedLifecycle(phase = TASKS)
-@Singleton
 public class RebuildBrowseNodesManager
     extends StateGuardLifecycleSupport
 {
@@ -59,7 +56,7 @@ public class RebuildBrowseNodesManager
 
   private boolean rebuildOnStart = false;
 
-  @Inject
+  @Autowired
   public RebuildBrowseNodesManager(
       final TaskScheduler taskScheduler,
       final RepositoryManager repositoryManager,

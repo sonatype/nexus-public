@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.self.hosted.blobstore.deletetemp;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
@@ -26,7 +24,6 @@ import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "1.0")
 @Component
-@Singleton
 public class DeleteBlobstoreTempFilesTaskDescriptor
     extends TaskDescriptorSupport
 {
@@ -36,7 +33,7 @@ public class DeleteBlobstoreTempFilesTaskDescriptor
 
   public static final String DAYS_OLDER_THAN = "olderThanDays";
 
-  @Inject
+  @Autowired
   public DeleteBlobstoreTempFilesTaskDescriptor() {
     super(TYPE_ID,
         DeleteBlobstoreTempFilesTask.class,

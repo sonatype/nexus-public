@@ -60,8 +60,7 @@ import ch.qos.logback.core.rolling.RollingPolicy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.ByteStreams;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
@@ -86,7 +85,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @Component
 @ManagedLifecycle(phase = KERNEL)
-@Singleton
 public class LogbackLogManager
     extends StateGuardLifecycleSupport
     implements LogManager, ApplicationContextAware
@@ -101,7 +99,7 @@ public class LogbackLogManager
 
   private ApplicationContext applicationContext;
 
-  @Inject
+  @Autowired
   public LogbackLogManager(
       final EventManager eventManager,
       final LoggerOverrides overrides)

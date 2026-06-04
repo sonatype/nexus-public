@@ -12,10 +12,9 @@
  */
 package org.sonatype.nexus.internal.httpclient;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretDeserializer;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
@@ -40,7 +39,6 @@ import org.springframework.stereotype.Component;
  * @see AuthenticationConfigurationDeserializer
  */
 @Component
-@Singleton
 public class HttpClientConfigurationObjectMapperCustomizer
     implements ConfigurationObjectMapperCustomizer
 {
@@ -50,7 +48,7 @@ public class HttpClientConfigurationObjectMapperCustomizer
 
   private final KeyValueStore keyValueStore;
 
-  @Inject
+  @Autowired
   public HttpClientConfigurationObjectMapperCustomizer(
       final SecretsService secretsService,
       final KeyValueStore keyValueStore)

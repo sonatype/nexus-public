@@ -19,13 +19,9 @@ import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import static org.springframework.beans.factory.config.BeanDefinition.SCOPE_SINGLETON;
-
 @Component
-@Scope(SCOPE_SINGLETON)
 public class ConanCleanupMigrationStep_2_18
     implements DatabaseMigrationStep
 {

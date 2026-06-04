@@ -14,9 +14,7 @@ package org.sonatype.nexus.repository.content.internal;
 
 import java.sql.Connection;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
  * Checks database integrity at application startup and configures automated repairs
  */
 @Component
-@Singleton
 @ManagedLifecycle(phase = UPGRADE)
 public class DatabaseIntegrityCheckService
     extends LifecycleSupport
@@ -39,7 +36,7 @@ public class DatabaseIntegrityCheckService
 
   private final List<DatabaseIntegrityChecker> databaseIntegrityCheckers;
 
-  @Inject
+  @Autowired
   public DatabaseIntegrityCheckService(
       final DataSessionSupplier dataSessionSupplier,
       final List<DatabaseIntegrityChecker> databaseIntegrityCheckers)

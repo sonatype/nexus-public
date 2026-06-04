@@ -12,8 +12,7 @@
  */
 package org.sonatype.nexus.coreui.internal.previewui;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -50,7 +49,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDB
  * Settings are stored in the database via the KeyValueStore with system property fallbacks.
  */
 @Component
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
@@ -82,7 +80,7 @@ public class PreviewUiSettingsResource
 
   private final boolean defaultSwitchFeedbackDisabled;
 
-  @Inject
+  @Autowired
   public PreviewUiSettingsResource(
       final KeyValueStore keyValueStore,
       @Value(PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE) final boolean defaultAnonymousEnabled,

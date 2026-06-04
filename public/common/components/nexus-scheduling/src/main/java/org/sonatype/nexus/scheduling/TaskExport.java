@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleDeserializer;
 import org.sonatype.nexus.scheduling.schedule.ScheduleSerializer;
@@ -43,14 +41,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Component
 @Qualifier("taskExport")
-@Singleton
 public class TaskExport
     extends JsonExporter
     implements ExportConfigData, ImportTaskData
 {
   private final TaskScheduler taskScheduler;
 
-  @Inject
+  @Autowired
   public TaskExport(final TaskScheduler taskScheduler) {
     this.taskScheduler = taskScheduler;
   }

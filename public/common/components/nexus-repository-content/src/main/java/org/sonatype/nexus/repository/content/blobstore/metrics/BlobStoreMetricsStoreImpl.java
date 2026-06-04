@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.blobstore.metrics;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
@@ -24,12 +22,11 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
 @Component
-@Singleton
 public class BlobStoreMetricsStoreImpl
     extends ConfigStoreSupport<BlobStoreMetricsDAO>
     implements BlobStoreMetricsStore
 {
-  @Inject
+  @Autowired
   protected BlobStoreMetricsStoreImpl(
       final DataSessionSupplier sessionSupplier)
   {

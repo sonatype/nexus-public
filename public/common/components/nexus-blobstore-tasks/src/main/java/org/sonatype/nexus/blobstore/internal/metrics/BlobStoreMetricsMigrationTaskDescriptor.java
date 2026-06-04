@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.internal.metrics;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
@@ -27,13 +25,12 @@ import org.springframework.stereotype.Component;
 
 @AvailabilityVersion(from = "2.0")
 @Component
-@Singleton
 public class BlobStoreMetricsMigrationTaskDescriptor
     extends TaskDescriptorSupport
 {
   private static final String EXPOSED_FLAG_VALUE = "${nexus.blobstore.metrics.migration.task.expose:false}";
 
-  @Inject
+  @Autowired
   public BlobStoreMetricsMigrationTaskDescriptor(
       @Value(EXPOSED_FLAG_VALUE) final boolean exposed)
   {

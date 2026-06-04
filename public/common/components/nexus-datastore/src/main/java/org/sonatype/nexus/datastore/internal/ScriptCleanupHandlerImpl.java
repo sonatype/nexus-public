@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.datastore.internal;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,7 +25,6 @@ import org.slf4j.LoggerFactory;
  */
 @Component
 @Qualifier("datastore")
-@Singleton
 public class ScriptCleanupHandlerImpl
     implements ScriptCleanupHandler
 {

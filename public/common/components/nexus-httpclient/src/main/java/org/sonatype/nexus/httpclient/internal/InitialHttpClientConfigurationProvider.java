@@ -12,9 +12,7 @@
  */
 package org.sonatype.nexus.httpclient.internal;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 
@@ -31,13 +29,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Component
 @Qualifier("initial")
-@Singleton
 public class InitialHttpClientConfigurationProvider
     implements FactoryBean<HttpClientConfiguration>
 {
   private final HttpClientManager clientManager;
 
-  @Inject
+  @Autowired
   public InitialHttpClientConfigurationProvider(final HttpClientManager clientManager) {
     this.clientManager = checkNotNull(clientManager);
   }

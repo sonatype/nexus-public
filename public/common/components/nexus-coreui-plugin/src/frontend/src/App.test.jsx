@@ -12,13 +12,13 @@
  */
 
 import React from 'react';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { UIRouter } from '@uirouter/react';
 import { Theme } from '@radix-ui/themes';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { App } from './App';
 import { getRouter } from './routerConfig/routerConfig';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, resetDialogState, ToastProvider } from '@sonatype/nexus-ui-plugin';
 import { helperFunctions } from './components/widgets/SystemStatusAlerts/CELimits/UsageHelper';
 import { ROUTE_NAMES } from './routerConfig/routeNames/routeNames';
 import { AuthProvider } from './contexts/AuthContext';
@@ -95,6 +95,17 @@ describe('App', () => {
       routerInstance.dispose();
       routerInstance = null;
     }
+    // Explicit cleanup (redundant with RTL auto-cleanup but defensive on CI,
+    // where a hanging ui-router transition from showUnsavedChangesModal can
+    // leave React in a state where auto-cleanup does not fully clear portals).
+    cleanup();
+    // Reset shared module state that persists across tests in this file.
+    // `unsavedChangesDialog` is a module-level singleton that holds a promise
+    // resolver and the last-mounted modal's state setter; without a reset,
+    // stale references can cause click handlers to target the wrong (dead)
+    // component on slow CI where timing margins are tight.
+    resetDialogState();
+    window.dirty = [];
   });
 
   describe('login layout', () => {
@@ -118,6 +129,76 @@ describe('App', () => {
       });
 
       await assertLoginLayoutRenders();
+    });
+  });
+
+  describe('toast bridge (NEXUS-52605 regression guard)', () => {
+    beforeEach(() => {
+      delete window.__nexusToast;
+      givenExtJSState();
+      givenUser();
+      jest.spyOn(ExtJS, 'useStatus').mockReturnValue({ edition: 'PRO' });
+      jest.spyOn(ExtJS, 'checkPermission').mockReturnValue(false);
+      window.location.hash = '';
+      window.dirty = [];
+    });
+
+    it('should register window.__nexusToast when App mounts', async () => {
+      expect(window.__nexusToast).toBeUndefined();
+      await renderComponent();
+      expect(window.__nexusToast).toBeDefined();
+      expect(typeof window.__nexusToast.error).toBe('function');
+      expect(typeof window.__nexusToast.success).toBe('function');
+      expect(typeof window.__nexusToast.warning).toBe('function');
+      expect(typeof window.__nexusToast.info).toBe('function');
+    });
+
+    it('should display a visible toast when window.__nexusToast.error is called', async () => {
+      await renderComponent();
+
+      act(() => {
+        window.__nexusToast.error('Search requires at least 3 characters');
+      });
+
+      const toast = await screen.findByTestId('toast-error');
+      expect(toast).toBeInTheDocument();
+      expect(toast).toHaveTextContent('Search requires at least 3 characters');
+    });
+
+    it('should display a visible toast when window.__nexusToast.success is called', async () => {
+      await renderComponent();
+
+      act(() => {
+        window.__nexusToast.success('Repository created successfully');
+      });
+
+      const toast = await screen.findByTestId('toast-success');
+      expect(toast).toBeInTheDocument();
+      expect(toast).toHaveTextContent('Repository created successfully');
+    });
+
+    it('should display a visible toast when window.__nexusToast.warning is called', async () => {
+      await renderComponent();
+
+      act(() => {
+        window.__nexusToast.warning('License expires in 30 days');
+      });
+
+      const toast = await screen.findByTestId('toast-warning');
+      expect(toast).toBeInTheDocument();
+      expect(toast).toHaveTextContent('License expires in 30 days');
+    });
+
+    it('should display a visible toast when window.__nexusToast.info is called', async () => {
+      await renderComponent();
+
+      act(() => {
+        window.__nexusToast.info('System maintenance scheduled');
+      });
+
+      const toast = await screen.findByTestId('toast-info');
+      expect(toast).toBeInTheDocument();
+      expect(toast).toHaveTextContent('System maintenance scheduled');
     });
   });
 
@@ -219,6 +300,59 @@ describe('App', () => {
         expect(brandingHeader).not.toBeInTheDocument();
         expect(brandingFooter).toBeVisible();
         expect(within(brandingFooter).getByText('Branding Footer')).toBeVisible();
+      });
+
+      it('preserves style tags from head in branding header HTML (NEXUS-52631 regression)', () => {
+        const customerHtml = [
+          '<html><head><style>',
+          '.container { display: flex; flex-direction: row; align-items: center; background-color: white; padding: 10px; }',
+          '.logo { width: auto; max-height: 40px; margin-right: 13px; }',
+          '.us-gov-banner { font-weight: bold; font-size: 7.5pt; }',
+          '</style></head><body>',
+          '<div class="container">',
+          '<img src="logo.png" alt="Logo" class="logo">',
+          '<div class="us-gov-banner">You are accessing a U.S. Government information system.</div>',
+          '</div></body></html>',
+        ].join('');
+
+        givenExtJSState({
+          ...getDefaultState(),
+          branding: {
+            headerEnabled: true,
+            headerHtml: customerHtml,
+            footerEnabled: false,
+            footerHtml: '',
+          },
+        });
+        renderComponent();
+
+        const brandingHeader = screen.getByTestId('nxrm-branding-header');
+        expect(within(brandingHeader).getByText('You are accessing a U.S. Government information system.')).toBeVisible();
+        const style = brandingHeader.querySelector('style');
+        expect(style).not.toBeNull();
+        expect(style.textContent).toContain('.container');
+        expect(style.textContent).toContain('display: flex');
+        expect(style.textContent).toContain('.logo');
+        expect(style.textContent).toContain('.us-gov-banner');
+      });
+
+      it('preserves style tags from head in branding footer HTML', () => {
+        givenExtJSState({
+          ...getDefaultState(),
+          branding: {
+            headerEnabled: false,
+            headerHtml: '',
+            footerEnabled: true,
+            footerHtml: '<html><head><style>.banner { font-weight: bold; font-size: 7.5pt; }</style></head><body><div class="banner">Footer content</div></body></html>',
+          },
+        });
+        renderComponent();
+
+        const brandingFooter = screen.getByTestId('nxrm-branding-footer');
+        expect(within(brandingFooter).getByText('Footer content')).toBeVisible();
+        const style = brandingFooter.querySelector('style');
+        expect(style).not.toBeNull();
+        expect(style.textContent).toContain('font-weight: bold');
       });
 
       it('sanitizes XSS in branding header HTML (z8s8)', () => {
@@ -388,7 +522,7 @@ describe('App', () => {
           router.stateService.go(BROWSE.BROWSE.ROOT);
         });
 
-        expect(selectors.modalTitle()).toBeVisible();
+        await waitFor(() => expect(selectors.modalTitle()).toBeVisible());
         expect(selectors.modalContent()).toBeVisible();
         expect(selectors.cancelButton()).toBeVisible();
 
@@ -396,7 +530,11 @@ describe('App', () => {
           selectors.cancelButton().click();
         });
 
-        expect(selectors.modalTitle()).not.toBeInTheDocument();
+        // waitFor accommodates CI timing: the click handler resolves a promise
+        // awaited by the router's transition hook, which in turn triggers the
+        // modal's state setter; on slow CI this sequence may not be flushed
+        // within act() and a synchronous expect can race ahead of the unmount.
+        await waitFor(() => expect(selectors.modalTitle()).not.toBeInTheDocument());
         expect(selectors.modalContent()).not.toBeInTheDocument();
         expect(selectors.cancelButton()).not.toBeInTheDocument();
       });
@@ -410,7 +548,7 @@ describe('App', () => {
           router.stateService.go(BROWSE.BROWSE.ROOT);
         });
 
-        expect(selectors.modalTitle()).toBeVisible();
+        await waitFor(() => expect(selectors.modalTitle()).toBeVisible());
         expect(selectors.modalContent()).toBeVisible();
         expect(selectors.continueButton()).toBeVisible();
 
@@ -418,7 +556,7 @@ describe('App', () => {
           selectors.continueButton().click();
         });
 
-        expect(selectors.modalTitle()).not.toBeInTheDocument();
+        await waitFor(() => expect(selectors.modalTitle()).not.toBeInTheDocument());
         expect(selectors.modalContent()).not.toBeInTheDocument();
         expect(selectors.continueButton()).not.toBeInTheDocument();
       });
@@ -435,9 +573,11 @@ describe('App', () => {
           <StateProvider>
             <Theme>
               <TooltipProvider>
-                <UIRouter router={router}>
-                  <App />
-                </UIRouter>
+                <ToastProvider>
+                  <UIRouter router={router}>
+                    <App />
+                  </UIRouter>
+                </ToastProvider>
               </TooltipProvider>
             </Theme>
           </StateProvider>

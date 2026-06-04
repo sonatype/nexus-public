@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -53,7 +51,6 @@ import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTT
 @Primary
 @Component
 @Qualifier("default")
-@Singleton
 public class GroupHandler
     implements Handler
 {
@@ -142,7 +139,7 @@ public class GroupHandler
 
       // skip offline repositories
       if (member.getConfiguration() != null && !member.getConfiguration().isOnline()) {
-        log.trace("Skipping offline member: {}", member);
+        log.info("Skipping offline member repository '{}' during group dispatch", member.getName());
         continue;
       }
 
@@ -248,7 +245,7 @@ public class GroupHandler
 
       // skip offline repositories
       if (member.getConfiguration() != null && !member.getConfiguration().isOnline()) {
-        log.trace("Skipping offline member: {}", member);
+        log.info("Skipping offline member repository '{}' during group dispatch", member.getName());
         continue;
       }
 

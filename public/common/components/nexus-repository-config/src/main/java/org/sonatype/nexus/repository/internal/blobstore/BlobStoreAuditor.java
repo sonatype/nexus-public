@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.util.Map;
 
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
-@Singleton
 public class BlobStoreAuditor
     extends AuditorSupport
     implements EventAware
