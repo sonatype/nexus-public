@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.93.0-06</version>
+  <version>3.93.1-04</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,11 +62,11 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.93.0-06</nexus.version>
+    <nexus.version>3.93.1-04</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
-    <spring-boot.version>3.5.14</spring-boot.version>
-    <spring.version>6.2.18</spring.version>
+    <spring-boot.version>3.5.15</spring-boot.version>
+    <spring.version>6.2.19</spring.version>
 
     <!-- Default empty argLine for JaCoCo agent, will be populated by jacoco:prepare-agent -->
     <argLine/>
@@ -228,7 +228,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.93.0-06</version>
+          <version>3.93.1-04</version>
           <executions>
             <execution>
               <goals>

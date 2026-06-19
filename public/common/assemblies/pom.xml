@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-common-parent</artifactId>
-    <version>3.93.0-06</version>
+    <version>3.93.1-04</version>
   </parent>
 
   <groupId>org.sonatype.nexus.common.assemblies</groupId>
@@ -41,7 +41,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-all</artifactId>
         <type>pom</type>
-        <version>3.93.0-06</version>
+        <version>3.93.1-04</version>
         <scope>import</scope>
       </dependency>
 
@@ -50,7 +50,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.common.assemblies</groupId>
         <artifactId>nexus-base-overlay</artifactId>
-        <version>3.93.0-06</version>
+        <version>3.93.1-04</version>
         <type>zip</type>
       </dependency>
 

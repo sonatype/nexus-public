@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.0-06</version>
+    <version>3.93.1-04</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -326,6 +326,14 @@
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
         <version>4.2.15.Final</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-bom</artifactId>
+        <version>2025.0.6</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

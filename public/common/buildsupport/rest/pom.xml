@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.0-06</version>
+    <version>3.93.1-04</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-rest</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.21.1</jackson2.version>
+    <jackson2.version>2.22.0</jackson2.version>
     <jaxb.version>2.3.3</jaxb.version>
     <resteasy.version>3.15.6.Final</resteasy.version>
     <swagger.version>1.6.15</swagger.version>
@@ -248,6 +248,14 @@
             <artifactId>jaxb-api</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>tools.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>3.2.0</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
