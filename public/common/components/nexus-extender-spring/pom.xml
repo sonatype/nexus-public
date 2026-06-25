@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.1-04</version>
+    <version>3.93.2-01</version>
   </parent>
 
   <artifactId>nexus-extender-spring</artifactId>

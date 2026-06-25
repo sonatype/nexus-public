@@ -153,6 +153,51 @@ public class AuthorizingRealmImplTest
   }
 
   /**
+   * Verifies that a comma-form multi-action privilege (e.g. "app:config:read,edit") correctly
+   * implies each individual action (NEXUS-53512 regression for NEXUS-52583 fast-path bug).
+   *
+   * Before the fix, comma-form grants were placed in exactPermissions and never matched by
+   * WildcardPermission.implies(), so every action in the grant was silently denied.
+   */
+  @Test
+  public void testMultiActionPrivilegeImpliesEachAction() throws Exception {
+    // Add a multi-action privilege to the existing role
+    CPrivilege multiPriv = WildcardPrivilegeDescriptor.privilege("app:config:read,edit");
+    configurationManager.createPrivilege(multiPriv);
+
+    CRole role = configurationManager.newRole();
+    role.setId("multi-action-role");
+    role.setName("Multi-action role");
+    role.setDescription("Has a comma-form multi-action privilege");
+    role.addPrivilege(multiPriv.getId());
+    configurationManager.createRole(role);
+
+    CUser user = new MemoryCUser();
+    user.setEmail("multiuser@foo");
+    user.setFirstName("multi");
+    user.setLastName("user");
+    user.setStatus(UserStatus.active.toString());
+    user.setId("multiuser");
+    user.setPassword("password");
+    Set<String> roles = new HashSet<>();
+    roles.add(role.getId());
+    configurationManager.createUser(user, roles);
+
+    SimplePrincipalCollection multiPrincipal =
+        new SimplePrincipalCollection("multiuser", realm.getName());
+    Subject mockMultiSubject = mock(Subject.class);
+    when(mockMultiSubject.getPrincipals()).thenReturn(multiPrincipal);
+    securityUtilsMock.when(SecurityUtils::getSubject).thenReturn(mockMultiSubject);
+
+    // Both actions implied by the comma-form grant must be permitted
+    assertTrue(realm.isPermitted(multiPrincipal, new WildcardPermission("app:config:read")));
+    assertTrue(realm.isPermitted(multiPrincipal, new WildcardPermission("app:config:edit")));
+    // Actions not in the grant must be denied
+    assertFalse(realm.isPermitted(multiPrincipal, new WildcardPermission("app:config:delete")));
+    assertFalse(realm.isPermitted(multiPrincipal, new WildcardPermission("app:config:create")));
+  }
+
+  /**
    * Verifies that invalidating the cache (e.g. on auth config change) forces re-evaluation
    * so updated permissions take effect.
    */

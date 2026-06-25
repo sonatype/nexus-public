@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.common.Description;
@@ -46,7 +48,7 @@ import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
-import org.apache.shiro.crypto.hash.Sha1Hash;
+import org.apache.shiro.authz.permission.WildcardPermission;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.realm.Realm;
@@ -87,18 +89,65 @@ public class AuthorizingRealmImpl
   private final Map<String, UserManager> userManagerMap;
 
   /**
-   * Bundles the expanded permission collection for a principal with a result cache so both
-   * live and die together — no stale result entries can outlive the permission set they were
-   * computed from.
+   * Bundles the expanded permission collection for a principal with indexed lookups.
+   * Separates exact permissions (no wildcards) for O(1) HashSet lookup from wildcard
+   * permissions that need iterative matching (NEXUS-52583 optimization).
    */
   private static final class PermissionsState
   {
-    final Collection<Permission> permissions;
+    // Exact permission strings (lowercase, no wildcards) for O(1) lookup
+    final Set<String> exactPermissions;
 
+    // Permissions containing wildcards that need iterative matching
+    final List<Permission> wildcardPermissions;
+
+    // Result cache for computed checks: (Permission -> Boolean)
     final ConcurrentHashMap<Permission, Boolean> results = new ConcurrentHashMap<>();
 
     PermissionsState(final Collection<Permission> permissions) {
-      this.permissions = permissions;
+      this.exactPermissions = new HashSet<>();
+      this.wildcardPermissions = new ArrayList<>();
+
+      for (Permission perm : permissions) {
+        if (perm instanceof WildcardPermission) {
+          String permStr = perm.toString().toLowerCase();
+          if (permStr.contains("*") || permStr.contains(",")) {
+            // Wildcard or comma-separated multi-action permission — needs iterative matching.
+            // Comma-form grants like "nexus:settings:read,update" must go through
+            // WildcardPermission.implies() so individual actions are correctly evaluated.
+            wildcardPermissions.add(perm);
+          }
+          else {
+            // Exact single-action permission — O(1) HashSet lookup is safe.
+            exactPermissions.add(permStr);
+          }
+        }
+        else {
+          // Non-WildcardPermission - treat as wildcard for safety
+          wildcardPermissions.add(perm);
+        }
+      }
+    }
+
+    /**
+     * Check if this state implies the given permission using optimized lookup.
+     */
+    boolean implies(final Permission permission) {
+      // Fast path: exact match for non-wildcard permissions
+      if (permission instanceof WildcardPermission) {
+        String permStr = permission.toString().toLowerCase();
+        if (!permStr.contains("*") && exactPermissions.contains(permStr)) {
+          return true;
+        }
+      }
+
+      // Slow path: check wildcard permissions
+      for (Permission wp : wildcardPermissions) {
+        if (wp.implies(permission)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
@@ -142,7 +191,10 @@ public class AuthorizingRealmImpl
     this.principalPermissionsCache = cacheBuilder.<PrincipalCollection, PermissionsState>build();
 
     HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
-    credentialsMatcher.setHashAlgorithmName(Sha1Hash.ALGORITHM_NAME);
+    // Shiro 2.x removed the Sha1Hash class; its ALGORITHM_NAME constant was the literal "SHA-1".
+    // This realm is authorization-only (authentication caching disabled below; it never authenticates),
+    // so the matcher's algorithm is not used to verify credentials -- the value is retained as-is.
+    credentialsMatcher.setHashAlgorithmName("SHA-1");
     setCredentialsMatcher(credentialsMatcher);
     setName(NAME);
     setAuthenticationCachingEnabled(false); // we authz only, no authc done by this realm
@@ -248,17 +300,21 @@ public class AuthorizingRealmImpl
     }
 
     PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
-    PermissionsState cached = principalPermissionsCache.getIfPresent(principals);
-    if (cached == null) {
-      cached = new PermissionsState(this.getPermissions(info));
-      principalPermissionsCache.put(principals, cached);
+    // cache.get(key, loader) is atomic: at most one thread builds the PermissionsState per
+    // principal under concurrent login bursts, preventing double DB queries (NEXUS-52583).
+    final PermissionsState state;
+    try {
+      state = principalPermissionsCache.get(principals, () -> new PermissionsState(this.getPermissions(info)));
     }
-
-    // computeIfAbsent is atomic: the linear scan runs at most once per (principal, permission) pair.
-    // Subsequent isPermitted calls for the same pair are O(1) map lookups, eliminating the
-    // O(system_privileges x user_permissions) scan that caused the 15-second UI block (NEXUS-52583).
-    final PermissionsState state = cached;
-    return state.results.computeIfAbsent(permission, p -> linearScan(p, state.permissions));
+    catch (ExecutionException e) {
+      // Loader threw an unexpected checked exception; evaluate without caching.
+      return linearScan(permission, this.getPermissions(info));
+    }
+    // computeIfAbsent is atomic: the permission check runs at most once per (principal, permission) pair.
+    // Subsequent isPermitted calls for the same pair are O(1) map lookups.
+    // The PermissionsState.implies() method uses an optimized lookup with HashSet for exact matches
+    // and only iterates wildcard permissions when needed (NEXUS-52583 optimization).
+    return state.results.computeIfAbsent(permission, state::implies);
   }
 
   /**
@@ -310,6 +366,8 @@ public class AuthorizingRealmImpl
     return permissions.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(permissions);
   }
 
+  // Only reached when principalPermissionsCacheEnabled=false (opt-out via config).
+  // With the cache enabled (the default) this method is unreachable from isPermitted().
   private static boolean linearScan(final Permission permission, final Collection<Permission> userPermissions) {
     if (userPermissions == null || userPermissions.isEmpty()) {
       return false;
