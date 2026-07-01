@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.time.Duration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -33,14 +35,21 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.proxy.ProxyFacet;
+import org.sonatype.nexus.repository.proxy.ProxyRepositoryConfiguration;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -326,5 +335,151 @@ public class MavenContentGroupFacetImplTest
     verify(component, never()).namespace();
     verify(component, never()).name();
     verify(assets, never()).path(any());
+  }
+
+  // ---- computeMinProxyMetadataMaxAgeSeconds tests (NEXUS-52362) ----
+
+  @Test
+  public void computeMinProxyMetadataMaxAge_noLeafMembers_returnsNegative() {
+    doReturn(List.of()).when(underTest).leafMembers();
+
+    assertThat(underTest.computeMinProxyMetadataMaxAgeSeconds(), equalTo(-1));
+  }
+
+  @Test
+  public void computeMinProxyMetadataMaxAge_hostedMembersOnly_returnsNegative() {
+    Repository hostedMember = mock(Repository.class);
+    when(hostedMember.optionalFacet(ProxyFacet.class)).thenReturn(Optional.empty());
+
+    doReturn(List.of(hostedMember)).when(underTest).leafMembers();
+
+    assertThat(underTest.computeMinProxyMetadataMaxAgeSeconds(), equalTo(-1));
+  }
+
+  @Test
+  public void computeMinProxyMetadataMaxAge_proxyWithZeroMaxAge_returnsZero() {
+    ProxyRepositoryConfiguration config = mock(ProxyRepositoryConfiguration.class);
+    when(config.getMetadataMaxAge()).thenReturn(Duration.ofMinutes(0));
+
+    ProxyFacet proxyFacet = mock(ProxyFacet.class);
+    when(proxyFacet.getConfiguration()).thenReturn(config);
+
+    Repository proxyMember = mock(Repository.class);
+    when(proxyMember.optionalFacet(ProxyFacet.class)).thenReturn(Optional.of(proxyFacet));
+
+    doReturn(List.of(proxyMember)).when(underTest).leafMembers();
+
+    assertThat(underTest.computeMinProxyMetadataMaxAgeSeconds(), equalTo(0));
+  }
+
+  @Test
+  public void computeMinProxyMetadataMaxAge_multipleProxies_returnsMinimum() {
+    Repository proxy1 = proxyMemberWithMetadataMaxAge(Duration.ofMinutes(30));
+    Repository proxy2 = proxyMemberWithMetadataMaxAge(Duration.ofMinutes(5));
+    Repository proxy3 = proxyMemberWithMetadataMaxAge(Duration.ofMinutes(60));
+
+    doReturn(List.of(proxy1, proxy2, proxy3)).when(underTest).leafMembers();
+
+    assertThat(underTest.computeMinProxyMetadataMaxAgeSeconds(), equalTo(300)); // 5 minutes = 300s
+  }
+
+  @Test
+  public void computeMinProxyMetadataMaxAge_proxyWithNegativeMaxAge_returnsNegative() {
+    // negative metadataMaxAge means "never expire" — should be excluded
+    Repository proxy = proxyMemberWithMetadataMaxAge(Duration.ofMinutes(-1));
+
+    doReturn(List.of(proxy)).when(underTest).leafMembers();
+
+    assertThat(underTest.computeMinProxyMetadataMaxAgeSeconds(), equalTo(-1));
+  }
+
+  @Test
+  public void computeMinProxyMetadataMaxAge_mixedFiniteAndInfinite_returnsFiniteMinimum() {
+    Repository proxy1 = proxyMemberWithMetadataMaxAge(Duration.ofMinutes(-1)); // infinite
+    Repository proxy2 = proxyMemberWithMetadataMaxAge(Duration.ofMinutes(10));
+
+    doReturn(List.of(proxy1, proxy2)).when(underTest).leafMembers();
+
+    assertThat(underTest.computeMinProxyMetadataMaxAgeSeconds(), equalTo(600)); // 10 minutes = 600s
+  }
+
+  @Test
+  public void getCached_returnsNull_whenProxyMetadataMaxAgeIsZero() throws Exception {
+    Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
+    MavenPath mavenPath = pathParser.parsePath("org/apache/commons/commons-lang3/maven-metadata.xml");
+
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(pathParser);
+
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+
+    org.sonatype.nexus.repository.view.Content content = mock(org.sonatype.nexus.repository.view.Content.class);
+    when(content.getSize()).thenReturn(512L);
+
+    FluentAsset asset = mock(FluentAsset.class);
+    when(asset.download()).thenReturn(content);
+    // first isStale() call is the group's infinite-TTL cacheController → fresh
+    // second isStale() call is the proxy TTL CacheController(0,...) → stale
+    when(asset.isStale(any())).thenReturn(false, true);
+    when(assetBuilder.find()).thenReturn(Optional.of(asset));
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("test-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+
+    // proxy metadataMaxAge=0 → always stale; group must not serve cached merged result
+    underTest.minProxyMetadataMaxAgeSeconds = 0; // bypass lazy init, set directly
+
+    assertThat(underTest.getCached(mavenPath), nullValue());
+  }
+
+  @Test
+  public void getCached_returnsContent_whenProxyMetadataMaxAgeIsNegative() throws Exception {
+    Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
+    MavenPath mavenPath = pathParser.parsePath("org/apache/commons/commons-lang3/maven-metadata.xml");
+
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(pathParser);
+
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+
+    org.sonatype.nexus.repository.view.Content content = mock(org.sonatype.nexus.repository.view.Content.class);
+    when(content.getSize()).thenReturn(512L);
+
+    FluentAsset asset = mock(FluentAsset.class);
+    when(asset.download()).thenReturn(content);
+    when(asset.isStale(any())).thenReturn(false); // group's cacheController says fresh
+    when(assetBuilder.find()).thenReturn(Optional.of(asset));
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("test-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+
+    // no proxy has a finite TTL (hosted-only group) → existing infinite-TTL behaviour preserved
+    underTest.minProxyMetadataMaxAgeSeconds = -1; // bypass lazy init, set directly
+
+    assertThat(underTest.getCached(mavenPath), notNullValue());
+  }
+
+  private static Repository proxyMemberWithMetadataMaxAge(final Duration metadataMaxAge) {
+    ProxyRepositoryConfiguration config = mock(ProxyRepositoryConfiguration.class);
+    when(config.getMetadataMaxAge()).thenReturn(metadataMaxAge);
+
+    ProxyFacet proxyFacet = mock(ProxyFacet.class);
+    when(proxyFacet.getConfiguration()).thenReturn(config);
+
+    Repository member = mock(Repository.class);
+    when(member.optionalFacet(ProxyFacet.class)).thenReturn(Optional.of(proxyFacet));
+    return member;
   }
 }

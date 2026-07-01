@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-api-parent</artifactId>
-    <version>3.90.3-03</version>
+    <version>3.90.4-01</version>
   </parent>
 
   <artifactId>nexus-rest-client</artifactId>

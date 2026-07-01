@@ -535,7 +535,9 @@ export const browseRoutes = [
     data: {
       visibilityRequirements: {
         anonymousAccessOrHasUser: true,
-        permissionPrefix: 'nexus:repository-view',
+        // Allow Browse visibility for users with either repository-view OR repository-content-selector permissions
+        // This ensures Content Selectors make Browse visible in UI (fixes NEXUS-50552)
+        permissionPrefixes: ['nexus:repository-view', 'nexus:repository-content-selector'],
         statesEnabled: [
           {
             key: 'browseableformats',
