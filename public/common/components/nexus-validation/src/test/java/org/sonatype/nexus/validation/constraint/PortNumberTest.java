@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.validation.constraint;
 
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
 
 import org.junit.Before;
 import org.junit.Test;

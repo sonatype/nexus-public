@@ -134,7 +134,7 @@ public abstract class RawUploadHandlerSupport
   protected abstract Content doPut(final ImportStreamConfiguration configuration) throws IOException;
 
   protected String normalizePath(final String path) {
-    String result = path.replaceAll("/+", "/");
+    String result = path.replace('\\', '/').replaceAll("/+", "/");
 
     if (result.startsWith("/")) {
       result = result.substring(1);

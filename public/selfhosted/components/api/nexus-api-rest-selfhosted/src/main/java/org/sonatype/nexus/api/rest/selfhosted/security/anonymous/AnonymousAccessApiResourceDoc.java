@@ -12,30 +12,30 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.anonymous.model.AnonymousAccessSettingsXO;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * @since 3.24
  */
-@Api(value = "Security Management: Anonymous Access")
+@Tag(name = "Security Management: Anonymous Access")
 public interface AnonymousAccessApiResourceDoc
 {
-  @ApiOperation("Get Anonymous Access settings")
+  @Operation(summary = "Get Anonymous Access settings")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to update settings")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to update settings")
   })
   AnonymousAccessSettingsXO read();
 
-  @ApiOperation("Update Anonymous Access settings")
+  @Operation(summary = "Update Anonymous Access settings")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to update settings")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to update settings")
   })
   AnonymousAccessSettingsXO update(@Valid AnonymousAccessSettingsXO anonymousXO);
 }

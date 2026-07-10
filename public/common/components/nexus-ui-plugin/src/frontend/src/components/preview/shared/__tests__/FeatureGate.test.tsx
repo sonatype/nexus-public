@@ -14,7 +14,16 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { FeatureGate, withFeatureGate } from '../FeatureGate';
+import { Theme } from '@radix-ui/themes';
+import { FeatureGate, withFeatureGate, withCloudExcluded } from '../FeatureGate';
+
+jest.mock('../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    state: jest.fn(),
+    useState: jest.fn((init) => (typeof init === 'function' ? init() : init)),
+    checkPermission: jest.fn().mockReturnValue(true),
+  },
+}));
 
 // Control window.location to simulate production vs development
 const originalLocation = window.location;
@@ -56,6 +65,7 @@ describe('FeatureGate', () => {
   });
 
   describe('with a disabled feature key', () => {
+    // Using security.oauth2 since security.anonymous is now enabled (NEXUS-51085)
     it('renders SettingsNotAvailablePage instead of children', () => {
       render(
         <FeatureGate featureKey="security.oauth2" featureName="OAuth2">
@@ -69,13 +79,13 @@ describe('FeatureGate', () => {
 
     it('passes featureName to SettingsNotAvailablePage', () => {
       render(
-        <FeatureGate featureKey="security.anonymous" featureName="Anonymous Access">
+        <FeatureGate featureKey="security.oauth2" featureName="OAuth2">
           <div>Child content</div>
         </FeatureGate>
       );
 
       expect(
-        screen.getByText(/Anonymous Access is still being prepared for the Nexus One UI/i)
+        screen.getByText(/OAuth2 is still being prepared for the Nexus One UI/i)
       ).toBeInTheDocument();
     });
   });
@@ -98,12 +108,12 @@ describe('withFeatureGate', () => {
 
   describe('with a disabled feature key', () => {
     it('renders SettingsNotAvailablePage with the correct featureName', () => {
-      const GatedPage = withFeatureGate(SamplePage, 'repository.repositories', 'Repositories');
+      const GatedPage = withFeatureGate(SamplePage, 'security.oauth2', 'OAuth2');
       render(<GatedPage />);
 
       expect(screen.queryByTestId('sample-page')).not.toBeInTheDocument();
       expect(
-        screen.getByText(/Repositories is still being prepared for the Nexus One UI/i)
+        screen.getByText(/OAuth2 is still being prepared for the Nexus One UI/i)
       ).toBeInTheDocument();
     });
   });
@@ -121,5 +131,41 @@ describe('withFeatureGate', () => {
       const GatedPage = withFeatureGate(UnnamedComponent, 'support.logs', 'Logs');
       expect(GatedPage.displayName).toBe('FeatureGate(UnnamedComponent)');
     });
+  });
+});
+
+describe('withCloudExcluded', () => {
+  const { ExtJS } = require('../../../../interface/ExtJS');
+
+  function TestWrapper({ children }: { children: React.ReactNode }) {
+    return <Theme>{children}</Theme>;
+  }
+
+  function Hello() {
+    return <div>hello</div>;
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders the wrapped component when not on cloud', () => {
+    ExtJS.state.mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+    const Gated = withCloudExcluded(Hello, 'HTTP');
+    render(<Gated />, { wrapper: TestWrapper });
+    expect(screen.getByText('hello')).toBeInTheDocument();
+  });
+
+  it('renders SettingsNotAvailablePage when on cloud', () => {
+    ExtJS.state.mockReturnValue({ getValue: jest.fn().mockReturnValue(true) });
+    const Gated = withCloudExcluded(Hello, 'HTTP');
+    render(<Gated />, { wrapper: TestWrapper });
+    expect(screen.queryByText('hello')).not.toBeInTheDocument();
+    expect(screen.getByText(/HTTP/)).toBeInTheDocument();
+  });
+
+  it('sets displayName on the returned component', () => {
+    const Gated = withCloudExcluded(Hello, 'HTTP');
+    expect(Gated.displayName).toBe('CloudExcluded(Hello)');
   });
 });

@@ -13,10 +13,10 @@
 package org.sonatype.nexus.security.internal.rest;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Request object for checking API access.
@@ -30,24 +30,24 @@ public class ApiAccessCheckXo
 
   @Nullable
   @Pattern(regexp = ID_PATTERN, message = ID_PATTERN_MESSAGE)
-  @ApiModelProperty(value = "The user ID to check access for. If omitted, checks access for the current user.",
+  @Schema(description = "The user ID to check access for. If omitted, checks access for the current user.",
       example = "john.doe")
   private String userId;
 
   @Nullable
   @Pattern(regexp = ID_PATTERN, message = ID_PATTERN_MESSAGE)
-  @ApiModelProperty(value = "The role ID to check access for. Mutually exclusive with userId.",
+  @Schema(description = "The role ID to check access for. Mutually exclusive with userId.",
       example = "nx-admin")
   private String roleId;
 
   @NotEmpty
-  @ApiModelProperty(value = "The API endpoint to check access for.",
+  @Schema(description = "The API endpoint to check access for.",
       required = true, example = "/service/rest/v1/repositories")
   private String endpoint;
 
   @NotEmpty
-  @ApiModelProperty(value = "The HTTP method for the endpoint.",
-      required = true, example = "GET", allowableValues = "GET,POST,PUT,DELETE,PATCH")
+  @Schema(description = "The HTTP method for the endpoint.",
+      required = true, example = "GET")
   private String method;
 
   public ApiAccessCheckXo() {

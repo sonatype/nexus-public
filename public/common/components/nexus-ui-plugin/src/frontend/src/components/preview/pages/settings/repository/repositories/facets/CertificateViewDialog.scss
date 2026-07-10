@@ -59,7 +59,7 @@
   }
 
   &__row {
-    padding: var(--space-1) 0;
+    padding: var(--space-2) 0;
     border-bottom: 1px solid var(--gray-a3);
 
     &:last-child {
@@ -70,18 +70,16 @@
   &__label {
     color: var(--gray-11);
     flex-shrink: 0;
-    min-width: 160px;
+    min-width: 180px;
   }
 
   &__value {
     text-align: right;
-    word-break: break-word;
+    word-break: break-all;
   }
 
-  &__fingerprint {
-    background: var(--gray-a2);
-    border-radius: var(--radius-2);
-    padding: var(--space-2) var(--space-3);
-    font-family: monospace;
+  &__footer {
+    border-top: 1px solid var(--gray-a4);
+    padding-top: var(--space-4);
   }
 }

@@ -14,7 +14,7 @@ package com.sonatype.nexus.ssl.plugin.validator;
 
 import java.security.cert.CertificateException;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;

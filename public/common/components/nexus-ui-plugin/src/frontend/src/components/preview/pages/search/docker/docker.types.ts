@@ -73,6 +73,42 @@ export interface DockerTag {
 }
 
 /**
+ * Image configuration metadata pulled from the Docker manifest/config blob.
+ *
+ * Surfaced in the Preview UI so operators can see OS/arch, environment, entrypoint,
+ * and other runtime details without having to shell into the registry (NEXUS-51972).
+ * All fields optional — the backend populates only what's available on each image.
+ */
+export interface DockerImageMetadata {
+  /** Operating system (e.g. "linux") */
+  os?: string;
+  /** CPU architecture (e.g. "amd64", "arm64") */
+  arch?: string;
+  /** Image creation timestamp (ISO 8601) */
+  created?: string;
+  /** Image author */
+  author?: string;
+  /** Environment variables (KEY=VALUE entries) */
+  env?: string[];
+  /** Default CMD for the image */
+  cmd?: string[];
+  /** ENTRYPOINT for the image */
+  entrypoint?: string[];
+  /** Working directory inside the container */
+  workingDir?: string;
+  /** Exposed ports (e.g. ["80/tcp", "443/tcp"]) */
+  exposedPorts?: string[];
+  /** Image labels */
+  labels?: Record<string, string>;
+  /** Layer/build history entries */
+  history?: unknown[];
+  /** Total image size in bytes */
+  totalSize?: number;
+  /** Registry URL the image was pushed to */
+  registryUrl?: string;
+}
+
+/**
  * Full detail for a Docker image.
  */
 export interface DockerDetail {
@@ -92,6 +128,16 @@ export interface DockerDetail {
   repository: string;
   /** Last update timestamp */
   lastUpdated: string;
+  /**
+   * Registry URL (e.g. "localhost:5000"). When present it is prefixed onto
+   * `docker pull` snippets so users get a ready-to-run command (NEXUS-51972).
+   */
+  registryUrl?: string;
+  /**
+   * Image configuration metadata (os/arch/env/cmd/entrypoint/etc).
+   * Rendered in the detail page when present (NEXUS-51972).
+   */
+  metadata?: DockerImageMetadata;
 }
 
 /**
@@ -183,5 +229,3 @@ export interface DockerDetailState {
   /** Image detail */
   detail?: DockerDetail;
 }
-
-

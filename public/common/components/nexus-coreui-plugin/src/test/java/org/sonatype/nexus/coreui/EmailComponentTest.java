@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.crypto.secrets.Secret;

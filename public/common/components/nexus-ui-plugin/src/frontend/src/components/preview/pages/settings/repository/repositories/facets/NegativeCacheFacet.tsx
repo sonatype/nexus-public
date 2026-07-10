@@ -23,6 +23,7 @@ import {
   RepositoryFormData,
   RepositoryFormErrors,
 } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 interface NegativeCacheFacetProps {
   formData: RepositoryFormData;
@@ -39,7 +40,6 @@ interface NegativeCacheFacetProps {
  */
 export function NegativeCacheFacet({
   formData,
-  onChange,
   onNestedChange,
   errors,
 }: NegativeCacheFacetProps) {
@@ -48,32 +48,42 @@ export function NegativeCacheFacet({
   };
 
   const handleTimeToLiveChange = (value: string) => {
-    const numValue = parseInt(value, 10);
-    onNestedChange('negativeCache', { timeToLive: isNaN(numValue) ? 1440 : numValue });
+    // Pass value through to machine - validation will handle errors
+    if (value === '' || value === '-') {
+      onNestedChange('negativeCache', { timeToLive: undefined });
+    } else {
+      const numValue = parseInt(value, 10);
+      // Only update if it's a valid number - otherwise let validation catch it
+      if (!Number.isNaN(numValue)) {
+        onNestedChange('negativeCache', { timeToLive: numValue });
+      }
+      // For invalid input like "abc", don't update - let current value persist
+      // and validation will show error when form is submitted
+    }
   };
 
   return (
-    <SettingsFormSection title="Negative Cache">
+    <SettingsFormSection title={UIStrings.NEGATIVE_CACHE.SECTION.title}>
       <SettingsCheckbox
         name="negativeCache-enabled"
-        label="Negative Cache"
+        label={UIStrings.NEGATIVE_CACHE.ENABLED.label}
         checked={formData.negativeCache?.enabled ?? true}
         onChange={handleEnabledChange}
-        description="Cache responses for content not present in the remote repository"
+        description={UIStrings.NEGATIVE_CACHE.ENABLED.description}
       />
 
       <SettingsTextInput
         name="negativeCache-timeToLive"
-        label="Negative Cache TTL"
-        value={String(formData.negativeCache?.timeToLive ?? 1440)}
+        label={UIStrings.NEGATIVE_CACHE.TTL.label}
+        value={formData.negativeCache?.timeToLive?.toString() ?? ''}
         onChange={handleTimeToLiveChange}
         type="number"
+        helpText={UIStrings.NEGATIVE_CACHE.TTL.helpText}
+        error={errors?.negativeCache?.timeToLive}
         disabled={!formData.negativeCache?.enabled}
-        helpText="How long (in minutes) to cache that a file was not found in the remote repository"
       />
     </SettingsFormSection>
   );
 }
 
 export default NegativeCacheFacet;
-

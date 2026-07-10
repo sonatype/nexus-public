@@ -50,10 +50,26 @@ const selectors = {
   getCardContent: (c, t) => within(c).getByText(t),
   getCardInfoIcon: (c) => c.querySelector('[data-icon="info-circle"]'),
   getCardMeter: (c) => within(c).getByTestId('meter'),
-  getStatusIndicator: () => screen.getByRole('status')
+  getStatusIndicator: (text) => screen.getByText(text)
 };
 
 describe('Usage Center', () => {
+  beforeEach(() => {
+    // Clear localStorage test overrides before each test
+    localStorage.clear();
+
+    // Default mock for useState - calls the function argument
+    ExtJS.useState.mockImplementation((arg) => {
+      if (typeof arg === 'function') return arg();
+      return arg;
+    });
+
+    // Default mock for throttlingStatus
+    when(ExtJS.state().getValue)
+      .calledWith('nexus.community.throttlingStatus')
+      .mockReturnValue('Under limits');
+  });
+
   async function renderView(usage = USAGE_CENTER_CONTENT_CE)
   {
     when(ExtJS.state().getValue)
@@ -79,6 +95,12 @@ describe('Usage Center', () => {
     when(ExtJS.state().getValue)
         .calledWith('nexus.datastore.clustered.enabled')
         .mockReturnValue(true);
+
+    // Mock useState for useCommunityEdition
+    ExtJS.useState.mockImplementation((arg) => {
+      if (typeof arg === 'function') return arg();
+      return arg;
+    });
 
     await act(async () => {
       render(<UsageCenter />);
@@ -176,30 +198,71 @@ describe('Usage Center', () => {
     });
 
     it("renders text and status indicator when usage is under limits", async () => {
-      jest.spyOn(ExtJS, 'useState').mockReturnValue('Under limits');
-  
+      // Mock useState to return appropriate values based on what function is called
+      ExtJS.useState.mockImplementation((arg) => {
+        if (typeof arg === 'function') {
+          const result = arg();
+          // If result is 'COMMUNITY', it's from getEdition
+          if (result === 'COMMUNITY') return result;
+          // Otherwise return Under limits for throttling status
+          return 'Under limits';
+        }
+        return arg;
+      });
+
+      // Mock getValue for throttlingStatus
+      when(ExtJS.state().getValue)
+        .calledWith('nexus.community.throttlingStatus')
+        .mockReturnValue('Under limits');
+
       await renderView();
-  
+
       expect(selectors.getHeading('Monitor this instance\'s usage to ensure your deployment is appropriate for your needs. Learn more about the usage center . Usage Metrics Overview')).toBeInTheDocument();
-      expect(selectors.getStatusIndicator()).toHaveTextContent('Usage below limits');
+      expect(selectors.getStatusIndicator('Usage below limits')).toBeInTheDocument();
     });
 
     it("renders text and status indicator when usage is nearing limits", async () => {
-      jest.spyOn(ExtJS, 'useState').mockReturnValue('75% usage');    
-  
+      // Mock useState to return appropriate values based on what function is called
+      ExtJS.useState.mockImplementation((arg) => {
+        if (typeof arg === 'function') {
+          const result = arg();
+          if (result === 'COMMUNITY') return result;
+          return '75% usage';
+        }
+        return arg;
+      });
+
+      // Mock getValue for throttlingStatus
+      when(ExtJS.state().getValue)
+        .calledWith('nexus.community.throttlingStatus')
+        .mockReturnValue('75% usage');
+
       await renderView();
-  
+
       expect(selectors.getHeading('Monitor this instance\'s usage to ensure your deployment is appropriate for your needs. Learn more about the usage center . Usage Metrics Overview')).toBeInTheDocument();
-      expect(selectors.getStatusIndicator()).toHaveTextContent('Usage nearing limits')
+      expect(selectors.getStatusIndicator('Usage nearing limits')).toBeInTheDocument();
     });
 
     it("renders text and status indicator when usage is over limits", async () => {
-      jest.spyOn(ExtJS, 'useState').mockReturnValue('Over limits');
-  
+      // Mock useState to return appropriate values based on what function is called
+      ExtJS.useState.mockImplementation((arg) => {
+        if (typeof arg === 'function') {
+          const result = arg();
+          if (result === 'COMMUNITY') return result;
+          return 'Over limits';
+        }
+        return arg;
+      });
+
+      // Mock getValue for throttlingStatus
+      when(ExtJS.state().getValue)
+        .calledWith('nexus.community.throttlingStatus')
+        .mockReturnValue('Over limits');
+
       await renderView();
-  
+
       expect(selectors.getHeading('Monitor this instance\'s usage to ensure your deployment is appropriate for your needs. Learn more about the usage center . Usage Metrics Overview')).toBeInTheDocument();
-      expect(selectors.getStatusIndicator()).toHaveTextContent('Usage over limits')
+      expect(selectors.getStatusIndicator('Usage over limits')).toBeInTheDocument();
     });
 
     it('renders data correctly', async () => {

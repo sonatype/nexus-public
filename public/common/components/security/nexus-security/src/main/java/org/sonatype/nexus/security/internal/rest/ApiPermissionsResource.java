@@ -15,18 +15,20 @@ package org.sonatype.nexus.security.internal.rest;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.rest.Resource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -36,8 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 
 /**
@@ -47,7 +49,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENA
 @Produces(APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path(ApiPermissionsResource.RESOURCE_PATH)
-@Api(value = "Internal UI: API permissions")
+@Tag(name = "Internal UI: API permissions")
 public class ApiPermissionsResource
     implements Resource
 {
@@ -65,12 +67,13 @@ public class ApiPermissionsResource
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:read")
-  @ApiOperation("List REST endpoints with permission metadata for the API documentation UI")
+  @Operation(summary = "List REST endpoints with permission metadata for the API documentation UI")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "Permission map", response = ApiPermissionsResponse.class),
-      @ApiResponse(code = 401, message = "Not authenticated"),
-      @ApiResponse(code = 403, message = "Missing nexus:settings:read"),
-      @ApiResponse(code = 500, message = "Registry unavailable")
+      @ApiResponse(responseCode = "200", description = "Permission map",
+          content = @Content(schema = @Schema(implementation = ApiPermissionsResponse.class))),
+      @ApiResponse(responseCode = "401", description = "Not authenticated"),
+      @ApiResponse(responseCode = "403", description = "Missing nexus:settings:read"),
+      @ApiResponse(responseCode = "500", description = "Registry unavailable")
   })
   public Response list(
       @QueryParam("method") final String method,

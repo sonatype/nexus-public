@@ -100,7 +100,7 @@ describe('SystemInfoPage', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('System Information')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     });
 
     expect(screen.getByText('View detailed system and server information')).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('SystemInfoPage', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('System Information')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     });
 
     const refreshButton = screen.getByRole('button', { name: /refresh/i });
@@ -149,7 +149,7 @@ describe('SystemInfoPage', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('System Information')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     });
 
     const downloadButton = screen.getByRole('button', { name: /download/i });
@@ -162,7 +162,7 @@ describe('SystemInfoPage', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('System Information')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     });
 
     const copyButton = screen.getByRole('button', { name: /copy/i });
@@ -177,7 +177,7 @@ describe('SystemInfoPage', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('System Information')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     });
 
     const copyButton = screen.getByRole('button', { name: /copy/i });
@@ -194,7 +194,7 @@ describe('SystemInfoPage', () => {
     render(<SystemInfoPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('System Information')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
     });
 
     const copyButton = screen.getByRole('button', { name: /copy/i });
@@ -412,6 +412,42 @@ describe('SystemInfoPage', () => {
       await waitFor(() => {
         expect(screen.getByText('version')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Breadcrumb navigation', () => {
+    it('renders breadcrumbs with Settings link', async () => {
+      render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+    });
+
+    it('renders System Information as current page in breadcrumbs', async () => {
+      const { container } = render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'System Information' })).toBeInTheDocument();
+      });
+
+      // System Information should be the current page (span with aria-current)
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('System Information');
+    });
+
+    it('navigates to Settings when Settings breadcrumb is clicked', async () => {
+      render(<SystemInfoPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      const originalHash = window.location.hash;
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+      window.location.hash = originalHash;
     });
   });
 });

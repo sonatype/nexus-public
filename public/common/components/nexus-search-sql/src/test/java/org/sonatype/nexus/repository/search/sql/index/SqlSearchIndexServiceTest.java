@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -95,6 +96,17 @@ class SqlSearchIndexServiceTest
     verify(searchStore).deleteComponentIds(any(), eq(Set.of(internalId)), any());
     verify(searchStore).deleteSearchAssets(any(), eq(Set.of(internalId)), any());
     verifyNoMoreInteractions(searchRecordProducer, searchStore);
+  }
+
+  @Test
+  void testIndexBatch_skipsWhenAllComponentsHaveNoAssets() {
+    List<FluentComponent> components = List.of(mockComponent(), mockComponent(), mockComponent());
+    components.forEach(c -> when(searchRecordProducer.createSearchRecord(c, repository)).thenReturn(Optional.empty()));
+
+    underTest.indexBatch(components, repository);
+
+    verify(searchStore, never()).saveBatch(any());
+    verifyNoMoreInteractions(searchStore);
   }
 
   @Test

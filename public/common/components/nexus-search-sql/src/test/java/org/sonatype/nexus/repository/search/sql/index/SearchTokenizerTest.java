@@ -37,6 +37,18 @@ class SearchTokenizerTest
     assertThat(SearchTokenizer.stripLeadingSeparators("/-\\._ asdf"), is("asdf"));
   }
 
+  @Test
+  void testStripTrailingSeparators() {
+    assertThat(SearchTokenizer.stripTrailingSeparators(""), is(""));
+    assertThat(SearchTokenizer.stripTrailingSeparators("-"), is(""));
+    assertThat(SearchTokenizer.stripTrailingSeparators("asdf-"), is("asdf"));
+    assertThat(SearchTokenizer.stripTrailingSeparators("EUCLID/"), is("EUCLID"));
+    assertThat(SearchTokenizer.stripTrailingSeparators("EUCLID"), is("EUCLID"));
+    assertThat(SearchTokenizer.stripTrailingSeparators("/EUCLID/"), is("/EUCLID"));
+    assertThat(SearchTokenizer.stripTrailingSeparators("term."), is("term"));
+    assertThat(SearchTokenizer.stripTrailingSeparators("asdf /-\\._"), is("asdf"));
+  }
+
   @ParameterizedTest
   @CsvSource({
       "package_id, true", "package.id, true", "package-id, true",

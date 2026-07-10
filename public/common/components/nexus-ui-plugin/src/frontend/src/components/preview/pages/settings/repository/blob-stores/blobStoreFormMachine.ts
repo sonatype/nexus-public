@@ -92,10 +92,45 @@ const isTypeGuard = (targetType: string) =>
   (_context: unknown, event: { type: string; value?: string }) => event.value === targetType;
 
 /**
+ * Used to extract token strings "${name}" => "name"
+ */
+const tokenMatcher = /\$\{(.*?)\}/g;
+function stripTokenCharacters(match: string): string {
+  return match.replace('${', '').replace('}', '');
+}
+
+/**
+ * Replace tokens in a string with values from a data object.
+ * Example: replaceTokens("${name}/path", { name: "my-store" }) => "my-store/path"
+ */
+function replaceTokens(template: string, data: Record<string, unknown>): string {
+  return template.replace(tokenMatcher, (match) => {
+    const key = stripTokenCharacters(match);
+    return String(data[key] ?? '');
+  });
+}
+
+/**
+ * Find the tokenReplacement attribute from blob store type fields.
+ * Returns the tokenReplacement string for the path field (file blob store).
+ */
+function findPathTokenReplacement(blobStoreTypes: BlobStoreTypeInfo[]): string | undefined {
+  const fileType = blobStoreTypes.find(t => t.id.toLowerCase() === 'file');
+  if (!fileType?.fields) return undefined;
+
+  const pathField = fileType.fields.find(f => f.id === 'path');
+  return pathField?.attributes?.tokenReplacement;
+}
+
+/**
  * Build the default form data for a given blob store type.
  * Resets all type-specific fields and initializes the target type's defaults.
  */
-function buildDefaultsForType(type: string, base: Partial<BlobStoreFormData>): BlobStoreFormData {
+function buildDefaultsForType(
+  type: string,
+  base: Partial<BlobStoreFormData>,
+  blobStoreTypes?: BlobStoreTypeInfo[]
+): BlobStoreFormData {
   const defaults: BlobStoreFormData = {
     name: base.name ?? '',
     type,
@@ -108,7 +143,13 @@ function buildDefaultsForType(type: string, base: Partial<BlobStoreFormData>): B
 
   switch (type) {
     case BLOB_STORE_TYPE_IDS.FILE:
-      // path is already ''
+      // If we have blob store types with tokenReplacement, use it to set default path
+      if (blobStoreTypes && base.name) {
+        const tokenReplacement = findPathTokenReplacement(blobStoreTypes);
+        if (tokenReplacement) {
+          defaults.path = replaceTokens(tokenReplacement, { name: base.name });
+        }
+      }
       break;
     case BLOB_STORE_TYPE_IDS.S3:
       defaults.bucketConfiguration = {
@@ -170,25 +211,39 @@ function validateBlobStore(data: BlobStoreFormData): ValidationErrors {
 
   if (type === BLOB_STORE_TYPE_IDS.S3) {
     const bucket = (data.bucketConfiguration?.bucket as Record<string, string>) ?? {};
-    if (!bucket.name?.trim()) {
+    const bucketName = bucket.name?.trim() ?? '';
+    if (!bucketName) {
       errors['bucketConfiguration.bucket.name'] = 'Bucket name is required';
+    } else if (bucketName.length < 3 || bucketName.length > 63) {
+      errors['bucketConfiguration.bucket.name'] = 'Bucket name must be between 3 and 63 characters';
     }
   }
 
   if (type === BLOB_STORE_TYPE_IDS.AZURE) {
     const config = data.bucketConfiguration ?? {};
-    if (!(config.accountName as string)?.trim()) {
+    // Azure storage account names: 3-24 characters (per Azure naming rules).
+    const accountName = (config.accountName as string)?.trim() ?? '';
+    if (!accountName) {
       errors['bucketConfiguration.accountName'] = 'Account name is required';
+    } else if (accountName.length < 3 || accountName.length > 24) {
+      errors['bucketConfiguration.accountName'] = 'Account name must be between 3 and 24 characters';
     }
-    if (!(config.containerName as string)?.trim()) {
+    // Azure container names: 3-63 characters (per Azure naming rules).
+    const containerName = (config.containerName as string)?.trim() ?? '';
+    if (!containerName) {
       errors['bucketConfiguration.containerName'] = 'Container name is required';
+    } else if (containerName.length < 3 || containerName.length > 63) {
+      errors['bucketConfiguration.containerName'] = 'Container name must be between 3 and 63 characters';
     }
   }
 
   if (type === BLOB_STORE_TYPE_IDS.GOOGLE) {
     const bucket = (data.bucketConfiguration?.bucket as Record<string, string>) ?? {};
-    if (!bucket.name?.trim()) {
+    const bucketName = bucket.name?.trim() ?? '';
+    if (!bucketName) {
       errors['bucketConfiguration.bucket.name'] = 'Bucket name is required';
+    } else if (bucketName.length < 3 || bucketName.length > 63) {
+      errors['bucketConfiguration.bucket.name'] = 'Bucket name must be between 3 and 63 characters';
     }
   }
 
@@ -216,10 +271,11 @@ function validateBlobStore(data: BlobStoreFormData): ValidationErrors {
 
 /**
  * Fetch a blob store by name and type from the REST API.
+ * Type is lowercased to match the REST API path segment convention (e.g. "file", not "File").
  */
 async function findBlobStore(name: string, type: string): Promise<RestBlobStore | null> {
   try {
-    const url = `${ENDPOINTS.BLOBSTORES}/${encodeURIComponent(type)}/${encodeURIComponent(name)}`;
+    const url = `${ENDPOINTS.BLOBSTORES}/${encodeURIComponent(type.toLowerCase())}/${encodeURIComponent(name)}`;
     const data = await restClient.get<RestBlobStore>(url);
     return data;
   } catch (err) {
@@ -241,17 +297,25 @@ async function fetchBlobStoreUsage(name: string): Promise<BlobStoreUsage> {
 }
 
 /**
+ * Convert bytes to megabytes, matching the save-side conversion in useBlobStores.ts.
+ * The REST API stores/returns softQuota.limit in bytes; the form field works in MB.
+ */
+function bytesToMegaBytes(bytes: number): number {
+  return bytes / (1024 * 1024);
+}
+
+/**
  * Transform a REST blob store response into the machine's form data shape.
  */
 function transformRestToFormData(rest: RestBlobStore, type: string): BlobStoreFormData {
   const formData = buildDefaultsForType(type, { name: rest.name });
 
-  // Soft quota
+  // Soft quota: API returns limit in bytes; form field works in MB.
   if (rest.softQuota) {
     formData.softQuota = {
       enabled: true,
       type: rest.softQuota.type,
-      limit: rest.softQuota.limit,
+      limit: bytesToMegaBytes(rest.softQuota.limit),
     };
   }
 
@@ -312,9 +376,35 @@ export function createBlobStoreFormMachine(
         data: buildDefaultsForType(event.value, {
           name: context.data.name,
           softQuota: context.data.softQuota,
-        }),
+        }, context.blobStoreTypes),
         touched: { ...context.touched, type: true },
       })),
+      // Update path field when name changes (using tokenReplacement for file blob stores)
+      updatePathFromName: assign((context: any, event: any) => {
+        const { blobStoreTypes, data, touched } = context;
+        const type = data.type?.toLowerCase();
+
+        // Only apply token replacement for file blob stores in create mode
+        if (type !== BLOB_STORE_TYPE_IDS.FILE) {
+          return {};
+        }
+
+        // Don't update path if it has been touched (user manually edited it)
+        if (touched?.path) {
+          return {};
+        }
+
+        const tokenReplacement = findPathTokenReplacement(blobStoreTypes);
+        if (!tokenReplacement) {
+          return {};
+        }
+
+        // Update path with new name
+        const newPath = replaceTokens(tokenReplacement, { name: event.value });
+        return {
+          data: { ...data, path: newPath },
+        };
+      }),
     },
     // Guards for TYPE_CHANGE transitions between sub-states
     guards: {
@@ -362,7 +452,7 @@ export function createBlobStoreFormMachine(
 
         const initialData: BlobStoreFormData = blobStore
           ? transformRestToFormData(blobStore, type)
-          : buildDefaultsForType(type, {});
+          : buildDefaultsForType(type, {}, Array.isArray(blobStoreTypes) ? blobStoreTypes : []);
 
         return {
           data: initialData,
@@ -383,6 +473,10 @@ export function createBlobStoreFormMachine(
         { target: '.google', cond: 'isTypeGoogle', actions: ['changeType', 'validate', 'computePristine'] },
         { target: '.group', cond: 'isTypeGroup', actions: ['changeType', 'validate', 'computePristine'] },
       ],
+      // Handle name changes to update path field (file blob stores only)
+      NAME_CHANGE: {
+        actions: ['updatePathFromName'],
+      },
       CONFIRM_DELETE: {
         actions: assign({ showDeleteModal: true } as any),
       },

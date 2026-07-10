@@ -38,7 +38,25 @@ export default {
       ADD_ANOTHER_ASSET_BTN_LABEL: 'Add another asset',
       ASSET_GROUP_NAME: assetNum => `Asset ${assetNum}`,
       ASSET_NOT_UNIQUE_MESSAGE: 'Asset not unique',
-      COORDINATES_EXTRACTED_FROM_POM_MESSAGE: 'Component details will be extracted from the provided POM file.'
+      COORDINATES_EXTRACTED_FROM_POM_MESSAGE: 'Component details will be extracted from the provided POM file.',
+      ENFORCEMENT_BLOCKED: {
+        // CLM-40150: TITLE and MESSAGE are unchanged. The link-label constant was removed
+        // alongside the broken evaluation link in UploadDetails.jsx — the IQ-side
+        // per-evaluation report UI does not exist for hosted-deployment blocks yet, so
+        // surfacing the link sent users to a 404. Reference ID still rendered separately
+        // (ENFORCEMENT_CORRELATION_ID_LABEL) for support correlation.
+        TITLE: 'Upload blocked by Lifecycle Evaluation.',
+        MESSAGE: (assetName, repositoryName) =>
+            `${assetName || 'Artifact'} was not uploaded to ${repositoryName || 'the repository'} ` +
+            'because it failed one or more policies configured.'
+      },
+      ENFORCEMENT_UNAVAILABLE: {
+        TITLE: 'Policy evaluation unavailable.',
+        MESSAGE: (assetName, repositoryName) =>
+            `${assetName || 'Artifact'} could not be uploaded to ${repositoryName || 'the repository'} ` +
+            'because policy evaluation is currently unavailable. Please retry in a few moments.'
+      },
+      ENFORCEMENT_CORRELATION_ID_LABEL: 'Reference ID'
     },
     URL_COPIED_MESSAGE: 'URL Copied to Clipboard',
     URL_COPY_ERROR_MESSAGE: 'Failed to copy URL to clipboard'

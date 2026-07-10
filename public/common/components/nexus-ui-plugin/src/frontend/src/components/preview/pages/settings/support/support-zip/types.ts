@@ -40,16 +40,23 @@ export interface SupportZipResponse {
   truncated: boolean;
 }
 
+export type SupportZipNodeStatus =
+  | 'NODE_UNAVAILABLE'
+  | 'NOT_CREATED'
+  | 'CREATING'
+  | 'COMPLETED'
+  | 'FAILED';
+
 /**
- * HA Node information
+ * HA Node information returned by the supportzip internal endpoints.
+ * Mirrors the backend SupportZipInfoData shape.
  */
 export interface NodeInfo {
   nodeId: string;
   hostname: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'OFFLINE';
-  supportZip?: SupportZipResponse | null;
+  status: SupportZipNodeStatus;
+  blobRef?: string;
   lastUpdated?: number;
-  error?: string;
 }
 
 /**
@@ -86,8 +93,5 @@ export const ARCHIVED_LOG_OPTIONS = [
  */
 export const SUPPORT_ZIP_API = {
   CREATE: '/service/rest/v1/support/supportzippath',
-  CREATE_HA: '/service/rest/v1/nodes/supportzips',
   DOWNLOAD: (filename: string) => `service/rest/wonderland/download/${filename}`,
 } as const;
-
-

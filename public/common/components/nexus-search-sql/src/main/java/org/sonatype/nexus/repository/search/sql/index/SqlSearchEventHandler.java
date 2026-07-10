@@ -12,15 +12,21 @@
  */
 package org.sonatype.nexus.repository.search.sql.index;
 
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.repository.content.search.SearchEventHandler;
+import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.types.ProxyType;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -31,6 +37,7 @@ import org.springframework.stereotype.Component;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
 /**
  * <ul>
@@ -75,6 +82,56 @@ public class SqlSearchEventHandler
       return;
     }
     super.requestIndex(event);
+  }
+
+  /** Proxy repositories write immediately; hosted and group use the base-class batch path. */
+  @Override
+  public void requestIndex(final String format, final int componentId, final Repository repository) {
+    if (componentId <= 0 || !isProcessEvents()) {
+      return;
+    }
+    if (isProxyRepository(repository)) {
+      threadPoolExecutor.execute(() -> repository.optionalFacet(SearchFacet.class)
+          .ifPresent(searchFacet -> {
+            try {
+              searchFacet.index(Set.of(toExternalId(componentId)));
+            }
+            catch (IllegalStateException e) {
+              // repository stopped/deleted between optionalFacet() and index() — swallow safely.
+              log.debug("Skipping index for stopped/deleted repository {}: {}", repository.getName(), e.getMessage());
+            }
+          }));
+    }
+    else {
+      // Hosted/group: batch path is sufficient — no HA race concern.
+      super.requestIndex(format, componentId, repository);
+    }
+  }
+
+  /**
+   * Extends base flush to also drain the thread pool used by proxy repos.
+   * Proxy repos bypass pendingRequests, so the base flush is a no-op for them.
+   * A sentinel task guarantees all prior index tasks have completed before returning.
+   */
+  @Override
+  public void flushPendingForRepository(final String repositoryName) {
+    super.flushPendingForRepository(repositoryName);
+    try {
+      // Sentinel drains all proxy tasks in the shared pool, not only this repository's.
+      // Acceptable tradeoff: flush is cold-cache-only; per-repo tracking adds significant complexity.
+      threadPoolExecutor.submit(() -> {
+      }).get(5, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    catch (Exception e) {
+      log.warn("Timed out waiting for search index flush for repository {}", repositoryName);
+    }
+  }
+
+  private static boolean isProxyRepository(final Repository repository) {
+    return repository.getType() != null && ProxyType.NAME.equals(repository.getType().getValue());
   }
 
   @AllowConcurrentEvents

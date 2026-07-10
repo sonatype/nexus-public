@@ -148,7 +148,7 @@ export default function BlobStoresForm() {
                  description={isEdit ? FORM.EDIT_DESCRIPTION(type?.name || pristineData.type) : null}/>
       {isEdit && type?.id !== 'group' && types?.some(type => type.id === 'group') &&
       <PageActions>
-        <NxButton variant="primary" onClick={modalConvertToGroupOpen} disabled={!hasUpdatePermissions}>{FORM.CONVERT_TO_GROUP_BUTTON}</NxButton>
+        <NxButton variant="primary" onClick={modalConvertToGroupOpen} disabled={!hasUpdatePermissions} data-analytics-id="nxrm-blobstore-convert-to-group">{FORM.CONVERT_TO_GROUP_BUTTON}</NxButton>
       </PageActions>
       }
     </PageHeader>
@@ -160,7 +160,7 @@ export default function BlobStoresForm() {
         submitBtnClasses={!hasUpdatePermissions && 'disabled'}
         additionalFooterBtns={isEdit &&
           <NxTooltip title={deleteTooltip}>
-            <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete} type="button">
+            <NxButton variant="tertiary" className={cannotDelete && 'disabled'} onClick={confirmDelete} type="button" data-analytics-id="nxrm-blobstore-delete">
               <NxFontAwesomeIcon icon={faTrash}/>
               <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
             </NxButton>

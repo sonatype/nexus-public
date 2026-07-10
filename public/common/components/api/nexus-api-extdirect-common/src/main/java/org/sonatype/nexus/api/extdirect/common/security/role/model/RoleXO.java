@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.extdirect.common.security.role.model;
 
 import java.util.Set;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.security.privilege.PrivilegesExist;
 import org.sonatype.nexus.security.role.RoleNotContainSelf;

@@ -12,32 +12,32 @@
  */
 package org.sonatype.nexus.security.privilege.rest;
 
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * @since 3.19
  */
 public abstract class ApiPrivilege
 {
-  @ApiModelProperty(NexusSecurityApiConstants.PRIVILEGE_TYPE_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.PRIVILEGE_TYPE_DESCRIPTION)
   private String type;
 
   @NotBlank
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
-  @ApiModelProperty(NexusSecurityApiConstants.PRIVILEGE_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.PRIVILEGE_NAME_DESCRIPTION)
   private String name;
 
   // note that the default value is "" as we want to match current UI behavior
   private String description = "";
 
-  @ApiModelProperty(NexusSecurityApiConstants.PRIVILEGE_READONLY_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.PRIVILEGE_READONLY_DESCRIPTION)
   private boolean readOnly;
 
   public ApiPrivilege(final String type) {

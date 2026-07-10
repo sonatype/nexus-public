@@ -17,14 +17,6 @@
 
 import './App';
 import { enforceHashRouting } from './hashEnforcement';
-import S3BlobStoreSettings from './components/pages/admin/BlobStores/S3/S3BlobStoreSettings';
-import S3BlobStoreWarning from './components/pages/admin/BlobStores/S3/S3BlobStoreWarning';
-import S3BlobStoreActions from './components/pages/admin/BlobStores/S3/S3BlobStoreActions';
-import AzureBlobStoreSettings from './components/pages/admin/BlobStores/Azure/AzureBlobStoreSettings';
-import AzureBlobStoreActions from './components/pages/admin/BlobStores/Azure/AzureBlobStoreActions';
-import GoogleBlobStoreSettings from './components/pages/admin/BlobStores/Google/GoogleBlobStoreSettings';
-import GoogleBlobStoreActions from './components/pages/admin/BlobStores/Google/GoogleBlobStoreActions';
-import FileBlobStoreWarning from './components/pages/admin/BlobStores/File/FileBlobStoreWarning';
 import CommunityEulaOnboarding from './components/pages/onboarding/CommunityEulaOnboarding';
 import CommunityDiscoverOnboarding from './components/pages/onboarding/CommunityDiscoverOnboarding';
 import TelemetryWarningBanner from './components/shared/telemetry/TelemetryWarningBanner';
@@ -36,26 +28,6 @@ enforceHashRouting();
 configureAxios();
 configureDebugLogging();
 exposeCreateRoot();
-
-window.BlobStoreTypes = {
-  ...window.BlobStoreTypes,
-  azure: {
-    Settings: AzureBlobStoreSettings,
-    Actions: AzureBlobStoreActions
-  },
-  s3: {
-    Settings: S3BlobStoreSettings,
-    Warning: S3BlobStoreWarning,
-    Actions: S3BlobStoreActions
-  },
-  google: {
-    Settings: GoogleBlobStoreSettings,
-    Actions: GoogleBlobStoreActions
-  },
-  file: {
-    Warning: FileBlobStoreWarning
-  }
-}
 
 window.ReactComponents = {
   ...window.ReactComponents,

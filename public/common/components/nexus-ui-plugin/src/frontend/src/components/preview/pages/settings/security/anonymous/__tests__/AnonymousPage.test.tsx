@@ -338,4 +338,29 @@ describe('AnonymousPage', () => {
     const usernameInput = screen.getByTestId('input-userId');
     expect(usernameInput).toHaveValue('anonymous');
   });
+
+  it('has nxrm-anonymous-save analytics ID on save button', async () => {
+    mockedUseAnonymousForm.mockReturnValue(createAnonymousFormMock(
+      { ...mockSettings, userId: 'guest' }, mockRealmTypes, { isPristine: false }
+    ));
+    render(<AnonymousPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-userId')).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    expect(saveButton).toHaveAttribute('data-analytics-id', 'nxrm-anonymous-save');
+  });
+
+  it('has nxrm-anonymous-toggle analytics ID on enabled checkbox', async () => {
+    render(<AnonymousPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkbox-enabled')).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getByTestId('checkbox-enabled');
+    expect(checkbox).toHaveAttribute('data-analytics-id', 'nxrm-anonymous-toggle');
+  });
 });

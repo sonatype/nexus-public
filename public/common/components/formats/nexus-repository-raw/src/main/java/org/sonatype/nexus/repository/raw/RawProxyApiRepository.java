@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw;
 
-import javax.validation.constraints.NotNull;
-
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
@@ -26,6 +24,7 @@ import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 3.41
@@ -33,7 +32,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RawProxyApiRepository
     extends SimpleApiProxyRepository
 {
-
   @NotNull
   private final RawAttributes raw;
 

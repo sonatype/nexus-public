@@ -57,13 +57,19 @@ public class AggregateJsMojo
   /**
    * Enables extra warnings which may hint at problems.
    */
-  @Parameter(property = "extjs.warnings", defaultValue = "false")
+  @Parameter(property = "extjs.warnings" /*
+                                          * NEXUS-46395 TODO: defaultValue moved to @Schema in OpenAPI
+                                          * 3.x: @Parameter(schema = @Schema(defaultValue = "false"))
+                                          */)
   private boolean warnings;
 
   /**
    * Enable omission (auto-commenting) of lines surrounded by {@code //<if flag>} and {@code //</if>}.
    */
-  @Parameter(property = "extjs.omit", defaultValue = "false")
+  @Parameter(property = "extjs.omit" /*
+                                      * NEXUS-46395 TODO: defaultValue moved to @Schema in OpenAPI
+                                      * 3.x: @Parameter(schema = @Schema(defaultValue = "false"))
+                                      */)
   private boolean omit;
 
   /**

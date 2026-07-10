@@ -48,6 +48,7 @@ import org.sonatype.nexus.security.realm.RealmManager;
 import org.sonatype.nexus.security.realm.SecurityRealm;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.session.SessionInvalidator;
 import org.sonatype.nexus.security.user.InvalidCredentialsException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.RoleMappingUserManager;
@@ -104,6 +105,8 @@ public class DefaultSecuritySystem
 
   private final SecurityHelper securityHelper;
 
+  private final SessionInvalidator sessionInvalidator;
+
   @Autowired
   public DefaultSecuritySystem(
       final EventManager eventManager,
@@ -112,7 +115,8 @@ public class DefaultSecuritySystem
       final AnonymousManager anonymousManager,
       final List<AuthorizationManager> authorizationManagersList,
       final List<UserManager> userManagersList,
-      final SecurityHelper securityHelper)
+      final SecurityHelper securityHelper,
+      final SessionInvalidator sessionInvalidator)
   {
     this.eventManager = checkNotNull(eventManager);
     this.realmSecurityManager = checkNotNull(realmSecurityManager);
@@ -121,6 +125,7 @@ public class DefaultSecuritySystem
     this.authorizationManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(authorizationManagersList));
     this.userManagers = QualifierUtil.buildQualifierBeanMap(checkNotNull(userManagersList));
     this.securityHelper = checkNotNull(securityHelper);
+    this.sessionInvalidator = checkNotNull(sessionInvalidator);
   }
 
   // TODO: Sort out better lifecycle management for dependent components
@@ -592,6 +597,8 @@ public class DefaultSecuritySystem
           userId, user.getSource());
     }
 
+    sessionInvalidator.invalidateSessionsForUser(userId, resolveInvalidationSource(userId, user));
+
     // Post event containing the userId for which the password has been changed
     eventManager.post(new UserPasswordChanged(userId, clearCache));
     eventManager.post(new UserPasswordChangedDistributedEvent(userId, clearCache));
@@ -602,6 +609,32 @@ public class DefaultSecuritySystem
       throw new AuthorizationException(
           format("%s is not permitted to change the password for %s", UserIdHelper.get(), userId));
     }
+  }
+
+  /**
+   * Pick the value stored on the JWT user-invalidation row. For a self-change we return the
+   * Shiro realm name of the caller's Subject — this matches the {@code realm} claim written into
+   * JWTs at login and into {@code jwt_session} rows at logout. For an admin-change (caller !=
+   * target) or when no Shiro context is available we return {@code user.getSource()}.
+   *
+   * <p>
+   * The returned value is informational: the invalidation match is on username alone.
+   */
+  private String resolveInvalidationSource(final String userId, final User user) {
+    try {
+      Subject subject = SecurityUtils.getSubject();
+      if (subject != null && subject.getPrincipal() != null
+          && userId.equals(subject.getPrincipal().toString())) {
+        Optional<String> realmName = subject.getPrincipals().getRealmNames().stream().findFirst();
+        if (realmName.isPresent()) {
+          return realmName.get();
+        }
+      }
+    }
+    catch (Exception e) {
+      log.debug("Could not resolve Shiro realm for self-change, falling back to user source", e);
+    }
+    return user.getSource();
   }
 
   public boolean isPermittedToChangeUserPassword(final String userId) {

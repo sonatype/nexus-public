@@ -13,6 +13,8 @@
 package org.sonatype.nexus.internal.webhooks;
 
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -24,16 +26,23 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Provider;
 
 import org.sonatype.nexus.common.InternalAccessible;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.thread.NexusThreadFactory;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 import org.sonatype.nexus.webhooks.Webhook;
 import org.sonatype.nexus.webhooks.WebhookRequest;
 import org.sonatype.nexus.webhooks.WebhookRequestSendEvent;
 import org.sonatype.nexus.webhooks.WebhookService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import com.codahale.metrics.annotation.Gauge;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -44,6 +53,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.BaseEncoding;
+
+import jakarta.inject.Provider;
+import jakarta.validation.ValidationException;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -54,7 +67,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +74,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Thread.MIN_PRIORITY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import org.springframework.stereotype.Component;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Default {@link WebhookService} implementation.
@@ -70,7 +83,9 @@ import org.springframework.stereotype.Component;
  * @since 3.1
  */
 @Component
+@ManagedLifecycle(phase = TASKS)
 public class WebhookServiceImpl
+    extends StateGuardLifecycleSupport
     implements WebhookService, EventAware, EventAware.Asynchronous
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -92,6 +107,8 @@ public class WebhookServiceImpl
 
   private final Provider<CloseableHttpClient> httpClientProvider;
 
+  private final AntiSsrfService antiSsrfService;
+
   private final List<Webhook> webhooks;
 
   private final ThreadPoolExecutor threadPoolExecutor;
@@ -99,10 +116,12 @@ public class WebhookServiceImpl
   @Autowired
   public WebhookServiceImpl(
       final Provider<CloseableHttpClient> httpClientProvider,
+      final AntiSsrfService antiSsrfService,
       final List<Webhook> webhooks,
       @Value("${nexus.webhook.pool.size:128}") final int poolSize)
   {
     this.httpClientProvider = checkNotNull(httpClientProvider);
+    this.antiSsrfService = checkNotNull(antiSsrfService);
     this.webhooks = checkNotNull(webhooks);
 
     checkArgument(poolSize > 0, "Pool size must be greater than zero");
@@ -155,7 +174,29 @@ public class WebhookServiceImpl
     return ImmutableList.copyOf(webhooks);
   }
 
+  //
+  // Lifecycle
+  //
+
   @Override
+  protected void doStop() throws Exception {
+    // Events received after stop will be rejected by @Guarded(by = STARTED) on queue(),
+    // and the on() method catches InvalidStateException to log at DEBUG level.
+    threadPoolExecutor.shutdown();
+    try {
+      if (!threadPoolExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+        threadPoolExecutor.shutdownNow();
+        log.warn("Webhook thread pool did not terminate gracefully within 30 seconds");
+      }
+    }
+    catch (InterruptedException e) {
+      threadPoolExecutor.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public void queue(final WebhookRequest request) {
     checkNotNull(request);
     threadPoolExecutor.execute(() -> {
@@ -165,6 +206,14 @@ public class WebhookServiceImpl
       catch (HttpResponseException e) {
         log.warn("Webhook endpoint returned error status for request: {} - {}",
             request, e.getMessage());
+      }
+      catch (SocketException e) {
+        if (threadPoolExecutor.isShutdown()) {
+          log.debug("Webhook request interrupted by shutdown: {}", request, e);
+        }
+        else {
+          log.warn("Webhook request failed with socket error: {} - {}", request, e.getMessage());
+        }
       }
       catch (Exception e) {
         log.error("Failed to send webhook request:{}", request, e);
@@ -181,14 +230,35 @@ public class WebhookServiceImpl
   @AllowConcurrentEvents
   @InternalAccessible
   void on(final WebhookRequestSendEvent event) {
-    queue(event.getRequest());
+    try {
+      queue(event.getRequest());
+    }
+    catch (InvalidStateException e) {
+      // Expected during shutdown - queue() is @Guarded(by = STARTED) and will reject
+      // events after doStop() completes. Log at DEBUG to avoid noise during shutdown.
+      log.debug("Webhook event received after shutdown, ignoring: {}", event.getRequest());
+    }
   }
 
   @Override
+  @Guarded(by = STARTED)
   public void send(final WebhookRequest request) throws Exception {
     checkNotNull(request);
 
     log.debug("Sending webhook request: {}", request);
+
+    // Validate webhook URL doesn't point to private/local network (SSRF protection)
+    URI url = request.getUrl();
+    String host = url != null ? url.getHost() : null;
+    if (host != null) {
+      try {
+        antiSsrfService.validateHost(host);
+      }
+      catch (ValidationException e) {
+        log.warn("Webhook blocked by SSRF protection: {} - {}", url, e.getMessage());
+        throw new IOException("Webhook URL blocked by SSRF protection: " + e.getMessage());
+      }
+    }
 
     Webhook webhook = request.getWebhook();
     String json = objectMapper.writeValueAsString(request.getPayload());

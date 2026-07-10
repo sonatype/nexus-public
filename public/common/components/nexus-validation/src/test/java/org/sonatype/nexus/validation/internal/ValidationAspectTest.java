@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.validation.internal;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.executable.ExecutableValidator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.executable.ExecutableValidator;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.validation.Validate;

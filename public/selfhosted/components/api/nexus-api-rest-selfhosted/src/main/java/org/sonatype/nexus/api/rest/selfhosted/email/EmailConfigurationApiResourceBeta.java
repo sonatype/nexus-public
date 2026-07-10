@@ -13,11 +13,11 @@
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.email.EmailManager;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 
 import static org.sonatype.nexus.api.rest.selfhosted.email.EmailConfigurationApiResourceBeta.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * @since 3.25
  * @deprecated moving to {@link EmailConfigurationApiResourceV1}
  */
-@Api(hidden = true)
+@Hidden
 @Component
 @Path(RESOURCE_URI)
 @Deprecated

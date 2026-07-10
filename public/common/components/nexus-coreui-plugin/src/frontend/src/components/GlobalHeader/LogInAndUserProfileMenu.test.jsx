@@ -36,21 +36,27 @@ jest.mock('@uirouter/react', () => ({
 }));
 
 // Mock nexus-ui-plugin with all needed exports
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    signOut: jest.fn(),
-    useState: jest.fn(),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn().mockImplementation((key) => {
-        if (key === 'user') return { id: 'admin' };
-        return undefined;
+jest.mock('@sonatype/nexus-ui-plugin', () => {
+  const useIsVisibleMock = jest.fn().mockReturnValue(true);
+
+  return {
+    ExtJS: {
+      signOut: jest.fn(),
+      useState: jest.fn(),
+      state: jest.fn().mockReturnValue({
+        getValue: jest.fn().mockImplementation((key) => {
+          if (key === 'user') return { id: 'admin' };
+          if (key === 'nugetApiKeyRealmEnabled') return true;
+          if (key === 'userTokenRealmEnabled') return true;
+          return undefined;
+        }),
       }),
-    }),
-    useUser: jest.fn().mockReturnValue({ name: 'admin', administrator: true }),
-    usePermission: jest.fn().mockReturnValue(true),
-  },
-  useIsVisible: jest.fn().mockReturnValue(true),
-}));
+      useUser: jest.fn().mockReturnValue({ name: 'admin', administrator: true }),
+      usePermission: jest.fn().mockReturnValue(true),
+    },
+    useIsVisible: useIsVisibleMock,
+  };
+});
 
 // Import the mocked modules
 import { ExtJS, useIsVisible } from '@sonatype/nexus-ui-plugin';
@@ -75,11 +81,13 @@ describe('LogInAndUserProfileMenu', () => {
     ExtJS.state.mockReturnValue({
       getValue: jest.fn().mockImplementation((key) => {
         if (key === 'user') return { id: 'admin' };
+        if (key === 'nugetApiKeyRealmEnabled') return true;
+        if (key === 'userTokenRealmEnabled') return true;
         return undefined;
       }),
     });
-    
-    // Reset and configure useIsVisible mock
+
+    // Reset and configure useIsVisible mock - default to true
     useIsVisible.mockReset();
     useIsVisible.mockReturnValue(true);
 

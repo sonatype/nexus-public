@@ -47,4 +47,15 @@ public interface SearchService
   default void waitForReady() {
     // not required for default
   }
+
+  /**
+   * Synchronously flush any pending search-index updates for the given repository.
+   * Lets a search caller observe the writes that have already happened in this
+   * repository, eliminating the eventual-consistency window from the asynchronous
+   * batched indexer. Default implementation is a no-op for backends that index
+   * synchronously.
+   */
+  default void flushPendingIndex(final String repositoryName) {
+    // not required for default
+  }
 }

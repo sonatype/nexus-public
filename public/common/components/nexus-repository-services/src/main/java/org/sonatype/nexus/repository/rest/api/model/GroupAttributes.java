@@ -14,11 +14,11 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import java.util.Collection;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model used to describe a group repository.
@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class GroupAttributes
 {
-  @ApiModelProperty(value = "Member repositories' names", dataType = "[Ljava.lang.String;")
+  @Schema(description = "Member repositories' names")
   @NotEmpty
   protected final Collection<String> memberNames;
 

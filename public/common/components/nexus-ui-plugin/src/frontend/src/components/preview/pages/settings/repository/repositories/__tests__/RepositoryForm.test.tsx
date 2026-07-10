@@ -12,23 +12,24 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
 import { RepositoryForm } from '../RepositoryForm';
-import { useRepositoriesApi } from '../useRepositoriesApi';
 import { useRepositoryForm } from '../useRepositoryForm';
 import { ToastProvider } from '../../../../../shared/Toast';
 
-// Mock hooks
-jest.mock('../useRepositoriesApi');
+// Mock the hook (Layer 2) - component only consumes hook output
 jest.mock('../useRepositoryForm');
 
-const mockUseRepositoriesApi = useRepositoriesApi as jest.MockedFunction<typeof useRepositoriesApi>;
 const mockUseRepositoryForm = useRepositoryForm as jest.MockedFunction<typeof useRepositoryForm>;
 
-function createMockRepoForm(data: any = {}, refs: any = {}) {
+const MOCK_BLOB_STORES = [{ name: 'default' }, { name: 'secondary' }];
+const MOCK_ROUTING_RULES = [{ id: '1', name: 'block-snapshots', mode: 'BLOCK' }];
+const MOCK_CLEANUP_POLICIES = [{ name: 'maven-cleanup', format: 'maven2' }];
+
+function createMockForm(data: any = {}) {
   return {
     field: jest.fn((name: string) => {
       const value = data[name];
@@ -41,30 +42,46 @@ function createMockRepoForm(data: any = {}, refs: any = {}) {
     isDeleting: false,
     saveError: null,
     validationErrors: {},
-    state: { matches: jest.fn(() => false), context: { data, ...refs } },
+    state: { matches: jest.fn(() => false), context: { data } },
     send: jest.fn(),
   } as any;
 }
 
-const mockBlobStores = [{ name: 'default' }, { name: 'secondary' }];
-const mockRoutingRules = [{ id: '1', name: 'block-snapshots', mode: 'BLOCK' }];
-const mockCleanupPolicies = [{ name: 'maven-cleanup', format: 'maven2' }];
+function createMockHookReturn(overrides: Partial<ReturnType<typeof useRepositoryForm>> = {}) {
+  const formData = overrides.formData || {
+    name: '', type: 'hosted', format: 'maven2',
+    recipe: 'maven2-hosted', online: true,
+    storage: { blobStoreName: '', strictContentTypeValidation: true },
+  };
 
-const mockApiHook = {
-  loading: false,
-  error: null,
-  setError: jest.fn(),
-  fetchBlobStores: jest.fn().mockResolvedValue(mockBlobStores),
-  fetchRoutingRules: jest.fn().mockResolvedValue(mockRoutingRules),
-  fetchCleanupPolicies: jest.fn().mockResolvedValue(mockCleanupPolicies),
-  fetchRepositoryReferences: jest.fn().mockResolvedValue([]),
-};
+  return {
+    form: createMockForm(formData),
+    repository: null,
+    isCreate: true,
+    hasFirewallLicense: false,
+    isCloud: false,
+    activeTab: 'settings',
+    setActiveTab: jest.fn(),
+    originChangeWarning: false,
+    setOriginChangeWarning: jest.fn(),
+    formData: formData as any,
+    pristineData: undefined,
+    errors: {},
+    blobStores: MOCK_BLOB_STORES as any,
+    routingRules: MOCK_ROUTING_RULES as any,
+    cleanupPolicies: MOCK_CLEANUP_POLICIES as any,
+    memberRepositories: [],
+    handleChange: jest.fn(),
+    handleNestedChange: jest.fn(),
+    ...overrides,
+  } as any;
+}
 
-const mockProxyRecipe = { format: 'maven2', type: 'proxy', name: 'maven2-proxy' };
-const mockHostedRecipe = { format: 'maven2', type: 'hosted', name: 'maven2-hosted' };
-const mockGroupRecipe = { format: 'maven2', type: 'group', name: 'maven2-group' };
+const MOCK_PROXY_RECIPE = { format: 'maven2', type: 'proxy', name: 'maven2-proxy' };
+const MOCK_HOSTED_RECIPE = { format: 'maven2', type: 'hosted', name: 'maven2-hosted' };
+const MOCK_GROUP_RECIPE = { format: 'maven2', type: 'group', name: 'maven2-group' };
 
-const mockProxyRepository = {
+const MOCK_PROXY_REPOSITORY = {
   name: 'maven-central',
   type: 'proxy',
   format: 'maven2',
@@ -73,23 +90,10 @@ const mockProxyRepository = {
   url: 'http://localhost:8081/repository/maven-central/',
   status: { online: true },
   attributes: {
-    storage: {
-      blobStoreName: 'default',
-      strictContentTypeValidation: true,
-    },
-    proxy: {
-      remoteUrl: 'https://repo1.maven.org/maven2/',
-      contentMaxAge: 1440,
-      metadataMaxAge: 1440,
-    },
-    negativeCache: {
-      enabled: true,
-      timeToLive: 1440,
-    },
-    httpClient: {
-      blocked: false,
-      autoBlock: true,
-    },
+    storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+    proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    negativeCache: { enabled: true, timeToLive: 1440 },
+    httpClient: { blocked: false, autoBlock: true },
   },
 };
 
@@ -108,44 +112,19 @@ describe('RepositoryForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseRepositoriesApi.mockReturnValue(mockApiHook as any);
-    mockUseRepositoryForm.mockImplementation(({ repository, format, repositoryType }: any) => {
-      const formData = repository ? {
-        name: repository.name, type: repository.type, format: repository.format,
-        recipe: repository.recipe || `${repository.format}-${repository.type}`,
-        online: repository.online ?? true, storage: repository.attributes?.storage || { blobStoreName: 'default', strictContentTypeValidation: true },
-        proxy: repository.attributes?.proxy, httpClient: repository.attributes?.httpClient,
-        negativeCache: repository.attributes?.negativeCache, group: repository.attributes?.group,
-        cleanup: repository.attributes?.cleanup, maven: repository.attributes?.maven,
-        docker: repository.attributes?.docker,
-      } : {
-        name: '', type: repositoryType || 'hosted', format: format || 'maven2',
-        recipe: `${format || 'maven2'}-${repositoryType || 'hosted'}`,
-        online: true, storage: { blobStoreName: '', strictContentTypeValidation: true },
-      };
-      return {
-        form: createMockRepoForm(formData, {
-          blobStores: mockBlobStores, routingRules: mockRoutingRules,
-          cleanupPolicies: mockCleanupPolicies, memberOptions: [],
-        }),
-        repository: repository || null,
-        isCreate: !repository,
-      } as any;
-    });
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn());
   });
 
   it('renders loading state while fetching reference data', () => {
-    const loadingForm = createMockRepoForm({}, { blobStores: [], routingRules: [], cleanupPolicies: [], memberOptions: [] });
+    const loadingForm = createMockForm({});
     loadingForm.isLoading = true;
-    mockUseRepositoryForm.mockReturnValue({
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
       form: loadingForm,
-      repository: null,
-      isCreate: true,
-    } as any);
+    }));
 
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -158,7 +137,7 @@ describe('RepositoryForm', () => {
   it('renders form for creating hosted repository', async () => {
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -174,9 +153,20 @@ describe('RepositoryForm', () => {
   });
 
   it('renders form for creating proxy repository', async () => {
+    const proxyFormData = {
+      name: '', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: '', strictContentTypeValidation: true },
+      proxy: { remoteUrl: '', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      formData: proxyFormData as any,
+      form: createMockForm(proxyFormData),
+    }));
+
     renderWithTheme(
       <RepositoryForm
-        recipe={mockProxyRecipe}
+        recipe={MOCK_PROXY_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -190,17 +180,24 @@ describe('RepositoryForm', () => {
   });
 
   it('renders form for creating group repository', async () => {
-    mockUseRepositoriesApi.mockReturnValue({
-      ...mockApiHook,
-      fetchRepositoryReferences: jest.fn().mockResolvedValue([
-        { name: 'maven-central', type: 'proxy' },
-        { name: 'maven-releases', type: 'hosted' },
-      ]),
-    } as any);
+    const groupFormData = {
+      name: '', type: 'group', format: 'maven2',
+      recipe: 'maven2-group', online: true,
+      storage: { blobStoreName: '', strictContentTypeValidation: true },
+      group: { memberNames: [] },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      formData: groupFormData as any,
+      form: createMockForm(groupFormData),
+      memberRepositories: [
+        { id: 'maven-central', name: 'maven-central', format: 'maven2', type: 'proxy' },
+        { id: 'maven-releases', name: 'maven-releases', format: 'maven2', type: 'hosted' },
+      ] as any,
+    }));
 
     renderWithTheme(
       <RepositoryForm
-        recipe={mockGroupRecipe}
+        recipe={MOCK_GROUP_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -211,8 +208,6 @@ describe('RepositoryForm', () => {
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     });
 
-    // Group repositories have a Group section (rendered by GroupFacet)
-    // Wait for the Group section title to appear
     await waitFor(() => {
       const groupSection = screen.queryByText('Group');
       expect(groupSection).toBeInTheDocument();
@@ -220,10 +215,26 @@ describe('RepositoryForm', () => {
   });
 
   it('renders form for editing repository', async () => {
+    const editFormData = {
+      name: 'maven-central', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      httpClient: { blocked: false, autoBlock: true },
+      negativeCache: { enabled: true, timeToLive: 1440 },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: MOCK_PROXY_REPOSITORY as any,
+      activeTab: 'settings',
+      formData: editFormData as any,
+      form: createMockForm(editFormData),
+    }));
+
     renderWithTheme(
       <RepositoryForm
-        repository={mockProxyRepository as any}
-        recipe={mockProxyRecipe}
+        repository={MOCK_PROXY_REPOSITORY as any}
+        recipe={MOCK_PROXY_RECIPE}
         isCreate={false}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -235,25 +246,53 @@ describe('RepositoryForm', () => {
       expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
     });
 
-    const settingsTab = screen.getByRole('tab', { name: /settings/i });
-    await userEvent.click(settingsTab);
-
     await waitFor(() => {
       expect(screen.getByDisplayValue('maven-central')).toBeInTheDocument();
     });
 
-    // Name should be disabled in edit mode
     const nameInput = screen.getByLabelText(/name/i);
     expect(nameInput).toBeDisabled();
 
-    // Delete button should be present
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  });
+
+  it('calls setActiveTab when tab is clicked', async () => {
+    const mockSetActiveTab = jest.fn();
+    const editFormData = {
+      name: 'maven-central', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: MOCK_PROXY_REPOSITORY as any,
+      activeTab: 'summary',
+      setActiveTab: mockSetActiveTab,
+      formData: editFormData as any,
+      form: createMockForm(editFormData),
+    }));
+
+    renderWithTheme(
+      <RepositoryForm
+        repository={MOCK_PROXY_REPOSITORY as any}
+        recipe={MOCK_PROXY_RECIPE}
+        isCreate={false}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+      />
+    );
+
+    const settingsTab = await screen.findByRole('tab', { name: /settings/i });
+    await userEvent.click(settingsTab);
+
+    expect(mockSetActiveTab).toHaveBeenCalledWith('settings');
   });
 
   it('validates required name field', async () => {
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -264,29 +303,29 @@ describe('RepositoryForm', () => {
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     });
 
-    // Submit form without filling name
     const submitButton = screen.getByRole('button', { name: /create repository/i });
     await userEvent.click(submitButton);
 
-    // Since the form validates on submit, it should prevent onSave from being called
-    // when required fields are empty
     await waitFor(() => {
       expect(mockOnSave).not.toHaveBeenCalled();
     });
   });
 
   it('validates name pattern', async () => {
-    // With XState, validation happens in the machine when SUBMIT is sent
-    const mockForm = createMockRepoForm(
-      { name: '-invalid-name', type: 'hosted', format: 'maven2', online: true, storage: { blobStoreName: '', strictContentTypeValidation: true } },
-      { blobStores: mockBlobStores, routingRules: mockRoutingRules, cleanupPolicies: mockCleanupPolicies, memberOptions: [] }
-    );
+    const invalidData = {
+      name: '-invalid-name', type: 'hosted', format: 'maven2', online: true,
+      storage: { blobStoreName: '', strictContentTypeValidation: true },
+    };
+    const mockForm = createMockForm(invalidData);
     mockForm.isPristine = false;
-    mockUseRepositoryForm.mockReturnValue({ form: mockForm, repository: null, isCreate: true } as any);
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      form: mockForm,
+      formData: invalidData as any,
+    }));
 
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -296,14 +335,24 @@ describe('RepositoryForm', () => {
     const submitButton = screen.getByRole('button', { name: /create repository/i });
     await userEvent.click(submitButton);
 
-    // Machine handles validation - verify submit event was sent
     expect(mockForm.send).toHaveBeenCalledWith('SUBMIT');
   });
 
   it('validates required remote URL for proxy repository', async () => {
+    const proxyFormData = {
+      name: '', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: '', strictContentTypeValidation: true },
+      proxy: { remoteUrl: '', contentMaxAge: 1440, metadataMaxAge: 1440 },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      formData: proxyFormData as any,
+      form: createMockForm(proxyFormData),
+    }));
+
     renderWithTheme(
       <RepositoryForm
-        recipe={mockProxyRecipe}
+        recipe={MOCK_PROXY_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -314,29 +363,18 @@ describe('RepositoryForm', () => {
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     });
 
-    // Fill name but not remote URL
-    const nameInput = screen.getByLabelText(/name/i);
-    await userEvent.type(nameInput, 'test-proxy');
-
-    // Note: We can't easily interact with Radix UI Select components in tests
-    // Instead, test that validation happens by clicking submit without all required fields
-
     const submitButton = screen.getByRole('button', { name: /create repository/i });
     await userEvent.click(submitButton);
 
-    // Form should show validation errors (either for remote URL or blob store)
     await waitFor(() => {
-      // Check that save was not called because of validation errors
       expect(mockOnSave).not.toHaveBeenCalled();
     });
   });
 
   it('renders blob store and content validation options', async () => {
-    // Since Radix UI Select components are difficult to test with userEvent.selectOptions,
-    // we verify the form renders the expected elements instead of full form submission
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -347,10 +385,7 @@ describe('RepositoryForm', () => {
       expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     });
 
-    // Verify blob store label is present
     expect(screen.getByText('Blob Store')).toBeInTheDocument();
-
-    // Verify the form has expected structure
     expect(screen.getByRole('button', { name: /create repository/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
@@ -358,7 +393,7 @@ describe('RepositoryForm', () => {
   it('calls onCancel when cancel button is clicked', async () => {
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -375,10 +410,26 @@ describe('RepositoryForm', () => {
   });
 
   it('shows delete button and calls onDelete', async () => {
+    const editFormData = {
+      name: 'maven-central', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      httpClient: { blocked: false, autoBlock: true },
+      negativeCache: { enabled: true, timeToLive: 1440 },
+    };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: MOCK_PROXY_REPOSITORY as any,
+      activeTab: 'settings',
+      formData: editFormData as any,
+      form: createMockForm(editFormData),
+    }));
+
     renderWithTheme(
       <RepositoryForm
-        repository={mockProxyRepository as any}
-        recipe={mockProxyRecipe}
+        repository={MOCK_PROXY_REPOSITORY as any}
+        recipe={MOCK_PROXY_RECIPE}
         isCreate={false}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -392,14 +443,13 @@ describe('RepositoryForm', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /delete/i }));
 
-    // Delete button now calls onDelete directly (machine handles confirmation)
     expect(mockOnDelete).toHaveBeenCalled();
   });
 
   it('displays error message from props', async () => {
     renderWithTheme(
       <RepositoryForm
-        recipe={mockHostedRecipe}
+        recipe={MOCK_HOSTED_RECIPE}
         isCreate={true}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
@@ -413,24 +463,25 @@ describe('RepositoryForm', () => {
   });
 
   it('shouldShowYumSigningFieldsWhenEditingYumProxy', async () => {
-    const yumProxyRepo = {
-      name: 'yum-proxy-test',
-      type: 'proxy',
-      format: 'yum',
-      recipe: 'yum-proxy',
-      online: true,
-      url: 'http://localhost:8081/repository/yum-proxy-test/',
-      status: { online: true },
-      attributes: {
-        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
-        proxy: { remoteUrl: 'http://mirror.centos.org/centos/', contentMaxAge: 1440, metadataMaxAge: 1440 },
-      },
+    const yumProxyData = {
+      name: 'yum-proxy-test', type: 'proxy', format: 'yum',
+      recipe: 'yum-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://mirror.stream.centos.org/', contentMaxAge: 1440, metadataMaxAge: 1440 },
     };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: { name: 'yum-proxy-test', type: 'proxy', format: 'yum' } as any,
+      activeTab: 'settings',
+      formData: yumProxyData as any,
+      form: createMockForm(yumProxyData),
+    }));
+
     const yumProxyRecipe = { format: 'yum', type: 'proxy', name: 'yum-proxy' };
 
     renderWithTheme(
       <RepositoryForm
-        repository={yumProxyRepo as any}
+        repository={{ name: 'yum-proxy-test', type: 'proxy', format: 'yum' } as any}
         recipe={yumProxyRecipe}
         isCreate={false}
         onSave={mockOnSave}
@@ -438,11 +489,6 @@ describe('RepositoryForm', () => {
       />
     );
 
-    // Click the Settings tab to reveal the form content
-    const settingsTab = await screen.findByRole('tab', { name: /settings/i });
-    await userEvent.click(settingsTab);
-
-    // Verify signing fields are present
     await waitFor(() => {
       expect(screen.getByText('Signing Key')).toBeInTheDocument();
       expect(screen.getByText('Passphrase')).toBeInTheDocument();
@@ -450,33 +496,31 @@ describe('RepositoryForm', () => {
   });
 
   it('shouldShowYumSigningFieldsWhenEditingYumGroup', async () => {
-    const yumGroupRepo = {
-      name: 'yum-group-test',
-      type: 'group',
-      format: 'yum',
-      recipe: 'yum-group',
-      online: true,
-      url: 'http://localhost:8081/repository/yum-group-test/',
-      status: { online: true },
-      attributes: {
-        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
-        group: { memberNames: ['yum-proxy-test'] },
-      },
+    const yumGroupData = {
+      name: 'yum-group-test', type: 'group', format: 'yum',
+      recipe: 'yum-group', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      group: { memberNames: ['yum-proxy-test'] },
     };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: { name: 'yum-group-test', type: 'group', format: 'yum' } as any,
+      activeTab: 'settings',
+      formData: yumGroupData as any,
+      form: createMockForm(yumGroupData),
+    }));
+
     const yumGroupRecipe = { format: 'yum', type: 'group', name: 'yum-group' };
 
     renderWithTheme(
       <RepositoryForm
-        repository={yumGroupRepo as any}
+        repository={{ name: 'yum-group-test', type: 'group', format: 'yum' } as any}
         recipe={yumGroupRecipe}
         isCreate={false}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
       />
     );
-
-    const settingsTab = await screen.findByRole('tab', { name: /settings/i });
-    await userEvent.click(settingsTab);
 
     await waitFor(() => {
       expect(screen.getByText('Signing Key')).toBeInTheDocument();
@@ -485,34 +529,32 @@ describe('RepositoryForm', () => {
   });
 
   it('shouldShowAptSigningFieldsWhenEditingAptProxy', async () => {
-    const aptProxyRepo = {
-      name: 'apt-proxy-test',
-      type: 'proxy',
-      format: 'apt',
-      recipe: 'apt-proxy',
-      online: true,
-      url: 'http://localhost:8081/repository/apt-proxy-test/',
-      status: { online: true },
-      attributes: {
-        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
-        proxy: { remoteUrl: 'http://archive.ubuntu.com/ubuntu/', contentMaxAge: 1440, metadataMaxAge: 1440 },
-        apt: { distribution: 'focal' },
-      },
+    const aptProxyData = {
+      name: 'apt-proxy-test', type: 'proxy', format: 'apt',
+      recipe: 'apt-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'http://archive.ubuntu.com/ubuntu/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      apt: { distribution: 'focal' },
     };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: { name: 'apt-proxy-test', type: 'proxy', format: 'apt' } as any,
+      activeTab: 'settings',
+      formData: aptProxyData as any,
+      form: createMockForm(aptProxyData),
+    }));
+
     const aptProxyRecipe = { format: 'apt', type: 'proxy', name: 'apt-proxy' };
 
     renderWithTheme(
       <RepositoryForm
-        repository={aptProxyRepo as any}
+        repository={{ name: 'apt-proxy-test', type: 'proxy', format: 'apt' } as any}
         recipe={aptProxyRecipe}
         isCreate={false}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
       />
     );
-
-    const settingsTab = await screen.findByRole('tab', { name: /settings/i });
-    await userEvent.click(settingsTab);
 
     await waitFor(() => {
       expect(screen.getByText('APT Signing')).toBeInTheDocument();
@@ -522,33 +564,31 @@ describe('RepositoryForm', () => {
   });
 
   it('shouldShowAptSigningFieldsWhenEditingAptHosted', async () => {
-    const aptHostedRepo = {
-      name: 'apt-hosted-test',
-      type: 'hosted',
-      format: 'apt',
-      recipe: 'apt-hosted',
-      online: true,
-      url: 'http://localhost:8081/repository/apt-hosted-test/',
-      status: { online: true },
-      attributes: {
-        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
-        apt: { distribution: 'focal' },
-      },
+    const aptHostedData = {
+      name: 'apt-hosted-test', type: 'hosted', format: 'apt',
+      recipe: 'apt-hosted', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      apt: { distribution: 'focal' },
     };
+    mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+      isCreate: false,
+      repository: { name: 'apt-hosted-test', type: 'hosted', format: 'apt' } as any,
+      activeTab: 'settings',
+      formData: aptHostedData as any,
+      form: createMockForm(aptHostedData),
+    }));
+
     const aptHostedRecipe = { format: 'apt', type: 'hosted', name: 'apt-hosted' };
 
     renderWithTheme(
       <RepositoryForm
-        repository={aptHostedRepo as any}
+        repository={{ name: 'apt-hosted-test', type: 'hosted', format: 'apt' } as any}
         recipe={aptHostedRecipe}
         isCreate={false}
         onSave={mockOnSave}
         onCancel={mockOnCancel}
       />
     );
-
-    const settingsTab = await screen.findByRole('tab', { name: /settings/i });
-    await userEvent.click(settingsTab);
 
     await waitFor(() => {
       expect(screen.getByText('APT Signing')).toBeInTheDocument();
@@ -581,17 +621,17 @@ describe('RepositoryForm', () => {
     };
 
     it('shouldCallOnSaveDirectlyWhenAdvanceOnlyAndFormIsValid', async () => {
-      const mockForm = createMockRepoForm(VALID_PROXY_DATA, {
-        blobStores: mockBlobStores, routingRules: mockRoutingRules,
-        cleanupPolicies: mockCleanupPolicies, memberOptions: [],
-      });
-      mockUseRepositoryForm.mockReturnValue({ form: mockForm, repository: null, isCreate: true } as any);
+      const mockForm = createMockForm(VALID_PROXY_DATA);
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        form: mockForm,
+        formData: VALID_PROXY_DATA as any,
+      }));
 
       const submitRef = { current: null } as React.MutableRefObject<(() => void) | null>;
 
       renderWithTheme(
         <RepositoryForm
-          recipe={mockProxyRecipe}
+          recipe={MOCK_PROXY_RECIPE}
           isCreate={true}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -601,32 +641,26 @@ describe('RepositoryForm', () => {
         />
       );
 
-      // Wait for the ref to be populated
-      await waitFor(() => {
-        expect(submitRef.current).not.toBeNull();
-      });
-
-      // Trigger the submit via ref (simulates wizard Continue click)
-      submitRef.current!();
-
-      // onSave should be called directly with form data
-      expect(mockOnSave).toHaveBeenCalledWith(VALID_PROXY_DATA);
-      // Machine SUBMIT should NOT be sent (avoids terminal saved state)
-      expect(mockForm.send).not.toHaveBeenCalledWith('SUBMIT');
+      // The submit logic is now in the hook, which is mocked.
+      // This test verifies the component passes onSubmitRef to the hook.
+      // The hook integration test (useRepositoryForm.test.ts) covers the actual logic.
+      expect(mockUseRepositoryForm).toHaveBeenCalledWith(
+        expect.objectContaining({ onSubmitRef: submitRef, advanceOnly: true })
+      );
     });
 
     it('shouldSendSubmitToMachineWhenAdvanceOnlyAndFormIsInvalid', async () => {
-      const mockForm = createMockRepoForm(INVALID_PROXY_DATA, {
-        blobStores: mockBlobStores, routingRules: mockRoutingRules,
-        cleanupPolicies: mockCleanupPolicies, memberOptions: [],
-      });
-      mockUseRepositoryForm.mockReturnValue({ form: mockForm, repository: null, isCreate: true } as any);
+      const mockForm = createMockForm(INVALID_PROXY_DATA);
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        form: mockForm,
+        formData: INVALID_PROXY_DATA as any,
+      }));
 
       const submitRef = { current: null } as React.MutableRefObject<(() => void) | null>;
 
       renderWithTheme(
         <RepositoryForm
-          recipe={mockProxyRecipe}
+          recipe={MOCK_PROXY_RECIPE}
           isCreate={true}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -636,30 +670,23 @@ describe('RepositoryForm', () => {
         />
       );
 
-      await waitFor(() => {
-        expect(submitRef.current).not.toBeNull();
-      });
-
-      submitRef.current!();
-
-      // onSave should NOT be called (form is invalid)
-      expect(mockOnSave).not.toHaveBeenCalled();
-      // Machine SUBMIT should be sent to trigger validation error display
-      expect(mockForm.send).toHaveBeenCalledWith('SUBMIT');
+      expect(mockUseRepositoryForm).toHaveBeenCalledWith(
+        expect.objectContaining({ onSubmitRef: submitRef, advanceOnly: true })
+      );
     });
 
     it('shouldSendSubmitToMachineWhenNotAdvanceOnly', async () => {
-      const mockForm = createMockRepoForm(VALID_PROXY_DATA, {
-        blobStores: mockBlobStores, routingRules: mockRoutingRules,
-        cleanupPolicies: mockCleanupPolicies, memberOptions: [],
-      });
-      mockUseRepositoryForm.mockReturnValue({ form: mockForm, repository: null, isCreate: true } as any);
+      const mockForm = createMockForm(VALID_PROXY_DATA);
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        form: mockForm,
+        formData: VALID_PROXY_DATA as any,
+      }));
 
       const submitRef = { current: null } as React.MutableRefObject<(() => void) | null>;
 
       renderWithTheme(
         <RepositoryForm
-          recipe={mockProxyRecipe}
+          recipe={MOCK_PROXY_RECIPE}
           isCreate={true}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -669,31 +696,24 @@ describe('RepositoryForm', () => {
         />
       );
 
-      await waitFor(() => {
-        expect(submitRef.current).not.toBeNull();
-      });
-
-      submitRef.current!();
-
-      // Normal flow: machine handles submission
-      expect(mockForm.send).toHaveBeenCalledWith('SUBMIT');
-      // onSave should NOT be called directly (machine handles it)
-      expect(mockOnSave).not.toHaveBeenCalled();
+      expect(mockUseRepositoryForm).toHaveBeenCalledWith(
+        expect.objectContaining({ onSubmitRef: submitRef, advanceOnly: false })
+      );
     });
 
     it('shouldNotSubmitWhenFormIsLoadingInAdvanceOnlyMode', async () => {
-      const mockForm = createMockRepoForm(VALID_PROXY_DATA, {
-        blobStores: mockBlobStores, routingRules: mockRoutingRules,
-        cleanupPolicies: mockCleanupPolicies, memberOptions: [],
-      });
+      const mockForm = createMockForm(VALID_PROXY_DATA);
       mockForm.isLoading = true;
-      mockUseRepositoryForm.mockReturnValue({ form: mockForm, repository: null, isCreate: true } as any);
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        form: mockForm,
+        formData: VALID_PROXY_DATA as any,
+      }));
 
       const submitRef = { current: null } as React.MutableRefObject<(() => void) | null>;
 
       renderWithTheme(
         <RepositoryForm
-          recipe={mockProxyRecipe}
+          recipe={MOCK_PROXY_RECIPE}
           isCreate={true}
           onSave={mockOnSave}
           onCancel={mockOnCancel}
@@ -703,17 +723,8 @@ describe('RepositoryForm', () => {
         />
       );
 
-      // The ref is populated but the guard inside prevents action when loading
-      await waitFor(() => {
-        expect(submitRef.current).not.toBeNull();
-      });
-
-      submitRef.current!();
-
-      // Neither onSave nor form.send should be called when form is loading
-      expect(mockOnSave).not.toHaveBeenCalled();
-      expect(mockForm.send).not.toHaveBeenCalled();
+      // Component shows loading state, submit logic is handled by hook
+      expect(screen.getByText(/loading form data/i)).toBeInTheDocument();
     });
   });
 });
-

@@ -100,6 +100,7 @@ public class AssetXOBuilder
 
     String contentType = assetBlob.map(AssetBlob::contentType).orElse(null);
     String format = repository.getFormat().getValue();
+    AssetXODescriptor descriptor = Optional.ofNullable(assetDescriptors).map(ad -> ad.get(format)).orElse(null);
 
     String uploader = uploaderVisible ? assetBlob.flatMap(AssetBlob::createdBy).orElse(null) : null;
     String uploaderIp = uploaderVisible ? assetBlob.flatMap(AssetBlob::createdByIp).orElse(null) : null;
@@ -140,7 +141,8 @@ public class AssetXOBuilder
         .blobStoreName(blobStoreName)
         .blobUpdated(blobUpdated)
         .blobRef(blobRef)
-        .lastVerified(lastVerified);
+        .lastVerified(lastVerified)
+        .registryUrl(descriptor != null ? descriptor.computeRegistryUrl(repository) : null);
   }
 
   @Nullable
@@ -153,10 +155,13 @@ public class AssetXOBuilder
       final String format,
       @Nullable final Map<String, AssetXODescriptor> assetDescriptors)
   {
-    Set<String> exposedAttributeKeys = Optional.ofNullable(assetDescriptors)
+    AssetXODescriptor descriptor = Optional.ofNullable(assetDescriptors)
         .map(ad -> ad.get(format))
-        .map(AssetXODescriptor::listExposedAttributeKeys)
-        .orElseGet(Collections::emptySet);
+        .orElse(null);
+
+    Set<String> exposedAttributeKeys = descriptor != null
+        ? descriptor.listExposedAttributeKeys()
+        : Collections.emptySet();
 
     Map<String, Object> exposedAttributes = asset.attributes(format)
         .backing()
@@ -164,7 +169,11 @@ public class AssetXOBuilder
         .stream()
         .filter(entry -> exposedAttributeKeys.contains(entry.getKey()))
         .filter(entry -> entry.getValue() != null)
-        .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        .collect(Collectors.toMap(
+            Entry::getKey,
+            entry -> descriptor != null
+                ? descriptor.transformAttributeValue(entry.getKey(), entry.getValue())
+                : entry.getValue()));
 
     return Collections.singletonMap(format, exposedAttributes);
   }

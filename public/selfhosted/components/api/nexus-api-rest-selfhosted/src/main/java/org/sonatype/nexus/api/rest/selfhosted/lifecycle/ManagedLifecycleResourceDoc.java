@@ -12,25 +12,36 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.lifecycle;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+// NEXUS-46395 sample migration: Swagger 1.x annotations \u2192 OpenAPI 3.x (Flavor B in the
+// resteasy-spike-notes.md). This file is the proof-of-concept for the 390-file annotation
+// sweep that the full Phase 3 migration must perform. Mapping applied here:
+//
+//   @Tag(name = "X")                            \u2192 @Tag(name = "X")
+//   @Operation(summary = "summary")             \u2192 @Operation(summary = "summary")
+//   @Operation(summary = , notes=)        \u2192 @Operation(summary=, description=)
+//   @Parameter(description = "description")             \u2192 @Parameter(description = "description")
+//
+// All replacement annotations live under io.swagger.v3.oas.annotations.* (provided by
+// io.swagger.core.v3:swagger-annotations-jakarta).
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * REST API to manage the Nexus application lifecycle.
  *
  * @since 3.16
  */
-@Api("Lifecycle")
+@Tag(name = "Lifecycle")
 public interface ManagedLifecycleResourceDoc
 {
-  @ApiOperation("Get current lifecycle phase")
+  @Operation(summary = "Get current lifecycle phase")
   String getPhase();
 
-  @ApiOperation("Move to new lifecycle phase")
-  void setPhase(@ApiParam("The phase to move to") final String phase);
+  @Operation(summary = "Move to new lifecycle phase")
+  void setPhase(@Parameter(description = "The phase to move to") final String phase);
 
-  @ApiOperation(value = "Bounce lifecycle phase",
-      notes = "Re-runs all phases from the given phase to the current phase")
-  void bounce(@ApiParam("The phase to bounce") final String phase);
+  @Operation(summary = "Bounce lifecycle phase",
+      description = "Re-runs all phases from the given phase to the current phase")
+  void bounce(@Parameter(description = "The phase to bounce") final String phase);
 }

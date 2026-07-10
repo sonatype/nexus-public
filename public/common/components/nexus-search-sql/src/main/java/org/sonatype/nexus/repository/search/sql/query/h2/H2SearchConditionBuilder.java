@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.search.sql.query.SqlSearchQueryCondition;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Expression;
 import org.sonatype.nexus.repository.search.sql.query.syntax.NullTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
+import org.sonatype.nexus.repository.search.sql.query.syntax.RegexWildcardTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlClause;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SqlPredicate;
@@ -229,7 +230,14 @@ abstract class H2SearchConditionBuilder
     sb.append(placeholder(param));
     sb.append(")");
 
-    parameters.put(param, term.get());
+    Object value;
+    if (term instanceof RegexWildcardTerm regexTerm) {
+      value = regexTerm.toRegexPattern();
+    }
+    else {
+      value = term.get();
+    }
+    parameters.put(param, value);
 
     return Optional.of(sb);
   }

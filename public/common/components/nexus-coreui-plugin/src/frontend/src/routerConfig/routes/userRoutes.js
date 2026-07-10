@@ -59,6 +59,12 @@ export const userRoutes = [
       visibilityRequirements: {
         requiresUser: true,
         permissions: ['nexus:apikey:*'],
+        statesEnabled: [
+          {
+            key: 'nugetApiKeyRealmEnabled',
+            defaultValue: false,
+          },
+        ],
       },
       title: USER.TITLE,
     },

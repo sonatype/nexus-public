@@ -13,7 +13,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box } from '@radix-ui/themes';
 import { AlertCircle, CheckCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 import './SettingsAlert.scss';
@@ -52,7 +51,7 @@ export function SettingsAlert({
     : { 'aria-live': 'polite', role: 'status' };
 
   return (
-    <Box
+    <div
       className={`settings-alert settings-alert--${type} ${className}`.trim()}
       {...ariaProps}
       {...restProps}
@@ -71,7 +70,7 @@ export function SettingsAlert({
           <X size={16} />
         </button>
       )}
-    </Box>
+    </div>
   );
 }
 

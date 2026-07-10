@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.sonatype.nexus.security.jwt.JwtVerificationException;
 import org.sonatype.nexus.security.jwt.SecretStore;
@@ -130,11 +130,11 @@ public class JwtHelperTest
   }
 
   @Test
-  public void testVerifyAndRefresh_success() throws Exception {
+  public void testRefreshJwtCookie_success() throws Exception {
     String jwt = makeValidJwt();
     DecodedJWT decodedJWT = decodeJwt(jwt);
 
-    Cookie refreshed = underTest.verifyAndRefreshJwtCookie(jwt, false);
+    Cookie refreshed = underTest.refreshJwtCookie(underTest.verifyJwt(jwt), false);
     assertCookie(refreshed);
 
     DecodedJWT refreshedJwt = decodeJwt(refreshed.getValue());
@@ -145,11 +145,11 @@ public class JwtHelperTest
   }
 
   @Test
-  public void testVerifyAndRefresh_secureRequest_success() throws Exception {
+  public void testRefreshJwtCookie_secureRequest_success() throws Exception {
     String jwt = makeValidJwt();
     DecodedJWT decodedJWT = decodeJwt(jwt);
 
-    Cookie refreshed = underTest.verifyAndRefreshJwtCookie(jwt, true);
+    Cookie refreshed = underTest.refreshJwtCookie(underTest.verifyJwt(jwt), true);
     assertCookie(refreshed, true);
 
     DecodedJWT refreshedJwt = decodeJwt(refreshed.getValue());
@@ -163,18 +163,18 @@ public class JwtHelperTest
    * Verify behavior when nexus.jwt.cookieSecure is set to false and the request occurs in an HTTPS environment.
    * This combination should result in the JWT returning false for {@link Cookie#getSecure()}, as the feature flag
    * takes precedence.
-   * 
+   *
    * @throws Exception
    */
   @Test
-  public void testVerifyAndRefresh_secureRequest_cookieSecure_false() throws Exception {
+  public void testRefreshJwtCookie_secureRequest_cookieSecure_false() throws Exception {
     String jwt = makeValidJwt();
     DecodedJWT decodedJWT = decodeJwt(jwt);
 
     JwtHelper cookieSecureFalse = new JwtHelper(300, "/", storeProvider, false);
     cookieSecureFalse.doStart();
 
-    Cookie refreshed = cookieSecureFalse.verifyAndRefreshJwtCookie(jwt, true);
+    Cookie refreshed = cookieSecureFalse.refreshJwtCookie(cookieSecureFalse.verifyJwt(jwt), true);
     assertCookie(refreshed, false);
 
     DecodedJWT refreshedJwt = decodeJwt(refreshed.getValue());
@@ -182,12 +182,6 @@ public class JwtHelperTest
     Claim userSessionId = decodedJWT.getClaim(USER_SESSION_ID);
     assertEquals(userSessionId.asString(), refreshedJwt.getClaim(USER_SESSION_ID).asString());
     assertJwt(refreshed.getValue());
-  }
-
-  @Test(expected = JwtVerificationException.class)
-  public void testVerifyAndRefresh_invalidJwt() throws Exception {
-    String jwt = makeInvalidJwt();
-    underTest.verifyAndRefreshJwtCookie(jwt, false);
   }
 
   private String makeValidJwt() {

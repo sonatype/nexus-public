@@ -27,8 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
-import javax.validation.ValidationException;
-import javax.validation.Validator;
+import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.capability.Capability;
 import org.sonatype.nexus.capability.CapabilityDescriptor;
@@ -53,7 +53,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
@@ -115,8 +114,6 @@ public class DefaultCapabilityRegistry
 
   private final SecretsService secretsService;
 
-  private final SecretsStore secretsStore;
-
   /**
    * Single-threaded executor for processing remote capability events sequentially.
    * Event handlers submit tasks to this executor for async processing.
@@ -134,7 +131,6 @@ public class DefaultCapabilityRegistry
       final ActivationConditionHandlerFactory activationConditionHandlerFactory,
       final ValidityConditionHandlerFactory validityConditionHandlerFactory,
       final SecretsService secretsService,
-      final SecretsStore secretsStore,
       final Provider<Validator> validatorProvider)
   {
     this.capabilityStorage = checkNotNull(capabilityStorage);
@@ -145,7 +141,6 @@ public class DefaultCapabilityRegistry
     this.activationConditionHandlerFactory = checkNotNull(activationConditionHandlerFactory);
     this.validityConditionHandlerFactory = checkNotNull(validityConditionHandlerFactory);
     this.secretsService = checkNotNull(secretsService);
-    this.secretsStore = checkNotNull(secretsStore);
     this.validatorProvider = checkNotNull(validatorProvider);
 
     references = new ConcurrentHashMap<>();
@@ -695,8 +690,7 @@ public class DefaultCapabilityRegistry
         type,
         descriptor,
         capability,
-        secretsService,
-        secretsStore);
+        secretsService);
   }
 
   private DefaultCapabilityReference require(final CapabilityIdentity id) {
@@ -811,8 +805,24 @@ public class DefaultCapabilityRegistry
     return encrypted;
   }
 
+  /**
+   * Checks if a value is a valid secret ID.
+   * <p>
+   * A valid secret ID matches the pattern "_\\d+" and exists in the secrets store.
+   *
+   * @param value the value to check
+   * @return true if the value is a valid secret ID format and exists
+   */
   private boolean isExistingSecretId(final String value) {
-    return value.matches("_\\d+") && secretsStore.read(Integer.parseInt(value.substring(1))).isPresent();
+    // Check if the secret ID format is valid
+    if (value == null || !value.matches("_\\d+")) {
+      return false;
+    }
+
+    // Verify existence in the secrets store
+    // Note: exists() handles both IllegalArgumentException and transient store failures
+    // by returning false, allowing graceful degradation (re-encrypt if not confirmed)
+    return secretsService.exists(value);
   }
 
   /**

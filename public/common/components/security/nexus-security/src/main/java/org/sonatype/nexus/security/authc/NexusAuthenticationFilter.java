@@ -15,9 +15,9 @@ package org.sonatype.nexus.security.authc;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
 

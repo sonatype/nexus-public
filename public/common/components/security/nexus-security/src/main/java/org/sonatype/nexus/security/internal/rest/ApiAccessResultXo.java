@@ -16,25 +16,24 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Response object for API access check results.
  */
 public class ApiAccessResultXo
 {
-  @ApiModelProperty(value = "Whether the user/role has access to the endpoint", required = true)
+  @Schema(description = "Whether the user/role has access to the endpoint", requiredMode = Schema.RequiredMode.REQUIRED)
   private boolean hasAccess;
 
   @Nullable
-  @ApiModelProperty(value = "The permission required to access the endpoint")
+  @Schema(description = "The permission required to access the endpoint")
   private String requiredPermission;
 
-  @ApiModelProperty(
-      value = "The permission chains showing how access is granted (user -> role -> privilege -> permission)")
+  @Schema(description = "The permission chains showing how access is granted (user -> role -> privilege -> permission)")
   private List<PermissionChainXo> chains;
 
-  @ApiModelProperty(value = "Related API endpoints that use similar permissions")
+  @Schema(description = "Related API endpoints that use similar permissions")
   private List<RelatedEndpointXo> relatedEndpoints;
 
   public ApiAccessResultXo() {
@@ -92,19 +91,19 @@ public class ApiAccessResultXo
   public static class PermissionChainXo
   {
     @Nullable
-    @ApiModelProperty(value = "The user in the permission chain")
+    @Schema(description = "The user in the permission chain")
     private EntityRefXo user;
 
     @Nullable
-    @ApiModelProperty(value = "The role in the permission chain")
+    @Schema(description = "The role in the permission chain")
     private EntityRefXo role;
 
     @Nullable
-    @ApiModelProperty(value = "The privilege in the permission chain")
+    @Schema(description = "The privilege in the permission chain")
     private EntityRefXo privilege;
 
     @Nullable
-    @ApiModelProperty(value = "The permission string")
+    @Schema(description = "The permission string")
     private String permission;
 
     public PermissionChainXo() {
@@ -165,11 +164,11 @@ public class ApiAccessResultXo
    */
   public static class EntityRefXo
   {
-    @ApiModelProperty(value = "The entity ID", required = true)
+    @Schema(description = "The entity ID", requiredMode = Schema.RequiredMode.REQUIRED)
     private String id;
 
     @Nullable
-    @ApiModelProperty(value = "The entity display name")
+    @Schema(description = "The entity display name")
     private String name;
 
     public EntityRefXo() {
@@ -204,18 +203,18 @@ public class ApiAccessResultXo
    */
   public static class RelatedEndpointXo
   {
-    @ApiModelProperty(value = "The HTTP method", required = true)
+    @Schema(description = "The HTTP method", requiredMode = Schema.RequiredMode.REQUIRED)
     private String method;
 
-    @ApiModelProperty(value = "The API endpoint path", required = true)
+    @Schema(description = "The API endpoint path", requiredMode = Schema.RequiredMode.REQUIRED)
     private String endpoint;
 
     @Nullable
-    @ApiModelProperty(value = "Description of the endpoint")
+    @Schema(description = "Description of the endpoint")
     private String description;
 
     @Nullable
-    @ApiModelProperty(value = "The permission required for this endpoint")
+    @Schema(description = "The permission required for this endpoint")
     private String permission;
 
     public RelatedEndpointXo() {

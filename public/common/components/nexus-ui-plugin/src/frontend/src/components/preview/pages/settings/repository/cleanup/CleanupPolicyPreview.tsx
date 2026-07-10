@@ -23,6 +23,7 @@ import './CleanupPolicyPreview.scss';
 
 interface CleanupPolicyPreviewProps {
   policyData: CleanupPolicyFormData;
+  selectedRepositories?: string[];
 }
 
 type SortField = 'name' | 'group' | 'version';
@@ -31,7 +32,7 @@ type SortDirection = 'asc' | 'desc';
 /**
  * CleanupPolicyPreview - Preview components that would be deleted by a cleanup policy
  */
-export function CleanupPolicyPreview({ policyData }: CleanupPolicyPreviewProps) {
+export function CleanupPolicyPreview({ policyData, selectedRepositories = [] }: CleanupPolicyPreviewProps) {
   const [repositories, setRepositories] = useState<RepositoryOption[]>([]);
   const [selectedRepository, setSelectedRepository] = useState('');
   const [previewResults, setPreviewResults] = useState<PreviewComponent[]>([]);
@@ -47,9 +48,18 @@ export function CleanupPolicyPreview({ policyData }: CleanupPolicyPreviewProps) 
 
   const { fetchRepositories, previewCleanupPolicy } = useCleanupPoliciesApi();
 
-  // Load repositories when format changes
+  // Serialize selected repos for stable dependency comparison
+  const selectedReposKey = selectedRepositories.join(',');
+
+  // Load repositories — use selected repos from form if available, otherwise fetch all for format
   useEffect(() => {
-    if (policyData.format) {
+    if (selectedRepositories.length > 0) {
+      setRepositories(selectedRepositories.map((name) => ({ id: name, name })));
+      setSelectedRepository('');
+      setPreviewResults([]);
+      setTotalCount(0);
+      setIsLoadingRepos(false);
+    } else if (policyData.format) {
       setIsLoadingRepos(true);
       setRepoError(null);
       setSelectedRepository('');
@@ -61,7 +71,7 @@ export function CleanupPolicyPreview({ policyData }: CleanupPolicyPreviewProps) 
         .catch((err) => setRepoError(err.message))
         .finally(() => setIsLoadingRepos(false));
     }
-  }, [policyData.format, fetchRepositories]);
+  }, [policyData.format, selectedReposKey, fetchRepositories]);
 
   // Check if preview is available
   const isPreviewAvailable = useMemo(() => {
@@ -111,7 +121,18 @@ export function CleanupPolicyPreview({ policyData }: CleanupPolicyPreviewProps) 
 
   // Filter and sort results
   const filteredResults = useMemo(() => {
-    let result = previewResults;
+    // Deduplicate by (name, group, version) — backend may emit duplicate rows when
+    // the retain (Number of Versions) exception is combined with the asset name
+    // matcher because the underlying SQL joins to the asset table.
+    const seen = new Set<string>();
+    let result = previewResults.filter((item) => {
+      const key = `${item.name}\u0000${item.group ?? ''}\u0000${item.version ?? ''}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
 
     // Apply filter
     if (filter) {

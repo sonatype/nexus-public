@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-extender-spring</artifactId>
@@ -39,18 +39,21 @@
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-common</artifactId>
     </dependency>
+    <!-- NEXUS-46395: javax.servlet-api 4.0.1 → jakarta.servlet-api 6.0 (Jakarta EE 10 / RESTEasy 7) -->
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-healthchecks</artifactId>
     </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-    </dependency>
+    <!--
+    NEXUS-46395: removed direct dependency on javax.annotation:javax.annotation-api:1.2.
+    Same reasoning as the matching comment in nexus-common/pom.xml: this module's javax.annotation.*
+    imports are Nullable (from jsr305 transitively), and jakarta.annotation.PreDestroy is brought in
+    transitively via spring-boot-starter (version-managed by the Spring Boot BOM).
+    -->
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-testsupport</artifactId>

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.manager.internal;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.config.Configuration;

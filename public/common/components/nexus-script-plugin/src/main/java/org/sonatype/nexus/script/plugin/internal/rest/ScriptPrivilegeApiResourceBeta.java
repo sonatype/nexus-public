@@ -15,21 +15,21 @@ package org.sonatype.nexus.script.plugin.internal.rest;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.stereotype.Component;
 
 /**
  * @since 3.26
  * @deprecated beta prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX} instead
  */
-@Api(hidden = true)
+@Hidden
 @Component
 @Path(ScriptPrivilegeApiResourceBeta.RESOURCE_URI)
 @Deprecated

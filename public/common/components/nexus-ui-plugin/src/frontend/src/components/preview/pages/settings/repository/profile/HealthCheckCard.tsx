@@ -14,7 +14,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Card, Flex, Text, Badge, Button, Switch, Tooltip, Grid, Separator } from '@radix-ui/themes';
 import { ShieldCheck, ShieldAlert, Info, ExternalLink, Shield, CheckCircle2, Skull } from 'lucide-react';
-import type { HealthCheckData, CapabilityInfo } from './hooks/useRepositoryProfile';
+import type { HealthCheckData, CapabilityInfo } from './types';
 
 const REPORT_NOT_AVAILABLE =
   'Health Check report not yet available. Reports are generated periodically after enabling Health Check.';
@@ -181,7 +181,17 @@ export function HealthCheckCard({
         </Flex>
 
         {isInstanceEnabled && !isRepoEnabled && (
-          <Text size="2" color="gray">Enable Health Check to scan for malware.</Text>
+          <Flex direction="column" gap="2">
+            <Text size="2" color="gray">Enable Health Check to scan for malware.</Text>
+            <Button
+              size="1"
+              variant="solid"
+              onClick={() => onToggleRepo(true)}
+              data-testid="health-check-enable-repo"
+            >
+              Enable Health Check
+            </Button>
+          </Flex>
         )}
 
         {isRepoEnabled && (

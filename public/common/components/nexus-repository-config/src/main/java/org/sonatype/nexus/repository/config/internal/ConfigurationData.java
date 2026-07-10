@@ -148,9 +148,7 @@ public class ConfigurationData
       attributes = Maps.newHashMap();
     }
 
-    Map<String, Object> map = attributes.computeIfAbsent(key, k -> Maps.newHashMap());
-
-    return new NestedAttributesMap(key, map);
+    return new NestedAttributesMap(key, attributes.computeIfAbsent(key, k -> Maps.newHashMap()));
   }
 
   @Override

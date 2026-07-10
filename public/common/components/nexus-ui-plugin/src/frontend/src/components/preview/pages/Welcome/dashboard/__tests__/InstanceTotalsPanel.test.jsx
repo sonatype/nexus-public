@@ -27,6 +27,16 @@ const sampleData = {
   totalComponents: 12345678,
   peakRequestsPerDay: 1234,
   peakRequestsPerMonth: 45678,
+  totalComponentsLimit: 0,
+  peakRequestsPerDayLimit: 0,
+};
+
+const sampleDataWithLimits = {
+  totalComponents: 8000,
+  peakRequestsPerDay: 500,
+  peakRequestsPerMonth: 10000,
+  totalComponentsLimit: 10000,
+  peakRequestsPerDayLimit: 1000,
 };
 
 describe('InstanceTotalsPanel', () => {
@@ -48,9 +58,12 @@ describe('InstanceTotalsPanel', () => {
     it('displays the correct values', () => {
       renderWithTheme(<InstanceTotalsPanel data={sampleData} loading={false} />);
 
-      expect(screen.getByText('12,345,678')).toBeInTheDocument();
-      expect(screen.getByText('1,234')).toBeInTheDocument();
-      expect(screen.getByText('45,678')).toBeInTheDocument();
+      const formatted = (n) => n.toLocaleString();
+      const valueEls = document.querySelectorAll('.nxrm-metric-card__value');
+      const valueTexts = Array.from(valueEls).map((el) => el.textContent);
+      expect(valueTexts).toContain(formatted(12345678));
+      expect(valueTexts).toContain(formatted(1234));
+      expect(valueTexts).toContain(formatted(45678));
     });
   });
 
@@ -63,9 +76,12 @@ describe('InstanceTotalsPanel', () => {
       };
       renderWithTheme(<InstanceTotalsPanel data={data} loading={false} />);
 
-      expect(screen.getByText('1,000,000')).toBeInTheDocument();
-      expect(screen.getByText('50,000')).toBeInTheDocument();
-      expect(screen.getByText('999,999')).toBeInTheDocument();
+      const formatted = (n) => n.toLocaleString();
+      const valueEls = document.querySelectorAll('.nxrm-metric-card__value');
+      const valueTexts = Array.from(valueEls).map((el) => el.textContent);
+      expect(valueTexts).toContain(formatted(1000000));
+      expect(valueTexts).toContain(formatted(50000));
+      expect(valueTexts).toContain(formatted(999999));
     });
 
     it('handles zero values by showing "No activity"', () => {
@@ -134,6 +150,44 @@ describe('InstanceTotalsPanel', () => {
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       expect(screen.getByText(/how is .* calculated\?/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('CE limit progress bar', () => {
+    it('shows a progress bar with "of N limit" text when totalComponentsLimit is set', () => {
+      renderWithTheme(<InstanceTotalsPanel data={sampleDataWithLimits} loading={false} />);
+
+      expect(screen.getByText(/8,000 of 10,000/)).toBeInTheDocument();
+    });
+
+    it('shows approaching-limit warning icon when usage >= 75% of limit', () => {
+      const approachingData = {
+        ...sampleDataWithLimits,
+        totalComponents: 8000,
+        totalComponentsLimit: 10000,
+      };
+      renderWithTheme(<InstanceTotalsPanel data={approachingData} loading={false} />);
+
+      expect(screen.getByLabelText('Approaching limit')).toBeInTheDocument();
+      expect(screen.getByText(/8,000 of 10,000/)).toBeInTheDocument();
+    });
+
+    it('shows exceeded-limit error icon when usage >= 100% of limit', () => {
+      const exceedingData = {
+        ...sampleDataWithLimits,
+        totalComponents: 11000,
+        totalComponentsLimit: 10000,
+      };
+      renderWithTheme(<InstanceTotalsPanel data={exceedingData} loading={false} />);
+
+      expect(screen.getByLabelText('Limit exceeded')).toBeInTheDocument();
+      expect(screen.getByText(/11,000 of 10,000/)).toBeInTheDocument();
+    });
+
+    it('does not show a progress bar when totalComponentsLimit is 0', () => {
+      renderWithTheme(<InstanceTotalsPanel data={sampleData} loading={false} />);
+
+      expect(screen.queryByText(/of.*limit/)).not.toBeInTheDocument();
     });
   });
 });

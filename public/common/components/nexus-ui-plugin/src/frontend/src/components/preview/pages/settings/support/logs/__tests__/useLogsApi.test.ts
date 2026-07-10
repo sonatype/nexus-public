@@ -102,7 +102,10 @@ describe('useLogsApi', () => {
 
       expect(mockRestClient.get).toHaveBeenCalledWith(
         LOGS_API.VIEW('nexus.log'),
-        { params: { bytesCount: -25000 } }
+        {
+          params: { bytesCount: -25000 },
+          headers: { Accept: 'text/plain' },
+        }
       );
       expect(content).toBe(mockContent);
     });
@@ -166,6 +169,14 @@ describe('useLogsApi', () => {
 
       expect(url).toBe('/service/rest/internal/logging/logs/test%20log%20file.log');
     });
+
+    it('preserves task log directory separators in URLs', () => {
+      const { result } = renderHook(() => useLogsApi());
+
+      const url = result.current.getDownloadUrl('tasks/component.normalize.version-20260605161637239.log');
+
+      expect(url).toBe('/service/rest/internal/logging/logs/tasks/component.normalize.version-20260605161637239.log');
+    });
   });
 
   describe('setError', () => {
@@ -186,5 +197,3 @@ describe('useLogsApi', () => {
     });
   });
 });
-
-

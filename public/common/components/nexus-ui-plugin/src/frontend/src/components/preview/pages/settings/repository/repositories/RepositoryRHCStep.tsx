@@ -77,7 +77,7 @@ export function RepositoryRHCStep({
         <Flex direction="column" gap="4">
           <Box>
             <Text size="4" weight="bold" as="div" mb="1">
-              Repository Health Check
+              Repository Health Check<br/>
             </Text>
             <Text size="2" color="gray" as="div">
               Repository Health Check analyzes components for security vulnerabilities and license issues. You can

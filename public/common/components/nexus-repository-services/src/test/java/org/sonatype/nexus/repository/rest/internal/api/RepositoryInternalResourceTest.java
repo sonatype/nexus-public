@@ -144,7 +144,7 @@ class RepositoryInternalResourceTest
     when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
     when(repositoryManager.browse()).thenReturn(repositories);
 
-    List<RepositoryXO> response = underTest.getRepositories(null, false, false, null, null);
+    List<RepositoryXO> response = underTest.getRepositories(null, false, false, null, null, null);
 
     assertThat(response.get(0).getName(), is(sortedRepositories.get(0).getName()));
     assertThat(response.get(1).getName(), is(sortedRepositories.get(1).getName()));
@@ -181,11 +181,74 @@ class RepositoryInternalResourceTest
     when(repositoryManager.browse()).thenReturn(repositories);
 
     // Filter by comma-separated format list: maven2,nuget (should exclude npm)
-    List<RepositoryXO> response = underTest.getRepositories(null, false, false, "maven2,nuget", null);
+    List<RepositoryXO> response = underTest.getRepositories(null, false, false, "maven2,nuget", null, null);
 
     assertThat(response.size(), is(2));
     assertThat(response.get(0).getName(), is("maven-central"));
     assertThat(response.get(1).getName(), is("nuget.org-proxy"));
+  }
+
+  @Test
+  void testGetRepositoriesExcludingReleaseVersionPolicy() {
+    // Mirrors the descriptor for repository.maven.purge-unused-snapshots:
+    // excludingAnyOfVersionPolicies(RELEASE) -> "!RELEASE". Repos without a versionPolicy
+    // (non-Maven) must still pass the exclude filter to match the classic UI behavior.
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Format npm = new Format("npm")
+    {
+    };
+
+    Repository mavenSnapshots = mockRepository("maven-snapshots", maven2, hostedType,
+        "http://localhost:8081/repository/maven-snapshots/", true, Map.of(), "SNAPSHOT");
+    Repository mavenReleases = mockRepository("maven-releases", maven2, hostedType,
+        "http://localhost:8081/repository/maven-releases/", true, Map.of(), "RELEASE");
+    Repository mavenGroup = mockRepository("maven-public", maven2, groupType,
+        "http://localhost:8081/repository/maven-public/", true, Map.of(), "MIXED");
+    Repository npmHosted = mockRepository("npm-hosted", npm, hostedType,
+        "http://localhost:8081/repository/npm-hosted/", true, Map.of()); // no versionPolicy
+
+    List<Repository> repositories = List.of(mavenSnapshots, mavenReleases, mavenGroup, npmHosted);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
+    when(repositoryManager.browse()).thenReturn(repositories);
+
+    List<RepositoryXO> response = underTest.getRepositories(null, false, false, null, null, "!RELEASE");
+
+    // maven-releases excluded; the rest pass (npm-hosted has no versionPolicy and is allowed
+    // through exclude-only filters).
+    assertThat(response.size(), is(3));
+    assertThat(response.get(0).getName(), is("maven-public"));
+    assertThat(response.get(1).getName(), is("maven-snapshots"));
+    assertThat(response.get(2).getName(), is("npm-hosted"));
+  }
+
+  @Test
+  void testGetRepositoriesIncludingSnapshotVersionPolicyOnly() {
+    // Includes-only filter: only repos with versionPolicy=SNAPSHOT pass; non-Maven repos
+    // without a versionPolicy are excluded because they cannot match an explicit include list.
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Format npm = new Format("npm")
+    {
+    };
+
+    Repository mavenSnapshots = mockRepository("maven-snapshots", maven2, hostedType,
+        "http://localhost:8081/repository/maven-snapshots/", true, Map.of(), "SNAPSHOT");
+    Repository mavenReleases = mockRepository("maven-releases", maven2, hostedType,
+        "http://localhost:8081/repository/maven-releases/", true, Map.of(), "RELEASE");
+    Repository npmHosted = mockRepository("npm-hosted", npm, hostedType,
+        "http://localhost:8081/repository/npm-hosted/", true, Map.of()); // no versionPolicy
+
+    List<Repository> repositories = List.of(mavenSnapshots, mavenReleases, npmHosted);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
+    when(repositoryManager.browse()).thenReturn(repositories);
+
+    List<RepositoryXO> response = underTest.getRepositories(null, false, false, null, null, "SNAPSHOT");
+
+    assertThat(response.size(), is(1));
+    assertThat(response.get(0).getName(), is("maven-snapshots"));
   }
 
   @Test
@@ -284,12 +347,27 @@ class RepositoryInternalResourceTest
       final boolean online,
       final Map<Class<? extends Facet>, Facet> facets)
   {
+    return mockRepository(name, format, type, url, online, facets, null);
+  }
+
+  private static Repository mockRepository(
+      final String name,
+      final Format format,
+      final Type type,
+      final String url,
+      final boolean online,
+      final Map<Class<? extends Facet>, Facet> facets,
+      final String versionPolicy)
+  {
     Repository repository = mock(Repository.class);
     lenient().when(repository.getName()).thenReturn(name);
     lenient().when(repository.getFormat()).thenReturn(format);
     lenient().when(repository.getType()).thenReturn(type);
     lenient().when(repository.getUrl()).thenReturn(url);
     ConfigurationData configuration = new ConfigurationData();
+    if (versionPolicy != null) {
+      configuration.setAttributes(Map.of("maven", Map.of("versionPolicy", versionPolicy)));
+    }
     lenient().when(repository.getConfiguration()).thenReturn(configuration);
     facets.forEach((clazz, facet) -> lenient().when(repository.facet(clazz)).thenAnswer(invocation -> facet));
     configuration.setOnline(online);

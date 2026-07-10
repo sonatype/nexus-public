@@ -96,10 +96,9 @@ export function RepositoryTypeSelector({
 
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
-      result = result.filter(f => 
-        (FORMAT_LABELS[f] || f).toLowerCase().includes(q) || 
-        f.toLowerCase().includes(q) ||
-        getFormatDescription(f).toLowerCase().includes(q)
+      result = result.filter(f =>
+        (FORMAT_LABELS[f] || f).toLowerCase().includes(q) ||
+        f.toLowerCase().includes(q)
       );
     }
     return result;

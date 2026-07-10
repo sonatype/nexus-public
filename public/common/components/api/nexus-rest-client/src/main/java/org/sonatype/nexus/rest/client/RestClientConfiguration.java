@@ -15,7 +15,7 @@ package org.sonatype.nexus.rest.client;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.core.Configurable;
+import jakarta.ws.rs.core.Configurable;
 
 import org.apache.http.client.HttpClient;
 

@@ -271,7 +271,7 @@ public class MetadataRebuildWorker
   }
 
   /*
-   * Rebuilds group level metadata. Returns a list of base versions.
+   * Rebuilds artifact level metadata. Returns a list of base versions.
    */
   @VisibleForTesting
   Collection<String> rebuildArtifactMetadata(
@@ -288,9 +288,15 @@ public class MetadataRebuildWorker
       metadataBuilder.onEnterGroupId(namespace);
       metadataBuilder.onEnterArtifactId(name);
       log.trace("Found base versions {}", baseVersions);
-      baseVersions.stream()
-          .forEach(metadataBuilder::addBaseVersion);
+      baseVersions.stream().forEach(metadataBuilder::addBaseVersion);
       Maven2Metadata metadata = metadataBuilder.onExitArtifactId();
+      // metadata can be null when there are no base versions to generate,
+      // which is expected when the repository doesn't contain the specified G:A
+      if (metadata == null) {
+        log.debug("No metadata to generate for repo {} g {} a {} - artifact not found in repository",
+            repository.getName(), namespace, name);
+        return Collections.emptySet();
+      }
       metadataUpdater.processMetadata(metadataPath, metadata);
       log.debug("Finished rebuild for repo {} g {} a {}", repository.getName(), namespace, name);
       updateRebuilt(true);
@@ -300,7 +306,7 @@ public class MetadataRebuildWorker
       maybeRethrow(e);
       failures.add(new MetadataException("Error processing metadata for path: " + metadataPath.getPath(), e));
       updateRebuilt(false);
-      return baseVersions != null ? baseVersions : Collections.emptySet();
+      return Collections.emptySet();
     }
   }
 
@@ -384,7 +390,8 @@ public class MetadataRebuildWorker
   /*
    * Component comparator to inverse sort by version
    */
-  private int reverseSortByVersion(final Component a, final Component b) {
+  @VisibleForTesting
+  int reverseSortByVersion(final Component a, final Component b) {
     Version aVersion = parseVersion(a.version());
     Version bVersion = parseVersion(b.version());
     if (bVersion == null) {

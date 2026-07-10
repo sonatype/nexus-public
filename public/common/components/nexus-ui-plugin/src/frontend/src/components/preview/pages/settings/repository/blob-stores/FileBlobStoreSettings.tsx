@@ -18,6 +18,9 @@ import {
   SettingsTextInput,
   SettingsAlert
 } from '../../../../shared/form';
+import { useIsClustered } from '../../../../shared/hooks';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import { shouldShowHaPathWarning, HA_PATH_WARNING } from './haPathWarning';
 import type { BlobStoreFormData } from './types';
 import './FileBlobStoreSettings.scss';
 
@@ -26,6 +29,7 @@ interface FileBlobStoreSettingsProps {
   onChange: (path: string, value: unknown) => void;
   disabled?: boolean;
   isEdit?: boolean;
+  errors?: Record<string, string | null>;
 }
 
 const STRINGS = {
@@ -43,8 +47,13 @@ export default function FileBlobStoreSettings({
   data,
   onChange,
   disabled = false,
-  isEdit = false
+  isEdit = false,
+  errors = {},
 }: FileBlobStoreSettingsProps) {
+  const isClustered = useIsClustered();
+  const workDirectory = ExtJS.state()?.getValue?.('nexus.application.workDirectory') || '';
+  const showHaWarning = isClustered && shouldShowHaPathWarning(data.path, workDirectory);
+
   return (
     <div className="file-blob-store-settings">
       <SettingsFormSection
@@ -53,8 +62,16 @@ export default function FileBlobStoreSettings({
         icon={<Folder size={20} />}
       >
         {isEdit && (
-          <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
+          <SettingsAlert type="warning">
             {STRINGS.WARNING}
+          </SettingsAlert>
+        )}
+
+        {showHaWarning && (
+          <SettingsAlert type="warning">
+            <strong>{HA_PATH_WARNING.TITLE}</strong>
+            <br />
+            {HA_PATH_WARNING.MESSAGE}
           </SettingsAlert>
         )}
 
@@ -65,6 +82,7 @@ export default function FileBlobStoreSettings({
           onChange={(value) => onChange('path', value)}
           helpText={STRINGS.PATH.helpText}
           placeholder={STRINGS.PATH.placeholder}
+          error={errors['path'] ?? undefined}
           required
           disabled={disabled}
           monospace
@@ -73,4 +91,3 @@ export default function FileBlobStoreSettings({
     </div>
   );
 }
-

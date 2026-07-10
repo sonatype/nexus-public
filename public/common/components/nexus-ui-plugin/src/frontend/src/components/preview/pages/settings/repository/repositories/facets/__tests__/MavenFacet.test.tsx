@@ -17,6 +17,20 @@ import { Theme } from '@radix-ui/themes';
 import { MavenFacet } from '../MavenFacet';
 import { RepositoryFormData } from '../../types';
 
+const mockGetValue = jest.fn((key: string) => {
+  if (key === 'isCloud') return false;
+  return false;
+});
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ExtJS: {
+    useState: (fn: () => any) => fn(),
+    state: () => ({
+      getValue: mockGetValue,
+    }),
+  },
+}));
+
 const defaultFormData: RepositoryFormData = {
   name: 'test-repo',
   format: 'maven2',
@@ -41,6 +55,17 @@ function renderFacet(props: Partial<React.ComponentProps<typeof MavenFacet>> = {
 }
 
 describe('MavenFacet', () => {
+  beforeEach(() => {
+    mockGetValue.mockImplementation((key: string) => {
+      if (key === 'isCloud') return false;
+      return false;
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders Maven 2 section title', () => {
     renderFacet();
     expect(screen.getByText('Maven 2')).toBeInTheDocument();
@@ -82,5 +107,31 @@ describe('MavenFacet', () => {
     };
     renderFacet({ formData });
     expect(screen.getByText(/phishing/i)).toBeInTheDocument();
+  });
+
+  it('hides Content Disposition when isCloud is true', () => {
+    mockGetValue.mockImplementation((key: string) => {
+      if (key === 'isCloud') return true;
+      return false;
+    });
+    renderFacet();
+    expect(screen.queryByText('Content Disposition')).not.toBeInTheDocument();
+    expect(screen.queryByText(/phishing/i)).not.toBeInTheDocument();
+    // Version and Layout Policy should still be visible
+    expect(screen.getByText('Version Policy')).toBeInTheDocument();
+    expect(screen.getByText('Layout Policy')).toBeInTheDocument();
+  });
+
+  it('does not show phishing warning when isCloud is true even with INLINE disposition', () => {
+    mockGetValue.mockImplementation((key: string) => {
+      if (key === 'isCloud') return true;
+      return false;
+    });
+    const formData = {
+      ...defaultFormData,
+      maven: { ...defaultFormData.maven, contentDisposition: 'INLINE' },
+    };
+    renderFacet({ formData });
+    expect(screen.queryByText(/phishing/i)).not.toBeInTheDocument();
   });
 });

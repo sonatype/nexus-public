@@ -30,6 +30,7 @@
  */
 
 import { createMachine, assign } from 'xstate';
+import { ExtJS } from '../../../../interface/ExtJS';
 import type { BrowseNode } from './tree/browse-tree.types';
 import type { AssetData, ComponentData } from './detail/DetailPanel';
 
@@ -81,7 +82,7 @@ export function createBrowseMachine(initialRepo?: string) {
       initial: initialRepo ? 'treeView' : 'repoList',
       context: {
         selectedRepository: initialRepo || null,
-        repositoryUrl: initialRepo ? `${typeof window !== 'undefined' ? window.location.origin : ''}/repository/${initialRepo}/` : '',
+        repositoryUrl: initialRepo ? ExtJS.urlOf(`/repository/${initialRepo}/`) : '',
         selectedNode: null,
         detailData: {
           asset: null,
@@ -187,7 +188,7 @@ export function createBrowseMachine(initialRepo?: string) {
           const e = event as { type: 'SELECT_REPO'; repoName: string };
           return {
             selectedRepository: e.repoName,
-            repositoryUrl: `${typeof window !== 'undefined' ? window.location.origin : ''}/repository/${e.repoName}/`,
+            repositoryUrl: ExtJS.urlOf(`/repository/${e.repoName}/`),
             selectedNode: null,
             detailData: { asset: null, component: null, loading: false, error: null },
           };

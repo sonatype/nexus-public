@@ -22,6 +22,16 @@ import { useTasksApi } from '../useTasksApi';
 jest.mock('../useTasksApi');
 const mockUseTasksApi = useTasksApi as jest.MockedFunction<typeof useTasksApi>;
 
+// Mock the internal API module used by tasksFormMachine so we can control task type responses
+jest.mock('../../../../../../../interface/api', () => ({
+  ENDPOINTS: { TASKS: '/service/rest/v1/tasks' },
+  restClient: { get: jest.fn().mockResolvedValue([]) },
+  urlBuilder: { tasks: { templates: () => '/service/rest/v1/tasks/templates' } },
+}));
+const mockInternalApi = jest.requireMock('../../../../../../../interface/api') as {
+  restClient: { get: jest.Mock };
+};
+
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   const actual = jest.requireActual('@sonatype/nexus-ui-plugin');
   return {
@@ -82,6 +92,7 @@ describe('TaskDetail', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockDeleteTask.mockResolvedValue(undefined);
+    mockInternalApi.restClient.get.mockResolvedValue([]);
     mockUseTasksApi.mockReturnValue({
       createTask: jest.fn().mockResolvedValue({ id: 'new-task' }),
       updateTask: jest.fn().mockResolvedValue(mockTask),
@@ -91,9 +102,10 @@ describe('TaskDetail', () => {
     } as any);
   });
 
-  it('renders loading state', () => {
-    renderWithTheme(<TaskDetail {...defaultProps} task={null} loading={true} />);
-    expect(screen.getByText('Loading task details...')).toBeInTheDocument();
+  it('renders skeleton placeholders during initial load', () => {
+    const { container } = renderWithTheme(<TaskDetail {...defaultProps} task={null} loading={true} />);
+    expect(screen.queryByText('Loading task details...')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-testid="task-detail-skeleton"]').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders task name in header', () => {
@@ -358,6 +370,213 @@ describe('TaskDetail', () => {
       await waitFor(() => {
         expect(confirmButton).toBeDisabled();
       });
+    });
+  });
+
+  describe('schedule restriction for non-concurrent task types', () => {
+    it('shows only Manual and Once options on the Schedule tab for repository.move tasks', async () => {
+      mockInternalApi.restClient.get.mockResolvedValue([
+        { type: 'repository.move', name: 'Admin - Change repository blob store', concurrentRun: false, properties: {} },
+      ]);
+
+      const moveTask: Task = {
+        ...mockTask,
+        typeId: 'repository.move',
+        typeName: 'Admin - Change repository blob store',
+        schedule: 'manual',
+      };
+
+      renderWithTheme(<TaskDetail {...defaultProps} task={moveTask} />);
+
+      // Navigate to the Schedule tab via the SummaryItem's direct onClick (more reliable than Radix UI tab trigger)
+      await act(async () => {
+        const scheduleLabel = screen.getByText('Schedule:');
+        fireEvent.click(scheduleLabel.closest('.task-detail__summary-item')!);
+      });
+
+      // Wait for machine to load task types and restrict schedule options
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: 'Manual', hidden: true })).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Once', hidden: true })).toBeInTheDocument();
+        expect(screen.queryByText('Hourly')).not.toBeInTheDocument();
+        expect(screen.queryByText('Daily')).not.toBeInTheDocument();
+        expect(screen.queryByText('Weekly')).not.toBeInTheDocument();
+        expect(screen.queryByText('Monthly')).not.toBeInTheDocument();
+        expect(screen.queryByText('Advanced (Cron)')).not.toBeInTheDocument();
+      }, { timeout: 3000 });
+    });
+  });
+
+  describe('analytics ids', () => {
+    it('Delete button carries data-analytics-id="nxrm-task-delete"', () => {
+      renderWithTheme(<TaskDetail {...defaultProps} canDelete={true} />);
+      expect(screen.getByTestId('form-delete')).toHaveAttribute('data-analytics-id', 'nxrm-task-delete');
+    });
+
+    it('Run button carries data-analytics-id="nxrm-task-run"', () => {
+      renderWithTheme(<TaskDetail {...defaultProps} canRun={true} />);
+      expect(screen.getByTestId('task-run')).toHaveAttribute('data-analytics-id', 'nxrm-task-run');
+    });
+
+    it('Stop button carries data-analytics-id="nxrm-task-stop"', () => {
+      const runningTask = {...defaultProps.task, status: 'RUNNING'};
+      renderWithTheme(<TaskDetail {...defaultProps} task={runningTask} canStop={true} />);
+      expect(screen.getByTestId('task-stop')).toHaveAttribute('data-analytics-id', 'nxrm-task-stop');
+    });
+  });
+
+  describe('NEXUS-53044 Save button reflects validation state', () => {
+    /**
+     * Regression: clearing a required dynamic field (e.g. Repository on PurgeUnusedTask)
+     * left validation errors but the Save button stayed visually enabled. SettingsForm
+     * derives its disabled state from {loading, pristine, submitDisabled} only — it does
+     * not look at validationErrors directly, so TaskDetail must forward `hasValidationErrors`
+     * via `submitDisabled`.
+     */
+    it('disables Save when a required dynamic field is cleared', async () => {
+      // Backend templates response: PurgeUnusedTask declares repositoryName as required.
+      mockInternalApi.restClient.get.mockResolvedValue([
+        {
+          type: 'repository.purge-unused',
+          name: 'Repository - Delete unused components',
+          enabled: true,
+          notificationCondition: 'FAILURE',
+          frequency: { schedule: 'manual' },
+          properties: { repositoryName: 'maven-central', lastUsed: '7' },
+        },
+      ]);
+      const purgeTask: Task = {
+        ...mockTask,
+        typeId: 'repository.purge-unused',
+        properties: { repositoryName: 'maven-central', lastUsed: '7' },
+      };
+
+      renderWithTheme(<TaskDetail {...defaultProps} task={purgeTask} />);
+
+      // Wait for the Save button to render. With a clean form it's disabled (pristine).
+      const saveButton = await screen.findByTestId('form-submit');
+      expect(saveButton).toBeDisabled();
+
+      // Simulate clearing the Repository field — write a non-empty intermediate value first
+      // so the form leaves pristine state, then clear it.
+      const detail = screen.getByTestId('task-detail');
+      const repoInput =
+        detail.querySelector<HTMLInputElement>('input[name="repositoryName"]') ||
+        detail.querySelector<HTMLInputElement>('[id*="repositoryName" i] input');
+      if (repoInput) {
+        await act(async () => {
+          fireEvent.change(repoInput, { target: { value: '' } });
+          fireEvent.blur(repoInput);
+        });
+      }
+
+      // Either pristine (still all original values) or invalid (cleared) — both must keep Save disabled.
+      await waitFor(() => {
+        expect(screen.getByTestId('form-submit')).toBeDisabled();
+      });
+    });
+  });
+
+  describe('a11y', () => {
+    it('renders the notification email input in the settings tab after entering edit mode', async () => {
+      renderWithTheme(<TaskDetail {...defaultProps} />);
+
+      const editButton = screen.getByTestId('task-edit-button');
+      await act(async () => {
+        fireEvent.click(editButton);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/notification email/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  /**
+   * NEXUS-52435 — regression: the same wrapper+callback shape that caused the
+   * double-PUT on save also affected delete (TaskDetail wraps deleteTask to call
+   * onDeleteProp, and TasksPage.handleDelete used to re-issue deleteTask). The
+   * second DELETE returned 404 because the first one had already removed the
+   * task. Delete must hit the API exactly once.
+   */
+  describe('NEXUS-52435 delete calls deleteTask exactly once', () => {
+    it('does not invoke deleteTask twice when confirming delete', async () => {
+      const deleteTaskMock = jest.fn().mockResolvedValue(undefined);
+      mockUseTasksApi.mockReturnValue({
+        createTask: jest.fn().mockResolvedValue({ id: 'new-task' }),
+        updateTask: jest.fn().mockResolvedValue(mockTask),
+        deleteTask: deleteTaskMock,
+        runTask: jest.fn().mockResolvedValue(undefined),
+        stopTask: jest.fn().mockResolvedValue(undefined),
+      } as any);
+
+      // onDelete (handleDelete from TasksPage) only does UI side-effects after the
+      // hook-driven delete. It must NOT call deleteTask itself.
+      const onDelete = jest.fn();
+
+      renderWithTheme(<TaskDetail {...defaultProps} onDelete={onDelete} />);
+
+      // Open the delete confirmation modal.
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('form-delete'));
+      });
+      // Type the task name to enable the destructive confirm button.
+      const confirmInput = await screen.findByRole('textbox');
+      await act(async () => {
+        fireEvent.change(confirmInput, { target: { value: 'Cleanup Task' } });
+      });
+      const dialog = screen.getByRole('alertdialog');
+      const confirmButton = within(dialog).getByRole('button', { name: /^Delete$/i });
+      await act(async () => {
+        fireEvent.click(confirmButton);
+      });
+
+      await waitFor(() => expect(deleteTaskMock).toHaveBeenCalled(), { timeout: 5000 });
+      expect(deleteTaskMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  /**
+   * NEXUS-52435 — regression: when editing a task and submitting Save, the legacy
+   * code path called updateTask twice (once inside useTasksForm via the wrapped
+   * createTask/updateTask, then again from the TasksPage onSave callback). The
+   * second PUT raced with backend state and returned 409 Conflict in the console.
+   * Save must hit the API exactly once.
+   */
+  describe('NEXUS-52435 save calls updateTask exactly once', () => {
+    it('does not invoke updateTask twice when Save is clicked in edit mode', async () => {
+      const manualTask: Task = { ...mockTask, schedule: 'manual' };
+      const updateTaskMock = jest.fn().mockResolvedValue(manualTask);
+      mockUseTasksApi.mockReturnValue({
+        createTask: jest.fn().mockResolvedValue({ id: 'new-task' }),
+        updateTask: updateTaskMock,
+        deleteTask: mockDeleteTask,
+        runTask: jest.fn().mockResolvedValue(undefined),
+        stopTask: jest.fn().mockResolvedValue(undefined),
+      } as any);
+
+      // onSave (handleSave from TasksPage) only does UI side-effects after the
+      // hook-driven save. Importantly it must NOT call updateTask itself.
+      const onSave = jest.fn().mockResolvedValue(undefined);
+
+      renderWithTheme(<TaskDetail {...defaultProps} task={manualTask} onSave={onSave} />);
+
+      // Make the form dirty so the SettingsForm submit can fire.
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('task-edit-button'));
+      });
+      const emailInput = await screen.findByLabelText(/notification email/i);
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'changed@example.com' } });
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('form-submit'));
+      });
+
+      await waitFor(() => expect(updateTaskMock).toHaveBeenCalled(), { timeout: 3000 });
+      // The whole point of this regression: exactly one call, not two.
+      expect(updateTaskMock).toHaveBeenCalledTimes(1);
     });
   });
 });

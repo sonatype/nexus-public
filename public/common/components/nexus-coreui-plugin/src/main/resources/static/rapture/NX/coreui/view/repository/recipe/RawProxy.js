@@ -26,6 +26,7 @@ Ext.define('NX.coreui.view.repository.recipe.RawProxy', {
   alias: 'widget.nx-coreui-repository-raw-proxy',
   requires: [
     'NX.coreui.view.repository.facet.RawFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet',
     'NX.coreui.view.repository.facet.RawProxyFacet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
@@ -43,6 +44,7 @@ Ext.define('NX.coreui.view.repository.recipe.RawProxy', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-raw-facet'},
+      {xtype: 'nx-coreui-repository-firewall-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

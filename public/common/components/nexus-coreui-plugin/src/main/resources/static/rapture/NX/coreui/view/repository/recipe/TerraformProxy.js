@@ -31,7 +31,8 @@ Ext.define('NX.coreui.view.repository.recipe.TerraformProxy', {
         'NX.coreui.view.repository.facet.BearerHttpClientFacet',
         'NX.coreui.view.repository.facet.NegativeCacheFacet',
         'NX.coreui.view.repository.facet.CleanupPolicyFacet',
-        'NX.coreui.view.repository.facet.TerraformProxyFacet'
+        'NX.coreui.view.repository.facet.TerraformProxyFacet',
+        'NX.coreui.view.repository.facet.FirewallFacet'
     ],
 
     /**
@@ -42,6 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.TerraformProxy', {
 
         me.items = [
             {xtype: 'nx-coreui-repository-terraform-proxy-facet'},
+            {xtype: 'nx-coreui-repository-firewall-facet'},
             {xtype: 'nx-coreui-repository-proxy-facet'},
             {xtype: 'nx-coreui-repository-storage-facet'},
             {xtype: 'nx-coreui-repository-routing-rule-facet'},

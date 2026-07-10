@@ -46,6 +46,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ExtJS: {
     checkPermission: jest.fn(),
     requestConfirmation: jest.fn(),
+    useState: (fn) => fn(),
     state: () => ({
       getValue: jest.fn((key) => {
         // Enable evaluation feature flag for tests
@@ -399,7 +400,7 @@ describe('RepositoriesForm', () => {
           mode: 'INHERIT'
         },
         maven: {
-          contentDisposition: 'INLINE',
+          contentDisposition: 'ATTACHMENT',
           layoutPolicy: 'STRICT',
           versionPolicy: 'RELEASE'
         }
@@ -604,7 +605,8 @@ describe('RepositoriesForm', () => {
       proxy: {
         remoteUrl: 'https://repo123.net',
         contentMaxAge: -1,
-        metadataMaxAge: 1440
+        metadataMaxAge: 1440,
+        preserveEncodedCharacters: false
       },
       negativeCache: {
         enabled: true,
@@ -633,7 +635,7 @@ describe('RepositoriesForm', () => {
         assetPathRegex: ''
       },
       maven: {
-        contentDisposition: 'INLINE',
+        contentDisposition: 'ATTACHMENT',
         layoutPolicy: 'STRICT',
         versionPolicy: 'RELEASE'
       }
@@ -724,7 +726,8 @@ describe('RepositoriesForm', () => {
         proxy: {
           remoteUrl: 'https://repo123.net',
           contentMaxAge: '600',
-          metadataMaxAge: '700'
+          metadataMaxAge: '700',
+          preserveEncodedCharacters: false
         },
         negativeCache: {
           enabled: true,
@@ -997,7 +1000,7 @@ describe('RepositoriesForm', () => {
 
     it('renders maven proxy fields with correct default values', async () => {
       await renderViewAndSetRequiredFields({format: 'maven2', type: 'proxy'});
-      validateSelect(selectors.getContentDispositionSelect(), null, 'INLINE');
+      validateSelect(selectors.getContentDispositionSelect(), null, 'ATTACHMENT');
       validateSelect(selectors.getLayoutPolicySelect(), null, 'STRICT');
       validateSelect(selectors.getVersionPolicySelect(), null, 'RELEASE');
     });
@@ -1026,7 +1029,8 @@ describe('RepositoriesForm', () => {
         proxy: {
           remoteUrl: 'https://foo.bar',
           contentMaxAge: -1,
-          metadataMaxAge: 1440
+          metadataMaxAge: 1440,
+          preserveEncodedCharacters: false
         },
         negativeCache: {
           enabled: true,
@@ -1127,7 +1131,8 @@ describe('RepositoriesForm', () => {
         proxy: {
           remoteUrl: 'https://foo.bar',
           contentMaxAge: -1,
-          metadataMaxAge: 1440
+          metadataMaxAge: 1440,
+          preserveEncodedCharacters: false
         },
         negativeCache: {
           enabled: true,

@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.rapture.settings;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Rapture settings.

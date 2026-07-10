@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -28,16 +28,18 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiAdvancedBucketConnection
 {
-  @ApiModelProperty("A custom endpoint URL for third party object stores using the S3 API.")
+  @Schema(description = "A custom endpoint URL for third party object stores using the S3 API.")
   private final String endpoint;
 
-  @ApiModelProperty("An API signature version which may be required for third party object stores using the S3 API.")
+  @Schema(
+      description = "An API signature version which may be required for third party object stores using the S3 API.")
   private final String signerType;
 
-  @ApiModelProperty("Setting this flag will result in path-style access being used for all requests.")
+  @Schema(description = "Setting this flag will result in path-style access being used for all requests.")
   private final Boolean forcePathStyle;
 
-  @ApiModelProperty("Setting this value will override the default connection pool size of Nexus of the s3 client for this blobstore.")
+  @Schema(
+      description = "Setting this value will override the default connection pool size of Nexus of the s3 client for this blobstore.")
   private final Integer maxConnectionPoolSize;
 
   @JsonCreator

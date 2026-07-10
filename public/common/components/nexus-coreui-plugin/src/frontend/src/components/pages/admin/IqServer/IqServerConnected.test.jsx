@@ -112,7 +112,6 @@ describe('IqServerConnected', () => {
     render(<IqServerConnected />);
 
     expect(screen.getByText(IQ_SERVER.CONNECTED.TITLE)).toBeInTheDocument();
-    expect(screen.getByText(IQ_SERVER.CONNECTED.SUBTITLE)).toBeInTheDocument();
   });
 
   it('displays connection status', () => {
@@ -122,7 +121,7 @@ describe('IqServerConnected', () => {
     expect(screen.getByText(IQ_SERVER.CONNECTED.STATUS)).toBeInTheDocument();
   });
 
-  it('shows IQ Server URL when available', () => {
+  it('shows IQ Server URL once at page level when available', () => {
     const testUrl = 'http://test.iq.server:8070';
     mockClmState({url: testUrl});
     render(<IqServerConnected />);
@@ -134,8 +133,7 @@ describe('IqServerConnected', () => {
     mockClmState({url: ''});
     const {container} = render(<IqServerConnected />);
 
-    const urlElement = container.querySelector('.nxrm-iq-tile-url');
-    expect(urlElement).not.toBeInTheDocument();
+    expect(container.querySelector('.nxrm-iq-subtitle')).not.toBeInTheDocument();
   });
 
   it('shows Lifecycle as enabled when available', () => {

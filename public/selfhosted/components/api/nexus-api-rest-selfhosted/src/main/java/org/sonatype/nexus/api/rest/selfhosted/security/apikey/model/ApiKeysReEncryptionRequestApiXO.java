@@ -14,19 +14,19 @@ package org.sonatype.nexus.api.rest.selfhosted.security.apikey.model;
 
 import javax.annotation.Nullable;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ApiKeysReEncryptionRequestApiXO
 {
-  @ApiModelProperty("Optional - The algorithm to be used to decrypt the principals")
+  @Schema(description = "Optional - The algorithm to be used to decrypt the principals")
   @Nullable
   private String algorithmForDecryption;
 
-  @ApiModelProperty("Optional - The iterations to be used to decrypt the principals")
+  @Schema(description = "Optional - The iterations to be used to decrypt the principals")
   @Nullable
   private Integer iterationsForDecryption;
 
-  @ApiModelProperty("Optional - Email to notify when task finishes")
+  @Schema(description = "Optional - Email to notify when task finishes")
   @Nullable
   private String notifyEmail;
 

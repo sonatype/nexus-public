@@ -181,6 +181,36 @@
     padding: var(--space-6);
     color: var(--gray-10);
   }
+
+  &__description-cell {
+    line-height: 1.4;
+  }
+
+  .entity-table__header--name {
+    width: 30%;
+  }
+
+  .entity-table__header--category {
+    width: 15%;
+  }
+
+  .entity-table__header--arrow {
+    width: 40px;
+  }
+
+  // In a wizard, the sticky thead's z-index: 1 causes it to paint over the action bar buttons.
+  // Dropping to z-index: 0 keeps sticky behaviour intact but lets the action bar paint on top.
+  .wizard-form & .entity-table thead {
+    z-index: 0;
+  }
+
+  .entity-table__row--selected {
+    background-color: var(--accent-3);
+
+    &:hover {
+      background-color: var(--accent-4);
+    }
+  }
 }
 
 @keyframes task-type-spin {
@@ -276,7 +306,6 @@
   background: var(--color-surface);
   border: 1px solid var(--gray-6);
   border-radius: var(--radius-3);
-  overflow: hidden;
   box-sizing: border-box;
 }
 

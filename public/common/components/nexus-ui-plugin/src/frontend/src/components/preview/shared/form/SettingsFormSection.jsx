@@ -48,14 +48,15 @@ export function SettingsFormSection({
   };
 
   return (
-    <Box className={`settings-section ${className}`.trim()}>
+    <Box className={`settings-section ${collapsed ? 'settings-section--collapsed' : ''} ${className}`.trim()}>
       {title && (
-        <Box 
+        <Box
           className={`settings-section__header ${collapsible ? 'settings-section__header--collapsible' : ''}`}
           onClick={handleToggle}
           role={collapsible ? 'button' : undefined}
           tabIndex={collapsible ? 0 : undefined}
           onKeyDown={collapsible ? (e) => e.key === 'Enter' && handleToggle() : undefined}
+          aria-expanded={collapsible ? !collapsed : undefined}
         >
           <Flex align="center" gap="2">
             {icon && (
@@ -65,12 +66,12 @@ export function SettingsFormSection({
             )}
             <Box>
               <Heading as="h2" size="3" weight="medium" className="settings-section__title">
-                {title}
                 {collapsible && (
                   <span className={`settings-section__chevron ${collapsed ? 'settings-section__chevron--collapsed' : ''}`}>
                     ▾
                   </span>
                 )}
+                {title}
               </Heading>
               {description && (
                 <Text as="p" size="2" className="settings-section__description">

@@ -15,10 +15,10 @@ package org.sonatype.nexus.coreui.internal.content;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 
 import org.sonatype.nexus.coreui.AssetXO;
 import org.sonatype.nexus.coreui.ComponentHelper;
@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.stereotype.Component;
 
 /**

@@ -210,4 +210,76 @@ public class SearchRecordDataParameterLimitTest
     assertThat("Should not add more paths after hitting limit",
         pathsAfter, is(pathsBefore));
   }
+
+  @Test
+  public void testTsvectorByteLimitPreventsOverflow() {
+    // NEXUS-52625: Simulate the tsvector overflow scenario.
+    // Add keywords with long paths (~400 bytes each) until the byte limit is reached.
+    // The byte limit should stop additions before hitting PostgreSQL's 1MB tsvector limit.
+
+    int addedCount = 0;
+    for (int i = 0; i < 5000; i++) {
+      int keywordsBefore = underTest.getKeywords().size();
+      // ~400 byte keyword simulating long YUM directory paths
+      String longKeyword = "enterprise-datacenter-region-" + String.format("%06d", i) +
+          "-westeurope/satellite-release-channel-production-" + String.format("%06d", i * 3) +
+          "-stable/rhel8-server-appstream-optional-" + String.format("%06d", i * 7) +
+          "-updates/x86_64-baseos-packages-multilib-" + String.format("%06d", i * 11) +
+          "-debuginfo/repository-snapshot-nightly-build-" + String.format("%06d", i * 13);
+      underTest.addKeyword(longKeyword);
+
+      if (underTest.getKeywords().size() == keywordsBefore) {
+        break; // Limit reached
+      }
+      addedCount++;
+    }
+
+    // Should have stopped well before 5000 due to byte limit
+    assertThat("Byte limit should prevent adding all 5000 keywords",
+        addedCount < 5000, is(true));
+    // Should have added at least some keywords before hitting the limit
+    assertThat("Should have added some keywords before hitting limit",
+        addedCount > 100, is(true));
+  }
+
+  @Test
+  public void testPathByteLimitPreventsOverflow() {
+    // NEXUS-52625: Verify that path additions are also protected by byte limit
+
+    int addedCount = 0;
+    for (int i = 0; i < 5000; i++) {
+      int pathsBefore = underTest.getPaths().size();
+      String longPath = "/enterprise-datacenter-" + String.format("%06d", i) +
+          "/satellite-release-channel-" + String.format("%06d", i * 3) +
+          "/rhel8-server-appstream-" + String.format("%06d", i * 7) +
+          "/x86_64-baseos-packages-" + String.format("%06d", i * 11) +
+          "/repository-snapshot-build-" + String.format("%06d", i * 13) +
+          "/updates-security-advisory-" + String.format("%06d", i * 17) +
+          "/Packages/ant.rpm";
+      underTest.addPath(longPath);
+
+      if (underTest.getPaths().size() == pathsBefore) {
+        break; // Limit reached
+      }
+      addedCount++;
+    }
+
+    // Should have stopped before 5000 due to byte limit
+    assertThat("Byte limit should prevent adding all 5000 paths",
+        addedCount < 5000, is(true));
+    assertThat("Should have added some paths before hitting limit",
+        addedCount > 100, is(true));
+  }
+
+  @Test
+  public void testSmallKeywordsDontTriggerByteLimit() {
+    // Normal usage: small keywords should never hit the byte limit
+    for (int i = 0; i < 100; i++) {
+      underTest.addKeyword("component-" + i);
+    }
+    // All 100 small keywords should be added (each adds 2 entries: phrase + tokenized)
+    // The exact count depends on tokenization, but should be well over 100
+    assertThat("Small keywords should not be blocked by byte limit",
+        underTest.getKeywords().size() > 100, is(true));
+  }
 }

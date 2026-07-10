@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.scheduling;
 
-import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail2.core.EmailException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

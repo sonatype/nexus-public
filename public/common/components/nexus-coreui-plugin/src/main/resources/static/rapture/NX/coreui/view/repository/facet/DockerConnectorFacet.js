@@ -261,6 +261,13 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
         if (warningPanel) {
           warningPanel.show();
         }
+        // Update connector fields visibility based on the actual pathEnabled value from backend
+        // This must happen after doSetValues (not afterRender) because afterRender fires before data is loaded
+        var routingGroup = form.down && form.down('#dockerRoutingMode');
+        if (routingGroup) {
+          var pathEnabledValue = routingGroup.getValue()['attributes.docker.pathEnabled'];
+          updateConnectorFields(form, pathEnabledValue);
+        }
       },
     });
 
@@ -274,13 +281,32 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
       name: 'dockercheckbox' + type,
       listeners: {
         /**
-         * Enable/Disable the port.
+         * Enable/Disable the port. When enabled and port is empty, auto-suggest a free port.
          */
         change: function () {
           var form = this.up('form'),
             port = form.down('#' + type + 'Port');
           if (this.getValue()) {
             port.enable();
+            if (!port.getValue() && (type === 'http' || type === 'https')) {
+              var otherType = type === 'http' ? 'https' : 'http';
+              var otherPort = form.down('#' + otherType + 'Port');
+              var otherPortValue = otherPort && otherPort.getValue();
+              var url = (NX.app.relativePath || '') +
+                (otherPortValue
+                  ? '/service/rest/internal/ui/docker/suggest-port?exclude=' + otherPortValue
+                  : '/service/rest/internal/ui/docker/suggest-port');
+              Ext.Ajax.request({
+                url: url,
+                method: 'GET',
+                success: function (response) {
+                  var suggested = parseInt(response.responseText, 10);
+                  if (!isNaN(suggested)) {
+                    port.setValue(suggested);
+                  }
+                }
+              });
+            }
           } else {
             port.disable();
           }

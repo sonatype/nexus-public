@@ -17,6 +17,29 @@ import { Theme } from '@radix-ui/themes';
 import { TaskScheduler, describeCron } from '../TaskScheduler';
 import { ScheduleData } from '../types';
 
+// Mock Radix UI Select to render items inline (no portal) so option labels are queryable in jsdom
+jest.mock('@radix-ui/themes', () => {
+  const actual = jest.requireActual('@radix-ui/themes');
+  return {
+    ...actual,
+    Select: {
+      Root: ({ children, value, onValueChange, disabled }: any) => (
+        <div data-testid="select-root" data-value={value} data-disabled={disabled}>
+          {children}
+        </div>
+      ),
+      Trigger: ({ children, id, placeholder, className, ...props }: any) => (
+        <button id={id} role="combobox" className={className} disabled={props.disabled}
+          aria-invalid={props['aria-invalid']} {...props}>
+          {children || placeholder}
+        </button>
+      ),
+      Content: ({ children }: any) => <div>{children}</div>,
+      Item: ({ children, value }: any) => <div data-value={value}>{children}</div>,
+    },
+  };
+});
+
 const renderWithTheme = (component: React.ReactElement) => {
   return render(<Theme>{component}</Theme>);
 };
@@ -85,6 +108,19 @@ describe('TaskScheduler', () => {
       expect(screen.getByText('Date')).toBeInTheDocument();
       expect(screen.getByText('Time')).toBeInTheDocument();
     });
+
+    it('renders date and time inputs as Radix TextField roots', () => {
+      const { container } = renderWithTheme(
+        <TaskScheduler value={onceSchedule} onChange={mockOnChange} />,
+      );
+
+      const dateInput = container.querySelector('input[type="date"]');
+      const timeInput = container.querySelector('input[type="time"]');
+      expect(dateInput).not.toBeNull();
+      expect(timeInput).not.toBeNull();
+      expect(dateInput!.closest('.rt-TextFieldRoot')).not.toBeNull();
+      expect(timeInput!.closest('.rt-TextFieldRoot')).not.toBeNull();
+    });
   });
 
   describe('daily schedule', () => {
@@ -146,6 +182,63 @@ describe('TaskScheduler', () => {
 
     it('describes last day of month', () => {
       expect(describeCron('0 0 6 L * ?')).toBe('Last day of month at 6:00 AM');
+    });
+  });
+
+  describe('a11y', () => {
+    it('links schedule date error to the input via aria-describedby', () => {
+      const onceWithError: ScheduleData = {
+        ...onceSchedule,
+        startDate: null,
+      };
+      const { container } = renderWithTheme(
+        <TaskScheduler
+          value={onceWithError}
+          onChange={mockOnChange}
+          errors={{ startDate: 'Date is required' }}
+        />,
+      );
+
+      const dateInput = container.querySelector('input[type="date"]');
+      const describedBy = dateInput!.getAttribute('aria-describedby');
+      expect(describedBy).toBeTruthy();
+      const helper = describedBy ? container.querySelector(`#${describedBy}`) : null;
+      expect(helper).not.toBeNull();
+      expect(helper!.textContent).toContain('Date is required');
+    });
+  });
+
+  describe('allowedSchedules', () => {
+    it('renders only the allowed options when allowedSchedules is provided', () => {
+      renderWithTheme(
+        <TaskScheduler
+          value={manualSchedule}
+          onChange={mockOnChange}
+          allowedSchedules={['manual', 'once']}
+        />,
+      );
+
+      expect(screen.getByText('Manual')).toBeInTheDocument();
+      expect(screen.getByText('Once')).toBeInTheDocument();
+      expect(screen.queryByText('Hourly')).not.toBeInTheDocument();
+      expect(screen.queryByText('Daily')).not.toBeInTheDocument();
+      expect(screen.queryByText('Weekly')).not.toBeInTheDocument();
+      expect(screen.queryByText('Monthly')).not.toBeInTheDocument();
+      expect(screen.queryByText('Advanced (Cron)')).not.toBeInTheDocument();
+    });
+
+    it('renders all seven schedule options when allowedSchedules is not provided', () => {
+      renderWithTheme(
+        <TaskScheduler value={manualSchedule} onChange={mockOnChange} />,
+      );
+
+      expect(screen.getByText('Manual')).toBeInTheDocument();
+      expect(screen.getByText('Once')).toBeInTheDocument();
+      expect(screen.getByText('Hourly')).toBeInTheDocument();
+      expect(screen.getByText('Daily')).toBeInTheDocument();
+      expect(screen.getByText('Weekly')).toBeInTheDocument();
+      expect(screen.getByText('Monthly')).toBeInTheDocument();
+      expect(screen.getByText('Advanced (Cron)')).toBeInTheDocument();
     });
   });
 });

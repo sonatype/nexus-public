@@ -22,6 +22,12 @@ import { useTasksApi } from '../useTasksApi';
 jest.mock('../useTasksApi');
 const mockUseTasksApi = useTasksApi as jest.MockedFunction<typeof useTasksApi>;
 
+// Mock the internal API module used by tasksFormMachine so it does not fire real
+// network requests for /tasks/templates (see taskApiMock for details). (NEXUS-52612)
+jest.mock('../../../../../../../interface/api', () =>
+  require('./taskApiMock').createTaskApiMock()
+);
+
 // Mock ExtJS
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
@@ -62,7 +68,7 @@ jest.mock('../TaskForm', () => ({
   TaskForm: ({ onSave, onCancel }: any) => {
     const React = require('react');
     return React.createElement('div', { 'data-testid': 'task-form' },
-      React.createElement('input', { placeholder: 'Search task category...' }),
+      React.createElement('input', { placeholder: 'Filter task types...' }),
       React.createElement('button', { onClick: onCancel }, 'Cancel'),
       React.createElement('button', { onClick: () => onSave({}) }, 'Save')
     );
@@ -71,8 +77,8 @@ jest.mock('../TaskForm', () => ({
 
 // Mock shared/form to avoid SCSS loading
 jest.mock('../../../../../shared/form', () => ({
-  SettingsButton: ({ children, testId, disabled, type, onClick }: { children: React.ReactNode; testId?: string; disabled?: boolean; type?: string; onClick?: () => void }) => (
-    <button data-testid={testId} disabled={disabled} type={(type as any) || 'button'} onClick={onClick}>
+  SettingsButton: ({ children, testId, disabled, type, onClick, ...rest }: { children: React.ReactNode; testId?: string; disabled?: boolean; type?: string; onClick?: () => void; [key: string]: any }) => (
+    <button data-testid={testId} disabled={disabled} type={(type as any) || 'button'} onClick={onClick} {...rest}>
       {children}
     </button>
   ),
@@ -89,7 +95,18 @@ jest.mock('../../../../../shared', () => ({
     info: jest.fn(),
     warning: jest.fn(),
   }),
-  PageHeader: jest.fn(({ title }: { title: string }) => require('react').createElement('div', null, require('react').createElement('h1', null, title))),
+  PageHeader: jest.fn(({ title, breadcrumbs, actions }: { title: string; breadcrumbs?: Array<{ label: string; onClick?: () => void }>; actions?: React.ReactNode }) => {
+    const React = require('react');
+    return React.createElement('div', null,
+      breadcrumbs && breadcrumbs.map((b: { label: string; onClick?: () => void }, i: number) =>
+        b.onClick
+          ? React.createElement('button', { key: i, onClick: b.onClick }, b.label)
+          : React.createElement('span', { key: i, 'aria-current': 'page' }, b.label)
+      ),
+      React.createElement('h1', null, title),
+      actions
+    );
+  }),
   LoadingState: jest.fn(({ message }: { message?: string }) => require('react').createElement('div', null, message || 'Loading...')),
   EntityTable: jest.fn(function EntityTable({ data, columns, getRowKey, onRowClick, emptyState, loading, loadingMessage }: any) {
     const React = require('react');
@@ -301,28 +318,37 @@ describe('TasksPage', () => {
       expect(screen.queryByRole('button', { name: /create task/i })).not.toBeInTheDocument();
     });
 
-    it('should show loading state while fetching tasks', () => {
+    it('should show skeleton placeholders while fetching tasks', () => {
       // Use a never-resolving promise to keep loading state
       mockUseTasksApi.mockReturnValue({
         ...defaultApiMock,
         loading: true,
         fetchTasks: jest.fn(() => new Promise(() => {})),
       });
-      renderWithProviders(<TasksPage />);
+      const { container } = renderWithProviders(<TasksPage />);
 
-      expect(screen.getByText('Loading tasks...')).toBeInTheDocument();
+      expect(screen.queryByText('Loading tasks...')).not.toBeInTheDocument();
+      expect(container.querySelectorAll('[data-testid="tasks-list-skeleton-row"]').length).toBeGreaterThanOrEqual(1);
     });
 
     it('should show error message when API fails', async () => {
-      mockUseTasksApi.mockReturnValue({ 
-        ...defaultApiMock, 
-        error: 'Failed to load tasks' 
+      mockUseTasksApi.mockReturnValue({
+        ...defaultApiMock,
+        error: 'Failed to load tasks'
       });
       renderWithProviders(<TasksPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Failed to load tasks')).toBeInTheDocument();
       });
+    });
+
+    it('renders the page-level alert region as a polite live region', () => {
+      renderWithProviders(<TasksPage />);
+
+      const liveRegion = screen.getByTestId('tasks-page-alerts');
+      expect(liveRegion.getAttribute('role')).toBe('status');
+      expect(liveRegion.getAttribute('aria-live')).toBe('polite');
     });
 
     it('should show empty state when no tasks exist', async () => {
@@ -363,15 +389,15 @@ describe('TasksPage', () => {
       });
     });
 
-    it('should show task type selector as card grid in create form', async () => {
+    it('should show task type selector as flat table in create form', async () => {
       renderWithProviders(<TasksPage />);
 
       const createButton = await screen.findByRole('button', { name: /create task/i });
       fireEvent.click(createButton);
 
-      // Wait for form to render with task category selector card grid
+      // Wait for form to render with task type filter
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Search task category...')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Filter task types...')).toBeInTheDocument();
       });
     });
 
@@ -430,6 +456,97 @@ describe('TasksPage', () => {
     });
   });
 
+  describe('breadcrumb navigation', () => {
+    it('renders breadcrumbs for list view', async () => {
+      renderWithProviders(<TasksPage />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument();
+      });
+
+      // Breadcrumbs: Settings (clickable) > Tasks (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(document.querySelector('[aria-current="page"]')?.textContent).toBe('Tasks');
+    });
+
+    it('clicking Settings breadcrumb navigates to settings page', async () => {
+      renderWithProviders(<TasksPage />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument();
+      });
+
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders breadcrumbs for create view', async () => {
+      renderWithProviders(<TasksPage />);
+
+      const createButton = await screen.findByRole('button', { name: /create task/i });
+      fireEvent.click(createButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /create task/i })).toBeInTheDocument();
+      });
+
+      // Breadcrumbs: Settings (clickable) > Tasks (clickable) > Create (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument();
+      expect(screen.getByText('Create')).toBeInTheDocument();
+    });
+
+    it('navigates back to list when Tasks breadcrumb is clicked in create view', async () => {
+      renderWithProviders(<TasksPage />);
+
+      const createButton = await screen.findByRole('button', { name: /create task/i });
+      fireEvent.click(createButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /create task/i })).toBeInTheDocument();
+      });
+
+      screen.getByRole('button', { name: 'Tasks' }).click();
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument();
+      });
+    });
+
+    it('renders breadcrumbs for detail view with task name', async () => {
+      renderWithProviders(<TasksPage />);
+
+      await selectTaskRow('Cleanup Task');
+
+      await waitFor(() => {
+        const headings = screen.getAllByRole('heading', { name: /cleanup task/i });
+        expect(headings.length).toBeGreaterThanOrEqual(1);
+      });
+
+      // Breadcrumbs: Settings (clickable) > Tasks (clickable) > {taskName} (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument();
+      expect(document.querySelector('[aria-current="page"]')?.textContent).toBe('Cleanup Task');
+    });
+
+    it('navigates back to list when Tasks breadcrumb is clicked in detail view', async () => {
+      renderWithProviders(<TasksPage />);
+
+      await selectTaskRow('Cleanup Task');
+
+      await waitFor(() => {
+        const headings = screen.getAllByRole('heading', { name: /cleanup task/i });
+        expect(headings.length).toBeGreaterThanOrEqual(1);
+      });
+
+      screen.getByRole('button', { name: 'Tasks' }).click();
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Tasks' })).toBeInTheDocument();
+      });
+    });
+  });
+
   // Note: Action integration tests (runTask, deleteTask) are covered by TaskDetail.test.tsx
   // which test these components in isolation.
   // The TasksPage is primarily responsible for:
@@ -438,4 +555,12 @@ describe('TasksPage', () => {
   // 3. Data fetching coordination
   // These aspects are tested in the describe blocks above.
 
+  describe('analytics ids', () => {
+    it('Create Task button carries data-analytics-id="nxrm-task-create"', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderWithProviders(<TasksPage />);
+      const createBtn = await screen.findByRole('button', {name: /create task/i});
+      expect(createBtn).toHaveAttribute('data-analytics-id', 'nxrm-task-create');
+    });
+  });
 });

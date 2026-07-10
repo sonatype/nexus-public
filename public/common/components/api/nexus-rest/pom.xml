@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-api-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-rest</artifactId>
@@ -37,9 +37,10 @@
       <artifactId>nexus-validation</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: javax.ws.rs-api replaced by jakarta.ws.rs-api (JAX-RS 3.1) -->
     <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>javax.ws.rs-api</artifactId>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
     </dependency>
 
     <dependency>
@@ -61,7 +62,7 @@
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
+      <artifactId>resteasy-core</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

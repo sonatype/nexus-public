@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
@@ -99,10 +99,21 @@ class UserResourceTest
   }
 
   @Test
-  void readAccount_throwsWhenNoCurrentUser() throws Exception {
+  void readAccount_returnsBadRequestWhenNoCurrentUser() throws Exception {
     when(securitySystem.currentUser()).thenReturn(null);
 
-    assertThrows(UserNotFoundException.class, () -> underTest.readAccount());
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.readAccount());
+    assertThat(exception.getResponse().getStatus(), is(400));
+  }
+
+  @Test
+  void readAccount_returnsBadRequestWhenCurrentUserThrowsUserNotFoundException() throws Exception {
+    when(securitySystem.currentUser()).thenThrow(new UserNotFoundException("test-user"));
+
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.readAccount());
+    assertThat(exception.getResponse().getStatus(), is(400));
   }
 
   @Test
@@ -140,7 +151,7 @@ class UserResourceTest
   }
 
   @Test
-  void updateAccount_throwsWhenNoCurrentUser() throws Exception {
+  void updateAccount_returnsBadRequestWhenNoCurrentUser() throws Exception {
     when(securitySystem.currentUser()).thenReturn(null);
 
     UserAccountXO xo = new UserAccountXO();
@@ -149,7 +160,9 @@ class UserResourceTest
     xo.setLastName("Name");
     xo.setEmail("updated@example.com");
 
-    assertThrows(UserNotFoundException.class, () -> underTest.updateAccount(xo));
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.updateAccount(xo));
+    assertThat(exception.getResponse().getStatus(), is(400));
   }
 
   @Test

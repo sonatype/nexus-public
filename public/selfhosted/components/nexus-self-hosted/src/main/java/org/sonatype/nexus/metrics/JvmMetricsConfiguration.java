@@ -14,7 +14,7 @@ package org.sonatype.nexus.metrics;
 
 import java.lang.management.ManagementFactory;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.BufferPoolMetricSet;

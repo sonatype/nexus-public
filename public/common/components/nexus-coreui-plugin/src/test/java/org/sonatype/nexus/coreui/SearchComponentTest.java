@@ -20,8 +20,8 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.ValidationException;
-import javax.validation.Validator;
+import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.event.EventManager;
@@ -38,6 +38,7 @@ import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.search.event.SearchEvent;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.query.SearchResultsGenerator;
+import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
@@ -63,6 +64,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Tests for {@link SearchComponent}.
@@ -95,11 +97,15 @@ class SearchComponentTest
   @Mock
   private Repository groupRepo;
 
+  @Mock
+  private ContentPermissionChecker contentPermissionChecker;
+
   private SearchComponent underTest;
 
   @BeforeEach
   void setUp() {
-    underTest = new SearchComponent(searchService, 1000, searchResultsGenerator, eventManager, repositoryManager);
+    underTest = new SearchComponent(searchService, 1000, searchResultsGenerator, eventManager, repositoryManager,
+        contentPermissionChecker);
   }
 
   private List<SearchFilter> createSearchFilters(List<Filter> filters) {
@@ -702,5 +708,148 @@ class SearchComponentTest
     List<ComponentXO> data = new ArrayList<>(result.getData());
     // Result repo not in filter map, so it uses original name
     assertThat(data.get(0).getRepositoryName(), is("some-other-repo"));
+  }
+
+  @Test
+  void testRead_keywordOnlySearch_mapsToGroupWhenNoDirectPermission() {
+    // Keyword-only search (no repository_name filter)
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(1L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    // Search result returns the member repo name "maven-releases"
+    ComponentSearchResult searchResult = new ComponentSearchResult();
+    searchResult.setId("comp-1");
+    searchResult.setGroup("org.example");
+    searchResult.setName("test-artifact");
+    searchResult.setVersion("1.0.0");
+    searchResult.setRepositoryName("maven-releases"); // Member repo
+    searchResult.setFormat("maven2");
+
+    when(repositoryManager.get("maven-releases")).thenReturn(memberRepo);
+    when(repositoryManager.get("maven-public")).thenReturn(groupRepo);
+    when(repositoryManager.findContainingGroups("maven-releases"))
+        .thenReturn(java.util.Set.of("maven-public"));
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse)).thenReturn(List.of(searchResult));
+
+    // User does NOT have direct permission on member repo, but DOES have permission on group
+    when(contentPermissionChecker.isPermitted("maven-releases", "maven2", BROWSE, null))
+        .thenReturn(false);
+    when(contentPermissionChecker.isPermitted("maven-public", "maven2", BROWSE, null))
+        .thenReturn(true);
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getData(), hasSize(1));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    // Should map to "maven-public" since user has no direct permission but has group permission
+    assertThat(data.get(0).getRepositoryName(), is("maven-public"));
+  }
+
+  @Test
+  void testRead_keywordOnlySearch_showsMemberRepoWhenUserHasDirectPermission() {
+    // Keyword-only search (no repository_name filter)
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(1L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    // Search result returns the member repo name "maven-releases"
+    ComponentSearchResult searchResult = new ComponentSearchResult();
+    searchResult.setId("comp-1");
+    searchResult.setGroup("org.example");
+    searchResult.setName("test-artifact");
+    searchResult.setVersion("1.0.0");
+    searchResult.setRepositoryName("maven-releases"); // Member repo
+    searchResult.setFormat("maven2");
+
+    when(repositoryManager.get("maven-releases")).thenReturn(memberRepo);
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse)).thenReturn(List.of(searchResult));
+
+    // User has DIRECT permission on member repo (like admin)
+    when(contentPermissionChecker.isPermitted("maven-releases", "maven2", BROWSE, null))
+        .thenReturn(true);
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getData(), hasSize(1));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    // Should show "maven-releases" since user has direct permission on it
+    assertThat(data.get(0).getRepositoryName(), is("maven-releases"));
+  }
+
+  @Test
+  void testRead_keywordOnlySearch_fallbackToMemberRepoWhenNoPermissionOnGroup() {
+    // Keyword-only search (no repository_name filter)
+    StoreLoadParameters parameters = new StoreLoadParameters();
+    parameters.setLimit(25);
+    parameters.setFilter(List.of(
+        new Filter()
+        {
+          {
+            setProperty("keyword");
+            setValue("test");
+          }
+        }));
+
+    SearchResponse searchResponse = new SearchResponse();
+    searchResponse.setTotalHits(1L);
+    when(searchService.search(any(SearchRequest.class))).thenReturn(searchResponse);
+
+    // Search result returns the member repo name "maven-releases"
+    ComponentSearchResult searchResult = new ComponentSearchResult();
+    searchResult.setId("comp-1");
+    searchResult.setGroup("org.example");
+    searchResult.setName("test-artifact");
+    searchResult.setVersion("1.0.0");
+    searchResult.setRepositoryName("maven-releases"); // Member repo
+    searchResult.setFormat("maven2");
+
+    when(repositoryManager.get("maven-releases")).thenReturn(memberRepo);
+    when(repositoryManager.get("maven-public")).thenReturn(groupRepo);
+    when(repositoryManager.findContainingGroups("maven-releases"))
+        .thenReturn(java.util.Set.of("maven-public"));
+
+    when(searchResultsGenerator.getSearchResultList(searchResponse)).thenReturn(List.of(searchResult));
+
+    // User has NO permission on member repo AND NO permission on containing group
+    // Should fallback to original repository name
+    when(contentPermissionChecker.isPermitted("maven-releases", "maven2", BROWSE, null))
+        .thenReturn(false);
+    when(contentPermissionChecker.isPermitted("maven-public", "maven2", BROWSE, null))
+        .thenReturn(false);
+
+    LimitedPagedResponse<ComponentXO> result = underTest.read(parameters);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.getData(), hasSize(1));
+    List<ComponentXO> data = new ArrayList<>(result.getData());
+    // Should fallback to "maven-releases" when no permission on either repo
+    assertThat(data.get(0).getRepositoryName(), is("maven-releases"));
   }
 }

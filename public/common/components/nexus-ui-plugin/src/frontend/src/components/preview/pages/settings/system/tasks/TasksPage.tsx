@@ -12,11 +12,12 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
-import { Clock, Plus, ArrowLeft } from 'lucide-react';
+import { Box } from '@radix-ui/themes';
+import { Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsButton, SettingsAlert } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 import { TasksList } from './TasksList';
 import { TaskDetail } from './TaskDetail';
 import { TaskForm } from './TaskForm';
@@ -100,9 +101,6 @@ export function TasksPage({ className }: TasksPageProps) {
     setError,
     fetchTask,
     fetchTaskTypes,
-    createTask,
-    updateTask,
-    deleteTask,
     runTask,
     stopTask,
   } = useTasksApi();
@@ -182,37 +180,25 @@ export function TasksPage({ className }: TasksPageProps) {
     navigateTo(BASE_PATH);
   }, [setError]);
 
-  // Handle save (create or update)
-  const handleSave = useCallback(async (data: TaskFormData, startTime?: string) => {
-    try {
-      if (viewMode === 'create') {
-        await createTask(data, startTime);
-        setSuccessMessage('Task created successfully');
-      } else if (task) {
-        await updateTask(task.id, data, startTime);
-        setSuccessMessage('Task updated successfully');
-      }
-      setRefreshKey((k) => k + 1);
-      navigateTo(BASE_PATH);
-    } catch (err) {
-      throw err;
-    }
-  }, [viewMode, task, createTask, updateTask, handleBack]);
+  // Handle save (create or update) — UI side-effects only.
+  // The actual REST call runs inside useTasksForm via the createTask/updateTask
+  // props passed by TaskDetail/TaskForm; this callback is invoked AFTER that
+  // save has already succeeded, so it must not re-issue the request.
+  const handleSave = useCallback(async (_data: TaskFormData, _startTime?: string) => {
+    setSuccessMessage(viewMode === 'create' ? 'Task created successfully' : 'Task updated successfully');
+    setRefreshKey((k) => k + 1);
+    navigateTo(BASE_PATH);
+  }, [viewMode]);
 
-  // Handle delete
+  // Handle delete — UI side-effects only.
+  // Mirrors handleSave: the REST DELETE runs once inside useTasksForm via the deleteTask
+  // prop wired in TaskDetail. Re-issuing it here would produce a second 404'd call.
   const handleDelete = useCallback(async () => {
     if (!task) return;
-    
-    try {
-      await deleteTask(task.id);
-      // setSuccessMessage is handled by useTasksApi if we want, but here it's manual
-      setSuccessMessage(`Task "${task.name}" deleted successfully`);
-      setRefreshKey((k) => k + 1);
-      navigateTo(BASE_PATH);
-    } catch (err) {
-      // Error is set by the API hook
-    }
-  }, [task, deleteTask]);
+    setSuccessMessage(`Task "${task.name}" deleted successfully`);
+    setRefreshKey((k) => k + 1);
+    navigateTo(BASE_PATH);
+  }, [task]);
 
   // Handle run
   const handleRun = useCallback(async () => {
@@ -244,26 +230,31 @@ export function TasksPage({ className }: TasksPageProps) {
     }
   }, [task, stopTask, fetchTask]);
 
+  // Navigation helper for Settings breadcrumb
+  const navigateToSettings = () => {
+    window.location.hash = '#preview/admin/settings';
+  };
+
   // Render header based on view mode
   const renderHeader = () => {
     if (viewMode === 'list') {
+      const breadcrumbs = [
+        { label: 'Settings', onClick: navigateToSettings },
+        { label: 'Tasks' },
+      ];
+      const actions = canCreate ? (
+        <SettingsButton variant="primary" onClick={handleCreate} icon={Plus} testId="tasks-create-button" data-analytics-id="nxrm-task-create">
+          Create Task
+        </SettingsButton>
+      ) : undefined;
       return (
-        <Flex justify="between" align="center" className="tasks-page__header">
-          <Flex align="center" gap="3">
-            <Clock size={24} className="tasks-page__icon" />
-            <Box>
-              <Heading as="h1" size="6" weight="medium">Tasks</Heading>
-              <Text size="2" className="tasks-page__description">
-                Manage scheduled tasks and background jobs
-              </Text>
-            </Box>
-          </Flex>
-          {canCreate && (
-            <SettingsButton variant="primary" onClick={handleCreate} icon={Plus} testId="tasks-create-button">
-              Create Task
-            </SettingsButton>
-          )}
-        </Flex>
+        <PageHeader
+          title="Tasks"
+          description="Manage scheduled tasks and background jobs"
+          breadcrumbs={breadcrumbs}
+          actions={actions}
+          className="tasks-page__header"
+        />
       );
     }
 
@@ -273,22 +264,19 @@ export function TasksPage({ className }: TasksPageProps) {
         ? task.name
         : 'Task Details';
 
+    const breadcrumbs = [
+      { label: 'Settings', onClick: navigateToSettings },
+      { label: 'Tasks', onClick: handleBack },
+      { label: viewMode === 'create' ? 'Create' : (task?.name || 'Task') },
+    ];
+
     return (
-      <Flex align="center" gap="3" className="tasks-page__header">
-        {viewMode === 'detail' && (
-          <SettingsButton variant="ghost" onClick={handleBack} className="tasks-page__back" icon={ArrowLeft} testId="tasks-header-back">
-            Back
-          </SettingsButton>
-        )}
-        <Box>
-          <Heading as="h1" size="6" weight="medium">{title}</Heading>
-          {task && viewMode === 'detail' && (
-            <Text size="2" className="tasks-page__description">
-              {task.typeName}
-            </Text>
-          )}
-        </Box>
-      </Flex>
+      <PageHeader
+        title={title}
+        description={task && viewMode === 'detail' ? task.typeName : undefined}
+        breadcrumbs={breadcrumbs}
+        className="tasks-page__header"
+      />
     );
   };
 
@@ -301,21 +289,27 @@ export function TasksPage({ className }: TasksPageProps) {
     >
       {renderHeader()}
 
-      {/* Alerts - Only show page-level errors in list mode; forms handle their own errors */}
-      {error && viewMode === 'list' && (
-        <Box className="tasks-page__alerts">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
-            {error}
-          </SettingsAlert>
-        </Box>
-      )}
-      {successMessage && (
-        <Box className="tasks-page__alerts">
-          <SettingsAlert type="success" onClose={() => setSuccessMessage(null)}>
-            {successMessage}
-          </SettingsAlert>
-        </Box>
-      )}
+      {/* Alerts - announced to assistive tech */}
+      <Box
+        role="status"
+        aria-live="polite"
+        data-testid="tasks-page-alerts"
+      >
+        {error && viewMode === 'list' && (
+          <Box className="tasks-page__alerts">
+            <SettingsAlert type="error" onClose={() => setError(null)}>
+              {error}
+            </SettingsAlert>
+          </Box>
+        )}
+        {successMessage && (
+          <Box className="tasks-page__alerts">
+            <SettingsAlert type="success" onClose={() => setSuccessMessage(null)}>
+              {successMessage}
+            </SettingsAlert>
+          </Box>
+        )}
+      </Box>
 
       {/* Content */}
       <Box className="tasks-page__content">

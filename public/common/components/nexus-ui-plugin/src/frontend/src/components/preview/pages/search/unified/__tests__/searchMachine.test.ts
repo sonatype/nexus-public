@@ -194,8 +194,8 @@ describe('searchMachine', () => {
       expect(FORMATS_WITH_CUSTOM_FILTERS).toContain(format);
     });
 
-    it('covers all 26 formats', () => {
-      expect(ALL_FORMATS).toHaveLength(26); // 26 formats (25 specific + 'all')
+    it('covers all 27 formats', () => {
+      expect(ALL_FORMATS).toHaveLength(27); // 27 formats (26 specific + 'all')
     });
   });
 

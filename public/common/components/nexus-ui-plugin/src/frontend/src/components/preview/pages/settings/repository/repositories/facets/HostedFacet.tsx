@@ -25,6 +25,11 @@ import {
   WRITE_POLICY_OPTIONS,
   WritePolicy,
 } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+
+// Formats that do not support namespace confusion protection via Firewall.
+// Matches classic UI: GenericHostedConfiguration.jsx UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS
+const UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS = ['docker'];
 
 interface HostedFacetProps {
   formData: RepositoryFormData;
@@ -53,24 +58,28 @@ export function HostedFacet({
     onNestedChange('component', { proprietaryComponents: checked });
   };
 
+  const supportsNamespaceConfusion = !UNSUPPORTED_NAMESPACE_CONFUSION_FORMATS.includes(formData.format);
+
   return (
-    <SettingsFormSection title="Hosted">
+    <SettingsFormSection title={UIStrings.HOSTED.SECTION.title}>
       <SettingsSelect
         name="storage-writePolicy"
-        label="Deployment Policy"
+        label={UIStrings.HOSTED.DEPLOYMENT_POLICY.label}
         value={formData.storage?.writePolicy || 'ALLOW_ONCE'}
         onChange={handleWritePolicyChange}
         options={WRITE_POLICY_OPTIONS}
-        helpText="Controls if deployments of and updates to artifacts are allowed"
+        helpText={UIStrings.HOSTED.DEPLOYMENT_POLICY.helpText}
       />
 
-      <SettingsCheckbox
-        name="component-proprietaryComponents"
-        label="Proprietary Components"
-        checked={formData.component?.proprietaryComponents ?? false}
-        onChange={handleProprietaryChange}
-        description="Components in this repository count as proprietary for firewall"
-      />
+      {supportsNamespaceConfusion && (
+        <SettingsCheckbox
+          name="component-proprietaryComponents"
+          label={UIStrings.HOSTED.PROPRIETARY_COMPONENTS.label}
+          checked={formData.component?.proprietaryComponents ?? false}
+          onChange={handleProprietaryChange}
+          description={UIStrings.HOSTED.PROPRIETARY_COMPONENTS.description}
+        />
+      )}
     </SettingsFormSection>
   );
 }

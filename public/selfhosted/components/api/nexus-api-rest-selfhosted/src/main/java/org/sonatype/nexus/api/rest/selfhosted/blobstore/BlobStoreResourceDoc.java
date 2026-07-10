@@ -14,23 +14,19 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore;
 
 import java.util.List;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreConnectionXO;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreQuotaResultXO;
 import org.sonatype.nexus.api.rest.common.blobstore.model.GenericBlobStoreApiResponse;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_FORBIDDEN;
-import static org.apache.http.HttpStatus.SC_NO_CONTENT;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 
@@ -39,24 +35,24 @@ import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
  *
  * @since 3.14
  */
-@Api(value = "Blob store")
+@Tag(name = "Blob store")
 public interface BlobStoreResourceDoc
 {
-  @ApiOperation("List the blob stores")
+  @Operation(summary = "List the blob stores")
   List<GenericBlobStoreApiResponse> listBlobStores();
 
-  @ApiOperation("Delete a blob store by name")
-  void deleteBlobStore(@ApiParam("The name of the blob store to delete") String name) throws Exception;
+  @Operation(summary = "Delete a blob store by name")
+  void deleteBlobStore(@Parameter(description = "The name of the blob store to delete") String name) throws Exception;
 
-  @ApiOperation("Get quota status for a given blob store")
+  @Operation(summary = "Get quota status for a given blob store")
   BlobStoreQuotaResultXO quotaStatus(String id);
 
-  @ApiOperation(value = "Verify connection using supplied Blob Store settings", hidden = true)
+  @Operation(summary = "Verify connection using supplied Blob Store settings", hidden = true)
   @ApiResponses(value = {
-      @ApiResponse(code = SC_NO_CONTENT, message = "Blob Store connection was successful"),
-      @ApiResponse(code = SC_BAD_REQUEST, message = "Blob Store connection failed"),
-      @ApiResponse(code = SC_UNAUTHORIZED, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = SC_FORBIDDEN, message = INSUFFICIENT_PERMISSIONS)
+      @ApiResponse(responseCode = "204", description = "Blob Store connection was successful"),
+      @ApiResponse(responseCode = "400", description = "Blob Store connection failed"),
+      @ApiResponse(responseCode = "401", description = AUTHENTICATION_REQUIRED),
+      @ApiResponse(responseCode = "403", description = INSUFFICIENT_PERMISSIONS)
   })
   void verifyConnection(final @NotNull @Valid BlobStoreConnectionXO blobStoreConnectionXO);
 }

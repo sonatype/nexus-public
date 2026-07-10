@@ -102,14 +102,14 @@ describe('LoggingConfigPage', () => {
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
     expect(screen.getByTestId('loggers-list')).toBeInTheDocument();
-    expect(screen.getByText('Logging')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Logging' })).toBeInTheDocument();
     expect(screen.getByText('Control logging levels')).toBeInTheDocument();
   });
 
   it('displays page header with actions', () => {
     render(<LoggingConfigPage />, { wrapper: TestWrapper });
 
-    expect(screen.getByText('Logging')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Logging' })).toBeInTheDocument();
     expect(screen.getByText('Create Logger')).toBeInTheDocument();
     expect(screen.getByText('Reset to Default Levels')).toBeInTheDocument();
   });
@@ -279,6 +279,76 @@ describe('LoggingConfigPage', () => {
 
     await waitFor(() => {
       expect(mockResetLogger).toHaveBeenCalledWith('org.sonatype');
+    });
+  });
+
+  describe('Breadcrumb navigation for list view', () => {
+    it('renders breadcrumbs with Settings link', () => {
+      render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    });
+
+    it('renders Logging as current page in breadcrumbs on list view', () => {
+      const { container } = render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      // Logging should be the current page (span with aria-current)
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('Logging');
+    });
+
+    it('navigates to Settings when Settings breadcrumb is clicked', () => {
+      render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      const originalHash = window.location.hash;
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+      window.location.hash = originalHash;
+    });
+  });
+
+  describe('Breadcrumb navigation for detail view', () => {
+    it('renders breadcrumb with logger name in detail view', async () => {
+      const { container } = render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      fireEvent.click(screen.getByText('Select Logger'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('logger-form')).toBeInTheDocument();
+      });
+
+      // org.sonatype should be the current page (span with aria-current)
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('org.sonatype');
+    });
+
+    it('renders Logging as clickable breadcrumb in detail view', async () => {
+      render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      fireEvent.click(screen.getByText('Select Logger'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Logging' })).toBeInTheDocument();
+      });
+    });
+
+    it('navigates back to list when Logging breadcrumb is clicked in detail view', async () => {
+      render(<LoggingConfigPage />, { wrapper: TestWrapper });
+
+      fireEvent.click(screen.getByText('Select Logger'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('logger-form')).toBeInTheDocument();
+      });
+
+      // Click the Logging breadcrumb to go back to list
+      fireEvent.click(screen.getByRole('button', { name: 'Logging' }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('loggers-list')).toBeInTheDocument();
+      });
     });
   });
 });

@@ -10,20 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useCallback } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading } from '@radix-ui/themes';
-import { Settings2, Plus, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Box, Flex } from '@radix-ui/themes';
+import { Plus, RotateCcw } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsButton, SettingsAlert, ConfirmDialog } from '../../../../shared/form';
-import { HelpSection, useToast } from '../../../../shared';
+import { HelpSection, useToast, PageHeader } from '../../../../shared';
 import { LoggersList } from './LoggersList';
 import { LoggerForm } from './LoggerForm';
 import { useLoggingConfigApi } from './useLoggingConfigApi';
@@ -108,58 +101,53 @@ export function LoggingConfigPage() {
     }
   }, [resetAllLoggers, toast]);
 
+  // Navigation helper for Settings breadcrumb
+  const navigateToSettings = () => {
+    window.location.hash = '#preview/admin/settings';
+  };
+
   // Render header based on view mode
   const renderHeader = () => {
     if (viewMode === 'list') {
-      return (
-        <Flex justify="between" align="center" className="logging-config-page__header">
-          <Flex align="center" gap="3">
-            <Settings2 size={24} className="logging-config-page__icon" />
-            <Box>
-              <Heading as="h1" size="6" weight="medium">
-                Logging
-              </Heading>
-              <Text size="2" className="logging-config-page__description">
-                Control logging levels
-              </Text>
-            </Box>
-          </Flex>
-          {canUpdate && (
-            <Flex gap="2">
-              <SettingsButton variant="secondary" onClick={handleResetAll} disabled={loading} icon={RotateCcw}>
-                Reset to Default Levels
-              </SettingsButton>
-              <SettingsButton variant="primary" onClick={handleCreate} icon={Plus}>
-                Create Logger
-              </SettingsButton>
-            </Flex>
-          )}
+      const breadcrumbs = [
+        { label: 'Settings', onClick: navigateToSettings },
+        { label: 'Logging' },
+      ];
+      const actions = canUpdate ? (
+        <Flex gap="2">
+          <SettingsButton variant="secondary" onClick={handleResetAll} disabled={loading} icon={RotateCcw}>
+            Reset to Default Levels
+          </SettingsButton>
+          <SettingsButton variant="primary" onClick={handleCreate} icon={Plus}>
+            Create Logger
+          </SettingsButton>
         </Flex>
+      ) : undefined;
+      return (
+        <PageHeader
+          title="Logging"
+          description="Control logging levels"
+          breadcrumbs={breadcrumbs}
+          actions={actions}
+          className="logging-config-page__header"
+        />
       );
     }
 
     const title = viewMode === 'create' ? 'Create Logger' : 'Edit Logger';
+    const breadcrumbs = [
+      { label: 'Settings', onClick: navigateToSettings },
+      { label: 'Logging', onClick: handleBack },
+      { label: viewMode === 'create' ? 'Create' : (selectedLogger || 'Logger') },
+    ];
 
     return (
-      <Flex align="center" gap="3" className="logging-config-page__header">
-        <SettingsButton
-          variant="ghost"
-          onClick={handleBack}
-          className="logging-config-page__back"
-          icon={ArrowLeft}
-          iconSize={18}
-        />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">
-            {title}
-          </Heading>
-          {selectedLogger && viewMode === 'detail' && (
-            <Text size="2" className="logging-config-page__description">
-              {selectedLogger}
-            </Text>
-          )}
-        </Box>
-      </Flex>
+      <PageHeader
+        title={title}
+        description={selectedLogger && viewMode === 'detail' ? selectedLogger : undefined}
+        breadcrumbs={breadcrumbs}
+        className="logging-config-page__header"
+      />
     );
   };
 
@@ -182,7 +170,6 @@ export function LoggingConfigPage() {
           <LoggersList
             key={refreshKey}
             onSelect={handleSelectLogger}
-            refreshKey={refreshKey}
           />
         )}
 

@@ -105,6 +105,8 @@ export {
   useUnsavedChangesWarning,
   clearDirtyState,
   hasUnsavedChanges,
+  useIsCloud,
+  useHasFirewallLicense,
 } from './hooks';
 
 // Toast - Viewport-fixed notification system (available but not yet in use)
@@ -217,3 +219,6 @@ export {
   DeepResearchLink,
   type DeepResearchLinkProps,
 } from './DeepResearchLink';
+
+// exportToCsv - Trigger a browser CSV file download from tabular data
+export { exportToCsv } from './utils/exportToCsv';

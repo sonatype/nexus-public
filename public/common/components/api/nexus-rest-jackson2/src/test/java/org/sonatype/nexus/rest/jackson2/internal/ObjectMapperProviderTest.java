@@ -13,6 +13,7 @@
 package org.sonatype.nexus.rest.jackson2.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -38,7 +39,7 @@ public class ObjectMapperProviderTest
 
   @Before
   public void setUp() {
-    ObjectMapperProvider provider = new ObjectMapperProvider();
+    ObjectMapperProvider provider = new ObjectMapperProvider(List.of());
     objectMapper = provider.get();
   }
 

@@ -215,11 +215,11 @@ Ext.define('NX.coreui.controller.Assets', {
         componentInfo = {};
 
     if (componentModel) {
-      repositoryInfo[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(componentModel.get('repositoryName'));
-      repositoryInfo[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(componentModel.get('format'));
-      componentInfo[NX.I18n.get('Search_Assets_Group')] = Ext.htmlEncode(componentModel.get('group'));
-      componentInfo[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(componentModel.get('name'));
-      componentInfo[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(componentModel.get('version'));
+      repositoryInfo[NX.I18n.get('Search_Assets_Repository')] = componentModel.get('repositoryName');
+      repositoryInfo[NX.I18n.get('Search_Assets_Format')] = componentModel.get('format');
+      componentInfo[NX.I18n.get('Search_Assets_Group')] = componentModel.get('group');
+      componentInfo[NX.I18n.get('Search_Assets_Name')] = componentModel.get('name');
+      componentInfo[NX.I18n.get('Search_Assets_Version')] = componentModel.get('version');
 
       container.down('#repositoryInfo').showInfo(repositoryInfo);
       container.down('#componentInfo').showInfo(componentInfo);

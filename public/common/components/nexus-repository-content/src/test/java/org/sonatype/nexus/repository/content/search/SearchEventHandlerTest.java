@@ -47,6 +47,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -549,6 +550,99 @@ public class SearchEventHandlerTest
   public void testDoStartWithFlushOnCountGreaterThanOne() {
     // The setUp method already started with flushOnCount=100, verify periodicJobService was used
     verify(periodicJobService).startUsing();
+  }
+
+  // -------- NEXUS-52885: synchronous flushPendingForRepository --------
+
+  @Test
+  public void testFlushPendingForRepositoryDrainsMatchingPending() {
+    when(repositoryManager.get("test-repo")).thenReturn(repository);
+    SearchFacet searchFacet = mock(SearchFacet.class);
+    when(repository.optionalFacet(SearchFacet.class)).thenReturn(Optional.of(searchFacet));
+
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+
+    underTest.flushPendingForRepository("test-repo");
+
+    // The pending request was processed synchronously on the calling thread.
+    verify(searchFacet).index(anyCollection());
+    assertThat(underTest.isCalmPeriod(), is(true));
+  }
+
+  @Test
+  public void testFlushPendingForRepositoryIgnoresOtherRepositories() {
+    Repository otherRepo = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(format.getValue()).thenReturn(FORMAT);
+    when(otherRepo.getFormat()).thenReturn(format);
+    when(otherRepo.getName()).thenReturn("other-repo");
+
+    SearchFacet otherFacet = mock(SearchFacet.class);
+    when(otherRepo.optionalFacet(SearchFacet.class)).thenReturn(Optional.of(otherFacet));
+    when(repositoryManager.get("other-repo")).thenReturn(otherRepo);
+
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+    underTest.requestIndex(FORMAT, COMPONENT_ID + 1, otherRepo);
+
+    underTest.flushPendingForRepository("other-repo");
+
+    verify(otherFacet).index(anyCollection());
+    // test-repo's request must remain queued.
+    assertThat(underTest.isCalmPeriod(), is(false));
+  }
+
+  @Test
+  public void testFlushPendingForRepositoryWithNoPendingIsNoop() {
+    underTest.flushPendingForRepository("test-repo");
+
+    // Repository should never be looked up if there's nothing pending.
+    verify(repositoryManager, never()).get("test-repo");
+  }
+
+  @Test
+  public void testFlushPendingForRepositoryWithNullNameIsNoop() {
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+    underTest.flushPendingForRepository(null);
+    // Pending request remains.
+    assertThat(underTest.isCalmPeriod(), is(false));
+  }
+
+  @Test
+  public void testFlushPendingForRepositoryWhenProcessingDisabledIsNoop() {
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+    underTest.setProcessEvents(false);
+    underTest.flushPendingForRepository("test-repo");
+    // Even though pending exists, processing is disabled — nothing flushed and nothing looked up.
+    verify(repositoryManager, never()).get("test-repo");
+  }
+
+  @Test
+  public void testFlushPendingForRepositoryDrainsPendingEvenWhenRepositoryMissing() {
+    when(repositoryManager.get("test-repo")).thenReturn(null);
+
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+
+    // Should not throw even though repository disappeared between enqueue and flush.
+    underTest.flushPendingForRepository("test-repo");
+
+    // Pending entry was consumed (drained from queue) even though the repo is gone.
+    assertThat(underTest.isCalmPeriod(), is(true));
+  }
+
+  @Test
+  public void testFlushPendingForRepositorySwallowsIllegalStateExceptionWhenFacetStopped() {
+    SearchFacet searchFacet = mock(SearchFacet.class);
+    when(repositoryManager.get("test-repo")).thenReturn(repository);
+    when(repository.optionalFacet(SearchFacet.class)).thenReturn(Optional.of(searchFacet));
+    doThrow(new IllegalStateException("repository stopped")).when(searchFacet).index(anyCollection());
+
+    underTest.requestIndex(FORMAT, COMPONENT_ID, repository);
+
+    // Must not throw — same silent-drop semantics as SqlSearchEventHandler.requestIndex().
+    underTest.flushPendingForRepository("test-repo");
+
+    // Entries were drained from the queue (isCalmPeriod true) even though index() threw.
+    assertThat(underTest.isCalmPeriod(), is(true));
   }
 
   private static ComponentData createComponentData(final int componentId) {

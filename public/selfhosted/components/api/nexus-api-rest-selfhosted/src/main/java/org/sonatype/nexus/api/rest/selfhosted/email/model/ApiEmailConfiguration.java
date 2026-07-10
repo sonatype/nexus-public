@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.validation.constraint.Hostname;
 import org.sonatype.nexus.validation.constraint.PortNumber;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 public class ApiEmailConfiguration
 {
@@ -39,25 +39,25 @@ public class ApiEmailConfiguration
 
   @Email
   @NotBlank
-  @ApiModelProperty(example = "nexus@example.org")
+  @Schema(example = "nexus@example.org")
   private String fromAddress;
 
-  @ApiModelProperty(value = "A prefix to add to all email subjects to aid in identifying automated emails")
+  @Schema(description = "A prefix to add to all email subjects to aid in identifying automated emails")
   private String subjectPrefix;
 
-  @ApiModelProperty(value = "Enable STARTTLS Support for Insecure Connections")
+  @Schema(description = "Enable STARTTLS Support for Insecure Connections")
   private boolean startTlsEnabled;
 
-  @ApiModelProperty(value = "Require STARTTLS Support")
+  @Schema(description = "Require STARTTLS Support")
   private boolean startTlsRequired;
 
-  @ApiModelProperty(value = "Enable SSL/TLS Encryption upon Connection")
+  @Schema(description = "Enable SSL/TLS Encryption upon Connection")
   private boolean sslOnConnectEnabled;
 
-  @ApiModelProperty(value = "Verify the server certificate when using TLS or SSL")
+  @Schema(description = "Verify the server certificate when using TLS or SSL")
   private boolean sslServerIdentityCheckEnabled;
 
-  @ApiModelProperty(value = "Use the Nexus Repository Manager's certificate truststore")
+  @Schema(description = "Use the Nexus Repository Manager's certificate truststore")
   private boolean nexusTrustStoreEnabled;
 
   public boolean isEnabled() {

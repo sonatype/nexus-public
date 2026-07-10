@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
@@ -21,8 +20,11 @@ import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.ReplicationAttributes;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
+import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 3.24
  */
+@JsonFilter(SwaggerEditionVisibility.NAME)
 @JsonIgnoreProperties({"format", "type"})
 public class RawProxyRepositoryApiRequest
     extends ProxyRepositoryApiRequest
@@ -47,7 +50,7 @@ public class RawProxyRepositoryApiRequest
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
-      @JsonProperty("routingRule") @JsonAlias("routingRuleName") final String routingRule,
+      @JsonProperty("routingRuleName") @JsonAlias("routingRule") final String routingRule,
       @JsonProperty("raw") final RawAttributes raw,
       @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY,
           content = Include.NON_NULL) final ReplicationAttributes replication)

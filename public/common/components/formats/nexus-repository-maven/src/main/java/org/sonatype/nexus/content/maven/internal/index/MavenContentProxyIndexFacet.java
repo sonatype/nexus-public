@@ -15,8 +15,8 @@ package org.sonatype.nexus.content.maven.internal.index;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.constraints.NotNull;
-import javax.validation.groups.Default;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;

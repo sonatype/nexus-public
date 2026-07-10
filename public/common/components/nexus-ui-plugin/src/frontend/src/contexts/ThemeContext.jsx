@@ -137,9 +137,12 @@ function resolveEffectiveTheme(theme) {
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => getStoredTheme());
-  const [effectiveTheme, setEffectiveTheme] = useState(() =>
-    resolveEffectiveTheme(getStoredTheme())
-  );
+  const [effectiveTheme, setEffectiveTheme] = useState(() => {
+    const stored = getStoredTheme();
+    const resolved = resolveEffectiveTheme(stored);
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    return hash.includes('preview/') ? resolved : THEMES.LIGHT;
+  });
 
   // Apply theme to document root whenever effectiveTheme changes.
   // Dark mode only applies on Preview UI routes -- Default UI (ExtJS/RSC)
@@ -166,6 +169,7 @@ export function ThemeProvider({ children }) {
         setEffectiveTheme(resolved);
         applyTheme(resolved);
       } else {
+        setEffectiveTheme(THEMES.LIGHT);
         applyTheme(THEMES.LIGHT);
       }
     }

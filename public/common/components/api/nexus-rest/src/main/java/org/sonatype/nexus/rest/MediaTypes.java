@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.rest;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 /**
  * Siesta specific media types.

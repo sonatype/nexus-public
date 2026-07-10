@@ -29,7 +29,6 @@ import {
   Tooltip,
 } from '@radix-ui/themes';
 import {
-  ArrowLeft,
   Calendar,
   ChevronDown,
   ChevronUp,
@@ -47,6 +46,7 @@ import { restClient, parseApiError } from '../../../../interface/api';
 import { APIConstants } from '../../../../constants/APIConstants';
 import { useToast } from '../../shared/Toast';
 import { ConfirmDialog } from '../../shared/form';
+import { exportToCsv, PageHeader } from '../../shared';
 
 import { fetchTagDetail } from './tags.api';
 import type { TagDetail } from './tags.types';
@@ -181,7 +181,11 @@ export function TagDetailPage(): JSX.Element {
   const [components, setComponents] = useState<TaggedComponent[]>([]);
   const [componentsLoading, setComponentsLoading] = useState(true);
   const [componentsError, setComponentsError] = useState<string | null>(null);
+  // continuationTokenRef is read inside the loadComponents async closure to avoid stale closure.
+  // continuationToken state drives the Load More button visibility in the render.
   const [continuationToken, setContinuationToken] = useState<string | null>(null);
+  const continuationTokenRef = React.useRef<string | null>(null);
+  const [totalComponentCount, setTotalComponentCount] = useState<number | null>(null);
   
   // Filter state
   const [searchFilter, setSearchFilter] = useState('');
@@ -216,44 +220,74 @@ export function TagDetailPage(): JSX.Element {
   }, [tagName]);
 
   /**
-   * Fetch tagged components using search API.
+   * Fetch the true total component count for this tag from the filtered tags API.
+   * This is separate from the paginated search results used for the table.
+   */
+  const loadTotalCount = useCallback(async () => {
+    if (!tagName) return;
+    try {
+      // nameFilter is a substring match on the backend. pageSize=100 (server max) maximises the
+      // chance the exact match is included. In systems with many similarly-named tags the exact
+      // match could still be excluded; in that case the badge falls back to loaded count.
+      const params = new URLSearchParams({ nameFilter: tagName, pageSize: '100', page: '0', sortField: 'name', sortDirection: 'asc' });
+      const data = await restClient.get<{ items: Array<{ name: string; componentCount: number }> }>(
+        `/service/rest/internal/ui/tags/filtered?${params.toString()}`
+      );
+      const match = data.items?.find((t) => t.name === tagName);
+      if (match !== undefined) {
+        setTotalComponentCount(match.componentCount);
+      }
+    } catch (err) {
+      // non-critical — badge falls back to loaded count
+      console.debug('Failed to fetch total component count for tag:', tagName, err);
+    }
+  }, [tagName]);
+
+  /**
+   * Fetch one page of tagged components from the search API.
+   * Pass append=true to load the next page (Load More).
    */
   const loadComponents = useCallback(async (append = false) => {
     if (!tagName) return;
-    
+
     if (!append) {
       setComponentsLoading(true);
     }
     setComponentsError(null);
-    
+
     try {
       const params = new URLSearchParams();
       params.set('tag', tagName);
-      
-      if (append && continuationToken) {
-        params.set('continuationToken', continuationToken);
+
+      if (append && continuationTokenRef.current) {
+        params.set('continuationToken', continuationTokenRef.current);
       }
-      
-      const data = await restClient.get<{items?: unknown[]; continuationToken?: string}>(
+
+      const data = await restClient.get<{items?: TaggedComponent[]; continuationToken?: string}>(
         `/service/rest/v1/search?${params.toString()}`
       );
-      
-      const newComponents = data.items || [];
+
+      const newComponents = (data.items || []) as TaggedComponent[];
       setComponents(prev => append ? [...prev, ...newComponents] : newComponents);
-      setContinuationToken(data.continuationToken || null);
+      const nextToken = data.continuationToken || null;
+      continuationTokenRef.current = nextToken;
+      setContinuationToken(nextToken);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load components';
       setComponentsError(message);
     } finally {
       setComponentsLoading(false);
     }
-  }, [tagName, continuationToken]);
+  }, [tagName]);
 
-  // Load data on mount
+  // Reset continuation token ref when tag changes, then load fresh data
   useEffect(() => {
+    continuationTokenRef.current = null;
+    setContinuationToken(null);
     loadTagDetail();
     loadComponents();
-  }, [tagName]); // eslint-disable-line react-hooks/exhaustive-deps
+    loadTotalCount();
+  }, [loadTagDetail, loadComponents, loadTotalCount]);
 
   /**
    * Get unique formats from components.
@@ -343,7 +377,7 @@ export function TagDetailPage(): JSX.Element {
    * Navigate to component detail.
    */
   const handleViewComponent = useCallback((component: TaggedComponent) => {
-    if (component.assets?.[0]?.id) {
+    if (component.assets?.[0]?.id && component.repository) {
       router.stateService.go('preview.browse.search.asset', {
         repositoryName: component.repository,
         assetId: btoa(component.assets[0].id),
@@ -352,29 +386,18 @@ export function TagDetailPage(): JSX.Element {
     }
   }, [router]);
 
-  /**
-   * Export components to CSV.
-   */
   const handleExportCsv = useCallback(() => {
-    const headers = ['Name', 'Group', 'Version', 'Format', 'Repository'];
-    const rows = filteredComponents.map(c => [
-      c.name,
-      c.group || '',
-      c.version || '',
-      c.format,
-      c.repository,
-    ]);
-    
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${tagName}-components.csv`;
-    a.click();
-    
-    URL.revokeObjectURL(url);
+    exportToCsv(
+      filteredComponents.map((c) => ({
+        name: c.name,
+        group: c.group,
+        version: c.version,
+        format: c.format,
+        repository: c.repository,
+      })),
+      `${tagName}-components.csv`,
+      ['name', 'group', 'version', 'format', 'repository'],
+    );
   }, [tagName, filteredComponents]);
 
   /**
@@ -389,7 +412,7 @@ export function TagDetailPage(): JSX.Element {
     } catch (err) {
       toast.error(parseApiError(err).message);
     }
-  }, [tagName, handleBack]);
+  }, [tagName, handleBack, toast]);
 
   /**
    * Render sort icon.
@@ -415,12 +438,13 @@ export function TagDetailPage(): JSX.Element {
   if (tagError) {
     return (
       <Box className="tag-detail-page">
-        <Box className="tag-detail-page__header">
-          <Button variant="ghost" onClick={handleBack}>
-            <ArrowLeft size={16} />
-            {STRINGS.backToTags}
-          </Button>
-        </Box>
+        <PageHeader
+          title={tagName || 'Tag Details'}
+          breadcrumbs={[
+            { label: 'Tags', onClick: handleBack },
+            { label: tagName || 'Unknown' }
+          ]}
+        />
         <Flex direction="column" align="center" justify="center" p="9" gap="3">
           <Text color="red">{STRINGS.error}</Text>
           <Text color="gray" size="2">{tagError}</Text>
@@ -434,17 +458,13 @@ export function TagDetailPage(): JSX.Element {
 
   return (
     <Box className="tag-detail-page">
-      {/* Breadcrumb Header */}
-      <Box className="tag-detail-page__header">
-        <Flex align="center" gap="2">
-          <Button variant="ghost" onClick={handleBack} className="tag-detail-page__back-btn">
-            <ArrowLeft size={16} />
-            {STRINGS.backToTags}
-          </Button>
-          <Text color="gray">/</Text>
-          <Text weight="medium">{tagName}</Text>
-        </Flex>
-      </Box>
+      <PageHeader
+        title={tagName || 'Tag Details'}
+        breadcrumbs={[
+          { label: 'Tags', onClick: handleBack },
+          { label: tagName || 'Unknown' }
+        ]}
+      />
 
       <ScrollArea className="tag-detail-page__content">
         {/* Tag Info Card */}
@@ -469,7 +489,9 @@ export function TagDetailPage(): JSX.Element {
                 <Flex align="center" gap="2">
                   <Package size={14} className="tag-detail-page__meta-icon" />
                   <Text size="2" color="gray">{STRINGS.header.totalComponents}:</Text>
-                  <Badge size="1" variant="soft" color="violet">{components.length}</Badge>
+                  <Badge size="1" variant="soft" color="violet">
+                    {totalComponentCount !== null ? totalComponentCount : components.length}
+                  </Badge>
                 </Flex>
               </Flex>
             </Box>
@@ -504,7 +526,7 @@ export function TagDetailPage(): JSX.Element {
                   </TextField.Slot>
                   {searchFilter && (
                     <TextField.Slot>
-                      <Button variant="ghost" size="1" onClick={() => setSearchFilter('')}>
+                      <Button variant="ghost" size="1" onClick={() => setSearchFilter('')} data-testid="clear-search-btn">
                         <X size={14} />
                       </Button>
                     </TextField.Slot>

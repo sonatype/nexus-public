@@ -16,22 +16,22 @@ import java.util.List;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.realm.model.RealmApiXO;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 /**
  * @since 3.20
  */
-@Api(value = "Security management: realms")
+@Tag(name = "Security management: realms")
 public interface RealmApiResourceDoc
 {
-  @ApiOperation("List the available realms")
+  @Operation(summary = "List the available realms")
   List<RealmApiXO> getRealms();
 
-  @ApiOperation("List the active realm IDs in order")
+  @Operation(summary = "List the active realm IDs in order")
   List<String> getActiveRealms();
 
-  @ApiOperation("Set the active security realms in the order they should be used")
-  void setActiveRealms(@ApiParam("The realm IDs") List<String> realmIds);
+  @Operation(summary = "Set the active security realms in the order they should be used")
+  void setActiveRealms(@Parameter(description = "The realm IDs") List<String> realmIds);
 }

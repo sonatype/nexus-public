@@ -74,11 +74,30 @@ Ext.define('NX.coreui.view.repository.facet.ConanProxyFacet', {
               afterrender: function(radioGroupForm) {
                 if (Ext.Object.isEmpty(radioGroupForm.getValue())) {
                   const defaultValue = {
-                    'attributes.conan.conanVersion': 'V1'
+                    'attributes.conan.conanVersion': 'V2'
                   };
                   radioGroupForm.setValue(defaultValue);
                 } else {
                   radioGroupForm.up('fieldset').hide();
+                }
+              },
+              change: function(radioGroupForm, newValue) {
+                const form = radioGroupForm.up('form');
+                const remoteUrl = form && form.down('#remoteUrl');
+                if (!remoteUrl) {
+                  return;
+                }
+                const version = newValue['attributes.conan.conanVersion'];
+                const key = version === 'V1'
+                    ? 'Repository_Facet_ProxyFacet_Conan_V1_Remote_HelpText'
+                    : 'Repository_Facet_ProxyFacet_Conan_V2_Remote_HelpText';
+                const text = NX.I18n.get(key);
+                remoteUrl.setHelpText(text);
+                if (remoteUrl.rendered && remoteUrl.el) {
+                  const helpEl = remoteUrl.el.down('.nx-boxlabel');
+                  if (helpEl) {
+                    helpEl.dom.innerHTML = text;
+                  }
                 }
               }
             }

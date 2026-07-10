@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;

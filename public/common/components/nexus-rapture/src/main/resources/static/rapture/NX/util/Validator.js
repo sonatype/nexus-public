@@ -62,6 +62,16 @@ Ext.define('NX.util.Validator', {
   nxUrlRegex: /^https?:\/\/[^"<>^`{|}]+$/i,
 
   /**
+   * Looser URL regex for OCI proxy remote URLs. Accepts {@code http://}, {@code https://}, and
+   * the OCI URI conventions {@code oci://} and {@code oci+http://}. The backend's
+   * {@code OciProxyRepositoryApiRequestToConfigurationConverter#normalizeRemoteUrl} normalises
+   * those OCI schemes to {@code https}/{@code http} on save, so the UI must accept what the
+   * server already accepts.
+   * @private
+   */
+  nxOciUrlRegex: /^(https?|oci(\+http)?):\/\/[^"<>^`{|}]+$/i,
+
+  /**
    * A regular expression to detect whether we have leading and trailing white space
    *
    * @private
@@ -107,6 +117,10 @@ Ext.define('NX.util.Validator', {
           return NX.util.Validator.nxUrlRegex.test(val);
         },
         'nx-urlText': NX.I18n.get('Util_Validator_Url'),
+        'nx-oci-url': function(val) {
+          return NX.util.Validator.nxOciUrlRegex.test(val);
+        },
+        'nx-oci-urlText': 'Must be a valid URL using http://, https://, oci://, or oci+http://',
         'nx-subdomain': function(val) {
           return NX.util.Validator.nxSubdomainRegex.test(val);
         },

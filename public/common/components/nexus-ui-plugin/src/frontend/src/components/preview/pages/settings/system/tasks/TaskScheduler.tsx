@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { Box, Flex, Text, Grid, Checkbox } from '@radix-ui/themes';
+import { Box, Flex, Text, Grid, Checkbox, TextField } from '@radix-ui/themes';
 import { Calendar, Clock, Info } from 'lucide-react';
 
 import {
@@ -29,7 +29,7 @@ import {
   MONTH_DAYS,
   DEFAULT_SCHEDULE_DATA,
   getTimezoneOffset,
-  isValidCronExpression,
+  validateCronExpression,
 } from './types';
 
 const DAY_NAMES: Record<string, string> = {
@@ -121,23 +121,21 @@ export function TaskScheduler({
   onChange,
   errors = {},
   disabled = false,
+  allowedSchedules,
 }: TaskSchedulerProps) {
   const timezone = useMemo(() => getTimezoneName(), []);
 
-  // Handle schedule type change
+  // Handle schedule type change.
   const handleScheduleChange = useCallback((newSchedule: string) => {
     const scheduleType = newSchedule as ScheduleType;
+    const isTimeBased = scheduleType !== 'manual' && scheduleType !== 'advanced';
+    const carriedStartDate = value.startDate ? new Date(value.startDate) : null;
     onChange({
       ...DEFAULT_SCHEDULE_DATA,
       schedule: scheduleType,
       timeZoneOffset: getTimezoneOffset(),
-      // Preserve start date/time when switching between time-based schedules
-      startDate: scheduleType !== 'manual' && scheduleType !== 'advanced' 
-        ? value.startDate || new Date() 
-        : null,
-      startTime: scheduleType !== 'manual' && scheduleType !== 'advanced'
-        ? value.startTime || '00:00'
-        : undefined,
+      startDate: isTimeBased ? (carriedStartDate || new Date()) : null,
+      startTime: isTimeBased ? (value.startTime || '00:00') : undefined,
     });
   }, [onChange, value.startDate, value.startTime]);
 
@@ -213,17 +211,17 @@ export function TaskScheduler({
                   <Calendar size={14} />
                   Date
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-date"
                   type="date"
                   value={dateValue}
                   onChange={(e) => handleDateChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
-                  min={new Date().toISOString().split('T')[0]}
+                  aria-describedby={errors.startDate ? 'schedule-date-error' : undefined}
+                  aria-invalid={errors.startDate ? true : undefined}
                 />
                 {errors.startDate && (
-                  <Text size="1" className="task-scheduler__error">{errors.startDate}</Text>
+                  <Text id="schedule-date-error" size="1" className="task-scheduler__error">{errors.startDate}</Text>
                 )}
               </Box>
               <Box className="task-scheduler__field task-scheduler__field--time">
@@ -231,18 +229,19 @@ export function TaskScheduler({
                   <Clock size={14} />
                   Time
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-time"
                   type="time"
                   value={value.startTime || '00:00'}
                   onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
                   autoComplete="off"
+                  aria-describedby={errors.startTime ? 'schedule-time-error' : undefined}
+                  aria-invalid={errors.startTime ? true : undefined}
                 />
                 <Text size="1" color="gray" mt="1">Times are shown in your local timezone ({timezone})</Text>
                 {errors.startTime && (
-                  <Text size="1" className="task-scheduler__error">{errors.startTime}</Text>
+                  <Text id="schedule-time-error" size="1" className="task-scheduler__error">{errors.startTime}</Text>
                 )}
               </Box>
             </Flex>
@@ -261,16 +260,17 @@ export function TaskScheduler({
                   <Calendar size={14} />
                   Start Date
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-date"
                   type="date"
                   value={dateValue}
                   onChange={(e) => handleDateChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
+                  aria-describedby={errors.startDate ? 'schedule-date-error' : undefined}
+                  aria-invalid={errors.startDate ? true : undefined}
                 />
                 {errors.startDate && (
-                  <Text size="1" className="task-scheduler__error">{errors.startDate}</Text>
+                  <Text id="schedule-date-error" size="1" className="task-scheduler__error">{errors.startDate}</Text>
                 )}
               </Box>
               <Box className="task-scheduler__field task-scheduler__field--time">
@@ -278,16 +278,17 @@ export function TaskScheduler({
                   <Clock size={14} />
                   Start Time ({timezone})
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-time"
                   type="time"
                   value={value.startTime || '00:00'}
                   onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
+                  aria-describedby={errors.startTime ? 'schedule-time-error' : undefined}
+                  aria-invalid={errors.startTime ? true : undefined}
                 />
                 {errors.startTime && (
-                  <Text size="1" className="task-scheduler__error">{errors.startTime}</Text>
+                  <Text id="schedule-time-error" size="1" className="task-scheduler__error">{errors.startTime}</Text>
                 )}
               </Box>
             </Flex>
@@ -306,16 +307,17 @@ export function TaskScheduler({
                   <Calendar size={14} />
                   Start Date
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-date"
                   type="date"
                   value={dateValue}
                   onChange={(e) => handleDateChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
+                  aria-describedby={errors.startDate ? 'schedule-date-error' : undefined}
+                  aria-invalid={errors.startDate ? true : undefined}
                 />
                 {errors.startDate && (
-                  <Text size="1" className="task-scheduler__error">{errors.startDate}</Text>
+                  <Text id="schedule-date-error" size="1" className="task-scheduler__error">{errors.startDate}</Text>
                 )}
               </Box>
               <Box className="task-scheduler__field task-scheduler__field--time">
@@ -323,18 +325,19 @@ export function TaskScheduler({
                   <Clock size={14} />
                   Time
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-time"
                   type="time"
                   value={value.startTime || '00:00'}
                   onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
                   autoComplete="off"
+                  aria-describedby={errors.startTime ? 'schedule-time-error' : undefined}
+                  aria-invalid={errors.startTime ? true : undefined}
                 />
                 <Text size="1" color="gray" mt="1">Times are shown in your local timezone ({timezone})</Text>
                 {errors.startTime && (
-                  <Text size="1" className="task-scheduler__error">{errors.startTime}</Text>
+                  <Text id="schedule-time-error" size="1" className="task-scheduler__error">{errors.startTime}</Text>
                 )}
               </Box>
             </Flex>
@@ -350,16 +353,17 @@ export function TaskScheduler({
                   <Calendar size={14} />
                   Start Date
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-date"
                   type="date"
                   value={dateValue}
                   onChange={(e) => handleDateChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
+                  aria-describedby={errors.startDate ? 'schedule-date-error' : undefined}
+                  aria-invalid={errors.startDate ? true : undefined}
                 />
                 {errors.startDate && (
-                  <Text size="1" className="task-scheduler__error">{errors.startDate}</Text>
+                  <Text id="schedule-date-error" size="1" className="task-scheduler__error">{errors.startDate}</Text>
                 )}
               </Box>
               <Box className="task-scheduler__field task-scheduler__field--time">
@@ -367,18 +371,19 @@ export function TaskScheduler({
                   <Clock size={14} />
                   Time
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-time"
                   type="time"
                   value={value.startTime || '00:00'}
                   onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
                   autoComplete="off"
+                  aria-describedby={errors.startTime ? 'schedule-time-error' : undefined}
+                  aria-invalid={errors.startTime ? true : undefined}
                 />
                 <Text size="1" color="gray" mt="1">Times are shown in your local timezone ({timezone})</Text>
                 {errors.startTime && (
-                  <Text size="1" className="task-scheduler__error">{errors.startTime}</Text>
+                  <Text id="schedule-time-error" size="1" className="task-scheduler__error">{errors.startTime}</Text>
                 )}
               </Box>
             </Flex>
@@ -414,16 +419,17 @@ export function TaskScheduler({
                   <Calendar size={14} />
                   Start Date
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-date"
                   type="date"
                   value={dateValue}
                   onChange={(e) => handleDateChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
+                  aria-describedby={errors.startDate ? 'schedule-date-error' : undefined}
+                  aria-invalid={errors.startDate ? true : undefined}
                 />
                 {errors.startDate && (
-                  <Text size="1" className="task-scheduler__error">{errors.startDate}</Text>
+                  <Text id="schedule-date-error" size="1" className="task-scheduler__error">{errors.startDate}</Text>
                 )}
               </Box>
               <Box className="task-scheduler__field task-scheduler__field--time">
@@ -431,18 +437,19 @@ export function TaskScheduler({
                   <Clock size={14} />
                   Time
                 </label>
-                <input
+                <TextField.Root
                   id="schedule-time"
                   type="time"
                   value={value.startTime || '00:00'}
                   onChange={(e) => handleTimeChange(e.target.value)}
                   disabled={disabled}
-                  className="task-scheduler__input"
                   autoComplete="off"
+                  aria-describedby={errors.startTime ? 'schedule-time-error' : undefined}
+                  aria-invalid={errors.startTime ? true : undefined}
                 />
                 <Text size="1" color="gray" mt="1">Times are shown in your local timezone ({timezone})</Text>
                 {errors.startTime && (
-                  <Text size="1" className="task-scheduler__error">{errors.startTime}</Text>
+                  <Text id="schedule-time-error" size="1" className="task-scheduler__error">{errors.startTime}</Text>
                 )}
               </Box>
             </Flex>
@@ -477,7 +484,11 @@ export function TaskScheduler({
           </Flex>
         );
 
-      case 'advanced':
+      case 'advanced': {
+        const cronResult = value.cronExpression
+          ? validateCronExpression(value.cronExpression)
+          : { valid: false };
+
         return (
           <Flex direction="column" gap="3">
             <SettingsTextInput
@@ -488,16 +499,14 @@ export function TaskScheduler({
               placeholder="0 0 * * * ?"
               helpText="Enter a Quartz cron expression. Format: [seconds] [minutes] [hours] [day-of-month] [month] [day-of-week] [year(optional)]"
               error={errors.cronExpression || (
-                value.cronExpression && !isValidCronExpression(value.cronExpression)
-                  ? 'Invalid cron expression format'
-                  : ''
+                value.cronExpression && !cronResult.valid ? cronResult.reason || 'Invalid cron expression' : ''
               )}
               required
               disabled={disabled}
             />
-            {value.cronExpression && isValidCronExpression(value.cronExpression) && (
+            {value.cronExpression && cronResult.valid && (
               <Text size="1" color="green" data-testid="cron-preview" className="task-scheduler__cron-preview">
-                {describeCron(value.cronExpression)}
+                {describeCron(value.cronExpression) || 'Valid cron expression'}
               </Text>
             )}
             <Box className="task-scheduler__cron-help">
@@ -511,6 +520,7 @@ export function TaskScheduler({
             </Box>
           </Flex>
         );
+      }
 
       default:
         return null;
@@ -524,7 +534,9 @@ export function TaskScheduler({
         label="Schedule"
         value={value.schedule}
         onChange={handleScheduleChange}
-        options={SCHEDULE_OPTIONS}
+        options={allowedSchedules
+          ? SCHEDULE_OPTIONS.filter((o) => allowedSchedules.includes(o.value))
+          : SCHEDULE_OPTIONS}
         placeholder="Select a schedule"
         helpText="Choose when this task should run"
         error={errors.schedule}
@@ -544,5 +556,3 @@ export function TaskScheduler({
 }
 
 export default TaskScheduler;
-
-

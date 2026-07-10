@@ -53,10 +53,11 @@ export type SortDirection = 'asc' | 'desc';
 /**
  * API URLs for logs
  */
+const encodeLogFilename = (filename: string) => filename.split('/').map(encodeURIComponent).join('/');
+
 export const LOGS_API = {
   LIST: '/service/rest/internal/logging/logs',
-  VIEW: (filename: string) => `/service/rest/internal/logging/logs/${encodeURIComponent(filename)}`,
+  VIEW: (filename: string) => `/service/rest/internal/logging/logs/${encodeLogFilename(filename)}`,
   MARK: '/service/rest/internal/logging/log/mark',
 } as const;
-
 

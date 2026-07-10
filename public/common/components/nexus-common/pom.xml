@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common</artifactId>
@@ -40,8 +40,8 @@
       <artifactId>nexus-version</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.aether</groupId>
-      <artifactId>aether-util</artifactId>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-util</artifactId>
     </dependency>
 
     <dependency>
@@ -54,14 +54,20 @@
       <artifactId>jakarta.inject-api</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-    </dependency>
+    <!--
+    NEXUS-46395: removed direct dependency on javax.annotation:javax.annotation-api:1.2.
+    The only javax.annotation.* imports in this module are Nullable / Nonnull / concurrent.*,
+    which all live in com.google.code.findbugs:jsr305 (already on the classpath transitively).
+    The legitimately-needed jakarta.annotation-api (PostConstruct/PreDestroy/Resource) is
+    brought in transitively via spring-boot-starter, version-managed by the Spring Boot BOM.
+    Dropping this declaration removes javax.annotation-api-1.2.jar - a JEE-7-era artifact
+    that was unused at compile time - from the runtime classpath.
+    -->
 
+    <!-- NEXUS-46395: javax.servlet-api 4.0.1 → jakarta.servlet-api 6.0 (Jakarta EE 10 / RESTEasy 7) -->
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
 
     <dependency>

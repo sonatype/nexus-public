@@ -23,7 +23,43 @@ import {
   CLEANUP_POLICY_API,
   getCleanupPolicyUrl,
   getRepositoriesUrl,
+  isRepositoriesFieldSupportedFormat,
 } from './types';
+
+/**
+ * Build the create/update request payload. The {@code repositories} field is
+ * intentionally omitted when the CLEANUP_RETAIN_ALL_FORMATS feature flag is
+ * disabled, when the format does not expose the attachment field, or when the
+ * list is empty: the server treats these cases identically as "no attachment
+ * change", and sending a non-null list against an unsupported format /
+ * disabled feature flag would trip the server-side validator and reject the
+ * request.
+ */
+function buildPolicyPayload(
+  formData: CleanupPolicyFormData,
+  retainAllFormatsEnabled: boolean
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    name: formData.name,
+    notes: formData.notes,
+    format: formData.format,
+    criteriaLastBlobUpdated: formData.criteriaLastBlobUpdated,
+    criteriaLastDownloaded: formData.criteriaLastDownloaded,
+    criteriaReleaseType: formData.criteriaReleaseType || null,
+    criteriaAssetRegex: formData.criteriaAssetRegex,
+    retain: formData.retain,
+    sortBy: formData.sortBy,
+  };
+  if (
+    retainAllFormatsEnabled &&
+    Array.isArray(formData.repositories) &&
+    formData.repositories.length > 0 &&
+    isRepositoriesFieldSupportedFormat(formData.format)
+  ) {
+    payload.repositories = formData.repositories;
+  }
+  return payload;
+}
 
 /**
  * Custom hook for Cleanup Policies API operations
@@ -109,17 +145,7 @@ export function useCleanupPoliciesApi() {
     setLoading(true);
     setError(null);
     try {
-      const payload = {
-        name: formData.name,
-        notes: formData.notes,
-        format: formData.format,
-        criteriaLastBlobUpdated: formData.criteriaLastBlobUpdated,
-        criteriaLastDownloaded: formData.criteriaLastDownloaded,
-        criteriaReleaseType: formData.criteriaReleaseType || null,
-        criteriaAssetRegex: formData.criteriaAssetRegex,
-        retain: formData.retain,
-        sortBy: formData.sortBy,
-      };
+      const payload = buildPolicyPayload(formData, isRetainAllFormatsEnabled());
       // restClient.post() returns data directly, not Axios response
       const result = await restClient.post<CleanupPolicy>(CLEANUP_POLICY_API.BASE_URL, payload);
       return result;
@@ -142,17 +168,7 @@ export function useCleanupPoliciesApi() {
     setLoading(true);
     setError(null);
     try {
-      const payload = {
-        name: formData.name,
-        notes: formData.notes,
-        format: formData.format,
-        criteriaLastBlobUpdated: formData.criteriaLastBlobUpdated,
-        criteriaLastDownloaded: formData.criteriaLastDownloaded,
-        criteriaReleaseType: formData.criteriaReleaseType || null,
-        criteriaAssetRegex: formData.criteriaAssetRegex,
-        retain: formData.retain,
-        sortBy: formData.sortBy,
-      };
+      const payload = buildPolicyPayload(formData, isRetainAllFormatsEnabled());
       // restClient.put() returns data directly, not Axios response
       const result = await restClient.put<CleanupPolicy>(getCleanupPolicyUrl(name), payload);
       return result;
@@ -282,11 +298,25 @@ export function useCleanupPoliciesApi() {
   }, []);
 
   /**
-   * Check if retain is enabled for a format
+   * Check if retain is enabled for a format.
+   * CleanupRetainStateContributor sets nexus.cleanup.{format}Retain for each format
+   * based on ProCleanupFeatureCheck.isRetainSupported().
    */
   const isRetainEnabled = useCallback((format: string): boolean => {
     try {
       return ExtJS.state().getValue(`nexus.cleanup.${format}Retain`) ?? false;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  /**
+   * Check if the global retainAllFormats feature flag is enabled.
+   * Gates multi-repo selection, preview table, and API execution features.
+   */
+  const isRetainAllFormatsEnabled = useCallback((): boolean => {
+    try {
+      return ExtJS.state().getValue('nexus.cleanup.retainAllFormats.enabled') ?? false;
     } catch {
       return false;
     }
@@ -307,6 +337,7 @@ export function useCleanupPoliciesApi() {
     getDryRunCsvUrl,
     isPreviewEnabled,
     isRetainEnabled,
+    isRetainAllFormatsEnabled,
   };
 }
 

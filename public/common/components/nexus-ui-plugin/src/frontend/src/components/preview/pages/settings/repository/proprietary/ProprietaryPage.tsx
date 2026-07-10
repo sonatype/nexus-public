@@ -10,13 +10,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
 import { Lock, Save, RotateCcw } from 'lucide-react';
@@ -41,9 +34,13 @@ import { RepositoryReference } from './types';
 
 import './ProprietaryPage.scss';
 
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
+
 /**
  * ProprietaryPage - Proprietary Repositories settings page for Preview UI
- * 
+ *
  * Allows administrators to mark hosted repositories as containing proprietary components.
  */
 export function ProprietaryPage() {
@@ -164,12 +161,11 @@ export function ProprietaryPage() {
           icon={Lock}
           title="Proprietary Repositories"
           description="Configure which repositories contain proprietary components"
-        
           breadcrumbs={[
             { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-            { label: 'Proprietary' }
+            { label: 'Proprietary Repositories' }
           ]}
-/>
+        />
         <LoadingState message="Loading settings..." />
       </Box>
     );
@@ -183,6 +179,10 @@ export function ProprietaryPage() {
           icon={Lock}
           title="Proprietary Repositories"
           description="Configure which repositories contain proprietary components"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Proprietary Repositories' }
+          ]}
         />
         <ErrorState
           title="Failed to Load"
@@ -195,11 +195,14 @@ export function ProprietaryPage() {
 
   return (
     <Box className="proprietary-page">
-      {/* Header - Using standard PageHeader component */}
       <PageHeader
         icon={Lock}
         title="Proprietary Repositories"
         description="Configure which repositories contain proprietary components"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'Proprietary Repositories' }
+        ]}
       />
 
       {/* Error Alert */}

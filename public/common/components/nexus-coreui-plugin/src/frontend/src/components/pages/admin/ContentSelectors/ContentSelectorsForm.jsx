@@ -55,7 +55,7 @@ export default function ContentSelectorsForm({service, onDone}) {
           {...FormUtils.formProps(state, send)}
           onCancel={cancel}
           additionalFooterBtns={isEdit && canDelete &&
-              <NxButton type="button" variant="tertiary" onClick={confirmDelete}>
+              <NxButton type="button" variant="tertiary" onClick={confirmDelete} data-analytics-id="nxrm-content-selector-delete">
                 <NxFontAwesomeIcon icon={faTrash}/>
                 <span>{UIStrings.SETTINGS.DELETE_BUTTON_LABEL}</span>
               </NxButton>

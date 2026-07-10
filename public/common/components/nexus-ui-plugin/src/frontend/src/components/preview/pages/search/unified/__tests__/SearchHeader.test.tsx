@@ -59,15 +59,43 @@ describe('SearchHeader', () => {
     expect(screen.getByPlaceholderText('Custom placeholder text')).toBeInTheDocument();
   });
 
-  it('calls onSearch when Enter is pressed', async () => {
+  it('fires onSearch on every keystroke with the cumulative input value', async () => {
     const onSearch = jest.fn();
     renderWithTheme(<SearchHeader {...defaultProps} onSearch={onSearch} />);
-    
+
     const input = screen.getByPlaceholderText(/search by/i);
-    await userEvent.type(input, 'test query');
+    await userEvent.type(input, 'mav');
+
+    expect(onSearch).toHaveBeenCalledTimes(3);
+    expect(onSearch).toHaveBeenNthCalledWith(1, 'm');
+    expect(onSearch).toHaveBeenNthCalledWith(2, 'ma');
+    expect(onSearch).toHaveBeenNthCalledWith(3, 'mav');
+  });
+
+  it('does not require Enter to fire onSearch', async () => {
+    const onSearch = jest.fn();
+    renderWithTheme(<SearchHeader {...defaultProps} onSearch={onSearch} />);
+
+    const input = screen.getByPlaceholderText(/search by/i);
+    await userEvent.type(input, 'docker');
+    const callsBeforeEnter = onSearch.mock.calls.length;
+
     fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-    
-    expect(onSearch).toHaveBeenCalledWith('test query');
+
+    expect(onSearch).toHaveBeenCalledTimes(callsBeforeEnter);
+    expect(onSearch).toHaveBeenLastCalledWith('docker');
+  });
+
+  it('fires onSearch with the empty string when the input is cleared', async () => {
+    const onSearch = jest.fn();
+    renderWithTheme(<SearchHeader {...defaultProps} onSearch={onSearch} query="maven" />);
+
+    const input = screen.getByPlaceholderText(/search by/i) as HTMLInputElement;
+    expect(input.value).toBe('maven');
+
+    await userEvent.clear(input);
+
+    expect(onSearch).toHaveBeenLastCalledWith('');
   });
 
   it('syncs input value with query prop', () => {

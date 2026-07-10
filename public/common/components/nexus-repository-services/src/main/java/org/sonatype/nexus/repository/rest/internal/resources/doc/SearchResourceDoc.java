@@ -12,20 +12,21 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources.doc;
 
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
 import org.sonatype.nexus.rest.Page;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.NO_SEARCH_RESULTS_FOUND;
 import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.SEARCH_RETURNED_MULTIPLE_ASSETS;
@@ -38,7 +39,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION
  *
  * @since 3.4
  */
-@Api(value = "Search")
+@Tag(name = "Search")
 public interface SearchResourceDoc
 {
   String SQL_SEARCH_RESTRICTIONS =
@@ -65,39 +66,39 @@ public interface SearchResourceDoc
 
   String ALLOWABLE_SORT_DIRECTIONS = "asc, desc";
 
-  @ApiOperation(value = "Search components", notes = SQL_SEARCH_RESTRICTIONS)
+  @Operation(summary = "Search components", description = SQL_SEARCH_RESTRICTIONS)
   Page<ComponentXO> search(
-      @ApiParam(value = CONTINUATION_TOKEN_DESCRIPTION, allowEmptyValue = true) final String continuationToken,
-      @ApiParam(value = SORT_DESCRIPTION, allowEmptyValue = true,
-          allowableValues = ALLOWABLE_SORT_VALUES) final String sort,
-      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true,
-          allowableValues = ALLOWABLE_SORT_DIRECTIONS) final String direction,
-      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true) final Integer timeout,
+      @Parameter(description = CONTINUATION_TOKEN_DESCRIPTION, allowEmptyValue = true) final String continuationToken,
+      @Parameter(description = SORT_DESCRIPTION, allowEmptyValue = true,
+          schema = @Schema(allowableValues = {GROUP, NAME, VERSION, "repository"})) final String sort,
+      @Parameter(description = DIRECTION_DESCRIPTION, allowEmptyValue = true,
+          schema = @Schema(allowableValues = {"asc", "desc"})) final String direction,
+      @Parameter(description = TIMEOUT_DESCRIPTION, allowEmptyValue = true) final Integer timeout,
       @Context final UriInfo uriInfo);
 
-  @ApiOperation(value = "Search assets", notes = SQL_SEARCH_RESTRICTIONS)
+  @Operation(summary = "Search assets", description = SQL_SEARCH_RESTRICTIONS)
   Page<AssetXO> searchAssets(
-      @ApiParam(value = CONTINUATION_TOKEN_DESCRIPTION) final String continuationToken,
-      @ApiParam(value = SORT_DESCRIPTION, allowEmptyValue = true,
-          allowableValues = ALLOWABLE_SORT_VALUES) final String sort,
-      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true,
-          allowableValues = ALLOWABLE_SORT_DIRECTIONS) final String direction,
-      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true) final Integer timeout,
+      @Parameter(description = CONTINUATION_TOKEN_DESCRIPTION) final String continuationToken,
+      @Parameter(description = SORT_DESCRIPTION, allowEmptyValue = true,
+          schema = @Schema(allowableValues = {GROUP, NAME, VERSION, "repository"})) final String sort,
+      @Parameter(description = DIRECTION_DESCRIPTION, allowEmptyValue = true,
+          schema = @Schema(allowableValues = {"asc", "desc"})) final String direction,
+      @Parameter(description = TIMEOUT_DESCRIPTION, allowEmptyValue = true) final Integer timeout,
       @Context final UriInfo uriInfo);
 
-  @ApiOperation(value = "Search and download asset",
-      notes = "Returns a 302 Found with location header field set to download URL. "
+  @Operation(summary = "Search and download asset",
+      description = "Returns a 302 Found with location header field set to download URL. "
           + "Unless a sort parameter is supplied, the search must return a single asset to receive download URL.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400,
-          message = "ValidationErrorXO{id='*', message='" + SEARCH_RETURNED_MULTIPLE_ASSETS + "'}"),
-      @ApiResponse(code = 404, message = NO_SEARCH_RESULTS_FOUND)
+      @ApiResponse(responseCode = "400",
+          description = "ValidationErrorXO{id='*', message='" + SEARCH_RETURNED_MULTIPLE_ASSETS + "'}"),
+      @ApiResponse(responseCode = "404", description = NO_SEARCH_RESULTS_FOUND)
   })
   Response searchAndDownloadAssets(
-      @ApiParam(value = SEARCH_AND_DL_SORT_DESCRIPTION, allowEmptyValue = true,
-          allowableValues = ALLOWABLE_SORT_VALUES) final String sort,
-      @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true,
-          allowableValues = ALLOWABLE_SORT_DIRECTIONS) final String direction,
-      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true) final Integer timeout,
+      @Parameter(description = SEARCH_AND_DL_SORT_DESCRIPTION, allowEmptyValue = true,
+          schema = @Schema(allowableValues = {GROUP, NAME, VERSION, "repository"})) final String sort,
+      @Parameter(description = DIRECTION_DESCRIPTION, allowEmptyValue = true,
+          schema = @Schema(allowableValues = {"asc", "desc"})) final String direction,
+      @Parameter(description = TIMEOUT_DESCRIPTION, allowEmptyValue = true) final Integer timeout,
       @Context final UriInfo uriInfo);
 }

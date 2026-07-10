@@ -12,14 +12,23 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.AssetInfo;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
@@ -38,6 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -67,7 +77,9 @@ public abstract class AssetStoreTestSupport
 
   protected ComponentStore<TestComponentDAO> componentStore;
 
-  private boolean entityVersioningEnabled;
+  protected GlobalRepositorySettings globalRepositorySettings = new GlobalRepositorySettings();
+
+  protected boolean entityVersioningEnabled;
 
   protected void initialiseStores(final boolean entityVersioningEnabled) {
     this.entityVersioningEnabled = entityVersioningEnabled;
@@ -80,6 +92,7 @@ public abstract class AssetStoreTestSupport
     generateVersions(4);
 
     underTest = new AssetStore<>(sessionRule, entityVersioningEnabled, "test", TestAssetDAO.class);
+    underTest.setGlobalRepositorySettings(globalRepositorySettings);
     componentStore = new ComponentStore<>(sessionRule, entityVersioningEnabled, "test", TestComponentDAO.class);
     underTest.setDependencies(contentFacetFinder, eventManager);
     componentStore.setDependencies(contentFacetFinder, eventManager);
@@ -384,5 +397,89 @@ public abstract class AssetStoreTestSupport
 
   private static void assertEntityVersion(final Component component, final Integer expectedEntityVersion) {
     assertThat(component.entityVersion(), Matchers.is(expectedEntityVersion));
+  }
+
+  protected void testMarkAsDownloadedReturnsTrueWhenRowUpdated() {
+    // GIVEN — fresh asset, never downloaded
+    AssetData asset = generateAsset(repositoryId, "/store-throttle-1");
+    globalRepositorySettings.setLastDownloadedInterval(Duration.ofHours(12));
+
+    inTx(() -> {
+      TestAssetDAO dao = underTest.dao();
+      dao.createAsset(asset, entityVersioningEnabled);
+
+      // WHEN
+      boolean updated = underTest.markAsDownloaded(asset);
+
+      // THEN
+      assertThat(updated, is(true));
+    });
+  }
+
+  protected void testMarkAsDownloadedReturnsFalseWhenThrottled() {
+    // GIVEN — asset just downloaded
+    AssetData asset = generateAsset(repositoryId, "/store-throttle-2");
+    globalRepositorySettings.setLastDownloadedInterval(Duration.ofHours(12));
+
+    inTx(() -> {
+      TestAssetDAO dao = underTest.dao();
+      dao.createAsset(asset, entityVersioningEnabled);
+
+      underTest.markAsDownloaded(asset); // first call — sets last_downloaded
+
+      // WHEN — second call within the interval
+      boolean updated = underTest.markAsDownloaded(asset);
+
+      // THEN
+      assertThat(updated, is(false));
+    });
+  }
+
+  protected void testConcurrentMarkAsDownloadedOnlyOneSucceeds() throws Exception {
+    // GIVEN — fresh asset, never downloaded; 12h interval
+    AssetData asset = generateAsset(repositoryId, "/concurrency-test");
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset, entityVersioningEnabled);
+      session.getTransaction().commit();
+    }
+    globalRepositorySettings.setLastDownloadedInterval(Duration.ofHours(12));
+
+    // WHEN — 10 threads race to mark the same asset
+    int threads = 10;
+    ExecutorService executor = Executors.newFixedThreadPool(threads);
+    CountDownLatch ready = new CountDownLatch(threads);
+    CountDownLatch start = new CountDownLatch(1);
+    AtomicInteger successCount = new AtomicInteger();
+    List<Future<?>> futures = new ArrayList<>();
+
+    for (int i = 0; i < threads; i++) {
+      futures.add(executor.submit(() -> {
+        ready.countDown();
+        start.await();
+        UnitOfWork.begin(() -> sessionRule.openSession(DEFAULT_DATASTORE_NAME));
+        try {
+          Transactional.operation.run(() -> {
+            if (underTest.markAsDownloaded(asset)) {
+              successCount.incrementAndGet();
+            }
+          });
+        }
+        finally {
+          UnitOfWork.end();
+        }
+        return null;
+      }));
+    }
+
+    ready.await();
+    start.countDown();
+    for (Future<?> f : futures) {
+      f.get(30, SECONDS);
+    }
+    executor.shutdown();
+
+    // THEN — exactly one winner
+    assertThat(successCount.get(), is(1));
   }
 }

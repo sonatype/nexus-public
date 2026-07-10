@@ -11,30 +11,31 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
-import React from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
-import { Mail, Loader2, Info, ExternalLink } from 'lucide-react';
+import React, { useState } from 'react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Loader2, Info, ExternalLink, ShieldCheck } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
+import { PageHeader } from '../../../../shared';
 import {
   SettingsForm,
   SettingsFormSection,
   SettingsCheckbox,
   SettingsTextInput,
   SettingsPasswordInput,
+  SettingsButton,
 } from '../../../../shared/form';
+import SslCertificateDetailsModal from '../../../../../widgets/SslCertificateDetailsModal/SslCertificateDetailsModal';
 import { EmailVerify } from './EmailVerify';
 import { useEmailForm } from './useEmailForm';
 import { useEmailApi } from './useEmailApi';
 import { EmailConfiguration, EmailPageProps } from './types';
 
 import './EmailPage.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 /**
  * EmailPage - Email Server configuration page for Preview UI
@@ -49,8 +50,18 @@ export function EmailPage({ className }: EmailPageProps) {
   // Email API for verification only
   const { verifying, sendVerificationEmail } = useEmailApi();
 
+  const isCloud = ExtJS.state?.().getValue?.('isCloud', false) ?? false;
   const canUpdate = ExtJS.checkPermission('nexus:settings:update');
   const formData = form.data as EmailConfiguration;
+
+  const [showCertModal, setShowCertModal] = useState(false);
+
+  const canReadTruststore = ExtJS.checkPermission('nexus:ssl-truststore:read');
+  const remoteUrl = formData.host && formData.port ? `https://${formData.host}:${formData.port}` : '';
+
+  if (isCloud) {
+    return null;
+  }
 
   // Loading state
   if (form.isLoading) {
@@ -68,15 +79,14 @@ export function EmailPage({ className }: EmailPageProps) {
   if (!canUpdate) {
     return (
       <Box className={`email-page ${className || ''}`.trim()}>
-        <Flex align="center" gap="3" className="email-page__header">
-          <Mail size={24} className="email-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">Email Server</Heading>
-            <Text size="2" className="email-page__description">
-              Configure outgoing email server settings
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Email Server"
+          description="Configure outgoing email server settings"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Email Server' },
+          ]}
+        />
 
         <SettingsFormSection title="Current Settings">
           <Box className="email-page__readonly">
@@ -108,16 +118,14 @@ export function EmailPage({ className }: EmailPageProps) {
       data-testid="email-page"
       data-loading={form.isSaving ? 'true' : 'false'}
     >
-      {/* Header */}
-      <Flex align="center" gap="3" className="email-page__header">
-        <Mail size={24} className="email-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">Email Server</Heading>
-          <Text size="2" className="email-page__description">
-            Configure outgoing email server settings
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title="Email Server"
+        description="Configure outgoing email server settings"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'Email Server' },
+        ]}
+      />
 
       {/* Scrollable content area */}
       <Box className="email-page__content">
@@ -129,6 +137,7 @@ export function EmailPage({ className }: EmailPageProps) {
           pristine={form.isPristine}
           cancelDisabled={form.isPristine}
           error={form.saveError || undefined}
+          submitAnalyticsId="nxrm-email-save"
         >
           <SettingsFormSection title="SMTP Configuration">
             <SettingsCheckbox
@@ -150,6 +159,9 @@ export function EmailPage({ className }: EmailPageProps) {
               label="SMTP Port"
               type="number"
               value={formData.port != null ? String(formData.port) : ''}
+              // Port needs a numeric value in context but UPDATE event types expect string;
+              // a numberField() helper on useForm would remove these casts (NEXUS-52591 follow-up).
+              // 0 when cleared so validateEmailConfig's `port === 0` guard marks it as required.
               onChange={(value: string) => form.send({ type: 'UPDATE', name: 'port', value: value ? parseInt(value, 10) : 0 } as any)}
               onBlur={() => form.send({ type: 'BLUR', name: 'port' } as any)}
               error={form.touched?.port ? form.validationErrors?.port : undefined}
@@ -164,23 +176,52 @@ export function EmailPage({ className }: EmailPageProps) {
               label="Use Nexus Trust Store"
               description="Use certificates from the Nexus Repository trust store for SSL/TLS connections"
             />
+
+            <Box>
+              <SettingsButton
+                type="button"
+                variant="secondary"
+                onClick={() => setShowCertModal(true)}
+                disabled={!remoteUrl || !canReadTruststore}
+                icon={ShieldCheck}
+              >
+                View Certificate
+              </SettingsButton>
+            </Box>
+
+            {showCertModal && remoteUrl && (
+              <SslCertificateDetailsModal
+                remoteUrl={remoteUrl}
+                onCancel={() => setShowCertModal(false)}
+              />
+            )}
           </SettingsFormSection>
 
           <SettingsFormSection title="Authentication">
-            <SettingsTextInput
-              {...form.field('username')}
-              label="Username"
-              helpText="Username for SMTP authentication (optional)"
-              autoComplete="username"
-              placeholder="nexus-smtp-user"
+            <SettingsCheckbox
+              {...form.checkbox('useAuthentication')}
+              label="Enable authentication"
+              description="Provide credentials for SMTP server authentication"
             />
 
-            <SettingsPasswordInput
-              {...form.field('password')}
-              label="Password"
-              helpText="Password for SMTP authentication (optional)"
-              autoComplete="new-password"
-            />
+            {formData.useAuthentication && (
+              <>
+                <SettingsTextInput
+                  {...form.field('username')}
+                  label="Username"
+                  helpText="Username for SMTP authentication"
+                  autoComplete="username"
+                  placeholder="nexus-smtp-user"
+                />
+                <SettingsPasswordInput
+                  {...form.field('password')}
+                  label="Password"
+                  helpText="Password for SMTP authentication"
+                  autoComplete="new-password"
+                  placeholder={form.isPristine && !formData.password ? 'Saved — enter to change' : undefined}
+                />
+              </>
+            )}
           </SettingsFormSection>
 
           <SettingsFormSection title="Email Settings">
@@ -201,7 +242,11 @@ export function EmailPage({ className }: EmailPageProps) {
             />
           </SettingsFormSection>
 
-          <SettingsFormSection title="SSL/TLS Options" collapsible defaultCollapsed>
+          <SettingsFormSection
+            title="SSL/TLS Options"
+            collapsible
+            defaultCollapsed={!(formData.startTlsEnabled || formData.startTlsRequired || formData.sslOnConnectEnabled || formData.sslCheckServerIdentityEnabled)}
+          >
             <SettingsCheckbox
               {...form.checkbox('startTlsEnabled')}
               label="Enable STARTTLS"
@@ -227,16 +272,21 @@ export function EmailPage({ className }: EmailPageProps) {
             />
           </SettingsFormSection>
 
-          {/* Verify Email Section */}
+        </SettingsForm>
+
+        {/* Test Email — outside form to prevent Enter-key from triggering SMTP save */}
+        <Box className="email-page__form-aligned" data-testid="email-verify-section">
           <SettingsFormSection title="Test Email">
             <EmailVerify
               onSendTest={sendVerificationEmail}
               loading={verifying}
-              disabled={form.isPristine && !formData.enabled}
+              disabled={!formData.enabled}
             />
           </SettingsFormSection>
+        </Box>
 
-          {/* Help Section */}
+        {/* Help Section */}
+        <Box className="email-page__form-aligned">
           <Box className="email-page__help">
             <Flex align="center" gap="2" className="email-page__help-header">
               <Info size={16} />
@@ -244,9 +294,7 @@ export function EmailPage({ className }: EmailPageProps) {
             </Flex>
             <Text size="2" className="email-page__help-text">
               The email server is used to send notifications about system events,
-              password reset emails, and other communications.
-            </Text>
-            <Text size="2" className="email-page__help-text">
+              password reset emails, and other communications.{' '}
               See our{' '}
               <a
                 href="https://help.sonatype.com/en/email-server-configuration.html"
@@ -260,7 +308,8 @@ export function EmailPage({ className }: EmailPageProps) {
               {' '}for more information.
             </Text>
           </Box>
-        </SettingsForm>
+        </Box>
+
       </Box>
     </Box>
   );

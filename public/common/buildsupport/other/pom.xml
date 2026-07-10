@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -41,8 +41,14 @@
     <azure-storage-blob.version>12.31.2</azure-storage-blob.version>
     <azure-identity.version>1.18.0</azure-identity.version>
     <azure-json.version>1.5.0</azure-json.version>
-    <!-- Override jakarta.mail version to fix NEXUS-50522 (SMTP Injection vulnerability CVE-2025-7962) -->
-    <jakarta-mail.version>1.6.8</jakarta-mail.version>
+    <!-- NEXUS-46395: jakarta-mail.version is now unused. The runtime Mail implementation is
+         com.sun.mail:jakarta.mail:2.0.2 (pulled in by commons-email2-jakarta), pinned
+         explicitly below to address NEXUS-50522 (CVE-2025-7962). The Eclipse Angus pin
+         that previously consumed this version was removed because nothing on the dep
+         tree pulled in org.eclipse.angus:jakarta.mail - leaving the pin in place would
+         have been dead code. Property kept defined-but-unused for one more release in
+         case downstream developer scripts grep for it. -->
+    <jakarta-mail.version>2.0.3</jakarta-mail.version>
   </properties>
 
   <dependencyManagement>
@@ -85,23 +91,12 @@
         <version>3.0.2</version>
       </dependency>
 
-      <dependency>
-        <groupId>javax.annotation</groupId>
-        <artifactId>javax.annotation-api</artifactId>
-        <version>1.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>javax.enterprise</groupId>
-        <artifactId>cdi-api</artifactId>
-        <version>1.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>javax.inject</groupId>
-        <artifactId>javax.inject</artifactId>
-        <version>1</version>
-      </dependency>
+      <!-- NEXUS-46395: dropped vestigial javax.annotation-api / javax.enterprise:cdi-api /
+           javax.inject:javax.inject / javax.interceptor-api version pins. None of these
+           coordinates appear on any compile or test classpath after the EE10 migration, and
+           the distribution-level enforcer bans (javax.{servlet,inject,ws.rs,validation,
+           enterprise,el,interceptor,transaction,xml.bind}:*) prevent transitive
+           reintroduction. -->
 
       <dependency>
         <groupId>jakarta.inject</groupId>
@@ -142,7 +137,7 @@
       <dependency>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-annotations</artifactId>
-        <version>1.21</version>
+        <version>1.24</version>
       </dependency>
 
       <dependency>
@@ -151,22 +146,35 @@
         <version>1.21</version>
       </dependency>
 
+      <!-- NEXUS-46395: Jakarta Validation 3.0.x for Jakarta EE 10 / RESTEasy 7. The 2.0.x
+           series is the Jakarta EE 8 line and is incompatible with RESTEasy 7's
+           ResteasyViolationException. -->
       <dependency>
         <groupId>jakarta.validation</groupId>
         <artifactId>jakarta.validation-api</artifactId>
-        <version>2.0.2</version>
+        <version>3.0.2</version>
       </dependency>
 
+      <!-- NEXUS-46395: org.glassfish:jakarta.el:3.0.4 is misnamed — despite its
+           artifactId, the classes inside are still in the javax.el.* package. It
+           does NOT provide jakarta.el.ELManager, which Hibernate Validator 8 needs at
+           runtime. The correct Jakarta EL 5.0 reference implementation is
+           org.glassfish.expressly:expressly (the renamed/relocated Eclipse Expressly
+           project), which depends on jakarta.el:jakarta.el-api:5.0.x transitively.
+           Without this, *every* test that calls Validation.buildDefaultValidatorFactory()
+           throws HV000183 "Unable to initialize 'jakarta.el.ExpressionFactory'". -->
       <dependency>
-        <groupId>org.glassfish</groupId>
-        <artifactId>jakarta.el</artifactId>
-        <version>3.0.4</version>
+        <groupId>org.glassfish.expressly</groupId>
+        <artifactId>expressly</artifactId>
+        <version>5.0.0</version>
       </dependency>
 
+      <!-- NEXUS-46395: Hibernate Validator 8.x is the Jakarta Validation 3.0 implementation
+           (Hibernate Validator 6.x targets Jakarta Validation 2.0). -->
       <dependency>
-        <groupId>org.hibernate</groupId>
+        <groupId>org.hibernate.validator</groupId>
         <artifactId>hibernate-validator</artifactId>
-        <version>6.2.0.Final</version>
+        <version>8.0.2.Final</version>
       </dependency>
 
       <dependency>
@@ -190,23 +198,13 @@
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.sisu</groupId>
-        <artifactId>sisu-odata4j</artifactId>
-        <version>0.0.7</version>
-      </dependency>
-
-      <dependency>
         <groupId>com.vividsolutions</groupId>
         <artifactId>jts</artifactId>
         <version>1.13</version>
       </dependency>
 
-      <dependency>
-        <groupId>javax.interceptor</groupId>
-        <artifactId>javax.interceptor-api</artifactId>
-        <version>1.2</version>
-      </dependency>
-
+      <!-- javax.transaction-api retained for nexus-repository-services test scope only;
+           the distribution-level enforcer ban prevents this from leaking into runtime. -->
       <dependency>
         <groupId>javax.transaction</groupId>
         <artifactId>javax.transaction-api</artifactId>
@@ -243,10 +241,17 @@
         <version>1.1.1</version>
       </dependency>
 
+      <!-- NEXUS-46395: ehcache 3.9.x is compiled against javax.xml.bind.*, which was
+           removed from the JDK in Java 11 and is not part of Jakarta EE 10. ehcache
+           3.10+ ships a separate "jakarta" classifier whose XML config code uses
+           jakarta.xml.bind.*. Without the classifier the bytecode still references
+           javax.xml.bind.ValidationEventHandler, which fails to load at runtime
+           (NoClassDefFoundError) on Java 25. -->
       <dependency>
         <groupId>org.ehcache</groupId>
         <artifactId>ehcache</artifactId>
-        <version>3.9.3</version>
+        <version>3.10.8</version>
+        <classifier>jakarta</classifier>
       </dependency>
 
       <dependency>
@@ -313,13 +318,12 @@
 
       <!--
         NEXUS-53122: Upgrade netty-bom to 4.2.15.Final to resolve CVE-2026-42587
-        (codec-http/http2 decompression limit bypass - CVSS 8.7).
-        This version also addresses:
-        - CVE-2026-33871 (netty-codec-http2 - CVSS 7.5)
+        (codec-http/http2 decompression limit bypass - CVSS 8.7). The earlier
+        4.2.14.Final upgrade addressed the following CVEs but not 42587:
         - CVE-2026-42577 (epoll transport DoS - CVSS 8.7)
         - CVE-2026-42578 (handler-proxy HTTP header injection - CVSS 7.5)
         - CVE-2026-42579 (codec-dns domain name validation - CVSS 7.5)
-        - CVE-2026-42580, CVE-2026-42581, CVE-2026-42584, CVE-2026-42585, CVE-2026-41417 (codec-http request smuggling - CVSS 5.3-8.7)
+        - CVE-2026-42580, 42581, 42584, 42585, 41417 (codec-http request smuggling - CVSS 5.3-8.7)
         - CVE-2026-42583 (codec-compression memory allocation DoS - CVSS 7.5)
       -->
       <dependency>
@@ -383,6 +387,12 @@
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>dynamodb</artifactId>
+        <version>${aws-java-sdk.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>ecr</artifactId>
         <version>${aws-java-sdk.version}</version>
       </dependency>
 
@@ -455,14 +465,16 @@
         <version>1.16.2</version>
       </dependency>
 
-      <!--
-      Force jakarta.mail to 1.6.8 to fix NEXUS-50522 (SMTP Injection vulnerability CVE-2025-7962).
-      This overrides the version pulled in transitively by org.jboss.resteasy:resteasy-multipart-provider
-      -->
+      <!-- NEXUS-46395 + NEXUS-50522 (CVE-2025-7962): pin com.sun.mail:jakarta.mail to the
+           patched 2.0.2 release. The EE-9-era com.sun.mail coordinates are what
+           commons-email2-jakarta:2.0.0-M1 references directly in its bytecode, so we cannot
+           swap to the post-EE-9 successor org.eclipse.angus:jakarta.mail without forking
+           commons-email. Verified that nothing on the dep tree pulls in
+           org.eclipse.angus:jakarta.mail, so an Angus pin would be dead code. -->
       <dependency>
         <groupId>com.sun.mail</groupId>
         <artifactId>jakarta.mail</artifactId>
-        <version>${jakarta-mail.version}</version>
+        <version>2.0.2</version>
       </dependency>
 
       <dependency>
@@ -471,6 +483,30 @@
         <version>1.1.1</version>
       </dependency>
 
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-bom</artifactId>
+        <version>1.82.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>dev.sigstore</groupId>
+        <artifactId>sigstore-java</artifactId>
+        <version>2.2.0</version>
+        <!--
+          Consider updating grpc-bom when updating the version
+
+          Remove grpc-bom if removing this dependency
+         -->
+        <exclusions>
+          <exclusion>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

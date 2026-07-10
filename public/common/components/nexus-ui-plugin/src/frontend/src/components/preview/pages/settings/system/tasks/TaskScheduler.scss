@@ -118,6 +118,23 @@
     }
   }
 
+  // Radix gives `.rt-TextFieldInput` `display: flex`, which makes Chrome lay out the date/time
+  // shadow DOM as flex items at content width — the picker indicator ends up next to the value
+  // with empty space on the right. Pull the indicator out of flow and pin it to the right edge.
+  .rt-TextFieldInput[type="date"],
+  .rt-TextFieldInput[type="time"] {
+    position: relative;
+    padding-right: calc(var(--text-field-native-icon-size) + var(--space-3));
+
+    &::-webkit-calendar-picker-indicator {
+      position: absolute;
+      top: 50%;
+      right: var(--space-2);
+      margin: 0;
+      transform: translateY(-50%);
+    }
+  }
+
   &__error {
     color: var(--red-11);
     margin-top: var(--space-1);

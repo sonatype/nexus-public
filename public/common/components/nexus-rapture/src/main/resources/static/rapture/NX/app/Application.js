@@ -361,7 +361,9 @@ Ext.define('NX.app.Application', {
     });
 
     becomeReady = function () {
-      // hide the loading mask after we have loaded
+      // Hide the loading mask immediately after ExtJS initializes.
+      // Permissions are loaded asynchronously in background (NEXUS-52583).
+      // This enables immediate UI interactivity even for users with 400+ roles.
       Ext.get('loading').remove();
       Ext.fly('loading-mask').animate({opacity: 0, remove: true});
 
@@ -370,6 +372,7 @@ Ext.define('NX.app.Application', {
       me.ready = true;
     };
 
+    // Wait for ExtJS application to be ready (does NOT wait for permissions)
     waitForExtJS(becomeReady);
   },
 
@@ -457,7 +460,9 @@ Ext.define('NX.app.Application', {
 });
 
 /**
- * Check every millisecond until Ext.getApplication() returns a truthy value
+ * Poll until Ext.getApplication() returns a truthy value, then invoke callback.
+ * NOTE: Does NOT wait for permissions to be loaded (NEXUS-52583) - the UI
+ * should render immediately and permissions load asynchronously.
  * @param callback to perform when the ExtJS application is ready
  */
 function waitForExtJS(callback) {
@@ -466,5 +471,5 @@ function waitForExtJS(callback) {
       clearInterval(interval);
       callback();
     }
-  }, 1);
+  }, 50);
 }

@@ -271,13 +271,13 @@ public class MavenMetadataRebuilder
   }
 
   /*
-   * Logs any failures recorded during metadata
+   * Logs any failures recorded during metadata rebuild.
+   * Each failure is logged as a single WARN line with the exception stack trace included.
    */
   private void maybeLogFailures(final MultipleFailures failures) {
     if (failures.isEmpty()) {
       return;
     }
-    log.warn("Errors encountered during metadata rebuild:");
     failures.getFailures().forEach(failure -> log.warn(failure.getMessage(), failure));
   }
 

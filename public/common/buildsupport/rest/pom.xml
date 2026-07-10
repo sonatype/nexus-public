@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-rest</artifactId>
@@ -28,10 +28,19 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.22.0</jackson2.version>
-    <jaxb.version>2.3.3</jaxb.version>
-    <resteasy.version>3.15.6.Final</resteasy.version>
-    <swagger.version>1.6.15</swagger.version>
+    <jackson2.version>2.22.1</jackson2.version>
+    <!-- NEXUS-46395: Jakarta XML Binding 4.0 for Jakarta EE 10 (was 2.3.3). -->
+    <jaxb.version>4.0.5</jaxb.version>
+    <!-- NEXUS-46395: RESTEasy 7.x is the Jakarta EE 10 / JAX-RS 3.1 line.
+         Artifact rename: resteasy-jaxrs → resteasy-core. -->
+    <resteasy.version>7.0.0.Final</resteasy.version>
+    <!-- NEXUS-46395: Swagger 1.x → OpenAPI 3.x (swagger-core 2.2.x).
+         The -jakarta classifier variants are required when running on Jakarta JAX-RS 3.1.
+         Swagger 1.x is incompatible with jakarta.ws.rs.* and must be replaced. -->
+    <swagger.version>2.2.35</swagger.version>
+    <!-- NEXUS-46395: legacy swagger-annotations 1.x is no longer required — the @Api*
+         sweep migrated all 390 consumer files to OpenAPI 3.x (@Tag/@Operation/@Schema
+         from io.swagger.v3.oas.annotations.*). -->
     <snakeyaml.version>2.4</snakeyaml.version>
   </properties>
 
@@ -66,11 +75,27 @@
         </exclusions>
       </dependency>
 
+      <!-- NEXUS-46395: javax.ws.rs-api replaced by jakarta.ws.rs-api 3.1 (JAX-RS 3.1).
+           Version pinned; RESTEasy 7 pulls this in transitively but pinning protects us
+           from any future transitive downgrade. -->
       <dependency>
-        <groupId>javax.ws.rs</groupId>
-        <artifactId>javax.ws.rs-api</artifactId>
-        <version>2.1.1</version>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>3.1.0</version>
       </dependency>
+
+      <!-- NEXUS-46395: jakarta.servlet-api 6.0 is required at compile time for any module
+           using HttpServletRequest etc. when running on RESTEasy 7. The Jetty EE10 BOM
+           supplies this transitively, but pinning here keeps modules that don't depend on
+           Jetty (e.g. nexus-siesta) able to compile. -->
+      <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>6.0.0</version>
+      </dependency>
+
+      <!-- NEXUS-46395: jakarta.validation-api 3.0.x is required by RESTEasy 7. The version
+           is pinned in buildsupport/other/pom.xml. -->
 
       <dependency>
         <groupId>org.jsoup</groupId>
@@ -121,15 +146,22 @@
         <version>${snakeyaml.version}</version>
       </dependency>
 
+      <!-- NEXUS-46395: OpenAPI 3.x annotations and JAX-RS 2/3 integration (jakarta variants).
+           These replace io.swagger:swagger-jaxrs:1.x. The legacy io.swagger:swagger-annotations:1.x
+           artifact has been removed entirely — the @Api*/@ApiOperation/@ApiModelProperty
+           annotations across the codebase were migrated to @Tag/@Operation/@Schema from
+           io.swagger.v3.oas.annotations.*. -->
       <dependency>
-        <groupId>io.swagger</groupId>
-        <artifactId>swagger-annotations</artifactId>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-annotations-jakarta</artifactId>
         <version>${swagger.version}</version>
       </dependency>
 
+
+
       <dependency>
-        <groupId>io.swagger</groupId>
-        <artifactId>swagger-jaxrs</artifactId>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-jaxrs2-jakarta</artifactId>
         <version>${swagger.version}</version>
         <exclusions>
           <!--
@@ -142,13 +174,33 @@
         </exclusions>
       </dependency>
 
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-core-jakarta</artifactId>
+        <version>${swagger.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-models-jakarta</artifactId>
+        <version>${swagger.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-integration-jakarta</artifactId>
+        <version>${swagger.version}</version>
+      </dependency>
+
       <!--
       RESTEasy
       -->
 
+      <!-- NEXUS-46395: RESTEasy 7 renamed resteasy-jaxrs to resteasy-core.
+           Consumers that currently depend on resteasy-jaxrs must update their GAV. -->
       <dependency>
         <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-jaxrs</artifactId>
+        <artifactId>resteasy-core</artifactId>
         <version>${resteasy.version}</version>
         <exclusions>
           <exclusion>
@@ -200,7 +252,7 @@
       <dependency>
         <groupId>org.apache.james</groupId>
         <artifactId>apache-mime4j-core</artifactId>
-        <version>0.8.10</version>
+        <version>0.8.12</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.resteasy</groupId>
@@ -238,17 +290,13 @@
         <type>pom</type>
       </dependency>
 
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-jaxb-annotations</artifactId>
-        <version>${jackson2.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
+      <!-- NEXUS-46395: removed dependencyManagement entry for the javax-flavored
+           jackson-module-jaxb-annotations. The Jakarta replacement
+           jackson-module-jakarta-xmlbind-annotations is brought in transitively via
+           jackson-jakarta-rs-* providers, so the legacy artifact is no longer needed.
+           Keeping a managed entry only invites a future regression: a consumer that
+           declares it would once again pull javax.xml.bind onto the runtime classpath
+           and trigger the NoClassDefFoundError on XmlElement seen at startup. -->
 
       <dependency>
         <groupId>tools.jackson</groupId>

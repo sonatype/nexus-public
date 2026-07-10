@@ -20,12 +20,13 @@ import { FileDropzone } from '../../../upload/components/FileDropzone';
 import { SettingsFormSection, SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { LicenseAgreementModal } from './LicenseAgreementModal';
 import { useLicensingApi } from './useLicensingApi';
+import { LicenseData } from './types';
 
 import './InstallLicense.scss';
 
 interface InstallLicenseProps {
   hasExistingLicense: boolean;
-  onLicenseInstalled: () => void;
+  onLicenseInstalled: (licenseData: LicenseData) => void;
 }
 
 /**
@@ -40,6 +41,7 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
 
   const canEdit = ExtJS.checkPermission(Permissions.LICENSING.CREATE);
   const isValid = files.length > 0;
+  const licenseUrl = getLicenseAgreementUrl();
 
   // Handle file selection
   const handleFilesChange = useCallback((newFiles: File[]) => {
@@ -48,12 +50,16 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
     setSuccessMessage(null);
   }, [setError]);
 
-  // Show agreement modal
+  // Show agreement modal — guard against missing licenseUrl so the modal is never silently skipped
   const handleShowAgreement = useCallback(() => {
+    if (!licenseUrl) {
+      setError('License agreement URL is unavailable. Please reload the page and try again.');
+      return;
+    }
     if (isValid && !loading) {
       setShowAgreementModal(true);
     }
-  }, [isValid, loading]);
+  }, [isValid, loading, licenseUrl, setError]);
 
   // Handle accept agreement
   const handleAccept = useCallback(async () => {
@@ -63,12 +69,12 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
     setError(null);
 
     try {
-      await uploadLicense(files[0]);
+      const licenseData = await uploadLicense(files[0]);
       setSuccessMessage('License installed. Restart is only required if you are enabling new PRO features.');
       setFiles([]);
-      onLicenseInstalled();
+      onLicenseInstalled(licenseData);
     } catch {
-      // Error is set by the API hook
+      // uploadLicense sets the error via useLicensingApi's setError; no additional handling needed here
     }
   }, [files, uploadLicense, onLicenseInstalled]);
 
@@ -85,8 +91,6 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
   const handleDismissSuccess = useCallback(() => {
     setSuccessMessage(null);
   }, []);
-
-  const licenseUrl = getLicenseAgreementUrl();
 
   return (
     <>
@@ -117,6 +121,7 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
                   files={files}
                   onChange={handleFilesChange}
                   accept=".lic"
+                  maxSize={1024 * 1024}
                   disabled={loading}
                   label="License"
                   required
@@ -145,7 +150,8 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
               <SettingsButton
                 variant="primary"
                 onClick={handleShowAgreement}
-                disabled={loading || !isValid || !!error}
+                disabled={loading || !isValid || !!error || !licenseUrl}
+                data-analytics-id="nxrm-licensing-upload"
               >
                 Upload License
               </SettingsButton>
@@ -168,4 +174,3 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
 }
 
 export default InstallLicense;
-

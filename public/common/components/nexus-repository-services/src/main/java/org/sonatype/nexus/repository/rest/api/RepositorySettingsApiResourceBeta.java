@@ -15,11 +15,11 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 
 import static org.sonatype.nexus.repository.rest.api.RepositorySettingsApiResourceBeta.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  * @deprecated the 'beta' prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX}
  *             instead. Support backward compatibility.
  */
-@Api(hidden = true)
+@Hidden
 @Component
 @Path(RESOURCE_URI)
 @Deprecated

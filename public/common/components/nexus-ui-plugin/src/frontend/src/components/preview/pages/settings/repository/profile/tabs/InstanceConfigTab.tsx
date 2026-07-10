@@ -27,7 +27,7 @@ import { ClassicSettingsLink } from './classicSettingsLink';
 import type {
   IqCapabilities,
   CapabilityInfo,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
 
 interface InstanceConfigTabProps {
   iqCapabilities: IqCapabilities | null;

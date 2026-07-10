@@ -23,6 +23,7 @@ import {ExtJS, FormUtils, UnitUtil, ValidationUtils} from '@sonatype/nexus-ui-pl
 import UIStrings from '../../../../constants/UIStrings';
 
 import {URLs} from './BlobStoresHelper';
+import BlobStoreTypes from './BlobStoreTypes';
 
 /*
  * Used to extract token strings "${name}" => "name"
@@ -34,7 +35,7 @@ function stripTokenCharacters(match) {
 
 function deriveDynamicFieldData(type) {
   // Check for blobstore specific initializer
-  const init = window.BlobStoreTypes[type.id]?.Actions?.init || (() => ({}));
+  const init = BlobStoreTypes[type.id]?.Actions?.init || (() => ({}));
   const result = init();
 
   type?.fields?.forEach(field => {
@@ -317,7 +318,7 @@ export default FormUtils.buildFormMachine({
     validate: assign({
       validationErrors: ({pristineData, data, type}) => {
         const isCreate = !ValidationUtils.notBlank(pristineData.name);
-        const Actions = type && window.BlobStoreTypes[type.id]?.Actions;
+        const Actions = type && BlobStoreTypes[type.id]?.Actions;
         const validationErrors = {
           ...(Actions?.validation(data, pristineData) || {}),
           type: ValidationUtils.validateNotBlank(type),

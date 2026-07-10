@@ -23,7 +23,8 @@ import userEvent from '@testing-library/user-event';
 
 const {
   useGracePeriodEndsDate,
-  useThrottlingStatusValue
+  useThrottlingStatusValue,
+  useEdition
 } = helperFunctions;
 
 export function renderView(gracePeriodEnd, throttlingStatus, currentState, message, recoveryModeEnabled) {
@@ -63,6 +64,7 @@ function givenUseState(throttlingStatus, gracePeriodEnd, currentState, message) 
       .calledWith(UpgradeAlertFunctions.message)
       .mockReturnValue(message);
 
+  // Mock useEdition for useCommunityEdition hook
   when(ExtJS.useState)
       .calledWith(expect.any(Function))
       .mockImplementation((fn) => fn());

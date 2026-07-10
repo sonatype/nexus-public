@@ -79,6 +79,11 @@ public class SqlSearchIndexService
         .map(Optional::get)
         .collect(toList());
 
+    if (searchData.isEmpty()) {
+      log.debug("No indexable components in batch for repository: {}", repository.getName());
+      return;
+    }
+
     // This is a batch update not an incremental update and only
     // one instance of the RebuildIndexTask can be running in a HA cluster.
     try {

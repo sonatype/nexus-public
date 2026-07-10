@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-jmx</artifactId>
@@ -32,10 +32,14 @@
       <artifactId>nexus-common</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
+    <!--
+    NEXUS-46395: removed direct dependency on javax.inject:javax.inject:1. This module's source
+    code uses jakarta.inject.* exclusively (verified: zero javax.inject imports across the codebase
+    after the Phase 3 sweep). The license-bundle 4.0.1 bump cleaned up the vestigial javax.inject
+    transitive that 4.0.0's pom still declared, so javax.inject-1.jar no longer appears on the
+    runtime classpath at all (verified by inspecting BOOT-INF/lib in all three distribution fat
+    jars). Dropping the explicit declaration just removes a now-redundant pom entry.
+    -->
 
     <dependency>
       <groupId>com.thoughtworks.paranamer</groupId>

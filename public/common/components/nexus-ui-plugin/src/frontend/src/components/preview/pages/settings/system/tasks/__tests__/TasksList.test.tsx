@@ -179,14 +179,15 @@ describe('TasksList', () => {
     mockedUseTasksApi.mockReturnValue(defaultMockApi);
   });
 
-  it('renders loading state initially', () => {
+  it('renders skeleton placeholders during the initial fetch', () => {
     mockedUseTasksApi.mockReturnValue({
       ...defaultMockApi,
       fetchTasks: jest.fn().mockImplementation(() => new Promise(() => {})),
     });
 
-    renderWithTheme(<TasksList {...defaultProps} />);
-    expect(screen.getByText('Loading tasks...')).toBeInTheDocument();
+    const { container } = renderWithTheme(<TasksList {...defaultProps} />);
+    expect(screen.queryByText('Loading tasks...')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-testid="tasks-list-skeleton-row"]').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders tasks after loading', async () => {
@@ -356,5 +357,16 @@ describe('TasksList', () => {
     await waitFor(() => {
       expect(screen.getByText('About Scheduled Tasks')).toBeInTheDocument();
     });
+  });
+
+  it('applies the running animation class to RUNNING status icons', async () => {
+    const { container } = renderWithTheme(<TasksList {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Index Task')).toBeInTheDocument();
+    });
+
+    const runningIcon = container.querySelector('.tasks-list__status-icon--running');
+    expect(runningIcon).not.toBeNull();
   });
 });

@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -24,12 +25,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 
 import java.util.HashMap;
 
@@ -59,7 +60,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.sonatype.nexus.security.BreadActions.READ;
 import org.springframework.stereotype.Component;
@@ -106,7 +107,14 @@ public class RepositoryInternalResource
 
   private final ApiRepositoryAdapter defaultAdapter;
 
-  private final RepositoryMetricsService repositoryMetricsService;
+  /*
+   * Optional because RepositoryMetricsServiceImpl lives in nexus-pro-datastore-plugin and is not
+   * present in OSS distributions (e.g. nexus-repository-core). Mirrors the @Nullable pattern used
+   * by RepositoryManagerRESTAdapterImpl and RepositoryUiService for the same dependency. Without
+   * this, the OSS core distribution fails to start because Spring cannot find a bean of type
+   * RepositoryMetricsService.
+   */
+  private final Optional<RepositoryMetricsService> repositoryMetricsService;
 
   @Autowired
   public RepositoryInternalResource(
@@ -118,7 +126,7 @@ public class RepositoryInternalResource
       final AuthorizingRepositoryManager authorizingRepositoryManager,
       final List<ApiRepositoryAdapter> convertersByFormatList,
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,
-      final RepositoryMetricsService repositoryMetricsService)
+      @Nullable final RepositoryMetricsService repositoryMetricsService)
   {
     this.formats = checkNotNull(formats);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -128,7 +136,7 @@ public class RepositoryInternalResource
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
     this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
     this.defaultAdapter = checkNotNull(defaultAdapter);
-    this.repositoryMetricsService = checkNotNull(repositoryMetricsService);
+    this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
   }
 
   @GET
@@ -138,7 +146,8 @@ public class RepositoryInternalResource
       @QueryParam("withAll") final boolean withAll,
       @QueryParam("withFormats") final boolean withFormats,
       @QueryParam("format") final String formatParam,
-      @QueryParam("facets") final String facetsParam)
+      @QueryParam("facets") final String facetsParam,
+      @QueryParam("versionPolicies") final String versionPoliciesParam)
   {
     // Parse facets filter (comma-separated fully-qualified class names)
     List<Class<? extends Facet>> facetClasses = parseFacets(facetsParam);
@@ -150,12 +159,17 @@ public class RepositoryInternalResource
     final boolean allFormats = formatParam != null && formatParam.equals(ALL_FORMATS);
     List<String> formatIncludes = allFormats ? Collections.emptyList() : parseIncludes(formatParam);
     List<String> formatExcludes = allFormats ? Collections.emptyList() : parseExcludes(formatParam);
+    // Parse version-policies filter (Maven-only attribute; non-Maven repos have a null value).
+    List<String> versionPolicyIncludes = parseIncludes(versionPoliciesParam);
+    List<String> versionPolicyExcludes = parseExcludes(versionPoliciesParam);
 
     List<RepositoryXO> repositories = repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse())
         .stream()
         .filter(repository -> matchesFilter(repository.getType().getValue(), typeIncludes, typeExcludes))
         .filter(repository -> matchesFilter(repository.getFormat().getValue(), formatIncludes, formatExcludes))
         .filter(repository -> facetClasses.isEmpty() || hasAnyFacet(repository, facetClasses))
+        .filter(repository -> matchesNullableFilter(getVersionPolicy(repository), versionPolicyIncludes,
+            versionPolicyExcludes))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
         .sorted(Comparator.comparing(RepositoryXO::getName))
         .collect(toList());
@@ -232,7 +246,7 @@ public class RepositoryInternalResource
   public AbstractApiRepository getRepository(@PathParam("repositoryName") final String repositoryName) {
     return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
         .map(repository -> convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter)
-            .adapt(repository))
+            .adaptDecorated(repository))
         .get();
   }
 
@@ -265,9 +279,9 @@ public class RepositoryInternalResource
   @GET
   @Path("/details")
   public List<RepositoryDetailXO> getRepositoryDetails() {
-    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService.list()
-        .stream()
-        .collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m));
+    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService
+        .map(svc -> svc.list().stream().collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m)))
+        .orElseGet(Map::of);
 
     return stream(repositoryManager.browse())
         .filter(repository -> repositoryPermissionChecker.userHasRepositoryAdminPermission(repository, READ))
@@ -306,9 +320,9 @@ public class RepositoryInternalResource
     List<String> typeList = parseCommaSeparated(types);
     List<String> statusList = parseCommaSeparated(statuses);
 
-    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService.list()
-        .stream()
-        .collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m));
+    Map<String, RepositoryMetricsDTO> metricsByName = repositoryMetricsService
+        .map(svc -> svc.list().stream().collect(Collectors.toMap(RepositoryMetricsDTO::getName, m -> m)))
+        .orElseGet(Map::of);
 
     // Build filtered stream - use userCanBrowseRepositories to allow anonymous access
     List<RepositoryDetailXO> allRepos =
@@ -393,6 +407,39 @@ public class RepositoryInternalResource
     return true;
   }
 
+  /**
+   * Same as {@link #matchesFilter} but tolerates a null value. A null value passes
+   * exclude-only filters (matching the classic UI's RepositoryUiService.filterIn semantics
+   * for non-Maven repos when filtering by versionPolicy) and fails include filters.
+   */
+  private boolean matchesNullableFilter(String value, List<String> includes, List<String> excludes) {
+    String lowerValue = value == null ? null : value.toLowerCase();
+    if (lowerValue != null && !excludes.isEmpty() && excludes.contains(lowerValue)) {
+      return false;
+    }
+    if (!includes.isEmpty()) {
+      return lowerValue != null && includes.contains(lowerValue);
+    }
+    return true;
+  }
+
+  /**
+   * Extract the Maven version policy from a repository's configuration. Returns null for
+   * non-Maven repositories or when the attribute is missing.
+   */
+  private static String getVersionPolicy(final Repository repository) {
+    Map<String, Map<String, Object>> attrs = repository.getConfiguration().getAttributes();
+    if (attrs == null) {
+      return null;
+    }
+    Map<String, Object> mavenAttrs = attrs.get("maven");
+    if (mavenAttrs == null) {
+      return null;
+    }
+    Object policy = mavenAttrs.get("versionPolicy");
+    return policy instanceof String ? (String) policy : null;
+  }
+
   private boolean filterByFormats(RepositoryDetailXO repo, List<String> formats) {
     if (formats.isEmpty()) {
       return true;
@@ -473,6 +520,12 @@ public class RepositoryInternalResource
       detailXO.setAssetCount(metrics.blobCount);
     }
 
+    // Set blob store name from storage configuration
+    String blobStoreName = repository.getConfiguration()
+        .attributes("storage")
+        .get("blobStoreName", String.class);
+    detailXO.setBlobStoreName(blobStoreName);
+
     return detailXO;
   }
 
@@ -500,10 +553,18 @@ public class RepositoryInternalResource
           .get("memberNames");
     }
     else {
-      return new RepositoryDetailXO(name, type, format, url, statusXO);
+      RepositoryDetailXO detailXO = new RepositoryDetailXO(name, type, format, url, statusXO);
+      detailXO.setBlobStoreName(repository.getConfiguration()
+          .attributes("storage")
+          .get("blobStoreName", String.class));
+      return detailXO;
     }
 
-    return new RepositoryNugetXO(name, type, format, url, statusXO, nugetVersion, memberNames);
+    RepositoryNugetXO nugetXO = new RepositoryNugetXO(name, type, format, url, statusXO, nugetVersion, memberNames);
+    nugetXO.setBlobStoreName(repository.getConfiguration()
+        .attributes("storage")
+        .get("blobStoreName", String.class));
+    return nugetXO;
   }
 
   private RemoteConnectionStatus getStatus(final Repository repository) {

@@ -43,9 +43,21 @@ public interface FluentAsset
   Content download();
 
   /**
-   * Mark this asset as recently downloaded by a user action.
+   * Mark this asset as recently downloaded by a user action. Throttled by the configured
+   * lastDownloaded interval — repeated calls within the interval are no-ops at the database.
    */
   FluentAsset markAsDownloaded();
+
+  /**
+   * Variant of {@link #markAsDownloaded()} that returns whether the database row was actually
+   * updated. Use this when you need to gate follow-up work (such as updating blob attribute
+   * files) on the throttle outcome — {@code false} indicates another caller updated within the
+   * interval and the file write should be skipped.
+   *
+   * @return {@code true} if the database row was updated; {@code false} if the throttle skipped
+   *         the update
+   */
+  boolean tryMarkAsDownloaded();
 
   /**
    * Mark this proxied asset as recently cached from the given content.

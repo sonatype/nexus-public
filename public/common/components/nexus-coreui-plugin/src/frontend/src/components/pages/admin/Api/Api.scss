@@ -18,6 +18,10 @@
     .title {
       display: none;
     }
+
+    hgroup.main a {
+      display: none;
+    }
   }
 
   .wrapper {
@@ -50,6 +54,10 @@
   }
 
   .swagger-ui .opblock.hidden {
+    display: none !important;
+  }
+
+  .swagger-ui .scheme-container {
     display: none !important;
   }
 }

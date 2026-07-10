@@ -30,8 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.validation.ValidationException;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
@@ -73,12 +73,15 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.Configurable;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -113,6 +116,9 @@ public abstract class ProxyFacetSupport
 
   public static final String PROXY_REMOTE_FETCH_SKIP_MARKER =
       "proxy.remote-fetch.skip";
+
+  public static final String PROXY_TELEMETRY_BLOCKING_MARKER =
+      "proxy.telemetry-blocking";
 
   public static final String MISSING_BLOB_SKIP_NEGATIVE_CACHE =
       "proxy.missing-blob.skip-negative-cache";
@@ -150,7 +156,6 @@ public abstract class ProxyFacetSupport
      * Preserve encoded characters in URLs when proxying to the remote repository.
      * When true, preserves encoded characters like %2B (plus), %23 (hash), and %20 (space).
      * When false (default), uses standard encoding that preserves literal + characters.
-     * Only used when the feature flag nexus.proxy.urlEncodingMode.enabled is true.
      */
     @NotNull
     public boolean preserveEncodedCharacters = false;
@@ -212,8 +217,6 @@ public abstract class ProxyFacetSupport
 
   private EncodingHelper encodingHelper;
 
-  private boolean urlEncodingModeEnabled;
-
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
 
   private static final String CTX_REQ_URI = "request.uri";
@@ -267,18 +270,29 @@ public abstract class ProxyFacetSupport
   }
 
   @Autowired
-  protected void configureUrlEncodingMode(
-      @Value("${nexus.proxy.urlEncodingMode.enabled:false}") final boolean enabled)
+  protected void warnIfLegacyUrlEncodingFlagPresent(
+      @Value("${nexus.proxy.urlEncodingMode.enabled:false}") final boolean legacyFlag)
   {
-    this.urlEncodingModeEnabled = enabled;
+    if (legacyFlag) {
+      log.warn(
+          "nexus.proxy.urlEncodingMode.enabled is set but has been removed. " +
+              "URL encoding is now configured per-repository via the 'Preserve encoded characters' setting.");
+    }
   }
 
   @Autowired
   @Nullable
-  private ThrottlerInterceptor throttlerInterceptor;
+  @Qualifier("contentUsage")
+  private ThrottlerInterceptor contentUsageThrottlerInterceptor;
 
   @Autowired
   @Nullable
+  @Qualifier("telemetryThrottler")
+  private ThrottlerInterceptor telemetryThrottlerInterceptor;
+
+  @Autowired
+  @Nullable
+  @Qualifier("gracePeriod")
   private GracePeriodInterceptor gracePeriodInterceptor;
 
   @Autowired
@@ -329,14 +343,12 @@ public abstract class ProxyFacetSupport
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
 
-    // Initialize EncodingHelper only if feature is enabled
-    if (urlEncodingModeEnabled) {
-      this.encodingHelper = new EncodingHelper(escapeHelper, config.preserveEncodedCharacters);
-      log.debug("URL encoding mode enabled. Preserve encoded characters: {}", config.preserveEncodedCharacters);
+    if (config.preserveEncodedCharacters) {
+      this.encodingHelper = new EncodingHelper(escapeHelper);
+      log.debug("Preserve encoded characters enabled for repository: {}", getRepository().getName());
     }
     else {
       this.encodingHelper = null;
-      log.debug("URL encoding mode feature disabled, using legacy behavior");
     }
 
     log.debug("Config: {}", config);
@@ -401,18 +413,23 @@ public abstract class ProxyFacetSupport
     }
     if (gracePeriodInterceptor != null &&
         gracePeriodInterceptor.isInGracePeriod() &&
-        throttlerInterceptor != null &&
-        throttlerInterceptor.shouldBlock()) {
+        shouldBlock(contentUsageThrottlerInterceptor)) {
       sendProxyThrottledRequestEventIfNeeded(context, false);
     }
     if (gracePeriodInterceptor != null &&
         !gracePeriodInterceptor.isInGracePeriod() &&
-        throttlerInterceptor != null &&
-        throttlerInterceptor.shouldBlock()) {
+        shouldBlock(contentUsageThrottlerInterceptor)) {
       context.getAttributes().set(PROXY_REMOTE_FETCH_SKIP_MARKER, TRUE);
       sendProxyThrottledRequestEventIfNeeded(context, true);
       return content;
     }
+
+    // Check telemetry throttler (grace period is encapsulated inside shouldBlock)
+    if (shouldBlock(telemetryThrottlerInterceptor)) {
+      context.getAttributes().set(PROXY_TELEMETRY_BLOCKING_MARKER, TRUE);
+      return content;
+    }
+
     return get(context, content);
   }
 
@@ -420,6 +437,10 @@ public abstract class ProxyFacetSupport
     if (!context.getAttributes().contains(PROXY_THROTTLED_ANALYTICS_MARKED)) {
       getEventManager().post(new ProxyThrottledRequestEvent(isBlocked));
     }
+  }
+
+  private boolean shouldBlock(@Nullable final ThrottlerInterceptor throttler) {
+    return throttler != null && throttler.shouldBlock();
   }
 
   private boolean isRemoteFetchSkipMarkerEnabled(final Context context) {
@@ -706,15 +727,14 @@ public abstract class ProxyFacetSupport
       if (url.contains("://")) {
         uri = new URI(url);
       }
-      // Check if feature is enabled before using EncodingHelper
-      else if (urlEncodingModeEnabled && encodingHelper != null) {
-        // New two-stage encoding (feature enabled)
+      // Use two-stage encoding when preserveEncodedCharacters is enabled
+      else if (encodingHelper != null) {
         String baseEncoded = encodingHelper.encodeUrlSegments(url);
         String finalEncoded = encodeUrl(baseEncoded);
         uri = config.remoteUrl.resolve(finalEncoded);
       }
       else {
-        // Legacy behavior (feature disabled or not configured)
+        // Legacy behavior (preserveEncodedCharacters == false)
         uri = config.remoteUrl.resolve(encodeUrl(url));
       }
     }
@@ -803,25 +823,21 @@ public abstract class ProxyFacetSupport
     HttpEntity entity = response.getEntity();
     log.debug("Entity: {}", entity);
 
-    // INFO-level: Log key response headers for production visibility
-    StringBuilder headerSummary = new StringBuilder();
-    Header[] allHeaders = response.getAllHeaders();
-    for (Header header : allHeaders) {
-      String name = header.getName().toLowerCase();
-      // Log important headers: etag, ETag, content-type, content-length, cache-control
-      if (name.equals("etag") || name.equals("content-type") || name.equals("content-length") ||
-          name.equals("cache-control") || name.equals("last-modified")) {
-        if (headerSummary.length() > 0) {
-          headerSummary.append(", ");
-        }
-        headerSummary.append(header.getName()).append(": ").append(header.getValue());
-      }
-    }
-    log.debug("ProxyFacet: Key response headers from upstream - {} - Repository: {}",
-        headerSummary.toString(), getRepository().getName());
-
-    // Diagnostic logging to debug ETag extraction issues (DEBUG level - all headers)
     if (log.isDebugEnabled()) {
+      StringBuilder headerSummary = new StringBuilder();
+      Header[] allHeaders = response.getAllHeaders();
+      for (Header header : allHeaders) {
+        String name = header.getName().toLowerCase();
+        if (name.equals("etag") || name.equals("content-type") || name.equals("content-length") ||
+            name.equals("cache-control") || name.equals("last-modified")) {
+          if (headerSummary.length() > 0) {
+            headerSummary.append(", ");
+          }
+          headerSummary.append(header.getName()).append(": ").append(header.getValue());
+        }
+      }
+      log.debug("ProxyFacet: Key response headers from upstream - {} - Repository: {}",
+          headerSummary.toString(), getRepository().getName());
       log.debug("ProxyFacet - ALL Response Headers:");
       for (Header header : allHeaders) {
         log.debug("  Header: {} = {}", header.getName(), header.getValue());
@@ -1011,9 +1027,24 @@ public abstract class ProxyFacetSupport
   {
     HttpContext httpContext = new BasicHttpContext();
 
-    // Only set encoding mode in context if feature is enabled
-    if (urlEncodingModeEnabled && encodingHelper != null) {
-      httpContext.setAttribute("preserveEncodedCharacters", encodingHelper.shouldPreserveEncodedCharacters());
+    // Read by NexusRedirectStrategy to preserve percent-encoding in redirect URLs
+    if (encodingHelper != null) {
+      httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+      // NEXUS-52769: disable URI normalization so Apache HttpClient does not collapse "//"
+      // in signed redirect URLs (Cloudflare R2 / S3 SigV4 signs the exact path bytes).
+      // Copy from the client default when the request has no per-request config to avoid
+      // shadowing the timeouts installed by HttpClientManagerImpl/DefaultsCustomizer.
+      RequestConfig baseConfig = request.getConfig();
+      if (baseConfig == null && client instanceof Configurable) {
+        baseConfig = ((Configurable) client).getConfig();
+      }
+      if (baseConfig == null) {
+        baseConfig = RequestConfig.DEFAULT;
+      }
+      request.setConfig(RequestConfig.copy(baseConfig)
+          .setNormalizeUri(false)
+          .build());
     }
 
     // Set repository info for outbound request telemetry
@@ -1123,7 +1154,7 @@ public abstract class ProxyFacetSupport
   /**
    * Encode a path for remote access using the two-stage encoding pipeline.
    *
-   * Stage 1: Base URL encoding (via EncodingHelper) - applies when feature is enabled
+   * Stage 1: Base URL encoding (via EncodingHelper) - applies when preserveEncodedCharacters is true
    * Stage 2: Format-specific encoding (via encodeUrl()) - always applied
    *
    * @param path the path to encode
@@ -1131,12 +1162,11 @@ public abstract class ProxyFacetSupport
    * @throws UnsupportedEncodingException if encoding fails
    */
   protected String encodePathForRemote(final String path) throws UnsupportedEncodingException {
-    if (urlEncodingModeEnabled && encodingHelper != null) {
-      // New two-stage encoding (feature enabled)
+    if (encodingHelper != null) {
       String baseEncoded = encodingHelper.encodeUrlSegments(path);
       return encodeUrl(baseEncoded);
     }
-    // Legacy behavior (feature disabled or not configured)
+    // Legacy behavior (preserveEncodedCharacters == false)
     return encodeUrl(path);
   }
 

@@ -13,15 +13,13 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Button, Card, Flex, Text, Heading, Badge } from '@radix-ui/themes';
-import { ArrowRight, Key, Package, User, Loader2, Shield, Mail, Calendar } from 'lucide-react';
+import { ArrowRight, Key, Package, User, Loader2, Shield, Mail } from 'lucide-react';
 import { ExtJS } from '../../../../../interface/ExtJS';
-import { restClient } from '../../../../../interface/api';
+import { restClient, ENDPOINTS } from '../../../../../interface/api';
 import { useToast } from '../../../shared';
 
 import {
-  SettingsForm,
   SettingsFormSection,
-  SettingsTextInput,
   SettingsPasswordInput,
   SettingsAlert,
 } from '../../../shared/form';
@@ -32,15 +30,12 @@ interface UserAccountPageProps {
   className?: string;
 }
 
-interface UserData {
+interface UserAccountData {
   userId: string;
   firstName: string;
   lastName: string;
-  emailAddress: string;
-  source: string;
-  status: string;
-  roles: string[];
-  readOnly?: boolean;
+  email: string;
+  external: boolean;
 }
 
 interface PasswordChangeData {
@@ -52,13 +47,14 @@ interface PasswordChangeData {
 /**
  * UserAccountPage - User Account settings page for Preview UI
  *
- * Allows users to view and update their account information.
+ * Fetches user profile from the internal API (service/rest/internal/ui/user)
+ * to display real Name and Email values.
  */
 export function UserAccountPage({ className }: UserAccountPageProps) {
   const user = ExtJS.useUser();
   const toast = useToast();
   const [loadingInitial, setLoadingInitial] = useState(true);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<UserAccountData | null>(null);
   const [passwordData, setPasswordData] = useState<PasswordChangeData>({
     currentPassword: '',
     newPassword: '',
@@ -67,34 +63,33 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  // Load user data
+  // Fetch user profile from the dedicated account API
   useEffect(() => {
-    if (user) {
-      setUserData({
-        userId: user.id || '',
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        emailAddress: user.email || '',
-        source: user.source || 'default',
-        status: user.status || 'active',
-        roles: user.roles || [],
-        readOnly: user.external || false,
-      });
+    if (!user) {
+      setLoadingInitial(false);
+      return;
     }
-    // Always finish loading, whether user exists or not
-    setLoadingInitial(false);
-  }, [user]);
 
-  // Success/error handled via Toast (Sprint 15)
+    restClient.get<UserAccountData>(ENDPOINTS.USER_ACCOUNT)
+      .then((data) => {
+        setUserData(data);
+      })
+      .catch(() => {
+        setError('Failed to load account information.');
+      })
+      .finally(() => {
+        setLoadingInitial(false);
+      });
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Password validation
   const passwordErrors = useMemo(() => {
     const errors: Record<string, string> = {};
-    
+
     if (touched.newPassword && passwordData.newPassword && passwordData.newPassword.length < 8) {
       errors.newPassword = 'Password must be at least 8 characters';
     }
-    
+
     if (touched.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
@@ -109,13 +104,11 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
       !passwordData.confirmPassword;
   }, [passwordErrors, passwordData]);
 
-  // Handle password field change
   const handlePasswordChange = useCallback((field: keyof PasswordChangeData, value: string) => {
     setPasswordData((prev) => ({ ...prev, [field]: value }));
     setTouched((prev) => ({ ...prev, [field]: true }));
   }, []);
 
-  // Handle password change submit
   const handlePasswordSubmit = useCallback(async () => {
     setTouched({
       currentPassword: true,
@@ -144,7 +137,6 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
     }
   }, [hasPasswordErrors, userData, passwordData.newPassword]);
 
-  // Reset password form
   const handlePasswordReset = useCallback(() => {
     setPasswordData({
       currentPassword: '',
@@ -155,7 +147,6 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
     setError(null);
   }, []);
 
-  // Loading state
   if (loadingInitial) {
     return (
       <Box className={`user-account-page ${className || ''}`.trim()}>
@@ -167,8 +158,7 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
     );
   }
 
-  // Not logged in
-  if (!user || !userData) {
+  if (!user) {
     return (
       <Box className={`user-account-page ${className || ''}`.trim()}>
         <Flex align="center" gap="3" className="user-account-page__header">
@@ -180,13 +170,20 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
             </Text>
           </Box>
         </Flex>
-        
+
         <SettingsAlert type="warning">
           You must be logged in to view your account settings.
         </SettingsAlert>
       </Box>
     );
   }
+
+  const displayName = userData?.firstName || userData?.lastName
+    ? `${userData.firstName} ${userData.lastName}`.trim()
+    : 'Not set';
+
+  const displayEmail = userData?.email || 'Not set';
+  const isExternal = userData?.external ?? false;
 
   return (
     <Box className={`user-account-page ${className || ''}`.trim()}>
@@ -209,6 +206,7 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
           </SettingsAlert>
         </Box>
       )}
+
       {/* Account Information (Read-only) */}
       <SettingsFormSection title="Account Information">
         <Box className="user-account-page__info">
@@ -216,7 +214,7 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
             <User size={16} className="user-account-page__info-icon" />
             <Box>
               <Text size="1" className="user-account-page__info-label">Username</Text>
-              <Text size="2" weight="medium">{userData.userId}</Text>
+              <Text size="2" weight="medium">{userData?.userId ?? user.id}</Text>
             </Box>
           </Flex>
 
@@ -224,99 +222,94 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
             <Mail size={16} className="user-account-page__info-icon" />
             <Box>
               <Text size="1" className="user-account-page__info-label">Email</Text>
-              <Text size="2" weight="medium">{userData.emailAddress || 'Not set'}</Text>
+              <Text size="2" weight="medium">{displayEmail}</Text>
             </Box>
           </Flex>
 
           <Flex className="user-account-page__info-row">
-            <Text size="1" className="user-account-page__info-label" style={{ marginLeft: '24px' }}>Name</Text>
-            <Text size="2" weight="medium">
-              {userData.firstName || userData.lastName
-                ? `${userData.firstName} ${userData.lastName}`.trim()
-                : 'Not set'}
-            </Text>
+            <User size={16} className="user-account-page__info-icon" />
+            <Box>
+              <Text size="1" className="user-account-page__info-label">Name</Text>
+              <Text size="2" weight="medium">{displayName}</Text>
+            </Box>
           </Flex>
 
           <Flex className="user-account-page__info-row">
             <Shield size={16} className="user-account-page__info-icon" />
             <Box>
               <Text size="1" className="user-account-page__info-label">Source</Text>
-              <Badge variant="soft" color={userData.source === 'default' ? 'blue' : 'gray'}>
-                {userData.source}
+              <Badge variant="soft" color={isExternal ? 'gray' : 'blue'}>
+                {isExternal ? 'external' : 'default'}
               </Badge>
             </Box>
           </Flex>
 
-          {userData.roles.length > 0 && (
-            <Flex className="user-account-page__info-row" align="start">
-              <Text size="1" className="user-account-page__info-label" style={{ marginLeft: '24px' }}>Roles</Text>
-              <Flex gap="1" wrap="wrap">
-                {userData.roles.slice(0, 5).map((role) => (
-                  <Badge key={role} variant="outline" size="1">
-                    {role}
-                  </Badge>
-                ))}
-                {userData.roles.length > 5 && (
-                  <Badge variant="outline" size="1">
-                    +{userData.roles.length - 5} more
-                  </Badge>
-                )}
-              </Flex>
-            </Flex>
-          )}
         </Box>
       </SettingsFormSection>
 
-      {/* Change Password (only for local users) */}
-      {!userData.readOnly && (
-        <SettingsForm
-          title=""
-          onSubmit={handlePasswordSubmit}
-          onCancel={handlePasswordReset}
-          submitDisabled={hasPasswordErrors}
-          submitLabel="Change Password"
-          showActions={true}
-        >
-          <SettingsFormSection title="Change Password">
-            <Text size="2" className="user-account-page__section-description">
-              Update your account password. Password must be at least 8 characters.
-            </Text>
+      {/* Change Password (only for local users with successfully loaded profile) */}
+      {userData && !isExternal && (
+        <SettingsFormSection title="Change Password">
+          <Text size="2" className="user-account-page__section-description">
+            Update your account password. Password must be at least 8 characters.
+          </Text>
 
-            <SettingsPasswordInput
-              name="currentPassword"
-              label="Current Password"
-              value={passwordData.currentPassword}
-              onChange={(value) => handlePasswordChange('currentPassword', value)}
-              required
-            />
+          <SettingsPasswordInput
+            name="currentPassword"
+            label="Current Password"
+            value={passwordData.currentPassword}
+            onChange={(value) => handlePasswordChange('currentPassword', value)}
+            required
+          />
 
-            <SettingsPasswordInput
-              name="newPassword"
-              label="New Password"
-              value={passwordData.newPassword}
-              onChange={(value) => handlePasswordChange('newPassword', value)}
-              error={passwordErrors.newPassword}
-              helpText="Minimum 8 characters"
-              required
-            />
+          <SettingsPasswordInput
+            name="newPassword"
+            label="New Password"
+            value={passwordData.newPassword}
+            onChange={(value) => handlePasswordChange('newPassword', value)}
+            error={passwordErrors.newPassword}
+            helpText="Minimum 8 characters"
+            required
+          />
 
-            <SettingsPasswordInput
-              name="confirmPassword"
-              label="Confirm New Password"
-              value={passwordData.confirmPassword}
-              onChange={(value) => handlePasswordChange('confirmPassword', value)}
-              error={passwordErrors.confirmPassword}
-              required
-            />
-          </SettingsFormSection>
-        </SettingsForm>
+          <SettingsPasswordInput
+            name="confirmPassword"
+            label="Confirm New Password"
+            value={passwordData.confirmPassword}
+            onChange={(value) => handlePasswordChange('confirmPassword', value)}
+            error={passwordErrors.confirmPassword}
+            required
+          />
+
+          <Flex gap="2" mt="4">
+            <Button
+              type="button"
+              variant="solid"
+              size="2"
+              disabled={hasPasswordErrors}
+              onClick={handlePasswordSubmit}
+              data-testid="change-password-submit"
+            >
+              Change Password
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="2"
+              onClick={handlePasswordReset}
+              data-testid="change-password-cancel"
+            >
+              Discard
+            </Button>
+          </Flex>
+        </SettingsFormSection>
       )}
 
-      {userData.readOnly && (
+      {userData && isExternal && (
         <SettingsFormSection title="Password">
           <SettingsAlert type="info">
             Your account is managed externally. Password changes must be made through your
-            authentication provider ({userData.source}).
+            authentication provider.
           </SettingsAlert>
         </SettingsFormSection>
       )}
@@ -383,5 +376,3 @@ export function UserAccountPage({ className }: UserAccountPageProps) {
 }
 
 export default UserAccountPage;
-
-

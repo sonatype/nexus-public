@@ -14,7 +14,7 @@ package org.sonatype.nexus.coreui;
 
 import java.util.Set;
 
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;

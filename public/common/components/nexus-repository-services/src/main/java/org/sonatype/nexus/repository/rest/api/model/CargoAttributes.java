@@ -14,13 +14,13 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class CargoAttributes
 {
   public static final String REQUIRE_AUTHENTICATION = "requireAuthentication";
 
-  @ApiModelProperty(value = "Indicates if this repository requires authentication overriding anonymous access.",
+  @Schema(description = "Indicates if this repository requires authentication overriding anonymous access.",
       example = "false")
   protected Boolean requireAuthentication;
 

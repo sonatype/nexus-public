@@ -16,6 +16,7 @@ import {
   NxButton,
   NxButtonBar,
   NxCheckbox,
+  NxErrorAlert,
   NxFileUpload,
   NxFontAwesomeIcon,
   NxForm,
@@ -28,7 +29,8 @@ import {
   NxPageTitle,
   NxStatefulForm,
   NxTextInput,
-  NxTile
+  NxTile,
+  NxWarningAlert
 } from '@sonatype/react-shared-components';
 import { faPlus, faUpload, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { filter, isEmpty, keys, map, match, mapObjIndexed, path, split, test, values } from 'ramda';
@@ -105,7 +107,16 @@ export default function UploadDetails() {
         },
         devTools: true
       }),
-      { multipleUpload, repoSettings, componentFieldsByGroup, assetFields, data, hasPomExtension, groupHelpText } = state.context,
+      {
+        multipleUpload,
+        repoSettings,
+        componentFieldsByGroup,
+        assetFields,
+        data,
+        hasPomExtension,
+        groupHelpText,
+        hostedEnforcementError
+      } = state.context,
       assetStateKeys = filter(test(ASSET_NUM_MATCHER), keys(data));
 
   const mkField = field => <Field key={field.name} { ...field } machineState={state} send={send} />,
@@ -144,6 +155,46 @@ export default function UploadDetails() {
                         aria-describedby="upload-details-description">
           {() =>
             <NxTile.Content>
+              {hostedEnforcementError && hostedEnforcementError.errorCode === 'HOSTED_DEPLOYMENT_BLOCKED' &&
+                <NxErrorAlert data-testid="nxrm-upload-blocked-alert">
+                  <strong>{UploadStrings.UPLOAD.DETAILS.ENFORCEMENT_BLOCKED.TITLE}</strong>
+                  {' '}
+                  {UploadStrings.UPLOAD.DETAILS.ENFORCEMENT_BLOCKED.MESSAGE(
+                      hostedEnforcementError.assetName,
+                      hostedEnforcementError.repositoryName)}
+                  {/* CLM-40150: removed the "View Lifecycle evaluation" link. The IQ-side
+                      per-evaluation report UI does not exist for hosted-deployment blocks
+                      yet, so the link 404'd. Reference ID below remains the only support
+                      handle. NOTE: when the IQ report UI lands and this link is reintroduced,
+                      the CLM-39871 href-scheme allowlist (safeEvaluationUrl / ASVS V5.3.6
+                      XSS guard) MUST come back with it. */}
+                  {hostedEnforcementError.correlationId &&
+                    <span className="nxrm-upload-details__correlation-id"
+                          data-testid="nxrm-upload-blocked-correlation-id">
+                      {UploadStrings.UPLOAD.DETAILS.ENFORCEMENT_CORRELATION_ID_LABEL}:
+                      {' '}
+                      <code>{hostedEnforcementError.correlationId}</code>
+                    </span>
+                  }
+                </NxErrorAlert>
+              }
+              {hostedEnforcementError && hostedEnforcementError.errorCode === 'HOSTED_ENFORCEMENT_UNAVAILABLE' &&
+                <NxWarningAlert data-testid="nxrm-upload-unavailable-alert">
+                  <strong>{UploadStrings.UPLOAD.DETAILS.ENFORCEMENT_UNAVAILABLE.TITLE}</strong>
+                  {' '}
+                  {UploadStrings.UPLOAD.DETAILS.ENFORCEMENT_UNAVAILABLE.MESSAGE(
+                      hostedEnforcementError.assetName,
+                      hostedEnforcementError.repositoryName)}
+                  {hostedEnforcementError.correlationId &&
+                    <span className="nxrm-upload-details__correlation-id"
+                          data-testid="nxrm-upload-unavailable-correlation-id">
+                      {UploadStrings.UPLOAD.DETAILS.ENFORCEMENT_CORRELATION_ID_LABEL}:
+                      {' '}
+                      <code>{hostedEnforcementError.correlationId}</code>
+                    </span>
+                  }
+                </NxWarningAlert>
+              }
               <NxForm.RequiredFieldNotice />
               <NxTile.Subsection aria-labelledby="upload-details-tile-title">
                 <NxTile.SubsectionHeader>

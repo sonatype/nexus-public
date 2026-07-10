@@ -7,10 +7,11 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import { SearchSidebar } from '../SearchSidebar';
+import * as searchFilters from '../searchFilters';
 
 function renderWithTheme(ui) {
   return render(<Theme>{ui}</Theme>);
@@ -112,6 +113,171 @@ describe('SearchSidebar', () => {
       );
       const trigger = screen.getByTestId('repository-dropdown-trigger');
       expect(trigger).toHaveTextContent('maven-central');
+    });
+  });
+
+  describe('focus preservation', () => {
+    it('is wrapped with React.memo to prevent re-renders when parent updates with identical props', () => {
+      const REACT_MEMO_TYPE = Symbol.for('react.memo');
+      expect((SearchSidebar as unknown as { $$typeof: symbol }).$$typeof).toBe(REACT_MEMO_TYPE);
+    });
+
+    it('restores focus to the active filter input after disabled transitions false→true→false', () => {
+      const { rerender } = renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{}}
+          disabled={false}
+        />,
+      );
+
+      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      input.focus();
+      expect(document.activeElement).toBe(input);
+
+      // Simulate search starting (disabled=true loses focus on the input)
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{}}
+            disabled={true}
+          />
+        </Theme>,
+      );
+
+      // Simulate search completing (disabled back to false)
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{}}
+            disabled={false}
+          />
+        </Theme>,
+      );
+
+      // Focus must be restored to the input that was active before the search
+      expect(document.activeElement).toBe(input);
+    });
+
+    it('restores focus even when browser fires blur on the input as it becomes disabled', () => {
+      const { rerender } = renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{}}
+          disabled={false}
+        />,
+      );
+
+      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      input.focus();
+      expect(document.activeElement).toBe(input);
+
+      // Browser fires blur on the input when disabled=true is applied
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{}}
+            disabled={true}
+          />
+        </Theme>,
+      );
+      // Explicitly fire blur as a real browser would when the input becomes disabled
+      fireEvent.blur(input);
+
+      // Re-enable — focus should still be restored despite the blur event
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{}}
+            disabled={false}
+          />
+        </Theme>,
+      );
+
+      expect(document.activeElement).toBe(input);
+    });
+
+    it('preserves local input value while search is in-flight (disabled=true)', () => {
+      const onFilterChange = jest.fn();
+      const { rerender } = renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{}}
+          onFilterChange={onFilterChange}
+          disabled={false}
+        />,
+      );
+
+      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      fireEvent.change(input, { target: { value: 'commons-lang' } });
+      expect(input.value).toBe('commons-lang');
+
+      // Parent triggers disabled=true (search in-flight) but does NOT update filters prop
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{}}
+            onFilterChange={onFilterChange}
+            disabled={true}
+          />
+        </Theme>,
+      );
+
+      // Value must be preserved from local state, not reset to '' by the empty filters prop
+      expect(input.value).toBe('commons-lang');
+    });
+  });
+
+  describe('nameOrVersion filter exclusion', () => {
+    it('never renders a nameOrVersion input in the sidebar even if format filters include it', () => {
+      // Temporarily inject a nameOrVersion filter into maven's format-specific filters
+      // to simulate a future accidental addition
+      jest.spyOn(searchFilters, 'getFiltersForFormat').mockReturnValue([
+        {
+          id: 'nameOrVersion',
+          label: 'Name or Version',
+          type: 'text' as const,
+          apiParam: 'name',
+          placeholder: 'Filter by component name or version',
+        },
+        {
+          id: 'groupId',
+          label: 'Group ID',
+          type: 'text' as const,
+          apiParam: 'maven.groupId',
+          placeholder: 'e.g., org.apache.commons',
+        },
+      ]);
+
+      renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{}}
+        />,
+      );
+
+      // nameOrVersion must never appear in the sidebar — it lives in SearchResults header
+      expect(
+        screen.queryByPlaceholderText('Filter by component name or version'),
+      ).not.toBeInTheDocument();
+      // groupId is a legitimate sidebar filter and must still appear
+      expect(screen.getByLabelText(/Group ID/i)).toBeInTheDocument();
+
+      jest.restoreAllMocks();
     });
   });
 

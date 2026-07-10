@@ -12,19 +12,19 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.file.model;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiModel;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreDescriptor;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class FileBlobStoreApiModel
     extends BlobStoreApiModel
 {
-  @ApiModelProperty(FileBlobStoreDescriptor.PATH_HELP_TEXT)
+  @Schema(description = FileBlobStoreDescriptor.PATH_HELP_TEXT)
   @NotEmpty(message = "Path is required")
   private String path;
 

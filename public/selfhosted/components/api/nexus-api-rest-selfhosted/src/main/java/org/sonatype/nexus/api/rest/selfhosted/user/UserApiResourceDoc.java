@@ -12,25 +12,25 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.user;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.api.rest.selfhosted.user.model.ApiCreateUser;
 import org.sonatype.nexus.security.internal.rest.ApiUser;
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Swagger documentation for {@link UserApiResource}
  *
  * @since 3.17
  */
-@Api(value = "Security management: users")
+@Tag(name = "Security management: users")
 public interface UserApiResourceDoc
 {
   String USER_ID_DESCRIPTION = "The userid the request should apply to.";
@@ -39,26 +39,27 @@ public interface UserApiResourceDoc
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
-  @ApiOperation("Create a new user in the default source.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
-  ApiUser createUser(@ApiParam("A representation of the user to create.") @NotNull @Valid ApiCreateUser user);
+  @Operation(summary = "Create a new user in the default source.")
+  @ApiResponses(value = {@ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
+  ApiUser createUser(
+      @Parameter(description = "A representation of the user to create.") @NotNull @Valid ApiCreateUser user);
 
-  @ApiOperation("Update an existing user.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)})
+  @Operation(summary = "Update an existing user.")
+  @ApiResponses(value = {@ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND),
+      @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)})
   void updateUser(
-      @ApiParam(value = USER_ID_DESCRIPTION) String userId,
-      @ApiParam("A representation of the user to update.") @NotNull @Valid ApiUser user);
+      @Parameter(description = USER_ID_DESCRIPTION) String userId,
+      @Parameter(description = "A representation of the user to update.") @NotNull @Valid ApiUser user);
 
-  @ApiOperation("Change a user's password.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_NOT_FOUND),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)})
+  @Operation(summary = "Change a user's password.")
+  @ApiResponses(value = {@ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.USER_NOT_FOUND),
+      @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)})
   void changePassword(
-      @ApiParam(value = USER_ID_DESCRIPTION) String userId,
-      @ApiParam(value = PASSWORD_DESCRIPTION) @NotNull(message = "Password must be supplied.") String password);
+      @Parameter(description = USER_ID_DESCRIPTION) String userId,
+      @Parameter(description = PASSWORD_DESCRIPTION) @NotNull(message = "Password must be supplied.") String password);
 }

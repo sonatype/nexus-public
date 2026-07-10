@@ -487,14 +487,14 @@ describe('UsersList', () => {
   });
 
   describe('self-hosted distribution (isCloud=false)', () => {
-    it('fetches users with default source', async () => {
+    it('fetches users from all sources', async () => {
       render(
         <UsersList onSelect={mockOnSelect} onCreate={mockOnCreate} />,
         { wrapper: TestWrapper }
       );
 
       await waitFor(() => {
-        expect(mockFetchUsers).toHaveBeenCalledWith('', 'default');
+        expect(mockFetchUsers).toHaveBeenCalledWith('', undefined);
       });
     });
 

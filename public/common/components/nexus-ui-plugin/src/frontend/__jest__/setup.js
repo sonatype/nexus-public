@@ -83,6 +83,7 @@ global.NX = {
   Permissions: {
     check: jest.fn().mockReturnValue(true)
   },
+  getApplication: jest.fn(() => ({})),
   app: {
     Application: {
       bundleActive: jest.fn()

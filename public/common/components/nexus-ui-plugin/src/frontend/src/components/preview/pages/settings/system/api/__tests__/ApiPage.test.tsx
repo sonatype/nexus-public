@@ -217,4 +217,25 @@ describe('ApiPage', () => {
       expect(screen.getByTestId('api-layout')).toBeInTheDocument();
     });
   });
+
+  describe('Breadcrumb Navigation', () => {
+    it('renders breadcrumbs for API page', async () => {
+      await act(async () => {
+        renderWithTheme(<ApiPage />);
+      });
+
+      // Breadcrumbs: Settings (clickable) > API (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'API' })).toBeInTheDocument();
+    });
+
+    it('clicking Settings breadcrumb navigates to settings page', async () => {
+      await act(async () => {
+        renderWithTheme(<ApiPage />);
+      });
+
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+  });
 });

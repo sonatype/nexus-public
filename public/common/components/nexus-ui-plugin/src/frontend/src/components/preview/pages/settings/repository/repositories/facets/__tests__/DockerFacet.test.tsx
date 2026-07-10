@@ -16,6 +16,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { DockerFacet, createRoutingModeChangeHandler, ROUTING_PATH_BASED, ROUTING_CONNECTORS } from '../DockerFacet';
 import { RepositoryFormData } from '../../types';
+import { DOCKER_FOREIGN_LAYER_WHITELIST_ERROR_KEY } from '../../repositoryFormMachine';
 
 const CONNECTOR_FORM_DATA: RepositoryFormData = {
   name: 'test-docker',
@@ -96,6 +97,14 @@ describe('DockerFacet', () => {
     expect(screen.getByText('Subdomain')).toBeInTheDocument();
   });
 
+  it('shows all routing and connector fields when isCloud is explicitly false', () => {
+    renderFacet({ isCloud: false, formData: CONNECTOR_FORM_DATA });
+    expect(screen.getByText('Routing Mode')).toBeInTheDocument();
+    expect(screen.getByText('HTTP Connector')).toBeInTheDocument();
+    expect(screen.getByText('HTTPS Connector')).toBeInTheDocument();
+    expect(screen.getByText('Subdomain')).toBeInTheDocument();
+  });
+
   it('always shows force basic auth regardless of routing mode', () => {
     renderFacet({ formData: PATH_BASED_FORM_DATA });
     expect(screen.getByText('Force Basic Authentication')).toBeInTheDocument();
@@ -145,6 +154,111 @@ describe('DockerFacet', () => {
     const errors = { 'docker.httpPort': 'Port must be between 1 and 65535' };
     renderFacet({ errors });
     expect(screen.getByText('Port must be between 1 and 65535')).toBeInTheDocument();
+  });
+
+  describe('custom index URL validation', () => {
+    const CUSTOM_INDEX_FORM_DATA: RepositoryFormData = {
+      ...PROXY_FORM_DATA,
+      dockerProxy: { indexType: 'CUSTOM', indexUrl: '', cacheForeignLayers: false, foreignLayerUrlWhitelist: [] },
+    };
+
+    it('shows custom index URL field when index type is CUSTOM', () => {
+      renderFacet({ repoType: 'proxy', formData: CUSTOM_INDEX_FORM_DATA });
+      expect(screen.getByLabelText(/index url/i)).toBeInTheDocument();
+    });
+
+    it('displays invalid URL format error when provided', () => {
+      const errors = { 'dockerProxy.indexUrl': 'Invalid URL format' };
+      renderFacet({ repoType: 'proxy', formData: CUSTOM_INDEX_FORM_DATA, errors });
+      expect(screen.getByText('Invalid URL format')).toBeInTheDocument();
+    });
+
+    it('displays scheme error when provided', () => {
+      const errors = { 'dockerProxy.indexUrl': 'Index URL must use http or https' };
+      renderFacet({ repoType: 'proxy', formData: CUSTOM_INDEX_FORM_DATA, errors });
+      expect(screen.getByText('Index URL must use http or https')).toBeInTheDocument();
+    });
+
+    it('displays required index URL error when provided', () => {
+      const errors = { 'dockerProxy.indexUrl': 'Index URL is required' };
+      renderFacet({ repoType: 'proxy', formData: CUSTOM_INDEX_FORM_DATA, errors });
+      expect(screen.getByText('Index URL is required')).toBeInTheDocument();
+    });
+
+    it('does not display index URL error when no error is set', () => {
+      renderFacet({ repoType: 'proxy', formData: CUSTOM_INDEX_FORM_DATA, errors: {} });
+      expect(screen.queryByText('Invalid URL format.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Index URL is required')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('cloud environment (isCloud=true)', () => {
+    it('hides Routing Mode select in cloud', () => {
+      renderFacet({ isCloud: true });
+      expect(screen.queryByText('Routing Mode')).not.toBeInTheDocument();
+    });
+
+    it('hides HTTP Connector field in cloud', () => {
+      renderFacet({ isCloud: true, formData: CONNECTOR_FORM_DATA });
+      expect(screen.queryByText('HTTP Connector')).not.toBeInTheDocument();
+    });
+
+    it('hides HTTPS Connector field in cloud', () => {
+      renderFacet({ isCloud: true, formData: CONNECTOR_FORM_DATA });
+      expect(screen.queryByText('HTTPS Connector')).not.toBeInTheDocument();
+    });
+
+    it('hides Subdomain field in cloud', () => {
+      renderFacet({ isCloud: true, formData: CONNECTOR_FORM_DATA });
+      expect(screen.queryByText('Subdomain')).not.toBeInTheDocument();
+    });
+
+    it('still shows Force Basic Authentication in cloud', () => {
+      renderFacet({ isCloud: true });
+      expect(screen.getByText('Force Basic Authentication')).toBeInTheDocument();
+    });
+
+    it('still shows Enable Docker V1 API in cloud', () => {
+      renderFacet({ isCloud: true });
+      expect(screen.getByText('Enable Docker V1 API')).toBeInTheDocument();
+    });
+
+    it('calls onNestedChange to set pathEnabled=true when isCloud=true and pathEnabled is false', () => {
+      const onNestedChange = jest.fn();
+      renderFacet({ isCloud: true, formData: CONNECTOR_FORM_DATA, onNestedChange });
+      expect(onNestedChange).toHaveBeenCalledWith('docker', {
+        pathEnabled: true,
+        httpPort: null,
+        httpsPort: null,
+        subdomain: null,
+      });
+    });
+
+    it('does not call onNestedChange when isCloud=true and pathEnabled is already true', () => {
+      const onNestedChange = jest.fn();
+      renderFacet({ isCloud: true, formData: PATH_BASED_FORM_DATA, onNestedChange });
+      expect(onNestedChange).not.toHaveBeenCalled();
+    });
+
+    it('still shows Docker Index section for proxy repos in cloud', () => {
+      renderFacet({ isCloud: true, repoType: 'proxy', formData: PROXY_FORM_DATA });
+      expect(screen.getAllByText('Docker Index').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/download and cache foreign layers/i)).toBeInTheDocument();
+    });
+  });
+
+  it('displays foreign layer whitelist validation error when provided', () => {
+    const errorMessage = 'Invalid URL format: "not-a-url"';
+    const errors = { [DOCKER_FOREIGN_LAYER_WHITELIST_ERROR_KEY]: errorMessage };
+    renderFacet({
+      repoType: 'proxy',
+      formData: {
+        ...PROXY_FORM_DATA,
+        dockerProxy: { indexType: 'HUB', cacheForeignLayers: true, foreignLayerUrlWhitelist: ['not-a-url'] },
+      },
+      errors,
+    });
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
   });
 
   describe('createRoutingModeChangeHandler', () => {

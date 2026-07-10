@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-test-common</artifactId>
@@ -32,9 +32,10 @@
   </properties>
 
   <dependencies>
+    <!-- NEXUS-46395: javax.servlet-api 4.0.1 → jakarta.servlet-api 6.0 (Jakarta EE 10 / RESTEasy 7) -->
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
 
     <dependency>
@@ -50,6 +51,7 @@
     <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
+      <classifier>jakarta</classifier>
       <optional>true</optional>
     </dependency>
 

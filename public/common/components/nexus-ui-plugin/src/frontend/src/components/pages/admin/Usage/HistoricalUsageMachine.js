@@ -17,13 +17,19 @@
 import { assign, createMachine } from 'xstate';
 
 import Axios from 'axios';
+import { isPermissionError } from './UsageInsightsUtils';
 
 export default createMachine(
   {
     id: 'LicensingHistoricalUsageMachine',
     initial: 'loading',
 
-    context: {},
+    context: {
+      data: null,
+      pristineData: null,
+      loadError: null,
+      isPermissionError: false
+    },
 
     states: {
       loading: {
@@ -36,13 +42,13 @@ export default createMachine(
           onError: {
             target: 'loadError',
             actions: assign({
-              loadError: (context, event) => event.data
+              loadError: (context, event) => event.data,
+              isPermissionError: (context, event) => isPermissionError(event.data)
             })
           }
         }
       },
       loaded: {},
-      close: {},
       loadError: {
         on: {
           RETRY: {
@@ -60,7 +66,8 @@ export default createMachine(
         pristineData: (_, { data }) => data.data
       }),
       clearError: assign({
-        loadError: () => null
+        loadError: () => null,
+        isPermissionError: () => false
       })
     },
     services: {

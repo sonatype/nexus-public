@@ -25,7 +25,7 @@ import type {
   RepositoryProfileData,
   HealthCheckData,
   FirewallData,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
 
 // =============================================================================
 // Types

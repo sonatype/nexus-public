@@ -28,7 +28,7 @@ import type {
   TaskInfo,
   CapabilityInfo,
   HttpSettingsInfo,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
 
 // =============================================================================
 // Types

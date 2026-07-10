@@ -98,7 +98,7 @@ describe('EvaluationConfiguration', () => {
     render(<EvaluationConfiguration parentMachine={overrideStateMachine} />);
 
     expect(screen.getByText('Activity Time Frame')).toBeInTheDocument();
-    expect(screen.getByText('Artifact Latest Versions')).toBeInTheDocument();
+    expect(screen.getByText('Latest Deployed Versions')).toBeInTheDocument();
     expect(screen.getByText('Policy Evaluation Stage')).toBeInTheDocument();
   });
 
@@ -106,7 +106,7 @@ describe('EvaluationConfiguration', () => {
     render(<EvaluationConfiguration parentMachine={mockParentMachine} />);
 
     const activityTimeFrameSelect = screen.getByLabelText('Activity Time Frame');
-    const artifactLatestVersionsSelect = screen.getByLabelText('Artifact Latest Versions');
+    const artifactLatestVersionsSelect = screen.getByLabelText('Latest Deployed Versions');
     const policyEvaluationStageSelect = screen.getByLabelText('Policy Evaluation Stage');
 
     expect(activityTimeFrameSelect).toBeDisabled();
@@ -123,7 +123,7 @@ describe('EvaluationConfiguration', () => {
     });
 
     const activityTimeFrameSelect = screen.getByLabelText('Activity Time Frame');
-    const artifactLatestVersionsSelect = screen.getByLabelText('Artifact Latest Versions');
+    const artifactLatestVersionsSelect = screen.getByLabelText('Latest Deployed Versions');
     const policyEvaluationStageSelect = screen.getByLabelText('Policy Evaluation Stage');
 
     await waitFor(() => {
@@ -230,7 +230,7 @@ describe('EvaluationConfiguration', () => {
     render(<EvaluationConfiguration parentMachine={overrideWithValuesStateMachine} />);
 
     const activityTimeFrameSelect = screen.getByLabelText('Activity Time Frame');
-    const artifactLatestVersionsSelect = screen.getByLabelText('Artifact Latest Versions');
+    const artifactLatestVersionsSelect = screen.getByLabelText('Latest Deployed Versions');
     const policyEvaluationStageSelect = screen.getByLabelText('Policy Evaluation Stage');
 
     expect(activityTimeFrameSelect).toHaveValue('60');
@@ -270,7 +270,7 @@ describe('EvaluationConfiguration', () => {
 
     await waitFor(() => {
       const activityTimeFrameSelect = screen.getByLabelText('Activity Time Frame');
-      const artifactLatestVersionsSelect = screen.getByLabelText('Artifact Latest Versions');
+      const artifactLatestVersionsSelect = screen.getByLabelText('Latest Deployed Versions');
       const policyEvaluationStageSelect = screen.getByLabelText('Policy Evaluation Stage');
 
       expect(activityTimeFrameSelect).toHaveValue('30');

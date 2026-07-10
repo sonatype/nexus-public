@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui.internal.capability;
 
 import java.util.List;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.coreui.FormFieldXO;
 

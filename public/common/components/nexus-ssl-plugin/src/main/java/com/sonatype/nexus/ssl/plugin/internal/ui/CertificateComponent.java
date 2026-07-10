@@ -18,8 +18,8 @@ import java.security.cert.Certificate;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
 import com.sonatype.nexus.ssl.plugin.validator.HostnameOrIpAddress;
 import com.sonatype.nexus.ssl.plugin.validator.PemCertificate;

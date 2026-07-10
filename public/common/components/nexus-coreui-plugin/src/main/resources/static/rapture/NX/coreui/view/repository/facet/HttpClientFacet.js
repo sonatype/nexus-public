@@ -48,6 +48,11 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
         itemId: 'attributes_httpclient_authentication_username',
         name: 'attributes.httpclient.authentication.username',
         fieldLabel: NX.I18n.get('System_AuthenticationSettings_Username_FieldLabel'),
+        // NEXUS-23898: prevent the browser password manager from auto-filling these proxy
+        // upstream credentials with the user's Nexus login credentials — if it does, the
+        // hidden fields' values diverge from their captured originalValue and the form
+        // reports as dirty even when the user has not edited anything.
+        inputAttrTpl: ' autocomplete="off"',
         allowBlank: false
       },
       {
@@ -56,6 +61,10 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
         inputType: 'password',
         name: 'attributes.httpclient.authentication.password',
         fieldLabel: NX.I18n.get('System_AuthenticationSettings_Password_FieldLabel'),
+        // NEXUS-23898: see username field above. autocomplete="new-password" is the
+        // documented signal to suppress saved-credential autofill on password inputs;
+        // "off" is unreliable on password fields in some browsers.
+        inputAttrTpl: ' autocomplete="new-password"',
         allowBlank: false
       },
       {
@@ -186,15 +195,33 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
   },
 
   authTypeChanged: function(combo) {
-    var ntlmFields = this.up('form').down('#ntlmFields');
+    // NEXUS-23898: enable/disable on the individual NTLM textfields, not on the parent
+    // fieldcontainer. ExtJS's Container.enable() does not reliably re-enable child fields
+    // when the container started as hidden + disabled during initial render — the original
+    // symptom was that NTLM Hostname/Domain were visible but uneditable on the proxy create
+    // form. Mirrors the per-field pattern used in BearerHttpClientFacet.authTypeChanged.
+    var form = this.up('form'),
+        ntlmFields = form.down('#ntlmFields'),
+        ntlmHost = form.down('[name=attributes.httpclient.authentication.ntlmHost]'),
+        ntlmDomain = form.down('[name=attributes.httpclient.authentication.ntlmDomain]');
 
-    if(combo.getValue() === 'ntlm') {
+    if (combo.getValue() === 'ntlm') {
       ntlmFields.show();
-      ntlmFields.enable();
+      if (ntlmHost) {
+        ntlmHost.enable();
+      }
+      if (ntlmDomain) {
+        ntlmDomain.enable();
+      }
     }
     else {
       ntlmFields.hide();
-      ntlmFields.disable();
+      if (ntlmHost) {
+        ntlmHost.disable();
+      }
+      if (ntlmDomain) {
+        ntlmDomain.disable();
+      }
     }
   },
 

@@ -14,8 +14,13 @@ package org.sonatype.nexus.bootstrap.entrypoint;
 
 import java.util.regex.Pattern;
 
-import org.sonatype.nexus.bootstrap.application.JavaxProviderDefaultListableBeanFactory;
+// NEXUS-46395: deleted JavaxProviderDefaultListableBeanFactory shim. Spring 6's stock
+// DefaultListableBeanFactory natively supports jakarta.inject.Provider; the shim was only
+// needed while we still had javax.inject.Provider consumers, all of which migrated to
+// jakarta.inject.Provider in Phase 3.
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.inject.Named;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.context.ApplicationContext;
@@ -92,14 +97,42 @@ public class SpringComponentScan
 
   /**
    * Create a child context to perform component scan. With this approach we isolate the context refresh from the parent
-   * context
+   * context.
+   *
+   * <p>
+   * NEXUS-46395: explicitly set the child's {@link org.springframework.core.env.Environment} to the parent's,
+   * rather than relying on {@code setParent(...)}'s implicit {@code Environment#merge}. The merge call only
+   * appends property sources from the parent <em>at the moment {@code setParent} runs</em>; subsequent reads
+   * from the child's environment do not delegate to the parent. {@code ApplicationLauncher} adds
+   * {@code nexus.edition} to the parent context's environment via a {@code MapPropertySource} just before this
+   * method runs, so the merge usually catches it — but in stricter timing scenarios (observed when booting the
+   * cloud-aws assembly with the stock Spring 6 {@code DefaultListableBeanFactory} replacing our Phase 1 shim),
+   * the child's environment was being read for {@code @ConditionalOnEdition} evaluation before any property
+   * sources had been propagated, causing {@link
+   * com.sonatype.nexus.bootstrap.entrypoint.conditional.OnEditionCondition} to reject every cloud-only bean
+   * with the message "nexus.edition property is not yet available". The downstream symptom was a
+   * {@code NoSuchBeanDefinitionException} for {@code RepositoryManager} when the capability registry tried to
+   * autowire a {@code FirewallRepositoryNameValidator}.
+   *
+   * <p>
+   * Using {@code setEnvironment(parentEnv)} sidesteps the merge entirely — the child reads the parent's
+   * environment directly, so anything added to the parent before this method runs (and anything added after
+   * but before the second-pass scan completes) is visible during condition evaluation.
+   *
+   * <p>
+   * Visible for testing — see {@code SpringComponentScanTest}, which pins the
+   * {@code childContext.getEnvironment() == parentContext.getEnvironment()} contract so a future
+   * refactor can't silently revert to the implicit merge.
    */
-  private AnnotationConfigApplicationContext getChildContext() {
-    JavaxProviderDefaultListableBeanFactory beanFactory =
-        new JavaxProviderDefaultListableBeanFactory(parentContext.getBeanFactory());
+  @VisibleForTesting
+  AnnotationConfigApplicationContext getChildContext() {
+    DefaultListableBeanFactory beanFactory =
+        new DefaultListableBeanFactory(parentContext.getBeanFactory());
 
     AnnotationConfigApplicationContext childContext = new AnnotationConfigApplicationContext(beanFactory);
     childContext.setParent(parentContext);
+    // NEXUS-46395: see method-level Javadoc. Must come AFTER setParent so we override the merged copy.
+    childContext.setEnvironment(parentContext.getEnvironment());
     childContext.setId(CHILDREN_CONTEXT_ID);
 
     PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();

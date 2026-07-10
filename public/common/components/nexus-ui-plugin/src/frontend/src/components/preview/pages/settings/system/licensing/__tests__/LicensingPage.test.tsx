@@ -28,27 +28,22 @@ const mockedUseLicensingApi = useLicensingApiModule.useLicensingApi as jest.Mock
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn().mockReturnValue(false),
+    useUser: jest.fn().mockReturnValue(null),
+    useState: jest.fn().mockReturnValue(undefined),
+    state: jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(undefined) }),
   },
 }));
 
-// Mock HistoricalUsage component
-jest.mock('../../../../../../pages/admin/Usage/HistoricalUsage', () => ({
+// Mock parseApiError used by LicensingPage for error handling
+jest.mock('../../../../../../../interface/api', () => ({
+  parseApiError: jest.fn((err: any) => ({ message: err?.message || 'An error occurred' })),
+}));
+
+// Mock HistoricalUsagePreview to avoid deep dependency chain
+jest.mock('../HistoricalUsagePreview', () => ({
   __esModule: true,
-  default: jest.fn(() => <div data-testid="historical-usage">Historical Usage</div>),
-  HistoricalUsage: jest.fn(() => <div data-testid="historical-usage">Historical Usage</div>),
-}));
-
-// Mock historicalUsageColumns
-jest.mock('../../../../../../pages/admin/Usage/HistoricalUsageColumns', () => ({
-  historicalUsageColumns: {
-    metricDateMonth: { key: 'month', Header: () => 'Month' },
-    peakComponents: { key: 'components', Header: () => 'Components' },
-    percentageChangeComponent: { key: 'componentChange', Header: () => 'Change' },
-    totalRequests: { key: 'requests', Header: () => 'Requests' },
-    percentageChangeRequests: { key: 'requestChange', Header: () => 'Change' },
-    totalEgress: { key: 'egress', Header: () => 'Egress' },
-    peakStorage: { key: 'storage', Header: () => 'Storage' },
-  },
+  default: jest.fn(() => <div data-testid="historical-usage-preview">Historical Usage</div>),
+  HistoricalUsagePreview: jest.fn(() => <div data-testid="historical-usage-preview">Historical Usage</div>),
 }));
 
 // Mock shared/form to avoid SCSS loading
@@ -71,9 +66,22 @@ jest.mock('../../../../../shared/form', () => ({
 
 // Mock InstallLicense to avoid its deep dependency chain
 jest.mock('../InstallLicense', () => ({
-  InstallLicense: ({ onLicenseInstalled }: { hasExistingLicense: boolean; onLicenseInstalled: () => void }) => (
+  InstallLicense: ({ onLicenseInstalled }: { hasExistingLicense: boolean; onLicenseInstalled: (data: any) => void }) => (
     <div data-testid="install-license">
-      <button onClick={onLicenseInstalled}>Install License</button>
+      <button
+        onClick={() => onLicenseInstalled({
+          contactCompany: 'New Corp',
+          contactName: 'Jane Doe',
+          contactEmail: 'jane@newcorp.com',
+          effectiveDate: '2024-06-01T00:00:00Z',
+          expirationDate: '2026-06-01T00:00:00Z',
+          licenseType: 'PRO',
+          licensedUsers: '50',
+          fingerprint: 'xyz789',
+        })}
+      >
+        Install License
+      </button>
     </div>
   ),
 }));
@@ -92,7 +100,7 @@ describe('LicensingPage', () => {
     effectiveDate: '2024-01-01T00:00:00Z',
     expirationDate: '2025-12-31T23:59:59Z',
     licenseType: 'PRO, Enterprise',
-    licensedUsers: 100,
+    licensedUsers: '100',
     fingerprint: 'abc123def456',
     maxRepoRequests: 1000000,
     maxRepoComponents: 50000,
@@ -160,6 +168,23 @@ describe('LicensingPage', () => {
 
     expect(screen.getByText('1,000,000')).toBeInTheDocument(); // maxRepoRequests formatted
     expect(screen.getByText('50,000')).toBeInTheDocument(); // maxRepoComponents formatted
+  });
+
+  it('displays licensed usage when limit values are zero', async () => {
+    mockFetchLicense.mockResolvedValue({
+      ...mockLicense,
+      maxRepoRequests: 0,
+      maxRepoComponents: 0,
+    });
+
+    render(<LicensingPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Licensed Usage')).toBeInTheDocument();
+    });
+
+    // Zero values are valid — section must render (not hidden by falsy check)
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays error message when fetch fails', async () => {
@@ -282,23 +307,36 @@ describe('LicensingPage', () => {
     expect(screen.queryByText('Licensed Usage')).not.toBeInTheDocument();
   });
 
-  it('refreshes license data when license is installed', async () => {
-    const mockOnLicenseInstalled = jest.fn();
+  it('shows new license details immediately after license is installed without refetching', async () => {
+    // Start with no license installed
+    mockFetchLicense.mockResolvedValue({});
+
     render(<LicensingPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Licensing' })).toBeInTheDocument();
     });
 
-    // Simulate license installation by calling the callback
-    // This would normally be called by InstallLicense component
-    const updatedLicense = { ...mockLicense, contactCompany: 'New Corp' };
-    mockFetchLicense.mockResolvedValue(updatedLicense);
+    // Confirm no license details shown initially
+    expect(screen.queryByText('New Corp')).not.toBeInTheDocument();
 
-    // Trigger refresh (simulating InstallLicense calling onLicenseInstalled)
+    // Clear mock call count from initial load
+    mockFetchLicense.mockClear();
+
+    // Click "Install License" which calls onLicenseInstalled with the new license data
+    const installButton = screen.getByRole('button', { name: 'Install License' });
+    fireEvent.click(installButton);
+
+    // License details should appear immediately without a second fetchLicense call
     await waitFor(() => {
-      expect(mockFetchLicense).toHaveBeenCalled();
+      expect(screen.getByText('New Corp')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.getByText('jane@newcorp.com')).toBeInTheDocument();
+
+    // Should NOT have made a second fetch - data comes from POST response
+    expect(mockFetchLicense).not.toHaveBeenCalled();
   });
 
   it('formats dates correctly', async () => {
@@ -337,7 +375,7 @@ describe('LicensingPage', () => {
   it('does not display licensed users when zero or undefined', async () => {
     mockFetchLicense.mockResolvedValue({
       ...mockLicense,
-      licensedUsers: 0,
+      licensedUsers: '0',
     });
 
     render(<LicensingPage />, { wrapper: TestWrapper });
@@ -348,6 +386,28 @@ describe('LicensingPage', () => {
 
     expect(screen.queryByText('Number of Licensed Users')).not.toBeInTheDocument();
   });
+
+  describe('breadcrumbs', () => {
+    it('renders Settings breadcrumb that navigates to settings page', async () => {
+      render(<LicensingPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      // Click Settings breadcrumb navigates to settings page
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders Licensing as current page breadcrumb', async () => {
+      render(<LicensingPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        // The current page item is rendered as Text (not a button) with aria-current="page"
+        const breadcrumb = screen.getByText('Licensing', { selector: '[aria-current="page"]' });
+        expect(breadcrumb).toBeInTheDocument();
+      });
+    });
+  });
 });
-
-

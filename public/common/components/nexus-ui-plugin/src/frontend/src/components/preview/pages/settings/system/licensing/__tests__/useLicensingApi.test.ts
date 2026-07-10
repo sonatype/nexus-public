@@ -30,6 +30,7 @@ jest.mock('../../../../../../../interface/api', () => ({
     delete: (...args: unknown[]) => mockRestClient.delete(...args),
   },
   parseApiError: jest.fn((err: any) => ({
+    status: err?.response?.status ?? 0,
     message: err?.response?.data?.message || err?.message || 'An error occurred',
   })),
 }));
@@ -48,7 +49,7 @@ describe('useLicensingApi', () => {
     effectiveDate: '2024-01-01T00:00:00Z',
     expirationDate: '2025-12-31T23:59:59Z',
     licenseType: 'PRO',
-    licensedUsers: 100,
+    licensedUsers: '100',
     fingerprint: 'abc123',
     maxRepoRequests: 1000000,
     maxRepoComponents: 50000,
@@ -70,7 +71,7 @@ describe('useLicensingApi', () => {
         licenseData = await result.current.fetchLicense();
       });
 
-      expect(mockRestClient.get).toHaveBeenCalledWith('service/rest/internal/ui/license');
+      expect(mockRestClient.get).toHaveBeenCalledWith('service/rest/v1/system/license');
       expect(licenseData).toEqual(mockLicenseData);
     });
 
@@ -87,7 +88,23 @@ describe('useLicensingApi', () => {
       expect(licenseData).toEqual({});
     });
 
-    it('throws error on failure', async () => {
+    it('returns empty object on 402 Payment Required (no license installed)', async () => {
+      // 402 is the expected response when no license is installed
+      const err402 = { response: { status: 402, data: { message: 'Missing or invalid license' } } };
+      mockRestClient.get.mockRejectedValue(err402);
+
+      const { result } = renderHook(() => useLicensingApi());
+
+      let licenseData;
+      await act(async () => {
+        licenseData = await result.current.fetchLicense();
+      });
+
+      // Should not throw — treat as "no license installed"
+      expect(licenseData).toEqual({});
+    });
+
+    it('throws error on non-402 failure', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       mockRestClient.get.mockRejectedValue(new Error('Network error'));
 
@@ -103,10 +120,10 @@ describe('useLicensingApi', () => {
   });
 
   describe('uploadLicense', () => {
-    it('uploads license file successfully', async () => {
+    it('uploads license file and returns license data from POST response', async () => {
       const file = new File(['license content'], 'license.lic', { type: 'application/octet-stream' });
       const arrayBuffer = new ArrayBuffer(8);
-      mockRestClient.post.mockResolvedValue({});
+      mockRestClient.post.mockResolvedValue(mockLicenseData);
 
       // Mock FileReader
       const mockFileReader = {
@@ -119,6 +136,7 @@ describe('useLicensingApi', () => {
 
       const { result } = renderHook(() => useLicensingApi());
 
+      let returnedData: any;
       await act(async () => {
         // Trigger FileReader onload
         setTimeout(() => {
@@ -126,12 +144,12 @@ describe('useLicensingApi', () => {
             mockFileReader.onload({} as any);
           }
         }, 0);
-        await result.current.uploadLicense(file);
+        returnedData = await result.current.uploadLicense(file);
       });
 
       await waitFor(() => {
         expect(mockRestClient.post).toHaveBeenCalledWith(
-          'service/rest/internal/ui/license',
+          'service/rest/v1/system/license',
           arrayBuffer,
           {
             headers: {
@@ -141,8 +159,37 @@ describe('useLicensingApi', () => {
         );
       });
 
+      expect(returnedData).toEqual(mockLicenseData);
       expect(result.current.loading).toBe(false);
       expect(result.current.error).toBeNull();
+    });
+
+    it('returns empty object when POST response is missing data', async () => {
+      const file = new File(['license content'], 'license.lic', { type: 'application/octet-stream' });
+      const arrayBuffer = new ArrayBuffer(8);
+      mockRestClient.post.mockResolvedValue(undefined);
+
+      const mockFileReader = {
+        readAsArrayBuffer: jest.fn(),
+        result: arrayBuffer,
+        onload: null as any,
+        onerror: null as any,
+      };
+      global.FileReader = jest.fn(() => mockFileReader) as any;
+
+      const { result } = renderHook(() => useLicensingApi());
+
+      let returnedData: any;
+      await act(async () => {
+        setTimeout(() => {
+          if (mockFileReader.onload) {
+            mockFileReader.onload({} as any);
+          }
+        }, 0);
+        returnedData = await result.current.uploadLicense(file);
+      });
+
+      expect(returnedData).toEqual({});
     });
 
     it('sets error state on upload failure', async () => {
@@ -341,5 +388,3 @@ describe('useLicensingApi', () => {
     });
   });
 });
-
-

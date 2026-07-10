@@ -613,8 +613,25 @@ public class S3BlobStore
     Blob sourceBlob = checkNotNull(get(blobId));
     String sourcePath = contentPath(sourceBlob.getId());
     BlobId copyBlobId = createCopyBlobId(sourceBlob.getId());
+    String destinationPath = contentPath(copyBlobId);
+
+    // NEXUS-53503: when the computed destination key equals the source key (e.g. the source blob
+    // is already permanent so createCopyBlobId is a no-op), an S3 CopyObject with src == dest and
+    // no metadata change is rejected by S3 with InvalidRequestException ("copy an object to
+    // itself"). The OCI manifest write path triggers this by storing the same blob twice. In that
+    // case the content already exists at the destination key, so the physical byte copy is a
+    // no-op and must be skipped - but we still run create() so the blob attributes/properties and
+    // metrics are (re)written, which makeBlobPermanent and other callers rely on.
+    boolean selfCopy = sourcePath.equals(destinationPath);
+
     return create(headers, destination -> {
-      copier.copy(s3, getConfiguredBucket(), sourcePath, destination);
+      if (selfCopy) {
+        log.debug("Skipping S3 self-copy of content for blob {}: source and destination keys are "
+            + "identical ({}); bytes already present, only attributes will be rewritten", copyBlobId, destinationPath);
+      }
+      else {
+        copier.copy(s3, getConfiguredBucket(), sourcePath, destination);
+      }
       BlobMetrics metrics = sourceBlob.getMetrics();
       return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
     }, copyBlobId);

@@ -76,42 +76,43 @@ export function SettingsPasswordInput({
           {helpText}
         </Text>
       )}
-      <Box className="settings-password-input__wrapper">
-        <TextField.Root
-          ref={inputRef}
-          id={inputId}
-          name={name}
-          type={showPassword ? 'text' : 'password'}
-          value={value}
-          onChange={handleChange}
-          onBlur={onBlur}
-          onFocus={onFocus}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          autoComplete={autoComplete}
-          aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
-          aria-invalid={!!error}
-          data-testid={`password-${name}`}
-          className="settings-password-input__input"
-          size="2"
-        />
+      <TextField.Root
+        ref={inputRef}
+        id={inputId}
+        name={name}
+        type={showPassword ? 'text' : 'password'}
+        value={value}
+        onChange={handleChange}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        placeholder={placeholder}
+        disabled={disabled}
+        required={required}
+        autoComplete={autoComplete}
+        aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
+        aria-invalid={!!error}
+        data-testid={`password-${name}`}
+        className="settings-password-input__input"
+        size="2"
+      >
         {showToggle && value && (
-          <IconButton
-            type="button"
-            variant="ghost"
-            color="gray"
-            size="1"
-            className="settings-password-input__toggle"
-            onClick={toggleVisibility}
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
-            data-testid={`password-toggle-${name}`}
-            tabIndex={-1}
-          >
-            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-          </IconButton>
+          <TextField.Slot side="right">
+            <IconButton
+              type="button"
+              variant="ghost"
+              color="gray"
+              size="1"
+              className="settings-password-input__toggle"
+              onClick={toggleVisibility}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              data-testid={`password-toggle-${name}`}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </IconButton>
+          </TextField.Slot>
         )}
-      </Box>
+      </TextField.Root>
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-password-input__error">
           <AlertCircle size={14} />

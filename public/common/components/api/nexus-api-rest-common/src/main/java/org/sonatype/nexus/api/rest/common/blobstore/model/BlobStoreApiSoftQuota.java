@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.model;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 
 import org.sonatype.nexus.blobstore.quota.internal.SpaceRemainingQuota;
 import org.sonatype.nexus.blobstore.quota.internal.SpaceUsedQuota;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * @since 3.19
@@ -26,12 +26,12 @@ import io.swagger.annotations.ApiModelProperty;
 public class BlobStoreApiSoftQuota
 {
   @NotBlank
-  @ApiModelProperty(value = "The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID,
-      allowableValues = SpaceRemainingQuota.ID + "," + SpaceUsedQuota.ID)
+  @Schema(description = "The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID
+      + SpaceUsedQuota.ID)
   private String type;
 
   @Min(0)
-  @ApiModelProperty("The limit in MB.")
+  @Schema(description = "The limit in MB.")
   private Long limit;
 
   public String getType() {

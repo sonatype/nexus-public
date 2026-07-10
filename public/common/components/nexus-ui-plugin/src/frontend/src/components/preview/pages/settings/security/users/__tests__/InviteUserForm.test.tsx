@@ -144,4 +144,37 @@ describe('InviteUserForm', () => {
     renderForm({ error: 'Server error occurred' });
     expect(screen.getByText(/server error occurred/i)).toBeInTheDocument();
   });
+
+  it('calls onCancel directly when form is empty (no discard dialog)', () => {
+    const onCancel = jest.fn();
+    renderForm({ onCancel });
+    fireEvent.click(screen.getByTestId('form-cancel'));
+    expect(onCancel).toHaveBeenCalled();
+    expect(screen.queryByText(/unsaved changes/i)).not.toBeInTheDocument();
+  });
+
+  it('shows discard dialog when canceling with filled fields', async () => {
+    const onCancel = jest.fn();
+    renderForm({ onCancel });
+    fireEvent.change(screen.getByLabelText(/first name/i), { target: { value: 'John' } });
+    fireEvent.click(screen.getByTestId('form-cancel'));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    });
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('navigates away after confirming discard', async () => {
+    const onCancel = jest.fn();
+    renderForm({ onCancel });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@x.com' } });
+    fireEvent.click(screen.getByTestId('form-cancel'));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+    await waitFor(() => {
+      expect(onCancel).toHaveBeenCalled();
+    });
+  });
 });

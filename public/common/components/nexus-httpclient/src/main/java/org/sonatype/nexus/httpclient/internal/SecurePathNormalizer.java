@@ -96,6 +96,11 @@ public final class SecurePathNormalizer
   /**
    * Checks if a decoded path contains path traversal sequences (.. or .).
    *
+   * Only literal "." and ".." segments count as traversal. Empty segments produced by
+   * consecutive slashes (e.g. "/a//b") are not path traversal and must not be flagged,
+   * because signed URLs (AWS S3, Cloudflare R2) sign the exact path bytes and
+   * collapsing "//" to "/" invalidates the signature (NEXUS-52769).
+   *
    * @param path the path to check
    * @return true if path traversal is detected
    */
@@ -104,8 +109,12 @@ public final class SecurePathNormalizer
       return false;
     }
 
-    String normalized = normalizePath(path);
-    return !path.equals(normalized);
+    for (String segment : path.split("/")) {
+      if (".".equals(segment) || "..".equals(segment)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

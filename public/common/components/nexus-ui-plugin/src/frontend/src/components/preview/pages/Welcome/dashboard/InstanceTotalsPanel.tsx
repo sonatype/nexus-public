@@ -12,13 +12,15 @@
  */
 
 import React, { useState } from 'react';
-import { Text, Heading, Box, IconButton, Card, Flex, Badge, Button } from '@radix-ui/themes';
-import { HelpCircle } from 'lucide-react';
+import { Text, Heading, Box, IconButton, Card, Flex, Badge, Button, Progress } from '@radix-ui/themes';
+import { HelpCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import type { InstanceTotalsPanelProps } from './simplified.types';
 import { MonthlyMetricChart } from './MonthlyMetricChart';
 import { formatBytesToGB, type MonthlyMetricsHistory } from './useMonthlyMetrics';
 import type { MetricType } from './metricMethodology';
 import { MetricHelpModal } from './MetricHelpModal';
+
+import { CE_WARN_THRESHOLD } from './ceThresholds';
 
 import './InstanceTotalsPanel.scss';
 
@@ -58,6 +60,8 @@ interface MetricCardWithChartProps {
   onHelpClick?: () => void;
   ctaLabel?: string;
   ctaHref?: string;
+  /** CE hard limit for this metric. When > 0, shows a usage progress bar with color coding. */
+  limitValue?: number;
 }
 
 function MetricCardWithChart({
@@ -72,9 +76,17 @@ function MetricCardWithChart({
   onHelpClick,
   ctaLabel,
   ctaHref,
+  limitValue,
 }: MetricCardWithChartProps) {
   const hasChartData = chartData && chartData.length >= 1;
   const percentChange = hasChartData ? computePercentChange(chartData) : null;
+
+  const numericValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  const hasLimit = limitValue != null && limitValue > 0;
+  const usageRatio = hasLimit ? numericValue / limitValue : 0;
+  const isExceeding = hasLimit && usageRatio >= 1;
+  const isApproaching = hasLimit && !isExceeding && usageRatio >= CE_WARN_THRESHOLD;
+  const limitBarColor = isExceeding ? 'red' : isApproaching ? 'orange' : 'blue';
 
   return (
     <Card className="nxrm-metric-card nxrm-metric-card--usage" size="3">
@@ -88,6 +100,8 @@ function MetricCardWithChart({
               </Heading>
               {hasMetricValue(value) && (
                 <Flex align="baseline" gap="2" wrap="nowrap">
+                  {isExceeding && <AlertCircle size={16} style={{color: 'var(--red-9)', flexShrink: 0}} aria-label="Limit exceeded" />}
+                  {isApproaching && <AlertTriangle size={16} style={{color: 'var(--orange-9)', flexShrink: 0}} aria-label="Approaching limit" />}
                   <Text size="6" weight="bold" className="nxrm-metric-card__value">
                     {formatDisplayValue(value, unit)}
                   </Text>
@@ -125,6 +139,25 @@ function MetricCardWithChart({
             </Flex>
           </Flex>
         </Box>
+
+        {hasLimit && (
+          <Box className="nxrm-metric-card__limit">
+            <Progress
+              value={Math.min(usageRatio * 100, 100)}
+              max={100}
+              color={limitBarColor}
+              size="1"
+            />
+            <Flex justify="between" mt="1">
+              <Text size="1" color="gray">
+                {numericValue.toLocaleString()} of {(limitValue ?? 0).toLocaleString()}
+              </Text>
+              <Text size="1" color="gray">
+                limit
+              </Text>
+            </Flex>
+          </Box>
+        )}
 
         {hasChartData ? (
           <div className="nxrm-metric-card__chart">
@@ -245,6 +278,7 @@ export function InstanceTotalsPanel({
           variant="area"
           metricType="totalComponents"
           onHelpClick={openHelp('totalComponents')}
+          limitValue={data.totalComponentsLimit || undefined}
         />
         <MetricCardWithChart
           value={data.peakRequestsPerDay}
@@ -253,6 +287,7 @@ export function InstanceTotalsPanel({
           variant="area"
           metricType="peakRequestsPerDay"
           onHelpClick={openHelp('peakRequestsPerDay')}
+          limitValue={data.peakRequestsPerDayLimit || undefined}
         />
         <MetricCardWithChart
           value={data.peakRequestsPerMonth}

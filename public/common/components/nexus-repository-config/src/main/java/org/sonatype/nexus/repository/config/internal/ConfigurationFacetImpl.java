@@ -19,9 +19,9 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import javax.validation.ConstraintViolation;
-import javax.validation.Valid;
-import javax.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.ProxyType;
 
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * API Proxy Repository for simple formats which do not have custom attributes for proxies.
@@ -44,10 +44,19 @@ public class SimpleApiProxyRepository
   @NotNull
   protected final HttpClientAttributes httpClient;
 
-  @ApiModelProperty(value = "The name of the routing rule assigned to this repository")
+  @Schema(description = "The name of the routing rule assigned to this repository")
   protected final String routingRuleName;
 
   protected final ReplicationAttributes replication;
+
+  /*
+   * Firewall attributes are populated cross-format by {@link ApiRepositoryAdapter#adaptDecorated}
+   * after the per-format adapter constructs the proxy DTO. Keeping it as a settable property
+   * (instead of a constructor parameter) means per-format subclasses don't need to thread the
+   * firewall field through their own constructors. Jackson deserialization populates it via the
+   * {@code @JsonProperty} setter; serialization uses the getter.
+   */
+  protected FirewallAttributes firewall;
 
   @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
   public SimpleApiProxyRepository(
@@ -100,5 +109,14 @@ public class SimpleApiProxyRepository
 
   public ReplicationAttributes getReplication() {
     return replication;
+  }
+
+  public FirewallAttributes getFirewall() {
+    return firewall;
+  }
+
+  @JsonProperty("firewall")
+  public void setFirewall(final FirewallAttributes firewall) {
+    this.firewall = firewall;
   }
 }

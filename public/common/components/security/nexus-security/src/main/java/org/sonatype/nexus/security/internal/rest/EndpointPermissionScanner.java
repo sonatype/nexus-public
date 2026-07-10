@@ -22,20 +22,20 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.OPTIONS;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.rest.Resource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -73,7 +73,8 @@ public final class EndpointPermissionScanner
     String typeSegment = trimSlashes(typePath.value());
     RequiresPermissions typePermissions = type.getAnnotation(RequiresPermissions.class);
     RequiresAuthentication typeAuth = type.getAnnotation(RequiresAuthentication.class);
-    Api typeApi = type.getAnnotation(Api.class);
+    // NEXUS-46395: Swagger 1.x @Api -> OpenAPI 3.x @Tag (single tag per annotation, not array)
+    Tag typeTag = type.getAnnotation(Tag.class);
 
     for (Method method : type.getMethods()) {
       if (method.isBridge() || method.isSynthetic()) {
@@ -92,9 +93,10 @@ public final class EndpointPermissionScanner
       RequiresPermissions effectivePerm = methodPermissions != null ? methodPermissions : typePermissions;
       boolean authenticated = methodAuth != null || typeAuth != null;
 
-      ApiOperation apiOperation = method.getAnnotation(ApiOperation.class);
-      String description = describeOperation(apiOperation);
-      String tag = firstTag(typeApi, apiOperation);
+      // NEXUS-46395: Swagger 1.x @ApiOperation -> OpenAPI 3.x @Operation
+      Operation methodOperation = method.getAnnotation(Operation.class);
+      String description = describeOperation(methodOperation);
+      String tag = firstTag(typeTag, methodOperation);
 
       List<ApiPermissionRequirement> requirements = toRequirements(effectivePerm);
       ApiEndpointPermission row = new ApiEndpointPermission(
@@ -153,27 +155,30 @@ public final class EndpointPermissionScanner
     return list;
   }
 
-  private static String describeOperation(@Nullable final ApiOperation apiOperation) {
-    if (apiOperation == null) {
+  // NEXUS-46395: ported from Swagger 1.x @ApiOperation (which had value() and notes())
+  // to OpenAPI 3.x @Operation (which has summary() and description()).
+  private static String describeOperation(@Nullable final Operation operation) {
+    if (operation == null) {
       return null;
     }
-    if (StringUtils.isNotBlank(apiOperation.value())) {
-      return apiOperation.value();
+    if (StringUtils.isNotBlank(operation.summary())) {
+      return operation.summary();
     }
-    if (StringUtils.isNotBlank(apiOperation.notes())) {
-      return apiOperation.notes();
+    if (StringUtils.isNotBlank(operation.description())) {
+      return operation.description();
     }
     return null;
   }
 
+  // NEXUS-46395: in OpenAPI 3.x there is at most one @Tag annotation per element, and
+  // its name is the tag name. @Operation may declare multiple tag names via tags()=String[].
   @Nullable
-  private static String firstTag(@Nullable final Api typeApi, @Nullable final ApiOperation op) {
+  private static String firstTag(@Nullable final Tag typeTag, @Nullable final Operation op) {
     if (op != null && op.tags() != null && op.tags().length > 0 && StringUtils.isNotBlank(op.tags()[0])) {
       return op.tags()[0];
     }
-    if (typeApi != null && typeApi.tags() != null && typeApi.tags().length > 0
-        && StringUtils.isNotBlank(typeApi.tags()[0])) {
-      return typeApi.tags()[0];
+    if (typeTag != null && StringUtils.isNotBlank(typeTag.name())) {
+      return typeTag.name();
     }
     return null;
   }

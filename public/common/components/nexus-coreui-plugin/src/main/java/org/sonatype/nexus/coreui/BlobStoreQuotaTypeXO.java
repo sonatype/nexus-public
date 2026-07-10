@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * BlobStore Quota Type exchange object.

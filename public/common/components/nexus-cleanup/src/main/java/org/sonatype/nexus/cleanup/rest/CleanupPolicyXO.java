@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.cleanup.rest;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType;
@@ -73,6 +75,8 @@ public class CleanupPolicyXO
 
   private int inUseCount;
 
+  private List<@NotBlank String> repositories;
+
   public String getName() {
     return name;
   }
@@ -113,6 +117,10 @@ public class CleanupPolicyXO
     return inUseCount;
   }
 
+  public List<String> getRepositories() {
+    return repositories;
+  }
+
   public void setName(final String name) {
     this.name = name;
   }
@@ -151,6 +159,10 @@ public class CleanupPolicyXO
 
   public void setInUseCount(int inUseCount) {
     this.inUseCount = inUseCount;
+  }
+
+  public void setRepositories(final List<String> repositories) {
+    this.repositories = repositories;
   }
 
   public static CleanupPolicyXO fromCleanupPolicy(final CleanupPolicy cleanupPolicy, int inUseCount) {

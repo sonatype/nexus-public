@@ -14,29 +14,27 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 import java.util.Objects;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class RoutingRuleXO
 {
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   private String name;
 
-  @ApiModelProperty(allowEmptyValue = true)
+  @Schema
   private String description;
 
-  @ApiModelProperty(
-      value = "Determines what should be done with requests when their path matches any of the matchers",
-      allowableValues = "BLOCK,ALLOW")
+  @Schema(description = "Determines what should be done with requests when their path matches any of the matchers")
   private RoutingMode mode;
 
-  @ApiModelProperty(
-      value = "Regular expressions used to identify request paths that are allowed or blocked (depending on mode)")
+  @Schema(
+      description = "Regular expressions used to identify request paths that are allowed or blocked (depending on mode)")
   private List<String> matchers;
 
   public String getName() {

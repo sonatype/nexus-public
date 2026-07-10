@@ -13,11 +13,9 @@
 package org.sonatype.nexus.repository.content.handlers;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -26,19 +24,19 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 
-import org.springframework.context.annotation.Primary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
-import org.springframework.stereotype.Component;
 
 /**
- * Updates the asset last downloaded time.
- *
- * @since 3.24
+ * Updates the asset last downloaded time. Throttling is enforced by AssetStore via a
+ * conditional SQL UPDATE; see NEXUS-52006.
  */
 @Primary
 @Component
@@ -47,18 +45,17 @@ public class LastDownloadedHandler
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  private final GlobalRepositorySettings globalSettings;
+  private final LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
 
-  private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
-
-  @Autowired
-  public LastDownloadedHandler(final GlobalRepositorySettings globalSettings) {
-    this.globalSettings = checkNotNull(globalSettings);
-  }
+  private final GlobalRepositorySettings globalRepositorySettings;
 
   @Autowired
-  public void injectExtraDependencies(final LastDownloadedAttributeHandler lastDownloadedPropertyHandler) {
-    this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedPropertyHandler);
+  public LastDownloadedHandler(
+      final LastDownloadedAttributeHandler lastDownloadedAttributeHandler,
+      final GlobalRepositorySettings globalRepositorySettings)
+  {
+    this.lastDownloadedAttributeHandler = checkNotNull(lastDownloadedAttributeHandler);
+    this.globalRepositorySettings = checkNotNull(globalRepositorySettings);
   }
 
   @Override
@@ -83,20 +80,19 @@ public class LastDownloadedHandler
   }
 
   protected void maybeUpdateLastDownloaded(@Nullable final Asset asset) {
-    if (asset != null && !isNextUpdateInFuture(asset.lastDownloaded())) {
-      if (asset instanceof FluentAsset) {
-        FluentAsset fluentAsset = (FluentAsset) asset;
-        fluentAsset.markAsDownloaded();
+    if (asset instanceof FluentAsset fluentAsset) {
+      if (isStale(fluentAsset) && fluentAsset.tryMarkAsDownloaded()) {
         lastDownloadedAttributeHandler.writeLastDownloadedAttribute(fluentAsset);
       }
-      else {
-        log.debug("Cannot mark read-only asset {} as downloaded", asset.path());
-      }
+    }
+    else if (asset != null) {
+      log.debug("Cannot mark read-only asset {} as downloaded", asset.path());
     }
   }
 
-  private boolean isNextUpdateInFuture(Optional<OffsetDateTime> lastTime) {
-    return lastTime.isPresent() && lastTime.get().plus(globalSettings.getLastDownloadedInterval()).isAfter(UTC.now());
+  private boolean isStale(final FluentAsset asset) {
+    OffsetDateTime threshold = OffsetDateTime.now().minus(globalRepositorySettings.getLastDownloadedInterval());
+    return asset.lastDownloaded().map(last -> last.isBefore(threshold)).orElse(true);
   }
 
   private boolean isSuccessfulRequestWithContent(final Context context, final Response response) {

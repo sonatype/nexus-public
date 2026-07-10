@@ -420,6 +420,42 @@ describe('usersFormMachine', () => {
       service.stop();
     });
 
+    it('should validate password must be at least 8 characters', async () => {
+      const machine = createUsersFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'userId', value: 'test-user' } as any);
+      service.send({ type: 'UPDATE', name: 'firstName', value: 'Test' } as any);
+      service.send({ type: 'UPDATE', name: 'lastName', value: 'User' } as any);
+      service.send({ type: 'UPDATE', name: 'emailAddress', value: 'test@example.com' } as any);
+      service.send({ type: 'UPDATE', name: 'password', value: 'short' } as any);
+      service.send({ type: 'UPDATE', name: 'passwordConfirm', value: 'short' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.password).toContain('at least 8 characters');
+
+      service.stop();
+    });
+
+    it('should not produce password length error when password is 8 or more characters', async () => {
+      const machine = createUsersFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'userId', value: 'test-user' } as any);
+      service.send({ type: 'UPDATE', name: 'firstName', value: 'Test' } as any);
+      service.send({ type: 'UPDATE', name: 'lastName', value: 'User' } as any);
+      service.send({ type: 'UPDATE', name: 'emailAddress', value: 'test@example.com' } as any);
+      service.send({ type: 'UPDATE', name: 'password', value: 'validpwd' } as any);
+      service.send({ type: 'UPDATE', name: 'passwordConfirm', value: 'validpwd' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.password).toBeFalsy();
+
+      service.stop();
+    });
+
     it('validates password confirmation must match', async () => {
       const machine = createUsersFormMachine(undefined);
       const service = await startAndLoad(machine);

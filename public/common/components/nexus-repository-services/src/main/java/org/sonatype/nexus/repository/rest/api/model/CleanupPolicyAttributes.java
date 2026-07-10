@@ -16,7 +16,7 @@ import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model which describes cleanup policies for a repository.
@@ -25,8 +25,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class CleanupPolicyAttributes
 {
-  @ApiModelProperty(value = "Components that match any of the applied policies will be deleted",
-      dataType = "[Ljava.lang.String;")
+  @Schema(description = "Components that match any of the applied policies will be deleted")
   protected Collection<String> policyNames;
 
   @JsonCreator

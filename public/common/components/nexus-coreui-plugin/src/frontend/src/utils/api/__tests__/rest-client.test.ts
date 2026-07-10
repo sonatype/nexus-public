@@ -23,6 +23,7 @@ import {
 } from '../rest-client';
 
 describe('rest-client', () => {
+
   describe('API Constants', () => {
     it('defines correct base paths', () => {
       expect(API_BASE).toBe('/service/rest');

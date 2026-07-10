@@ -114,6 +114,18 @@ export default function GenericProxyConfiguration({parentMachine}) {
         </>
       )}
 
+      <NxFormGroup
+        label={EDITOR.PRESERVE_ENCODED_CHARS_LABEL}
+        sublabel={EDITOR.PRESERVE_ENCODED_CHARS_SUBLABEL}
+      >
+        <NxCheckbox
+          {...FormUtils.checkboxProps('proxy.preserveEncodedCharacters', parentState)}
+          onChange={FormUtils.handleUpdate('proxy.preserveEncodedCharacters', sendParent)}
+        >
+          {EDITOR.ENABLED_CHECKBOX_DESCR}
+        </NxCheckbox>
+      </NxFormGroup>
+
       <NxFieldset label={EDITOR.BLOCKING_LABEL} className="nxrm-form-group-proxy-blocking">
         <NxCheckbox
           {...FormUtils.checkboxProps('httpClient.blocked', parentState)}

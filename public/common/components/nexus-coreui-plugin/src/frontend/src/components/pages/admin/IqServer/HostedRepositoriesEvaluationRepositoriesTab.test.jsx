@@ -47,7 +47,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
 }));
 
 describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
-  const mockOnBack = jest.fn();
   const mockOnSelectionChange = jest.fn();
   const mockSend = jest.fn();
 
@@ -103,7 +102,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
     return render(
       <HostedRepositoriesEvaluationRepositoriesTab
-        onBack={mockOnBack}
         settingsData={mockSettingsData}
         initialSelectedRepositories={[]}
         onSelectionChange={mockOnSelectionChange}
@@ -114,7 +112,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
   beforeEach(() => {
     const {useRouter} = require('@uirouter/react');
-    mockOnBack.mockClear();
     mockOnSelectionChange.mockClear();
     mockSend.mockClear();
     useMachine.mockClear();
@@ -139,11 +136,29 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     expect(selects.length).toBe(1); // Only format filter for first-time users
   });
 
-  it('renders Back and Save buttons for first-time users', () => {
+  it('renders Save button for first-time users', () => {
     renderComponent();
 
-    expect(screen.getByText(UIStrings.SETTINGS.BACK_BUTTON_LABEL)).toBeInTheDocument();
     expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.save)).toBeInTheDocument();
+    expect(screen.queryByText(UIStrings.SETTINGS.BACK_BUTTON_LABEL)).not.toBeInTheDocument();
+  });
+
+  it('renders Back button for first-time users when onBack is provided', () => {
+    const mockOnBack = jest.fn();
+    renderComponent({onBack: mockOnBack, globalConfigAvailable: false});
+
+    const backButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.back);
+    expect(backButton).toBeInTheDocument();
+
+    userEvent.click(backButton);
+    expect(mockOnBack).toHaveBeenCalled();
+  });
+
+  it('does not render Back button for returning users even when onBack is provided', () => {
+    const mockOnBack = jest.fn();
+    renderComponent({onBack: mockOnBack, globalConfigAvailable: true});
+
+    expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.back)).not.toBeInTheDocument();
   });
 
   it('renders Update button for returning users', () => {
@@ -187,24 +202,14 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     expect(screen.getByText('Retry')).toBeInTheDocument();
   });
 
-  it('calls onBack when Back button is clicked', () => {
-    renderComponent();
-
-
-    const backButton = screen.getByText(UIStrings.SETTINGS.BACK_BUTTON_LABEL);
-    userEvent.click(backButton);
-
-    expect(mockOnBack).toHaveBeenCalled();
-  });
-
-  it('shows modal when Save is clicked without selecting repositories', async () => {
+  it('shows inline error when Save is clicked without selecting repositories', async () => {
     renderComponent();
 
     const saveButton = screen.getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL);
     userEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.INCOMPLETE_MODAL.TITLE)).toBeInTheDocument();
+      expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.INCOMPLETE_MODAL.MESSAGE)).toBeInTheDocument();
     });
   });
 
@@ -466,7 +471,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     useMachine.mockReturnValue([loadedState, mockSend]);
     rerender(
       <HostedRepositoriesEvaluationRepositoriesTab
-        onBack={mockOnBack}
         settingsData={mockSettingsData}
         initialSelectedRepositories={[]}
         onSelectionChange={mockOnSelectionChange}
@@ -506,7 +510,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     useMachine.mockReturnValue([errorState, mockSend]);
     rerender(
       <HostedRepositoriesEvaluationRepositoriesTab
-        onBack={mockOnBack}
         settingsData={mockSettingsData}
         initialSelectedRepositories={[]}
         onSelectionChange={mockOnSelectionChange}
@@ -625,7 +628,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
   it('shows correct repository count in summary text', () => {
     renderComponent();
 
-    expect(screen.getByText(/Showing 2 of 2 repositories/)).toBeInTheDocument();
+    expect(screen.getByText(/2 of 2 repositories/)).toBeInTheDocument();
   });
 
   it('renders repositories with isSelected flag', () => {
@@ -684,6 +687,43 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     expect(mavenRow).not.toHaveTextContent('Custom');
   });
 
+  it('preserves Custom tag when Enable Monitoring is clicked on an already-enabled repo with custom config', async () => {
+    const reposWithCustomEnabled = [
+      {
+        id: 'repo1',
+        name: 'Maven Central',
+        format: 'maven2',
+        size: 1024,
+        artifactCount: 100,
+        isSelected: true,
+        hasCustomConfig: true
+      }
+    ];
+    const stateWithCustomEnabled = {
+      ...defaultMachineState,
+      context: {
+        ...defaultMachineState.context,
+        repositories: reposWithCustomEnabled,
+        hasSelections: true,
+        existingSettings: {activityTimeFrame: 30}
+      }
+    };
+
+    renderComponent({globalConfigAvailable: true, initialSelectedRepositories: []}, stateWithCustomEnabled);
+
+    // repo1 is isSelected:true so it gets auto-selected on init; Disable Monitoring is shown
+    // Repo is already enabled so Disable Monitoring is shown — click it to set pending=false
+    const disableButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring);
+    await userEvent.click(disableButton);
+
+    // Now Enable Monitoring is shown — click it (idempotent re-enable of already-enabled repo, sets pending=true)
+    const enableButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring);
+    await userEvent.click(enableButton);
+
+    // Custom tag must still be visible — regression guard for the pending===true && repo.isSelected fix
+    expect(screen.getAllByText('Custom').length).toBeGreaterThan(0);
+  });
+
   it('does not show Custom tags for first-time users', () => {
     renderComponent({globalConfigAvailable: false});
 
@@ -719,7 +759,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       jest.clearAllTimers();
     });
 
-    it('sends PATCH event for returning users with repository changes', async () => {
+    it('sends PATCH event for returning users with repository changes via Enable Monitoring', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -738,8 +778,11 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
       renderComponent({globalConfigAvailable: true}, returningUserState);
 
+      // Check repo-2 (disabled) and click Enable Monitoring to add it
       const checkbox = screen.getAllByRole('checkbox')[2];
       await userEvent.click(checkbox);
+      const enableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring);
+      await userEvent.click(enableBtn);
 
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
       await userEvent.click(updateButton);
@@ -755,7 +798,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       });
     });
 
-    it('sends PATCH event for returning users with settings changes', async () => {
+    it('sends PATCH event for returning users after Enable Monitoring is clicked', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -768,35 +811,30 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
             autoEnrollNewRepos: false
           },
           repositories: [
-            {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true}
+            {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true},
+            {id: 'repo-2', name: 'NPM Registry', format: 'npm', type: 'hosted', isSelected: false}
           ]
         }
       };
 
-      const changedSettingsData = {
-        ...mockSettingsData,
-        activityTimeFrame: '90'
-      };
+      renderComponent({globalConfigAvailable: true, initialSelectedRepositories: ['repo-1']}, returningUserState);
 
-      renderComponent({globalConfigAvailable: true, settingsData: changedSettingsData, initialSelectedRepositories: ['repo-1']}, returningUserState);
+      // Check repo-2 and click Enable Monitoring to make pending changes
+      const checkbox = screen.getAllByRole('checkbox')[2];
+      await userEvent.click(checkbox);
+      const enableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring);
+      await userEvent.click(enableBtn);
 
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
+      expect(updateButton).not.toBeDisabled();
       await userEvent.click(updateButton);
 
       await waitFor(() => {
-        expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({
-          type: 'UPDATE',
-          data: expect.objectContaining({
-            settings: expect.objectContaining({
-              activityTimeFrame: '90'
-            })
-          })
-        }));
         expect(mockSend).toHaveBeenCalledWith('PATCH');
       });
     });
 
-    it('shows error modal when no changes are made', async () => {
+    it('Update button is disabled when no monitoring changes have been made', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -826,13 +864,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       }, returningUserState);
 
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
-      await userEvent.click(updateButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/No changes to save/i)).toBeInTheDocument();
-      });
-
-      expect(mockSend).not.toHaveBeenCalledWith('PATCH');
+      expect(updateButton).toBeDisabled();
     });
 
     it('redirects to Lifecycle page after successful PATCH', async () => {
@@ -867,7 +899,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       useMachine.mockReturnValue([patchingState, mockSend]);
       const {rerender} = render(
         <HostedRepositoriesEvaluationRepositoriesTab
-          onBack={mockOnBack}
           settingsData={mockSettingsData}
           initialSelectedRepositories={[]}
           onSelectionChange={mockOnSelectionChange}
@@ -878,7 +909,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       useMachine.mockReturnValue([loadedState, mockSend]);
       rerender(
         <HostedRepositoriesEvaluationRepositoriesTab
-          onBack={mockOnBack}
           settingsData={mockSettingsData}
           initialSelectedRepositories={[]}
           onSelectionChange={mockOnSelectionChange}
@@ -922,7 +952,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       useMachine.mockReturnValue([patchingState, mockSend]);
       const {rerender} = render(
         <HostedRepositoriesEvaluationRepositoriesTab
-          onBack={mockOnBack}
           settingsData={mockSettingsData}
           initialSelectedRepositories={[]}
           onSelectionChange={mockOnSelectionChange}
@@ -933,7 +962,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       useMachine.mockReturnValueOnce([loadedStateWithError, mockSend]);
       rerender(
         <HostedRepositoriesEvaluationRepositoriesTab
-          onBack={mockOnBack}
           settingsData={mockSettingsData}
           initialSelectedRepositories={[]}
           onSelectionChange={mockOnSelectionChange}
@@ -945,7 +973,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       });
     });
 
-    it('calculates repositoriesToAdd correctly', async () => {
+    it('calculates repositoriesToAdd from Enable Monitoring button click, not checkbox selection', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -967,14 +995,13 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         initialSelectedRepositories: ['repo-1']
       }, returningUserState);
 
-      // Wait for initial selection to be set
-      await waitFor(() => {
-        const checkboxes = screen.getAllByRole('checkbox');
-        expect(checkboxes[1]).toBeChecked();
-      });
-
+      // Check repo-2 (currently disabled) to select it for batch action
       const checkbox = screen.getAllByRole('checkbox')[2];
       await userEvent.click(checkbox);
+
+      // Click Enable Monitoring — this is what drives repositoriesToAdd
+      const enableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring);
+      await userEvent.click(enableBtn);
 
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
       await userEvent.click(updateButton);
@@ -992,7 +1019,88 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       });
     });
 
-    it('calculates repositoriesToRemove correctly', async () => {
+    it('checking a row without clicking Enable Monitoring keeps the Update button disabled when settings unchanged', async () => {
+      const returningUserState = {
+        ...defaultMachineState,
+        context: {
+          ...defaultMachineState.context,
+          globalConfigAvailable: true,
+          existingSettings: {
+            activityTimeFrame: '30',
+            artifactLatestVersions: '5',
+            policyEvaluationStage: 'build',
+            autoEnrollNewRepos: false,
+            versionDepth: 5
+          },
+          repositories: [
+            {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true},
+            {id: 'repo-2', name: 'NPM Registry', format: 'npm', type: 'hosted', isSelected: false}
+          ]
+        }
+      };
+
+      // Pass settingsData that matches existingSettings (no settings changes)
+      renderComponent({
+        globalConfigAvailable: true,
+        initialSelectedRepositories: ['repo-1'],
+        settingsData: {
+          activityTimeFrame: '30',
+          artifactLatestVersions: '5',
+          policyEvaluationStage: 'build',
+          applyToNewRepos: false,
+          versionDepth: '5'
+        }
+      }, returningUserState);
+
+      // Check repo-2 (currently disabled) — just a UI selection, no monitoring change intended
+      const checkbox = screen.getAllByRole('checkbox')[2];
+      await userEvent.click(checkbox);
+
+      // Update button should remain disabled since Enable/Disable Monitoring was not clicked AND settings unchanged
+      const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
+      expect(updateButton).toBeDisabled();
+      expect(mockSend).not.toHaveBeenCalledWith('PATCH');
+    });
+
+    it('Update button is enabled when settings have changed without monitoring changes', async () => {
+      const returningUserState = {
+        ...defaultMachineState,
+        context: {
+          ...defaultMachineState.context,
+          globalConfigAvailable: true,
+          existingSettings: {
+            activityTimeFrame: '60',
+            artifactLatestVersions: '5',
+            policyEvaluationStage: 'build',
+            autoEnrollNewRepos: false,
+            versionDepth: 5
+          },
+          repositories: [
+            {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true},
+            {id: 'repo-2', name: 'NPM Registry', format: 'npm', type: 'hosted', isSelected: false}
+          ]
+        }
+      };
+
+      // Pass settingsData with activityTimeFrame changed from 60 to 30
+      renderComponent({
+        globalConfigAvailable: true,
+        initialSelectedRepositories: ['repo-1'],
+        settingsData: {
+          activityTimeFrame: '30',
+          artifactLatestVersions: '5',
+          policyEvaluationStage: 'build',
+          applyToNewRepos: false,
+          versionDepth: '5'
+        }
+      }, returningUserState);
+
+      // Update button should be enabled because settings changed (activityTimeFrame 60 → 30)
+      const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
+      expect(updateButton).not.toBeDisabled();
+    });
+
+    it('calculates repositoriesToRemove from Disable Monitoring button click, not checkbox deselection', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -1014,19 +1122,15 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         initialSelectedRepositories: ['repo-1']
       }, returningUserState);
 
-      // Wait for initial selection to be set
+      // Wait for initial selection (repo-1 checked) to be reflected
       await waitFor(() => {
         const checkboxes = screen.getAllByRole('checkbox');
         expect(checkboxes[1]).toBeChecked();
       });
 
-      // First, add repo-2 so we have something selected when we remove repo-1
-      const checkbox2 = screen.getAllByRole('checkbox')[2];
-      await userEvent.click(checkbox2);
-
-      // Now uncheck repo-1 (removes it while keeping repo-2 selected)
-      const checkbox1 = screen.getAllByRole('checkbox')[1];
-      await userEvent.click(checkbox1);
+      // Click Disable Monitoring on the already-selected repo-1
+      const disableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring);
+      await userEvent.click(disableBtn);
 
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
       await userEvent.click(updateButton);
@@ -1039,8 +1143,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         );
         expect(updateCall).toBeDefined();
         expect(updateCall[0].data).toEqual(expect.objectContaining({
-          repositoriesToRemove: ['repo-1'],
-          repositoriesToAdd: ['repo-2']
+          repositoriesToRemove: ['repo-1']
         }));
       });
     });
@@ -1058,7 +1161,8 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
             autoEnrollNewRepos: false
           },
           repositories: [
-            {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true}
+            {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true},
+            {id: 'repo-2', name: 'NPM Registry', format: 'npm', type: 'hosted', isSelected: false}
           ]
         }
       };
@@ -1071,6 +1175,12 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       };
 
       renderComponent({globalConfigAvailable: true, settingsData: changedSettingsData, initialSelectedRepositories: ['repo-1']}, returningUserState);
+
+      // Must click Enable Monitoring before Update button becomes enabled
+      const checkbox = screen.getAllByRole('checkbox')[2];
+      await userEvent.click(checkbox);
+      const enableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring);
+      await userEvent.click(enableBtn);
 
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
       await userEvent.click(updateButton);
@@ -1088,6 +1198,129 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         expect(updateCall[0].data.settings.enableFirewallAutoBlocking).toBeUndefined();
         expect(updateCall[0].data.settings.enableQuarantine).toBeUndefined();
       });
+    });
+  });
+
+  describe('Monitoring column and Enable/Disable buttons', () => {
+    const returningUserState = {
+      ...defaultMachineState,
+      context: {
+        ...defaultMachineState.context,
+        hasSelections: true
+      },
+      matches: jest.fn((state) => state === 'loaded')
+    };
+
+    it('shows Monitoring column header for returning users', () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      expect(screen.getByText('Monitoring')).toBeInTheDocument();
+    });
+
+    it('does not show Monitoring column header for first-time users', () => {
+      renderComponent({globalConfigAvailable: false});
+
+      expect(screen.queryByText('Monitoring')).not.toBeInTheDocument();
+    });
+
+    it('shows Enabled status for selected repo in Monitoring column', () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      const rows = screen.getAllByRole('row');
+      expect(rows[1]).toHaveTextContent('Enabled');
+    });
+
+    it('shows Disabled status for unselected repo in Monitoring column', () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      const rows = screen.getAllByRole('row');
+      expect(rows[2]).toHaveTextContent('Disabled');
+    });
+
+    it('does not show Enable/Disable Monitoring buttons when no rows are checked', async () => {
+      const noSelectionState = {
+        ...returningUserState,
+        context: {
+          ...returningUserState.context,
+          repositories: [
+            {id: 'repo1', name: 'Maven Central', format: 'maven2', size: 1024, artifactCount: 100, isSelected: false, hasCustomConfig: false},
+            {id: 'repo2', name: 'NPM Registry', format: 'npm', size: 2048, artifactCount: 200, isSelected: false, hasCustomConfig: false}
+          ]
+        }
+      };
+      renderComponent({globalConfigAvailable: true}, noSelectionState);
+
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring)).not.toBeInTheDocument();
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).not.toBeInTheDocument();
+    });
+
+    it('shows Disable Monitoring (not Enable) when all checked rows are already enabled', async () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      await waitFor(() => {
+        expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).toBeInTheDocument();
+      });
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring)).not.toBeInTheDocument();
+    });
+
+    it('shows Enable Monitoring (not Disable) when a disabled row is checked', async () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[2]);
+
+      expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring)).toBeInTheDocument();
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).not.toBeInTheDocument();
+    });
+
+    it('clicking Enable Monitoring updates Monitoring column to Enabled without calling API', async () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[2]);
+
+      const enableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring);
+      await userEvent.click(enableBtn);
+
+      const rows = screen.getAllByRole('row');
+      expect(rows[2]).toHaveTextContent('Enabled');
+      expect(mockSend).not.toHaveBeenCalledWith('PATCH');
+      expect(mockSend).not.toHaveBeenCalledWith('SAVE');
+    });
+
+    it('clicking Disable Monitoring updates Monitoring column to Disabled without calling API', async () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      await waitFor(() => {
+        expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).toBeInTheDocument();
+      });
+
+      const disableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring);
+      await userEvent.click(disableBtn);
+
+      const rows = screen.getAllByRole('row');
+      expect(rows[1]).toHaveTextContent('Disabled');
+      expect(mockSend).not.toHaveBeenCalledWith('PATCH');
+    });
+
+    it('shows Clear Selection button when rows are checked', async () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      await waitFor(() => {
+        expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection)).toBeInTheDocument();
+      });
+    });
+
+    it('clicking Clear Selection unchecks all rows', async () => {
+      renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      await waitFor(() => {
+        expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection)).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection));
+
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection)).not.toBeInTheDocument();
     });
   });
 

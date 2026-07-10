@@ -14,27 +14,30 @@ package org.sonatype.nexus.repository.raw;
 
 import java.util.List;
 
-import javax.validation.constraints.NotEmpty;
+import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
+@JsonFilter(SwaggerEditionVisibility.NAME)
 public class RawAttributes
 {
-  @ApiModelProperty(value = "Content Disposition",
-      allowableValues = "INLINE,ATTACHMENT", example = "ATTACHMENT")
+  @SwaggerEditionVisibility(cloud = false, note = "Remove content-disposition from cloud")
+  @Schema(description = "Content Disposition", example = "ATTACHMENT")
   @NotEmpty
   private final String contentDisposition;
 
-  @ApiModelProperty(value = "Whether to forward query parameters to the upstream repository",
+  @Schema(description = "Whether to forward query parameters to the upstream repository",
       example = "true")
   @JsonInclude(Include.NON_NULL)
   private final Boolean forwardQueryParameters;
 
-  @ApiModelProperty(value = "List of query parameter names to exclude from forwarding (case-insensitive)",
+  @Schema(description = "List of query parameter names to exclude from forwarding (case-insensitive)",
       example = "[\"apiKey\", \"token\"]")
   @JsonInclude(Include.NON_EMPTY)
   private final List<String> excludedQueryParameters;

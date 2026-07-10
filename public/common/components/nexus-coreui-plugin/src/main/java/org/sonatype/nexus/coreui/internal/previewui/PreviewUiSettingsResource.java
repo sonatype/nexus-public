@@ -13,13 +13,13 @@
 package org.sonatype.nexus.coreui.internal.previewui;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 
 import org.sonatype.nexus.kv.KeyValueStore;
 import org.sonatype.nexus.rest.Resource;
@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_ANONYMOUS_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_DEFAULT_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_LEGACY_DISABLED_NAMED_VALUE;

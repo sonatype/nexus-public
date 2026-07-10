@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.common.stateguard;
 
+import java.lang.reflect.Method;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.Before;
@@ -19,17 +21,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.MockitoAnnotations;
 
-import java.lang.reflect.Method;
-
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class GuardedAspectTest
-
 {
-
   private GuardedAspect guardedAspect;
 
   @Mock
@@ -49,7 +48,6 @@ public class GuardedAspectTest
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
     guardedAspect = new GuardedAspect();
   }
 

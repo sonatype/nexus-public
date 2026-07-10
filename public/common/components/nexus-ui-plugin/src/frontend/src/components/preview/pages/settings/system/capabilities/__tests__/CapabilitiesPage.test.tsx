@@ -264,7 +264,7 @@ describe('CapabilitiesPage', () => {
     render(<CapabilitiesPage />, { wrapper: TestWrapper });
 
     expect(screen.getByTestId('capabilities-list')).toBeInTheDocument();
-    expect(screen.getByText('Capabilities')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Capabilities' })).toBeInTheDocument();
     expect(screen.getByText('Manage repository manager capabilities and plugins')).toBeInTheDocument();
   });
 
@@ -325,7 +325,7 @@ describe('CapabilitiesPage', () => {
   it('displays page header with icon and description', () => {
     render(<CapabilitiesPage />, { wrapper: TestWrapper });
 
-    expect(screen.getByText('Capabilities')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Capabilities' })).toBeInTheDocument();
     expect(screen.getByText('Manage repository manager capabilities and plugins')).toBeInTheDocument();
   });
 
@@ -347,7 +347,7 @@ describe('CapabilitiesPage', () => {
     render(<CapabilitiesPage />, { wrapper: TestWrapper });
 
     // Page should still render
-    expect(screen.getByText('Capabilities')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Capabilities' })).toBeInTheDocument();
   });
 
   it('handles error state', () => {
@@ -369,7 +369,7 @@ describe('CapabilitiesPage', () => {
 
     // Error is now handled via Toast notifications (Sprint 15)
     // Page should still render even when API has error
-    expect(screen.getByText('Capabilities')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Capabilities' })).toBeInTheDocument();
   });
 
   it('derives create viewMode from .createWithType route', () => {
@@ -401,6 +401,89 @@ describe('CapabilitiesPage', () => {
       'preview.admin.system.capabilities.detail',
       { capabilityId: 'cap-1' }
     );
+  });
+
+  describe('breadcrumb navigation', () => {
+    it('renders breadcrumbs for list view', () => {
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      // Breadcrumbs: Settings (clickable) > Capabilities (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Capabilities' })).toBeInTheDocument();
+    });
+
+    it('clicking Settings breadcrumb navigates to settings page', () => {
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders breadcrumbs for create/selectType view', () => {
+      mockRouteName = 'preview.admin.system.capabilities.create';
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      // Breadcrumbs: Settings (clickable) > Capabilities (clickable) > Create (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Capabilities' })).toBeInTheDocument();
+      expect(screen.getByText('Create')).toBeInTheDocument();
+    });
+
+    it('renders breadcrumbs for createWithType view', () => {
+      mockRouteName = 'preview.admin.system.capabilities.createWithType';
+      mockRouteParams = { typeId: 'outreach' };
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      // Breadcrumbs: Settings (clickable) > Capabilities (clickable) > Create (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Capabilities' })).toBeInTheDocument();
+      expect(screen.getByText('Create')).toBeInTheDocument();
+    });
+
+    it('renders breadcrumbs for detail view with capability type name', async () => {
+      mockRouteName = 'preview.admin.system.capabilities.detail';
+      mockRouteParams = { capabilityId: 'cap-1' };
+
+      mockedUseCapabilitiesApi.mockReturnValue({
+        loading: false,
+        error: null,
+        setError: mockSetError,
+        fetchCapabilities: jest.fn().mockResolvedValue([
+          {
+            id: 'cap-1',
+            typeId: 'outreach',
+            typeName: 'Outreach: Management',
+            enabled: true,
+            active: true,
+            error: false,
+            state: 'ACTIVE',
+            stateDescription: 'Active',
+            description: 'Outreach capability',
+            notes: '',
+            properties: {},
+          },
+        ]),
+        fetchCapabilityTypes: mockFetchCapabilityTypes,
+        fetchCapability: mockFetchCapability,
+        createCapability: mockCreateCapability,
+        updateCapability: mockUpdateCapability,
+        deleteCapability: mockDeleteCapability,
+        enableCapability: mockEnableCapability,
+        disableCapability: mockDisableCapability,
+      });
+
+      render(<CapabilitiesPage />, { wrapper: TestWrapper });
+
+      // Breadcrumbs: Settings (clickable) > Capabilities (clickable) > {typeName} (current page)
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Capabilities' })).toBeInTheDocument();
+      // The last breadcrumb should be the capability type name (after async fetch resolves)
+      await waitFor(() => {
+        expect(document.querySelector('[aria-current="page"]')?.textContent).toBe('Outreach: Management');
+      });
+    });
   });
 });
 

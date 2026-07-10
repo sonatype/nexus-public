@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model specifying the HTTP connection used by a proxy repository.
@@ -26,30 +26,28 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class HttpClientConnectionAttributes
 {
-  @ApiModelProperty(value = "Total retries if the initial connection attempt suffers a timeout", example = "0",
-      allowableValues = "range[0,10]")
+  @Schema(description = "Total retries if the initial connection attempt suffers a timeout", example = "0")
   @Min(0L)
   @Max(10L)
   protected final Integer retries;
 
-  @ApiModelProperty(value = "Custom fragment to append to User-Agent header in HTTP requests", example = "")
+  @Schema(description = "Custom fragment to append to User-Agent header in HTTP requests", example = "")
   protected final String userAgentSuffix;
 
-  @ApiModelProperty(value = "Seconds to wait for activity before stopping and retrying the connection", example = "60",
-      allowableValues = "range[1,3600]")
+  @Schema(description = "Seconds to wait for activity before stopping and retrying the connection", example = "60")
   @Min(1L)
   @Max(3600L)
   protected final Integer timeout;
 
-  @ApiModelProperty(value = "Whether to enable redirects to the same location (may be required by some servers)",
+  @Schema(description = "Whether to enable redirects to the same location (may be required by some servers)",
       example = "false")
   protected final Boolean enableCircularRedirects;
 
-  @ApiModelProperty(value = "Whether to allow cookies to be stored and used", example = "false")
+  @Schema(description = "Whether to allow cookies to be stored and used", example = "false")
   protected final Boolean enableCookies;
 
-  @ApiModelProperty(
-      value = "Use certificates stored in the Nexus Repository Manager truststore to connect to external systems",
+  @Schema(
+      description = "Use certificates stored in the Nexus Repository Manager truststore to connect to external systems",
       example = "false")
   protected final Boolean useTrustStore;
 

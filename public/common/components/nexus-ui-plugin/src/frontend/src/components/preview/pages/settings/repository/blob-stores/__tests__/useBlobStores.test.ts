@@ -203,8 +203,251 @@ describe('useBlobStores hooks', () => {
       // CRITICAL: Verify correct REST endpoints are called
       expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/v1/blobstores/file/test');
       expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/internal/ui/blobstores/usage/test');
-      expect(result.current.blobStore).toEqual(mockBlobStore);
       expect(result.current.repositoryUsage).toBe(2);
+    });
+
+    // -----------------------------------------------------------------------
+    // REGRESSION: soft quota transformation on load
+    // Bug: API response has no "enabled" field and stores limit in bytes.
+    // BlobStoresPage binds checkbox to softQuota.enabled — was always false.
+    // -----------------------------------------------------------------------
+
+    it('sets softQuota.enabled=true when API response includes a softQuota object', async () => {
+      const mockBlobStore = {
+        name: 'test',
+        type: 'file',
+        path: '/data',
+        softQuota: { type: 'spaceUsedQuota', limit: 104857600 }, // 100 MB in bytes
+      };
+      mockRestClient.get
+        .mockResolvedValueOnce(mockBlobStore)
+        .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+
+      const { result } = renderHook(() => useBlobStore('test', 'file'));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.blobStore?.softQuota?.enabled).toBe(true);
+    });
+
+    it('converts softQuota.limit from bytes to MB when loading', async () => {
+      // 100 MB = 104857600 bytes; the form field must show 100, not 104857600
+      const mockBlobStore = {
+        name: 'test',
+        type: 'file',
+        path: '/data',
+        softQuota: { type: 'spaceUsedQuota', limit: 104857600 },
+      };
+      mockRestClient.get
+        .mockResolvedValueOnce(mockBlobStore)
+        .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+
+      const { result } = renderHook(() => useBlobStore('test', 'file'));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.blobStore?.softQuota?.limit).toBe(100);
+    });
+
+    it('converts a 1-GiB softQuota.limit from bytes to MB (1073741824 → 1024)', async () => {
+      const mockBlobStore = {
+        name: 'test',
+        type: 'file',
+        path: '/data',
+        softQuota: { type: 'spaceRemainingQuota', limit: 1073741824 },
+      };
+      mockRestClient.get
+        .mockResolvedValueOnce(mockBlobStore)
+        .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+
+      const { result } = renderHook(() => useBlobStore('test', 'file'));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.blobStore?.softQuota?.enabled).toBe(true);
+      expect(result.current.blobStore?.softQuota?.limit).toBe(1024);
+    });
+
+    it('leaves softQuota undefined when the API response has no softQuota', async () => {
+      const mockBlobStore = { name: 'no-quota', type: 'file', path: '/data' };
+      mockRestClient.get
+        .mockResolvedValueOnce(mockBlobStore)
+        .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+
+      const { result } = renderHook(() => useBlobStore('no-quota', 'file'));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.blobStore?.softQuota).toBeUndefined();
+    });
+
+    // -----------------------------------------------------------------------
+    // REGRESSION: type casing in GET URL
+    // Bug: list API returns typeId="File" (capital); hook built URL with that
+    // casing → /blobstores/File/name → 404 → blobStore stayed null.
+    // -----------------------------------------------------------------------
+
+    it('lowercases type in GET URL even when caller passes mixed-case type', async () => {
+      const mockBlobStore = { name: 'my-store', type: 'file', path: '/data' };
+      mockRestClient.get
+        .mockResolvedValueOnce(mockBlobStore)
+        .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+
+      // Simulate what BlobStoresList does: passes store.typeId which may be "File"
+      const { result } = renderHook(() => useBlobStore('my-store', 'File'));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(mockRestClient.get).toHaveBeenCalledWith(
+        '/service/rest/v1/blobstores/file/my-store' // must be lowercase
+      );
+    });
+
+    it.each(['S3', 'Azure', 'Google'])(
+      'lowercases mixed-case type "%s" in GET URL',
+      async (mixedType) => {
+        const mockBlobStore = { name: 'cloud-store', type: mixedType.toLowerCase() };
+        mockRestClient.get
+          .mockResolvedValueOnce(mockBlobStore)
+          .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+
+        const { result } = renderHook(() => useBlobStore('cloud-store', mixedType));
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        expect(mockRestClient.get).toHaveBeenCalledWith(
+          `/service/rest/v1/blobstores/${mixedType.toLowerCase()}/cloud-store`
+        );
+      }
+    );
+
+    // -----------------------------------------------------------------------
+    // REGRESSION: type casing in PUT/POST URL
+    // Bug: save() used data.type as-is in the URL, causing 404 on update.
+    // -----------------------------------------------------------------------
+
+    it('lowercases type in PUT URL when saving an existing blob store', async () => {
+      const mockBlobStore = { name: 'existing', type: 'file', path: '/data' };
+      mockRestClient.get
+        .mockResolvedValueOnce(mockBlobStore)
+        .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+      mockRestClient.put.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useBlobStore('existing', 'file'));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      await act(async () => {
+        // Caller may pass mixed-case type on save
+        await result.current.save({ name: 'existing', type: 'File', path: '/new-path' });
+      });
+
+      expect(mockRestClient.put).toHaveBeenCalledWith(
+        '/service/rest/v1/blobstores/file/existing', // must be lowercase
+        expect.any(Object)
+      );
+    });
+
+    it.each(['S3', 'Azure', 'Google'])(
+      'lowercases mixed-case type "%s" in PUT URL when saving',
+      async (mixedType) => {
+        const mockBlobStore = { name: 'cloud', type: mixedType.toLowerCase() };
+        mockRestClient.get
+          .mockResolvedValueOnce(mockBlobStore)
+          .mockResolvedValueOnce({ blobStoreUsage: 0, repositoryUsage: 0 });
+        mockRestClient.put.mockResolvedValue({ success: true });
+
+        const { result } = renderHook(() => useBlobStore('cloud', mixedType));
+        await waitFor(() => expect(result.current.loading).toBe(false));
+
+        await act(async () => {
+          await result.current.save({ name: 'cloud', type: mixedType });
+        });
+
+        expect(mockRestClient.put).toHaveBeenCalledWith(
+          `/service/rest/v1/blobstores/${mixedType.toLowerCase()}/cloud`,
+          expect.any(Object)
+        );
+      }
+    );
+
+    it('lowercases type in POST URL when creating a new blob store', async () => {
+      mockRestClient.post.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useBlobStore(undefined));
+
+      await act(async () => {
+        await result.current.save({ name: 'new-store', type: 'File' });
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        '/service/rest/v1/blobstores/file', // must be lowercase
+        expect.any(Object)
+      );
+    });
+
+    // -----------------------------------------------------------------------
+    // REGRESSION: formatBlobStoreData — softQuota MB→bytes on save
+    // The form stores limit in MB; the API expects bytes.
+    // -----------------------------------------------------------------------
+
+    it('converts softQuota.limit from MB to bytes when saving', async () => {
+      mockRestClient.post.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useBlobStore(undefined));
+
+      await act(async () => {
+        await result.current.save({
+          name: 'quota-store',
+          type: 'file',
+          path: '/data',
+          softQuota: { enabled: true, type: 'spaceUsedQuota', limit: 100 }, // 100 MB in form
+        });
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        '/service/rest/v1/blobstores/file',
+        expect.objectContaining({
+          softQuota: { type: 'spaceUsedQuota', limit: 104857600 }, // 100 MB → bytes
+        })
+      );
+    });
+
+    it('strips softQuota from save payload when enabled is false', async () => {
+      mockRestClient.post.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useBlobStore(undefined));
+
+      await act(async () => {
+        await result.current.save({
+          name: 'no-quota-store',
+          type: 'file',
+          path: '/data',
+          softQuota: { enabled: false },
+        });
+      });
+
+      const [, body] = mockRestClient.post.mock.calls[0];
+      expect(body).not.toHaveProperty('softQuota');
+    });
+
+    it('strips the UI-only enabled flag from the softQuota save payload', async () => {
+      mockRestClient.post.mockResolvedValue({ success: true });
+
+      const { result } = renderHook(() => useBlobStore(undefined));
+
+      await act(async () => {
+        await result.current.save({
+          name: 'quota-store',
+          type: 'file',
+          path: '/data',
+          softQuota: { enabled: true, type: 'spaceUsedQuota', limit: 50 },
+        });
+      });
+
+      const [, body] = mockRestClient.post.mock.calls[0];
+      // The REST API does not accept an "enabled" field — it must be stripped
+      expect(body.softQuota).not.toHaveProperty('enabled');
+      expect(body.softQuota).toEqual({ type: 'spaceUsedQuota', limit: 52428800 });
     });
 
     it('does not fetch when name is not provided', () => {

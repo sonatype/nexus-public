@@ -12,8 +12,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Box, Flex, Heading, Text } from '@radix-ui/themes';
-import { Code, ExternalLink, Info } from 'lucide-react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { ExternalLink, Info } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { usePrivilegesApi } from '../../security/privileges/usePrivilegesApi';
@@ -21,6 +21,7 @@ import type { Privilege } from '../../security/privileges/types';
 import { useRolesApi } from '../../security/roles/useRolesApi';
 import type { Role } from '../../security/roles/types';
 import { SettingsAlert } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 import { ApiLayout } from './ApiLayout';
 import { EndpointDetail } from './EndpointDetail';
 import { EndpointList, endpointRowId } from './EndpointList';
@@ -250,29 +251,38 @@ export function ApiPage({ className }: ApiPageProps) {
 
   const accessDotPalette = deepLink.roleLensId ? 'roleLens' : 'session';
 
+  // Navigation helper for Settings breadcrumb
+  const navigateToSettings = () => {
+    window.location.hash = '#preview/admin/settings';
+  };
+
   return (
     <Box
       className={`api-page ${className || ''}`.trim()}
       data-testid="api-page"
       data-loading={initialLoading ? 'true' : 'false'}
     >
-      <Flex align="center" gap="3" className="api-page__header">
-        <Code size={24} className="api-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">
-            API
-          </Heading>
-          <Text size="2" className="api-page__description">
-            Documentation, permissions, and access tools
-          </Text>
+      <PageHeader
+        title="API"
+        description="Documentation, permissions, and access tools"
+        breadcrumbs={[
+          { label: 'Settings', onClick: navigateToSettings },
+          { label: 'API' },
+        ]}
+        className="api-page__header"
+      />
+
+      {/* Deep link info */}
+      {(deepLink.viewAsUserId || deepLink.roleLensId || deepLink.permissionFilter) && (
+        <Box className="api-page__deep-link-info" mt="2">
           {deepLink.viewAsUserId && (
-            <Text size="2" color="gray" mt="1" as="div">
+            <Text size="2" color="gray" as="div">
               Viewing access for user: <Text weight="bold">{deepLink.viewAsUserId}</Text>
               {currentUserId && deepLink.viewAsUserId === currentUserId ? ' (you)' : null}
             </Text>
           )}
           {deepLink.roleLensId && (
-            <Text size="2" color="gray" mt="1" as="div">
+            <Text size="2" color="gray" as="div">
               Role lens:{' '}
               <Text weight="bold">
                 {roleLens?.target?.name ?? deepLink.roleLensId}
@@ -281,12 +291,12 @@ export function ApiPage({ className }: ApiPageProps) {
             </Text>
           )}
           {deepLink.permissionFilter && (
-            <Text size="2" color="gray" mt="1" as="div">
+            <Text size="2" color="gray" as="div">
               Filtered to permission containing: <Text weight="bold">{deepLink.permissionFilter}</Text>
             </Text>
           )}
         </Box>
-      </Flex>
+      )}
 
       {deepLinkWarnings.length > 0 && !dismissDeepLinkBanner && (
         <Box className="api-page__alerts" mb="3">

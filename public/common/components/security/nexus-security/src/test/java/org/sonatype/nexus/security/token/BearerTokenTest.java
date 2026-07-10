@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.token;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.Before;
 import org.junit.Test;

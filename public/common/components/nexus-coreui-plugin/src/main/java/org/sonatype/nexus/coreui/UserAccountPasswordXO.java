@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 3.24

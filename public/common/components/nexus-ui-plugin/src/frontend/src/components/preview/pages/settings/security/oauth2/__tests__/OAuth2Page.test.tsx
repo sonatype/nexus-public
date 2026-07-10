@@ -110,7 +110,7 @@ describe('OAuth2Page', () => {
     render(<OAuth2Page />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('OAuth2')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'OAuth2' })).toBeInTheDocument();
     });
   });
 
@@ -337,6 +337,30 @@ describe('OAuth2Page', () => {
 
     await waitFor(() => {
       expect(screen.getByText('JWS Algorithm')).toBeInTheDocument();
+    });
+  });
+
+  describe('breadcrumbs', () => {
+    it('renders Settings breadcrumb that navigates to settings page', async () => {
+      render(<OAuth2Page />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      // Click Settings breadcrumb navigates to settings page
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders OAuth2 as current page breadcrumb', async () => {
+      render(<OAuth2Page />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        // The current page item is rendered as Text (not a button) with aria-current="page"
+        const breadcrumb = screen.getByText('OAuth2', { selector: '[aria-current="page"]' });
+        expect(breadcrumb).toBeInTheDocument();
+      });
     });
   });
 });

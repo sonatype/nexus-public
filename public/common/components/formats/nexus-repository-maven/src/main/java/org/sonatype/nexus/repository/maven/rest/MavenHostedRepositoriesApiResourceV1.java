@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.maven.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 

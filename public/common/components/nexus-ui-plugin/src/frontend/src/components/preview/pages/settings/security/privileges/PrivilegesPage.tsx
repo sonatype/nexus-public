@@ -327,12 +327,20 @@ export function PrivilegesPage() {
             icon={headerProps.icon}
             title={headerProps.title}
             description={headerProps.description}
-            actions={headerProps.actions}
-
-            breadcrumbs={[
-              { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-              { label: 'Privileges' }
-            ]}
+            actions={routeState.viewMode === 'list' ? headerProps.actions : undefined}
+            breadcrumbs={routeState.viewMode === 'list'
+              ? [
+                  { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                  { label: 'Privileges' }
+                ]
+              : [
+                  { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                  { label: 'Privileges', onClick: handleBack },
+                  { label: routeState.viewMode === 'create' || routeState.viewMode === 'select-type'
+                    ? 'Create'
+                    : privilege?.name || 'Loading...' }
+                ]
+            }
           />
         </Box>
       )}

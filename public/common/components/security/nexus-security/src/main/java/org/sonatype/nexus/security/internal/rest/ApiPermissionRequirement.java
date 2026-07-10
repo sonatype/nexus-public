@@ -14,17 +14,18 @@ package org.sonatype.nexus.security.internal.rest;
 
 import java.util.Objects;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * One required permission entry for an API endpoint (matches UI permission map JSON).
  */
 public class ApiPermissionRequirement
 {
-  @ApiModelProperty(value = "Permission string as declared on the resource", required = true)
+  @Schema(description = "Permission string as declared on the resource", requiredMode = Schema.RequiredMode.REQUIRED)
   private String permission;
 
-  @ApiModelProperty(value = "How this permission combines with siblings (AND or OR)", required = true)
+  @Schema(description = "How this permission combines with siblings (AND or OR)",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private String logical;
 
   public ApiPermissionRequirement() {

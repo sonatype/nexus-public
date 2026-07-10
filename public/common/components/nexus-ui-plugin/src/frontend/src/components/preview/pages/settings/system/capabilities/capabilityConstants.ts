@@ -17,7 +17,6 @@ import {
   Users,
   Cloud,
   UserCheck,
-  Shield,
   HeartPulse,
   Clock,
   Link,
@@ -35,13 +34,18 @@ import {
   Puzzle,
 } from 'lucide-react';
 
+// `firewall.audit` was removed from this map: post-migration the new UI never renders
+// capabilities of that type (filtered at useCapabilitiesApi.fetchCapabilities() and not
+// advertised by /v1/capabilities/types). Firewall configuration belongs on the repository
+// config page now. The legacy REST API surface remains for hardcoded client compatibility.
+// The previously-imported `Shield` icon has been pruned along with the lookup entry.
+
 export const TYPE_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   audit: FileSearch,
   baseurl: Globe,
   crowd: Users,
   customs3regions: Cloud,
   defaultrole: UserCheck,
-  'firewall.audit': Shield,
   healthcheck: HeartPulse,
   'license-expiration': Clock,
   LegacyUrlCapability: Link,

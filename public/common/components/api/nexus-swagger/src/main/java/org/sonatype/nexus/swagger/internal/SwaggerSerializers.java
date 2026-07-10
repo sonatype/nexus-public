@@ -15,16 +15,20 @@ package org.sonatype.nexus.swagger.internal;
 import org.sonatype.nexus.rest.Component;
 
 /**
- * Siesta-managed {@link io.swagger.jaxrs.listing.SwaggerSerializers}.
- * 
- * @since 3.3
+ * Siesta-managed {@link io.swagger.v3.jaxrs2.SwaggerSerializers}.
+ *
+ * <p>
+ * NEXUS-46395: migrated from Swagger 1.x ({@code io.swagger.jaxrs.listing.SwaggerSerializers})
+ * to OpenAPI 3.x. The new base class outputs OpenAPI 3.0 JSON/YAML rather than Swagger 2.0 JSON;
+ * customers consuming the {@code /v3/api-docs} endpoint will see this shape change. Pretty-printing
+ * is configured at the ObjectMapper level in OpenAPI 3.x; we no longer call setPrettyPrint().
  */
 @org.springframework.stereotype.Component
 public class SwaggerSerializers
-    extends io.swagger.jaxrs.listing.SwaggerSerializers
+    extends io.swagger.v3.jaxrs2.SwaggerSerializers
     implements Component
 {
   public SwaggerSerializers() { // NOSONAR
-    setPrettyPrint(true);
+    // OpenAPI 3.x SwaggerSerializers always pretty-prints by default; no toggle needed.
   }
 }

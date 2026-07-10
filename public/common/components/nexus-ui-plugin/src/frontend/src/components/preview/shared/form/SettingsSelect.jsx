@@ -54,8 +54,8 @@ export function SettingsSelect({
   const helpId = `settings-help-${name}`;
   const errorId = `settings-error-${name}`;
 
-  // Convert empty string value to our special NONE_VALUE for Radix compatibility
-  const normalizedValue = value === '' ? NONE_VALUE : value;
+  // Convert empty string or undefined value to our special NONE_VALUE for Radix compatibility
+  const normalizedValue = value === '' || value === undefined ? NONE_VALUE : value;
 
   // Convert options with empty string values to use NONE_VALUE
   const normalizedOptions = options.map((option) => ({
@@ -75,7 +75,7 @@ export function SettingsSelect({
       {label && (
         <label htmlFor={selectId} className="settings-select__label">
           {label}
-          {required && <span className="settings-select__required">*</span>}
+          {required && <span className="settings-select__required" aria-hidden="true">*</span>}
         </label>
       )}
       {helpText && !error && (
@@ -88,6 +88,7 @@ export function SettingsSelect({
           value={normalizedValue}
           onValueChange={handleChange}
           disabled={disabled}
+          name={name}
         >
           <Select.Trigger
             id={selectId}

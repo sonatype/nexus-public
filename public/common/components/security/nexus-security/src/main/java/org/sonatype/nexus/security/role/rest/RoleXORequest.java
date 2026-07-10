@@ -17,26 +17,26 @@ import java.util.Set;
 
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 public class RoleXORequest
 {
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_ID_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_ID_DESCRIPTION)
   private String id;
 
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_NAME_DESCRIPTION)
   private String name;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_DESCRIPTION_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_DESCRIPTION_DESCRIPTION)
   private String description;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_PRIVILEGES_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_PRIVILEGES_DESCRIPTION)
   private Set<String> privileges;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_ROLES_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_ROLES_DESCRIPTION)
   private Set<String> roles;
 
   public void setRoles(final Set<String> roles) {

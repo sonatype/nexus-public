@@ -14,8 +14,8 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore.file;
 
 import java.util.Set;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.api.rest.common.blobstore.file.model.FileBlobStoreApiCreateRequest;
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;

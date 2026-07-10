@@ -12,8 +12,8 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { PermissionsProvider, usePermissions } from '../PermissionsContext';
+import { act, render, screen } from '@testing-library/react';
+import { PermissionsProvider, usePermissions, usePermission } from '../PermissionsContext';
 import * as extJsLoader from '../../utils/extJsLoader';
 
 jest.mock('../../utils/extJsLoader');
@@ -181,6 +181,106 @@ describe('PermissionsContext', () => {
 
       expect(screen.getByTestId('check')).toHaveTextContent('false');
       expect(screen.getByTestId('has')).toHaveTextContent('false');
+    });
+  });
+
+  describe('usePermission hook', () => {
+    function PermissionConsumer({ permission }) {
+      const value = usePermission(permission);
+      return <span data-testid="value">{String(value)}</span>;
+    }
+
+    function Wrapper({ children }) {
+      return <PermissionsProvider>{children}</PermissionsProvider>;
+    }
+
+    it('returns false when ExtJS is not loaded', () => {
+      render(<PermissionConsumer permission="nexus:admin" />, { wrapper: Wrapper });
+      expect(screen.getByTestId('value')).toHaveTextContent('false');
+    });
+
+    it('returns the permission value from NX.Permissions.check when ExtJS is loaded', () => {
+      mockedExtJsLoader.isExtJSLoaded.mockReturnValue(true);
+      window.NX = { Permissions: { check: jest.fn().mockReturnValue(true) } };
+
+      render(<PermissionConsumer permission="nexus:admin" />, { wrapper: Wrapper });
+
+      expect(screen.getByTestId('value')).toHaveTextContent('true');
+    });
+
+    it('re-evaluates when the ExtJS changed event fires', async () => {
+      mockedExtJsLoader.isExtJSLoaded.mockReturnValue(true);
+      const checkMock = jest.fn().mockReturnValue(false);
+      window.NX = { Permissions: { check: checkMock } };
+
+      const changedListeners = [];
+      window.Ext = {
+        getApplication: jest.fn().mockReturnValue({
+          getController: jest.fn().mockReturnValue({
+            on: jest.fn((event, cb) => { if (event === 'changed') changedListeners.push(cb); }),
+            un: jest.fn()
+          })
+        })
+      };
+
+      render(<PermissionConsumer permission="nexus:admin" />, { wrapper: Wrapper });
+      expect(screen.getByTestId('value')).toHaveTextContent('false');
+
+      // Simulate permissions becoming available and firing 'changed'
+      checkMock.mockReturnValue(true);
+      act(() => { changedListeners.forEach(fn => fn()); });
+
+      expect(screen.getByTestId('value')).toHaveTextContent('true');
+    });
+
+    it('cleans up ExtJS listeners on unmount', () => {
+      mockedExtJsLoader.isExtJSLoaded.mockReturnValue(true);
+      window.NX = { Permissions: { check: jest.fn().mockReturnValue(false) } };
+
+      const unMock = jest.fn();
+      window.Ext = {
+        getApplication: jest.fn().mockReturnValue({
+          getController: jest.fn().mockReturnValue({ on: jest.fn(), un: unMock })
+        })
+      };
+
+      const { unmount } = render(<PermissionConsumer permission="nexus:admin" />, { wrapper: Wrapper });
+      unmount();
+
+      expect(unMock).toHaveBeenCalled();
+    });
+
+    it('registers listeners and re-evaluates when ExtJS loads after component mount', async () => {
+      // Component mounts while ExtJS is not yet loaded
+      mockedExtJsLoader.isExtJSLoaded.mockReturnValue(false);
+      // Collect ALL onExtJSLoad callbacks — both PermissionsProvider and usePermission register one
+      const extJsLoadCallbacks = [];
+      mockedExtJsLoader.onExtJSLoad.mockImplementation((cb) => { extJsLoadCallbacks.push(cb); });
+
+      window.NX = { Permissions: { check: jest.fn().mockReturnValue(false) } };
+
+      const changedListeners = [];
+      window.Ext = {
+        getApplication: jest.fn().mockReturnValue({
+          getController: jest.fn().mockReturnValue({
+            on: jest.fn((event, cb) => { if (event === 'changed') changedListeners.push(cb); }),
+            un: jest.fn()
+          })
+        })
+      };
+
+      render(<PermissionConsumer permission="nexus:admin" />, { wrapper: Wrapper });
+      expect(screen.getByTestId('value')).toHaveTextContent('false');
+
+      // ExtJS finishes loading — fire all queued onExtJSLoad callbacks
+      mockedExtJsLoader.isExtJSLoaded.mockReturnValue(true);
+      act(() => { extJsLoadCallbacks.forEach(cb => cb()); });
+
+      // Listeners are now registered; simulate a subsequent login event
+      window.NX.Permissions.check.mockReturnValue(true);
+      act(() => { changedListeners.forEach(fn => fn()); });
+
+      expect(screen.getByTestId('value')).toHaveTextContent('true');
     });
   });
 

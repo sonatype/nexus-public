@@ -10,24 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useCallback } from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
-import { Globe, Loader2, Info, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Loader2, Info, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
+import { PageHeader } from '../../../../shared';
 import {
   SettingsForm,
   SettingsFormSection,
   SettingsCheckbox,
   SettingsTextInput,
   SettingsPasswordInput,
+  SettingsSelect,
   SettingsButton,
   SettingsAlert,
 } from '../../../../shared/form';
@@ -38,6 +33,10 @@ import {
 } from './types';
 
 import './HttpPage.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 const ALLOWED_NUMBER_KEYS = new Set([
   'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
@@ -53,6 +52,15 @@ function handleNumberKeyDown(e: React.KeyboardEvent) {
   }
 }
 
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <Flex className="http-page__row" gap="3">
+      <Text size="2" weight="medium" className="http-page__label">{label}</Text>
+      <Text size="2">{value}</Text>
+    </Flex>
+  );
+}
+
 /**
  * HttpPage - HTTP Settings configuration page for Preview UI
  *
@@ -63,28 +71,52 @@ export function HttpPage({ className }: HttpPageProps) {
   // XState form hook handles load, save, dirty tracking, toast, validation
   const form = useHttpForm();
 
-  // Local UI state for the "add non-proxy host" input
-  const [newNonProxyHost, setNewNonProxyHost] = useState('');
-
   const canUpdate = ExtJS.checkPermission('nexus:settings:update');
   const formData = form.data as HttpConfiguration;
   const isProxyEnabled = formData.httpEnabled || formData.httpsEnabled;
 
-  // Add non-proxy host
+  // Local UI state for the "add non-proxy host" input
+  const [newNonProxyHost, setNewNonProxyHost] = useState('');
+  const [nonProxyHostError, setNonProxyHostError] = useState<string | null>(null);
+
+
+  // Add non-proxy host(s) — supports comma-separated paste
   const handleAddNonProxyHost = useCallback(() => {
-    const trimmed = newNonProxyHost.trim();
-    if (trimmed && !formData.nonProxyHosts.includes(trimmed)) {
-      form.send({ type: 'UPDATE', name: 'nonProxyHosts', value: [...formData.nonProxyHosts, trimmed] } as any);
-      setNewNonProxyHost('');
+    const raw = newNonProxyHost;
+    if (!raw.trim()) return;
+
+    const allTokens = raw.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
+    const validTokens = allTokens.filter((t) => !/\s/.test(t));
+    const invalidTokens = allTokens.filter((t) => /\s/.test(t));
+
+    if (invalidTokens.length > 0) {
+      setNonProxyHostError(
+        `Skipped ${invalidTokens.length} invalid entr${invalidTokens.length === 1 ? 'y' : 'ies'} containing spaces: ${invalidTokens.map((t) => `"${t}"`).join(', ')}`
+      );
+    } else {
+      setNonProxyHostError(null);
     }
+
+    if (validTokens.length === 0) return;
+
+    const existing = formData.nonProxyHosts;
+    const additions = validTokens.filter((t: string) => !existing.includes(t));
+    if (additions.length === 0) {
+      setNewNonProxyHost('');
+      return;
+    }
+
+    const next = [...existing, ...additions];
+    form.send({ type: 'UPDATE', name: 'nonProxyHosts', value: next } as any);
+    setNewNonProxyHost('');
   }, [newNonProxyHost, formData.nonProxyHosts, form]);
 
-  // Remove non-proxy host
-  const handleRemoveNonProxyHost = useCallback((index: number) => {
+  // Remove non-proxy host by value (display order is sorted, so index would be wrong)
+  const handleRemoveNonProxyHost = useCallback((host: string) => {
     form.send({
       type: 'UPDATE',
       name: 'nonProxyHosts',
-      value: formData.nonProxyHosts.filter((_: string, i: number) => i !== index),
+      value: formData.nonProxyHosts.filter((h: string) => h !== host),
     } as any);
   }, [formData.nonProxyHosts, form]);
 
@@ -98,19 +130,19 @@ export function HttpPage({ className }: HttpPageProps) {
 
   // Toggle HTTP proxy
   const handleToggleHttpProxy = useCallback(() => {
-    form.send({ type: 'UPDATE', name: 'httpEnabled', value: !formData.httpEnabled } as any);
-    if (formData.httpEnabled) {
-      // Disabling - also disable auth
-      form.send({ type: 'UPDATE', name: 'httpAuthEnabled', value: false } as any);
+    const enabling = !formData.httpEnabled;
+    form.send({ type: 'UPDATE', name: 'httpEnabled', value: enabling } as any);
+    if (!enabling) {
+      form.send({ type: 'UPDATE', name: 'httpAuthType', value: '' } as any);
     }
   }, [form, formData.httpEnabled]);
 
   // Toggle HTTPS proxy
   const handleToggleHttpsProxy = useCallback(() => {
-    form.send({ type: 'UPDATE', name: 'httpsEnabled', value: !formData.httpsEnabled } as any);
-    if (formData.httpsEnabled) {
-      // Disabling - also disable auth
-      form.send({ type: 'UPDATE', name: 'httpsAuthEnabled', value: false } as any);
+    const enabling = !formData.httpsEnabled;
+    form.send({ type: 'UPDATE', name: 'httpsEnabled', value: enabling } as any);
+    if (!enabling) {
+      form.send({ type: 'UPDATE', name: 'httpsAuthType', value: '' } as any);
     }
   }, [form, formData.httpsEnabled]);
 
@@ -118,13 +150,20 @@ export function HttpPage({ className }: HttpPageProps) {
   const handleDiscard = useCallback(() => {
     form.reset();
     setNewNonProxyHost('');
+    setNonProxyHostError(null);
   }, [form]);
 
   // Loading state
   if (form.isLoading) {
     return (
-      <Box className={`http-page ${className || ''}`.trim()}>
-        <Flex align="center" justify="center" className="http-page__loading">
+      <Box
+        className={`http-page ${className || ''}`.trim()}
+        role="status"
+        aria-busy="true"
+        aria-live="polite"
+        data-testid="http-page-loading"
+      >
+        <Flex align="center" justify="center" gap="3" className="http-page__loading">
           <Loader2 size={24} className="http-page__spinner" />
           <Text size="2">Loading HTTP settings...</Text>
         </Flex>
@@ -132,48 +171,89 @@ export function HttpPage({ className }: HttpPageProps) {
     );
   }
 
-  // Read-only view for users without update permission
+  // Read-only view for users without update permission — full-config parity with legacy HttpReadOnly
   if (!canUpdate) {
+    const showHttpProxy = formData.httpEnabled;
+    const showHttpsProxy = formData.httpsEnabled;
+    const showNonProxyHosts = (showHttpProxy || showHttpsProxy) && formData.nonProxyHosts.length > 0;
+
     return (
       <Box className={`http-page ${className || ''}`.trim()}>
-        <Flex align="center" gap="3" className="http-page__header">
-          <Globe size={24} className="http-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">HTTP Settings</Heading>
-            <Text size="2" className="http-page__description">
-              Configure HTTP proxy and connection settings
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="HTTP Settings"
+          description="Configure HTTP proxy and connection settings"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'HTTP' }
+          ]}
+        />
 
-        <SettingsFormSection title="Current Settings">
-          <Box className="http-page__readonly">
-            <Flex className="http-page__row">
-              <Text size="2" weight="medium" className="http-page__label">HTTP Proxy</Text>
-              <Text size="2">{formData.httpEnabled ? `${formData.httpHost}:${formData.httpPort}` : 'Disabled'}</Text>
-            </Flex>
-            <Flex className="http-page__row">
-              <Text size="2" weight="medium" className="http-page__label">HTTPS Proxy</Text>
-              <Text size="2">{formData.httpsEnabled ? `${formData.httpsHost}:${formData.httpsPort}` : 'Disabled'}</Text>
-            </Flex>
-          </Box>
+        <Box className="http-page__readonly-banner" mb="3">
+          <SettingsAlert type="info">
+            You are viewing a read-only version of this page. Some fields are hidden when they
+            are at their default values or when authentication is disabled.
+          </SettingsAlert>
+        </Box>
+
+        <SettingsFormSection title="Connection Settings">
+          {formData.userAgentSuffix && <Row label="User-Agent Suffix" value={formData.userAgentSuffix} />}
+          {formData.timeout != null && <Row label="Connection Timeout" value={formData.timeout} />}
+          {formData.retries != null && <Row label="Connection Retries" value={formData.retries} />}
         </SettingsFormSection>
+
+        {showHttpProxy && (
+          <SettingsFormSection title="HTTP Proxy">
+            <Row label="Host" value={formData.httpHost || '—'} />
+            <Row label="Port" value={formData.httpPort ?? '—'} />
+            {formData.httpAuthType === 'username' && (
+              <>
+                <Row label="Auth Username" value={formData.httpAuthUsername || '—'} />
+                {formData.httpAuthNtlmHost && <Row label="NTLM Host" value={formData.httpAuthNtlmHost} />}
+                {formData.httpAuthNtlmDomain && <Row label="NTLM Domain" value={formData.httpAuthNtlmDomain} />}
+              </>
+            )}
+          </SettingsFormSection>
+        )}
+
+        {showHttpsProxy && (
+          <SettingsFormSection title="HTTPS Proxy">
+            <Row label="Host" value={formData.httpsHost || '—'} />
+            <Row label="Port" value={formData.httpsPort ?? '—'} />
+            {formData.httpsAuthType === 'username' && (
+              <>
+                <Row label="Auth Username" value={formData.httpsAuthUsername || '—'} />
+                {formData.httpsAuthNtlmHost && <Row label="NTLM Host" value={formData.httpsAuthNtlmHost} />}
+                {formData.httpsAuthNtlmDomain && <Row label="NTLM Domain" value={formData.httpsAuthNtlmDomain} />}
+              </>
+            )}
+          </SettingsFormSection>
+        )}
+
+        {showNonProxyHosts && (
+          <SettingsFormSection title="Hosts to Exclude from Proxy">
+            <Box className="http-page__host-list">
+              {[...formData.nonProxyHosts]
+                .sort((a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                .map((host: string) => (
+                  <Text key={host} as="div" size="2">{host}</Text>
+              ))}
+            </Box>
+          </SettingsFormSection>
+        )}
       </Box>
     );
   }
 
   return (
     <Box className={`http-page ${className || ''}`.trim()}>
-      {/* Header */}
-      <Flex align="center" gap="3" className="http-page__header">
-        <Globe size={24} className="http-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">HTTP Settings</Heading>
-          <Text size="2" className="http-page__description">
-            Configure HTTP proxy and connection settings
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title="HTTP Settings"
+        description="Configure HTTP proxy and connection settings"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'HTTP' }
+        ]}
+      />
 
       {/* Content area */}
       <Box className="http-page__content">
@@ -184,13 +264,9 @@ export function HttpPage({ className }: HttpPageProps) {
           loading={form.isSaving}
           pristine={form.isPristine}
           error={form.saveError || undefined}
+          submitAnalyticsId="nxrm-http-save"
         >
-          {form.saveError && (
-            <Box mb="4">
-              <SettingsAlert type="error">{form.saveError}</SettingsAlert>
-            </Box>
-          )}
-          <SettingsFormSection title="Connection Settings">
+        <SettingsFormSection title="Connection Settings">
           <SettingsTextInput
             {...form.field('userAgentSuffix')}
             label="User-Agent Suffix"
@@ -263,14 +339,25 @@ export function HttpPage({ className }: HttpPageProps) {
                 placeholder="8080"
               />
 
-              <SettingsFormSection title="HTTP Proxy Authentication" collapsible defaultCollapsed={!formData.httpAuthEnabled}>
-                <SettingsCheckbox
-                  {...form.checkbox('httpAuthEnabled')}
-                  label="Enable Authentication"
-                  description="Authenticate with the HTTP proxy server"
+              <SettingsFormSection
+                key={`http-auth-${formData.httpAuthType !== ''}`}
+                title="HTTP Proxy Authentication"
+                collapsible
+                defaultCollapsed={formData.httpAuthType === ''}
+              >
+                <SettingsSelect
+                  name="httpAuthType"
+                  label="Authentication"
+                  value={formData.httpAuthType}
+                  onChange={(v: string) => form.send({ type: 'UPDATE', name: 'httpAuthType', value: v } as any)}
+                  options={[
+                    { value: '', label: 'No authentication' },
+                    { value: 'username', label: 'Username' },
+                  ]}
+                  helpText="Type of authentication used to connect to the proxy"
                 />
 
-                {formData.httpAuthEnabled && (
+                {formData.httpAuthType === 'username' && (
                   <>
                     <SettingsTextInput
                       {...form.field('httpAuthUsername')}
@@ -341,14 +428,25 @@ export function HttpPage({ className }: HttpPageProps) {
                 placeholder="8443"
               />
 
-              <SettingsFormSection title="HTTPS Proxy Authentication" collapsible defaultCollapsed={!formData.httpsAuthEnabled}>
-                <SettingsCheckbox
-                  {...form.checkbox('httpsAuthEnabled')}
-                  label="Enable Authentication"
-                  description="Authenticate with the HTTPS proxy server"
+              <SettingsFormSection
+                key={`https-auth-${formData.httpsAuthType !== ''}`}
+                title="HTTPS Proxy Authentication"
+                collapsible
+                defaultCollapsed={formData.httpsAuthType === ''}
+              >
+                <SettingsSelect
+                  name="httpsAuthType"
+                  label="Authentication"
+                  value={formData.httpsAuthType}
+                  onChange={(v: string) => form.send({ type: 'UPDATE', name: 'httpsAuthType', value: v } as any)}
+                  options={[
+                    { value: '', label: 'No authentication' },
+                    { value: 'username', label: 'Username' },
+                  ]}
+                  helpText="Type of authentication used to connect to the proxy"
                 />
 
-                {formData.httpsAuthEnabled && (
+                {formData.httpsAuthType === 'username' && (
                   <>
                     <SettingsTextInput
                       {...form.field('httpsAuthUsername')}
@@ -385,7 +483,13 @@ export function HttpPage({ className }: HttpPageProps) {
 
         {/* Non-Proxy Hosts */}
         {isProxyEnabled && (
-          <SettingsFormSection title="Hosts to Exclude from Proxy">
+          <SettingsFormSection
+            title={
+              formData.nonProxyHosts.length > 0
+                ? `Hosts to Exclude from Proxy (${formData.nonProxyHosts.length})`
+                : 'Hosts to Exclude from Proxy'
+            }
+          >
             <Text size="2" className="http-page__section-description">
               Specify hosts that should bypass the proxy. Use wildcards (*) for pattern matching.
             </Text>
@@ -396,10 +500,11 @@ export function HttpPage({ className }: HttpPageProps) {
                   name="newNonProxyHost"
                   label="Host Pattern"
                   value={newNonProxyHost}
-                  onChange={setNewNonProxyHost}
+                  onChange={(v: string) => { setNewNonProxyHost(v); setNonProxyHostError(null); }}
                   onKeyDown={handleNonProxyHostKeyDown}
                   placeholder="*.example.com"
                   helpText="Enter a hostname or pattern to exclude"
+                  error={nonProxyHostError || undefined}
                 />
               </Box>
               <SettingsButton
@@ -416,18 +521,20 @@ export function HttpPage({ className }: HttpPageProps) {
 
             {formData.nonProxyHosts.length > 0 && (
               <Box className="http-page__host-list">
-                {formData.nonProxyHosts.map((host: string, index: number) => (
-                  <Flex key={host} align="center" justify="between" className="http-page__host-item">
-                    <Text size="2">{host}</Text>
-                    <button
-                      type="button"
-                      className="http-page__remove-button"
-                      onClick={() => handleRemoveNonProxyHost(index)}
-                      aria-label={`Remove ${host}`}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </Flex>
+                {[...formData.nonProxyHosts]
+                  .sort((a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                  .map((host: string) => (
+                    <Flex key={host} align="center" justify="between" className="http-page__host-item">
+                      <Text size="2">{host}</Text>
+                      <button
+                        type="button"
+                        className="http-page__remove-button"
+                        onClick={() => handleRemoveNonProxyHost(host)}
+                        aria-label={`Remove ${host}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </Flex>
                 ))}
               </Box>
             )}
@@ -445,9 +552,9 @@ export function HttpPage({ className }: HttpPageProps) {
               including proxy configuration for accessing remote repositories.
             </Text>
             <Text size="2" className="http-page__help-text">
-              See our{' '}
+              {' '}See our{' '}
               <a
-                href="https://help.sonatype.com/en/http-configuration.html"
+                href="http://links.sonatype.com/products/nxrm3/docs/http-request-and-proxy-settings"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="http-page__help-link"

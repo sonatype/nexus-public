@@ -124,23 +124,25 @@ describe('previewFeatureFlags', () => {
   });
 
   describe('PREVIEW_FEATURE_FLAGS', () => {
-    it('has repository features disabled — Coming Soon', () => {
-      expect(PREVIEW_FEATURE_FLAGS['repository.repositories']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['repository.blobstores']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['repository.selectors']).toBe(false);
+    it('has repository features enabled per release spec', () => {
+      expect(PREVIEW_FEATURE_FLAGS['repository.repositories']).toBe(true); // NEXUS-52792
+      expect(PREVIEW_FEATURE_FLAGS['repository.blobstores']).toBe(true); // NEXUS-52793
+      expect(PREVIEW_FEATURE_FLAGS['repository.selectors']).toBe(true); // NEXUS-52782
       expect(PREVIEW_FEATURE_FLAGS['repository.cleanuppolicies']).toBe(true);
     });
 
     it('has security features partially enabled per release spec', () => {
       // Coming Soon
-      expect(PREVIEW_FEATURE_FLAGS['security.privileges']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['security.privileges']).toBe(true); // NEXUS-52808
       expect(PREVIEW_FEATURE_FLAGS['security.roles']).toBe(true);
-      expect(PREVIEW_FEATURE_FLAGS['security.users']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.anonymous']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['security.users']).toBe(true); // NEXUS-52807
+      // Enabled — NEXUS-51085
+      expect(PREVIEW_FEATURE_FLAGS['security.anonymous']).toBe(true);
+      expect(PREVIEW_FEATURE_FLAGS['security.realms']).toBe(true);
+      // Coming Soon
       expect(PREVIEW_FEATURE_FLAGS['security.ldap']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['security.crowd']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.realms']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['security.saml']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['security.saml']).toBe(true); // NEXUS-52595
       expect(PREVIEW_FEATURE_FLAGS['security.sslcertificates']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['security.usertokens']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['security.oauth2']).toBe(false);
@@ -161,11 +163,11 @@ describe('previewFeatureFlags', () => {
       expect(PREVIEW_FEATURE_FLAGS['system.nodes']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['system.capabilities']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['system.tasks']).toBe(true);
+      expect(PREVIEW_FEATURE_FLAGS['system.http']).toBe(true); // NEXUS-52594
+      expect(PREVIEW_FEATURE_FLAGS['system.licensing']).toBe(true); // Enabled — NEXUS-52900
       // Coming Soon
-      expect(PREVIEW_FEATURE_FLAGS['system.licensing']).toBe(false);
       expect(PREVIEW_FEATURE_FLAGS['system.upgrade']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['system.emailserver']).toBe(false);
-      expect(PREVIEW_FEATURE_FLAGS['system.http']).toBe(false);
+      expect(PREVIEW_FEATURE_FLAGS['system.emailserver']).toBe(true);
       expect(PREVIEW_FEATURE_FLAGS['iqserver']).toBe(false);
     });
   });
@@ -181,7 +183,7 @@ describe('previewFeatureFlags', () => {
       window.location.search = '';
 
       expect(isFeatureEnabled('security.oauth2')).toBe(false);
-      expect(isFeatureEnabled('security.anonymous')).toBe(false);
+      expect(isFeatureEnabled('security.ldap')).toBe(false);
     });
 
     it('returns false for unknown features', () => {

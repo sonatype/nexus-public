@@ -354,4 +354,54 @@ describe('BlobStoresList', function() {
     expect(blobStoreBlobCount(0)).toHaveTextContent('Calculating...');
     expect(blobStoreTotalSize(0)).toHaveTextContent('Calculating...');
   });
+
+  describe('Analytics IDs', function() {
+    it('has nxrm-blobstore-create analytics ID on create button', async function() {
+      axios.get.mockResolvedValue({data: []});
+
+      renderComponent();
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const createButton = screen.getByRole('button', {name: /Create blob store/i});
+      expect(createButton).toHaveAttribute('data-analytics-id', 'nxrm-blobstore-create');
+    });
+
+    it('has nxrm-blobstore-filter analytics ID on filter input', async function() {
+      axios.get.mockResolvedValue({data: []});
+
+      renderComponent();
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const filterInput = screen.getByPlaceholderText('Filter by name');
+      expect(filterInput).toHaveAttribute('data-analytics-id', 'nxrm-blobstore-filter');
+    });
+  });
+
+  describe('Accessibility', function() {
+    it('has aria-label on filter input', async function() {
+      axios.get.mockResolvedValue({data: []});
+
+      renderComponent();
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const filterInput = screen.getByPlaceholderText('Filter by name');
+      expect(filterInput).toHaveAttribute('aria-label', 'Filter blob stores by name');
+    });
+
+    it('create button is disabled when user lacks permission', async function() {
+      ExtJS.usePermission.mockReturnValue(false);
+
+      axios.get.mockResolvedValue({data: []});
+
+      renderComponent();
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const createButton = screen.getByRole('button', {name: /Create blob store/i});
+      expect(createButton).toBeDisabled();
+    });
+  });
 });

@@ -17,16 +17,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * REST API representation of a user.
@@ -36,38 +36,38 @@ import javax.validation.constraints.NotEmpty;
 public class ApiUser
 {
   @NotBlank
-  @ApiModelProperty(NexusSecurityApiConstants.USER_ID_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.USER_ID_DESCRIPTION)
   private String userId;
 
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.FIRST_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.FIRST_NAME_DESCRIPTION)
   private String firstName;
 
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.LAST_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.LAST_NAME_DESCRIPTION)
   private String lastName;
 
   @NotEmpty
   @Email
-  @ApiModelProperty(NexusSecurityApiConstants.EMAIL_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.EMAIL_DESCRIPTION)
   private String emailAddress;
 
   @NotBlank
-  @ApiModelProperty(NexusSecurityApiConstants.SOURCE_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.SOURCE_DESCRIPTION)
   private String source;
 
   @NotNull
-  @ApiModelProperty(NexusSecurityApiConstants.STATUS_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.STATUS_DESCRIPTION)
   private ApiUserStatus status;
 
-  @ApiModelProperty("Indicates whether the user's properties could be modified by the Nexus Repository Manager. "
+  @Schema(description = "Indicates whether the user's properties could be modified by the Nexus Repository Manager. "
       + "When false only roles are considered during update.")
   private boolean readOnly;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLES_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLES_DESCRIPTION)
   private Set<String> roles;
 
-  @ApiModelProperty("The roles which the user has been assigned in an external source, "
+  @Schema(description = "The roles which the user has been assigned in an external source, "
       + "e.g. LDAP group. These cannot be changed within the Nexus Repository Manager.")
   private Set<String> externalRoles;
 

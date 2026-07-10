@@ -17,6 +17,7 @@ import {
   NxSystemNotice,
 } from '@sonatype/react-shared-components';
 import CEHardLimitAlert from './CELimits/CEHardLimitAlert';
+import TelemetryWarningBanner from '../../shared/telemetry/TelemetryWarningBanner';
 
 import './SystemNotices.scss';
 import UpgradeAlert from './UpgradeAlert/UpgradeAlert';
@@ -27,6 +28,7 @@ export default function SystemNotices () {
   const recoveryModeEnabled = ExtJS.useState(() => ExtJS.state().getValue('recovery.mode.enabled'));
 
   return <NxSystemNotice.Container className="nxrm-system-notices">
+    <TelemetryWarningBanner />
     <CEHardLimitAlert />
 
     {recoveryModeEnabled ? <RecoveryModeAlert /> : <UpgradeAlert />}

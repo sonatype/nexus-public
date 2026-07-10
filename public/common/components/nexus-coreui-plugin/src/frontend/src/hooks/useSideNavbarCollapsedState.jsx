@@ -11,16 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useTransitionHook } from '@uirouter/react';
 import { useState, useEffect } from 'react';
-import { ROUTE_NAMES } from '../routerConfig/routeNames/routeNames';
 
 export default function useSideNavbarCollapsedState(initState) {
   const [isOpen, setIsOpen] = useState(initState);
-  const [savedOpenState, setSavedOpenState] = useState(isOpen);
 
   const onToggleClick = () => {
-    setSavedOpenState(!isOpen);
     setIsOpen(!isOpen);
   };
 
@@ -37,21 +33,6 @@ export default function useSideNavbarCollapsedState(initState) {
     window.addEventListener('nx-sidebar-toggle', handleGlobalToggle);
     return () => window.removeEventListener('nx-sidebar-toggle', handleGlobalToggle);
   }, []);
-
-  useTransitionHook('onSuccess', {}, transition => {
-    const prevState = transition.from().name;
-    const currentState = transition.to().name;
-    const isCurrentRouteAdmin = currentState.includes(ROUTE_NAMES.ADMIN.DIRECTORY);
-    const isPreviousRouteAdmin = prevState && prevState.includes(ROUTE_NAMES.ADMIN.DIRECTORY);
-    const isNavigationInOrOutOfAdmin = isCurrentRouteAdmin !== isPreviousRouteAdmin;
-    if (isNavigationInOrOutOfAdmin) {
-      if (isCurrentRouteAdmin) {
-        setIsOpen(false);
-      } else {
-        setIsOpen(savedOpenState);
-      }
-    }
-  });
 
   return [isOpen, onToggleClick];
 }

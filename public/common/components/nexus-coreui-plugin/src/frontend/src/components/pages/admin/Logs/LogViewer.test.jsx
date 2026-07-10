@@ -39,12 +39,28 @@ describe('LogViewer', () => {
     return render(<LogViewer itemId={itemId} />);
   };
 
+  const renderErrorView = async (itemId, errorMessage) => {
+    axios.get.mockReturnValue(Promise.reject({ message: errorMessage }));
+    return render(<LogViewer itemId={itemId} />);
+  };
+
   it('has the correct logs', async () => {
     const { container } = await renderView('test', 'This is a test log');
 
     const logs = container.querySelector('.log-viewer-textarea');
     await waitFor(() => {
       expect(logs).toHaveTextContent('This is a test log');
+    });
+  });
+
+  it('requests log content with Accept: text/plain to avoid a 406 from the server', async () => {
+    await renderView('nexus.log', 'log content');
+
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalledWith(
+          expect.stringContaining('/nexus.log'),
+          expect.objectContaining({headers: {'Accept': 'text/plain'}})
+      );
     });
   });
 
@@ -94,5 +110,95 @@ describe('LogViewer', () => {
     expect(axios.post).toHaveBeenCalledWith('service/rest/internal/logging/log/mark', 'testing the mark', {
       headers: { 'Content-Type': 'text/plain' }
     });
+  });
+
+  it('renders an error message when log fetch fails', async () => {
+    const { container } = await renderErrorView('test.log', 'Network Error');
+
+    await waitFor(() => {
+      expect(container.querySelector('.nx-alert--error')).toHaveTextContent('Network Error');
+    });
+  });
+
+  it('shows a Retry button in error state', async () => {
+    await renderErrorView('test.log', 'Network Error');
+
+    await waitFor(() => {
+      expect(screen.getByText('Retry')).toBeInTheDocument();
+    });
+  });
+
+  it('recovers after clicking Retry', async () => {
+    axios.get
+        .mockReturnValueOnce(Promise.reject({message: 'Network Error'}))
+        .mockReturnValueOnce(Promise.resolve({data: 'Recovered log content'}));
+
+    const { container } = render(<LogViewer itemId="test.log" />);
+    await waitFor(() => expect(screen.getByText('Retry')).toBeInTheDocument());
+
+    userEvent.click(screen.getByText('Retry'));
+
+    await waitFor(() => {
+      expect(container.querySelector('.log-viewer-textarea')).toHaveTextContent('Recovered log content');
+    });
+    expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+  });
+
+  it('recovers when refresh rate is changed to auto in error state', async () => {
+    axios.get
+        .mockReturnValueOnce(Promise.reject({message: 'Network Error'}))
+        .mockReturnValueOnce(Promise.resolve({data: 'Log content after recovery'}));
+
+    const { container } = render(<LogViewer itemId="test.log" />);
+    await waitFor(() => expect(screen.getByText('Retry')).toBeInTheDocument());
+
+    const rate = screen.getByLabelText(VIEW.REFRESH.RATE_LABEL);
+    await userEvent.selectOptions(rate, '20');
+
+    await waitFor(() => {
+      expect(container.querySelector('.log-viewer-textarea')).toHaveTextContent('Log content after recovery');
+    });
+    expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+  });
+
+  it('recovers when refresh rate is changed to manual in error state', async () => {
+    // 1st fetch succeeds (machine settles into idle/manual state with period=0)
+    // 2nd fetch fails when user switches to auto-refresh (machine enters error with period=20)
+    // 3rd fetch succeeds when user switches back to Manual (sends MANUAL_REFRESH)
+    axios.get
+        .mockResolvedValueOnce({data: 'Initial content'})
+        .mockRejectedValueOnce({message: 'Network Error'})
+        .mockResolvedValueOnce({data: 'Manual recovery content'});
+
+    const { container } = render(<LogViewer itemId="test.log" />);
+    await waitFor(() => expect(container.querySelector('.log-viewer-textarea')).toHaveTextContent('Initial content'));
+
+    const rate = screen.getByLabelText(VIEW.REFRESH.RATE_LABEL);
+
+    // Switch to auto: UPDATE_PERIOD → retrieve → fails → error state with period=20
+    await userEvent.selectOptions(rate, '20');
+    await waitFor(() => expect(screen.getByText('Retry')).toBeInTheDocument());
+
+    // Switch back to Manual: MANUAL_REFRESH → retrieve → succeeds → recovery
+    await userEvent.selectOptions(rate, '0');
+    await waitFor(() => {
+      expect(container.querySelector('.log-viewer-textarea')).toHaveTextContent('Manual recovery content');
+    });
+    expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+  });
+
+  it('has the download button with analytics id', async () => {
+    const { container } = await renderView('test', 'This is a test log');
+
+    const downloadButton = container.querySelector('[data-analytics-id="nxrm-logs-download"]');
+    expect(downloadButton).toBeInTheDocument();
+    expect(downloadButton).toHaveTextContent('Download');
+  });
+
+  it('has the mark button with analytics id', async () => {
+    const { container } = await renderView('nexus.log', 'This is a test log');
+
+    const markButton = container.querySelector('[data-analytics-id="nxrm-logs-mark"]');
+    expect(markButton).toBeInTheDocument();
   });
 });

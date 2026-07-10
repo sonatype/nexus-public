@@ -11,10 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { screen } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import React from 'react';
 import { renderComponentRoute } from '../../../testUtils/renderUtils';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
+import { MissingRoutePage } from './MissingRoutePage';
 
 jest.mock('../user/Welcome/Welcome', () => {
   return () => (
@@ -24,11 +25,62 @@ jest.mock('../user/Welcome/Welcome', () => {
   );
 });
 
+jest.mock('@uirouter/react', () => ({
+  ...jest.requireActual('@uirouter/react'),
+  useSref: jest.fn(() => ({ href: '#browse/welcome' })),
+}));
+
 describe('MissingRoutePage', () => {
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '' },
+      writable: true,
+      configurable: true,
+    });
+  });
+
   it('should render 404 page when requested', async () => {
     await renderComponentRoute(ROUTE_NAMES.MISSING_ROUTE);
 
     await assertMissingRoutePageRendered();
+  });
+
+  it('Return to Dashboard links to Classic UI when on a classic route', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '#browse/somewhere' },
+      writable: true,
+      configurable: true,
+    });
+    render(<MissingRoutePage />);
+
+    const dashboardLink = screen.getByRole('link', { name: 'Return to Dashboard' });
+    expect(dashboardLink.getAttribute('href')).toContain('browse/welcome');
+    expect(dashboardLink.getAttribute('href')).not.toContain('preview/browse/welcome');
+  });
+
+  it('Return to Dashboard links to Preview UI when on a preview route', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '#preview/admin/support/metrichealth' },
+      writable: true,
+      configurable: true,
+    });
+    render(<MissingRoutePage />);
+
+    const dashboardLink = screen.getByRole('link', { name: 'Return to Dashboard' });
+    expect(dashboardLink.getAttribute('href')).toBe('#preview/browse/welcome');
+  });
+
+  it('Return to Dashboard links to Classic UI when hash is empty', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...window.location, hash: '' },
+      writable: true,
+      configurable: true,
+    });
+    render(<MissingRoutePage />);
+
+    const dashboardLink = screen.getByRole('link', { name: 'Return to Dashboard' });
+    expect(dashboardLink.getAttribute('href')).toContain('browse/welcome');
+    expect(dashboardLink.getAttribute('href')).not.toContain('preview/browse/welcome');
   });
 
   async function assertMissingRoutePageRendered() {

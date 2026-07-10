@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.validation;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ValidatorFactory;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ValidatorFactory;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.validation.internal.SpringConstraintValidatorFactory;

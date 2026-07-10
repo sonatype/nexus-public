@@ -26,8 +26,6 @@ public class FirewallCapability
 {
   private static final String CLM_CAPABILITY_ID = "clm";
 
-  private static final String AUDIT_QUARANTINE_CAPABILITY_ID = "firewall.audit";
-
   private FirewallCapability() {
     throw new IllegalStateException("Utility class");
   }
@@ -42,22 +40,6 @@ public class FirewallCapability
 
     CapabilityContext context = references.iterator().next().context();
     return Optional.of(context);
-  }
-
-  public static boolean auditAndQuarantineCapabilityExists(final CapabilityRegistry capabilities) {
-    return capabilities.get(capabilities().withType(CapabilityType.capabilityType(AUDIT_QUARANTINE_CAPABILITY_ID)))
-        .stream()
-        .anyMatch(reference -> reference.context().isEnabled());
-  }
-
-  public static long countFirewallCapabilities(final CapabilityRegistry capabilities) {
-    return capabilities.get(
-        capabilities()
-            .withType(CapabilityType.capabilityType(AUDIT_QUARANTINE_CAPABILITY_ID))
-            .includeNotExposed()
-            .withProperty("quarantine", "true")
-            .enabled())
-        .size();
   }
 
   public static boolean isFirewallSupportedFormat(String format) {

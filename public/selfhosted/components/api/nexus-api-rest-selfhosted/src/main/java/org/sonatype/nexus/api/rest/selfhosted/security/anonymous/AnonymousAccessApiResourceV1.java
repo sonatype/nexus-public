@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;

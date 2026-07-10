@@ -88,6 +88,10 @@ export interface InstanceTotals {
   peakRequestsPerDay: number;
   /** Peak requests per month (highest recorded) */
   peakRequestsPerMonth: number;
+  /** CE hard limit for total components (0 when no limit applies) */
+  totalComponentsLimit: number;
+  /** CE hard limit for peak requests per day (0 when no limit applies) */
+  peakRequestsPerDayLimit: number;
 }
 
 // =============================================================================

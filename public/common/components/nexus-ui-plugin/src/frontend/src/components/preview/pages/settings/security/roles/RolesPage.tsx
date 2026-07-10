@@ -319,6 +319,7 @@ export function RolesPage() {
               title={headerProps.title}
               description={headerProps.description}
               breadcrumbs={[
+                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
                 { label: 'Roles', onClick: handleBack },
                 { label: routeState.roleId || 'Role Profile' },
               ]}

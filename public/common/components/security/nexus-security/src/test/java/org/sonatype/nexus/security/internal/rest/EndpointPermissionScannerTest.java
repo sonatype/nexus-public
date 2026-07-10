@@ -16,15 +16,15 @@ import java.util.List;
 
 import org.sonatype.nexus.rest.Resource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -32,7 +32,8 @@ import static org.hamcrest.Matchers.is;
 
 class EndpointPermissionScannerTest
 {
-  @Api(tags = "Widget API")
+  // NEXUS-46395: Swagger 1.x @Api(tags="...") -> OpenAPI 3.x @Tag(name="...")
+  @Tag(name = "Widget API")
   @Path("v1/widgets")
   public static class SampleResource
       implements Resource
@@ -41,7 +42,7 @@ class EndpointPermissionScannerTest
     @Path("{id}")
     @RequiresAuthentication
     @RequiresPermissions("nexus:widgets:read")
-    @ApiOperation("Get widget")
+    @Operation(summary = "Get widget")
     public String getWidget(final String id) {
       return id;
     }

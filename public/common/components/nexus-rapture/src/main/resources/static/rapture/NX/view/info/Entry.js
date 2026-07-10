@@ -28,6 +28,18 @@ Ext.define('NX.view.info.Entry', {
     'Ext.XTemplate'
   ],
 
+  statics: {
+    /**
+     * Wraps HTML content to indicate it should be rendered without encoding.
+     * Use this when passing HTML content to showInfo that should not be encoded.
+     * @param {String} html The HTML content to render
+     * @return {Object} An object that signals to the template to render raw HTML
+     */
+    rawHtml: function(html) {
+      return { isRawHtml: true, html: html };
+    }
+  },
+
   /**
    * @override
    */
@@ -39,13 +51,21 @@ Ext.define('NX.view.info.Entry', {
       '<table>',
       '<tpl for=".">',
       '<tr class="nx-info-entry">',
-      '<td class="nx-info-entry-name">{name}</td>',
-      '<td class="nx-info-entry-value">{value}</td>',
+      '<td class="nx-info-entry-name">{name:htmlEncode}</td>',
+      '<td class="nx-info-entry-value">{[this.encodeValue(values.value)]}</td>',
       '</tr>',
       '</tpl>',
       '</tr>',
       '</table>',
-      '</div>'
+      '</div>',
+      {
+        encodeValue: function(v) {
+          if (v && v.isRawHtml) {
+            return v.html;
+          }
+          return Ext.htmlEncode(v);
+        }
+      }
     ]);
 
     me.callParent();

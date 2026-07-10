@@ -32,6 +32,7 @@ interface S3BlobStoreSettingsProps {
   onChange: (path: string, value: unknown) => void;
   disabled?: boolean;
   isEdit?: boolean;
+  errors?: Record<string, string | null>;
 }
 
 const STRINGS = {
@@ -132,7 +133,8 @@ export default function S3BlobStoreSettings({
   data,
   onChange,
   disabled = false,
-  isEdit = false
+  isEdit = false,
+  errors = {},
 }: S3BlobStoreSettingsProps) {
   const { values: dropdownValues, loading: dropdownLoading } = useS3DropdownValues();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']));
@@ -243,6 +245,7 @@ export default function S3BlobStoreSettings({
           onChange={(value) => updateBucket('name', value)}
           helpText={STRINGS.BASIC.BUCKET.helpText}
           placeholder={STRINGS.BASIC.BUCKET.placeholder}
+          error={errors['bucketConfiguration.bucket.name'] ?? undefined}
           required
           disabled={disabled}
         />

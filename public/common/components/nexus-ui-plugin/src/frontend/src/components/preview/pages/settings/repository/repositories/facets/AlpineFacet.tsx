@@ -20,6 +20,7 @@ import {
 } from '../../../../../shared/form';
 
 import { RepositoryFormData, RepositoryFormErrors } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 interface AlpineFacetProps {
   formData: RepositoryFormData;
@@ -50,24 +51,24 @@ export function AlpineFacet({
     <>
       {showSigning && (
         <SettingsFormSection
-          title="Alpine Signing"
-          description="RSA signing configuration for Alpine repositories"
+          title={UIStrings.ALPINE.SIGNING.title}
+          description={UIStrings.ALPINE.SIGNING.description}
         >
           <SettingsTextInput
             name="alpine-keypair"
-            label="RSA Signing Key"
+            label={UIStrings.ALPINE.SIGNING.KEYPAIR.label}
             value={formData.alpineSigning?.keypair || ''}
             onChange={(value) => onNestedChange('alpineSigning', { keypair: value })}
-            helpText="PEM encoded RSA signing key pair"
+            helpText={UIStrings.ALPINE.SIGNING.KEYPAIR.helpText}
             required
           />
 
           <SettingsPasswordInput
             name="alpine-passphrase"
-            label="RSA Signing Key Passphrase"
+            label={UIStrings.ALPINE.SIGNING.PASSPHRASE.label}
             value={formData.alpineSigning?.passphrase || ''}
             onChange={(value) => onNestedChange('alpineSigning', { passphrase: value })}
-            helpText="Passphrase for the RSA signing key (leave empty if key has no passphrase)"
+            helpText={UIStrings.ALPINE.SIGNING.PASSPHRASE.helpText}
           />
         </SettingsFormSection>
       )}

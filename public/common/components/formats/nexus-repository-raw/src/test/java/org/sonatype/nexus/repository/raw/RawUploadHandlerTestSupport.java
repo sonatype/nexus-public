@@ -300,6 +300,20 @@ public abstract class RawUploadHandlerTestSupport
 
     testNormalizePath("foo", "bar/goo.jar", path("foo/bar/goo.jar"));
     testNormalizePath("foo/bar", "car/goo.jar", path("foo/bar/car/goo.jar"));
+
+    testNormalizePath("foo", "bar\\goo.jar", path("foo/bar/goo.jar"));
+    testNormalizePath("foo\\bar", "goo.jar", path("foo/bar/goo.jar"));
+    testNormalizePath("foo\\bar\\baz", "goo.jar", path("foo/bar/baz/goo.jar"));
+    testNormalizePath("foo\\bar", "baz/goo.jar", path("foo/bar/baz/goo.jar"));
+
+    // leading backslash on directory
+    testNormalizePath("\\foo\\bar", "goo.jar", path("foo/bar/goo.jar"));
+    // trailing backslash on filename
+    testNormalizePath("foo", "bar.jar\\", path("foo/bar.jar"));
+    // mixed backslash and forward slash in single field
+    testNormalizePath("foo\\bar/baz", "goo.jar", path("foo/bar/baz/goo.jar"));
+    // both fields with backslashes
+    testNormalizePath("foo\\bar", "baz\\goo.jar", path("foo/bar/baz/goo.jar"));
   }
 
   // adjust the path string if necessary

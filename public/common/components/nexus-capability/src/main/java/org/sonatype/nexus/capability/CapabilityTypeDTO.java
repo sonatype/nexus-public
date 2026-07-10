@@ -15,22 +15,22 @@ package org.sonatype.nexus.capability;
 import java.util.List;
 import java.util.Objects;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel("CapabilityType")
+@Schema(description = "CapabilityType")
 public class CapabilityTypeDTO
 {
-  @ApiModelProperty("Capability type identifier")
+  @Schema(description = "Capability type identifier")
   private String id;
 
-  @ApiModelProperty("Display name of the capability type")
+  @Schema(description = "Display name of the capability type")
   private String name;
 
-  @ApiModelProperty("Description of the capability type")
+  @Schema(description = "Description of the capability type")
   private String about;
 
-  @ApiModelProperty("Form fields configuration for this capability type")
+  @Schema(description = "Form fields configuration for this capability type")
   private List<FormFieldDTO> formFields;
 
   protected CapabilityTypeDTO() {

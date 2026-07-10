@@ -61,6 +61,24 @@ Ext.define('NX.coreui.controller.SearchComposer', {
           fieldLabel: NX.I18n.get('SearchComposer_Version_FieldLabel'),
           width: 250
         }
+      },
+      {
+        id: 'composer.description',
+        group: NX.I18n.get('SearchComposer_Group'),
+        config: {
+          format: 'composer',
+          fieldLabel: NX.I18n.get('SearchComposer_Description_FieldLabel'),
+          width: 250
+        }
+      },
+      {
+        id: 'composer.keywords',
+        group: NX.I18n.get('SearchComposer_Group'),
+        config: {
+          format: 'composer',
+          fieldLabel: NX.I18n.get('SearchComposer_Keywords_FieldLabel'),
+          width: 250
+        }
       }
     ], me);
 

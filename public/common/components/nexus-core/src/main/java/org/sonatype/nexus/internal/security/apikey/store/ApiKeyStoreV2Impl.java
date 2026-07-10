@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.crypto.secrets.Secret;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
@@ -30,10 +29,11 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * An {@link ApiKeyStore} implementation which makes use of {@link SecretsService}
@@ -144,11 +144,26 @@ public class ApiKeyStoreV2Impl
         .map(ApiKeyInternal.class::cast);
   }
 
-  @Transactional
   @Override
   public Optional<ApiKeyInternal> getApiKeyByToken(final String domain, final char[] apiKey) {
-    return dao().findPrincipals(domain, accessKey(apiKey))
-        .filter(key -> Arrays.equals(((ApiKeyV2Data) key).getSecret().decrypt(), secret(apiKey)));
+    Optional<ApiKeyInternal> storedKey = findPrincipals(domain, accessKey(apiKey));
+
+    return storedKey.filter(key -> fixedTimeEquals(
+        ((ApiKeyV2Data) key).getSecret().decrypt(),
+        secret(apiKey)));
+  }
+
+  @Transactional
+  protected Optional<ApiKeyInternal> findPrincipals(final String domain, final String accessKey) {
+    return dao().findPrincipals(domain, accessKey);
+  }
+
+  private static boolean fixedTimeEquals(final char[] a, final char[] b) {
+    int result = 0;
+    for (int i = 0; i < a.length; i++) {
+      result |= a[i] ^ b[i];
+    }
+    return result == 0;
   }
 
   @Override

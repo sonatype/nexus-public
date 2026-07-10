@@ -108,6 +108,19 @@ describe('ContentSelectorsList', () => {
     expect(screen.getByText('Select all npm packages')).toBeInTheDocument();
   });
 
+  it('displays selector expressions', async () => {
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('maven-selector')).toBeInTheDocument();
+    });
+    expect(screen.getByText('format == "maven2"')).toBeInTheDocument();
+    expect(screen.getByText('format == "npm"')).toBeInTheDocument();
+    expect(screen.getByText('format == "raw"')).toBeInTheDocument();
+  });
+
   it('filters selectors by name', async () => {
     render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} />, {
       wrapper: TestWrapper,
@@ -139,6 +152,23 @@ describe('ContentSelectorsList', () => {
 
     expect(screen.queryByText('maven-selector')).not.toBeInTheDocument();
     expect(screen.getByText('npm-selector')).toBeInTheDocument();
+    expect(screen.queryByText('raw-selector')).not.toBeInTheDocument();
+  });
+
+  it('filters selectors by expression', async () => {
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('maven-selector')).toBeInTheDocument();
+    });
+
+    const filterInput = screen.getByPlaceholderText('Filter by name or description...');
+    fireEvent.change(filterInput, { target: { value: 'maven2' } });
+
+    expect(screen.getByText('maven-selector')).toBeInTheDocument();
+    expect(screen.queryByText('npm-selector')).not.toBeInTheDocument();
     expect(screen.queryByText('raw-selector')).not.toBeInTheDocument();
   });
 
@@ -258,6 +288,7 @@ describe('ContentSelectorsList', () => {
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Type')).toBeInTheDocument();
     expect(screen.getByText('Description')).toBeInTheDocument();
+    expect(screen.getByText('Expression')).toBeInTheDocument();
   });
 
   it('shows retry button on error', async () => {

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 // Mock the shared module before importing SettingsHubPage
@@ -32,8 +32,30 @@ jest.mock('../../../config/featureFlags', () => ({
 }));
 
 // Mock the settingsConfig to avoid dependency on actual config
+// Section order matches classic UI: Repository → Security → Support → System
 jest.mock('../settingsConfig', () => ({
   SETTINGS_SECTIONS: [
+    {
+      id: 'repository',
+      label: 'Repository',
+      cards: [
+        {
+          id: 'repositories',
+          path: 'repository/repositories',
+          label: 'Repositories',
+          description: 'Manage repository configurations',
+          featureKey: 'repository.repositories',
+        },
+        {
+          id: 'blob-stores',
+          path: 'repository/blob-stores',
+          label: 'Blob Stores',
+          description: 'Configure blob storage locations',
+          featureKey: 'repository.blobstores',
+          cloudExcluded: true,
+        },
+      ],
+    },
     {
       id: 'security',
       label: 'Security',
@@ -44,6 +66,7 @@ jest.mock('../settingsConfig', () => ({
           label: 'Users',
           description: 'Manage user accounts and access',
           featureKey: 'security.users',
+          visibilityRequirements: { requiresPermission: 'nexus:users:read' },
         },
         {
           id: 'roles',
@@ -51,6 +74,7 @@ jest.mock('../settingsConfig', () => ({
           label: 'Roles',
           description: 'Configure user roles and permissions',
           featureKey: 'security.roles',
+          visibilityRequirements: { requiresPermission: 'nexus:roles:read' },
         },
         {
           id: 'ldap',
@@ -71,23 +95,16 @@ jest.mock('../settingsConfig', () => ({
       ],
     },
     {
-      id: 'repository',
-      label: 'Repository',
+      id: 'support',
+      label: 'Support',
+      cloudExcluded: true,
       cards: [
         {
-          id: 'repositories',
-          path: 'repository/repositories',
-          label: 'Repositories',
-          description: 'Manage repository configurations',
-          featureKey: 'repository.repositories',
-        },
-        {
-          id: 'blob-stores',
-          path: 'repository/blob-stores',
-          label: 'Blob Stores',
-          description: 'Configure blob storage locations',
-          featureKey: 'repository.blobstores',
-          cloudExcluded: true,
+          id: 'logs',
+          path: 'support/logs',
+          label: 'Logs',
+          description: 'View application logs',
+          featureKey: 'support.logs',
         },
       ],
     },
@@ -117,6 +134,12 @@ jest.mock('../../../../../interface/ExtJS', () => ({
     isProEdition: jest.fn().mockReturnValue(false),
     useUser: jest.fn().mockReturnValue({ administrator: false }),
   },
+}));
+
+// Mock NavigationUtils — isVisible returns true by default so all cards pass permission check
+const mockIsVisible = jest.fn().mockReturnValue(true);
+jest.mock('../../../../../interface/NavigationUtils', () => ({
+  isVisible: (...args: any[]) => mockIsVisible(...args),
 }));
 
 // Import after mocks are set up
@@ -165,9 +188,23 @@ describe('SettingsHubPage', () => {
     it('renders all sections when no search query', () => {
       renderWithTheme(<SettingsHubPage />);
 
-      expect(screen.getByRole('heading', { name: 'Security' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Repository' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Security' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Support' })).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'System' })).toBeInTheDocument();
+    });
+
+    it('renders sections in correct order matching classic UI', () => {
+      renderWithTheme(<SettingsHubPage />);
+
+      // Get all section headings in DOM order
+      const sectionHeadings = screen.getAllByRole('heading', { level: 2 });
+
+      // Verify order matches classic ExtJS admin navigation: Repository → Security → Support → System
+      expect(sectionHeadings[0]).toHaveTextContent('Repository');
+      expect(sectionHeadings[1]).toHaveTextContent('Security');
+      expect(sectionHeadings[2]).toHaveTextContent('Support');
+      expect(sectionHeadings[3]).toHaveTextContent('System');
     });
 
     it('renders all cards when no search query', () => {
@@ -423,9 +460,9 @@ describe('SettingsHubPage', () => {
       renderWithTheme(<SettingsHubPage />);
 
       const links = screen.getAllByRole('link');
-      // Should have 6 links total (3 security + 2 repository + 1 system)
+      // Should have 7 links total (2 repository + 3 security + 1 support + 1 system)
       // IP Allow List is proOnly and hidden by default (isProEdition = false)
-      expect(links.length).toBe(6);
+      expect(links.length).toBe(7);
     });
   });
 
@@ -692,6 +729,191 @@ describe('SettingsHubPage', () => {
 
       // Badge should come after label in DOM order
       expect(labelEl.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  describe('Permission Filtering', () => {
+    afterEach(() => {
+      mockIsVisible.mockReturnValue(true);
+    });
+
+    it('hides cards when isVisible returns false for their visibilityRequirements', () => {
+      mockIsVisible.mockImplementation((reqs: any) => {
+        if (reqs?.requiresPermission === 'nexus:users:read') {
+          return false;
+        }
+        return true;
+      });
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(screen.queryByText('Users')).not.toBeInTheDocument();
+      expect(screen.getByText('Roles')).toBeInTheDocument();
+    });
+
+    it('hides entire section when all cards fail permission check', () => {
+      mockIsVisible.mockImplementation((reqs: any) => {
+        if (reqs?.requiresPermission === 'nexus:users:read' ||
+            reqs?.requiresPermission === 'nexus:roles:read') {
+          return false;
+        }
+        return true;
+      });
+
+      renderWithTheme(<SettingsHubPage />);
+
+      // LDAP and IP Allow List (filtered by adminOnly) still present — but
+      // since IP Allow List is hidden (non-admin) and LDAP has no visibilityRequirements,
+      // the section should still show LDAP
+      expect(screen.getByText('LDAP')).toBeInTheDocument();
+      expect(screen.queryByText('Users')).not.toBeInTheDocument();
+      expect(screen.queryByText('Roles')).not.toBeInTheDocument();
+    });
+
+    it('shows all cards when isVisible returns true', () => {
+      mockIsVisible.mockReturnValue(true);
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(screen.getByText('Users')).toBeInTheDocument();
+      expect(screen.getByText('Roles')).toBeInTheDocument();
+      expect(screen.getByText('Repositories')).toBeInTheDocument();
+    });
+
+    it('calls isVisible with card visibilityRequirements', () => {
+      mockIsVisible.mockClear();
+
+      renderWithTheme(<SettingsHubPage />);
+
+      expect(mockIsVisible).toHaveBeenCalledWith({ requiresPermission: 'nexus:users:read' });
+      expect(mockIsVisible).toHaveBeenCalledWith({ requiresPermission: 'nexus:roles:read' });
+      // Cards without visibilityRequirements pass undefined
+      expect(mockIsVisible).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  describe('Reactive Permission Subscription', () => {
+    let permissionsHandler: (() => void) | null = null;
+    let mockPermissionsController: any;
+    let mockStateController: any;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      permissionsHandler = null;
+      mockPermissionsController = {
+        on: jest.fn((event: string, handler: () => void) => {
+          if (event === 'changed') permissionsHandler = handler;
+        }),
+        un: jest.fn(),
+      };
+      mockStateController = {
+        on: jest.fn(),
+        un: jest.fn(),
+      };
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      mockIsVisible.mockReturnValue(true);
+      delete (window as any).Ext;
+    });
+
+    it('re-evaluates card visibility when permissions change', () => {
+      // Start with all cards visible
+      mockIsVisible.mockReturnValue(true);
+
+      // Set up Ext before render
+      (window as any).Ext = {
+        getApplication: () => ({
+          getController: (name: string) => {
+            if (name === 'Permissions') return mockPermissionsController;
+            if (name === 'State') return mockStateController;
+            return null;
+          },
+        }),
+      };
+
+      renderWithTheme(<SettingsHubPage />);
+
+      // All cards should be visible initially
+      expect(screen.getByText('Users')).toBeInTheDocument();
+      expect(screen.getByText('Roles')).toBeInTheDocument();
+
+      // Now simulate permissions changing — Users becomes hidden
+      mockIsVisible.mockImplementation((reqs: any) => {
+        if (reqs?.requiresPermission === 'nexus:users:read') return false;
+        return true;
+      });
+
+      // Fire the permission change event
+      act(() => {
+        permissionsHandler?.();
+      });
+
+      // Users should now be hidden
+      expect(screen.queryByText('Users')).not.toBeInTheDocument();
+      expect(screen.getByText('Roles')).toBeInTheDocument();
+    });
+
+    it('retries subscription when Ext is not yet available', () => {
+      // Ext not available initially
+      (window as any).Ext = undefined;
+
+      renderWithTheme(<SettingsHubPage />);
+
+      // Fast-forward to trigger interval retry
+      (window as any).Ext = {
+        getApplication: () => ({
+          getController: (name: string) => {
+            if (name === 'Permissions') return mockPermissionsController;
+            if (name === 'State') return mockStateController;
+            return null;
+          },
+        }),
+      };
+
+      act(() => {
+        jest.advanceTimersByTime(200);
+      });
+
+      // Should have subscribed after retry
+      expect(mockPermissionsController.on).toHaveBeenCalledWith('changed', expect.any(Function));
+    });
+
+    it('cleans up event listeners on unmount', () => {
+      (window as any).Ext = {
+        getApplication: () => ({
+          getController: (name: string) => {
+            if (name === 'Permissions') return mockPermissionsController;
+            if (name === 'State') return mockStateController;
+            return null;
+          },
+        }),
+      };
+
+      const { unmount } = renderWithTheme(<SettingsHubPage />);
+
+      unmount();
+
+      expect(mockPermissionsController.un).toHaveBeenCalledWith('changed', expect.any(Function));
+      expect(mockStateController.un).toHaveBeenCalledWith('userchanged', expect.any(Function));
+    });
+
+    it('clears interval on unmount when Ext is not available', () => {
+      (window as any).Ext = undefined;
+
+      const { unmount } = renderWithTheme(<SettingsHubPage />);
+
+      // Unmount before Ext becomes available — should not leak interval
+      unmount();
+
+      // Advancing timers after unmount should not throw
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+
+      // No subscription should have occurred
+      expect(mockPermissionsController.on).not.toHaveBeenCalled();
     });
   });
 });

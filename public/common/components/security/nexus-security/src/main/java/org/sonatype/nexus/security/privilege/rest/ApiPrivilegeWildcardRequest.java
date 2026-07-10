@@ -16,8 +16,8 @@ import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.WildcardPrivilegeDescriptor;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * @since 3.19
@@ -28,7 +28,7 @@ public class ApiPrivilegeWildcardRequest
   public static final String PATTERN_KEY = "pattern";
 
   @NotBlank
-  @ApiModelProperty(NexusSecurityApiConstants.PRIVILEGE_PATTERN_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.PRIVILEGE_PATTERN_DESCRIPTION)
   private String pattern;
 
   /**

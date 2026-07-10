@@ -13,7 +13,7 @@
 package org.sonatype.nexus.security.authc.apikey;
 
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
 

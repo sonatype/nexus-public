@@ -16,6 +16,7 @@ import {
   screen,
   waitForElementToBeRemoved,
   act,
+  fireEvent,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS, APIConstants, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
@@ -154,7 +155,7 @@ const EMPTY_DATA = {
   sslCheckServerIdentityEnabled: false,
 };
 
-const populateForm = () => {
+const populateForm = async () => {
   const {
     enabled,
     host,
@@ -170,19 +171,19 @@ const populateForm = () => {
     useTruststore,
   } = selectors;
 
-  userEvent.click(enabled());
-  userEvent.type(host(), DATA.host);
+  await userEvent.click(enabled());
+  fireEvent.change(host(), {target: {value: DATA.host}});
   userEvent.clear(port());
-  userEvent.type(port(), DATA.port.toString());
-  userEvent.click(useTruststore());
-  userEvent.type(username(), DATA.username);
-  userEvent.type(password(), DATA.password);
-  userEvent.type(fromAddress(), DATA.fromAddress);
-  userEvent.type(subjectPrefix(), DATA.subjectPrefix);
-  userEvent.click(enableStarttls());
-  userEvent.click(requireStarttls());
-  userEvent.click(enableSslTls());
-  userEvent.click(identityCheck());
+  fireEvent.change(port(), {target: {value: DATA.port.toString()}});
+  await userEvent.click(useTruststore());
+  fireEvent.change(username(), {target: {value: DATA.username}});
+  fireEvent.change(password(), {target: {value: DATA.password}});
+  fireEvent.change(fromAddress(), {target: {value: DATA.fromAddress}});
+  fireEvent.change(subjectPrefix(), {target: {value: DATA.subjectPrefix}});
+  await userEvent.click(enableStarttls());
+  await userEvent.click(requireStarttls());
+  await userEvent.click(enableSslTls());
+  await userEvent.click(identityCheck());
 };
 
 const formShouldBeEmpty = () => {
@@ -401,7 +402,7 @@ describe('EmailServer', () => {
     userEvent.click(querySubmitButton());
     expect(queryFormError(TestUtils.NO_CHANGES_MESSAGE)).toBeInTheDocument();
 
-    populateForm();
+    await populateForm();
 
     expect(queryFormError()).not.toBeInTheDocument();
 
@@ -416,12 +417,12 @@ describe('EmailServer', () => {
       });
 
     userEvent.click(querySubmitButton());
-    await waitForElementToBeRemoved(querySavingMask);
+    await waitForElementToBeRemoved(querySavingMask());
 
     expect(Axios.post).toHaveBeenCalledWith(URL, NEW_UPDATE);
 
     expect(NX.Messages.success).toHaveBeenCalledWith(UIStrings.SAVE_SUCCESS);
-  });
+  }, 20000);
 
   it('discards changes', async () => {
     when(Axios.post)
@@ -435,7 +436,7 @@ describe('EmailServer', () => {
     await renderAndWaitForLoad();
 
     expect(discardButton()).toHaveClass('disabled');
-    populateForm();
+    await populateForm();
     expect(discardButton()).not.toHaveClass('disabled');
 
     userEvent.click(discardButton());

@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.sonatype.nexus.repository.config.WritePolicy;
 
 import java.util.Objects;
@@ -29,8 +29,7 @@ import java.util.Objects;
 public class HostedStorageAttributes
     extends StorageAttributes
 {
-  @ApiModelProperty(value = "Controls if deployments of and updates to assets are allowed",
-      allowableValues = "ALLOW, ALLOW_ONCE, DENY",
+  @Schema(description = "Controls if deployments of and updates to assets are allowed",
       example = "ALLOW_ONCE")
   @NotNull
   protected final String writePolicy;

@@ -190,6 +190,14 @@ export function isAssetCached(contentType: string | null | undefined, size: numb
   return contentType !== 'unknown' && size !== null && size !== undefined && size > 0;
 }
 
+/** Returns the registry URL if it matches a safe host[:port][/path] pattern, otherwise undefined. */
+export function sanitizeRegistryUrl(value: string | null | undefined): string | undefined {
+  if (typeof value !== 'string' || value.length === 0) {
+    return undefined;
+  }
+  return /^[A-Za-z0-9.\-]+(?::\d+)?(?:\/[A-Za-z0-9._\-/]+)?$/.test(value) ? value : undefined;
+}
+
 /**
  * Gets the display text for the last downloaded date.
  *

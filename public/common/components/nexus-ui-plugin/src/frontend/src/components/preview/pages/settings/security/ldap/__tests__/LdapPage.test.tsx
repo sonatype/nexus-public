@@ -194,7 +194,7 @@ describe('LdapPage', () => {
     render(<LdapPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('LDAP')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'LDAP' })).toBeInTheDocument();
     });
 
     expect(screen.getByText('Manage LDAP server connections for user authentication')).toBeInTheDocument();

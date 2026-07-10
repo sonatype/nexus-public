@@ -34,7 +34,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -88,6 +87,7 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_KEY;
@@ -120,6 +120,8 @@ public class EncryptingS3Client
 
   private final S3Presigner presigner;
 
+  private final AwsCredentialsProvider credentialsProvider;
+
   public EncryptingS3Client(
       final S3Client delegate,
       final BlobStoreConfiguration blobStoreConfig,
@@ -127,6 +129,7 @@ public class EncryptingS3Client
   {
     this.delegate = delegate;
     this.blobStoreConfig = blobStoreConfig;
+    this.credentialsProvider = checkNotNull(presignerCredentialsProvider);
     this.presigner = createPresigner(delegate, blobStoreConfig, presignerCredentialsProvider);
 
     encrypter = getEncrypter(blobStoreConfig);
@@ -287,7 +290,8 @@ public class EncryptingS3Client
         .key(key);
 
     if (responseHeaderFileName != null) {
-      requestBuilder.responseContentDisposition("attachment; filename=\"%s\"".formatted(responseHeaderFileName));
+      requestBuilder.responseContentDisposition(
+          "attachment; filename=\"%s\"".formatted(sanitizeContentDispositionFilename(responseHeaderFileName)));
     }
     if (contentType != null) {
       requestBuilder.responseContentType(contentType);
@@ -407,10 +411,10 @@ public class EncryptingS3Client
   {
     // Properly close async resources to prevent resource leaks
     // Both S3AsyncClient and S3TransferManager implement AutoCloseable and must be closed.
-    // Create a NEW credentials provider instance to avoid sharing with the main S3Client,
-    // preventing premature STS client shutdown during IRSA token refresh.
+    // credentialsProvider is a SharedS3CredentialsProvider — close() is a no-op, so closing
+    // this async client does not shut down the underlying STS client.
     final S3AsyncClient asyncClient = S3AsyncClient.builder()
-        .credentialsProvider(DefaultCredentialsProvider.create())
+        .credentialsProvider(credentialsProvider)
         .region(delegate.serviceClientConfiguration().region())
         .build();
 
@@ -442,6 +446,33 @@ public class EncryptingS3Client
             .join();
       }
     }
+  }
+
+  /**
+   * Sanitizes a filename for safe use in the Content-Disposition header's filename parameter.
+   *
+   * Per RFC 6266 §4.3, characters that can break out of the quoted-string context must be escaped
+   * or stripped. This prevents injection of additional header parameters (e.g., a malicious filename
+   * like {@code report.pdf"; filename*=UTF-8''setup.exe} that could cause browsers to suggest
+   * a different filename than intended).
+   *
+   * AWS S3 rejects response-content-disposition values containing CRLF ({@code %0d/%0a}), so
+   * header splitting is already mitigated upstream. The residual risk is parameter injection.
+   *
+   * This implementation strips the problematic characters rather than percent-encoding because
+   * the filename parameter is a quoted-string, not a token or raw value.
+   *
+   * @param filename the unsanitized filename
+   * @return a filename safe for inclusion in a Content-Disposition quoted-string
+   */
+  private static String sanitizeContentDispositionFilename(final String filename) {
+    // Strip characters that break quoted-string parsing per RFC 2616 / RFC 6266:
+    // - " (quote) closes the quoted-string early
+    // - \ (backslash) is the escape character in quoted-strings
+    // - ; separates Content-Disposition parameters
+    // - CR/LF are stripped as defense-in-depth (though S3 already rejects them)
+    // We use replacement rather than escape for simplicity and to avoid double-encoding issues.
+    return filename.replaceAll("[\"\\\\;\r\n]", "_");
   }
 
   /*

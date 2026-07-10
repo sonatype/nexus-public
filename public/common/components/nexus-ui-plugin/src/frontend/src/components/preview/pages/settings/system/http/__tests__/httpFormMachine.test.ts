@@ -13,7 +13,8 @@
 
 import { interpret } from 'xstate';
 import { waitFor } from 'xstate/lib/waitFor';
-import { createHttpFormMachine } from '../httpFormMachine';
+import { createHttpFormMachine, validateHttpConfig } from '../httpFormMachine';
+import { DEFAULT_HTTP_CONFIGURATION } from '../types';
 
 // Mock the local API module used by httpFormMachine
 jest.mock('../../../../../../../interface/api', () => ({
@@ -28,27 +29,38 @@ jest.mock('../../../../../../../interface/api', () => ({
 
 const { restClient } = jest.requireMock('../../../../../../../interface/api');
 
+const DEFAULT_AUTH = {
+  enabled: false,
+  username: '',
+  password: '',
+  ntlmHost: '',
+  ntlmDomain: '',
+};
+
+const DEFAULT_PROXY = {
+  enabled: false,
+  host: '',
+  port: '',
+  authInfo: DEFAULT_AUTH,
+};
+
 const MOCK_HTTP_CONFIG = {
-  userAgentSuffix: 'NexusRepo',
+  userAgent: 'NexusRepo',
   timeout: 30,
   retries: 3,
-  httpEnabled: false,
-  httpHost: null,
-  httpPort: null,
-  httpAuthEnabled: false,
-  httpsEnabled: false,
-  httpsHost: null,
-  httpsPort: null,
-  httpsAuthEnabled: false,
+  httpProxy: DEFAULT_PROXY,
+  httpsProxy: DEFAULT_PROXY,
   nonProxyHosts: [],
 };
 
 const MOCK_HTTP_WITH_PROXY = {
   ...MOCK_HTTP_CONFIG,
-  httpEnabled: true,
-  httpHost: 'proxy.example.com',
-  httpPort: 8080,
-  httpAuthEnabled: false,
+  httpProxy: {
+    enabled: true,
+    host: 'proxy.example.com',
+    port: '8080',
+    authInfo: DEFAULT_AUTH,
+  },
 };
 
 /**
@@ -199,11 +211,11 @@ describe('httpFormMachine', () => {
       service.stop();
     });
 
-    it('requires username when httpAuthEnabled', async () => {
+    it('requires username when httpAuthType is username', async () => {
       const service = await startAndLoad();
 
       service.send({ type: 'UPDATE', name: 'httpEnabled', value: true } as any);
-      service.send({ type: 'UPDATE', name: 'httpAuthEnabled', value: true } as any);
+      service.send({ type: 'UPDATE', name: 'httpAuthType', value: 'username' } as any);
       service.send({ type: 'UPDATE', name: 'httpAuthUsername', value: '' } as any);
       service.send({ type: 'SUBMIT' } as any);
 
@@ -299,8 +311,10 @@ describe('httpFormMachine', () => {
       service.send({ type: 'UPDATE', name: 'timeout', value: 60 } as any);
       service.send({ type: 'SUBMIT' } as any);
 
-      await waitFor(service, (state) => state.matches('saved'));
-      expect(service.getSnapshot().matches('saved')).toBe(true);
+      // stayEditableAfterSave: true — machine returns to editing (pristine) after save
+      await waitFor(service, (state) => state.matches('editing') && state.context.isPristine);
+      expect(service.getSnapshot().matches('editing')).toBe(true);
+      expect(service.getSnapshot().context.isPristine).toBe(true);
 
       service.stop();
     });
@@ -316,8 +330,9 @@ describe('httpFormMachine', () => {
       service.send({ type: 'UPDATE', name: 'httpPort', value: 9090 } as any);
       service.send({ type: 'SUBMIT' } as any);
 
-      await waitFor(service, (state) => state.matches('saved'));
-      expect(service.getSnapshot().matches('saved')).toBe(true);
+      await waitFor(service, (state) => state.matches('editing') && state.context.isPristine);
+      expect(service.getSnapshot().matches('editing')).toBe(true);
+      expect(service.getSnapshot().context.isPristine).toBe(true);
 
       service.stop();
     });
@@ -337,6 +352,99 @@ describe('httpFormMachine', () => {
       expect(service.getSnapshot().context.saveError).toBeTruthy();
 
       service.stop();
+    });
+
+    it('sends retries: 0 (not null) to the API', async () => {
+      restClient.put.mockResolvedValue(undefined);
+
+      const service = await startAndLoad();
+
+      service.send({ type: 'UPDATE', name: 'retries', value: 0 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      await waitFor(service, (state) => state.matches('editing') && state.context.isPristine);
+      expect(restClient.put).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ retries: 0 }),
+      );
+
+      service.stop();
+    });
+  });
+});
+
+describe('validateHttpConfig — parity with legacy', () => {
+  const base = DEFAULT_HTTP_CONFIGURATION;
+
+  describe('timeout', () => {
+    it('accepts null', () => {
+      expect(validateHttpConfig({ ...base, timeout: null }).timeout).toBeUndefined();
+    });
+    it('accepts 1', () => {
+      expect(validateHttpConfig({ ...base, timeout: 1 }).timeout).toBeUndefined();
+    });
+    it('accepts 3600', () => {
+      expect(validateHttpConfig({ ...base, timeout: 3600 }).timeout).toBeUndefined();
+    });
+    it('rejects 0', () => {
+      expect(validateHttpConfig({ ...base, timeout: 0 }).timeout).toBeDefined();
+    });
+    it('rejects 3601', () => {
+      expect(validateHttpConfig({ ...base, timeout: 3601 }).timeout).toBeDefined();
+    });
+    it('rejects negative', () => {
+      expect(validateHttpConfig({ ...base, timeout: -1 }).timeout).toBeDefined();
+    });
+  });
+
+  describe('retries', () => {
+    it('accepts null', () => {
+      expect(validateHttpConfig({ ...base, retries: null }).retries).toBeUndefined();
+    });
+    it('accepts 0', () => {
+      expect(validateHttpConfig({ ...base, retries: 0 }).retries).toBeUndefined();
+    });
+    it('accepts 10', () => {
+      expect(validateHttpConfig({ ...base, retries: 10 }).retries).toBeUndefined();
+    });
+    it('rejects -1', () => {
+      expect(validateHttpConfig({ ...base, retries: -1 }).retries).toBeDefined();
+    });
+    it('rejects 11', () => {
+      expect(validateHttpConfig({ ...base, retries: 11 }).retries).toBeDefined();
+    });
+  });
+
+  describe('httpHost format (when httpEnabled)', () => {
+    const proxyOn = { ...base, httpEnabled: true, httpPort: 8080 };
+
+    it('accepts a hostname', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpHost: 'proxy.example.com' }).httpHost).toBeUndefined();
+    });
+    it('accepts an IPv4 address', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpHost: '192.168.1.1' }).httpHost).toBeUndefined();
+    });
+    it('accepts a single-label hostname', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpHost: 'proxy' }).httpHost).toBeUndefined();
+    });
+    it('rejects a URL with scheme', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpHost: 'http://proxy.example.com' }).httpHost).toBeDefined();
+    });
+    it('rejects whitespace', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpHost: 'proxy with space' }).httpHost).toBeDefined();
+    });
+    it('still requires non-blank', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpHost: '' }).httpHost).toBeDefined();
+    });
+  });
+
+  describe('httpsHost format mirrors httpHost', () => {
+    const proxyOn = { ...base, httpsEnabled: true, httpsPort: 8443 };
+    it('rejects a URL with scheme', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpsHost: 'https://proxy.example.com' }).httpsHost).toBeDefined();
+    });
+    it('accepts a hostname', () => {
+      expect(validateHttpConfig({ ...proxyOn, httpsHost: 'proxy.example.com' }).httpsHost).toBeUndefined();
     });
   });
 });

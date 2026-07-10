@@ -72,6 +72,8 @@ public abstract class ParallelTaskSupport
 
   @Override
   protected final Object execute() throws Exception {
+    validateConfiguration();
+
     String name = getClass().getSimpleName();
     try (ThreadPoolExecutor executor = new ThreadPoolExecutor(
         0,
@@ -118,6 +120,13 @@ public abstract class ParallelTaskSupport
       CancelableHelper.checkCancellation();
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Override to validate configuration before parallelization
+   */
+  protected void validateConfiguration() {
+    // empty
   }
 
   private Runnable exceptionHandler(final Runnable runnable) {

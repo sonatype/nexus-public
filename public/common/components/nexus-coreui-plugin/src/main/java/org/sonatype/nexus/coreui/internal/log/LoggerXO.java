@@ -13,8 +13,8 @@
 package org.sonatype.nexus.coreui.internal.log;
 
 import java.util.Map;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.log.LoggerLevel;
 

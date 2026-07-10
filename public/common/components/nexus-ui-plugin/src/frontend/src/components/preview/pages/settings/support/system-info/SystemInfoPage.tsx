@@ -11,19 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Box, Flex, Text, Heading, Select } from '@radix-ui/themes';
 import { Loader2, Download, Copy, RefreshCw, Info, ExternalLink, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsAlert, SettingsButton } from '../../../../shared/form';
-import { useToast } from '../../../../shared';
+import { useToast, PageHeader } from '../../../../shared';
 import { SystemInfoSection } from './SystemInfoSection';
 import { NodeSelector } from './NodeSelector';
 import { useSystemInfoApi } from './useSystemInfoApi';
@@ -273,16 +267,15 @@ export function SystemInfoPage({ className }: SystemInfoPageProps) {
   if (!canRead) {
     return (
       <Box className={`system-info-page ${className || ''}`.trim()}>
-        <Flex align="center" gap="3" className="system-info-page__header">
-          <Info size={24} className="system-info-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">System Information</Heading>
-            <Text size="2" className="system-info-page__description">
-              View detailed system and server information
-            </Text>
-          </Box>
-        </Flex>
-        
+        <PageHeader
+          title="System Information"
+          description="View detailed system and server information"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+            { label: 'System Information' },
+          ]}
+        />
+
         <SettingsAlert type="warning">
           You do not have permission to view system information.
         </SettingsAlert>
@@ -293,49 +286,49 @@ export function SystemInfoPage({ className }: SystemInfoPageProps) {
   return (
     <Box className={`system-info-page ${className || ''}`.trim()}>
       {/* Header */}
-      <Flex align="center" justify="between" className="system-info-page__header">
-        <Flex align="center" gap="3">
-          <Info size={24} className="system-info-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">System Information</Heading>
-            <Text size="2" className="system-info-page__description">
-              View detailed system and server information
-            </Text>
-          </Box>
-        </Flex>
-        
-        {/* Action buttons */}
-        <Flex gap="2" className="system-info-page__actions">
-          <SettingsButton
-            variant="ghost"
-            onClick={handleRefresh}
-            disabled={refreshing || loading}
-            aria-label="Refresh"
-            icon={RefreshCw}
-            className={refreshing ? 'system-info-page__spinning' : ''}
-          >
-            Refresh
-          </SettingsButton>
-          <SettingsButton
-            variant="ghost"
-            onClick={handleCopy}
-            disabled={!systemInfo || loading}
-            aria-label="Copy to clipboard"
-            icon={Copy}
-          >
-            Copy
-          </SettingsButton>
-          <SettingsButton
-            variant="ghost"
-            onClick={handleDownload}
-            disabled={!systemInfo || loading}
-            aria-label="Download"
-            icon={Download}
-          >
-            Download
-          </SettingsButton>
-        </Flex>
-      </Flex>
+      <PageHeader
+        title="System Information"
+        description="View detailed system and server information"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+          { label: 'System Information' },
+        ]}
+        actions={
+          <Flex gap="2" className="system-info-page__actions">
+            <SettingsButton
+              variant="ghost"
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+              aria-label="Refresh"
+              icon={RefreshCw}
+              className={refreshing ? 'system-info-page__spinning' : ''}
+              data-analytics-id="nxrm-system-info-refresh"
+            >
+              Refresh
+            </SettingsButton>
+            <SettingsButton
+              variant="ghost"
+              onClick={handleCopy}
+              disabled={!systemInfo || loading}
+              aria-label="Copy to clipboard"
+              icon={Copy}
+              data-analytics-id="nxrm-system-info-copy"
+            >
+              Copy
+            </SettingsButton>
+            <SettingsButton
+              variant="ghost"
+              onClick={handleDownload}
+              disabled={!systemInfo || loading}
+              aria-label="Download"
+              icon={Download}
+              data-analytics-id="nxrm-system-info-download"
+            >
+              Download
+            </SettingsButton>
+          </Flex>
+        }
+      />
 
       {/* Error Alert */}
       {error && (
@@ -453,7 +446,7 @@ export function SystemInfoPage({ className }: SystemInfoPageProps) {
             className="system-info-page__help-link"
           >
             documentation
-            <ExternalLink size={12} />
+            <ExternalLink size={12} aria-hidden="true" />
           </a>
           {' '}for more information.
         </Text>
@@ -463,4 +456,3 @@ export function SystemInfoPage({ className }: SystemInfoPageProps) {
 }
 
 export default SystemInfoPage;
-

@@ -193,6 +193,31 @@ describe('useRepositoriesByFormat', () => {
     expect(mockRestClient.get).toHaveBeenCalledTimes(4);
   });
 
+  it('correctly counts offline repositories', async () => {
+    reposPayload = [
+      { name: 'maven-central', format: 'maven2', type: 'proxy', online: true },
+      { name: 'maven-releases', format: 'maven2', type: 'hosted', online: false },
+      { name: 'maven-snapshots', format: 'maven2', type: 'hosted', online: true },
+      { name: 'maven-public', format: 'maven2', type: 'group', online: true },
+      { name: 'npm-proxy', format: 'npm', type: 'proxy', online: false },
+      { name: 'npm-hosted', format: 'npm', type: 'hosted', online: false },
+    ];
+
+    const { result } = renderHook(() => useRepositoriesByFormat());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const mavenRow = result.current.data.find((r) => r.formatCode === 'maven2');
+    expect(mavenRow.onlineCount).toBe(3);
+    expect(mavenRow.offlineCount).toBe(1);
+
+    const npmRow = result.current.data.find((r) => r.formatCode === 'npm');
+    expect(npmRow.onlineCount).toBe(0);
+    expect(npmRow.offlineCount).toBe(2);
+  });
+
   it('converts format display names correctly', async () => {
     const { result } = renderHook(() => useRepositoriesByFormat());
 

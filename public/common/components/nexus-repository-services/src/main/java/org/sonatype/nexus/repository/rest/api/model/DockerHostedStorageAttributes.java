@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model for describing storage of docker hosted repositories.
@@ -24,8 +24,8 @@ import io.swagger.annotations.ApiModelProperty;
 public class DockerHostedStorageAttributes
     extends HostedStorageAttributes
 {
-  @ApiModelProperty(
-      value = "Whether to allow redeploying the 'latest' tag but defer to the Deployment Policy for all other tags",
+  @Schema(
+      description = "Whether to allow redeploying the 'latest' tag but defer to the Deployment Policy for all other tags",
       example = "true")
   protected final Boolean latestPolicy;
 

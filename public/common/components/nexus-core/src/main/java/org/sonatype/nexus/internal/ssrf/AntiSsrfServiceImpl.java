@@ -26,7 +26,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
@@ -35,6 +35,11 @@ import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.httpclient.HttpClientManager;
+import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
+import org.sonatype.nexus.httpclient.config.ProxyServerConfiguration;
+import org.sonatype.nexus.httpclient.internal.NonProxyHostsMatcher;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.KeyValueEvent;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -58,7 +63,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * and cluster replication via {@link KeyValueEvent}.
  *
  * On first startup, seeds the DB from nexus.properties defaults. Subsequent startups load from DB.
- * Cloud metadata endpoint (169.254.169.254) is always blocked regardless of configuration.
+ * Cloud metadata endpoints (169.254.169.254 and fd00:ec2::254) are always blocked regardless of configuration.
  */
 @ManagedLifecycle(phase = Phase.SERVICES)
 @Component
@@ -70,9 +75,13 @@ public class AntiSsrfServiceImpl
 
   static final String CLOUD_METADATA_ADDRESS = "169.254.169.254";
 
+  private static final String CLOUD_METADATA_ADDRESS_IPV6 = "fd00:ec2::254";
+
   private static final Set<String> IPV6_LOOPBACK_ADDRESSES = Set.of("::1", "0:0:0:0:0:0:0:1");
 
   private final GlobalKeyValueStore kvStore;
+
+  private final HttpClientManager httpClientManager;
 
   private final boolean propsEnabled;
 
@@ -87,6 +96,7 @@ public class AntiSsrfServiceImpl
   @Autowired
   public AntiSsrfServiceImpl(
       final GlobalKeyValueStore kvStore,
+      final HttpClientManager httpClientManager,
       @Value("${nexus.proxy.allowPrivateNetworks:true}") final boolean allowPrivateNetworks,
       @Value("${nexus.proxy.privateNetworks.allowedIPs:}") final String[] allowedIPs,
       @Value("${nexus.proxy.privateNetworks.allowedDomains:}") final String[] allowedDomains,
@@ -94,6 +104,7 @@ public class AntiSsrfServiceImpl
       @Value("${nexus.proxy.privateNetworks.cacheExpiration:10m}") final Duration cacheExpiration)
   {
     this.kvStore = checkNotNull(kvStore);
+    this.httpClientManager = checkNotNull(httpClientManager);
     this.propsEnabled = !allowPrivateNetworks;
     this.propsAllowedIPs = toTrimmedSet(allowedIPs);
     this.propsAllowedDomains = toTrimmedSet(allowedDomains);
@@ -213,6 +224,10 @@ public class AntiSsrfServiceImpl
       if (!config.enabled() || config.allowedDomains().contains(host)) {
         return Optional.empty();
       }
+      if (isProxyConfiguredFor(host)) {
+        log.debug("DNS resolution failed for {} but proxy is configured - deferring to proxy", host);
+        return Optional.empty();
+      }
       return Optional.of("Failed to resolve host: " + host);
     }
 
@@ -258,7 +273,13 @@ public class AntiSsrfServiceImpl
 
     String hostAddress = address.getHostAddress();
 
+    // Always block cloud metadata endpoints regardless of configuration
     if (hostAddress.equals(CLOUD_METADATA_ADDRESS)) {
+      return "restricted address";
+    }
+
+    // Block AWS IPv6 cloud metadata endpoint (fd00:ec2::254)
+    if (address instanceof Inet6Address inet6 && isCloudMetadataIPv6(inet6)) {
       return "restricted address";
     }
 
@@ -267,11 +288,22 @@ public class AntiSsrfServiceImpl
         return "loopback address";
       }
 
+      // Block 0.0.0.0 - on Linux this can connect to localhost services
+      if (address.isAnyLocalAddress()) {
+        return "wildcard address";
+      }
+
       if (address.isLinkLocalAddress()) {
         return "link-local address";
       }
 
       if (address.isSiteLocalAddress()) {
+        return "private network address";
+      }
+
+      // Block IPv6 Unique Local Addresses (fc00::/7)
+      // Java's isSiteLocalAddress() only checks the deprecated fec0::/10 range
+      if (address instanceof Inet6Address inet6 && isUniqueLocalAddress(inet6)) {
         return "private network address";
       }
     }
@@ -332,6 +364,10 @@ public class AntiSsrfServiceImpl
 
   private boolean isCloudMetadataAddress(final InetAddress address) {
     if (CLOUD_METADATA_ADDRESS.equals(address.getHostAddress())) {
+      return true;
+    }
+    // Check IPv6 cloud metadata endpoint (fd00:ec2::254)
+    if (address instanceof Inet6Address inet6 && isCloudMetadataIPv6(inet6)) {
       return true;
     }
     // Check IPv6-mapped form (::ffff:169.254.169.254)
@@ -397,8 +433,33 @@ public class AntiSsrfServiceImpl
         .collect(Collectors.toSet());
   }
 
+  /**
+   * Returns {@code true} when a global HTTP or HTTPS proxy is configured and the host is not
+   * excluded by {@code nonProxyHosts}. The route planner will tunnel via the proxy in that case,
+   * so SSRF validation can safely defer DNS-based IP checks rather than blocking on a DNS failure.
+   */
+  private boolean isProxyConfiguredFor(final String host) {
+    HttpClientConfiguration httpConfig = httpClientManager.getConfiguration();
+    if (httpConfig == null) {
+      return false;
+    }
+    ProxyConfiguration proxy = httpConfig.getProxy();
+    if (proxy == null) {
+      return false;
+    }
+
+    ProxyServerConfiguration http = proxy.getHttp();
+    ProxyServerConfiguration https = proxy.getHttps();
+    boolean anyProxyEnabled = (http != null && http.isEnabled()) || (https != null && https.isEnabled());
+    if (!anyProxyEnabled) {
+      return false;
+    }
+
+    return !NonProxyHostsMatcher.matches(host, proxy.getNonProxyHosts());
+  }
+
   private boolean isCloudMetadataIp(final String ip) {
-    if (CLOUD_METADATA_ADDRESS.equals(ip)) {
+    if (CLOUD_METADATA_ADDRESS.equals(ip) || CLOUD_METADATA_ADDRESS_IPV6.equals(ip)) {
       return true;
     }
     try {
@@ -425,5 +486,37 @@ public class AntiSsrfServiceImpl
       }
     }
     return bytes[10] == (byte) 0xff && bytes[11] == (byte) 0xff;
+  }
+
+  /**
+   * Checks if an IPv6 address is the AWS IMDS IPv6 endpoint (fd00:ec2::254).
+   */
+  private static boolean isCloudMetadataIPv6(final Inet6Address address) {
+    byte[] bytes = address.getAddress();
+    if (bytes.length != 16) {
+      return false;
+    }
+    // fd00:ec2::254 expands to fd00:0ec2:0000:0000:0000:0000:0000:0254
+    // bytes: fd 00 0e c2 00 00 00 00 00 00 00 00 00 00 02 54
+    return (bytes[0] & 0xff) == 0xfd
+        && bytes[1] == 0x00
+        && (bytes[2] & 0xff) == 0x0e
+        && (bytes[3] & 0xff) == 0xc2
+        && bytes[14] == 0x02
+        && bytes[15] == 0x54;
+  }
+
+  /**
+   * Checks if an IPv6 address is in the Unique Local Address range (fc00::/7).
+   * These addresses are in the range fc00::/7 (fc00::/8 or fd00::/8).
+   */
+  private static boolean isUniqueLocalAddress(final Inet6Address address) {
+    byte[] bytes = address.getAddress();
+    if (bytes.length != 16) {
+      return false;
+    }
+    // fc00::/7 means first byte is 0xfc or 0xfd
+    int firstByte = bytes[0] & 0xff;
+    return (firstByte & 0xfe) == 0xfc;
   }
 }

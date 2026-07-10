@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -115,7 +115,9 @@ public class UploadServiceTest
     String result = component
         .createSearchTerm(mockRepo, Arrays.asList("foo-x.z/bar/bar", "foo-x.z/bar/foo", "foo-x.z/bar/foo/bar"));
 
-    // Multiple files: common prefix is "foo-x.z/bar" (directory), not stripped
+    // Multiple files: prefix is the directory "foo-x.z/bar"; the generic
+    // (non-Maven/Helm/Terraform) branch then converts "/" → " " for keyword
+    // tokenization.
     assertThat(result, is("foo-x.z bar"));
   }
 
@@ -512,5 +514,100 @@ public class UploadServiceTest
         "/nginx-1.0.0.tgz.prov"));
     // Helm format with multiple files should extract common name
     assertThat(result, is("nginx"));
+  }
+
+  /**
+   * NEXUS-52809: Terraform format must return namespace/name/provider rather
+   * than the noisy /v1/modules/... path tokens.
+   */
+  @Test
+  public void testCreateSearchTerm_terraformFormat() {
+    Repository mockRepo = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(mockRepo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("terraform");
+
+    String result = component.createSearchTerm(mockRepo,
+        List.of("/v1/modules/myorg/mymod/local/0.0.5-main-20260323/mymod-0.0.5.zip"));
+    assertThat(result, is("myorg/mymod/local"));
+  }
+
+  /**
+   * NEXUS-52809 reproduction: two modules sharing namespace+provider but
+   * different names must yield distinct search terms.
+   */
+  @Test
+  public void testCreateSearchTerm_terraformFormatDistinguishesSiblings() {
+    Repository mockRepo = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(mockRepo.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("terraform");
+
+    String mymod = component.createSearchTerm(mockRepo,
+        List.of("/v1/modules/myorg/mymod/local/0.0.5/mymod-0.0.5.zip"));
+    String mymod2 = component.createSearchTerm(mockRepo,
+        List.of("/v1/modules/myorg/mymod2/local/1.2.3/mymod2-1.2.3.zip"));
+
+    assertThat(mymod, is("myorg/mymod/local"));
+    assertThat(mymod2, is("myorg/mymod2/local"));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformUnexpectedShape() {
+    // Defensive fallback: if the path doesn't begin with /v1/modules/...,
+    // return the cleaned path rather than null or a partial slice.
+    String result = component.convertPathToSearchTerm("terraform", "/some/other/shape");
+    assertThat(result, is("some/other/shape"));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformCaseInsensitivePrefix() {
+    String result = component.convertPathToSearchTerm(
+        "terraform", "/V1/MODULES/myorg/mymod/local/1.0.0/mymod-1.0.0.zip");
+    assertThat(result, is("myorg/mymod/local"));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformEmptyPath() {
+    // Empty string is passed through unchanged so the caller's empty-cleaned
+    // check can fall back to its default keyword behaviour.
+    String result = component.convertPathToSearchTerm("terraform", "");
+    assertThat(result, is(""));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformNullPath() {
+    // Null pass-through is the documented contract of the terraform helper.
+    // Note: the Maven, Helm, and generic branches NPE on null today; the
+    // production caller (createSearchTerm) guards non-null before dispatch,
+    // so this assertion only locks in the contract for direct callers/tests.
+    String result = component.convertPathToSearchTerm("terraform", null);
+    assertThat(result, is(nullValue()));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformPrefixOnly() {
+    // /v1/modules with nothing after it can't yield a module id; expect the
+    // cleaned fallback rather than an out-of-bounds slice.
+    String result = component.convertPathToSearchTerm("terraform", "/v1/modules");
+    assertThat(result, is("v1/modules"));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformTooFewSegments() {
+    // Five segments after cleaning is the minimum; four (no provider) must
+    // hit the fallback rather than read past the array end.
+    String result = component.convertPathToSearchTerm("terraform", "/v1/modules/myorg/mymod");
+    assertThat(result, is("v1/modules/myorg/mymod"));
+  }
+
+  @Test
+  public void testConvertPathToSearchTerm_terraformExactlyFiveSegments() {
+    // Exactly five segments (no version, no filename) hits the >= 5 guard and
+    // still returns {namespace}/{name}/{provider} rather than the cleaned-path
+    // fallback. Unlikely in practice (the Terraform Registry HTTP API always
+    // includes a version), but the guard explicitly allows it.
+    String result = component.convertPathToSearchTerm("terraform", "/v1/modules/myorg/mymod/local");
+    assertThat(result, is("myorg/mymod/local"));
   }
 }

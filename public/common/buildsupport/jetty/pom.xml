@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-jetty</artifactId>
@@ -34,11 +34,8 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>4.0.1</version>
-      </dependency>
+      <!-- NEXUS-46395: javax.servlet-api 4.0.1 removed; jakarta.servlet-api 6.0 is
+           supplied via the dependency-management entry in buildsupport/rest/pom.xml. -->
 
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
@@ -48,18 +45,16 @@
         <type>pom</type>
       </dependency>
 
+      <!-- NEXUS-46395 Phase 3: jetty-ee8-bom retired in favor of jetty-ee10-bom.
+           Jetty 12 EE10 supplies jakarta.servlet-api 6.0 transitively via this BOM.
+           (The phase 1 spike imported this BOM alongside the EE8 BOM; on phase 3
+           the EE8 import is gone so this is now the sole servlet-api source.) -->
       <dependency>
-        <groupId>org.eclipse.jetty.ee8</groupId>
-        <artifactId>jetty-ee8-bom</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-bom</artifactId>
         <version>${eclipse-jetty.version}</version>
         <scope>import</scope>
         <type>pom</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty.toolchain</groupId>
-        <artifactId>jetty-servlet-api</artifactId>
-        <version>4.0.6</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

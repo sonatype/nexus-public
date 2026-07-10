@@ -13,15 +13,15 @@
 package org.sonatype.nexus.coreui;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response.Status;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.rest.Resource;
@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 import org.springframework.stereotype.Component;
 
@@ -85,7 +85,7 @@ public class UserResource
    */
   @GET
   @RequiresUser
-  public UserAccountXO readAccount() throws UserNotFoundException {
+  public UserAccountXO readAccount() {
     return convert(getCurrentUser());
   }
 
@@ -129,13 +129,16 @@ public class UserResource
     }
   }
 
-  private User getCurrentUser() throws UserNotFoundException {
-    User user = securitySystem.currentUser();
-    if (user != null) {
+  private User getCurrentUser() {
+    try {
+      User user = securitySystem.currentUser();
+      if (user == null) {
+        throw new WebApplicationMessageException(Status.BAD_REQUEST, "Unable to get current user");
+      }
       return user;
     }
-    else {
-      throw new UserNotFoundException("Unable to get current user");
+    catch (UserNotFoundException e) {
+      throw new WebApplicationMessageException(Status.BAD_REQUEST, "Unable to get current user");
     }
   }
 

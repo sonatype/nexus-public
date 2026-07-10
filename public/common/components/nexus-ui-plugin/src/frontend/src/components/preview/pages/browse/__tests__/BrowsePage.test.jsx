@@ -106,6 +106,7 @@ jest.mock('../browse.api', () => ({
     size: 1024,
     repositoryName: 'maven-central',
     path: '/org/apache/maven/pom.xml',
+    downloadUrl: 'https://server.example.com/custom-context/repository/maven-central/org/apache/maven/pom.xml',
   }),
   fetchComponent: jest.fn().mockResolvedValue({
     id: 'comp-123',
@@ -397,14 +398,14 @@ describe('BrowsePage', () => {
       });
     });
 
-    it('copies repository URL to clipboard and shows success toast', async () => {
+    it('copies current page URL (Preview UI href) to clipboard and shows success toast', async () => {
       mockParams = { repoName: 'maven-central' };
       renderWithProviders(<BrowsePage />);
 
       const copyBtn = screen.getByRole('button', { name: /copy url to clipboard/i });
       await userEvent.click(copyBtn);
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalled();
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.href);
       expect(mockToast.success).toHaveBeenCalledWith('URL copied to clipboard');
     });
   });

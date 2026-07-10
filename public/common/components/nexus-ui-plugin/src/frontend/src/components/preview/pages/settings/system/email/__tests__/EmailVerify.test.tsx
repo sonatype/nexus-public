@@ -163,6 +163,17 @@ describe('EmailVerify', () => {
       expect(mockOnSendTest).toHaveBeenCalledWith('test@example.com');
     });
   });
+
+  it('has nxrm-email-test analytics ID on the Send Test button', () => {
+    render(
+      <Theme>
+        <EmailVerify onSendTest={jest.fn()} />
+      </Theme>
+    );
+
+    const sendButton = screen.getByRole('button', { name: /send test/i });
+    expect(sendButton).toHaveAttribute('data-analytics-id', 'nxrm-email-test');
+  });
 });
 
 

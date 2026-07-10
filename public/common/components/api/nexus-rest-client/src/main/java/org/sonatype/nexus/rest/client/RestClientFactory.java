@@ -14,7 +14,7 @@ package org.sonatype.nexus.rest.client;
 
 import java.net.URI;
 
-import javax.ws.rs.client.Client;
+import jakarta.ws.rs.client.Client;
 
 /**
  * REST client factory.

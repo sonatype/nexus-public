@@ -14,7 +14,7 @@
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { Box, Flex, Text, ScrollArea, Button as RadixButton } from '@radix-ui/themes';
 import { Trash2, Loader2, Key, RefreshCw } from 'lucide-react';
-import { ExtJS } from '../../../../../../interface/ExtJS';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 import {
   SettingsForm,
@@ -23,7 +23,6 @@ import {
   SettingsPasswordInput,
   SettingsCheckbox,
   SettingsTransferList,
-  SettingsSelect,
   SettingsButton,
   ConfirmDialog,
 } from '../../../../shared/form';
@@ -62,6 +61,7 @@ export function UserForm({
   wizardStep = 0,
   hideActions = false,
   onValidationChange,
+  onDirtyChange,
   onSubmitRef,
 }: UserFormProps) {
   const { createUser, updateUser, changePassword, resetUserToken } = useUsersApi();
@@ -76,6 +76,9 @@ export function UserForm({
   const isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
   const isCurrentUser = user?.userId === state?.getUser?.()?.id;
   const isAdminUser = user?.userId === 'admin';
+  const activeCapabilities = state?.getValue?.('capabilityActiveTypes') || [];
+  const isUserTokenCapabilityActive = activeCapabilities.includes('usertoken');
+  const canResetUserToken = ExtJS.checkPermission('nexus:usertoken-user:delete');
 
   // Use XState form hook - use route params when user not yet loaded so machine can fetch
   const { form, user: formUser, isCreate } = useUsersForm({
@@ -108,6 +111,13 @@ export function UserForm({
     if (wizardStep === 0) setHasAttemptedRolesSubmit(false);
   }, [wizardStep]);
 
+  // Notify parent of dirty state changes
+  useEffect(() => {
+    if (onDirtyChange) {
+      onDirtyChange(!form.isPristine);
+    }
+  }, [form.isPristine, onDirtyChange]);
+
   // Use the user from props if provided, otherwise from form state
   const currentUser = user || formUser;
 
@@ -117,7 +127,6 @@ export function UserForm({
   const context = form.state.context as any;
   const formData = form.data as UserFormData;
   const allRoles = context.allRoles || [];
-  const userSources = context.userSources || [];
   const isExternal = currentUser ? isExternalUser(currentUser.source) : isExternalUser(formData.source);
 
   // Notify parent of validation status
@@ -130,12 +139,14 @@ export function UserForm({
         
         const isEmailValid = isExternal || !formData.emailAddress || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailAddress);
         
-        const isPasswordValid = isExternal || !isCreate || 
-                                (!!formData.password && !!formData.passwordConfirm && formData.password === formData.passwordConfirm);
-        
+        const isPasswordValid = isExternal || !isCreate ||
+                                (!!formData.password && formData.password.length >= 8 &&
+                                 !!formData.passwordConfirm && formData.password === formData.passwordConfirm);
+
         // If editing and change password is open, validate it
-        const isEditPasswordValid = !isCreate && (!showPasswordChange || 
-                                    (!!formData.password && !!formData.passwordConfirm && formData.password === formData.passwordConfirm));
+        const isEditPasswordValid = !isCreate && (!showPasswordChange ||
+                                    (!!formData.password && formData.password.length >= 8 &&
+                                     !!formData.passwordConfirm && formData.password === formData.passwordConfirm));
 
         const isValid = hasBasicInfo && isEmailValid && (isCreate ? isPasswordValid : isEditPasswordValid);
         onValidationChange(isValid);
@@ -145,19 +156,6 @@ export function UserForm({
       }
     }
   }, [formData, isExternal, isCreate, onValidationChange, wizardStep, showPasswordChange]);
-
-  // Source options for selector
-  const sourceOptions = useMemo(() => {
-    return userSources.map((source: { id: string; name: string }) => ({
-      value: source.id,
-      label: source.name,
-    }));
-  }, [userSources]);
-
-  // Handle source change via machine event
-  const handleSourceChange = useCallback((value: string) => {
-    form.send({ type: 'SOURCE_CHANGE', value } as any);
-  }, [form]);
 
   // Convert roles to transfer list format
   const availableRoles = useMemo(() => {
@@ -235,19 +233,6 @@ export function UserForm({
 
   const setupContent = (
     <SettingsFormSection title="User Setup" defaultOpen>
-      {/* Source Selector (create mode only) */}
-      {isCreate && (
-        <SettingsSelect
-          name="source"
-          label="Source"
-          value={formData.source}
-          onChange={handleSourceChange}
-          options={sourceOptions}
-          helpText="Select the authentication source for this user"
-          required
-        />
-      )}
-
       <SettingsTextInput
         {...form.field('userId')}
         label="ID"
@@ -342,7 +327,7 @@ export function UserForm({
         </Box>
       )}
 
-      {!isCreate && !isExternal && isPro && (
+      {!isCreate && !isExternal && isPro && isUserTokenCapabilityActive && canResetUserToken && (
         <Box mt="4" mb="4">
           <Flex align="center" justify="between">
             <Box>
@@ -498,6 +483,7 @@ export function UserForm({
         onCancel={onCancel}
         loading={isSaving || loading}
         pristine={form.isPristine}
+        noDirtyTracking={hideActions}
         error={error || form.saveError || undefined}
         submitLabel={isCreate ? 'Create' : 'Save'}
         footerExtra={

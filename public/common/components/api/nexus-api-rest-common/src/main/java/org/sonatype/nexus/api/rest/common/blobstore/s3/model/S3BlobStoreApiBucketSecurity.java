@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -27,16 +27,17 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiBucketSecurity
 {
-  @ApiModelProperty("An IAM access key ID for granting access to the S3 bucket")
+  @Schema(description = "An IAM access key ID for granting access to the S3 bucket")
   private final String accessKeyId;
 
-  @ApiModelProperty("The secret access key associated with the specified IAM access key ID")
+  @Schema(description = "The secret access key associated with the specified IAM access key ID")
   private String secretAccessKey;
 
-  @ApiModelProperty("An IAM role to assume in order to access the S3 bucket")
+  @Schema(description = "An IAM role to assume in order to access the S3 bucket")
   private final String role;
 
-  @ApiModelProperty("An AWS STS session token associated with temporary security credentials which grant access to the S3 bucket")
+  @Schema(
+      description = "An AWS STS session token associated with temporary security credentials which grant access to the S3 bucket")
   private String sessionToken;
 
   @JsonCreator

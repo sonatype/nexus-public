@@ -12,15 +12,10 @@
  */
 
 
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Flex, Text, Heading, Card, IconButton, Tooltip, TextField, Separator, ScrollArea, Badge, AlertDialog, Button, Grid } from '@radix-ui/themes';
-import { useRouter } from '@uirouter/react';
-import { Shield, Loader2, Info, ExternalLink, CheckCircle, XCircle, ArrowLeft, List, Copy, Search, X, Minimize2, Check, Plus } from 'lucide-react';
+import { Shield, Loader2, Info, ExternalLink, CheckCircle, XCircle, List, Copy, Search, X, Minimize2, Check, Plus } from 'lucide-react';
 
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
@@ -35,6 +30,7 @@ import {
   SettingsAlert,
   SettingsButton,
 } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 import { useIqServerApi } from './useIqServerApi';
 import { ConnectionIndicator, ConnectionStatus } from './ConnectionIndicator';
 import { useToast } from '../../../../shared/Toast';
@@ -338,7 +334,6 @@ function validateIqConfig(config: IqServerConfiguration, pristineConfig: IqServe
  * Configures Sonatype IQ Server integration for Repository Firewall and Lifecycle.
  */
 export function IqServerPage({ className }: IqServerPageProps) {
-  const router = useRouter();
   const { loading, verifying, error, setError, fetchSettings, fetchCapabilities, fetchCapabilitiesWithConfig, saveSettings, verifyConnection } = useIqServerApi();
 
   const [settings, setSettings] = useState<IqServerConfiguration>(DEFAULT_IQ_CONFIGURATION);
@@ -621,15 +616,6 @@ export function IqServerPage({ className }: IqServerPageProps) {
     // The auto-test effect will re-run if needed
   }, [pristineSettings, setError]);
 
-  // Back: prefer browser history so user returns to where they came from; otherwise System > Tasks
-  const handleBack = useCallback(() => {
-    if (window.history.length > 2) {
-      window.history.back();
-    } else {
-      router.stateService.go('preview.admin.system.tasks.list');
-    }
-  }, [router]);
-
   // Insert property helper
   const insertProperty = useCallback((propValue: string) => {
     setSettings((prev) => {
@@ -669,15 +655,13 @@ export function IqServerPage({ className }: IqServerPageProps) {
   if (!canUpdate) {
     return (
       <Box className={`iq-server-page ${className || ''}`.trim()}>
-        <Flex align="center" gap="3" className="iq-server-page__header">
-          <Shield size={24} className="iq-server-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">IQ Server</Heading>
-            <Text size="2" className="iq-server-page__description">
-              Manage Sonatype Repository Firewall and Lifecycle configuration
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="IQ Server"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+            { label: 'IQ Server' },
+          ]}
+        />
 
         <SettingsFormSection title="Current Settings">
           <Box className="iq-server-page__readonly">
@@ -702,18 +686,14 @@ export function IqServerPage({ className }: IqServerPageProps) {
   return (
     <Box className={`iq-server-page ${className || ''}`.trim()}>
       {/* Header */}
-      <Flex align="center" gap="3" className="iq-server-page__header">
-        <SettingsButton variant="ghost" onClick={handleBack} className="iq-server-page__back" icon={ArrowLeft}>
-          Back
-        </SettingsButton>
-        <Shield size={24} className="iq-server-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">IQ Server</Heading>
-          <Text size="2" className="iq-server-page__description">
-            Manage Sonatype Repository Firewall and Lifecycle configuration
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title="IQ Server"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+          { label: 'IQ Server' },
+        ]}
+      />
+
 
       {/* Connection Indicator - auto-tests on load */}
       <ConnectionIndicator

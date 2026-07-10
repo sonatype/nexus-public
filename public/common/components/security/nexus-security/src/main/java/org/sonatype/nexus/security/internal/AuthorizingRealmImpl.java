@@ -49,6 +49,7 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.authz.permission.WildcardPermission;
+import org.apache.shiro.crypto.hash.Sha1Hash;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.realm.Realm;
@@ -191,10 +192,7 @@ public class AuthorizingRealmImpl
     this.principalPermissionsCache = cacheBuilder.<PrincipalCollection, PermissionsState>build();
 
     HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
-    // Shiro 2.x removed the Sha1Hash class; its ALGORITHM_NAME constant was the literal "SHA-1".
-    // This realm is authorization-only (authentication caching disabled below; it never authenticates),
-    // so the matcher's algorithm is not used to verify credentials -- the value is retained as-is.
-    credentialsMatcher.setHashAlgorithmName("SHA-1");
+    credentialsMatcher.setHashAlgorithmName(Sha1Hash.ALGORITHM_NAME);
     setCredentialsMatcher(credentialsMatcher);
     setName(NAME);
     setAuthenticationCachingEnabled(false); // we authz only, no authc done by this realm

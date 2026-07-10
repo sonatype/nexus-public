@@ -34,6 +34,8 @@ export interface ConfirmDialogProps {
   cancelTestId?: string;
   /** testId for the Confirm button */
   confirmTestId?: string;
+  /** Analytics ID for the confirm action button (e.g., 'nxrm-entity-delete') */
+  analyticsId?: string;
 }
 
 /**
@@ -57,6 +59,7 @@ export function ConfirmDialog({
   testId,
   cancelTestId,
   confirmTestId,
+  analyticsId,
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
     onConfirm();
@@ -114,6 +117,7 @@ export function ConfirmDialog({
               onClick={handleConfirm}
               disabled={loading}
               data-testid={confirmTestId ?? (testId ? `${testId}-confirm` : undefined)}
+              data-analytics-id={analyticsId}
             >
               {loading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
               {confirmLabel}

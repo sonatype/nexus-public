@@ -25,6 +25,16 @@ export interface UseCleanupPolicyFormOptions {
   onCancel: () => void;
   createPolicy: (data: CleanupPolicyFormData) => Promise<CleanupPolicy>;
   updatePolicy: (name: string, data: CleanupPolicyFormData) => Promise<CleanupPolicy>;
+  /**
+   * Optional getter for the repository attachment override. Called at save
+   * time so the form can read the latest selection state. Threaded into the
+   * save payload because the underlying XState machine does not track
+   * `repositories`.
+   *   - returns `undefined` -> field omitted (backend preserves existing attachments)
+   *   - returns `[]`        -> field present as empty list (backend clears all attachments)
+   *   - returns `[a, b]`    -> field present as exact set
+   */
+  getRepositories?: () => string[] | undefined;
 }
 
 export interface UseCleanupPolicyFormReturn {
@@ -54,6 +64,7 @@ export function useCleanupPolicyForm({
   onCancel,
   createPolicy,
   updatePolicy,
+  getRepositories,
 }: UseCleanupPolicyFormOptions): UseCleanupPolicyFormReturn {
   const toast = useToast();
   const isCreate = !policyName && !policy;
@@ -90,6 +101,12 @@ export function useCleanupPolicyForm({
               : null,
             retain: ctx.criteriaEnabled.retain ? ctx.data.retain : null,
             sortBy: ctx.criteriaEnabled.retain ? ctx.data.sortBy : null,
+            // Include repositories only when caller opted in. `undefined` means
+            // "preserve existing attachments" per the backend contract.
+            ...((): { repositories?: string[] } => {
+              const repos = getRepositories?.();
+              return repos !== undefined ? { repositories: repos } : {};
+            })(),
           };
 
           if (isCreate) {

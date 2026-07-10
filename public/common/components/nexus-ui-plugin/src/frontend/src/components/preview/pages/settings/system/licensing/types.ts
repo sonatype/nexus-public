@@ -21,7 +21,7 @@ export interface LicenseData {
   effectiveDate?: string;
   expirationDate?: string;
   licenseType?: string;
-  licensedUsers?: number;
+  licensedUsers?: string;
   fingerprint?: string;
   maxRepoRequests?: number;
   maxRepoComponents?: number;
@@ -38,7 +38,7 @@ export interface LicenseUploadData {
  * API URLs
  */
 export const LICENSE_API = {
-  BASE_URL: 'service/rest/internal/ui/license',
+  BASE_URL: 'service/rest/v1/system/license',
 };
 
 /**

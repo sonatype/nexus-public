@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.validation.ssrf;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 /**
  * Service for SSRF protection validation and configuration management.

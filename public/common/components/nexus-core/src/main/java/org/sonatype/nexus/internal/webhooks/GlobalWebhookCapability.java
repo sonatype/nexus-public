@@ -32,12 +32,12 @@ import org.sonatype.nexus.capability.Tag;
 import org.sonatype.nexus.capability.Taggable;
 import org.sonatype.nexus.common.upgrade.AvailabilityVersion;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
 import org.sonatype.nexus.formfields.UrlFormField;
 import org.sonatype.nexus.validation.constraint.Url;
+import org.sonatype.nexus.validation.constraint.SsrfSafeUrl;
 import org.sonatype.nexus.webhooks.GlobalWebhook;
 import org.sonatype.nexus.webhooks.WebhookConfiguration;
 import org.sonatype.nexus.webhooks.WebhookService;
@@ -74,7 +74,7 @@ public class GlobalWebhookCapability
     @DefaultMessage("Event Types")
     String namesLabel();
 
-    @DefaultMessage("Event types which trigger this Webhook.\n\nNote: The 'firewall_quarantine' event requires IQ Server and Repository Firewall to be configured.")
+    @DefaultMessage("Event types which trigger this Webhook.\n\nNote: The 'firewall_quarantine' event is only emitted for repositories where Repository Firewall is in quarantine or PCCS mode and IQ Server is reachable.")
     String namesHelp();
 
     @DefaultMessage("URL")
@@ -102,7 +102,7 @@ public class GlobalWebhookCapability
 
   @Override
   protected Configuration createConfig(final Map<String, String> properties) throws Exception {
-    return new GlobalWebhookCapability.Configuration(properties, secretsService(), secretsStore());
+    return new GlobalWebhookCapability.Configuration(properties, secretsService());
   }
 
   @Override
@@ -110,18 +110,20 @@ public class GlobalWebhookCapability
     return messages.description(String.join(", ", getConfig().names));
   }
 
+  /**
+   * Activation is only gated on the standard passivate-during-update condition. Historically an
+   * additional {@code capabilityOfTypeActive("firewall.audit")} clause was added whenever the
+   * subscribed events included {@code firewall_quarantine}, but NEXUS-53667 removed that: firewall
+   * configuration lives on each repository now (see
+   * {@code FirewallCapabilityToRepositoryConfigMigrationStep_2_143}) and the {@code firewall.audit}
+   * capability rows no longer exist post-migration, so that clause was permanently false and the
+   * capability could never activate. Event emission is already correctly gated per-repository at
+   * fire time inside {@code FirewallContributedHandler}; a webhook subscribed to an event that no
+   * repository will ever raise is harmless.
+   */
   @Override
   public Condition activationCondition() {
-    Condition baseCondition = conditions().capabilities().passivateCapabilityDuringUpdate();
-
-    // If firewall_quarantine webhook is selected, add condition to require Firewall capability
-    if (getConfig() != null && getConfig().names.contains("firewall_quarantine")) {
-      CapabilityType firewallType = capabilityType("firewall.audit");
-      Condition firewallCondition = conditions().capabilities().capabilityOfTypeActive(firewallType);
-      return conditions().logical().and(baseCondition, firewallCondition);
-    }
-
-    return baseCondition;
+    return conditions().capabilities().passivateCapabilityDuringUpdate();
   }
 
   @Override
@@ -153,6 +155,7 @@ public class GlobalWebhookCapability
     @GlobalWebhookType
     public List<String> names;
 
+    @SsrfSafeUrl
     @Url
     public URI url;
 
@@ -161,19 +164,15 @@ public class GlobalWebhookCapability
 
     private final SecretsService secretsService;
 
-    private final SecretsStore secretsStore;
-
     public Configuration(
         final Map<String, String> properties,
-        final SecretsService secretsService,
-        final SecretsStore secretsStore)
+        final SecretsService secretsService)
     {
       this.names = parseList(properties.get(P_NAMES));
       this.url = parseUri(properties.get(P_URL));
       // Store only the secret ID - decrypt on-demand when needed
       this.secretId = Strings.emptyToNull(properties.get(P_SECRET));
       this.secretsService = secretsService;
-      this.secretsStore = secretsStore;
     }
 
     private static List<String> parseList(final String value) {
@@ -190,7 +189,7 @@ public class GlobalWebhookCapability
     @Nullable
     @Override
     public String getSecret() {
-      return decryptSecret(secretId, secretsStore, secretsService);
+      return decryptSecret(secretId, secretsService);
     }
   }
 
@@ -247,8 +246,9 @@ public class GlobalWebhookCapability
 
     @Override
     protected Configuration createConfig(final Map<String, String> properties) {
-      // This is only used for validation - pass null for secrets as they won't be accessed during validation
-      return new Configuration(properties, null, null);
+      // This is only used for validation - pass only secretsService as it's required for decryption
+      // Use a dummy configuration for validation
+      return new Configuration(properties, null);
     }
 
     @Override

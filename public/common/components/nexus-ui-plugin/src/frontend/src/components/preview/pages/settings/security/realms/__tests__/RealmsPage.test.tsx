@@ -91,6 +91,7 @@ describe('RealmsPage', () => {
     { id: 'LdapRealm', name: 'LDAP Realm' },
     { id: 'SamlRealm', name: 'SAML Realm' },
     { id: 'DockerToken', name: 'Docker Bearer Token Realm' },
+    { id: 'OciBearerToken', name: 'OCI Bearer Token Realm' },
   ];
 
   const mockActiveRealmIds = ['NexusAuthenticatingRealm', 'NexusAuthorizingRealm'];
@@ -135,6 +136,14 @@ describe('RealmsPage', () => {
     expect(screen.getByText('Configure the active security realms and their order')).toBeInTheDocument();
   });
 
+  it('renders the Active Realms section heading', async () => {
+    render(<RealmsPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Active Realms')).toBeInTheDocument();
+    });
+  });
+
   it('displays available and active realms lists', async () => {
     render(<RealmsPage />, { wrapper: TestWrapper });
 
@@ -159,7 +168,7 @@ describe('RealmsPage', () => {
     });
 
     expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByText('3 realms')).toBeInTheDocument(); // Inactive count
+    expect(screen.getByText('4 realms')).toBeInTheDocument(); // Inactive count
     expect(screen.getByText('2 realms')).toBeInTheDocument(); // Active count
   });
 
@@ -480,6 +489,22 @@ describe('RealmsPage', () => {
     const activeList = screen.getByLabelText('Active realms');
     expect(activeList).toContainElement(screen.getByText('Local Authorizing Realm'));
     expect(activeList).not.toContainElement(screen.queryByText('Local Authenticating Realm'));
+  });
+
+  it('has nxrm-realms-save analytics ID on save button', async () => {
+    const activeRealms = mockActiveRealmIds
+      .map(id => mockAvailableRealms.find(r => r.id === id))
+      .filter((r): r is Realm => r !== undefined);
+    mockedUseRealmsForm.mockReturnValue(createRealmsFormMock(mockAvailableRealms, activeRealms, { isPristine: false }));
+
+    render(<RealmsPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('LDAP Realm')).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    expect(saveButton).toHaveAttribute('data-analytics-id', 'nxrm-realms-save');
   });
 });
 

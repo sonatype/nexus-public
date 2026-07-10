@@ -12,8 +12,10 @@
  */
 import React from 'react';
 
+import BlobStoreTypes from './BlobStoreTypes';
+
 export default function CustomBlobStoreSettings({type, service}) {
-  const Settings = window.BlobStoreTypes[type.id]?.Settings;
+  const Settings = BlobStoreTypes[type.id]?.Settings;
 
   if (Settings) {
     return <Settings service={service} />;

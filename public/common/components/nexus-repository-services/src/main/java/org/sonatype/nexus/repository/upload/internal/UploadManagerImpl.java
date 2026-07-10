@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -47,7 +47,6 @@ import org.sonatype.nexus.repository.upload.UnsupportedImportException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import org.apache.commons.fileupload.FileUploadException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,13 +195,8 @@ public class UploadManagerImpl
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request) throws IOException {
-    try {
-      BlobStoreMultipartForm multipartForm = multipartHelper.parse(repository, request);
-      return ComponentUploadUtils.createComponentUpload(repository.getFormat().getValue(), multipartForm);
-    }
-    catch (FileUploadException e) {
-      throw new IOException(e);
-    }
+    BlobStoreMultipartForm multipartForm = multipartHelper.parse(repository, request);
+    return ComponentUploadUtils.createComponentUpload(repository.getFormat().getValue(), multipartForm);
   }
 
   private UploadHandler getUploadHandler(final Repository repository) {

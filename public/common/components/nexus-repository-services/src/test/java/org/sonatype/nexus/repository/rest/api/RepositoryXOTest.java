@@ -59,6 +59,8 @@ public class RepositoryXOTest
 
   private final String url;
 
+  private final boolean online;
+
   private final Map<String, Object> attributes;
 
   private final Map<String, Map<String, Object>> expectedAttributes;
@@ -70,6 +72,7 @@ public class RepositoryXOTest
       final Type type,
       final String expectedType,
       final String url,
+      final boolean online,
       final Map<String, Object> attributes,
       final Map<String, Map<String, Object>> expectedAttributes)
   {
@@ -79,6 +82,7 @@ public class RepositoryXOTest
     this.type = type;
     this.expectedType = expectedType;
     this.url = url;
+    this.online = online;
     this.attributes = attributes;
     this.expectedAttributes = expectedAttributes;
   }
@@ -87,11 +91,11 @@ public class RepositoryXOTest
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{
         {
-            "x", format("npm"), "npm", new ProxyType(), "proxy", "u", Map.of("remoteUrl", "url"),
+            "x", format("npm"), "npm", new ProxyType(), "proxy", "u", true, Map.of("remoteUrl", "url"),
             Map.of("proxy", Map.of("remoteUrl", "url"))
         },
-        {"y", format("maven"), "maven", new HostedType(), "hosted", "u", Map.of("remoteUrl", "foo"), Map.of()},
-        {"z", format("nuget"), "nuget", new GroupType(), "group", "u", Map.of("remoteUrl", "foo"), Map.of()}
+        {"y", format("maven"), "maven", new HostedType(), "hosted", "u", false, Map.of("remoteUrl", "foo"), Map.of()},
+        {"z", format("nuget"), "nuget", new GroupType(), "group", "u", true, Map.of("remoteUrl", "foo"), Map.of()}
     });
   }
 
@@ -102,7 +106,7 @@ public class RepositoryXOTest
     when(repository.getType()).thenReturn(type);
     when(repository.getUrl()).thenReturn(url);
 
-    Configuration mockConfiguration = configuration(type.getValue(), attributes);
+    Configuration mockConfiguration = configuration(type.getValue(), online, attributes);
     when(repository.getConfiguration()).thenReturn(mockConfiguration);
 
     RepositoryXO repositoryXO = RepositoryXO.fromRepository(repository);
@@ -111,6 +115,7 @@ public class RepositoryXOTest
     assertThat(repositoryXO.getFormat(), is(expectedFormat));
     assertThat(repositoryXO.getType(), is(expectedType));
     assertThat(repositoryXO.getUrl(), is(url));
+    assertThat(repositoryXO.isOnline(), is(online));
     assertThat(repositoryXO.getAttributes(), is(expectedAttributes));
   }
 
@@ -120,10 +125,11 @@ public class RepositoryXOTest
     return format;
   }
 
-  private Configuration configuration(final String type, final Map<String, Object> value) {
+  private Configuration configuration(final String type, final boolean online, final Map<String, Object> value) {
     Configuration configuration = mock(Configuration.class);
     when(configuration.getAttributes()).thenReturn(Map.of(type, value));
     when(configuration.attributes(type)).thenReturn(new NestedAttributesMap(type, value));
+    when(configuration.isOnline()).thenReturn(online);
     return configuration;
   }
 }

@@ -28,6 +28,18 @@ public interface AuthRateLimiterService
 {
 
   /**
+   * Checks whether the given username is currently rate-limited without incrementing the
+   * failure counter. Use this for a pre-authentication guard to short-circuit blocked users
+   * before credentials are validated.
+   *
+   * @param username the authenticating user; must not be {@code null}
+   * @return {@code null} if the user is not currently blocked,
+   *         or a {@link RateLimitResult} describing the backoff when blocked
+   */
+  @Nullable
+  RateLimitResult check(String username);
+
+  /**
    * Records a failed authentication attempt for the given username and checks whether
    * the request should be blocked. The counter is incremented on every call; call
    * {@link #recordSuccess} to clear it after a successful login.
@@ -52,4 +64,35 @@ public interface AuthRateLimiterService
    * @param username the user whose counter should be cleared
    */
   void reset(String username);
+
+  /**
+   * Checks whether the given token hash is currently rate-limited without incrementing the
+   * failure counter. Used for API key authentication where each token should be rate-limited
+   * independently to prevent one bad token from affecting all users of the same format.
+   *
+   * @param tokenHash a hash of the API token; must not be {@code null}
+   * @return {@code null} if the token is not currently blocked,
+   *         or a {@link RateLimitResult} describing the backoff when blocked
+   */
+  @Nullable
+  RateLimitResult checkByToken(String tokenHash);
+
+  /**
+   * Records a failed authentication attempt for the given token hash and checks whether
+   * the request should be blocked. The counter is incremented on every call; call
+   * {@link #recordSuccessByToken} to clear it after a successful authentication.
+   *
+   * @param tokenHash a hash of the API token; must not be {@code null}
+   * @return {@code null} if the attempt count is within the threshold,
+   *         or a {@link RateLimitResult} describing the backoff when blocked
+   */
+  @Nullable
+  RateLimitResult checkAndRecordByToken(String tokenHash);
+
+  /**
+   * Resets the failure counter for the given token hash upon a successful authentication.
+   *
+   * @param tokenHash a hash of the API token
+   */
+  void recordSuccessByToken(String tokenHash);
 }

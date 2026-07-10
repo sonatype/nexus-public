@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.search.sql.query;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.repository.content.Asset;
@@ -83,6 +84,9 @@ public class SqlSearchService
   private final SearchConditionFactory queryFactory;
 
   private final Map<String, FormatStoreManager> formatStoreManagersByFormat;
+
+  // Tracks formats already warned about to suppress repeated log spam for unregistered formats (e.g. swift, oci)
+  private final Set<String> warnedFormats = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   private final SqlSearchSortUtil sqlSearchSortUtil;
 
@@ -193,6 +197,11 @@ public class SqlSearchService
   }
 
   @Override
+  public void flushPendingIndex(final String repositoryName) {
+    sqlSearchEventHandler.flushPendingForRepository(repositoryName);
+  }
+
+  @Override
   public void waitForCalm() {
     log.debug("Waiting for calm period to allow SQL search indexing to complete");
     try {
@@ -260,8 +269,15 @@ public class SqlSearchService
     return requestModifier.modify(searchRequest);
   }
 
+  @Nullable
   private AssetStore<?> getAssetStore(final String format) {
     FormatStoreManager formatStoreManager = formatStoreManagersByFormat.get(format);
+    if (formatStoreManager == null) {
+      if (warnedFormats.add(format)) {
+        log.warn("No FormatStoreManager registered for format: {}", format);
+      }
+      return null;
+    }
     return formatStoreManager.assetStore(DEFAULT_DATASTORE_NAME);
   }
 
@@ -403,6 +419,9 @@ public class SqlSearchService
     // for each format, get the asset store and fetch all the assets for the components
     for (Entry<String, List<Integer>> formatComponentIds : componentIdsByFormat.entrySet()) {
       AssetStore<?> assetStore = getAssetStore(formatComponentIds.getKey());
+      if (assetStore == null) {
+        continue;
+      }
       Set<Integer> componentIds = new HashSet<>(formatComponentIds.getValue());
       final Optional<SqlSearchQueryCondition> assetCondition = Optional.ofNullable(queryCondition)
           .flatMap(SqlSearchQueryConditionGroup::getAssetCondition);

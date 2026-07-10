@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;

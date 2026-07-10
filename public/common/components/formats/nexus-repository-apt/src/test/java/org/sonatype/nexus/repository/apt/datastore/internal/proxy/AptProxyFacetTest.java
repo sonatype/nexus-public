@@ -52,7 +52,6 @@ public class AptProxyFacetTest
     }
 
     public void initializeWithEncodingHelper(EncodingHelper encodingHelper) {
-      // Initialize for new mode (urlEncodingModeEnabled=true)
       configureUrlEscapeRules(null);
       this.testEncodingHelper = encodingHelper;
     }
@@ -190,7 +189,7 @@ public class AptProxyFacetTest
     // Test the critical new-mode path: when EncodingHelper is active,
     // encodeUrl() must return the URL unchanged to prevent double-encoding
     EscapeHelper escapeHelper = new EscapeHelper();
-    EncodingHelper encodingHelper = new EncodingHelper(escapeHelper, false);
+    EncodingHelper encodingHelper = new EncodingHelper(escapeHelper);
 
     TestableAptProxyFacet facetWithEncodingHelper = new TestableAptProxyFacet();
     facetWithEncodingHelper.initializeWithEncodingHelper(encodingHelper);
@@ -204,9 +203,9 @@ public class AptProxyFacetTest
 
   @Test
   public void testEncodeUrl_returnsRawPathInNewModePreserveEncoded() throws UnsupportedEncodingException {
-    // Test new mode with preserveEncodedCharacters=true
+    // Test new mode — EncodingHelper always preserves encoded characters
     EscapeHelper escapeHelper = new EscapeHelper();
-    EncodingHelper encodingHelper = new EncodingHelper(escapeHelper, true);
+    EncodingHelper encodingHelper = new EncodingHelper(escapeHelper);
 
     TestableAptProxyFacet facetWithEncodingHelper = new TestableAptProxyFacet();
     facetWithEncodingHelper.initializeWithEncodingHelper(encodingHelper);

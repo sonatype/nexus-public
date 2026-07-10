@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-siesta</artifactId>
@@ -37,6 +37,23 @@
       <artifactId>nexus-servlet</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: explicit jakarta.servlet-api now that RESTEasy 7 requires Jakarta
+         servlet types. Previously came in transitively via javax.servlet-api. -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- NEXUS-46395: explicit jakarta.validation-api 3.0.x for RESTEasy 7's
+         ResteasyViolationException, which extends jakarta.validation.ConstraintViolationException.
+         The transitive 2.0.x lurking in the dep tree must be overridden by the dep-mgmt
+         pin in buildsupport/rest. -->
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-rest</artifactId>
@@ -49,7 +66,7 @@
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
+      <artifactId>resteasy-core</artifactId>
       <exclusions>
         <exclusion>
           <groupId>org.jboss.resteasy</groupId>
@@ -91,8 +108,8 @@
 
 
     <dependency>
-      <groupId>org.eclipse.jetty.ee8</groupId>
-      <artifactId>jetty-ee8-servlet</artifactId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
+      <artifactId>jetty-ee10-servlet</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -14,7 +14,7 @@ package org.sonatype.nexus.coreui;
 
 import java.util.Map;
 import java.util.Objects;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Component exchange object.

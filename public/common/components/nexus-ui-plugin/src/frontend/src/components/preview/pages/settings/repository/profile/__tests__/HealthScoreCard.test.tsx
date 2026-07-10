@@ -16,7 +16,7 @@ import { render, screen } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { HealthScoreCard } from '../HealthScoreCard';
-import type { HealthCheckData, RepositoryMetrics } from '../hooks/useRepositoryProfile';
+import type { HealthCheckData, RepositoryMetrics } from '../types';
 
 // Wrapper component for Radix Theme
 function TestWrapper({ children }: { children: React.ReactNode }) {

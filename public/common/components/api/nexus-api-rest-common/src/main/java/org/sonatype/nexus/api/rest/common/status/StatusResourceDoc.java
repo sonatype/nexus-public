@@ -12,30 +12,30 @@
  */
 package org.sonatype.nexus.api.rest.common.status;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.core.Response;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * REST API for status operations
  *
  * @since 3.15
  */
-@Api("Status")
+@Tag(name = "Status")
 public interface StatusResourceDoc
 {
   /**
    * @return 200 if the server is available to serve read requests, 503 otherwise
    */
   @GET
-  @ApiOperation("Health check endpoint that validates server can respond to read requests")
+  @Operation(summary = "Health check endpoint that validates server can respond to read requests")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Available to service requests"),
-      @ApiResponse(code = 503, message = "Unavailable to service requests")
+      @ApiResponse(responseCode = "200", description = "Available to service requests"),
+      @ApiResponse(responseCode = "503", description = "Unavailable to service requests")
   })
   Response isAvailable();
 
@@ -45,10 +45,10 @@ public interface StatusResourceDoc
    * @since 3.16
    */
   @GET
-  @ApiOperation("Health check endpoint that validates server can respond to read and write requests")
+  @Operation(summary = "Health check endpoint that validates server can respond to read and write requests")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Available to service requests"),
-      @ApiResponse(code = 503, message = "Unavailable to service requests")
+      @ApiResponse(responseCode = "200", description = "Available to service requests"),
+      @ApiResponse(responseCode = "503", description = "Unavailable to service requests")
   })
   Response isWritable();
 }

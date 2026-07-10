@@ -12,11 +12,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
-import { Route, Plus, ArrowLeft, Eye } from 'lucide-react';
+import { Box, Flex } from '@radix-ui/themes';
+import { Eye, Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
-import { useToast, LoadingState } from '../../../../shared';
+import { useToast, LoadingState, PageHeader } from '../../../../shared';
 import { SettingsButton, SettingsAlert, ConfirmDialog } from '../../../../shared/form';
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { RoutingRulesList } from './RoutingRulesList';
@@ -207,58 +207,50 @@ export function RoutingRulesPage() {
   const renderHeader = () => {
     if (routeState.viewMode === 'list') {
       return (
-        <Flex justify="between" align="center" className="routing-rules-page__header">
-          <Flex align="center" gap="3">
-            <Route size={24} className="routing-rules-page__icon" />
-            <Box>
-              <Heading as="h1" size="6" weight="medium">Routing Rules</Heading>
-              <Text size="2" className="routing-rules-page__description">
-                Control which requests are allowed or blocked for repositories
-              </Text>
-            </Box>
-          </Flex>
-          <Flex gap="2">
-            <SettingsButton
-              variant="secondary"
-              onClick={handlePreview}
-              icon={Eye}
-              testId="preview-button"
-            >
-              Preview
-            </SettingsButton>
-            {canCreate && (
+        <PageHeader
+          title="Routing Rules"
+          description="Control which requests are allowed or blocked for repositories"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Routing Rules' }
+          ]}
+          actions={
+            <Flex gap="2">
               <SettingsButton
-                variant="primary"
-                onClick={handleCreate}
-                icon={Plus}
-                testId="create-rule-button"
+                variant="secondary"
+                onClick={handlePreview}
+                icon={Eye}
+                testId="preview-button"
               >
-                Create Rule
+                Preview
               </SettingsButton>
-            )}
-          </Flex>
-        </Flex>
+              {canCreate && (
+                <SettingsButton
+                  variant="primary"
+                  onClick={handleCreate}
+                  icon={Plus}
+                  testId="create-rule-button"
+                >
+                  Create Rule
+                </SettingsButton>
+              )}
+            </Flex>
+          }
+        />
       );
     }
 
     if (routeState.viewMode === 'preview') {
       return (
-        <Flex align="center" gap="3" className="routing-rules-page__header">
-          <SettingsButton
-            variant="ghost"
-            onClick={handleBack}
-            className="routing-rules-page__back"
-            icon={ArrowLeft}
-            testId="back-button"
-            aria-label="Back to Routing Rules"
-          />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">Global Routing Preview</Heading>
-            <Text size="2" className="routing-rules-page__description">
-              Test how routing rules affect requests across all repositories
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Global Routing Preview"
+          description="Test how routing rules affect requests across all repositories"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Routing Rules', onClick: handleBack },
+            { label: 'Preview' }
+          ]}
+        />
       );
     }
 
@@ -268,26 +260,24 @@ export function RoutingRulesPage() {
         ? `Edit ${rule.name}`
         : 'Routing Rule Details';
 
+    const description = rule && routeState.viewMode === 'detail'
+      ? `Mode: ${rule.mode} • ${rule.matchers.length} matcher(s)${(rule.assignedRepositoryCount ?? 0) > 0 ? ` • Assigned to ${rule.assignedRepositoryCount} repositories` : ''}`
+      : undefined;
+
+    const lastBreadcrumb = routeState.viewMode === 'create'
+      ? 'Create'
+      : rule?.name || 'Loading...';
+
     return (
-      <Flex align="center" gap="3" className="routing-rules-page__header">
-        <SettingsButton
-          variant="ghost"
-          onClick={handleBack}
-          className="routing-rules-page__back"
-          icon={ArrowLeft}
-          testId="back-button"
-          aria-label="Back to Routing Rules"
-        />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">{title}</Heading>
-          {rule && routeState.viewMode === 'detail' && (
-            <Text size="2" className="routing-rules-page__description">
-              Mode: {rule.mode} • {rule.matchers.length} matcher(s)
-              {(rule.assignedRepositoryCount ?? 0) > 0 && ` • Assigned to ${rule.assignedRepositoryCount} repositories`}
-            </Text>
-          )}
-        </Box>
-      </Flex>
+      <PageHeader
+        title={title}
+        description={description}
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'Routing Rules', onClick: handleBack },
+          { label: lastBreadcrumb }
+        ]}
+      />
     );
   };
 

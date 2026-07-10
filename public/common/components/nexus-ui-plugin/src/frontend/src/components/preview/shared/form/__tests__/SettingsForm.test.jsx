@@ -76,6 +76,10 @@ describe('SettingsForm', () => {
     children: <div data-testid="form-content">Form Content</div>,
   };
 
+  afterEach(() => {
+    window.dirty = [];
+  });
+
   it('renders title and children', () => {
     render(<SettingsForm {...defaultProps} />);
     
@@ -255,8 +259,67 @@ describe('SettingsForm', () => {
 
   it('has noValidate attribute on form', () => {
     const { container } = render(<SettingsForm {...defaultProps} />);
-    
+
     expect(container.querySelector('form')).toHaveAttribute('noValidate');
+  });
+
+  it('clears window.dirty after discard confirm', async () => {
+    const onCancel = jest.fn();
+    window.dirty = [];
+
+    // Use dirty={true} instead of pristine={false} so SettingsForm tracks dirty state itself
+    // (when pristine prop is passed, parent is assumed to be managing state)
+    render(
+      <SettingsForm {...defaultProps} onCancel={onCancel} dirty confirmDiscard />
+    );
+
+    // Form should register as dirty
+    expect(window.dirty.length).toBeGreaterThan(0);
+
+    // Click cancel to trigger discard dialog
+    fireEvent.click(screen.getByText('Discard'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    });
+
+    // Confirm discard
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+
+    // After confirming discard, window.dirty must be empty so the router's
+    // onBefore hook won't show a second "unsaved changes" modal
+    expect(window.dirty).toEqual([]);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-register dirty state after discard confirm on re-render', async () => {
+    const onCancel = jest.fn();
+    window.dirty = [];
+
+    // Use dirty={true} instead of pristine={false} so SettingsForm tracks dirty state itself
+    const { rerender } = render(
+      <SettingsForm {...defaultProps} onCancel={onCancel} dirty confirmDiscard />
+    );
+
+    // Confirm the form is tracked as dirty
+    expect(window.dirty.length).toBeGreaterThan(0);
+
+    // Click cancel and confirm discard
+    fireEvent.click(screen.getByText('Discard'));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+
+    expect(window.dirty).toEqual([]);
+
+    // Simulate a React re-render (e.g., parent state change from navigation)
+    // The form should NOT re-register as dirty
+    rerender(
+      <SettingsForm {...defaultProps} onCancel={onCancel} dirty confirmDiscard />
+    );
+
+    expect(window.dirty).toEqual([]);
   });
 });
 

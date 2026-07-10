@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-base</artifactId>
@@ -29,7 +29,7 @@
   <dependencies>
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
-      <artifactId>jetty-ee8-nested</artifactId>
+      <artifactId>jetty-ee10-servlet</artifactId>
     </dependency>
 
     <dependency>
@@ -41,9 +41,10 @@
       <artifactId>jcl-over-slf4j</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: javax.ws.rs-api replaced by jakarta.ws.rs-api (JAX-RS 3.1) -->
     <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>javax.ws.rs-api</artifactId>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
     </dependency>
 
     <dependency>
@@ -59,6 +60,15 @@
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-core</artifactId>
+    </dependency>
+
+    <!-- NEXUS-46395: ReEncryptionRequiredHealthCheck and ConditionallyAppliedHealthCheck
+         (and friends) extend com.codahale.metrics.health.HealthCheck which lives in the
+         metrics-healthchecks artifact. Was previously coming in transitively through some
+         path that is no longer reachable; declare it explicitly. -->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-healthchecks</artifactId>
     </dependency>
 
     <dependency>
@@ -181,26 +191,14 @@
     </dependency>
 
     <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib-nodep</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.objenesis</groupId>
-      <artifactId>objenesis</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.eclipse.jetty.ee8</groupId>
-      <artifactId>jetty-ee8-servlet</artifactId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
+      <artifactId>jetty-ee10-servlet</artifactId>
       <scope>test</scope>
     </dependency>
 

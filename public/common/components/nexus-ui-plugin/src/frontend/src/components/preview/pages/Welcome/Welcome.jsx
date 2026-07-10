@@ -25,9 +25,8 @@ import welcomeMachine from '../../../pages/user/Welcome/WelcomeMachine';
 import OutreachActions from './OutreachActions';
 import MalwareStatusCard from './MalwareStatusCard';
 import HealthCheckStatusCard from './HealthCheckStatusCard';
-import CEHardLimitAlerts from './CEHardLimitAlerts';
+import CELimitsAlerts from './CELimitsAlerts';
 import MalwareBanner from '../../shared/security/MalwareBanner';
-import TelemetryWarningBanner from '../../shared/telemetry/TelemetryWarningBanner';
 import UsageMetricsTabContent from './UsageMetricsTabContent';
 import {isFeatureEnabled} from '../../config/featureFlags';
 
@@ -147,8 +146,7 @@ function WelcomeDashboard({
               <Box style={{ flex: '1 1 300px', minWidth: 0 }}>
                 {isAuthenticated && (
                   <Flex direction="column" gap="4">
-                    {isAdmin && <CEHardLimitAlerts />}
-                    <TelemetryWarningBanner />
+                    <CELimitsAlerts />
                     <MalwareBanner />
                     <Heading as="h2" size="4" weight="bold" pt="2">Repository Security</Heading>
                     <ErrorBoundary>

@@ -191,4 +191,17 @@ public class BrowseComponentTest
     assertFalse(xos.get(1).isLeaf());
     assertTrue(xos.get(2).isLeaf());
   }
+
+  @Test
+  public void testMissingRepositoryReturnsEmptyList() {
+    TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters();
+    treeStoreLoadParameters.setRepositoryName("non-existent-repo");
+    treeStoreLoadParameters.setNode(ROOT);
+
+    when(repositoryManager.get("non-existent-repo")).thenReturn(null);
+
+    List<BrowseNodeXO> xos = underTest.read(treeStoreLoadParameters);
+
+    assertThat(xos, hasSize(0));
+  }
 }

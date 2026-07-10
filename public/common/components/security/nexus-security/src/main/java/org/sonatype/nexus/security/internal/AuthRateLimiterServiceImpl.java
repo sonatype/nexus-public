@@ -12,17 +12,16 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
-import javax.annotation.PreDestroy;
 
 import org.sonatype.nexus.security.authc.AuthRateLimiterService;
 import org.sonatype.nexus.security.authc.RateLimitResult;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +36,13 @@ import static org.sonatype.nexus.common.app.FeatureFlags.AUTH_RATE_LIMIT_ENABLED
  * Default implementation of {@link AuthRateLimiterService} using in-memory tracking with
  * exponential backoff. Tracks failed attempts per username; a request is blocked when
  * the username exceeds the configured failure threshold.
+ *
+ * <p>
+ * Uses a Guava {@link Cache} with last-accessed expiration and soft values. Soft references
+ * allow the GC to reclaim entries under memory pressure, preventing an attacker from exhausting
+ * heap by submitting logins for arbitrary bogus usernames. Idle entries are automatically evicted
+ * after {@code maxDelaySeconds} of inactivity.
+ * </p>
  *
  * <p>
  * <strong>Cluster limitation:</strong> State is held in-memory on each node and is not
@@ -55,17 +61,15 @@ public class AuthRateLimiterServiceImpl
 
   private static final String USER_PREFIX = "user::";
 
+  private static final String TOKEN_PREFIX = "token::";
+
   private final int maxAttempts;
 
   private final long baseDelaySeconds;
 
   private final long maxDelaySeconds;
 
-  private final int maxTrackedKeys;
-
-  private final ConcurrentHashMap<String, AttemptRecord> attempts = new ConcurrentHashMap<>();
-
-  private final ScheduledExecutorService cleaner;
+  private final LoadingCache<String, AttemptRecord> attempts;
 
   public AuthRateLimiterServiceImpl(
       @Value("${nexus.auth.ratelimit.max-attempts:3}") final int maxAttempts,
@@ -76,14 +80,18 @@ public class AuthRateLimiterServiceImpl
     this.maxAttempts = maxAttempts;
     this.baseDelaySeconds = baseDelaySeconds;
     this.maxDelaySeconds = maxDelaySeconds;
-    this.maxTrackedKeys = maxTrackedKeys;
 
-    this.cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
-      Thread t = new Thread(r, "auth-rate-limit-cleaner");
-      t.setDaemon(true);
-      return t;
-    });
-    this.cleaner.scheduleAtFixedRate(this::cleanup, 5, 5, TimeUnit.MINUTES);
+    this.attempts = CacheBuilder.newBuilder()
+        .expireAfterAccess(maxDelaySeconds, TimeUnit.SECONDS)
+        .softValues()
+        .maximumSize(maxTrackedKeys)
+        .build(CacheLoader.from(AttemptRecord::new));
+  }
+
+  @Override
+  @Nullable
+  public RateLimitResult check(final String username) {
+    return checkForKey(USER_PREFIX + username);
   }
 
   @Override
@@ -94,32 +102,59 @@ public class AuthRateLimiterServiceImpl
 
   @Override
   public void recordSuccess(final String username) {
-    attempts.remove(USER_PREFIX + username);
+    attempts.invalidate(USER_PREFIX + username);
     log.debug("Rate limit counter cleared on success for user '{}'", username);
   }
 
   @Override
   public void reset(final String username) {
-    attempts.remove(USER_PREFIX + username);
+    attempts.invalidate(USER_PREFIX + username);
     log.debug("Rate limit counter reset for user '{}'", username);
   }
 
-  @PreDestroy
-  public void stop() {
-    cleaner.shutdownNow();
+  @Override
+  @Nullable
+  public RateLimitResult checkByToken(final String tokenHash) {
+    return checkForKey(TOKEN_PREFIX + tokenHash);
+  }
+
+  @Override
+  @Nullable
+  public RateLimitResult checkAndRecordByToken(final String tokenHash) {
+    return checkAndRecordForKey(TOKEN_PREFIX + tokenHash);
+  }
+
+  @Override
+  public void recordSuccessByToken(final String tokenHash) {
+    attempts.invalidate(TOKEN_PREFIX + tokenHash);
+    log.debug("Rate limit counter cleared on success for token hash prefix '{}'",
+        tokenHash.substring(0, Math.min(8, tokenHash.length())));
+  }
+
+  @Nullable
+  private RateLimitResult checkForKey(final String key) {
+    AttemptRecord record = attempts.getIfPresent(key);
+    if (record == null) {
+      return null;
+    }
+    synchronized (record) {
+      if (record.failureCount <= maxAttempts) {
+        return null;
+      }
+      long shift = record.failureCount - maxAttempts - 1;
+      long retryAfter = (shift >= 63)
+          ? maxDelaySeconds
+          : Math.min(baseDelaySeconds * (1L << shift), maxDelaySeconds);
+      return new RateLimitResult(retryAfter, record.failureCount);
+    }
   }
 
   private RateLimitResult checkAndRecordForKey(final String key) {
-    if (attempts.size() >= maxTrackedKeys && !attempts.containsKey(key)) {
-      log.warn("Rate limit tracker full ({} entries); skipping tracking for '{}'", maxTrackedKeys, key);
-      return null;
-    }
-    AttemptRecord record = attempts.computeIfAbsent(key, k -> new AttemptRecord());
+    AttemptRecord record = attempts.getUnchecked(key);
     synchronized (record) {
       // Intentionally increment even when already rate-limited: each blocked attempt
       // advances the exponential backoff, discouraging repeated brute-force retries.
       record.failureCount++;
-      record.lastFailureTimeMs = System.currentTimeMillis();
 
       if (record.failureCount <= maxAttempts) {
         return null;
@@ -129,29 +164,20 @@ public class AuthRateLimiterServiceImpl
       long retryAfter = (shift >= 63)
           ? maxDelaySeconds
           : Math.min(baseDelaySeconds * (1L << shift), maxDelaySeconds);
-      log.debug("Rate limiting key '{}': attempt={}, retryAfter={}s", key, record.failureCount, retryAfter);
+
+      // Log first block at INFO to leave a clear signal in production logs without spamming.
+      if (record.failureCount == maxAttempts + 1) {
+        log.info("Rate limiting key '{}': attempt={}, retryAfter={}s", key, record.failureCount, retryAfter);
+      }
+      else {
+        log.debug("Rate limiting key '{}': attempt={}, retryAfter={}s", key, record.failureCount, retryAfter);
+      }
       return new RateLimitResult(retryAfter, record.failureCount);
     }
-  }
-
-  private void cleanup() {
-    long cutoffMs = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(maxDelaySeconds);
-    // Note: removeIf and computeIfAbsent (in checkAndRecordForKey) are not atomically coordinated.
-    // In the narrow window between removeIf evicting an entry and the synchronized block in
-    // checkAndRecordForKey acquiring it, a new AttemptRecord could be inserted and then immediately
-    // evicted. The worst-case effect is that a counter is silently reset — an acceptable trade-off
-    // given the rarity of the race and the self-correcting nature of the backoff algorithm.
-    attempts.entrySet().removeIf(entry -> {
-      synchronized (entry.getValue()) {
-        return entry.getValue().lastFailureTimeMs < cutoffMs;
-      }
-    });
   }
 
   private static final class AttemptRecord
   {
     int failureCount;
-
-    long lastFailureTimeMs;
   }
 }

@@ -47,6 +47,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     state: jest.fn().mockReturnValue({
       getValue: jest.fn().mockImplementation((key) => {
         if (key === 'anonymousUsername') return 'anonymous';
+        if (key === 'capabilityActiveTypes') return ['usertoken'];
         return null;
       }),
       getUser: jest.fn().mockReturnValue({ id: 'admin' }),
@@ -380,9 +381,264 @@ describe('UserForm', () => {
       <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
       { wrapper: TestWrapper }
     );
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('reset-token-btn')).toBeInTheDocument();
+    });
+  });
+
+  it('hides reset token button in UserForm when usertoken capability is not active', async () => {
+    // Override the mock to return empty capabilities
+    const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
+    ExtJS.state.mockReturnValue({
+      getValue: jest.fn().mockImplementation((key) => {
+        if (key === 'anonymousUsername') return 'anonymous';
+        if (key === 'capabilityActiveTypes') return []; // No usertoken capability
+        return null;
+      }),
+      getUser: jest.fn().mockReturnValue({ id: 'admin' }),
+    });
+
+    const user: User = {
+      userId: 'testuser',
+      realm: 'default',
+      firstName: 'Test',
+      lastName: 'User',
+      emailAddress: 'test@example.com',
+      source: 'default',
+      status: 'active',
+      roles: ['nx-admin'],
+    };
+
+    render(
+      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('User Setup')).toBeInTheDocument();
+    });
+
+    // Reset Token button should NOT be visible
+    expect(screen.queryByTestId('reset-token-btn')).not.toBeInTheDocument();
+  });
+
+  it('hides reset token button in UserForm when user lacks nexus:usertoken-user:delete permission', async () => {
+    // Override the mock to return false for usertoken permission
+    const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
+    ExtJS.checkPermission.mockImplementation((permission: string) => {
+      if (permission === 'nexus:usertoken-user:delete') {
+        return false;
+      }
+      return true;
+    });
+
+    const user: User = {
+      userId: 'testuser',
+      realm: 'default',
+      firstName: 'Test',
+      lastName: 'User',
+      emailAddress: 'test@example.com',
+      source: 'default',
+      status: 'active',
+      roles: ['nx-admin'],
+    };
+
+    render(
+      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('User Setup')).toBeInTheDocument();
+    });
+
+    // Reset Token button should NOT be visible
+    expect(screen.queryByTestId('reset-token-btn')).not.toBeInTheDocument();
+  });
+
+  it('should not render source selector in create mode', async () => {
+    render(
+      <UserForm isCreate={true} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('User Setup')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByLabelText('Source')).not.toBeInTheDocument();
+    expect(screen.queryByText('Select the authentication source for this user')).not.toBeInTheDocument();
+  });
+
+  it('should report invalid via onValidationChange when password is shorter than 8 characters', async () => {
+    const mockValidationChange = jest.fn();
+
+    mockedUseUsersForm.mockImplementation(() => {
+      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
+      return {
+        form: createMockForm(
+          { userId: 'newuser', firstName: 'Test', lastName: 'User', emailAddress: 'test@example.com',
+            password: 'short', passwordConfirm: 'short', status: true, roles: [] as string[], source: 'default' },
+          { ...contextData, user: null }
+        ) as any,
+        user: null,
+        isCreate: true,
+      };
+    });
+
+    render(
+      <UserForm
+        isCreate={true}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        wizardStep={0}
+        hideActions={true}
+        onValidationChange={mockValidationChange}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(mockValidationChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('should report valid via onValidationChange when password meets minimum length', async () => {
+    const mockValidationChange = jest.fn();
+
+    mockedUseUsersForm.mockImplementation(() => {
+      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
+      return {
+        form: createMockForm(
+          { userId: 'newuser', firstName: 'Test', lastName: 'User', emailAddress: 'test@example.com',
+            password: 'validpass', passwordConfirm: 'validpass', status: true, roles: [] as string[], source: 'default' },
+          { ...contextData, user: null }
+        ) as any,
+        user: null,
+        isCreate: true,
+      };
+    });
+
+    render(
+      <UserForm
+        isCreate={true}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        wizardStep={0}
+        hideActions={true}
+        onValidationChange={mockValidationChange}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(mockValidationChange).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('should report invalid via onValidationChange when edit-mode password is shorter than 8 characters', async () => {
+    const mockValidationChange = jest.fn();
+    const user: User = {
+      userId: 'testuser',
+      realm: 'default',
+      firstName: 'Test',
+      lastName: 'User',
+      emailAddress: 'test@example.com',
+      source: 'default',
+      status: 'active',
+      roles: ['nx-admin'],
+    };
+
+    mockedUseUsersForm.mockImplementation(() => {
+      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
+      return {
+        form: createMockForm(
+          { userId: 'testuser', firstName: 'Test', lastName: 'User', emailAddress: 'test@example.com',
+            password: 'short', passwordConfirm: 'short', status: true, roles: ['nx-admin'], source: 'default' },
+          { ...contextData, user }
+        ) as any,
+        user,
+        isCreate: false,
+      };
+    });
+
+    const { rerender } = render(
+      <UserForm
+        isCreate={false}
+        user={user}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        wizardStep={0}
+        hideActions={true}
+        onValidationChange={mockValidationChange}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('change-password-btn'));
+
+    await waitFor(() => {
+      expect(mockValidationChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('should call onDirtyChange when form becomes dirty', async () => {
+    const mockDirtyChange = jest.fn();
+
+    mockedUseUsersForm.mockImplementation(() => {
+      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
+      return {
+        form: {
+          ...createMockForm(
+            { userId: 'modified', firstName: '', lastName: '', emailAddress: '', password: '', passwordConfirm: '', status: true, roles: [] as string[], source: 'default' },
+            { ...contextData, user: null }
+          ),
+          isPristine: false,
+        } as any,
+        user: null,
+        isCreate: true,
+      };
+    });
+
+    render(
+      <UserForm
+        isCreate={true}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        wizardStep={0}
+        hideActions={true}
+        onDirtyChange={mockDirtyChange}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(mockDirtyChange).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('should call onDirtyChange with false when form is pristine', async () => {
+    const mockDirtyChange = jest.fn();
+
+    render(
+      <UserForm
+        isCreate={true}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        wizardStep={0}
+        hideActions={true}
+        onDirtyChange={mockDirtyChange}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(mockDirtyChange).toHaveBeenCalledWith(false);
     });
   });
 });

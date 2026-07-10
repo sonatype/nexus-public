@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.repository.config.UniqueRepositoryName;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
@@ -21,8 +21,8 @@ import org.sonatype.nexus.validation.group.Create;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 3.20
@@ -30,22 +30,23 @@ import javax.validation.constraints.NotEmpty;
 public abstract class AbstractRepositoryApiRequest
     implements RepositoryApiRequest
 {
-  @ApiModelProperty(value = "A unique identifier for this repository", example = "internal", required = true)
+  @Schema(description = "A unique identifier for this repository", example = "internal",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotEmpty
   @UniqueRepositoryName(groups = Create.class)
   protected String name;
 
-  @ApiModelProperty(value = "Component format used by this repository", hidden = true)
+  @Schema(description = "Component format used by this repository", hidden = true)
   @NotEmpty
   protected String format;
 
-  @ApiModelProperty(value = "Controls if deployments of and updates to artifacts are allowed",
-      allowableValues = "hosted,proxy,group", hidden = true)
+  @Schema(description = "Controls if deployments of and updates to artifacts are allowed", hidden = true)
   @NotEmpty
   protected String type;
 
-  @ApiModelProperty(value = "Whether this repository accepts incoming requests", example = "true", required = true)
+  @Schema(description = "Whether this repository accepts incoming requests", example = "true",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   @NotNull
   protected Boolean online;
 

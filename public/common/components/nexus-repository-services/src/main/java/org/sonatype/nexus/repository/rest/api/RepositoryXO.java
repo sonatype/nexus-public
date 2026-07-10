@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Repository transfer object for REST APIs.
@@ -37,7 +37,10 @@ public class RepositoryXO
 
   private String url;
 
-  @ApiModelProperty(value = "Size of the repository in bytes")
+  @Schema(description = "Whether this repository accepts incoming requests", example = "true")
+  private boolean online;
+
+  @Schema(description = "Size of the repository in bytes")
   @JsonInclude(Include.NON_NULL)
   private Long size;
 
@@ -52,6 +55,7 @@ public class RepositoryXO
         .format(repository.getFormat().getValue())
         .type(repository.getType().getValue())
         .url(repository.getUrl())
+        .online(repository.getConfiguration().isOnline())
         .attributes(attributes(repository))
         .size(size)
         .build();
@@ -106,6 +110,14 @@ public class RepositoryXO
     this.url = url;
   }
 
+  public boolean isOnline() {
+    return online;
+  }
+
+  public void setOnline(boolean online) {
+    this.online = online;
+  }
+
   public Long getSize() {
     return size;
   }
@@ -131,14 +143,14 @@ public class RepositoryXO
       return false;
     }
     RepositoryXO that = (RepositoryXO) o;
-    return Objects.equals(name, that.name) && Objects.equals(format, that.format) &&
+    return online == that.online && Objects.equals(name, that.name) && Objects.equals(format, that.format) &&
         Objects.equals(type, that.type) && Objects.equals(url, that.url) &&
         Objects.equals(size, that.size) && Objects.equals(attributes, that.attributes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, format, type, url, size, attributes);
+    return Objects.hash(name, format, type, url, online, size, attributes);
   }
 
   public static class RepositoryXOBuilder
@@ -150,6 +162,8 @@ public class RepositoryXO
     private String type;
 
     private String url;
+
+    private boolean online;
 
     private Long size;
 
@@ -175,6 +189,11 @@ public class RepositoryXO
       return this;
     }
 
+    public RepositoryXOBuilder online(boolean online) {
+      this.online = online;
+      return this;
+    }
+
     public RepositoryXOBuilder size(Long size) {
       this.size = size;
       return this;
@@ -191,6 +210,7 @@ public class RepositoryXO
       repositoryXO.setFormat(format);
       repositoryXO.setType(type);
       repositoryXO.setUrl(url);
+      repositoryXO.setOnline(online);
       repositoryXO.setSize(size);
       repositoryXO.setAttributes(attributes);
       return repositoryXO;

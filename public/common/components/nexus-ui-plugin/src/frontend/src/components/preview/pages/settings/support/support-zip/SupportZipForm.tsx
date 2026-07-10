@@ -33,6 +33,7 @@ interface SupportZipFormProps {
   onSubmitAll?: () => void;
   isHa?: boolean;
   disabled?: boolean;
+  hideActions?: boolean;
 }
 
 /**
@@ -45,6 +46,7 @@ export function SupportZipForm({
   onSubmitAll,
   isHa = false,
   disabled = false,
+  hideActions = false,
 }: SupportZipFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +153,7 @@ export function SupportZipForm({
             {/* Archived logs dropdown */}
             <Box mt="3">
               <SettingsSelect
+                name="archivedLog"
                 label="Include logs from previous days"
                 value={String(params.archivedLog)}
                 onChange={(value) => onParamChange('archivedLog', Number(value))}
@@ -188,33 +191,36 @@ export function SupportZipForm({
         </SettingsFormSection>
 
         {/* Actions */}
-        <Flex gap="3" mt="4">
-          <SettingsButton
-            type="submit"
-            variant="primary"
-            disabled={disabled}
-            icon={Archive}
-            data-testid="support-zip-create-button"
-          >
-            Create support ZIP
-          </SettingsButton>
-          {isHa && onSubmitAll && (
+        {!hideActions && (
+          <Flex gap="3" mt="4">
             <SettingsButton
-              type="button"
+              type="submit"
               variant="primary"
-              onClick={onSubmitAll}
               disabled={disabled}
-              icon={Server}
-              data-testid="support-zip-create-all-button"
+              icon={Archive}
+              data-testid="support-zip-create-button"
+              data-analytics-id="nxrm-support-zip-create"
             >
-              Create support ZIP (all nodes)
+              Create support ZIP
             </SettingsButton>
-          )}
-        </Flex>
+            {isHa && onSubmitAll && (
+              <SettingsButton
+                type="button"
+                variant="primary"
+                onClick={onSubmitAll}
+                disabled={disabled}
+                icon={Server}
+                data-testid="support-zip-create-all-button"
+                data-analytics-id="nxrm-support-zip-create-all"
+              >
+                Create support ZIP (all nodes)
+              </SettingsButton>
+            )}
+          </Flex>
+        )}
       </SettingsForm>
     </Box>
   );
 }
 
 export default SupportZipForm;
-

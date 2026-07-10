@@ -16,7 +16,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;

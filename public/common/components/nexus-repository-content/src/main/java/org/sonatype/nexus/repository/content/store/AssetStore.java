@@ -42,12 +42,14 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.util.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.common.app.FeatureFlags.DATASTORE_CLUSTERED_ENABLED_NAMED_VALUE;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
@@ -65,6 +67,8 @@ public class AssetStore<T extends AssetDAO>
 
   private final boolean clustered;
 
+  private GlobalRepositorySettings globalRepositorySettings;
+
   @Autowired
   public AssetStore(
       final DataSessionSupplier sessionSupplier,
@@ -74,6 +78,11 @@ public class AssetStore<T extends AssetDAO>
   {
     super(sessionSupplier, contentStoreName, daoClass);
     this.clustered = clustered;
+  }
+
+  @Autowired
+  public void setGlobalRepositorySettings(final GlobalRepositorySettings globalRepositorySettings) {
+    this.globalRepositorySettings = checkNotNull(globalRepositorySettings);
   }
 
   /**
@@ -424,15 +433,22 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Updates the last downloaded time of the given asset in the content data store.
+   * Updates the last downloaded time of the given asset, throttled by the configured
+   * lastDownloaded interval. Returns whether the database row actually changed — callers should
+   * use this to gate downstream work like blob attribute file writes.
    *
    * @param asset the asset to update
+   * @return {@code true} if the asset's last_downloaded was updated; {@code false} if the
+   *         throttle skipped the update (i.e. another caller updated within the interval)
    */
   @Transactional
-  public void markAsDownloaded(final Asset asset) {
-    dao().markAsDownloaded(asset);
-
-    postCommitEvent(() -> new AssetDownloadedEvent(asset));
+  public boolean markAsDownloaded(final Asset asset) {
+    long intervalSeconds = globalRepositorySettings.getLastDownloadedInterval().toSeconds();
+    int rows = dao().markAsDownloaded(asset, intervalSeconds);
+    if (rows > 0) {
+      postCommitEvent(() -> new AssetDownloadedEvent(asset));
+    }
+    return rows > 0;
   }
 
   /**

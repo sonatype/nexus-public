@@ -113,16 +113,18 @@ describe('SonatypeLifecycle', () => {
   });
 
   it('renders the hosted repositories evaluation section with NxH2', () => {
-    render(<SonatypeLifecycle/>);
+    const {container} = render(<SonatypeLifecycle/>);
 
-    expect(screen.getByText(SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.title)).toBeInTheDocument();
+    const h2Element = container.querySelector('.nx-h2');
+    expect(h2Element).toHaveTextContent(SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.title);
     expect(screen.getByText(SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.description)).toBeInTheDocument();
   });
 
   it('renders the global evaluation settings card using NxTile', async () => {
-    render(<SonatypeLifecycle/>);
+    const {container} = render(<SonatypeLifecycle/>);
 
-    expect(screen.getByText(SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.title)).toBeInTheDocument();
+    const h3Element = container.querySelector('.nx-h3');
+    expect(h3Element).toHaveTextContent(SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.title);
 
     await waitFor(() => {
       expect(screen.getByText(SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.description)).toBeInTheDocument();
@@ -226,10 +228,99 @@ describe('SonatypeLifecycle', () => {
     render(<SonatypeLifecycle/>);
 
     await waitFor(() => {
+      // versionDepth not set — shows activity time frame only
       expect(screen.getByText(/Last 60 Days/)).toBeInTheDocument();
-      expect(screen.getByText(/10 Artifact Latest Versions/)).toBeInTheDocument();
-      expect(screen.getByText(/BUILD/)).toBeInTheDocument();
-      expect(screen.getByText(/Monitored: 5\/10/)).toBeInTheDocument();
+      expect(screen.queryByText(/Latest Deployed Versions/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Build/)).toBeInTheDocument();
+      expect(screen.getByText(/Global Evaluation: 5\/10/)).toBeInTheDocument();
+      expect(screen.getByText(/Custom Evaluation: N\/A/)).toBeInTheDocument();
+    });
+  });
+
+  it('displays Latest Deployed Versions instead of activity time frame when versionDepth > 0', async () => {
+    const mockSettings = {
+      activityTimeFrame: 60,
+      artifactLatestVersions: 10,
+      versionDepth: 3,
+      policyEvaluationStage: 'BUILD',
+      autoEnrollNewRepos: true,
+      monitoredRepoCount: 5,
+      totalRepoCount: 10
+    };
+
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: mockSettings
+        }
+      },
+      jest.fn()
+    ]);
+
+    render(<SonatypeLifecycle/>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/10 Latest Deployed Versions/)).toBeInTheDocument();
+      expect(screen.queryByText(/Last 60 Days/)).not.toBeInTheDocument();
+    });
+  });
+
+  it('displays global count excluding custom repositories when numberOfCustomRepositories is provided', async () => {
+    const mockSettings = {
+      activityTimeFrame: 60,
+      artifactLatestVersions: 10,
+      policyEvaluationStage: 'BUILD',
+      autoEnrollNewRepos: true,
+      monitoredRepoCount: 5,
+      numberOfCustomRepositories: 2,
+      totalRepoCount: 10
+    };
+
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: mockSettings
+        }
+      },
+      jest.fn()
+    ]);
+
+    render(<SonatypeLifecycle/>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Global Evaluation: 3\/10/)).toBeInTheDocument();
+      expect(screen.getByText(/Custom Evaluation: 2/)).toBeInTheDocument();
+    });
+  });
+
+  it('displays 0 global count when monitoredRepoCount is less than numberOfCustomRepositories', async () => {
+    const mockSettings = {
+      activityTimeFrame: 30,
+      artifactLatestVersions: 1,
+      policyEvaluationStage: 'RELEASE',
+      autoEnrollNewRepos: false,
+      monitoredRepoCount: 0,
+      numberOfCustomRepositories: 1,
+      totalRepoCount: 12
+    };
+
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: mockSettings
+        }
+      },
+      jest.fn()
+    ]);
+
+    render(<SonatypeLifecycle/>);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Global Evaluation: 0\/12/)).toBeInTheDocument();
+      expect(screen.getByText(/Custom Evaluation: 1/)).toBeInTheDocument();
     });
   });
 

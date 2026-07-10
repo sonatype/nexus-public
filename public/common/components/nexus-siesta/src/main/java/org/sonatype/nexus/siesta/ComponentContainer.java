@@ -14,15 +14,17 @@ package org.sonatype.nexus.siesta;
 
 import java.io.IOException;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.rest.Component;
 import org.sonatype.nexus.rest.Resource;
 
-import org.jboss.resteasy.core.Dispatcher;
+// NEXUS-46395: Dispatcher moved from org.jboss.resteasy.core to org.jboss.resteasy.spi
+// in RESTEasy 7.
+import org.jboss.resteasy.spi.Dispatcher;
 
 /**
  * Siesta {@link Component} (and {@link Resource} container abstraction.

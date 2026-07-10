@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.internal.rest;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType;
 import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern;

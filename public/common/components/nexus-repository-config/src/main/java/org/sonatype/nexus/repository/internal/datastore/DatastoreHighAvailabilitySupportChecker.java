@@ -34,6 +34,7 @@ public class DatastoreHighAvailabilitySupportChecker
   protected List<String> getEnabledFormats() {
     return ImmutableList.<String>builder()
         .add("docker")
+        .add("oci")
         .add("maven2")
         .add("npm")
         .add("r")
@@ -54,6 +55,7 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("composer")
         .add("huggingface")
         .add("terraform")
+        .add("terraformbackend")
         .add("swift")
         .add("pub")
         .add("ansiblegalaxy")

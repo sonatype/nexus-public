@@ -45,12 +45,21 @@ describe('NavigationUtils', () => {
       Security: {
         hasUser: jest.fn(() => true),
       },
+      // hasValidDependencies() in NavigationUtils requires NX.getApplication
+      // to be a function returning a truthy value, otherwise the dependency
+      // check short-circuits and isVisible() falls through to the cookie path.
+      getApplication: jest.fn(() => ({})),
     };
     global.NX = mockNX;
+    global.window = global.window || {};
+    global.window.NX = mockNX;
   });
 
   afterEach(() => {
     delete global.NX;
+    if (global.window) {
+      delete global.window.NX;
+    }
     jest.clearAllMocks();
   });
 

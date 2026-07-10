@@ -18,6 +18,15 @@
 export const KEY_EGRESS = 'egress';
 export const KEY_STORAGE = 'storage';
 
+/**
+ * Check if an error is a permission error (403 Forbidden)
+ * @param {Error} error - The error object from Axios
+ * @returns {boolean} True if the error is a 403 Forbidden response
+ */
+export const isPermissionError = (error) => {
+  return error?.response?.status === 403;
+};
+
 export function getScaleFactor(value) {
   const order = Math.floor(Math.log10(value) / 3) * 3;
   if(order > 0) {

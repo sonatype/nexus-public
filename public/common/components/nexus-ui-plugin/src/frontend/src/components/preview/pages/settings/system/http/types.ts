@@ -21,7 +21,8 @@ export interface HttpConfiguration {
   httpEnabled: boolean;
   httpHost: string;
   httpPort: number | null;
-  httpAuthEnabled: boolean;
+  /** '' = no auth, 'username' = username/password (+ optional NTLM) */
+  httpAuthType: string;
   httpAuthUsername: string;
   httpAuthPassword: string;
   httpAuthNtlmHost: string;
@@ -29,7 +30,8 @@ export interface HttpConfiguration {
   httpsEnabled: boolean;
   httpsHost: string;
   httpsPort: number | null;
-  httpsAuthEnabled: boolean;
+  /** '' = no auth, 'username' = username/password (+ optional NTLM) */
+  httpsAuthType: string;
   httpsAuthUsername: string;
   httpsAuthPassword: string;
   httpsAuthNtlmHost: string;
@@ -54,7 +56,7 @@ export const DEFAULT_HTTP_CONFIGURATION: HttpConfiguration = {
   httpEnabled: false,
   httpHost: '',
   httpPort: null,
-  httpAuthEnabled: false,
+  httpAuthType: '',
   httpAuthUsername: '',
   httpAuthPassword: '',
   httpAuthNtlmHost: '',
@@ -62,7 +64,7 @@ export const DEFAULT_HTTP_CONFIGURATION: HttpConfiguration = {
   httpsEnabled: false,
   httpsHost: '',
   httpsPort: null,
-  httpsAuthEnabled: false,
+  httpsAuthType: '',
   httpsAuthUsername: '',
   httpsAuthPassword: '',
   httpsAuthNtlmHost: '',

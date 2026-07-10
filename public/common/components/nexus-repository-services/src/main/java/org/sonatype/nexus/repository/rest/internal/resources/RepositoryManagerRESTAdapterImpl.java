@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -203,6 +203,7 @@ public class RepositoryManagerRESTAdapterImpl
     xo.setType(type.getValue());
     xo.setFormat(getFormat(configuration).getValue());
     xo.setUrl(getUrl(repositoryName));
+    xo.setOnline(configuration.isOnline());
     xo.setAttributes(attributes(configuration));
 
     if (sizeMap != null) {

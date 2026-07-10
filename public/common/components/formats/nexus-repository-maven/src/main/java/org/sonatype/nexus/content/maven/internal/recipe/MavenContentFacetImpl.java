@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;

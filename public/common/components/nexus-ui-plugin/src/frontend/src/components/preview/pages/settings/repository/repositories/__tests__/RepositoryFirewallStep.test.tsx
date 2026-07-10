@@ -16,12 +16,18 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
-import { RepositoryFirewallStep } from '../RepositoryFirewallStep';
-
+const mockGet = jest.fn();
+const mockPut = jest.fn();
 jest.mock('../../../../../../../interface/api', () => ({
-  restClient: { put: jest.fn() },
+  restClient: {
+    get: (...args: unknown[]) => mockGet(...args),
+    put: (...args: unknown[]) => mockPut(...args),
+  },
   parseApiError: jest.fn((err: unknown) => ({ message: err instanceof Error ? err.message : 'Error' })),
 }));
+
+import { RepositoryFirewallStep } from '../RepositoryFirewallStep';
+import { __resetPccsFormatsCacheForTests } from '../../../../../shared/security/useFirewallEnable';
 
 function renderWithTheme(ui: React.ReactElement) {
   return render(<Theme>{ui}</Theme>);
@@ -32,6 +38,11 @@ describe('RepositoryFirewallStep', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    __resetPccsFormatsCacheForTests();
+    mockGet.mockResolvedValue([
+      { format: 'npm', pccsModeSupported: true },
+      { format: 'pypi', pccsModeSupported: true },
+    ]);
   });
 
   it('renders None, Audit, Quarantine when hasFirewallLicense', () => {
@@ -93,5 +104,85 @@ describe('RepositoryFirewallStep', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Quarantine' }));
     expect(onChoice).toHaveBeenCalledWith('quarantine');
+  });
+
+  it('does NOT render the PCCS button for non-PCCS formats (maven2)', () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        repositoryName="maven2-proxy-1"
+        hasFirewallLicense={true}
+        format="maven2"
+        onComplete={onComplete}
+      />
+    );
+    expect(screen.queryByRole('button', { name: 'PCCS' })).not.toBeInTheDocument();
+  });
+
+  it('does NOT render PCCS when format prop is omitted', () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        repositoryName="npm-proxy-1"
+        hasFirewallLicense={true}
+        onComplete={onComplete}
+      />
+    );
+    expect(screen.queryByRole('button', { name: 'PCCS' })).not.toBeInTheDocument();
+  });
+
+  it('renders the PCCS button for npm proxies', async () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        repositoryName="npm-proxy-1"
+        hasFirewallLicense={true}
+        format="npm"
+        onComplete={onComplete}
+      />
+    );
+    expect(await screen.findByRole('button', { name: 'PCCS' })).toBeInTheDocument();
+  });
+
+  it('renders the PCCS button for pypi proxies', async () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        repositoryName="pypi-proxy-1"
+        hasFirewallLicense={true}
+        format="pypi"
+        onComplete={onComplete}
+      />
+    );
+    expect(await screen.findByRole('button', { name: 'PCCS' })).toBeInTheDocument();
+  });
+
+  it('deferred mode: clicking PCCS calls onChoice("pccs") without API calls', async () => {
+    const onChoice = jest.fn();
+
+    renderWithTheme(
+      <RepositoryFirewallStep
+        mode="deferred"
+        value="none"
+        onChoice={onChoice}
+        hasFirewallLicense={true}
+        format="npm"
+      />
+    );
+
+    const pccsBtn = await screen.findByRole('button', { name: 'PCCS' });
+    fireEvent.click(pccsBtn);
+    expect(onChoice).toHaveBeenCalledWith('pccs');
+    // No PUT side-effect in deferred mode
+    expect(mockPut).not.toHaveBeenCalled();
+  });
+
+  it('shows the deferred PCCS confirmation summary when value="pccs"', async () => {
+    renderWithTheme(
+      <RepositoryFirewallStep
+        mode="deferred"
+        value="pccs"
+        onChoice={jest.fn()}
+        hasFirewallLicense={true}
+        format="npm"
+      />
+    );
+    expect(await screen.findByText('Firewall will be enabled in PCCS mode')).toBeInTheDocument();
   });
 });

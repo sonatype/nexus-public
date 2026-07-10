@@ -26,6 +26,8 @@ import {
   RoutingRule,
 } from '../types';
 
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+
 import './RoutingRuleFacet.scss';
 
 interface RoutingRuleFacetProps {
@@ -54,22 +56,22 @@ export function RoutingRuleFacet({
   }));
 
   return (
-    <SettingsFormSection title="Routing Rule">
+    <SettingsFormSection title={UIStrings.ROUTING_RULE.SECTION.title}>
       <Box className="routing-rule-facet">
         <Text size="2" className="routing-rule-facet__help">
-          Choose a rule to restrict some requests from being served by this repository.
+          {UIStrings.ROUTING_RULE.helpText}
         </Text>
 
         <SettingsSelect
           name="routingRuleId"
-          label="Routing Rule"
+          label={UIStrings.ROUTING_RULE.SELECT.label}
           value={formData.routingRuleId || ''}
           onChange={handleChange}
           options={[
-            { value: '', label: 'None (allow all requests)' },
+            { value: '', label: UIStrings.ROUTING_RULE.SELECT.noneOption },
             ...ruleOptions,
           ]}
-          helpText="Routing rule to apply to this repository"
+          helpText={UIStrings.ROUTING_RULE.SELECT.helpText}
         />
       </Box>
     </SettingsFormSection>

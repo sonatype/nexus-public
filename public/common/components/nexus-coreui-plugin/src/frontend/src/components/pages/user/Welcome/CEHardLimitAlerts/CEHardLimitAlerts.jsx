@@ -22,7 +22,7 @@ import {
   NxTextLink
 } from '@sonatype/react-shared-components';
 
-import {helperFunctions} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
+import {helperFunctions, useTestOverrideDetection, STORAGE_KEY_CE_THROTTLING_STATUS, STORAGE_KEY_CE_GRACE_PERIOD_ENDS} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 import UIStrings from '../../../../../constants/UIStrings';
 import CEHardLimitAlertsMachine from './CEHardLimitAlertsMachine';
 import './CEHardLimitAlerts.scss';
@@ -31,7 +31,8 @@ const {
   useGracePeriodEndDate,
   useViewLearnMoreUrl,
   useViewPurchaseALicenseUrl,
-  useThrottlingStatus
+  useThrottlingStatus,
+  useCommunityEdition
 } = helperFunctions;
 
 const {
@@ -45,10 +46,16 @@ export default function CEHardLimitAlerts() {
     devTools: true
   });
 
+  // Force re-render when test overrides change (Test Hub scenarios)
+  useTestOverrideDetection([
+    STORAGE_KEY_CE_THROTTLING_STATUS,
+    STORAGE_KEY_CE_GRACE_PERIOD_ENDS,
+  ]);
+
   const user = ExtJS.useUser();
   const isAdmin = user?.administrator;
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
-  const isCommunityEdition = ExtJS.state().getEdition() === 'COMMUNITY';
+  const isCommunityEdition = useCommunityEdition();
 
   const gracePeriodEndDate = useGracePeriodEndDate();
   const throttlingStatus = useThrottlingStatus();
@@ -58,7 +65,7 @@ export default function CEHardLimitAlerts() {
 
   function PurchaseOrUploadHeaderLinks() {
     return(
-      <>
+      <span>
         <NxTextLink external className="usage-view-pricing-link" href={useViewPurchaseALicenseUrl()}>Purchase a license to remove limits</NxTextLink>, or if you have already purchased a license{' '}
         <NxTextLink className="ce-upload-license" href="#admin/system/licensing">upload it here</NxTextLink>.
         <NxButtonBar>
@@ -69,14 +76,14 @@ export default function CEHardLimitAlerts() {
             {HEADER.BUTTONS.LEARN_MORE}
           </a>
         </NxButtonBar>
-      </>
+      </span>
     );
   }
 
   function ThrottlingHeaderAlertLinks() {
     return(
-      <>
-        Purchase a license to remove limits, or if you have already purchased a license{' '}
+      <span>
+        <NxTextLink external className="usage-view-pricing-link" href={useViewPurchaseALicenseUrl()}>Purchase a license to remove limits</NxTextLink>, or if you have already purchased a license{' '}
         <NxTextLink className="ce-upload-license" href="#admin/system/licensing">upload it here</NxTextLink>.
         <NxButtonBar>
           <a className="nx-btn ce-restore-usage" target="_blank" href={useViewLearnMoreUrl()}>{HEADER.BUTTONS.LEARN_MORE}</a>
@@ -86,7 +93,7 @@ export default function CEHardLimitAlerts() {
             href={useViewPurchaseALicenseUrl()}>
             {HEADER.BUTTONS.PURCHASE_NOW}</a>
         </NxButtonBar>
-      </>
+      </span>
     );
   }
 

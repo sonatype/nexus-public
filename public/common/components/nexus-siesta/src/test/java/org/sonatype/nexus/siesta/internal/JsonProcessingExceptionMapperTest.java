@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.siesta.internal;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.rest.ValidationErrorXO;
 

@@ -898,4 +898,46 @@ public class SecretsServiceImplTest
 
     return new Object[]{secret, secretId};
   }
+
+  @Test
+  public void existsReturnsFalseForNullSecretId() {
+    assertThat(underTestSha1.exists(null), is(false));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void existsReturnsFalseForEmptySecretId() {
+    assertThat(underTestSha1.exists(""), is(false));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void existsReturnsFalseForLegacyToken() {
+    assertThat(underTestSha1.exists("legacyplaintextpassword"), is(false));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void existsReturnsTrueWhenSecretPresentInStore() {
+    when(secretsStore.read(123)).thenReturn(Optional.of(getMockSecretData(123, null, "encrypted-value")));
+    assertThat(underTestSha1.exists("_123"), is(true));
+  }
+
+  @Test
+  public void existsReturnsFalseWhenSecretNotInStore() {
+    when(secretsStore.read(123)).thenReturn(Optional.empty());
+    assertThat(underTestSha1.exists("_123"), is(false));
+  }
+
+  @Test
+  public void existsReturnsFalseForInvalidNumericFormat() {
+    assertThat(underTestSha1.exists("_abc"), is(false));
+    verifyNoInteractions(secretsStore);
+  }
+
+  @Test
+  public void existsReturnsFalseWhenStoreThrowsException() {
+    when(secretsStore.read(anyInt())).thenThrow(new RuntimeException("DB unavailable"));
+    assertThat(underTestSha1.exists("_456"), is(false));
+  }
 }

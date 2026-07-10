@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.extdirect.DirectComponent;
@@ -42,6 +43,7 @@ import org.sonatype.nexus.repository.search.event.SearchEvent;
 import org.sonatype.nexus.repository.search.event.SearchEventSource;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.repository.search.query.SearchResultsGenerator;
+import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -57,6 +59,7 @@ import org.springframework.stereotype.Component;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
+import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Search {@link DirectComponent}.
@@ -78,6 +81,8 @@ public class SearchComponent
 
   private final RepositoryManager repositoryManager;
 
+  private final ContentPermissionChecker contentPermissionChecker;
+
   private int searchResultsLimit;
 
   @Autowired
@@ -86,13 +91,15 @@ public class SearchComponent
       @Value("${nexus.searchResultsLimit:1000}") final int searchResultsLimit,
       final SearchResultsGenerator searchResultsGenerator,
       final EventManager eventManager,
-      final RepositoryManager repositoryManager)
+      final RepositoryManager repositoryManager,
+      final ContentPermissionChecker contentPermissionChecker)
   {
     this.searchService = checkNotNull(searchService);
     this.searchResultsLimit = searchResultsLimit;
     this.searchResultsGenerator = checkNotNull(searchResultsGenerator);
     this.eventManager = checkNotNull(eventManager);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
   }
 
   /**
@@ -179,11 +186,14 @@ public class SearchComponent
 
     SearchResponse response = searchService.search(request);
 
+    List<ComponentSearchResult> results = searchResultsGenerator.getSearchResultList(response);
+
     if (filters.stream().noneMatch(filter -> filter.getProperty().equals(REPOSITORY_NAME_FILTER))) {
-      // No repository_name filter - skip repository-specific mapping
-      List<ComponentXO> componentXOs = searchResultsGenerator.getSearchResultList(response)
-          .stream()
-          .map(componentHit -> toComponent(componentHit, identityMapper()))
+      // No repository_name filter - use permission-based mapping
+      UnaryOperator<String> permissionMapper = createPermissionBasedMapper(results);
+
+      List<ComponentXO> componentXOs = results.stream()
+          .map(componentHit -> toComponent(componentHit, permissionMapper))
           .toList();
 
       return new LimitedPagedResponse<>(limit, response.getTotalHits(), componentXOs, false);
@@ -191,8 +201,7 @@ public class SearchComponent
 
     UnaryOperator<String> repositoryNameMapper = tryExtractRepositoryFromSearch(filters);
 
-    List<ComponentXO> componentXOs = searchResultsGenerator.getSearchResultList(response)
-        .stream()
+    List<ComponentXO> componentXOs = results.stream()
         .map(componentHit -> toComponent(componentHit, repositoryNameMapper))
         .toList();
 
@@ -229,8 +238,55 @@ public class SearchComponent
     return componentXO;
   }
 
-  private UnaryOperator<String> identityMapper() {
-    return repositoryName -> repositoryName;
+  /**
+   * Creates a mapper that maps repository names to the first repository where the user
+   * has browse permission. This is used for keyword-only searches where we need to
+   * determine if the user accessed content through group permissions.
+   */
+  private UnaryOperator<String> createPermissionBasedMapper(final List<ComponentSearchResult> results) {
+    // Build a map of repository name -> first permitting repository (group preferred)
+    Map<String, String> nameMap = new HashMap<>();
+
+    for (ComponentSearchResult result : results) {
+      String repoName = result.getRepositoryName();
+      if (!nameMap.containsKey(repoName)) {
+        String permittedRepo = findPermittedRepository(repoName, result.getFormat());
+        nameMap.put(repoName, permittedRepo);
+      }
+    }
+
+    return repositoryName -> nameMap.getOrDefault(repositoryName, repositoryName);
+  }
+
+  /**
+   * Find the repository name to display based on user permissions.
+   * If the user has direct browse permission on the repository, returns the repository name.
+   * If the user doesn't have direct permission, checks containing groups and returns
+   * the first group where the user has browse permission.
+   * Falls back to the original repository name if no permission found.
+   */
+  private String findPermittedRepository(final String repositoryName, final String format) {
+    Repository repository = repositoryManager.get(repositoryName);
+    if (repository == null) {
+      return repositoryName;
+    }
+
+    // Check if user has direct permission on the repository itself
+    if (contentPermissionChecker.isPermitted(repositoryName, format, BROWSE, null)) {
+      return repositoryName;
+    }
+
+    // No direct permission - check containing groups
+    List<String> containingGroups = new ArrayList<>(repositoryManager.findContainingGroups(repositoryName));
+    for (String group : containingGroups) {
+      if (repositoryManager.get(group) != null
+          && contentPermissionChecker.isPermitted(group, format, BROWSE, null)) {
+        return group;
+      }
+    }
+
+    // Fallback to original repository name
+    return repositoryName;
   }
 
   private void fireSearchEvent(final Collection<SearchFilter> searchFilters) {
@@ -259,7 +315,7 @@ public class SearchComponent
         .collect(Collectors.toMap(
             Repository::getName,
             Repository::getName,
-            (a, b) -> a,
+            (a, ignored) -> a,
             HashMap::new));
 
     // If any of the specified repositories are groups then add leaf members missing from the map referencing the group

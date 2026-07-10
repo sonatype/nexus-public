@@ -51,8 +51,9 @@ describe('SystemNotices -- CEHardLimitAlert', () => {
     renderView('', '75% usage');
 
     const expectedMessage = WelcomeStrings.WELCOME.USAGE.BANNERS.NEAR_LIMITS;
+    const expectedTitle = WelcomeStrings.WELCOME.USAGE.BANNERS.NEAR_LIMITS_TITLE;
 
-    const alert = assertCommunityEditionLimitMessageShowing(expectedMessage)
+    const alert = assertCommunityEditionLimitMessageShowing(expectedMessage, expectedTitle)
     assertHasContactAndReviewUsageLinks(alert);
     await assertCanDismissTheBanner(alert);
   });

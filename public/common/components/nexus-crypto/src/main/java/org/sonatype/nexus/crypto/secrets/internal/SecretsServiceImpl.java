@@ -396,6 +396,30 @@ public class SecretsServiceImpl
     }
   }
 
+  @Override
+  public boolean exists(final String secretId) {
+    if (secretId == null || secretId.isEmpty()) {
+      return false;
+    }
+
+    if (isLegacyToken(secretId)) {
+      log.debug("Legacy tokens are not stored, cannot check existence");
+      return false;
+    }
+
+    try {
+      return secretsStore.read(parseToken(secretId)).isPresent();
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("Invalid secret ID format: {}", secretId);
+      return false;
+    }
+    catch (Exception e) {
+      log.warn("Failed to check secret existence for {}, treating as non-existent", secretId, e);
+      return false;
+    }
+  }
+
   private char[] doDecrypt(final String token) throws CipherException {
     if (isLegacyToken(token)) {
       return decryptLegacy(token);

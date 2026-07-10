@@ -17,7 +17,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.regex.Pattern;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;

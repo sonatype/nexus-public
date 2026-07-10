@@ -12,36 +12,37 @@
  */
 package org.sonatype.nexus.repository.maven.api;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 
 /**
  * REST API model for describing maven specific repository properties.
  *
  * @since 3.20
  */
+@JsonFilter(SwaggerEditionVisibility.NAME)
 public class MavenAttributes
 {
-  @ApiModelProperty(value = "What type of artifacts does this repository store?",
-      allowableValues = "RELEASE,SNAPSHOT,MIXED",
+  @Schema(description = "What type of artifacts does this repository store?",
       example = "MIXED")
   @NotEmpty
   @Pattern(regexp = "RELEASE|SNAPSHOT|MIXED", message = "must be one of RELEASE, SNAPSHOT, MIXED")
   protected final String versionPolicy;
 
-  @ApiModelProperty(value = "Validate that all paths are maven artifact or metadata paths",
-      allowableValues = "STRICT,PERMISSIVE",
+  @Schema(description = "Validate that all paths are maven artifact or metadata paths",
       example = "STRICT")
   @NotEmpty
   @Pattern(regexp = "STRICT|PERMISSIVE", message = "must be one of STRICT, PERMISSIVE")
   protected final String layoutPolicy;
 
-  @ApiModelProperty(value = "Content Disposition",
-      allowableValues = "INLINE,ATTACHMENT", example = "ATTACHMENT")
+  @Schema(description = "Content Disposition", example = "ATTACHMENT")
+  @SwaggerEditionVisibility(cloud = false, note = "Remove content-disposition from cloud")
   @Pattern(regexp = "INLINE|ATTACHMENT", message = "must be one of INLINE, ATTACHMENT")
   private final String contentDisposition;
 

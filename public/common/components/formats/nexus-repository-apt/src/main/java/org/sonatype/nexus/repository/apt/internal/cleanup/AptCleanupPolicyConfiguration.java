@@ -25,6 +25,8 @@ import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.IS_PREREL
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.REGEX_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_KEY;
+import static org.sonatype.nexus.cleanup.config.CleanupPolicyConstants.RETAIN_SORT_BY_KEY;
 
 /**
  * @since 3.19
@@ -36,9 +38,13 @@ public class AptCleanupPolicyConfiguration
 {
   @Override
   public Map<String, Boolean> getConfiguration() {
-    return ImmutableMap.of(LAST_BLOB_UPDATED_KEY, true,
-        LAST_DOWNLOADED_KEY, true,
-        IS_PRERELEASE_KEY, false,
-        REGEX_KEY, true);
+    return ImmutableMap.<String, Boolean>builder()
+        .put(LAST_BLOB_UPDATED_KEY, true)
+        .put(LAST_DOWNLOADED_KEY, true)
+        .put(IS_PRERELEASE_KEY, true)
+        .put(REGEX_KEY, true)
+        .put(RETAIN_KEY, true)
+        .put(RETAIN_SORT_BY_KEY, true)
+        .build();
   }
 }

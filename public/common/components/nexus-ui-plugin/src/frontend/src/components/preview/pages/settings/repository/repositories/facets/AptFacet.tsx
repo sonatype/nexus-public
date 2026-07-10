@@ -22,6 +22,7 @@ import {
 } from '../../../../../shared/form';
 
 import { RepositoryFormData, RepositoryFormErrors } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 interface AptFacetProps {
   formData: RepositoryFormData;
@@ -55,51 +56,51 @@ export function AptFacet({
   return (
     <>
       <SettingsFormSection
-        title="APT Settings"
-        description="Debian/APT repository configuration"
+        title={UIStrings.APT.SETTINGS.title}
+        description={UIStrings.APT.SETTINGS.description}
       >
         {isProxy && (
           <SettingsCheckbox
             name="apt-enforceDistribution"
-            label="Enforce Distribution"
+            label={UIStrings.APT.SETTINGS.ENFORCE_DISTRIBUTION.label}
             checked={formData.apt?.enforceDistribution ?? false}
             onChange={(checked) => onNestedChange('apt', { enforceDistribution: checked })}
-            description="Restrict the distribution field to the value configured below"
+            description={UIStrings.APT.SETTINGS.ENFORCE_DISTRIBUTION.description}
           />
         )}
 
         <SettingsTextInput
           name="apt-distribution"
-          label="Distribution"
+          label={UIStrings.APT.SETTINGS.DISTRIBUTION.label}
           value={formData.apt?.distribution || ''}
           onChange={(value) => onNestedChange('apt', { distribution: value })}
-          helpText="Distribution to fetch (e.g., bionic, focal, jammy) or path for flat repositories"
-          placeholder="e.g., bionic"
+          helpText={UIStrings.APT.SETTINGS.DISTRIBUTION.helpText}
+          placeholder={UIStrings.APT.SETTINGS.DISTRIBUTION.placeholder}
           required={isHosted || formData.apt?.enforceDistribution}
         />
 
         {isProxy && (
           <SettingsCheckbox
             name="apt-flat"
-            label="Flat Repository"
+            label={UIStrings.APT.SETTINGS.FLAT.label}
             checked={formData.apt?.flat ?? false}
             onChange={(checked) => onNestedChange('apt', { flat: checked })}
-            description="Is this repository flat (i.e., no distribution folder hierarchy)?"
+            description={UIStrings.APT.SETTINGS.FLAT.description}
           />
         )}
       </SettingsFormSection>
 
       {showSigning && (
         <SettingsFormSection
-          title="APT Signing"
-          description="GPG signing configuration for APT repositories"
+          title={UIStrings.APT.SIGNING.title}
+          description={UIStrings.APT.SIGNING.description}
         >
           <SettingsTextArea
             name="apt-keypair"
-            label="GPG Signing Key"
+            label={UIStrings.APT.SIGNING.KEYPAIR.label}
             value={formData.aptSigning?.keypair || ''}
             onChange={(value) => onNestedChange('aptSigning', { keypair: value })}
-            helpText="PEM encoded GPG signing key pair"
+            helpText={UIStrings.APT.SIGNING.KEYPAIR.helpText}
             required={isHosted}
             rows={8}
             monospace
@@ -107,10 +108,10 @@ export function AptFacet({
 
           <SettingsPasswordInput
             name="apt-passphrase"
-            label="GPG Signing Key Passphrase"
+            label={UIStrings.APT.SIGNING.PASSPHRASE.label}
             value={formData.aptSigning?.passphrase || ''}
             onChange={(value) => onNestedChange('aptSigning', { passphrase: value })}
-            helpText="Passphrase for the GPG signing key (leave empty if key has no passphrase)"
+            helpText={UIStrings.APT.SIGNING.PASSPHRASE.helpText}
             showToggle={false}
           />
         </SettingsFormSection>

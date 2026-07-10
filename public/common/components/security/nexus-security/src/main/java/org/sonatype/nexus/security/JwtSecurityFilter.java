@@ -12,15 +12,17 @@
  */
 package org.sonatype.nexus.security;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
@@ -111,28 +113,27 @@ public class JwtSecurityFilter
             return super.createSubject(request, response);
           }
 
-          // Check if the session has been revoked (logged out)
           Claim userSessionIdClaim = decodedJwt.getClaim(USER_SESSION_ID);
-          if (!userSessionIdClaim.isNull()) {
-            String userSessionId = userSessionIdClaim.asString();
-            if (jwtSessionRevocationService.isRevoked(userSessionId)) {
-              Claim userClaim = decodedJwt.getClaim(USER);
-              String username = userClaim != null ? userClaim.asString() : "unknown";
-              String remoteAddr = request.getRemoteAddr();
-              String remoteHost = request.getRemoteHost();
+          String userSessionId = userSessionIdClaim != null && !userSessionIdClaim.isNull()
+              ? userSessionIdClaim.asString()
+              : null;
+          Claim userClaim = decodedJwt.getClaim(USER);
+          String usernameClaim = userClaim != null && !userClaim.isNull() ? userClaim.asString() : null;
 
-              log.warn("SECURITY: Attempt to use revoked JWT token detected and blocked. " +
-                  "Username: {}, Session ID: {}, Remote IP: {}, Remote Host: {}",
-                  username, userSessionId, remoteAddr, remoteHost);
+          // Session-level revocation (logout)
+          if (userSessionId != null && jwtSessionRevocationService.isRevoked(userSessionId)) {
+            return rejectAndFallback(request, response, cookie, usernameClaim, userSessionId,
+                "Attempt to use revoked JWT token detected and blocked.");
+          }
 
-              // Record audit event for revoked token usage attempt
-              recordRevokedTokenAudit(username, userSessionId, remoteAddr, remoteHost);
-
-              cookie.setValue("");
-              cookie.setMaxAge(0);
-              WebUtils.toHttp(response).addCookie(cookie);
-
-              return super.createSubject(request, response);
+          // User-level invalidation (e.g. password change after the JWT was issued)
+          Date issuedAt = decodedJwt.getIssuedAt();
+          if (usernameClaim != null && issuedAt != null) {
+            OffsetDateTime iat = issuedAt.toInstant().atOffset(ZoneOffset.UTC);
+            if (jwtSessionRevocationService.isUserInvalidatedAfter(usernameClaim, iat)) {
+              return rejectAndFallback(request, response, cookie, usernameClaim,
+                  userSessionId != null ? userSessionId : "unknown",
+                  "Attempt to use JWT token issued before user invalidation (e.g. password change).");
             }
           }
 
@@ -173,15 +174,25 @@ public class JwtSecurityFilter
   }
 
   /**
-   * Record audit event for attempted use of a revoked JWT token.
-   * This creates a permanent audit trail of security events.
+   * Common handling when a JWT must not be accepted: log a security-warn line, emit an audit
+   * record, clear the JWT cookie on the response, and return the fallback unauthenticated
+   * subject from the super filter. Covers both per-session revocation (logout) and per-user
+   * invalidation (password change) so the two paths share the same observable behavior.
    */
-  private void recordRevokedTokenAudit(
+  private WebSubject rejectAndFallback(
+      final ServletRequest request,
+      final ServletResponse response,
+      final Cookie cookie,
       final String username,
       final String sessionId,
-      final String remoteAddr,
-      final String remoteHost)
+      final String reason)
   {
+    String remoteAddr = request.getRemoteAddr();
+    String remoteHost = request.getRemoteHost();
+
+    log.warn("SECURITY: {} Username: {}, Session ID: {}, Remote IP: {}, Remote Host: {}",
+        reason, username, sessionId, remoteAddr, remoteHost);
+
     if (auditRecorder.isEnabled()) {
       AuditData data = new AuditData();
       data.setDomain("security.jwt");
@@ -197,5 +208,11 @@ public class JwtSecurityFilter
 
       auditRecorder.record(data);
     }
+
+    cookie.setValue("");
+    cookie.setMaxAge(0);
+    WebUtils.toHttp(response).addCookie(cookie);
+
+    return super.createSubject(request, response);
   }
 }

@@ -12,35 +12,37 @@
  */
 package org.sonatype.nexus.security.internal.rest;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Swagger documentation for {@link ApiAccessCheckResource}
  */
-@Api(value = "Security management: API access")
+@Tag(name = "Security management: API access")
 public interface ApiAccessCheckResourceDoc
 {
-  @ApiOperation(
-      value = "Check if a user or role has access to an API endpoint",
-      notes = "This endpoint allows administrators to verify whether a specific user or role " +
+  @Operation(summary = "Check if a user or role has access to an API endpoint",
+      description = "This endpoint allows administrators to verify whether a specific user or role " +
           "has the required permissions to access a given REST API endpoint. " +
           "The response includes the permission chain showing how access is granted, " +
           "from user to role to privilege to permission.")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "Access check result", response = ApiAccessResultXo.class),
-      @ApiResponse(code = 400,
-          message = "Invalid request - userId and roleId are mutually exclusive, or missing required fields"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to perform access check"),
-      @ApiResponse(code = 404, message = "User or role not found")
+      @ApiResponse(responseCode = "200", description = "Access check result",
+          content = @Content(schema = @Schema(implementation = ApiAccessResultXo.class))),
+      @ApiResponse(responseCode = "400",
+          description = "Invalid request - userId and roleId are mutually exclusive, or missing required fields"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to perform access check"),
+      @ApiResponse(responseCode = "404", description = "User or role not found")
   })
   ApiAccessResultXo checkAccess(
-      @ApiParam(value = "Access check request containing target user/role and endpoint to check",
+      @Parameter(description = "Access check request containing target user/role and endpoint to check",
           required = true) @NotNull @Valid ApiAccessCheckXo request);
 }

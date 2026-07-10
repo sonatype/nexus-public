@@ -17,31 +17,32 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Permission metadata for a single REST operation (HTTP method + path pattern).
  */
 public class ApiEndpointPermission
 {
-  @ApiModelProperty(value = "HTTP method", required = true, example = "DELETE")
+  @Schema(description = "HTTP method", requiredMode = Schema.RequiredMode.REQUIRED, example = "DELETE")
   private String httpMethod;
 
-  @ApiModelProperty(value = "Path pattern with JAX-RS template segments", required = true)
+  @Schema(description = "Path pattern with JAX-RS template segments", requiredMode = Schema.RequiredMode.REQUIRED)
   private String pathPattern;
 
-  @ApiModelProperty(value = "Required permissions and combination logic", required = true)
+  @Schema(description = "Required permissions and combination logic", requiredMode = Schema.RequiredMode.REQUIRED)
   private List<ApiPermissionRequirement> permissions;
 
   @Nullable
-  @ApiModelProperty("Short description from Swagger annotations, if any")
+  @Schema(description = "Short description from Swagger annotations, if any")
   private String description;
 
   @Nullable
-  @ApiModelProperty("Swagger tag / API grouping")
+  @Schema(description = "Swagger tag / API grouping")
   private String tag;
 
-  @ApiModelProperty(value = "Whether the endpoint requires an authenticated subject", required = true)
+  @Schema(description = "Whether the endpoint requires an authenticated subject",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private boolean authenticated;
 
   public ApiEndpointPermission() {

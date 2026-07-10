@@ -60,7 +60,7 @@ export default function ContentSelectorsPreview({type, expression}) {
                 <option key={id} value={id}>{name}</option>
             )}
           </NxFormSelect>
-          <NxButton disabled={previewUnavailable} onClick={previewHandler}>{UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON}</NxButton>
+          <NxButton disabled={previewUnavailable} onClick={previewHandler} data-analytics-id="nxrm-content-selector-preview">{UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON}</NxButton>
         </div>
       </FieldWrapper>
       <SectionToolbar>

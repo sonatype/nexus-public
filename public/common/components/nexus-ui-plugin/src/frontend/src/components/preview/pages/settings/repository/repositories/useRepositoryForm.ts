@@ -11,11 +11,30 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from '../../../../../../interface/form';
-import { useToast } from '../../../../shared';
-import { createRepositoryFormMachine } from './repositoryFormMachine';
-import { Repository, RepositoryFormData, RepositoryType } from './types';
+import { useToast, useIsCloud, useHasFirewallLicense } from '../../../../shared';
+import { useRepositoriesApi } from './useRepositoriesApi';
+import { createRepositoryFormMachine, validateRepository } from './repositoryFormMachine';
+import {
+  Repository,
+  RepositoryFormData,
+  RepositoryType,
+  BlobStore,
+  RoutingRule,
+  CleanupPolicy,
+  RepositoryReference,
+  hasFormErrors,
+} from './types';
+
+interface RepositoryFormMachineContext {
+  repository: Repository | null;
+  pristineData: RepositoryFormData | undefined;
+  blobStores: BlobStore[];
+  routingRules: RoutingRule[];
+  cleanupPolicies: CleanupPolicy[];
+  memberRepositories: RepositoryReference[];
+}
 
 export interface UseRepositoryFormOptions {
   /** Repository name for edit mode; undefined for create mode */
@@ -30,13 +49,15 @@ export interface UseRepositoryFormOptions {
   onSave?: (data: RepositoryFormData) => Promise<void | { skipNavigate?: boolean }>;
   /** Callback to navigate back / cancel the form */
   onCancel: () => void;
-  /** API function to create a new repository */
-  createRepository: (data: RepositoryFormData) => Promise<void>;
-  /** API function to update an existing repository */
-  updateRepository: (name: string, data: RepositoryFormData) => Promise<void>;
   /** When true, save only calls onSave (advance wizard) without creating/updating */
   advanceOnly?: boolean;
+  /** Ref for exposing submit function to parent (wizard integration) */
+  onSubmitRef?: React.MutableRefObject<(() => void) | null>;
+  /** Callback to report whether form is valid for wizard advancement */
+  onCanAdvanceChange?: (canAdvance: boolean) => void;
 }
+
+export type RepositoryFormTab = 'summary' | 'settings' | 'firewall' | 'health-check';
 
 export interface UseRepositoryFormReturn {
   /** Form state and helpers from useForm */
@@ -45,35 +66,57 @@ export interface UseRepositoryFormReturn {
   repository: Repository | null;
   /** Whether this is a create (true) or edit (false) form */
   isCreate: boolean;
+
+  /** Whether the current environment has a Firewall/CLM license */
+  hasFirewallLicense: boolean;
+  /** Whether running in cloud mode */
+  isCloud: boolean;
+
+  /** Currently active tab (edit mode) */
+  activeTab: RepositoryFormTab;
+  /** Set the active tab */
+  setActiveTab: (tab: RepositoryFormTab) => void;
+  /** Whether the proxy remote URL has changed from its original value */
+  originChangeWarning: boolean;
+  /** Set the origin change warning state (called by HttpClientFacet) */
+  setOriginChangeWarning: (warning: boolean) => void;
+
+  /** Form data cast to RepositoryFormData */
+  formData: RepositoryFormData;
+  /** Pristine data (original values before edits) */
+  pristineData: RepositoryFormData | undefined;
+  /** Validation errors from the machine */
+  errors: Record<string, string | undefined>;
+
+  /** Reference data: available blob stores */
+  blobStores: BlobStore[];
+  /** Reference data: available routing rules */
+  routingRules: RoutingRule[];
+  /** Reference data: available cleanup policies */
+  cleanupPolicies: CleanupPolicy[];
+  /** Reference data: available member repositories (for group type) */
+  memberRepositories: RepositoryReference[];
+
+  /** Update one or more top-level form fields */
+  handleChange: (updates: Partial<RepositoryFormData>) => void;
+  /** Update a nested form field (e.g., storage, proxy, httpClient) */
+  handleNestedChange: <K extends keyof RepositoryFormData>(
+    key: K,
+    updates: Partial<RepositoryFormData[K]>
+  ) => void;
 }
 
 /**
  * Custom hook for managing RepositoryForm state and logic.
  *
- * Uses XState form machine for state management with automatic dirty tracking,
- * unsaved changes warnings, and type variant sub-states for hosted/proxy/group.
+ * This is the Layer 2 (Integration) hook that:
+ * - Initializes the XState form machine
+ * - Provides all derived state (isCloud, hasFirewallLicense, reference data)
+ * - Manages UI state (activeTab, originChangeWarning)
+ * - Handles wizard integration (onSubmitRef, onCanAdvanceChange)
+ * - Exposes bridge functions for facet components (handleChange, handleNestedChange)
  *
- * The machine handles:
- * - Loading the repository (if editing) and reference data (blob stores, routing rules, etc.)
- * - TYPE_CHANGE transitions between hosted/proxy/group with field resets
- * - Validation per repository type (proxy requires remoteUrl, group requires members)
- * - Format as a context field that affects validation, not a sub-state
- *
- * @example
- * ```tsx
- * const { form, repository, isCreate } = useRepositoryForm({
- *   format: 'maven2',
- *   repositoryType: 'hosted',
- *   onCancel: () => navigate('/admin/repository/repositories'),
- *   createRepository: api.createRepository,
- *   updateRepository: api.updateRepository,
- * });
- *
- * if (form.isLoading) return <Spinner />;
- *
- * // Change repository type (triggers sub-state transition)
- * form.send({ type: 'TYPE_CHANGE', value: 'proxy' });
- * ```
+ * The component (Layer 3) should only consume this hook's return value and render JSX.
  */
 export function useRepositoryForm({
   repositoryName,
@@ -82,14 +125,32 @@ export function useRepositoryForm({
   repositoryType = 'hosted',
   onSave,
   onCancel,
-  createRepository,
-  updateRepository,
   advanceOnly = false,
+  onSubmitRef,
+  onCanAdvanceChange,
 }: UseRepositoryFormOptions): UseRepositoryFormReturn {
   const toast = useToast();
-  const isCreate = !repositoryName && !repository;
+  const { createRepository, updateRepository } = useRepositoriesApi();
+  const isCreate = !repositoryName;
 
-  // Create the form machine - memoized based on key identifiers
+  // ============================================
+  // Derived state from ExtJS (session-scoped)
+  // ============================================
+
+  const isCloud = useIsCloud();
+  const hasFirewallLicense = useHasFirewallLicense();
+
+  // ============================================
+  // UI state (presentation-adjacent, managed in hook layer)
+  // ============================================
+
+  const [activeTab, setActiveTab] = useState<RepositoryFormTab>(isCreate ? 'summary' : 'settings');
+  const [originChangeWarning, setOriginChangeWarning] = useState(false);
+
+  // ============================================
+  // Form machine setup
+  // ============================================
+
   const machine = useMemo(
     () =>
       createRepositoryFormMachine({
@@ -101,7 +162,6 @@ export function useRepositoryForm({
     [repositoryName, repository, format, repositoryType]
   );
 
-  // Use the form machine with action/service overrides
   const form = useForm(machine, {
     actions: {
       onCancel: onCancel,
@@ -110,13 +170,11 @@ export function useRepositoryForm({
       save: async (ctx: { data: RepositoryFormData; repository: Repository | null }) => {
         try {
           if (advanceOnly) {
-            // Wizard advance: validate passed, just notify parent (no create/update)
             if (onSave) {
               await onSave(ctx.data);
             }
             return;
           }
-          // Use the preloaded repository if available, otherwise use ctx.repository
           const repoToUpdate = repository || ctx.repository;
 
           if (isCreate) {
@@ -126,18 +184,15 @@ export function useRepositoryForm({
             await updateRepository(repoToUpdate.name, ctx.data);
             toast.success(`Repository "${ctx.data.name}" updated successfully`);
           }
-          // Call the provided onSave callback if needed
           let skipNavigate = false;
           if (onSave) {
             const result = await onSave(ctx.data);
             skipNavigate = !!(result && typeof result === 'object' && result.skipNavigate);
           }
-          // Navigate back after successful save (unless onSave requested skip)
           if (!skipNavigate) {
             onCancel();
           }
         } catch (err) {
-          // Raw API functions throw errors, form machine will handle them
           toast.error(err instanceof Error ? err.message : 'Operation failed');
           throw err;
         }
@@ -145,13 +200,103 @@ export function useRepositoryForm({
     },
   });
 
-  // Access the raw state to get the extended context with reference data
-  const context = (form.state as { context: { repository: Repository | null } }).context;
+  // ============================================
+  // Derived data from machine context
+  // ============================================
+
+  const context = form.state.context as RepositoryFormMachineContext;
   const loadedRepository = context.repository;
+  const formData = form.data as RepositoryFormData;
+  const pristineData = context.pristineData;
+  const blobStores = context.blobStores || [];
+  const routingRules = context.routingRules || [];
+  const cleanupPolicies = context.cleanupPolicies || [];
+  const memberRepositories = context.memberRepositories || [];
+  const errors = form.validationErrors || {};
+
+  // ============================================
+  // Bridge functions for facet components
+  // ============================================
+
+  const handleChange = useCallback((updates: Partial<RepositoryFormData>) => {
+    Object.entries(updates).forEach(([key, value]) => {
+      form.send({ type: 'UPDATE', name: key, value });
+    });
+  }, [form]);
+
+  const handleNestedChange = useCallback(<K extends keyof RepositoryFormData>(
+    key: K,
+    updates: Partial<RepositoryFormData[K]>
+  ) => {
+    const current = (formData[key] ?? {}) as Partial<RepositoryFormData[K]>;
+    form.send({ type: 'UPDATE', name: key as string, value: { ...current, ...updates } });
+  }, [form, formData]);
+
+  // ============================================
+  // Wizard integration
+  // ============================================
+
+  const { isLoading, isSaving } = form;
+
+  useEffect(() => {
+    if (onSubmitRef) {
+      onSubmitRef.current = () => {
+        if (!isLoading && !isSaving) {
+          if (advanceOnly && onSave) {
+            const validationErrors = validateRepository(form.data as RepositoryFormData, { isCloud });
+            if (!hasFormErrors(validationErrors)) {
+              onSave(form.data as RepositoryFormData);
+            } else {
+              form.send('SUBMIT');
+            }
+          } else {
+            form.send('SUBMIT');
+          }
+        }
+      };
+      return () => { onSubmitRef.current = null; };
+    }
+  }, [onSubmitRef, isLoading, isSaving, advanceOnly, onSave, isCloud, form]);
+
+  useEffect(() => {
+    if (!onCanAdvanceChange) return;
+    if (form.isLoading) {
+      onCanAdvanceChange(false);
+      return;
+    }
+    if (form.data) {
+      const validationErrors = validateRepository(form.data as RepositoryFormData, { isCloud });
+      onCanAdvanceChange(!hasFormErrors(validationErrors));
+    }
+  }, [form.data, form.isLoading, onCanAdvanceChange, isCloud]);
+
+  // ============================================
+  // Return
+  // ============================================
 
   return {
     form,
     repository: loadedRepository,
     isCreate,
+
+    hasFirewallLicense,
+    isCloud,
+
+    activeTab,
+    setActiveTab,
+    originChangeWarning,
+    setOriginChangeWarning,
+
+    formData,
+    pristineData,
+    errors,
+
+    blobStores,
+    routingRules,
+    cleanupPolicies,
+    memberRepositories,
+
+    handleChange,
+    handleNestedChange,
   };
 }

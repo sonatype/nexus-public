@@ -15,10 +15,10 @@ package org.sonatype.nexus.security.anonymous;
 import java.util.Date;
 import java.util.Set;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.ClientInfo;

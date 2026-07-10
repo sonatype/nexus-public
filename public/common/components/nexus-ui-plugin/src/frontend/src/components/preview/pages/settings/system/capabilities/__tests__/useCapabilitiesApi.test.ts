@@ -97,6 +97,34 @@ describe('useCapabilitiesApi', () => {
       });
       errorSpy.mockRestore();
     });
+
+    /*
+     * Post-firewall-migration the new UI must never display capabilities of type
+     * `firewall.audit`: firewall configuration belongs on the repository config page.
+     * The server-side shim still returns these entries for legacy REST API clients
+     * (Terraform / Ansible / scripts), so the filter is enforced client-side at this
+     * single chokepoint. If this test fails, check whether UI_HIDDEN_CAPABILITY_TYPE_IDS
+     * in useCapabilitiesApi.ts has been altered.
+     */
+    it('hides firewall.audit entries from the UI while preserving other types', async () => {
+      mockRestClient.get.mockResolvedValue([
+        mockRestCapability, // type: 'outreach'
+        { id: 'firewall-audit-npm-proxy', type: 'firewall.audit', enabled: true, properties: {} },
+        { id: 'firewall-audit-pypi-proxy', type: 'firewall.audit', enabled: true, properties: {} },
+        { id: 'cap-2', type: 'audit', enabled: true, properties: {} },
+      ]);
+
+      const { result } = renderHook(() => useCapabilitiesApi());
+
+      let capabilities: any;
+      await act(async () => {
+        capabilities = await result.current.fetchCapabilities();
+      });
+
+      expect(capabilities).toHaveLength(2);
+      expect(capabilities.map((c: any) => c.typeId).sort()).toEqual(['audit', 'outreach']);
+      expect(capabilities.find((c: any) => c.typeId === 'firewall.audit')).toBeUndefined();
+    });
   });
 
   describe('fetchCapabilityTypes', () => {

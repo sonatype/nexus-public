@@ -12,41 +12,36 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.eula;
 
-import javax.ws.rs.core.MediaType;
-
 import org.sonatype.nexus.api.rest.selfhosted.security.eula.model.EulaStatus;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Example;
-import io.swagger.annotations.ExampleProperty;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Swagger documentation for {@link CommunityEulaApiResource}.
  */
-@Api(value = "Community Edition Eula")
+@Tag(name = "Community Edition Eula")
 public interface CommunityEulaApiResourceDoc
 {
-  @ApiOperation(value = "Get the current Community Eula status.")
+  @Operation(summary = "Get the current Community Eula status.")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "Successful response", examples = @Example(value = {
-          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON,
-              value = "{\"disclaimer\": \"Use of Sonatype Nexus Repository - Community Edition is governed by the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula. By returning the value from ‘accepted:false’ to ‘accepted:true’, you acknowledge that you have read and agree to the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula.\", \"accepted\": false}")
-      }))
+      @ApiResponse(responseCode = "200", description = "Successful response")
+  // NEXUS-46395 TODO: examples= attribute dropped during sweep; restore via
+  // @Content(examples = @ExampleObject(value = "{ ... }"))
   })
   EulaStatus getCommunityEulaStatus();
 
-  @ApiOperation("Set the Community Eula status.")
+  @Operation(summary = "Set the Community Eula status.")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "EULA status set successfully"),
-      @ApiResponse(code = 500, message = "Incorrect EULA Status")
+      @ApiResponse(responseCode = "204", description = "EULA status set successfully"),
+      @ApiResponse(responseCode = "500", description = "Incorrect EULA Status")
   })
   void setEulaAcceptedCE(
-      @ApiParam(examples = @Example(value = {
-          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON,
-              value = "{\"disclaimer\": \"Use of Sonatype Nexus Repository - Community Edition is governed by the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula. By returning the value from ‘accepted:false’ to ‘accepted:true’, you acknowledge that you have read and agree to the End User License Agreement at https://links.sonatype.com/products/nxrm/ce-eula.\", \"accepted\": true}")
-      })) EulaStatus eulaStatus);
+      // NEXUS-46395 TODO: examples on @Parameter moves to a nested @Schema or to @Content;
+      // for the spike we accept the loss of the inline example. Restore via
+      // @Parameter(content = @Content(examples = @ExampleObject(value = "{...}"))) on the
+      // body parameter, or via @RequestBody at the operation level.
+      EulaStatus eulaStatus);
 }

@@ -85,7 +85,16 @@ export default function LoginPageRadix() {
   return (
     <div className="nxrm-login-page-radix">
       <header className="nxrm-login-header" role="banner">
-        <a href="/#browse/welcome" className="nxrm-login-header__link" title="Home" aria-label="Sonatype Nexus Repository home">
+        <a
+          href="#browse/welcome"
+          className="nxrm-login-header__link"
+          title="Home"
+          aria-label="Sonatype Nexus Repository home"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.hash = '#browse/welcome';
+          }}
+        >
           <img
             src={wordmarkLogo}
             alt=""

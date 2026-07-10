@@ -44,7 +44,7 @@ const STRINGS = {
   aboutTagsDescription:
     'Tags let you label and organize components across repositories. Use tags to mark release candidates, track deployments, or group related components. Tags can be applied to any component via the REST API or through automation workflows.',
   learnMore: 'Learn more about tags',
-  learnMoreUrl: 'http://links.sonatype.com/products/nxrm3/docs/tags',
+  learnMoreUrl: 'https://help.sonatype.com/en/tagging.html',
 };
 
 const TAG_NAME_REGEX = /^[a-zA-Z0-9-]{1}[a-zA-Z0-9_\-.]*$/;
@@ -72,6 +72,7 @@ export function TagsPageRadix(): JSX.Element {
     currentPage,
     pageSize,
     totalItems,
+    totalUnfilteredItems,
     setFilters,
     toggleSort,
     setPage,
@@ -153,6 +154,9 @@ export function TagsPageRadix(): JSX.Element {
   const hasActiveFilters =
     filters.componentCountRanges.length > 0 || filters.activityDays.length > 0;
 
+  const hasAnyFilter = hasActiveFilters || !!filters.nameFilter;
+  const headerCount = hasAnyFilter ? totalItems : (totalUnfilteredItems ?? totalItems);
+
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
   const renderSortDropdown = (triggerStyle?: React.CSSProperties) => (
@@ -217,7 +221,7 @@ export function TagsPageRadix(): JSX.Element {
             <Box mb="4">
               <PageHeader
                 title={STRINGS.pageTitle}
-                description={totalItems.toLocaleString()}
+                description={loading ? '-' : headerCount.toLocaleString()}
                 actions={
                   <Button
                     variant="solid"
@@ -285,7 +289,7 @@ export function TagsPageRadix(): JSX.Element {
                   tags={tags}
                   loading={loading}
                   error={error}
-                  hasFilters={hasActiveFilters || !!filters.nameFilter}
+                  hasFilters={hasAnyFilter}
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={toggleSort}

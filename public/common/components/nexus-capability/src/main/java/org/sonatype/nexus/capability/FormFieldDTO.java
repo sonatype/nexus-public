@@ -16,69 +16,69 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel("FormField")
+@Schema(description = "FormField")
 public class FormFieldDTO
 {
-  @ApiModelProperty("Field identifier")
+  @Schema(description = "Field identifier")
   private String id;
 
-  @ApiModelProperty("Field type (e.g., string, password, number, checkbox, combobox)")
+  @Schema(description = "Field type (e.g., string, password, number, checkbox, combobox)")
   private String type;
 
-  @ApiModelProperty("Display label for the field")
+  @Schema(description = "Display label for the field")
   private String label;
 
-  @ApiModelProperty("Help text shown to users")
+  @Schema(description = "Help text shown to users")
   private String helpText;
 
-  @ApiModelProperty("Whether the field is required")
+  @Schema(description = "Whether the field is required")
   private Boolean required;
 
-  @ApiModelProperty("Whether the field is disabled")
+  @Schema(description = "Whether the field is disabled")
   private Boolean disabled;
 
-  @ApiModelProperty("Whether the field is read-only")
+  @Schema(description = "Whether the field is read-only")
   private Boolean readOnly;
 
   @Nullable
-  @ApiModelProperty("Regular expression for field validation")
+  @Schema(description = "Regular expression for field validation")
   private String regexValidation;
 
   @Nullable
-  @ApiModelProperty("Initial value for the field")
+  @Schema(description = "Initial value for the field")
   private String initialValue;
 
-  @ApiModelProperty("Additional attributes for the field")
+  @Schema(description = "Additional attributes for the field")
   private Map<String, Object> attributes;
 
   @Nullable
-  @ApiModelProperty("Minimum value (for number fields)")
+  @Schema(description = "Minimum value (for number fields)")
   private String minimumValue;
 
   @Nullable
-  @ApiModelProperty("Maximum value (for number fields)")
+  @Schema(description = "Maximum value (for number fields)")
   private String maximumValue;
 
   @Nullable
-  @ApiModelProperty("API endpoint for fetching selectable options")
+  @Schema(description = "API endpoint for fetching selectable options")
   private String storeApi;
 
   @Nullable
-  @ApiModelProperty("Filters to apply when fetching options from the store API")
+  @Schema(description = "Filters to apply when fetching options from the store API")
   private Map<String, String> storeFilters;
 
   @Nullable
-  @ApiModelProperty("Property path for the ID field in store API response")
+  @Schema(description = "Property path for the ID field in store API response")
   private String idMapping;
 
   @Nullable
-  @ApiModelProperty("Property path for the name/display field in store API response")
+  @Schema(description = "Property path for the name/display field in store API response")
   private String nameMapping;
 
-  @ApiModelProperty("Whether autocomplete is enabled for this field")
+  @Schema(description = "Whether autocomplete is enabled for this field")
   private boolean allowAutocomplete;
 
   protected FormFieldDTO() {
@@ -268,7 +268,6 @@ public class FormFieldDTO
         ", helpText='" + helpText + '\'' +
         ", required=" + required +
         ", disabled=" + disabled +
-        ", readOnly=" + readOnly +
         ", regexValidation='" + regexValidation + '\'' +
         ", initialValue='" + initialValue + '\'' +
         ", attributes=" + attributes +

@@ -30,6 +30,14 @@
 import { AxiosError } from 'axios';
 import { ApiError, FieldError, RestErrorResponse } from './types';
 
+// JAX-RS ConstraintViolationExceptionMapper prefixes the `id` field of each
+// validation error with the leaf bean's simple name (`HelperBean.`) followed by
+// the property path (often `attributes.<field>` for repository config). Neither
+// segment is part of the frontend form's field naming, so we strip both before
+// surfacing field-level errors. (NEXUS-51599)
+const HELPER_BEAN_PREFIX = 'HelperBean.';
+const ATTRIBUTES_PREFIX = 'attributes.';
+
 const CONSTRAINT_MESSAGES: Record<string, string> = {
   'org.sonatype.nexus.validation.constraint.name':
     'Only letters, digits, hyphens (-), underscores (_), and dots (.) are allowed and may not start with underscore or dot.',
@@ -205,13 +213,24 @@ function parseBadRequest(
   // Handle array of errors directly (Nexus validation format)
   // Example: [{"id":"PARAMETER path","message":"Path is required"}]
   // Example: [{"id":"*","message":"A file blob store must have a unique path..."}]
+  // Example: [{"id":"HelperBean.attributes.docker.httpPort","message":"Port must be unique..."}]
   if (Array.isArray(data)) {
     for (const err of data) {
       if (err.message) {
         const resolvedMessage = resolveConstraintMessage(err.message);
-        const fieldName = err.id && err.id !== '*'
+        let fieldName = err.id && err.id !== '*'
           ? err.id.replace('PARAMETER ', '')
           : null;
+        // Anchor the HelperBean. and attributes. strips to the start of the
+        // string so an `id` that legitimately contains those tokens deeper in
+        // the property path (e.g. a field literally named myHelperBean.foo)
+        // isn't mangled mid-key.
+        if (fieldName && fieldName.startsWith(HELPER_BEAN_PREFIX)) {
+          fieldName = fieldName.slice(HELPER_BEAN_PREFIX.length);
+        }
+        if (fieldName && fieldName.startsWith(ATTRIBUTES_PREFIX)) {
+          fieldName = fieldName.slice(ATTRIBUTES_PREFIX.length);
+        }
         messages.push(resolvedMessage);
         if (fieldName) {
           fieldErrors.push({

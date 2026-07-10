@@ -13,9 +13,7 @@
 package org.sonatype.nexus.capability;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
-import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,13 +38,7 @@ public class CapabilityConfigurationSupportTest
   private SecretsService secretsService;
 
   @Mock
-  private SecretsStore secretsStore;
-
-  @Mock
   private Secret secret;
-
-  @Mock
-  private SecretData secretData;
 
   private TestCapabilityConfiguration config;
 
@@ -63,7 +55,7 @@ public class CapabilityConfigurationSupportTest
     when(secretsService.from(secretId)).thenReturn(secret);
     when(secret.decrypt()).thenReturn(decryptedValue.toCharArray());
 
-    String result = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result = config.decryptSecret(secretId, secretsService);
 
     assertThat(result, is(decryptedValue));
     verify(secretsService).from(secretId);
@@ -77,7 +69,7 @@ public class CapabilityConfigurationSupportTest
     when(secretsService.from(secretId)).thenReturn(secret);
     when(secret.decrypt()).thenReturn(decryptedValue.toCharArray());
 
-    String result = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result = config.decryptSecret(secretId, secretsService);
 
     assertThat(result, is(decryptedValue));
     verify(secretsService).from(secretId);
@@ -91,7 +83,7 @@ public class CapabilityConfigurationSupportTest
     when(secretsService.from(secretId)).thenReturn(secret);
     when(secret.decrypt()).thenReturn(decryptedValue.toCharArray());
 
-    String result = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result = config.decryptSecret(secretId, secretsService);
 
     assertThat(result, is(decryptedValue));
     verify(secretsService).from(secretId);
@@ -103,7 +95,7 @@ public class CapabilityConfigurationSupportTest
 
     when(secretsService.from(secretId)).thenThrow(new RuntimeException("Secret not found"));
 
-    String result = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result = config.decryptSecret(secretId, secretsService);
 
     assertThat(result, is(nullValue()));
     verify(secretsService).from(secretId);
@@ -111,7 +103,7 @@ public class CapabilityConfigurationSupportTest
 
   @Test
   public void testDecryptSecretWithNullSecretId() {
-    String result = config.decryptSecret(null, secretsStore, secretsService);
+    String result = config.decryptSecret(null, secretsService);
 
     assertThat(result, is(nullValue()));
     verify(secretsService, never()).from(org.mockito.ArgumentMatchers.anyString());
@@ -119,41 +111,19 @@ public class CapabilityConfigurationSupportTest
 
   @Test
   public void testDecryptSecretWithEmptySecretId() {
-    String result = config.decryptSecret("", secretsStore, secretsService);
+    String result = config.decryptSecret("", secretsService);
 
     assertThat(result, is(""));
     verify(secretsService, never()).from(org.mockito.ArgumentMatchers.anyString());
   }
 
   @Test
-  public void testDecryptSecretWithNullSecretsStore() {
-    String secretId = "_123";
-    String decryptedValue = "my-secret";
-
-    // SecretsStore is not used anymore, so this test just verifies it still works
-    when(secretsService.from(secretId)).thenReturn(secret);
-    when(secret.decrypt()).thenReturn(decryptedValue.toCharArray());
-
-    String result = config.decryptSecret(secretId, null, secretsService);
-
-    assertThat(result, is(decryptedValue));
-  }
-
-  @Test
   public void testDecryptSecretWithNullSecretsService() {
     String secretId = "_123";
 
-    String result = config.decryptSecret(secretId, secretsStore, null);
+    String result = config.decryptSecret(secretId, null);
 
-    assertThat(result, is(secretId));
-  }
-
-  @Test
-  public void testDecryptSecretWithBothServicesNull() {
-    String secretId = "_123";
-
-    String result = config.decryptSecret(secretId, null, null);
-
+    // If SecretsService not available, return the value as-is
     assertThat(result, is(secretId));
   }
 
@@ -161,11 +131,12 @@ public class CapabilityConfigurationSupportTest
   public void testDecryptSecretWithInvalidFormat() {
     String secretId = "_abc";
 
-    when(secretsService.from(secretId)).thenThrow(new NumberFormatException("Invalid format"));
+    // parseToken() in SecretImpl throws IllegalArgumentException for invalid format
+    when(secretsService.from(secretId)).thenThrow(new IllegalArgumentException("Unexpected token"));
 
-    String result = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result = config.decryptSecret(secretId, secretsService);
 
-    // Should return as-is for backwards compatibility
+    // Verify that invalid secret ID (non-numeric after underscore) returns as-is for backwards compatibility
     assertThat(result, is(secretId));
   }
 
@@ -173,11 +144,12 @@ public class CapabilityConfigurationSupportTest
   public void testDecryptSecretWithNonNumericValue() {
     String secretId = "not-a-number";
 
-    when(secretsService.from(secretId)).thenThrow(new NumberFormatException("Invalid format"));
+    // parseToken() in SecretImpl throws IllegalArgumentException for invalid format
+    when(secretsService.from(secretId)).thenThrow(new IllegalArgumentException("Unexpected token"));
 
-    String result = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result = config.decryptSecret(secretId, secretsService);
 
-    // Should return as-is for backwards compatibility
+    // Verify that invalid secret ID returns as-is for backwards compatibility
     assertThat(result, is(secretId));
   }
 
@@ -190,8 +162,8 @@ public class CapabilityConfigurationSupportTest
     when(secret.decrypt()).thenReturn(decryptedValue.toCharArray());
 
     // Call multiple times
-    String result1 = config.decryptSecret(secretId, secretsStore, secretsService);
-    String result2 = config.decryptSecret(secretId, secretsStore, secretsService);
+    String result1 = config.decryptSecret(secretId, secretsService);
+    String result2 = config.decryptSecret(secretId, secretsService);
 
     assertThat(result1, is(decryptedValue));
     assertThat(result2, is(decryptedValue));
@@ -205,8 +177,8 @@ public class CapabilityConfigurationSupportTest
   {
     // Exposes protected method for testing
     @Override
-    public String decryptSecret(String secretId, SecretsStore secretsStore, SecretsService secretsService) {
-      return super.decryptSecret(secretId, secretsStore, secretsService);
+    public String decryptSecret(String secretId, SecretsService secretsService) {
+      return super.decryptSecret(secretId, secretsService);
     }
   }
 }

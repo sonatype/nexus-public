@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -56,12 +56,15 @@ import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.view.ViewFacet;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -71,6 +74,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.FIREWALL;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
@@ -84,6 +88,8 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     extends StateGuardLifecycleSupport
     implements RepositoryManager, EventAware
 {
+  private static final Logger log = LoggerFactory.getLogger(BaseRepositoryManager.class);
+
   public static final String CLEANUP_ATTRIBUTES_KEY = "cleanup";
 
   public static final String CLEANUP_NAME_KEY = "policyName";
@@ -121,6 +127,9 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
    */
   private final Map<String, Object> retryLocks = new ConcurrentHashMap<>();
 
+  @Nullable
+  private final SecretEncoder ecrSecretEncoder;
+
   protected BaseRepositoryManager(
       final EventManager eventManager,
       final ConfigurationStore store,
@@ -136,6 +145,27 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder,
       final FailedRepositoryTracker failedRepositoryTracker)
   {
+    this(eventManager, store, factory, configFacet, recipesList, securityContributor,
+        defaultRepositoriesContributors, skipDefaultRepositories, blobStoreManager, groupMemberMappingCache,
+        configurationValidators, httpAuthenticationSecretEncoder, failedRepositoryTracker, null);
+  }
+
+  protected BaseRepositoryManager(
+      final EventManager eventManager,
+      final ConfigurationStore store,
+      final RepositoryFactory factory,
+      final Provider<ConfigurationFacet> configFacet,
+      final List<Recipe> recipesList,
+      final RepositoryAdminSecurityContributor securityContributor,
+      final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
+      final boolean skipDefaultRepositories,
+      final BSM blobStoreManager,
+      final GroupMemberMappingCache groupMemberMappingCache,
+      final List<ConfigurationValidator> configurationValidators,
+      final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder,
+      final FailedRepositoryTracker failedRepositoryTracker,
+      @Nullable final SecretEncoder ecrSecretEncoder)
+  {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.factory = checkNotNull(factory);
@@ -149,6 +179,49 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     this.configurationValidators = checkNotNull(configurationValidators);
     this.httpAuthenticationSecretEncoder = checkNotNull(httpAuthenticationSecretEncoder);
     this.failedRepositoryTracker = checkNotNull(failedRepositoryTracker);
+    this.ecrSecretEncoder = ecrSecretEncoder;
+  }
+
+  /**
+   * Encode ECR secrets if encoder is available.
+   */
+  private void encodeEcrSecretsIfNeeded(final Map<String, Map<String, Object>> attributes) {
+    if (ecrSecretEncoder != null) {
+      ecrSecretEncoder.encodeSecrets(attributes);
+    }
+  }
+
+  /**
+   * Encode ECR secrets with old/new comparison if encoder is available.
+   */
+  private void encodeEcrSecretsIfNeeded(
+      final Map<String, Map<String, Object>> oldAttributes,
+      final Map<String, Map<String, Object>> newAttributes)
+  {
+    if (ecrSecretEncoder != null) {
+      ecrSecretEncoder.encodeSecrets(oldAttributes, newAttributes);
+    }
+  }
+
+  /**
+   * Remove ECR secrets if encoder is available.
+   */
+  private void removeEcrSecretsIfNeeded(final Map<String, Map<String, Object>> attributes) {
+    if (ecrSecretEncoder != null) {
+      ecrSecretEncoder.removeSecret(attributes);
+    }
+  }
+
+  /**
+   * Remove ECR secrets with old/new comparison if encoder is available.
+   */
+  private void removeEcrSecretsIfNeeded(
+      final Map<String, Map<String, Object>> oldAttributes,
+      final Map<String, Map<String, Object>> newAttributes)
+  {
+    if (ecrSecretEncoder != null) {
+      ecrSecretEncoder.removeSecret(oldAttributes, newAttributes);
+    }
   }
 
   /**
@@ -270,8 +343,25 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   private void provisionDefaultRepositories() {
     for (DefaultRepositoriesContributor contributor : defaultRepositoriesContributors) {
       for (Configuration configuration : contributor.getRepositoryConfigurations()) {
+        String repositoryName = configuration.getRepositoryName();
         log.debug("Provisioning default repository: {}", configuration);
-        store.create(configuration);
+        try {
+          // Run ConfigurationValidators on the contributor-supplied config so
+          // edition-specific guards (e.g. OciCloudEditionConfigurationValidator)
+          // apply to default-repo seeding, not just the REST API write paths.
+          // Per-repo failures are tracked rather than aborting the whole
+          // provisioning loop — a single misconfigured contributor must not
+          // prevent other defaults (and the rest of the manager) from booting.
+          validateConfiguration(configuration);
+          store.create(configuration);
+          failedRepositoryTracker.clearFailure(repositoryName);
+        }
+        catch (Exception e) {
+          log.error("Failed to provision default repository '{}' from contributor '{}'. "
+              + "Repository will not be available; other defaults will continue to provision.",
+              repositoryName, contributor.getClass().getSimpleName(), e);
+          failedRepositoryTracker.recordFailure(repositoryName, e);
+        }
       }
     }
   }
@@ -288,6 +378,12 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
               configuration.getRepositoryName(), recipeName);
           continue;
         }
+        // Re-run ConfigurationValidators on restore so a backup taken on a
+        // self-hosted node cannot smuggle a now-illegal config (e.g. an OCI
+        // repo with forceBasicAuth=false) onto a cloud node. Per-repo
+        // failures are caught below and tracked, so other repositories still
+        // start up.
+        validateConfiguration(configuration);
         Repository repository = newRepository(configuration);
         track(repository);
         failedRepositoryTracker.clearFailure(configuration.getRepositoryName());
@@ -477,6 +573,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     try {
       if (!EventHelper.isReplicating()) {
         httpAuthenticationSecretEncoder.encodeHttpAuthPassword(configuration.getAttributes());
+        encodeEcrSecretsIfNeeded(configuration.getAttributes());
       }
       validateConfiguration(configuration);
 
@@ -488,6 +585,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     }
     catch (Exception e) {
       httpAuthenticationSecretEncoder.removeSecret(configuration.getAttributes());
+      removeEcrSecretsIfNeeded(configuration.getAttributes());
       throw e;
     }
     repository.start();
@@ -512,10 +610,25 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     Repository repository = repository(repositoryName);
 
     final Configuration oldConfiguration = repository.getConfiguration().copy();
+
+    // NEXUS-53393: preserve omitted firewall block from old config — see helper Javadoc.
+    // Replication should faithfully apply the originator's authoritative state, not
+    // heuristically merge — so skip preservation on the replicating thread.
+    //
+    // Ordering note (load-bearing): this runs AFTER validateConfiguration(...) above. The
+    // preserved firewall mode therefore is not re-checked by FirewallConfigurationValidator,
+    // which is the right trade-off — the mode was already valid when stored, and re-validating
+    // could spuriously reject a no-change PUT when CLM/IQ is temporarily unavailable. Do not
+    // move this above validateConfiguration.
+    if (!EventHelper.isReplicating()) {
+      preserveFirewallFromExistingIfAbsent(oldConfiguration, configuration, repositoryName);
+    }
+
     try {
       if (!EventHelper.isReplicating()) {
         httpAuthenticationSecretEncoder.encodeHttpAuthPassword(oldConfiguration.getAttributes(),
             configuration.getAttributes());
+        encodeEcrSecretsIfNeeded(oldConfiguration.getAttributes(), configuration.getAttributes());
       }
 
       // ensure configuration sanity
@@ -526,10 +639,12 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
       if (!EventHelper.isReplicating()) {
         store.update(configuration);
         httpAuthenticationSecretEncoder.removeSecret(oldConfiguration.getAttributes(), configuration.getAttributes());
+        removeEcrSecretsIfNeeded(oldConfiguration.getAttributes(), configuration.getAttributes());
       }
     }
     catch (Exception e) {
       httpAuthenticationSecretEncoder.removeSecret(configuration.getAttributes(), oldConfiguration.getAttributes());
+      removeEcrSecretsIfNeeded(configuration.getAttributes(), oldConfiguration.getAttributes());
       throw e;
     }
 
@@ -539,6 +654,70 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
     eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
 
     return repository;
+  }
+
+  /**
+   * NEXUS-53393: carry the persisted {@code firewall} sub-block from {@code existing} onto
+   * {@code target} when {@code target} does not already carry one.
+   * <p>
+   * The typed REST API request-to-Configuration converters (see
+   * {@code ProxyRepositoryApiRequestToConfigurationConverter#convertFirewall}) only write the
+   * {@code firewall} block when the request body supplies a non-null {@code mode}. As a result,
+   * an omitted {@code firewall} field, {@code firewall: null}, {@code firewall: \{\}} and
+   * {@code firewall: \{"mode": null\}} are all indistinguishable in the converted Configuration
+   * — they all surface as "no firewall key in the attributes map". Without this helper, every
+   * such partial update would silently wipe the persisted {@code firewall.mode}, dropping
+   * firewall protection on the repository.
+   * <p>
+   * The contract intentionally accepts that ambiguity: a caller can clear firewall only by
+   * sending an explicit {@code mode} value (canonically {@link
+   * org.sonatype.nexus.repository.firewall.FirewallMode#DISABLED}). All other shapes are
+   * treated as "do not change".
+   * <p>
+   * Defensive copy: subsequent code in {@link #update(Configuration)} (validation, secret
+   * encoding on the {@code httpclient} sub-block, the rollback path) operates on the new
+   * Configuration and may iterate or mutate the attributes map. The defensive {@code putAll}
+   * keeps the firewall sub-map independent of the existing Configuration's reference, so
+   * mutations to either side after this call cannot bleed across.
+   * <p>
+   * The same omission-clears semantic affects other optional sub-sections (cleanup,
+   * negativeCache, httpClient, storage, format-specific blocks); they are out of scope for
+   * NEXUS-53393 and tracked separately.
+   */
+  @VisibleForTesting
+  static void preserveFirewallFromExistingIfAbsent(
+      final Configuration existing,
+      final Configuration target,
+      final String repositoryName)
+  {
+    Map<String, Map<String, Object>> targetAttrs = target.getAttributes();
+    if (targetAttrs != null && targetAttrs.containsKey(FIREWALL)) {
+      // Target already carries a firewall block. The typed REST converter only writes one when
+      // the request body supplies a non-null mode (so PCCS/AUDIT/QUARANTINE/DISABLED all land
+      // here, including the canonical clear via mode=DISABLED). The same guard also handles
+      // any other code path that may have planted a firewall sub-map on target before this
+      // helper ran (e.g. validation or pre-processing that called attributes(FIREWALL) and
+      // triggered the lazy-init computeIfAbsent in ConfigurationData). In every case, leave
+      // target's firewall block untouched — explicit caller intent wins.
+      return;
+    }
+    Map<String, Map<String, Object>> existingAttrs = existing.getAttributes();
+    if (existingAttrs == null) {
+      return;
+    }
+    Map<String, Object> existingFirewall = existingAttrs.get(FIREWALL);
+    if (existingFirewall == null || existingFirewall.isEmpty()) {
+      // Common case for repositories that have never had firewall configured: the existing
+      // firewall map is either absent or an empty map planted by Configuration.attributes(key)
+      // lazy-init via FirewallConfigurationHelper.getFirewallMode(...) /
+      // FirewallAttributes.fromConfiguration(...). Either way there is nothing meaningful to
+      // carry forward, so leave target alone (don't synthesise an empty firewall block).
+      return;
+    }
+    log.debug(
+        "Preserving existing firewall configuration on '{}' update because the request did not redefine it: {}",
+        repositoryName, existingFirewall);
+    target.attributes(FIREWALL).backing().putAll(existingFirewall);
   }
 
   protected void validateConfiguration(final Configuration configuration) {
@@ -595,6 +774,7 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
     if (!EventHelper.isReplicating()) {
       httpAuthenticationSecretEncoder.removeSecret(configuration.getAttributes());
+      removeEcrSecretsIfNeeded(configuration.getAttributes());
       store.delete(configuration);
     }
 

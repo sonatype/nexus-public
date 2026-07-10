@@ -31,6 +31,17 @@ import {blobStoreFormSelectors} from '../testUtils/blobStoreFormSelectors';
 import { ROUTE_NAMES } from '../../../../../routerConfig/routeNames/routeNames';
 import { useCurrentStateAndParams } from '@uirouter/react';
 
+jest.mock('../BlobStoreTypes', () => ({
+  __esModule: true,
+  default: {
+    s3: {
+      Settings: require('./S3BlobStoreSettings').default,
+      Warning: require('./S3BlobStoreWarning').default,
+      Actions: require('./S3BlobStoreActions').default
+    }
+  }
+}));
+
 const S3_STRINGS = UIStrings.S3_BLOBSTORE_CONFIGURATION;
 const MAX_REPLICATION_BUCKETS = 5;
 
@@ -98,14 +109,6 @@ const selectors = {
 };
 
 describe('BlobStoresForm-S3', () => {
-  window.BlobStoreTypes = {
-    s3: {
-      Settings: S3BlobStoreSettings,
-      Warning: S3BlobStoreWarning,
-      Actions: S3BlobStoreActions
-    }
-  };
-
   beforeEach(() => {
     ExtJS.isProEdition.mockReturnValue(false);
     when(ExtJS.state().getValue).calledWith('S3FailoverEnabled', expect.any(Boolean)).mockReturnValue(false);

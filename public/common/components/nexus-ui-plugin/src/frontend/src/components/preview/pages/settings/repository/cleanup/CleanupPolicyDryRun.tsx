@@ -12,34 +12,46 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Flex, Text, Tooltip } from '@radix-ui/themes';
-import { Download, HelpCircle } from 'lucide-react';
+import { Box, Flex, Text, Tooltip, Table, Callout } from '@radix-ui/themes';
+import { Download, AlertTriangle, Loader2 } from 'lucide-react';
 
 import { SettingsSelect, SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { useCleanupPoliciesApi } from './useCleanupPoliciesApi';
-import { CleanupPolicyFormData, RepositoryOption } from './types';
+import { CleanupPolicyFormData, RepositoryOption, PreviewComponent } from './types';
 
 import './CleanupPolicyDryRun.scss';
 
 interface CleanupPolicyDryRunProps {
   policyData: CleanupPolicyFormData;
   policyName?: string;
+  selectedRepositories?: string[];
 }
 
 /**
  * CleanupPolicyDryRun - Generate CSV report of components that would be deleted
  */
-export function CleanupPolicyDryRun({ policyData, policyName }: CleanupPolicyDryRunProps) {
+export function CleanupPolicyDryRun({ policyData, policyName, selectedRepositories = [] }: CleanupPolicyDryRunProps) {
   const [repositories, setRepositories] = useState<RepositoryOption[]>([]);
   const [selectedRepository, setSelectedRepository] = useState('');
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
+  const [previewResults, setPreviewResults] = useState<PreviewComponent[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const { fetchRepositories, getDryRunCsvUrl } = useCleanupPoliciesApi();
+  const { fetchRepositories, getDryRunCsvUrl, previewCleanupPolicy } = useCleanupPoliciesApi();
 
-  // Load repositories when format changes
+  // Serialize selected repos for stable dependency comparison
+  const selectedReposKey = selectedRepositories.join(',');
+
+  // Load repositories — use selected repos from form if available, otherwise fetch all for format
   useEffect(() => {
-    if (policyData.format) {
+    if (selectedRepositories.length > 0) {
+      setRepositories(selectedRepositories.map((name) => ({ id: name, name })));
+      setSelectedRepository('');
+      setIsLoadingRepos(false);
+    } else if (policyData.format) {
       setIsLoadingRepos(true);
       setRepoError(null);
       setSelectedRepository('');
@@ -49,7 +61,7 @@ export function CleanupPolicyDryRun({ policyData, policyName }: CleanupPolicyDry
         .catch((err) => setRepoError(err.message))
         .finally(() => setIsLoadingRepos(false));
     }
-  }, [policyData.format, fetchRepositories]);
+  }, [policyData.format, selectedReposKey, fetchRepositories]);
 
   // Check if at least one criteria is selected
   const hasCriteria = useMemo(() => {
@@ -87,6 +99,41 @@ export function CleanupPolicyDryRun({ policyData, policyName }: CleanupPolicyDry
     }
     return '';
   }, [selectedRepository, hasCriteria]);
+
+  // Auto-load preview when repository is selected and criteria exist
+  // Use specific policyData fields as dependencies (not the object reference)
+  // to ensure re-fetch when individual criteria values change
+  useEffect(() => {
+    if (selectedRepository && hasCriteria) {
+      setIsLoadingPreview(true);
+      setPreviewError(null);
+      previewCleanupPolicy(selectedRepository, policyData, policyName)
+        .then((result) => {
+          setPreviewResults(result.components);
+          setTotalCount(result.total);
+        })
+        .catch((err) => {
+          setPreviewError(err.message);
+          setPreviewResults([]);
+          setTotalCount(0);
+        })
+        .finally(() => setIsLoadingPreview(false));
+    } else {
+      setPreviewResults([]);
+      setTotalCount(0);
+    }
+  }, [
+    selectedRepository,
+    hasCriteria,
+    policyData.criteriaLastBlobUpdated,
+    policyData.criteriaLastDownloaded,
+    policyData.criteriaAssetRegex,
+    policyData.criteriaReleaseType,
+    policyData.retain,
+    policyData.sortBy,
+    policyName,
+    previewCleanupPolicy
+  ]);
 
   return (
     <Box className="cleanup-policy-dry-run">
@@ -138,6 +185,78 @@ export function CleanupPolicyDryRun({ policyData, policyName }: CleanupPolicyDry
           </Tooltip>
         )}
       </Flex>
+
+      {/* Preview Table — shows components that would be deleted */}
+      {selectedRepository && hasCriteria && (
+        <Box mt="4">
+          {previewError && (
+            <SettingsAlert type="error">
+              {previewError}
+            </SettingsAlert>
+          )}
+
+          {totalCount > 0 && (
+            <Callout.Root color="amber" mb="3">
+              <Callout.Icon>
+                <AlertTriangle size={16} />
+              </Callout.Icon>
+              <Callout.Text>
+                <Text size="2">
+                  Showing {previewResults.length} of {totalCount} components that would be deleted.
+                </Text>
+              </Callout.Text>
+            </Callout.Root>
+          )}
+
+          <Table.Root>
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Group</Table.ColumnHeaderCell>
+                <Table.ColumnHeaderCell>Version</Table.ColumnHeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {isLoadingPreview ? (
+                <Table.Row>
+                  <Table.Cell colSpan={3}>
+                    <Flex align="center" justify="center" py="4" gap="2">
+                      <Loader2 size={16} className="cleanup-policy-dry-run__spinner" />
+                      <Text size="2" color="gray">Loading preview...</Text>
+                    </Flex>
+                  </Table.Cell>
+                </Table.Row>
+              ) : previewResults.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell colSpan={3}>
+                    <Flex align="center" justify="center" py="4">
+                      <Text size="2" color="gray">
+                        No components match the selected criteria
+                      </Text>
+                    </Flex>
+                  </Table.Cell>
+                </Table.Row>
+              ) : (
+                previewResults.map((item, index) => (
+                  <Table.Row key={`${item.name}-${item.version}-${index}`}>
+                    <Table.Cell>{item.name}</Table.Cell>
+                    <Table.Cell>{item.group || '—'}</Table.Cell>
+                    <Table.Cell>{item.version || '—'}</Table.Cell>
+                  </Table.Row>
+                ))
+              )}
+            </Table.Body>
+          </Table.Root>
+
+          {totalCount === 0 && !isLoadingPreview && !previewError && (
+            <Box mt="2">
+              <Text size="2" color="gray">
+                No assets in this repository match the current criteria.
+              </Text>
+            </Box>
+          )}
+        </Box>
+      )}
     </Box>
   );
 }

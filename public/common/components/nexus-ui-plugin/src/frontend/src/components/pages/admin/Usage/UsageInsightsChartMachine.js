@@ -16,7 +16,7 @@
  */
 import {assign, createMachine} from 'xstate';
 import Axios from 'axios';
-import {KEY_STORAGE, KEY_EGRESS, getMonthOptions, getDateRange} from "./UsageInsightsUtils";
+import {KEY_STORAGE, KEY_EGRESS, getMonthOptions, getDateRange, isPermissionError} from "./UsageInsightsUtils";
 
 /**
  * State machine for fetching daily metrics (egress and storage) from DailyMetricsApiResource
@@ -33,6 +33,7 @@ export default createMachine(
         storageData: null,
         combinedData: null,
         loadError: null,
+        isPermissionError: false,
         monthOptions: [],
         selectedMonth: null,
         dateFrom: '',
@@ -138,26 +139,28 @@ export default createMachine(
 
           return { egressData, storageData, combinedData };
         }),
-        setError: assign({
-          loadError: (_, event) => {
-            const error = event.data;
-            const url = error.config?.url || '';
+        setError: assign((_, event) => {
+          const error = event.data;
+          const url = error.config?.url || '';
 
-            // Identify which endpoint failed
-            const metric = url.includes('egress') ? 'egress'
-                : url.includes('storage') ? 'storage'
-                    : 'metrics';
+          // Identify which endpoint failed
+          const metric = url.includes('egress') ? 'egress'
+              : url.includes('storage') ? 'storage'
+                  : 'metrics';
 
-            // Build user-friendly message
-            const baseMessage = error.response?.data?.message
-                || error.message
-                || 'Unknown error';
+          // Build user-friendly message
+          const baseMessage = error.response?.data?.message
+              || error.message
+              || 'Unknown error';
 
-            return `Failed to load ${metric} data: ${baseMessage}`;
-          }
+          return {
+            loadError: `Failed to load ${metric} data: ${baseMessage}`,
+            isPermissionError: isPermissionError(error)
+          };
         }),
         clearError: assign({
-          loadError: () => null
+          loadError: () => null,
+          isPermissionError: () => false
         })
       },
       services: {

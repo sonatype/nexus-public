@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.content;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -255,6 +256,64 @@ public class MavenMetadataRebuilderTest
     verify(workerSpy, times(1)).rebuildVersionsMetadata(group1, artifact1, baseVersions);
     verify(workerSpy, times(1)).rebuildArtifactMetadata(repository, group1, artifact1);
 
+    MultipleFailures failures = worker.getFailures();
+    assertThat(failures.size(), is(0));
+  }
+
+  /**
+   * NEXUS-52855: Test that rebuildArtifactMetadata handles empty base versions without NPE.
+   */
+  @Test
+  public void rebuildArtifactMetadata_handlesEmptyBaseVersions() {
+    int bufferSize = 20;
+    final String groupId = "org.test";
+    final String artifactId = "test-parent";
+
+    // Return empty base versions (artifact doesn't exist in repo)
+    when(mavenContentFacet.getBaseVersions(groupId, artifactId)).thenReturn(Collections.emptyList());
+
+    MetadataRebuildWorker worker = new MetadataRebuildWorker(repository, false, groupId, artifactId, null, bufferSize);
+
+    // This should NOT throw NPE
+    Collection<String> result = worker.rebuildArtifactMetadata(repository, groupId, artifactId);
+
+    // Should return empty collection
+    assertThat(result.size(), is(0));
+
+    // Should have no failures (gracefully handled, no errors)
+    MultipleFailures failures = worker.getFailures();
+    assertThat(failures.size(), is(0));
+  }
+
+  /**
+   * NEXUS-52855: Test that rebuildGA handles empty base versions without errors.
+   */
+  @Test
+  public void rebuildGA_handlesEmptyBaseVersions() {
+    int bufferSize = 20;
+    int maxThreads = 1;
+    final String groupId = "org.test";
+    final String artifactId = "test-parent";
+
+    // Return empty base versions (artifact doesn't exist in repo)
+    when(mavenContentFacet.getBaseVersions(groupId, artifactId)).thenReturn(Collections.emptyList());
+
+    MavenMetadataRebuilder mavenMetadataRebuilder = new MavenMetadataRebuilder(bufferSize, maxThreads);
+
+    DatastoreMetadataUpdater metadataUpdaterSpy = Mockito.spy(new DatastoreMetadataUpdater(false, repository));
+    MetadataRebuildWorker worker = new MetadataRebuildWorker(repository, false, groupId, artifactId, null, bufferSize);
+    worker.setMetadataUpdater(metadataUpdaterSpy);
+    MetadataRebuildWorker workerSpy = Mockito.spy(worker);
+
+    doNothing().when(workerSpy).rebuildGroupMetadata(groupId);
+
+    // rebuildWithWorker calls rebuildGA synchronously, no Thread.sleep needed
+    mavenMetadataRebuilder.rebuildWithWorker(workerSpy, false, false, groupId, artifactId, null);
+
+    verify(workerSpy, times(1)).rebuildGA(groupId, artifactId);
+    verify(workerSpy, times(1)).rebuildArtifactMetadata(repository, groupId, artifactId);
+
+    // Should have no failures
     MultipleFailures failures = worker.getFailures();
     assertThat(failures.size(), is(0));
   }

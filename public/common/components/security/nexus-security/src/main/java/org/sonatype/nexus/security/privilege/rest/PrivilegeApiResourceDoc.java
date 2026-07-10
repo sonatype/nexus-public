@@ -14,76 +14,80 @@ package org.sonatype.nexus.security.privilege.rest;
 
 import java.util.Collection;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * @since 3.19
  */
-@Api(value = "Security management: privileges")
+@Tag(name = "Security management: privileges")
 public interface PrivilegeApiResourceDoc
 {
-  @ApiOperation("Retrieve a list of privileges.")
+  @Operation(summary = "Retrieve a list of privileges.")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)
   })
   Collection<ApiPrivilege> getPrivileges();
 
-  @ApiOperation("Retrieve a privilege by name.")
+  @Operation(summary = "Retrieve a privilege by name.")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)})
-  ApiPrivilege getPrivilege(@ApiParam("The name of the privilege to retrieve.") @NotNull final String privilegeName);
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)})
+  ApiPrivilege getPrivilege(
+      @Parameter(description = "The name of the privilege to retrieve.") @NotNull final String privilegeName);
 
-  @ApiOperation("Delete a privilege by name.")
+  @Operation(summary = "Delete a privilege by name.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_READ_ONLY),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)})
-  void deletePrivilege(@ApiParam("The name of the privilege to delete.") @NotNull final String privilegeName);
+      @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_READ_ONLY),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)})
+  void deletePrivilege(
+      @Parameter(description = "The name of the privilege to delete.") @NotNull final String privilegeName);
 
-  @ApiOperation("Create an application type privilege.")
+  @Operation(summary = "Create an application type privilege.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
+      @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "201", description = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
   Response createPrivilege(
-      @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeApplicationRequest privilege);
+      @Parameter(
+          description = "The privilege to create.") @NotNull @Valid final ApiPrivilegeApplicationRequest privilege);
 
-  @ApiOperation("Update an application type privilege.")
+  @Operation(summary = "Update an application type privilege.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)})
+      @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
+      @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)})
   void updatePrivilege(
-      @ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
-      @ApiParam("The privilege to update.") @NotNull @Valid final ApiPrivilegeApplicationRequest privilege);
+      @Parameter(description = "The name of the privilege to update.") @NotNull final String privilegeName,
+      @Parameter(
+          description = "The privilege to update.") @NotNull @Valid final ApiPrivilegeApplicationRequest privilege);
 
-  @ApiOperation("Create a wildcard type privilege.")
+  @Operation(summary = "Create a wildcard type privilege.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
+      @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "201", description = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
   Response createPrivilege(
-      @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeWildcardRequest privilege);
+      @Parameter(description = "The privilege to create.") @NotNull @Valid final ApiPrivilegeWildcardRequest privilege);
 
-  @ApiOperation("Update a wildcard type privilege.")
+  @Operation(summary = "Update a wildcard type privilege.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)})
+      @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
+      @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)})
   void updatePrivilege(
-      @ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
-      @ApiParam("The privilege to update.") @NotNull @Valid final ApiPrivilegeWildcardRequest privilege);
+      @Parameter(description = "The name of the privilege to update.") @NotNull final String privilegeName,
+      @Parameter(description = "The privilege to update.") @NotNull @Valid final ApiPrivilegeWildcardRequest privilege);
 }

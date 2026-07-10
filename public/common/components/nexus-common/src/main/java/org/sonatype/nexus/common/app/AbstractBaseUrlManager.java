@@ -13,9 +13,9 @@
 package org.sonatype.nexus.common.app;
 
 import javax.annotation.Nullable;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.google.common.base.Strings;
 import jakarta.inject.Provider;
@@ -147,15 +147,10 @@ public abstract class AbstractBaseUrlManager
 
   protected static int countSlashes(final String path) {
     int count = 0;
-    // we start at 1 to avoid leading slashes
-    int previousIndex = 0;
+    // start at 1 to skip the leading slash
     for (int i = 1; i < path.length(); i++) {
       if (path.charAt(i) == '/') {
-        // skip double slashes
-        if (previousIndex != (i - 1)) {
-          ++count;
-        }
-        previousIndex = i;
+        ++count;
       }
     }
     return count;

@@ -31,7 +31,7 @@ import type {
   HealthCheckData,
   FirewallData,
   IqApplicationMapping,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
 
 // =============================================================================
 // Types

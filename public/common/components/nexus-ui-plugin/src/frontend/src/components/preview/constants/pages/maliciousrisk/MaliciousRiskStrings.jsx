@@ -94,12 +94,11 @@ export default {
     MALWARE_REMEDIATION: {
       DESCRIPTION: 'Sonatype has identified malware components in your repository. Use the CSV below to identify which components are malicious and remediate.',
       REMEDIATION_STEPS: {
-        TITLE: 'Steps to Address Malware',
-        FIRST: <>Schedule Malware Removal Tasks to automatically clean detected malware from your proxy repositories.
-          Repository Health Check detects malware; these tasks remove it. <NxTextLink
+        TITLE: 'Steps to Identify and Address Malware',
+        FIRST: <>Create and run Automatic Malware Management tasks on your proxy repositories. <NxTextLink
           href="https://links.sonatype.com/products/nxrm3/docs/scheduled-task" className="scheduled-task-link" external>
           Learn about maintenance tasks</NxTextLink></>,
-        SECOND: 'Download the CSV of components cleaned by Malware Removal Tasks. This report is populated after tasks have run and processed malware.',
+        SECOND: 'Download the CSV file using the link below to review the components flagged by Sonatype as containing malware.',
         THIRD: <>Search your proxy repository to remove the components. <NxTextLink
           href="https://links.sonatype.com/nexus-repository-firewall/malware-risk/guide-to-removing-malware"
           className="guide-to-removing-malware-link" external>

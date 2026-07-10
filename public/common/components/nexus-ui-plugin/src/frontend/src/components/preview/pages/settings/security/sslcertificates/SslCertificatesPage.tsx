@@ -10,13 +10,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
 import { Plus, ArrowLeft } from 'lucide-react';
@@ -31,6 +24,10 @@ import { useSslCertificatesApi } from './useSslCertificatesApi';
 import { SslCertificate, AddCertificateFormData } from './types';
 
 import './SslCertificatesPage.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 type ViewMode = 'list' | 'create' | 'detail';
 
@@ -144,6 +141,10 @@ export function SslCertificatesPage() {
         <PageHeader
           title="SSL Certificates"
           description="Manage trusted SSL certificates for use with the Nexus truststore"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'SSL Certificates' }
+          ]}
           actions={canCreate && (
             <SettingsButton variant="primary" onClick={handleCreate} icon={Plus}>
               Add Certificate
@@ -159,18 +160,19 @@ export function SslCertificatesPage() {
         ? `Certificate ${certificate.subjectCommonName}`
         : 'Certificate Details';
 
+    const lastBreadcrumb = viewMode === 'create'
+      ? 'Add'
+      : certificate?.subjectCommonName || 'Loading...';
+
     return (
       <PageHeader
         title={title}
         breadcrumbs={[
-          { label: 'SSL Certificates', onClick: handleBack }
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'SSL Certificates', onClick: handleBack },
+          { label: lastBreadcrumb }
         ]}
-      
-          breadcrumbs={[
-            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-            { label: 'SSL Certificates' }
-          ]}
-/>
+      />
     );
   };
 

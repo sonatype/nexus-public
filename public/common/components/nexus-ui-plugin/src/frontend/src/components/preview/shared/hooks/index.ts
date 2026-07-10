@@ -23,4 +23,6 @@ export {
   hasUnsavedChanges,
 } from './useUnsavedChangesWarning';
 
-
+export { useIsCloud } from './useIsCloud';
+export { useIsClustered } from './useIsClustered';
+export { useHasFirewallLicense } from './useHasFirewallLicense';

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.authz;
 
-import javax.servlet.annotation.WebFilter;
+import jakarta.servlet.annotation.WebFilter;
 
 import org.apache.shiro.web.filter.authz.HttpMethodPermissionFilter;
 import org.slf4j.Logger;

@@ -22,10 +22,10 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import javax.validation.ConstraintViolation;
-import javax.validation.ValidationException;
-import javax.validation.Validator;
-import javax.validation.groups.Default;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
+import jakarta.validation.groups.Default;
 
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.common.template.TemplateHelper;

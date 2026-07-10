@@ -26,5 +26,3 @@ export interface NodeInfo {
 export interface NodesPageProps {
   className?: string;
 }
-
-

@@ -16,14 +16,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { HttpPage } from '../HttpPage';
-import * as useHttpApiModule from '../useHttpApi';
 import * as useHttpFormModule from '../useHttpForm';
 
-// Mock the API hook and form hook
-jest.mock('../useHttpApi');
 jest.mock('../useHttpForm');
 
-const mockedUseHttpApi = useHttpApiModule.useHttpApi as jest.MockedFunction<typeof useHttpApiModule.useHttpApi>;
 const mockedUseHttpForm = useHttpFormModule.useHttpForm as jest.MockedFunction<typeof useHttpFormModule.useHttpForm>;
 
 function createHttpFormMock(data: Record<string, any>, overrides: Record<string, any> = {}) {
@@ -79,7 +75,7 @@ describe('HttpPage', () => {
     httpEnabled: false,
     httpHost: '',
     httpPort: null,
-    httpAuthEnabled: false,
+    httpAuthType: '',
     httpAuthUsername: '',
     httpAuthPassword: '',
     httpAuthNtlmHost: '',
@@ -87,7 +83,7 @@ describe('HttpPage', () => {
     httpsEnabled: false,
     httpsHost: '',
     httpsPort: null,
-    httpsAuthEnabled: false,
+    httpsAuthType: '',
     httpsAuthUsername: '',
     httpsAuthPassword: '',
     httpsAuthNtlmHost: '',
@@ -95,24 +91,12 @@ describe('HttpPage', () => {
     nonProxyHosts: [],
   };
 
-  const mockFetchSettings = jest.fn();
-  const mockSaveSettings = jest.fn();
-  const mockSetError = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset ExtJS.checkPermission to return true for editable form
     const { ExtJS } = require('../../../../../../../interface/ExtJS');
     ExtJS.checkPermission.mockReturnValue(true);
 
-    mockedUseHttpApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchSettings: mockFetchSettings.mockResolvedValue(mockSettings),
-      saveSettings: mockSaveSettings.mockResolvedValue(mockSettings),
-    });
-    // Default form hook mock with loaded settings
     mockedUseHttpForm.mockReturnValue(createHttpFormMock(mockSettings));
   });
 
@@ -127,7 +111,7 @@ describe('HttpPage', () => {
     render(<HttpPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('HTTP Settings')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'HTTP Settings' })).toBeInTheDocument();
     });
 
     expect(screen.getByText('Configure HTTP proxy and connection settings')).toBeInTheDocument();
@@ -243,21 +227,136 @@ describe('HttpPage', () => {
     });
   });
 
-  it('shows read-only view when user lacks update permission', async () => {
-    const { ExtJS } = require('../../../../../../../interface/ExtJS');
-    ExtJS.checkPermission.mockReturnValue(false);
+  it('splits comma-separated input into multiple non-proxy hosts on Add', async () => {
+    const sendSpy = jest.fn();
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock(
+      {
+        ...mockSettings,
+        httpEnabled: true,
+        httpHost: 'proxy.example.com',
+        httpPort: 8080,
+        nonProxyHosts: [],
+      },
+      { send: sendSpy },
+    ));
 
     render(<HttpPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => {
-      expect(screen.getByText('HTTP Settings')).toBeInTheDocument();
+    const input = await screen.findByLabelText('Host Pattern');
+    fireEvent.change(input, { target: { value: 'a.com, b.com,c.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }));
+
+    const updateCalls = sendSpy.mock.calls.filter(
+      ([event]: any[]) => event?.type === 'UPDATE' && event?.name === 'nonProxyHosts',
+    );
+    expect(updateCalls.length).toBeGreaterThanOrEqual(1);
+    const lastUpdate = updateCalls[updateCalls.length - 1][0];
+    expect(lastUpdate.value).toEqual(['a.com', 'b.com', 'c.com']);
+  });
+
+  it('skips blank tokens and tokens with internal whitespace when splitting on comma', async () => {
+    const sendSpy = jest.fn();
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock(
+      {
+        ...mockSettings,
+        httpEnabled: true,
+        httpHost: 'proxy.example.com',
+        httpPort: 8080,
+        nonProxyHosts: [],
+      },
+      { send: sendSpy },
+    ));
+
+    render(<HttpPage />, { wrapper: TestWrapper });
+
+    const input = await screen.findByLabelText('Host Pattern');
+    fireEvent.change(input, { target: { value: 'a.com, ,bad host , b.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }));
+
+    const updateCalls = sendSpy.mock.calls.filter(
+      ([event]: any[]) => event?.type === 'UPDATE' && event?.name === 'nonProxyHosts',
+    );
+    const lastUpdate = updateCalls[updateCalls.length - 1][0];
+    expect(lastUpdate.value).toEqual(['a.com', 'b.com']);
+  });
+
+  describe('read-only view (no update permission)', () => {
+    beforeEach(() => {
+      const { ExtJS } = require('../../../../../../../interface/ExtJS');
+      ExtJS.checkPermission.mockReturnValue(false);
     });
 
-    // Save button should not be present
-    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    it('shows the page title and read-only banner', async () => {
+      render(<HttpPage />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(screen.getByText('HTTP Settings')).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+      expect(screen.getByText(/read-only/i)).toBeInTheDocument();
+    });
 
-    // Should show read-only view
-    expect(screen.getByText('Current Settings')).toBeInTheDocument();
+    it('shows configured connection settings', async () => {
+      mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+        ...mockSettings,
+        userAgentSuffix: 'UniqueAgent/99',
+        timeout: 999,
+        retries: 7,
+      }));
+      render(<HttpPage />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(screen.getByText('UniqueAgent/99')).toBeInTheDocument();
+      });
+      expect(screen.getByText('999')).toBeInTheDocument();
+      expect(screen.getByText('7')).toBeInTheDocument();
+    });
+
+    it('shows HTTP proxy host, port, and auth username when configured', async () => {
+      mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+        ...mockSettings,
+        httpEnabled: true,
+        httpHost: 'proxy.example.com',
+        httpPort: 8080,
+        httpAuthType: 'username',
+        httpAuthUsername: 'svc',
+      }));
+      render(<HttpPage />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(screen.getByText('proxy.example.com')).toBeInTheDocument();
+      });
+      expect(screen.getByText('8080')).toBeInTheDocument();
+      expect(screen.getByText('svc')).toBeInTheDocument();
+    });
+
+    it('hides HTTP auth fields when auth is disabled', async () => {
+      mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+        ...mockSettings,
+        httpEnabled: true,
+        httpHost: 'proxy.example.com',
+        httpPort: 8080,
+        httpAuthType: '',
+        httpAuthUsername: 'should-not-show',
+      }));
+      render(<HttpPage />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(screen.getByText('proxy.example.com')).toBeInTheDocument();
+      });
+      expect(screen.queryByText('should-not-show')).not.toBeInTheDocument();
+    });
+
+    it('shows non-proxy hosts when proxy is enabled', async () => {
+      mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+        ...mockSettings,
+        httpEnabled: true,
+        httpHost: 'p',
+        httpPort: 80,
+        nonProxyHosts: ['*.internal.com', 'localhost'],
+      }));
+      render(<HttpPage />, { wrapper: TestWrapper });
+      await waitFor(() => {
+        expect(screen.getByText('*.internal.com')).toBeInTheDocument();
+      });
+      expect(screen.getByText('localhost')).toBeInTheDocument();
+    });
   });
 
   it('shows non-proxy hosts section when proxy is enabled', async () => {
@@ -291,6 +390,56 @@ describe('HttpPage', () => {
     });
   });
 
+  it('renders non-proxy hosts in alphabetical order regardless of input order', async () => {
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+      ...mockSettings,
+      httpEnabled: true,
+      httpHost: 'proxy.example.com',
+      httpPort: 8080,
+      nonProxyHosts: ['zeta.example.com', 'alpha.example.com', 'mike.example.com'],
+    }));
+
+    render(<HttpPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('alpha.example.com')).toBeInTheDocument();
+    });
+
+    const buttons = screen.getAllByRole('button', { name: /^Remove / });
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Remove alpha.example.com',
+      'Remove mike.example.com',
+      'Remove zeta.example.com',
+    ]);
+  });
+
+  it('removes the correct host when sorted display order differs from data order', async () => {
+    const send = jest.fn();
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+      ...mockSettings,
+      httpEnabled: true,
+      httpHost: 'proxy.example.com',
+      httpPort: 8080,
+      nonProxyHosts: ['zeta.example.com', 'alpha.example.com'],
+    }, { send }));
+
+    render(<HttpPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('alpha.example.com')).toBeInTheDocument();
+    });
+
+    // Sorted, alpha is first on screen but at index 1 in the underlying data —
+    // a regression test against the old index-based remove handler.
+    fireEvent.click(screen.getByRole('button', { name: 'Remove alpha.example.com' }));
+
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'UPDATE',
+      name: 'nonProxyHosts',
+      value: ['zeta.example.com'],
+    }));
+  });
+
   it('displays help section', async () => {
     render(<HttpPage />, { wrapper: TestWrapper });
 
@@ -300,7 +449,7 @@ describe('HttpPage', () => {
 
     expect(screen.getByText('documentation')).toHaveAttribute(
       'href',
-      'https://help.sonatype.com/en/http-configuration.html'
+      'http://links.sonatype.com/products/nxrm3/docs/http-request-and-proxy-settings'
     );
   });
 
@@ -309,6 +458,37 @@ describe('HttpPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('http-form')).toBeInTheDocument();
     });
+  });
+
+  it('HTTP Auth section shows credentials when httpAuthType is username', async () => {
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock({
+      ...mockSettings,
+      httpEnabled: true,
+      httpHost: 'proxy.example.com',
+      httpPort: 8080,
+      httpAuthType: 'username',
+      httpAuthUsername: 'svc',
+    }));
+    render(<HttpPage />, { wrapper: TestWrapper });
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('svc')).toBeInTheDocument();
+    });
+  });
+
+  it('loading state has aria-busy and aria-live attributes', () => {
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock(mockSettings, { isLoading: true }));
+    const { container } = render(<HttpPage />, { wrapper: TestWrapper });
+    const status = container.querySelector('[role="status"]');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveAttribute('aria-busy', 'true');
+    expect(status).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('save button carries the nxrm-http-save analytics id', async () => {
+    mockedUseHttpForm.mockReturnValue(createHttpFormMock(mockSettings, { isPristine: false }));
+    render(<HttpPage />, { wrapper: TestWrapper });
+    const saveButton = await screen.findByRole('button', { name: 'Save' });
+    expect(saveButton).toHaveAttribute('data-analytics-id', 'nxrm-http-save');
   });
 
   describe('number field key filtering', () => {
@@ -348,6 +528,28 @@ describe('HttpPage', () => {
       expect(event).toBe(false);
     });
   });
+
+  describe('breadcrumbs', () => {
+    it('renders Settings breadcrumb that navigates to settings page', async () => {
+      render(<HttpPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      // Click Settings breadcrumb navigates to settings page
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders HTTP as current page breadcrumb', async () => {
+      render(<HttpPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        // The current page item is rendered as Text (not a button) with aria-current="page"
+        const breadcrumb = screen.getByText('HTTP', { selector: '[aria-current="page"]' });
+        expect(breadcrumb).toBeInTheDocument();
+      });
+    });
+  });
 });
-
-

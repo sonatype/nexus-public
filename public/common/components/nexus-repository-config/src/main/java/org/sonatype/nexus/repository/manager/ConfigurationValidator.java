@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.manager;
 
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.repository.config.Configuration;
 

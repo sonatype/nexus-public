@@ -12,13 +12,13 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
-import { Puzzle, Plus, ArrowLeft } from 'lucide-react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
 
 import { SettingsButton, WizardForm } from '../../../../shared/form';
-import { useToast } from '../../../../shared';
+import { useToast, PageHeader } from '../../../../shared';
 import { CapabilitiesList } from './CapabilitiesList';
 import { CapabilityTypeSelector } from './CapabilityTypeSelector';
 import { CapabilityDetail } from './CapabilityDetail';
@@ -238,49 +238,62 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
     }
   }, [selectedCapability, disableCapability]);
 
+  // Navigation helper for Settings breadcrumb
+  const navigateToSettings = () => {
+    window.location.hash = '#preview/admin/settings';
+  };
+
   // Render header based on view mode
   const renderHeader = () => {
     if (viewMode === 'list') {
+      const breadcrumbs = [
+        { label: 'Settings', onClick: navigateToSettings },
+        { label: 'Capabilities' },
+      ];
+      const actions = canCreate ? (
+        <SettingsButton variant="primary" onClick={handleStartCreate} data-analytics-id="nxrm-capability-create" icon={Plus}>
+          Create Capability
+        </SettingsButton>
+      ) : undefined;
       return (
-        <Flex justify="between" align="center" className="capabilities-page__header">
-          <Flex align="center" gap="3">
-            <Puzzle size={24} className="capabilities-page__icon" />
-            <Box>
-              <Heading as="h1" size="6" weight="medium">Capabilities</Heading>
-              <Text size="2" className="capabilities-page__description">
-                Manage repository manager capabilities and plugins
-              </Text>
-            </Box>
-          </Flex>
-          {canCreate && (
-            <SettingsButton variant="primary" onClick={handleStartCreate} data-analytics-id="nxrm-capability-create" icon={Plus}>
-              Create Capability
-            </SettingsButton>
-          )}
-        </Flex>
+        <PageHeader
+          title="Capabilities"
+          description="Manage repository manager capabilities and plugins"
+          breadcrumbs={breadcrumbs}
+          actions={actions}
+          className="capabilities-page__header"
+        />
       );
     }
 
-    // WizardForm handles headers for selectType and create views
+    // selectType and create views: show breadcrumbs only (WizardForm provides its own title)
     if (viewMode === 'selectType' || viewMode === 'create') {
-      return null;
+      return (
+        <PageHeader
+          breadcrumbs={[
+            { label: 'Settings', onClick: navigateToSettings },
+            { label: 'Capabilities', onClick: handleBack },
+            { label: 'Create' },
+          ]}
+          className="capabilities-page__header"
+        />
+      );
     }
 
     // Detail view
+    const breadcrumbs = [
+      { label: 'Settings', onClick: navigateToSettings },
+      { label: 'Capabilities', onClick: handleBack },
+      { label: selectedCapability?.typeName || 'Capability' },
+    ];
+
     return (
-      <Flex align="center" gap="3" className="capabilities-page__header">
-        <SettingsButton variant="ghost" onClick={handleBack} className="capabilities-page__back">
-          &#8592; Capabilities
-        </SettingsButton>
-        <Box>
-          <Heading as="h1" size="6" weight="medium">
-            {selectedCapability?.typeName || 'Capability'}
-          </Heading>
-          <Text size="2" className="capabilities-page__description">
-            {selectedCapability?.description || 'View and manage capability settings'}
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title={selectedCapability?.typeName || 'Capability'}
+        description={selectedCapability?.description || 'View and manage capability settings'}
+        breadcrumbs={breadcrumbs}
+        className="capabilities-page__header"
+      />
     );
   };
 
@@ -301,7 +314,6 @@ export function CapabilitiesPage({ className }: CapabilitiesPageProps) {
           <CapabilitiesList
             key={refreshKey}
             onSelect={handleSelectCapability}
-            refreshKey={refreshKey}
           />
         )}
 

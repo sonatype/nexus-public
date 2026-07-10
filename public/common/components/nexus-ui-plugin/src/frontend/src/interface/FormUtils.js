@@ -22,6 +22,11 @@ import {any, dissocPath, equals, hasPath, join, lensPath, path, pathOr, set, whe
 const FIELD_ID = 'FIELD ';
 const PARAMETER_ID = 'PARAMETER ';
 const HELPER_BEAN = 'HelperBean.';
+// Backend ConstraintViolation paths are rooted at "attributes." for repository
+// configuration (e.g. "attributes.docker.httpPort"), but forms bind to the
+// un-prefixed field name ("docker.httpPort"). Strip the leading segment so
+// inline save errors land on the right input. (NEXUS-51599)
+const ATTRIBUTES_PREFIX = 'attributes.';
 
 const SUBMITTING = false;
 const SUBMITTED = true;
@@ -212,7 +217,15 @@ export default class FormUtils {
               data.forEach(({id, message}) => {
                 id = id.replace(FIELD_ID, '');
                 id = id.replace(PARAMETER_ID, '');
-                id = id.replace(HELPER_BEAN, '');
+                // Anchor the HelperBean. and attributes. strips to the start
+                // of the string so an `id` that legitimately contains those
+                // tokens deeper in the property path isn't mangled mid-key.
+                if (id.startsWith(HELPER_BEAN)) {
+                  id = id.slice(HELPER_BEAN.length);
+                }
+                if (id.startsWith(ATTRIBUTES_PREFIX)) {
+                  id = id.slice(ATTRIBUTES_PREFIX.length);
+                }
                 saveErrors[id] = message;
               });
               return saveErrors;
@@ -454,7 +467,12 @@ export default class FormUtils {
       saveErrorData = {}
     } = current.context;
 
-    const saveError = path(fieldName, saveErrors);
+    // saveErrors is a flat-keyed object whose keys are the dotted form-field names
+    // produced by setSaveError (e.g. {'docker.httpPort': 'Port must be unique...'}).
+    // Look up by flat key first, then fall back to nested-path lookup for any
+    // legacy callers that still nest saveErrors into objects. (NEXUS-51599)
+    const flatKey = join('.', fieldName);
+    const saveError = saveErrors[flatKey] ?? path(fieldName, saveErrors);
     const savedValue = path(fieldName, saveErrorData);
     const currentValue = path(fieldName, data);
     const validationError = path(fieldName, validationErrors);

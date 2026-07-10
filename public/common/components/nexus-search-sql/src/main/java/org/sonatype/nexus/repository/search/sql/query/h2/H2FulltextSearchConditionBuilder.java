@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.search.sql.query.syntax.BooleanTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.ExactTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.LenientTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.Operand;
+import org.sonatype.nexus.repository.search.sql.query.syntax.RegexWildcardTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.SingleValueTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.StringTerm;
 import org.sonatype.nexus.repository.search.sql.query.syntax.WildcardTerm;
@@ -76,6 +77,12 @@ public class H2FulltextSearchConditionBuilder
       return true;
     }
     SingleValueTerm<?> term = Iterables.getOnlyElement(terms);
+
+    // RegexWildcardTerm is only used for single-value search scenarios, so it will never have multiple terms
+    // RegexWildcardTerm should use exact column with REGEX operand, not text search
+    if (term instanceof RegexWildcardTerm) {
+      return false;
+    }
 
     return !(term instanceof ExactTerm || term instanceof BooleanTerm);
   }

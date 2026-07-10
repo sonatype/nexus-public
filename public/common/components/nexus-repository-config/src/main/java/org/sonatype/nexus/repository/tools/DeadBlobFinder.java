@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.tools;
 
 import java.util.List;
 import java.util.function.Consumer;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.Repository;
 

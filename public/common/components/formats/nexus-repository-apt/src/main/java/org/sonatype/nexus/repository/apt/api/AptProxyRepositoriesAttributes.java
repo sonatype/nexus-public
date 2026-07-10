@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.repository.apt.api;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model for apt-specific proxy attributes.
@@ -25,8 +25,8 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class AptProxyRepositoriesAttributes
 {
-  @ApiModelProperty(
-      value = "Distribution name. When enforceDistribution is false (default), this field is optional and informational only - "
+  @Schema(
+      description = "Distribution name. When enforceDistribution is false (default), this field is optional and informational only - "
           +
           "proxy repositories forward all distribution requests to upstream transparently. " +
           "When enforceDistribution is true, this field is required and restricts requests to only the specified distribution.",
@@ -34,15 +34,15 @@ public class AptProxyRepositoriesAttributes
       required = false)
   private final String distribution;
 
-  @ApiModelProperty(
-      value = "Whether the upstream repository uses a flat structure (without distribution subdirectories). " +
+  @Schema(
+      description = "Whether the upstream repository uses a flat structure (without distribution subdirectories). " +
           "Set to true for flat repositories, false for standard hierarchical repositories.",
       example = "false",
       required = true)
   @NotNull
   private final Boolean flat;
 
-  @ApiModelProperty(value = "Whether to restrict requests to only the specified distribution", example = "false")
+  @Schema(description = "Whether to restrict requests to only the specified distribution", example = "false")
   private final Boolean enforceDistribution;
 
   @JsonCreator

@@ -13,36 +13,34 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Objects;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.DESCRIPTION_DESCRIPTION;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_DESCRIPTION;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_EXAMPLE;
-import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_NOTES;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.NAME_DESCRIPTION;
 
 /**
  * ContentSelector transfer object for REST APIs.
  */
-@ApiModel
+@Schema
 public class ContentSelectorApiCreateRequest
     implements ValidatableContentSelectorRequest
 {
-  @ApiModelProperty(value = NAME_DESCRIPTION)
+  @Schema(description = NAME_DESCRIPTION)
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotBlank
   private String name;
 
-  @ApiModelProperty(value = DESCRIPTION_DESCRIPTION, allowEmptyValue = true)
+  @Schema(description = DESCRIPTION_DESCRIPTION)
   private String description;
 
-  @ApiModelProperty(value = EXPRESSION_DESCRIPTION, example = EXPRESSION_EXAMPLE, notes = EXPRESSION_NOTES)
+  @Schema(description = EXPRESSION_DESCRIPTION, example = EXPRESSION_EXAMPLE)
   @NotBlank
   private String expression;
 

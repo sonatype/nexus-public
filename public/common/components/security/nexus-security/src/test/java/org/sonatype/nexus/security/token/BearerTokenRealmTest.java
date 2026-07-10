@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.token;
 import java.security.Principal;
 import java.util.Optional;
 import jakarta.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;

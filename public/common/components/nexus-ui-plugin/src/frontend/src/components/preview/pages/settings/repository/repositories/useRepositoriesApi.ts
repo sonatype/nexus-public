@@ -229,6 +229,46 @@ export function useRepositoriesApi() {
     }
   }, []);
 
+  /**
+   * Toggle a repository's online (system status) flag.
+   *
+   * The public v1 PUT requires the full format-specific config payload, so we
+   * first GET the current config from the format/type/name endpoint and then
+   * PUT it back with `online` flipped. Spreading a Repository fetched from the
+   * internal UI endpoint is unsafe here — it contains UI-only fields (status,
+   * url, recipe, attributes, routingRuleId) that the public PUT rejects.
+   *
+   * Concurrency note: the GET-then-PUT is not protected by If-Match/etag, so
+   * a concurrent admin write that lands between the two calls will be silently
+   * overwritten by this PUT. This matches the existing pattern in
+   * repositoryProfileMachine.ts (`executeToggleOnline`) and the Classic UI's
+   * form save path. A toggle-only operation is generally low-risk for this
+   * race; do not adopt this pattern for higher-stakes mutations without
+   * adding optimistic-locking support.
+   */
+  const setRepositoryOnline = useCallback(
+    async (name: string, format: string, type: string, online: boolean): Promise<void> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const apiFormat = getApiFormatPath(format);
+        const url = `${REPOSITORIES_REST_URL}/${encodeURIComponent(apiFormat)}/${encodeURIComponent(type)}/${encodeURIComponent(name)}`;
+        const fullConfig = await restClient.get<Record<string, unknown>>(url);
+        if (!fullConfig) {
+          throw new Error('Could not fetch repository configuration for update');
+        }
+        await restClient.put(url, { ...fullConfig, online });
+      } catch (err: unknown) {
+        const apiError = parseApiError(err);
+        setError(apiError.message);
+        throw new Error(apiError.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   // ==========================================================================
   // Reference Data
   // ==========================================================================
@@ -367,6 +407,19 @@ export function useRepositoriesApi() {
     }
   }, []);
 
+  /**
+   * Disable health check for a repository
+   * Uses REST API: DELETE /service/rest/v1/repositories/{name}/health-check
+   */
+  const disableHealthCheck = useCallback(async (repositoryName: string): Promise<void> => {
+    try {
+      await restClient.delete(ENDPOINTS.HEALTH_CHECK_ANALYZE(repositoryName));
+    } catch (err: unknown) {
+      const apiError = parseApiError(err);
+      throw new Error(apiError.message);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -379,6 +432,7 @@ export function useRepositoriesApi() {
     deleteRepository,
     invalidateCache,
     rebuildIndex,
+    setRepositoryOnline,
     // Reference data
     fetchRecipes,
     fetchBlobStores,
@@ -388,6 +442,7 @@ export function useRepositoriesApi() {
     // Health check
     fetchHealthCheckStatus,
     enableHealthCheck,
+    disableHealthCheck,
   };
 }
 
@@ -433,6 +488,7 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
         remoteUrl: data.proxy.remoteUrl,
         contentMaxAge: data.proxy.contentMaxAge ?? 1440,
         metadataMaxAge: data.proxy.metadataMaxAge ?? 1440,
+        preserveEncodedCharacters: data.proxy.preserveEncodedCharacters ?? false,
       };
     }
     if (data.negativeCache) {
@@ -566,11 +622,10 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
-  if (data.format === 'npm' && data.type === 'proxy' && data.npm) {
-    config.npm = {
-      removeQuarantinedVersions: data.npm.removeQuarantinedVersions ?? false,
-    };
-  }
+  // npm proxies have no extra format-specific config to send post-migration STL-381:
+  // the previous `npm.removeQuarantinedVersions` flag is dead (PCCS is now expressed via
+  // `firewall.mode = "PCCS"` and the migration step strips the field from migrated repos).
+  // The `NpmConfig` type was removed accordingly — see types.ts.
 
   if (data.format === 'nuget' && data.type === 'proxy') {
     config.nugetProxy = {
@@ -579,10 +634,20 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
     };
   }
 
-  if (data.format === 'pypi' && data.type === 'proxy' && data.pypi) {
+  if (data.format === 'pypi' && data.type === 'proxy') {
+    // Always emit the `pypi` block for pypi proxies. Guarding on `data.pypi`
+    // here meant a create where the user never opened the PyPI section sent
+    // no `pypi` field, and the backend converter (which short-circuits on
+    // null) left the repository with no pypi attributes — `indexPath` was
+    // effectively unset on the server. Default below mirrors the backend's
+    // `/simple` fallback so existing behaviour is preserved when the user
+    // doesn't touch the section.
+    //
+    // `removeQuarantinedVersions` removed post-migration STL-381 — see
+    // PypiConfig comment in types.ts and the migration step's
+    // removeFormatAttribute call.
     config.pypi = {
-      indexPath: data.pypi.indexPath,
-      removeQuarantinedVersions: data.pypi.removeQuarantinedVersions ?? false,
+      indexPath: data.pypi?.indexPath ?? '/simple',
     };
   }
 

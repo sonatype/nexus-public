@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.jwt.datastore;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -127,6 +128,109 @@ public class JwtSessionDAOTest
   public void testNonExistentSession() {
     boolean revoked = withDao(d -> d.isRevoked("non-existent-session"));
     assertThat(revoked, is(false));
+  }
+
+  @Test
+  public void testInvalidateUserAndIsUserInvalidatedAfter() {
+    OffsetDateTime cutoff = OffsetDateTime.now();
+
+    // No invalidation yet
+    assertThat(withDao(d -> d.isUserInvalidatedAfter("alice", cutoff.minusMinutes(5))), is(false));
+
+    // Record user-wide invalidation (user_source stored but not used in match)
+    JwtSessionData invalidation = new JwtSessionData();
+    invalidation.setUserSessionId(UUID.randomUUID().toString());
+    invalidation.setUsername("alice");
+    invalidation.setUserSource("default");
+    invalidation.setRevokedAt(cutoff);
+    invalidation.setExpiresAt(cutoff.plusHours(1));
+    invalidation.setType(JwtSessionData.TYPE_USER_INVALIDATION);
+    callDao(d -> d.invalidateUser(invalidation));
+
+    // JWT issued BEFORE the cutoff → invalidated
+    assertThat(withDao(d -> d.isUserInvalidatedAfter("alice", cutoff.minusMinutes(5))), is(true));
+
+    // JWT issued AFTER the cutoff → not invalidated
+    assertThat(withDao(d -> d.isUserInvalidatedAfter("alice", cutoff.plusMinutes(5))), is(false));
+
+    // Different username → not invalidated
+    assertThat(withDao(d -> d.isUserInvalidatedAfter("bob", cutoff.minusMinutes(5))), is(false));
+  }
+
+  @Test
+  public void testIsRevokedDoesNotMatchUserInvalidationRows() {
+    // Insert only a USER_INVALIDATION row
+    String syntheticId = UUID.randomUUID().toString();
+    JwtSessionData invalidation = new JwtSessionData();
+    invalidation.setUserSessionId(syntheticId);
+    invalidation.setUsername("alice");
+    invalidation.setUserSource("default");
+    invalidation.setRevokedAt(OffsetDateTime.now());
+    invalidation.setExpiresAt(OffsetDateTime.now().plusHours(1));
+    invalidation.setType(JwtSessionData.TYPE_USER_INVALIDATION);
+    callDao(d -> d.invalidateUser(invalidation));
+
+    // isRevoked is scoped to type='SESSION' and must not match this row
+    assertThat(withDao(d -> d.isRevoked(syntheticId)), is(false));
+  }
+
+  @Test
+  public void testRevokeSessionLegacyAndIsRevokedLegacy() {
+    // Initially not revoked
+    assertThat(withDao(d -> d.isRevokedLegacy("legacy-session-1")), is(false));
+
+    // Revoke using the legacy path (no type column)
+    JwtSessionData sessionData = new JwtSessionData();
+    sessionData.setUserSessionId("legacy-session-1");
+    sessionData.setUsername("testuser");
+    sessionData.setUserSource("default");
+    sessionData.setRevokedAt(OffsetDateTime.now());
+    sessionData.setExpiresAt(OffsetDateTime.now().plusHours(1));
+    callDao(d -> d.revokeSessionLegacy(sessionData));
+
+    // Now it should be revoked via legacy check
+    assertThat(withDao(d -> d.isRevokedLegacy("legacy-session-1")), is(true));
+  }
+
+  @Test
+  public void testDeleteExpiredRemovesBothRowKinds() {
+    // Expired SESSION row
+    JwtSessionData expiredSession = new JwtSessionData();
+    expiredSession.setUserSessionId("expired-session-row");
+    expiredSession.setUsername("alice");
+    expiredSession.setUserSource("default");
+    expiredSession.setRevokedAt(OffsetDateTime.now().minusHours(2));
+    expiredSession.setExpiresAt(OffsetDateTime.now().minusHours(1));
+    callDao(d -> d.revokeSession(expiredSession));
+
+    // Expired USER_INVALIDATION row
+    String expiredInvId = UUID.randomUUID().toString();
+    JwtSessionData expiredInvalidation = new JwtSessionData();
+    expiredInvalidation.setUserSessionId(expiredInvId);
+    expiredInvalidation.setUsername("alice");
+    expiredInvalidation.setUserSource("default");
+    expiredInvalidation.setRevokedAt(OffsetDateTime.now().minusHours(2));
+    expiredInvalidation.setExpiresAt(OffsetDateTime.now().minusHours(1));
+    expiredInvalidation.setType(JwtSessionData.TYPE_USER_INVALIDATION);
+    callDao(d -> d.invalidateUser(expiredInvalidation));
+
+    // Active USER_INVALIDATION row
+    String activeInvId = UUID.randomUUID().toString();
+    JwtSessionData activeInvalidation = new JwtSessionData();
+    activeInvalidation.setUserSessionId(activeInvId);
+    activeInvalidation.setUsername("bob");
+    activeInvalidation.setUserSource("default");
+    activeInvalidation.setRevokedAt(OffsetDateTime.now());
+    activeInvalidation.setExpiresAt(OffsetDateTime.now().plusHours(1));
+    activeInvalidation.setType(JwtSessionData.TYPE_USER_INVALIDATION);
+    callDao(d -> d.invalidateUser(activeInvalidation));
+
+    int deleted = withDao(JwtSessionDAO::deleteExpiredSessions);
+    assertThat(deleted, is(2));
+
+    // Active invalidation remains
+    assertThat(withDao(d -> d.isUserInvalidatedAfter("bob",
+        OffsetDateTime.now().minusMinutes(1))), is(true));
   }
 
   private void callDao(final Consumer<JwtSessionDAO> fn) {

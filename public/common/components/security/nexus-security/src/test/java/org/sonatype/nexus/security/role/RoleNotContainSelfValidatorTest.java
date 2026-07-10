@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.role;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.security.Roles;
 import org.sonatype.nexus.security.SecuritySystem;

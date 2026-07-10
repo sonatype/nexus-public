@@ -17,22 +17,22 @@ import java.util.List;
 import org.sonatype.nexus.api.rest.selfhosted.security.usersource.model.ApiUserSource;
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Swagger documentation for {@link SecurityApiResource}
  *
  * @since 3.17
  */
-@Api(value = "Security management")
+@Tag(name = "Security management")
 public interface SecurityApiResourceDoc
 {
-  @ApiOperation("Retrieve a list of the available user sources.")
+  @Operation(summary = "Retrieve a list of the available user sources.")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)
   })
   List<ApiUserSource> getUserSources();
 }

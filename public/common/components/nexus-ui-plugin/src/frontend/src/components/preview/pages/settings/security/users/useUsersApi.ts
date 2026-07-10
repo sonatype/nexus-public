@@ -14,6 +14,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 // Sprint 15: ExtAPIUtils and APIConstants removed - no longer using ExtDirect
 import { restClient, parseApiError, ENDPOINTS, urlBuilder } from '../../../../../../interface/api';
+import { ExtJS } from '../../../../../../interface/ExtJS';
 import { User, UserSource, Role, UserFormData, DEFAULT_SOURCE, isExternalUser } from './types';
 
 export interface UserInviteData {
@@ -98,10 +99,13 @@ export function useUsersApi() {
    */
   const fetchUsers = useCallback(async (
     filter: string = '',
-    sourceFilter: string = DEFAULT_SOURCE
+    sourceFilter?: string
   ): Promise<User[]> => {
     try {
-      const params: Record<string, string> = { source: sourceFilter };
+      const params: Record<string, string> = {};
+      if (sourceFilter) {
+        params.source = sourceFilter;
+      }
       if (filter) {
         params.userId = filter;
       }
@@ -195,8 +199,21 @@ export function useUsersApi() {
     setError(null);
     try {
       if (isExternalUser(source)) {
-        // External users: update role mappings via REST
-        // PUT /v1/security/users/{userId} with source query param
+        const isCloud = ExtJS.state?.().getValue?.('isCloud', false) ?? false;
+        if (isCloud) {
+          // Cloud: dedicated role sub-resource (PUT /v1/security/users/{userId}/roles)
+          await restClient.put(urlBuilder.users.updateRoles(userId), {
+            roles: data.roles ?? [],
+          });
+          return {
+            ...data,
+            userId,
+            source,
+            realm: source,
+            status: data.status ? 'active' : 'disabled',
+          } as User;
+        }
+        // Self-hosted: update role mappings via PUT /v1/security/users/{userId}?source=
         const payload = {
           userId: userId,
           firstName: data.firstName || userId,

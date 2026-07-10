@@ -180,6 +180,180 @@ describe('heritageToPreviewPath', () => {
   });
 });
 
+describe('heritageToPreviewPath — additional branches', () => {
+  describe('browse/browse (bare, no repo)', () => {
+    it('maps browse/browse to preview/browse', () => {
+      expect(heritageToPreviewPath('browse/browse')).toBe('preview/browse');
+    });
+  });
+
+  describe('browse repo paths (browseRepoMatch)', () => {
+    it('maps repo-only path (no colon) to preview browse with trailing slash', () => {
+      expect(heritageToPreviewPath('browse/browse:my-repo')).toBe('preview/browse/my-repo/');
+    });
+
+    it('maps repo + node path (colon-separated) to preview browse with slash-separated path', () => {
+      expect(heritageToPreviewPath('browse/browse:my-repo:com%2Ffoo')).toBe('preview/browse/my-repo/com/foo');
+    });
+
+    it('maps repo with empty node path (trailing colon) to preview browse without trailing slash', () => {
+      expect(heritageToPreviewPath('browse/browse:my-repo:')).toBe('preview/browse/my-repo');
+    });
+
+    it('preserves query string on repo-only browse path', () => {
+      expect(heritageToPreviewPath('browse/browse:my-repo?tab=info')).toBe('preview/browse/my-repo/?tab=info');
+    });
+  });
+
+  describe('browse/search routes', () => {
+    it('maps browse/search/generic=keyword=<q> to preview browse search with q param', () => {
+      expect(heritageToPreviewPath('browse/search/generic=keyword=hello')).toBe('preview/browse/search?q=hello');
+    });
+
+    it('maps browse/search/generic (exact) to preview browse search', () => {
+      expect(heritageToPreviewPath('browse/search/generic')).toBe('preview/browse/search');
+    });
+
+    it('maps browse/search/maven (format-specific) to preview browse search', () => {
+      expect(heritageToPreviewPath('browse/search/maven')).toBe('preview/browse/search');
+    });
+  });
+
+  describe('browse/malwarerisk routes', () => {
+    // NOTE: This nexus-coreui-plugin implementation keeps the legacy 'malwarerisk'
+    // segment in the preview path. The nexus-ui-plugin copy of this utility
+    // maps the same input to 'preview/browse/malicious-packages' (the renamed
+    // route). Both mappings are intentionally correct for their own module.
+    it('maps browse/malwarerisk (exact) to preview browse malwarerisk', () => {
+      expect(heritageToPreviewPath('browse/malwarerisk')).toBe('preview/browse/malwarerisk');
+    });
+
+    it('maps browse/malwarerisk sub-path to preview browse malwarerisk', () => {
+      expect(heritageToPreviewPath('browse/malwarerisk/deep')).toBe('preview/browse/malwarerisk');
+    });
+  });
+
+  describe('admin root paths', () => {
+    it('maps admin (bare) to preview/settings', () => {
+      expect(heritageToPreviewPath('admin')).toBe('preview/settings');
+    });
+
+    it('maps admin/ (with trailing slash) to preview/settings', () => {
+      expect(heritageToPreviewPath('admin/')).toBe('preview/settings');
+    });
+  });
+
+  describe('admin/security/atlassiancrowd sub-paths', () => {
+    it('maps atlassiancrowd sub-path to preview crowd route', () => {
+      expect(heritageToPreviewPath('admin/security/atlassiancrowd/sub')).toBe('preview/admin/security/crowd');
+    });
+  });
+
+  describe('user routes', () => {
+    it('maps user/account (exact) to preview user account', () => {
+      expect(heritageToPreviewPath('user/account')).toBe('preview/user/account');
+    });
+
+    it('maps user/account sub-path to preview user account', () => {
+      expect(heritageToPreviewPath('user/account/settings')).toBe('preview/user/account');
+    });
+
+    it('maps user/NuGetApiToken to preview user nugetapitoken', () => {
+      expect(heritageToPreviewPath('user/NuGetApiToken')).toBe('preview/user/nugetapitoken');
+    });
+
+    it('maps user/usertoken to preview user usertoken', () => {
+      expect(heritageToPreviewPath('user/usertoken')).toBe('preview/user/usertoken');
+    });
+
+    it('maps other user/ paths via fallthrough', () => {
+      expect(heritageToPreviewPath('user/other')).toBe('preview/user/other');
+    });
+  });
+
+  describe('admin renamed routes (sub-paths)', () => {
+    it('maps admin/repository/cleanuppolicies sub-path to preview cleanup-policies', () => {
+      expect(heritageToPreviewPath('admin/repository/cleanuppolicies/my-policy'))
+        .toBe('preview/admin/repository/cleanup-policies/my-policy');
+    });
+
+    it('maps admin/repository/cleanuppolicies (exact) to preview cleanup-policies', () => {
+      expect(heritageToPreviewPath('admin/repository/cleanuppolicies'))
+        .toBe('preview/admin/repository/cleanup-policies');
+    });
+
+    it('maps admin/repository/routingrules sub-path to preview routing-rules', () => {
+      expect(heritageToPreviewPath('admin/repository/routingrules/my-rule'))
+        .toBe('preview/admin/repository/routing-rules/my-rule');
+    });
+
+    it('maps admin/repository/routingrules (exact) to preview routing-rules', () => {
+      expect(heritageToPreviewPath('admin/repository/routingrules'))
+        .toBe('preview/admin/repository/routing-rules');
+    });
+
+    it('maps admin/security/usertoken (exact) to preview user-tokens', () => {
+      expect(heritageToPreviewPath('admin/security/usertoken'))
+        .toBe('preview/admin/security/user-tokens');
+    });
+
+    it('maps admin/security/usertoken sub-path to preview user-tokens', () => {
+      expect(heritageToPreviewPath('admin/security/usertoken/sub'))
+        .toBe('preview/admin/security/user-tokens/sub');
+    });
+
+    it('maps admin/support/status sub-path to preview metrichealth', () => {
+      expect(heritageToPreviewPath('admin/support/status/metrics'))
+        .toBe('preview/admin/support/metrichealth/metrics');
+    });
+  });
+
+  describe('else (unrecognised) paths', () => {
+    it('maps an unknown path by prepending preview/', () => {
+      expect(heritageToPreviewPath('some/other')).toBe('preview/some/other');
+    });
+  });
+
+  describe('query string preservation', () => {
+    it('appends query string from a browse/welcome path', () => {
+      expect(heritageToPreviewPath('browse/welcome?tab=info')).toBe('preview/browse/welcome?tab=info');
+    });
+
+    it('appends query string from an admin path', () => {
+      expect(heritageToPreviewPath('admin/repository/repositories?tab=config'))
+        .toBe('preview/admin/repository/repositories?tab=config');
+    });
+  });
+});
+
+describe('getHeritageEquivalent — additional branches', () => {
+  describe('function heritage (preview/browse/ with repo path)', () => {
+    it('invokes previewBrowsePathToHeritageBrowseParam for a repo browse path', () => {
+      expect(getHeritageEquivalent('preview/browse/my-repo/')).toBe('browse/browse:my-repo');
+    });
+
+    it('invokes function heritage and appends query string', () => {
+      expect(getHeritageEquivalent('preview/browse/my-repo/?tab=info'))
+        .toBe('browse/browse:my-repo?tab=info');
+    });
+
+    it('invokes function heritage for a repo with a node path', () => {
+      expect(getHeritageEquivalent('preview/browse/my-repo/com/foo'))
+        .toBe('browse/browse:my-repo:com%2Ffoo');
+    });
+  });
+
+  describe('startsWith(preview + "/") with empty suffix', () => {
+    it('returns the heritage value without a colon when path has a trailing slash', () => {
+      expect(getHeritageEquivalent('preview/browse/welcome/')).toBe('browse/welcome');
+    });
+
+    it('returns heritage without colon for admin page with trailing slash', () => {
+      expect(getHeritageEquivalent('preview/admin/system/tasks/')).toBe('admin/system/tasks');
+    });
+  });
+});
+
 describe('previewBrowsePathToHeritageBrowseParam', () => {
   it('maps repo browse path', () => {
     expect(previewBrowsePathToHeritageBrowseParam('preview/browse/my-repo/'))

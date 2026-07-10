@@ -178,7 +178,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
 
   const fetchFirewallStatus = useCallback(async () => {
     try {
-      const data = await restClient.get<FirewallStatusData[]>(ENDPOINTS.FIREWALL_STATUS);
+      const data = await restClient.get<FirewallStatusData[]>(ENDPOINTS.FIREWALL_STATUS_SUMMARY);
       return (data || []).reduce<Record<string, FirewallStatusData>>((acc, item) => {
         acc[item.repositoryName] = item;
         return acc;
@@ -741,7 +741,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                                   </Table.Cell>
                                   <Table.Cell>
                                     <Text size="2" color="gray">
-                                      {repo.attributes?.storage?.blobStoreName || '—'}
+                                      {repo.blobStoreName || '—'}
                                     </Text>
                                   </Table.Cell>
                                   <Table.Cell>

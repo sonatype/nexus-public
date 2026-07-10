@@ -11,10 +11,19 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import React from 'react';
 import { Box, Flex, Text, Tabs } from '@radix-ui/themes';
-import { Loader2, Trash2, FileText, Settings as SettingsIcon, Shield, ShieldCheck } from 'lucide-react';
-import { ExtJS } from '../../../../../../interface/ExtJS';
+import {
+  Loader2,
+  Trash2,
+  FileText,
+  Settings as SettingsIcon,
+  Shield,
+  ShieldCheck,
+  Database,
+  RotateCcw,
+  Power,
+} from 'lucide-react';
 
 import {
   SettingsForm,
@@ -22,23 +31,11 @@ import {
   SettingsTextInput,
   SettingsCheckbox,
   SettingsButton,
-  SettingsAlert,
 } from '../../../../shared/form';
 
-import { useRepositoriesApi } from './useRepositoriesApi';
 import { useRepositoryForm } from './useRepositoryForm';
-import { validateRepository } from './repositoryFormMachine';
-import { hasFormErrors } from './types';
+import { RepositoryFormProps } from './types';
 import { RepositorySummary } from './RepositorySummary';
-import {
-  Repository,
-  RepositoryFormData,
-  RepositoryFormProps,
-  BlobStore,
-  RoutingRule,
-  CleanupPolicy,
-  RepositoryReference,
-} from './types';
 
 // Import facets
 import { StorageFacet } from './facets/StorageFacet';
@@ -54,7 +51,6 @@ import { AptFacet } from './facets/AptFacet';
 import { AlpineFacet } from './facets/AlpineFacet';
 import { YumFacet } from './facets/YumFacet';
 import { NugetFacet } from './facets/NugetFacet';
-import { NpmFacet } from './facets/NpmFacet';
 import { PyPiFacet } from './facets/PyPiFacet';
 import { RawFacet } from './facets/RawFacet';
 import { RoutingRuleFacet } from './facets/RoutingRuleFacet';
@@ -62,18 +58,11 @@ import { RepositoryFirewallConfigTab } from './RepositoryFirewallConfigTab';
 
 import './RepositoryForm.scss';
 
-function hasFirewallLicense(): boolean {
-  try {
-    const clm = ExtJS.state()?.getValue?.('clm');
-    return !!(clm?.enabled ?? clm?.hasFirewall);
-  } catch {
-    return false;
-  }
-}
-
 /**
- * RepositoryForm - Create/Edit form for repositories
- * Now uses XState for state management via useRepositoryForm hook
+ * RepositoryForm - Create/Edit form for repositories (Layer 3: Presentation)
+ *
+ * This component is purely presentational. All business logic, state management,
+ * and integration concerns are handled by useRepositoryForm (Layer 2).
  */
 export function RepositoryForm({
   repository,
@@ -82,6 +71,10 @@ export function RepositoryForm({
   onSave,
   onCancel,
   onDelete,
+  onRebuildIndex,
+  onInvalidateCache,
+  onToggleOnline,
+  isActionInFlight = false,
   loading,
   error,
   hideActions = false,
@@ -89,89 +82,34 @@ export function RepositoryForm({
   advanceOnly = false,
   onCanAdvanceChange,
 }: RepositoryFormProps & { onSubmitRef?: React.MutableRefObject<(() => void) | null> }) {
-  const { createRepository, updateRepository } = useRepositoriesApi();
-  const [activeTab, setActiveTab] = useState(isCreate ? 'summary' : 'settings');
-  const [originChangeWarning, setOriginChangeWarning] = useState(false);
-
-  // Use XState form hook
-  const { form, repository: loadedRepository } = useRepositoryForm({
+  const {
+    form,
+    hasFirewallLicense,
+    isCloud,
+    activeTab,
+    setActiveTab,
+    originChangeWarning,
+    setOriginChangeWarning,
+    formData,
+    pristineData,
+    errors,
+    blobStores,
+    routingRules,
+    cleanupPolicies,
+    memberRepositories,
+    handleChange,
+    handleNestedChange,
+  } = useRepositoryForm({
     repositoryName: isCreate ? undefined : repository?.name,
     repository: repository || undefined,
     format: recipe.format,
     repositoryType: recipe.type,
     onSave,
     onCancel,
-    createRepository,
-    updateRepository,
     advanceOnly,
+    onSubmitRef,
+    onCanAdvanceChange,
   });
-
-  const isCloud = ExtJS.state?.().getValue?.('isCloud', false) ?? false;
-
-  // Expose submit function to parent via ref (for WizardForm integration)
-  useEffect(() => {
-    if (onSubmitRef) {
-      onSubmitRef.current = () => {
-        if (!form.isLoading && !form.isSaving) {
-          if (advanceOnly && onSave) {
-            // Bypass the machine's SUBMIT → saved (final) transition.
-            // Validate manually and call onSave directly so the machine stays
-            // in 'editing' state, keeping the form editable if the user navigates back.
-            const errors = validateRepository(form.data as RepositoryFormData, { isCloud });
-            if (!hasFormErrors(errors)) {
-              onSave(form.data as RepositoryFormData);
-            } else {
-              // Show validation errors via normal machine flow (stays in editing due to errors)
-              form.send('SUBMIT');
-            }
-          } else {
-            form.send('SUBMIT');
-          }
-        }
-      };
-      return () => { onSubmitRef.current = null; };
-    }
-  }, [onSubmitRef, form, form.isLoading, form.isSaving, advanceOnly, onSave, isCloud]);
-
-  // Report form validity for wizard Next button (step 2)
-  useEffect(() => {
-    if (!onCanAdvanceChange) return;
-    if (form.isLoading) {
-      onCanAdvanceChange(false);
-      return;
-    }
-    if (form.data) {
-      const errors = validateRepository(form.data as RepositoryFormData, { isCloud });
-      onCanAdvanceChange(!hasFormErrors(errors));
-    }
-  }, [form.data, form.isLoading, onCanAdvanceChange, isCloud]);
-
-  // Access extended context for reference data
-  const context = form.state.context as any;
-  const pristineData = context.pristineData as RepositoryFormData | undefined;
-  const formData = form.data as RepositoryFormData;
-  const blobStores: BlobStore[] = context.blobStores || [];
-  const routingRules: RoutingRule[] = context.routingRules || [];
-  const cleanupPolicies: CleanupPolicy[] = context.cleanupPolicies || [];
-  const memberOptions: RepositoryReference[] = context.memberRepositories || [];
-
-  // Bridge functions for facets - translate form.send() to the onChange/onNestedChange pattern
-  const handleChange = useCallback((updates: Partial<RepositoryFormData>) => {
-    Object.entries(updates).forEach(([key, value]) => {
-      form.send({ type: 'UPDATE', name: key, value });
-    });
-  }, [form]);
-
-  const handleNestedChange = useCallback(<K extends keyof RepositoryFormData>(
-    key: K,
-    updates: Partial<RepositoryFormData[K]>
-  ) => {
-    const current = (formData as any)[key] || {};
-    form.send({ type: 'UPDATE', name: key as string, value: { ...current, ...updates } });
-  }, [form, formData]);
-
-  // Validation errors from machine
-  const errors = form.validationErrors || {};
 
   // Determine which facets to show based on repository type
   const showProxyFacets = recipe.type === 'proxy';
@@ -228,6 +166,7 @@ export function RepositoryForm({
             onNestedChange={handleNestedChange}
             errors={errors}
             repoType={recipe.type}
+            isCloud={isCloud}
           />
         )}
 
@@ -266,19 +205,16 @@ export function RepositoryForm({
           />
         )}
 
-        {recipe.format === 'npm' && recipe.type === 'proxy' && (
-          <NpmFacet
-            formData={formData}
-            onNestedChange={handleNestedChange}
-            showFirewallFeatures={hasFirewallLicense()}
-          />
-        )}
+        {/* npm proxies have no extra format-specific config in the new UI: the previous npm
+         * Settings section contained only the legacy `removeQuarantinedVersions` checkbox,
+         * which is dead post-migration STL-381 (PCCS is now expressed via firewall.mode and
+         * the field is stripped by the migration step). The Firewall tab's PCCS button is
+         * the canonical way to enable PCCS on npm/pypi proxies. */}
 
         {recipe.format === 'pypi' && recipe.type === 'proxy' && (
           <PyPiFacet
             formData={formData}
             onNestedChange={handleNestedChange}
-            showFirewallFeatures={hasFirewallLicense()}
           />
         )}
 
@@ -289,7 +225,22 @@ export function RepositoryForm({
           />
         )}
 
-        {/* Proxy-specific sections */}
+        {/* Storage Section — placed before ProxyFacet to match Classic UI order
+            (e.g. maven2_proxy: VersionPolicy, LayoutPolicy, ContentDisposition,
+            Storage, Proxy, Options, Cleanup, ...). This also positions
+            NugetFacet's "Query Cache Item Max Age" correctly relative to
+            Storage. */}
+        <StorageFacet
+          formData={formData}
+          onChange={handleChange}
+          onNestedChange={handleNestedChange}
+          errors={errors}
+          isEdit={!isCreate}
+          isCloud={isCloud}
+          blobStores={blobStores}
+        />
+
+        {/* Proxy-specific sections (remote URL, content/metadata max age) */}
         {showProxyFacets && (
           <ProxyFacet
             formData={formData}
@@ -300,17 +251,6 @@ export function RepositoryForm({
             originChangeWarning={originChangeWarning}
           />
         )}
-
-        {/* Storage Section */}
-        <StorageFacet
-          formData={formData}
-          onChange={handleChange}
-          onNestedChange={handleNestedChange}
-          errors={errors}
-          isEdit={!isCreate}
-          isCloud={isCloud}
-          blobStores={blobStores}
-        />
 
         {/* Hosted-specific sections - after Storage to match Classic UI order */}
         {showHostedFacets && (
@@ -329,7 +269,7 @@ export function RepositoryForm({
             onChange={handleChange}
             onNestedChange={handleNestedChange}
             errors={errors}
-            memberOptions={memberOptions}
+            memberOptions={memberRepositories}
             format={recipe.format}
           />
         )}
@@ -386,7 +326,7 @@ export function RepositoryForm({
   const formBody = (
     <>
       {!isCreate && repository ? (
-        <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="repository-form__tabs">
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab as (v: string) => void} className="repository-form__tabs">
           <Tabs.List>
             <Tabs.Trigger value="summary">
               <FileText size={16} /> Summary
@@ -412,6 +352,7 @@ export function RepositoryForm({
                 repository={repository}
                 formData={formData}
                 onNavigateToTab={setActiveTab}
+                isCloud={isCloud}
               />
             </Tabs.Content>
 
@@ -424,15 +365,17 @@ export function RepositoryForm({
                 <Tabs.Content value="firewall">
                   <RepositoryFirewallConfigTab
                     repositoryName={repository.name}
-                    hasFirewallLicense={hasFirewallLicense()}
+                    hasFirewallLicense={hasFirewallLicense}
                     showHealthCheck={false}
+                    format={recipe.format}
                   />
                 </Tabs.Content>
                 <Tabs.Content value="health-check">
                   <RepositoryFirewallConfigTab
                     repositoryName={repository.name}
-                    hasFirewallLicense={hasFirewallLicense()}
+                    hasFirewallLicense={hasFirewallLicense}
                     showFirewall={false}
+                    format={recipe.format}
                   />
                 </Tabs.Content>
               </>
@@ -445,9 +388,6 @@ export function RepositoryForm({
     </>
   );
 
-  // When hideActions is true, don't wrap in SettingsForm (WizardForm provides the wrapper)
-  // The form submission will be handled by WizardForm's onComplete callback
-  // We expose the submit handler via a data attribute so WizardForm can trigger it
   if (hideActions) {
     return (
       <Box className="repository-form" data-testid="repository-form">
@@ -456,7 +396,46 @@ export function RepositoryForm({
     );
   }
 
-  // Normal mode - wrap in SettingsForm
+  // Repository action buttons (edit mode only). Visibility mirrors the Classic UI
+  // (RepositoryFeature.js + bindIfProxyOrHosted/Group helpers in Repositories.js):
+  //   - Rebuild Index: hosted OR proxy (not group) — backend rejects others.
+  //   - Invalidate Cache: proxy OR group (not hosted) — backend rejects hosted.
+  //   - Toggle Online: all three repo types.
+  //   - Delete: all three repo types.
+  // pristineData drives visibility/disabled state because it reflects the saved
+  // type from the server, not the (read-only) form value, and does not change
+  // while the user edits the form.
+  const isEdit = !isCreate;
+  const savedType = pristineData?.type ?? recipe.type;
+  const showRebuildIndex = isEdit && !!onRebuildIndex && (savedType === 'hosted' || savedType === 'proxy');
+  const showInvalidateCache = isEdit && !!onInvalidateCache && (savedType === 'proxy' || savedType === 'group');
+  const showToggleOnline = isEdit && !!onToggleOnline;
+  const showDelete = isEdit && !!onDelete;
+  const hasAnyAction = showRebuildIndex || showInvalidateCache || showToggleOnline || showDelete;
+
+  // Use pristineData.online for the label so it reflects the *saved* status,
+  // not the (potentially edited) Online checkbox value. The toggle action
+  // affects the persisted state, independent of unsaved form changes.
+  const isOnlineSaved = pristineData?.online ?? true;
+  // Action buttons are disabled while the form itself is saving, while the
+  // page is loading new data, AND while another action (rebuild / invalidate
+  // / toggle) is mid-flight. The last condition prevents firing a second POST
+  // before the first completes — see RepositoryProfilePage.tsx for the same
+  // pattern (`disabled={isExecuting || isDeleting}`).
+  const actionsDisabled = !!form.isSaving || !!loading || isActionInFlight;
+  // Toggling online does a GET-then-PUT of the saved repository config, so
+  // any unsaved edits in the form would be discarded by the refetch that
+  // follows the PUT. Block the toggle while the form is dirty rather than
+  // silently destroying user input — the user can save (or discard) first
+  // and then toggle.
+  const toggleOnlineBlockedByDirtyForm = !form.isPristine;
+  const toggleOnlineDisabled = actionsDisabled || toggleOnlineBlockedByDirtyForm;
+  const toggleOnlineTitle = toggleOnlineBlockedByDirtyForm
+    ? 'Save or discard your unsaved changes before toggling system status'
+    : isOnlineSaved
+      ? 'Take this repository offline'
+      : 'Bring this repository online';
+
   return (
     <Box className="repository-form">
       <SettingsForm
@@ -471,17 +450,58 @@ export function RepositoryForm({
         submitAnalyticsId={isCreate ? 'nxrm-repository-create' : 'nxrm-repository-save'}
         cancelAnalyticsId="nxrm-repository-cancel"
         footerExtra={
-          !isCreate && onDelete ? (
-            <SettingsButton
-              variant="danger"
-              onClick={onDelete}
-              disabled={form.isSaving || loading}
-              icon={Trash2}
-              testId="form-delete"
-              data-analytics-id="nxrm-repository-delete"
-            >
-              Delete
-            </SettingsButton>
+          hasAnyAction ? (
+            <Flex gap="2" wrap="wrap" align="center">
+              {showRebuildIndex && (
+                <SettingsButton
+                  variant="secondary"
+                  onClick={onRebuildIndex}
+                  disabled={actionsDisabled}
+                  icon={Database}
+                  testId="form-rebuild-index"
+                  data-analytics-id="nxrm-repository-rebuild-index"
+                >
+                  Rebuild Index
+                </SettingsButton>
+              )}
+              {showInvalidateCache && (
+                <SettingsButton
+                  variant="secondary"
+                  onClick={onInvalidateCache}
+                  disabled={actionsDisabled}
+                  icon={RotateCcw}
+                  testId="form-invalidate-cache"
+                  data-analytics-id="nxrm-repository-invalidate-cache"
+                >
+                  Invalidate Cache
+                </SettingsButton>
+              )}
+              {showToggleOnline && (
+                <SettingsButton
+                  variant="secondary"
+                  onClick={() => onToggleOnline?.(!isOnlineSaved)}
+                  disabled={toggleOnlineDisabled}
+                  icon={Power}
+                  testId="form-toggle-online"
+                  data-analytics-id="nxrm-repository-toggle-online"
+                  title={toggleOnlineTitle}
+                >
+                  {isOnlineSaved ? 'Disable System Status' : 'Enable System Status'}
+                </SettingsButton>
+              )}
+              {showDelete && (
+                <SettingsButton
+                  variant="danger"
+                  onClick={onDelete}
+                  disabled={actionsDisabled}
+                  icon={Trash2}
+                  testId="form-delete"
+                  data-analytics-id="nxrm-repository-delete"
+                >
+                  Delete
+                </SettingsButton>
+              )}
+            </Flex>
           ) : undefined
         }
       >
@@ -491,4 +511,3 @@ export function RepositoryForm({
   );
 }
 
-export default RepositoryForm;

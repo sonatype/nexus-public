@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 
 import java.util.Enumeration;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.view.Headers;
 

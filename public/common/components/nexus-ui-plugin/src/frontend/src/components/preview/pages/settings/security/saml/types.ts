@@ -19,8 +19,9 @@ export interface SamlConfiguration {
   lastNameAttribute?: string;
   emailAttribute?: string;
   groupsAttribute?: string;
-  validateResponseSignature?: boolean;
-  validateAssertionSignature?: boolean;
+  // Tri-state: null = Default (backend decides), true = Force enabled, false = Force disabled
+  validateResponseSignature?: boolean | null;
+  validateAssertionSignature?: boolean | null;
 }
 
 export interface SamlPageProps {

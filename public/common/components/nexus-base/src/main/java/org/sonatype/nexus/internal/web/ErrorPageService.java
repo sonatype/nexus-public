@@ -14,11 +14,9 @@ package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
 
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
-import javax.ws.rs.core.Response.Status;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
@@ -27,11 +25,11 @@ import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
 import jakarta.annotation.Nullable;
-import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
+import org.eclipse.jetty.ee10.servlet.ServletContextResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 /**
  * Service to write a rendered HTML error page
@@ -79,17 +77,12 @@ public class ErrorPageService
       errorMessage = "Unknown error";
     }
     else {
-      response.setStatus(errorCode, errorMessage);
-      ServletResponse resp = response;
-      if (response instanceof ShiroHttpServletResponse) {
-        resp = ((ShiroHttpServletResponse) response).getResponse();
-        while (resp instanceof HttpServletResponseWrapper) {
-          resp = ((HttpServletResponseWrapper) resp).getResponse();
-        }
-      }
-      if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
-        ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(errorCode, errorMessage);
-      }
+      // NEXUS-46395: HttpServletResponse.setStatus(int, String) was removed in Jakarta
+      // Servlet 6; only setStatus(int) remains. The custom HTTP/1.1 reason phrase that
+      // Firewall depends on is propagated through the patched Jetty handler chain via
+      // Response#setReason() (jetty-modifications/jetty-server).
+      response.setStatus(errorCode);
+      setJettyReason(response, errorMessage);
     }
 
     TemplateParameters params = templateHelper.parameters();
@@ -103,6 +96,28 @@ public class ErrorPageService
     }
 
     writeResponseWithoutCaching(params, request, response);
+  }
+
+  /**
+   * Forwards the HTTP/1.1 reason phrase to the underlying Jetty core {@code Response} so it appears
+   * on the wire. {@link ServletContextResponse#getServletContextResponse(jakarta.servlet.ServletResponse)}
+   * walks any {@code ServletResponseWrapper} chain (covers {@code ShiroHttpServletResponse} and any
+   * other wrappers added by Shiro / servlet filters) before returning the EE10 ServletContextResponse,
+   * from which we can reach the core {@code org.eclipse.jetty.server.Response}.
+   *
+   * <p>
+   * If the response is not a Jetty response (e.g. test harness with a mocked
+   * {@code HttpServletResponse}, or a hypothetical non-Jetty deployment), the helper throws
+   * {@link IllegalStateException}; we log at debug and let the response go out without a custom
+   * reason phrase rather than failing the request.
+   */
+  private void setJettyReason(final HttpServletResponse response, final String errorMessage) {
+    try {
+      ServletContextResponse.getServletContextResponse(response).getResponse().setReason(errorMessage);
+    }
+    catch (IllegalStateException e) {
+      log.debug("Could not unwrap response to set HTTP reason phrase: {}", e.toString());
+    }
   }
 
   /**

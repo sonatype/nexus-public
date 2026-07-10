@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.secrets;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.secrets.model.ReEncryptionRequestApiXO;
 import org.sonatype.nexus.crypto.secrets.MissingKeyException;

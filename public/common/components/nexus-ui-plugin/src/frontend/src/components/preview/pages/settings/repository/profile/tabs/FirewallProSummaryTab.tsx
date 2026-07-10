@@ -176,7 +176,7 @@ export function FirewallProSummaryTab({
           </Text>
           <Button
             variant="soft"
-            onClick={() => window.open('https://links.sonatype.com/firewall-pro-formats', '_blank')}
+            onClick={() => window.open('https://links.sonatype.com/nexus-repository-firewall', '_blank')}
           >
             <ExternalLink size={14} />
             Learn More
@@ -208,7 +208,7 @@ export function FirewallProSummaryTab({
             </Button>
             <Button
               variant="ghost"
-              onClick={() => window.open('https://links.sonatype.com/firewall-pro', '_blank')}
+              onClick={() => window.open('https://links.sonatype.com/nexus-repository-firewall', '_blank')}
             >
               <ExternalLink size={14} />
               Learn More

@@ -37,6 +37,21 @@
     margin-bottom: var(--nx-spacing-8x);
   }
 
+  // NEXUS-53064 B1: ensure the OCI caption help text aligns to the section
+  // heading's left edge instead of inheriting the form-grid left indent.
+  .nxrm-oci-connectors-caption,
+  .nxrm-oci-cosign-caption {
+    margin-bottom: var(--nx-spacing-2x);
+  }
+
+  .nxrm-oci-connectors-help,
+  .nxrm-oci-cosign-help {
+    color: #333;
+    margin-left: 0;
+    padding-left: 0;
+    margin-bottom: var(--nx-spacing-8x);
+  }
+
   .nxrm-form-group-asset-matcher {
     margin-left: var(--nx-spacing-12x);
   }

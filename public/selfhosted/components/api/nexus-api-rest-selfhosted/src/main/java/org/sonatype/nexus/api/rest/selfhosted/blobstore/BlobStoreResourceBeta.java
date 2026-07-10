@@ -15,8 +15,8 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreQuotaResultXO;
 import org.sonatype.nexus.blobstore.ConnectionChecker;
@@ -25,7 +25,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.api.rest.selfhosted.blobstore.BlobStoreResourceBeta.RESOURCE_URI;
@@ -37,7 +37,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
  * @since 3.24
  * @deprecated moving to {@link BlobStoreResourceV1}
  */
-@Api(hidden = true)
+@Hidden
 @Component
 @Path(RESOURCE_URI)
 @Deprecated

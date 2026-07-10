@@ -72,21 +72,11 @@ describe('SettingsCard', () => {
     expect(card).toHaveStyle({ cursor: 'pointer' });
   });
 
-  it('renders separator dot between label and description', () => {
+  it('does not truncate description text', () => {
     renderWithTheme(<SettingsCard card={mockCard} />);
 
-    expect(screen.getByText('·')).toBeInTheDocument();
-  });
-
-  it('applies text truncation styles to description', () => {
-    const { container } = renderWithTheme(<SettingsCard card={mockCard} />);
-
     const description = screen.getByText('Manage user accounts and access');
-    expect(description).toHaveStyle({
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    });
+    expect(description).not.toHaveStyle({ whiteSpace: 'nowrap' });
   });
 
   it('renders with searchTerms in card data', () => {
@@ -102,20 +92,15 @@ describe('SettingsCard', () => {
     expect(screen.getByText('Manage user accounts and access')).toBeInTheDocument();
   });
 
-  it('renders card with long description', () => {
+  it('renders card with long description without truncation', () => {
     const cardWithLongDescription: SettingCard = {
       ...mockCard,
-      description: 'This is a very long description that should be truncated with ellipsis when it exceeds the available width',
+      description: 'This is a very long description that should wrap naturally when it exceeds the available width',
     };
 
     renderWithTheme(<SettingsCard card={cardWithLongDescription} />);
 
-    const description = screen.getByText(cardWithLongDescription.description);
-    expect(description).toHaveStyle({
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    });
+    expect(screen.getByText(cardWithLongDescription.description)).toBeInTheDocument();
   });
 
   it('renders card with special characters in label and description', () => {

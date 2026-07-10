@@ -11,18 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useCallback } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading } from '@radix-ui/themes';
-import { Archive, Loader2 } from 'lucide-react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Loader2 } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsAlert } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 import { SupportZipForm } from './SupportZipForm';
 import { SupportZipResponse } from './SupportZipResponse';
 import { SupportZipHA } from './SupportZipHA';
@@ -46,16 +41,15 @@ import './SupportZipPage.scss';
 export function SupportZipPage() {
   const [params, setParams] = useState<SupportZipParams>(DEFAULT_SUPPORT_ZIP_PARAMS);
   const [response, setResponse] = useState<SupportZipResponseType | null>(null);
-  const [haResponses, setHaResponses] = useState<SupportZipResponseType[] | null>(null);
 
-  const { createSupportZip, createHaSupportZips, loading, error, setError } = useSupportZipApi();
+  const { createSupportZip, loading, error, setError } = useSupportZipApi();
 
   // Permission checks
   const canRead = ExtJS.checkPermission('nexus:atlas:read');
   const canCreate = ExtJS.checkPermission('nexus:atlas:create');
 
   // Check if clustered (HA) mode
-  const isClustered = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
+  const isClustered = ExtJS.useState(() => ExtJS.state().getValue('nexus.datastore.clustered.enabled'));
 
   // Handle single param change
   const handleParamChange = useCallback(
@@ -68,31 +62,17 @@ export function SupportZipPage() {
     []
   );
 
-  // Handle create support ZIP
+  // Handle create support ZIP (single-node)
   const handleSubmit = useCallback(async () => {
     try {
       setError(null);
       setResponse(null);
-      setHaResponses(null);
       const result = await createSupportZip(params);
       setResponse(result);
     } catch (err) {
       // Error is handled by the hook
     }
   }, [params, createSupportZip, setError]);
-
-  // Handle create HA support ZIPs
-  const handleSubmitAll = useCallback(async () => {
-    try {
-      setError(null);
-      setResponse(null);
-      setHaResponses(null);
-      const results = await createHaSupportZips(params);
-      setHaResponses(results);
-    } catch (err) {
-      // Error is handled by the hook
-    }
-  }, [params, createHaSupportZips, setError]);
 
   // Permission denied view
   if (!canRead) {
@@ -102,17 +82,14 @@ export function SupportZipPage() {
         data-testid="support-zip-page"
         data-permission="denied"
       >
-        <Flex align="center" gap="3" className="support-zip-page__header">
-          <Archive size={24} className="support-zip-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">
-              Support ZIP
-            </Heading>
-            <Text size="2" className="support-zip-page__description">
-              Creates a ZIP file containing useful support information about your server
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Support ZIP"
+          description="Creates a ZIP file containing useful support information about your server"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+            { label: 'Support ZIP' },
+          ]}
+        />
 
         <SettingsAlert type="warning" data-testid="support-zip-permission-warning">
           You do not have permission to view Support ZIP. Contact an administrator.
@@ -123,17 +100,14 @@ export function SupportZipPage() {
 
   // Render header
   const renderHeader = () => (
-    <Flex align="center" gap="3" className="support-zip-page__header">
-      <Archive size={24} className="support-zip-page__icon" />
-      <Box>
-        <Heading as="h1" size="6" weight="medium">
-          Support ZIP
-        </Heading>
-        <Text size="2" className="support-zip-page__description">
-          Creates a ZIP file containing useful support information about your server
-        </Text>
-      </Box>
-    </Flex>
+    <PageHeader
+      title="Support ZIP"
+      description="Creates a ZIP file containing useful support information about your server"
+      breadcrumbs={[
+        { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+        { label: 'Support ZIP' },
+      ]}
+    />
   );
 
   // Render content based on state
@@ -141,9 +115,9 @@ export function SupportZipPage() {
     // Loading state
     if (loading) {
       return (
-        <Box className="support-zip-page__loading" data-testid="support-zip-loading">
+        <Box className="support-zip-page__loading" data-testid="support-zip-loading" aria-live="polite" aria-busy="true">
           <Flex align="center" justify="center" gap="3" py="9">
-            <Loader2 size={24} className="support-zip-page__spinner" />
+            <Loader2 size={24} className="support-zip-page__spinner" aria-hidden="true" />
             <Text size="3">Creating support ZIP...</Text>
           </Flex>
           <Text size="2" color="gray" align="center">
@@ -158,30 +132,12 @@ export function SupportZipPage() {
       return <SupportZipResponse response={response} />;
     }
 
-    // HA responses
-    if (haResponses && haResponses.length > 0) {
-      return (
-        <Box className="support-zip-page__ha-responses" data-testid="support-zip-ha-responses">
-          <Heading as="h3" size="4" weight="medium" mb="4">
-            Support ZIPs Created
-          </Heading>
-          {haResponses.map((resp, index) => (
-            <Box key={index} mb="4" className="support-zip-page__ha-response-item">
-              <SupportZipResponse response={resp} nodeId={`Node ${index + 1}`} />
-            </Box>
-          ))}
-        </Box>
-      );
-    }
-
-    // For clustered mode, show HA component
+    // For clustered mode, show HA component (self-contained)
     if (isClustered) {
       return (
         <SupportZipHA
           params={params}
           onParamChange={handleParamChange}
-          onSubmit={handleSubmit}
-          onSubmitAll={handleSubmitAll}
           disabled={loading || !canCreate}
         />
       );
@@ -193,8 +149,7 @@ export function SupportZipPage() {
         params={params}
         onParamChange={handleParamChange}
         onSubmit={handleSubmit}
-        onSubmitAll={handleSubmitAll}
-        isHa={isClustered}
+        isHa={false}
         disabled={loading || !canCreate}
       />
     );
@@ -236,5 +191,3 @@ export function SupportZipPage() {
 }
 
 export default SupportZipPage;
-
-

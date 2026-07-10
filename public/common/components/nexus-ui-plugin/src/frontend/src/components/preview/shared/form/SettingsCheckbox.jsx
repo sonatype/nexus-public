@@ -38,6 +38,7 @@ export function SettingsCheckbox({
   description = '',
   disabled = false,
   className = '',
+  analyticsId,
 }) {
   const inputId = `settings-checkbox-${name}`;
   const descriptionId = `settings-checkbox-desc-${name}`;
@@ -61,6 +62,7 @@ export function SettingsCheckbox({
             disabled={disabled}
             aria-describedby={description ? descriptionId : undefined}
             data-testid={`checkbox-${name}`}
+            {...(analyticsId ? { 'data-analytics-id': analyticsId } : {})}
             className="settings-checkbox__input"
           />
           {checked && <Check size={14} className="settings-checkbox__icon" />}
@@ -93,6 +95,8 @@ SettingsCheckbox.propTypes = {
   disabled: PropTypes.bool,
   /** Additional CSS class */
   className: PropTypes.string,
+  /** Analytics ID for the checkbox input */
+  analyticsId: PropTypes.string,
 };
 
 export default SettingsCheckbox;

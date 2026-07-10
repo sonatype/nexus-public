@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Badge,
   Box,
@@ -26,6 +26,7 @@ import {
 import { Search, X, Info } from 'lucide-react';
 
 import { ExtJS } from '../../../../interface/ExtJS';
+import { isVisible } from '../../../../interface/NavigationUtils';
 import { PageHeader } from '../../shared';
 import { SETTINGS_SECTIONS } from './settingsConfig';
 import SettingsCard from './SettingsCard';
@@ -49,6 +50,49 @@ export function SettingsHubPage() {
   const isProEdition = ExtJS.isProEdition?.() ?? false;
   const user = ExtJS.useUser();
   const isAdmin = !!user?.administrator;
+
+  // Reactive trigger: increments when ExtJS permissions load or change,
+  // forcing the useMemo to re-evaluate isVisible() with real permission data.
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
+  useEffect(() => {
+    let unmounted = false;
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const cleanupRef: { fn?: () => void } = {};
+
+    function subscribe() {
+      const app = (window as any).Ext?.getApplication?.();
+      if (!app) return false;
+
+      const pc = app.getController?.('Permissions');
+      const sc = app.getController?.('State');
+      if (!pc) return false;
+
+      if (unmounted) return true;
+
+      const handler = () => { if (!unmounted) setPermissionsVersion((v) => v + 1); };
+      pc.on('changed', handler);
+      sc?.on('userchanged', handler);
+      handler();
+      cleanupRef.fn = () => {
+        pc.un('changed', handler);
+        sc?.un('userchanged', handler);
+      };
+      return true;
+    }
+
+    if (!subscribe()) {
+      let retries = 0;
+      interval = setInterval(() => {
+        if (subscribe() || ++retries >= 100) clearInterval(interval!);
+      }, 100);
+    }
+
+    return () => {
+      unmounted = true;
+      if (interval) clearInterval(interval);
+      cleanupRef.fn?.();
+    };
+  }, []);
 
   // ExtJS.state() is a singleton store that React cannot observe — edition values
   // are read at startup and do not change during a session,
@@ -82,6 +126,13 @@ export function SettingsHubPage() {
         .filter((section) => section.cards.length > 0);
     }
 
+    sections = sections
+      .map((section) => ({
+        ...section,
+        cards: section.cards.filter((card) => isVisible(card.visibilityRequirements)),
+      }))
+      .filter((section) => section.cards.length > 0);
+
     if (!searchQuery.trim()) {
       return sections;
     }
@@ -96,7 +147,8 @@ export function SettingsHubPage() {
         card.searchTerms?.some((term) => term.toLowerCase().includes(query))
       ),
     })).filter((section) => section.cards.length > 0);
-  }, [searchQuery, isCloud, isProEdition, isAdmin]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, isCloud, isProEdition, isAdmin, permissionsVersion]);
 
   const hasResults = filteredSections.length > 0;
 

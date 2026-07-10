@@ -16,28 +16,28 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Response for {@code GET /internal/ui/api/permissions}.
  */
 public class ApiPermissionsResponse
 {
-  @ApiModelProperty(value = "Mapped endpoints", required = true)
+  @Schema(description = "Mapped endpoints", requiredMode = Schema.RequiredMode.REQUIRED)
   private List<ApiEndpointPermission> endpoints;
 
-  @ApiModelProperty(value = "ISO-8601 timestamp when the registry was built", required = true)
+  @Schema(description = "ISO-8601 timestamp when the registry was built", requiredMode = Schema.RequiredMode.REQUIRED)
   private String generatedAt;
 
-  @ApiModelProperty(value = "Total endpoints returned before client-side filtering", required = true)
+  @Schema(description = "Total endpoints returned before client-side filtering",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private int totalEndpoints;
 
-  @ApiModelProperty(
-      value = "Count of Swagger operations that had no permission mapping at registry build time")
+  @Schema(description = "Count of Swagger operations that had no permission mapping at registry build time")
   private int unmappedEndpoints;
 
   @Nullable
-  @ApiModelProperty("Present when the registry could not serve data")
+  @Schema(description = "Present when the registry could not serve data")
   private String error;
 
   public ApiPermissionsResponse() {

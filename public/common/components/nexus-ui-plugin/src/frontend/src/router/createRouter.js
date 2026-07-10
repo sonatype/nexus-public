@@ -20,6 +20,42 @@ import {isVisible} from '../interface/NavigationUtils';
 import {showUnsavedChangesModal} from './unsavedChangesDialog';
 import {RouteNames} from "../constants/RouteNames";
 
+/**
+ * Checks visibility for a state AND all its ancestor states.
+ * If any ancestor has visibilityRequirements that fail, the child is also not visible.
+ * This ensures that protected parent routes (e.g., preview.admin.pages with permission checks)
+ * also protect all their child routes even if the child doesn't declare its own requirements.
+ *
+ * Only walks ancestors for Preview UI routes. Classic admin routes already declare their own
+ * permissions per-route, and their parent `admin` gate uses requiresAnyPermission with a broad
+ * list — walking that ancestor would require every child test to satisfy the parent too, which
+ * breaks existing behavior where each child is self-contained.
+ */
+function isVisibleIncludingAncestors(state) {
+  const statesToCheck = [];
+
+  if (state.data?.visibilityRequirements) {
+    statesToCheck.push(state.data.visibilityRequirements);
+  }
+
+  // Only walk ancestors for preview routes — classic routes are self-contained
+  if (state.name && state.name.startsWith('preview.')) {
+    let current = state.parent;
+    while (current && current.name) {
+      if (current.data?.visibilityRequirements) {
+        statesToCheck.push(current.data.visibilityRequirements);
+      }
+      current = current.parent;
+    }
+  }
+
+  if (statesToCheck.length === 0) {
+    return true;
+  }
+
+  return statesToCheck.every((requirements) => isVisible(requirements));
+}
+
 function getTransitionFromStateName(transition) {
   const from = transition.from();
   if (!from) {
@@ -82,12 +118,10 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
 
   // validate permissions and configuration on each route request
   router.transitionService.onBefore({}, async (transition) => {
-    const redirectTo404 = () => {
-      transition.abort();
-      router.stateService.go(missingRoute.name);
-    };
-
-    const stateTo = transition.to();
+    // $to() returns the internal StateObject with a resolved .parent chain;
+    // .to() returns only the StateDeclaration (no .parent), which would break
+    // isVisibleIncludingAncestors' ancestor walk.
+    const stateTo = transition.$to();
     const stateFrom = transition.from();
     console.debug(`evaluating transition from ${stateFrom.name} to ${stateTo.name}`);
 
@@ -98,18 +132,21 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
       return;
     }
 
-    if (!isVisible(stateTo.data?.visibilityRequirements)) {
+    if (!isVisibleIncludingAncestors(stateTo)) {
       if (!ExtJS.hasUser()) {
         transition.abort();
-        const isAnonymousAccessEnabled = !!ExtJS.state().getValue('anonymousUsername');
-        if (isAnonymousAccessEnabled && stateFrom.name === RouteNames.LOGIN) {
-          console.warn('state is not visible for navigation after login, redirecting to 404');
-          redirectTo404();
+
+        // If the user is already on the login page, silently abort the transition.
+        // No redirect or feedback needed — the user is already where they should be
+        // and can authenticate to gain access. This avoids redirect loops.
+        if (stateFrom.name === RouteNames.LOGIN) {
           return;
         }
 
         console.debug('Redirecting to login page with return URL');
-        // Keep original requested URL and then encode to Base64
+        // urlService.url() returns the path without '#' (e.g., '/admin/security/roles').
+        // We prepend '#' before Base64-encoding so the decoded value can be used directly
+        // as window.location.hash to restore the full route after login.
         const url = router.urlService.url();
         if (url) {
           const returnTo = btoa(`#${url}`);
@@ -118,8 +155,10 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
           router.stateService.go(RouteNames.LOGIN);
         }
       } else {
-        console.warn('state is not visible for navigation, aborting transition', stateTo.name);
-        redirectTo404();
+        console.warn('state is not visible for navigation, redirecting to dashboard', stateTo.name);
+        transition.abort();
+        const welcomeRoute = isPreviewUIRouteName(stateTo.name) ? 'preview.browse.welcome' : RouteNames.WELCOME;
+        router.stateService.go(welcomeRoute);
       }
     }
   });
@@ -181,6 +220,30 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
     const hash = window.location?.hash?.replace(/^#\/?/, '') || '';
     if (hash.includes('=') && !hash.startsWith('preview/')) {
       console.debug('Unrecognized URL appears to be an ExtJS bookmark, deferring to ExtJS:', hash);
+      return;
+    }
+
+    // Unrecognized URL in a protected area: if user is NOT authenticated,
+    // redirect to login so they can sign in and be routed back.
+    // We prefer NX.Security.hasUser() because it reflects runtime auth state
+    // (updated after SPA login). We only fall back to bootstrap data when
+    // NX.Security is not yet available (very early page load).
+    const rawPath = (typeof matchValue === 'object' && matchValue?.path) || hash;
+    const path = (rawPath || '').replace(/^\//, '');
+    const isProtectedPath = path && (path.startsWith('admin') || path.startsWith('preview/') || path.startsWith('user/'));
+    const isAuthenticated = (typeof window.NX?.Security?.hasUser === 'function')
+        ? window.NX.Security.hasUser()
+        : (window.__nxRestBootstrap?.user?.authenticated === true);
+
+    if (isProtectedPath && !isAuthenticated) {
+      console.debug('Unrecognized protected URL, redirecting to login:', path);
+      const url = router.urlService.url();
+      if (url) {
+        const returnTo = btoa(`#${url}`);
+        router.stateService.go(RouteNames.LOGIN, {returnTo});
+      } else {
+        router.stateService.go(RouteNames.LOGIN);
+      }
       return;
     }
 

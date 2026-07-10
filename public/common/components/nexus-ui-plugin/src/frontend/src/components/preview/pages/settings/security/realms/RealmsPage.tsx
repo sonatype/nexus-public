@@ -11,14 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useCallback, useMemo } from 'react';
-import { Box, Flex, Text } from '@radix-ui/themes';
+import { Box, Flex, Text, Heading } from '@radix-ui/themes';
 import {
   Loader2,
   GripVertical,
@@ -41,6 +35,10 @@ import { useRealmsForm } from './useRealmsForm';
 import { Realm, RealmsPageProps } from './types';
 
 import './RealmsPage.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 /**
  * RealmsPage - Security Realms configuration page for Preview UI
@@ -243,10 +241,14 @@ export function RealmsPage({ className }: RealmsPageProps) {
         pristine={realmsForm.isPristine}
         showActions={canUpdate}
         testId="realms-form"
+        submitAnalyticsId="nxrm-realms-save"
         data-loading={realmsForm.isLoading || realmsForm.isSaving ? 'true' : 'false'}
         data-dirty={!realmsForm.isPristine ? 'true' : 'false'}
         data-valid="true"
       >
+        {/* Section heading */}
+        <Heading as="h2" size="3" mb="3">Active Realms</Heading>
+
         {/* Transfer List */}
         <Box className="realms-page__transfer-container">
           {/* Available (Inactive) Panel */}

@@ -109,7 +109,7 @@ describe('SslCertificatesPage', () => {
     render(<SslCertificatesPage />, { wrapper: TestWrapper });
     
     expect(screen.getByTestId('ssl-certificates-list')).toBeInTheDocument();
-    expect(screen.getByText('SSL Certificates')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'SSL Certificates' })).toBeInTheDocument();
   });
 
   it('shows create form when Add Certificate button is clicked', async () => {
@@ -153,7 +153,7 @@ describe('SslCertificatesPage', () => {
   it('displays page header with icon and description', () => {
     render(<SslCertificatesPage />, { wrapper: TestWrapper });
     
-    expect(screen.getByText('SSL Certificates')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'SSL Certificates' })).toBeInTheDocument();
     expect(screen.getByText(/Manage trusted SSL certificates/i)).toBeInTheDocument();
   });
 
@@ -179,7 +179,7 @@ describe('SslCertificatesPage', () => {
     render(<SslCertificatesPage />, { wrapper: TestWrapper });
     
     // Page should still render
-    expect(screen.getByText('SSL Certificates')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'SSL Certificates' })).toBeInTheDocument();
   });
 
   it('handles error state', () => {

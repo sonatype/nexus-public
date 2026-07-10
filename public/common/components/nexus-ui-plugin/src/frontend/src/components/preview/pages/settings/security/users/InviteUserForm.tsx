@@ -100,6 +100,10 @@ export function InviteUserForm({ onSuccess, onCancel, loading: externalLoading =
     }
   }, [formData, inviteUser, onSuccess]);
 
+  const isDirty = formData.firstName.trim() !== '' ||
+    formData.lastName.trim() !== '' ||
+    formData.email.trim() !== '';
+
   return (
     <SettingsForm
       testId="invite-user-form"
@@ -107,7 +111,9 @@ export function InviteUserForm({ onSuccess, onCancel, loading: externalLoading =
       onCancel={onCancel}
       loading={loading}
       pristine={false}
-      confirmDiscard={false}
+      dirty={isDirty}
+      confirmDiscard={true}
+      noDirtyTracking={!isDirty}
       error={error}
       submitLabel="Invite User"
     >

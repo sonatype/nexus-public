@@ -34,7 +34,7 @@ import {
 const ALL_FORMATS = [
   'all', 'alpine','ansiblegalaxy', 'apt', 'cargo', 'cocoapods', 'composer', 'conan', 'conda',
   'docker', 'gitlfs', 'go', 'helm', 'huggingface', 'maven', 'npm',
-  'nuget', 'p2', 'pub', 'pypi', 'r', 'raw', 'rubygems', 'swift', 'terraform', 'yum'
+  'nuget', 'p2', 'pub', 'pypi', 'r', 'raw', 'rubygems', 'swift', 'terraform', 'terraformbackend', 'yum'
 ] as const;
 
 // Expected API format mappings
@@ -64,6 +64,7 @@ const API_FORMAT_MAPPINGS: Record<string, string> = {
   rubygems: 'rubygems',
   swift: 'swift',
   terraform: 'terraform',
+  terraformbackend: 'terraformbackend',
   yum: 'yum',
 };
 
@@ -94,6 +95,7 @@ const PLACEHOLDER_PATTERNS: Record<string, RegExp> = {
   rubygems: /gem/i,
   swift: /package/i,
   terraform: /module/i,
+  terraformbackend: /state|path/i,
   yum: /package/i,
 };
 
@@ -129,6 +131,7 @@ const EXPECTED_FILTERS: Record<string, string[]> = {
   rubygems: ['repository', 'description', 'platform', 'summary'],
   swift: ['repository', 'scope'],
   terraform: ['repository', 'provider', 'namespace'],
+  terraformbackend: ['repository'],
   yum: ['repository', 'yumName', 'architecture'],
 };
 
@@ -213,9 +216,9 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
 // =============================================================================
 
 describe('searchFilters', () => {
-  describe('FORMATS - All 26 Formats', () => {
-    it('defines exactly 26 formats', () => {
-      expect(Object.keys(FORMATS).length).toBe(26);
+  describe('FORMATS - All 27 Formats', () => {
+    it('defines exactly 27 formats', () => {
+      expect(Object.keys(FORMATS).length).toBe(27);
     });
 
     ALL_FORMATS.forEach(format => {
@@ -254,9 +257,9 @@ describe('searchFilters', () => {
   // TESTS: Format Filters
   // =============================================================================
 
-  describe('FORMAT_FILTERS - All 26 Formats', () => {
-    it('defines filters for exactly 26 formats', () => {
-      expect(Object.keys(FORMAT_FILTERS).length).toBe(26);
+  describe('FORMAT_FILTERS - All 27 Formats', () => {
+    it('defines filters for exactly 27 formats', () => {
+      expect(Object.keys(FORMAT_FILTERS).length).toBe(27);
     });
 
     ALL_FORMATS.forEach(format => {
@@ -332,7 +335,7 @@ describe('searchFilters', () => {
 
     // Test that formats with no custom filters only have repository
     describe('Formats with no custom filters', () => {
-      const formatsWithOnlyRepository = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
+      const formatsWithOnlyRepository = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw', 'terraformbackend'];
 
       formatsWithOnlyRepository.forEach(format => {
         it(`${format} only has repository filter (no redundant name/version)`, () => {
@@ -353,7 +356,7 @@ describe('searchFilters', () => {
     it('returns array of all formats', () => {
       const options = getFormatOptions();
       expect(Array.isArray(options)).toBe(true);
-      expect(options.length).toBe(26);
+      expect(options.length).toBe(27);
     });
 
     it('includes all expected formats', () => {

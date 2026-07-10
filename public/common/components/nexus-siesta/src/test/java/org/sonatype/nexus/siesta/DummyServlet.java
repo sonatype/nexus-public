@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.siesta;
 
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServlet;
 
 /**
  * Dummy servlet.

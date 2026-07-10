@@ -43,6 +43,9 @@ export const REPOSITORY_TYPES = {
   GROUP: 'group' as const,
 };
 
+/** Validation error key for the Docker proxy foreign-layer URL whitelist field. */
+export const DOCKER_FOREIGN_LAYER_WHITELIST_ERROR_KEY = 'dockerProxy.foreignLayerUrlWhitelist';
+
 // Internal UI endpoints for reference data
 const RECIPES_URL = `${API_INTERNAL_UI}/repositories/recipes`;
 const REPOSITORIES_LIST_URL = `${API_INTERNAL_UI}/repositories`;
@@ -61,6 +64,36 @@ const isTypeGuard = (targetType: string) =>
 // =============================================================================
 // Validation
 // =============================================================================
+
+/**
+ * Returns true when an entry looks like a regex pattern. Used by the Docker
+ * proxy foreign-layer whitelist validator to bypass URL-format validation for
+ * legacy regex entries (e.g. Classic UI's ".*" default seed, anchored patterns
+ * like "^https://.*$").
+ *
+ * Two-step gate to avoid letting URL typos slip through as "valid regex":
+ *   1. Entries that look like a URL ("http://..." / "https://...") always go
+ *      to URL validation, even if they contain regex meta-chars.
+ *   2. Otherwise, require a strong regex signal (anchors, character classes,
+ *      alternation, brackets, or escape sequences). The trigger set excludes
+ *      "?" and "+" because they are common in URL query strings and would
+ *      let typos like "example.com?path" silently bypass validation.
+ *
+ * Java/JS regex engines have minor syntax differences (possessive quantifiers,
+ * named groups). A pattern accepted by Java but rejected by JS would be flagged
+ * client-side as "Invalid URL format"; the server's Pattern.compile() is the
+ * authoritative validator for anything that gets past this gate.
+ */
+function looksLikeRegexPattern(entry: string): boolean {
+  if (/^https?:\/\//i.test(entry)) return false;
+  if (!/[*^$|[\]{}]|\\[dDsSwWbB]/.test(entry)) return false;
+  try {
+    new RegExp(entry);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Validate repository form data.
@@ -91,6 +124,57 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
         new URL(data.proxy.remoteUrl);
       } catch {
         errors['proxy.remoteUrl'] = 'Invalid URL format';
+      }
+    }
+
+    // Proxy numeric fields validation (contentMaxAge, metadataMaxAge)
+    // These fields are optional but must be valid numbers when provided
+    const contentMaxAge = data.proxy?.contentMaxAge;
+    if (contentMaxAge != null && (Number.isNaN(contentMaxAge) || contentMaxAge < -1)) {
+      errors['proxy.contentMaxAge'] = 'Maximum Component Age must be a valid number (-1 or greater)';
+    }
+
+    const metadataMaxAge = data.proxy?.metadataMaxAge;
+    // Match Classic UI's validateTimeToLive: allow any value >= -1 (including 0).
+    // -1 means "cache forever" — a legitimate, supported value. Tightening this
+    // to >0 blocked editing existing Maven2 proxy repos that had been configured
+    // with -1, manifesting as a silent Save failure.
+    if (metadataMaxAge != null && (Number.isNaN(metadataMaxAge) || metadataMaxAge < -1)) {
+      errors['proxy.metadataMaxAge'] = 'Maximum Metadata Age must be a valid number (-1 or greater)';
+    }
+
+    // Negative cache validation — validate TTL regardless of enabled state so
+    // an invalid value saved while disabled is caught before re-enabling trips it.
+    const timeToLive = data.negativeCache?.timeToLive;
+    if (timeToLive != null && (Number.isNaN(timeToLive) || timeToLive < 0)) {
+      errors['negativeCache.timeToLive'] = 'TTL must be 0 or greater';
+    }
+    if (data.negativeCache?.enabled && (timeToLive == null || Number.isNaN(timeToLive) || timeToLive < 0)) {
+      errors['negativeCache.timeToLive'] = 'TTL is required when negative cache is enabled (0 or greater)';
+    }
+
+    // HTTP Authentication validation — fields required vary by auth type
+    const authType = data.httpClient?.authentication?.type;
+    if (authType === 'bearer') {
+      if (!data.httpClient?.authentication?.bearerToken?.trim()) {
+        errors['httpClient.authentication.bearerToken'] = 'Bearer token is required';
+      }
+    } else if (authType) {
+      // username/ntlm auth types all require username + password
+      if (!data.httpClient?.authentication?.username?.trim()) {
+        errors['httpClient.authentication.username'] = 'Username is required when authentication is enabled';
+      }
+      if (!data.httpClient?.authentication?.password?.trim()) {
+        errors['httpClient.authentication.password'] = 'Password is required when authentication is enabled';
+      }
+      // NTLM-specific fields
+      if (authType === 'ntlm') {
+        if (!data.httpClient?.authentication?.ntlmHost?.trim()) {
+          errors['httpClient.authentication.ntlmHost'] = 'NTLM Host is required for NTLM authentication';
+        }
+        if (!data.httpClient?.authentication?.ntlmDomain?.trim()) {
+          errors['httpClient.authentication.ntlmDomain'] = 'NTLM Domain is required for NTLM authentication';
+        }
       }
     }
   }
@@ -124,6 +208,52 @@ export function validateRepository(data: RepositoryFormData, options?: { isCloud
     }
     if (httpsPort != null && (httpsPort < 1 || httpsPort > 65535)) {
       errors['docker.httpsPort'] = 'Port must be between 1 and 65535';
+    }
+  }
+
+  // Docker proxy foreign-layer URL whitelist validation: each entry must parse
+  // as a URL on the client. Entries that look like regex patterns and compile
+  // as such are allowed through, preserving backward compatibility with the
+  // Classic UI's default seed value of ".*" and any user-entered regex patterns
+  // the server's Pattern.compile() accepts.
+  if (data.format === 'docker' && data.type === 'proxy' && data.dockerProxy?.cacheForeignLayers) {
+    for (const raw of data.dockerProxy.foreignLayerUrlWhitelist ?? []) {
+      const entry = raw.trim();
+      if (!entry) continue;
+      if (looksLikeRegexPattern(entry)) continue;
+      try {
+        new URL(entry);
+      } catch {
+        errors[DOCKER_FOREIGN_LAYER_WHITELIST_ERROR_KEY] = `Invalid URL format: "${entry}"`;
+        break;
+      }
+    }
+  }
+
+  // Docker proxy custom index URL validation.
+  // Mirrors the backend @Url constraint (DockerProxyFacetSupport.Config#indexUrl)
+  // for immediate UX feedback; the backend remains the source of truth.
+  if (data.format === 'docker' && data.type === 'proxy' && data.dockerProxy?.indexType === 'CUSTOM') {
+    const indexUrl = data.dockerProxy.indexUrl?.trim();
+    if (!indexUrl) {
+      errors['dockerProxy.indexUrl'] = 'Index URL is required';
+    } else {
+      try {
+        const parsed = new URL(indexUrl);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          errors['dockerProxy.indexUrl'] = 'Index URL must use http or https';
+        }
+      } catch {
+        errors['dockerProxy.indexUrl'] = 'Invalid URL format';
+      }
+    }
+  }
+
+  // NuGet proxy validation
+  if (data.format === 'nuget' && data.type === 'proxy') {
+    const queryCacheItemMaxAge = data.nugetProxy?.queryCacheItemMaxAge;
+    if (queryCacheItemMaxAge != null && (Number.isNaN(queryCacheItemMaxAge) || queryCacheItemMaxAge < 0)) {
+      errors['nugetProxy.queryCacheItemMaxAge'] = 'Cache age must be 0 or greater';
     }
   }
 
@@ -193,7 +323,6 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
     maven: getConfig('maven'),
     docker: getConfig('docker'),
     dockerProxy: getConfig('dockerProxy'),
-    npm: getConfig('npm'),
     nugetProxy: getConfig('nugetProxy'),
     apt: getConfig('apt'),
     aptSigning: getConfig('aptSigning'),
@@ -201,6 +330,12 @@ function buildFormDataFromRepository(repo: Repository): RepositoryFormData {
     yum: getConfig('yum'),
     yumSigning: getConfig('yumSigning'),
     raw: getConfig('raw'),
+    // Without this, an existing PyPI proxy's saved `indexPath` would not seed
+    // the form on edit, and a save without touching that section would omit
+    // `pypi` from the PUT body entirely (silent no-op for the user).
+    // (Post-migration STL-381: `removeQuarantinedVersions` was removed; PCCS
+    // is now expressed via `firewall.mode = "PCCS"` on the top-level config.)
+    pypi: getConfig('pypi'),
     terraformSigning: getConfig('terraformSigning'),
   };
 }
@@ -220,6 +355,45 @@ function buildDefaultFormData(format: string, type: RepositoryType): RepositoryF
       strictContentTypeValidation: true,
     },
   };
+
+  // Format-specific defaults
+  // Maven2 (hosted/proxy) defaults: 'Attachment' content disposition (matches classic UI / API)
+  if (format === 'maven2' && type !== 'group') {
+    baseValues.maven = {
+      versionPolicy: 'RELEASE',
+      layoutPolicy: 'STRICT',
+      contentDisposition: 'ATTACHMENT',
+    };
+  }
+
+  // NuGet proxy default: Query Cache Item Max Age = 3600 seconds (matches classic UI / API).
+  // Without this seed, the field renders blank on create and the API serializer
+  // applies the default at submit-time, hiding the value from the user.
+  if (format === 'nuget' && type === 'proxy') {
+    baseValues.nugetProxy = {
+      queryCacheItemMaxAge: 3600,
+      nugetVersion: 'V3',
+    };
+  }
+
+  // PyPI proxy defaults. Seeding `pypi` here ensures the create payload always
+  // carries a `pypi` block so the backend converter runs (it skips the block
+  // entirely when the request field is null, leaving the repo without any
+  // pypi attributes set). Default `indexPath` matches the Classic UI and the
+  // backend's own `/simple` fallback.
+  // (Post-migration STL-381: `removeQuarantinedVersions` was removed from
+  // PypiConfig — PCCS is now expressed via `firewall.mode = "PCCS"`.)
+  if (format === 'pypi' && type === 'proxy') {
+    baseValues.pypi = {
+      indexPath: '/simple',
+    };
+  }
+
+  // npm proxy: post-migration STL-381 there is no longer any npm-specific
+  // form data to seed. The legacy `removeQuarantinedVersions` flag was npm's
+  // only field and has been removed; `NpmConfig` no longer exists in types.ts.
+  // PCCS is now expressed via `firewall.mode = "PCCS"` on the top-level
+  // repository config (set via the Firewall tab).
 
   switch (type) {
     case 'hosted':
@@ -320,9 +494,28 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
             typeDefaults = {};
         }
 
-        // Build new data: type defaults + preserved common fields + explicit overrides
+        // Format-specific defaults that the type-only DEFAULT_* maps don't
+        // carry. These mirror the logic in buildDefaultFormData so that a
+        // TYPE_CHANGE landing on (e.g.) pypi-proxy seeds the same self-
+        // describing payload that a fresh pypi-proxy create would. Without
+        // these, switching TO pypi-proxy via TYPE_CHANGE would leave
+        // data.pypi undefined and the form would render the firewall
+        // checkbox unchecked even though buildRepositoryConfig now defaults
+        // it sensibly on save.
+        const formatDefaults: Partial<RepositoryFormData> = {};
+        if (currentData.format === 'nuget' && newType === 'proxy') {
+          formatDefaults.nugetProxy = { queryCacheItemMaxAge: 3600, nugetVersion: 'V3' };
+        }
+        if (currentData.format === 'pypi' && newType === 'proxy') {
+          // `removeQuarantinedVersions` removed post-migration STL-381 — see PypiConfig in types.ts.
+          formatDefaults.pypi = { indexPath: '/simple' };
+        }
+        // npm proxy has no format-specific defaults post-migration STL-381 (NpmConfig was removed).
+
+        // Build new data: type defaults + format defaults + preserved common fields + explicit overrides
         const newData: RepositoryFormData = {
           ...typeDefaults,
+          ...formatDefaults,
           ...preserved,
           type: newType,
           recipe: `${currentData.format}-${newType}`,

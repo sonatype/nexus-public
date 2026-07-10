@@ -393,4 +393,75 @@ describe('ExtJS', () => {
     });
 
   });
+
+  describe('arePermissionsReady', () => {
+    let originalNX;
+
+    beforeEach(() => {
+      originalNX = global.NX;
+      delete global.NX;
+    });
+
+    afterEach(() => {
+      global.NX = originalNX;
+    });
+
+    it('returns false when NX.Permissions is not available', () => {
+      expect(ExtJS.arePermissionsReady()).toBe(false);
+    });
+
+    it('returns true when NX.Permissions.permissions is defined', () => {
+      global.NX = { Permissions: { permissions: {} } };
+      expect(ExtJS.arePermissionsReady()).toBe(true);
+    });
+
+    it('returns false when NX.Permissions.permissions is undefined', () => {
+      global.NX = { Permissions: {} };
+      expect(ExtJS.arePermissionsReady()).toBe(false);
+    });
+  });
+
+  describe('waitForPermissions', () => {
+    let originalNX;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      originalNX = global.NX;
+      delete global.NX;
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      global.NX = originalNX;
+    });
+
+    it('resolves immediately when NX.Permissions is already ready', async () => {
+      global.NX = { Permissions: { permissions: {} } };
+      await expect(ExtJS.waitForPermissions()).resolves.toBeUndefined();
+    });
+
+    it('resolves once permissions become available via polling', async () => {
+      const promise = ExtJS.waitForPermissions();
+
+      jest.advanceTimersByTime(150);
+      global.NX = { Permissions: { permissions: {} } };
+      jest.advanceTimersByTime(150);
+
+      await expect(promise).resolves.toBeUndefined();
+    });
+
+    it('rejects after the configured timeout when permissions never load', async () => {
+      const promise = ExtJS.waitForPermissions(500);
+      jest.advanceTimersByTime(501);
+      await expect(promise).rejects.toThrow('Permissions load timed out');
+    });
+
+    it('uses 30000ms default timeout', async () => {
+      const promise = ExtJS.waitForPermissions();
+      jest.advanceTimersByTime(29999);
+      global.NX = { Permissions: { permissions: {} } };
+      jest.advanceTimersByTime(200);
+      await expect(promise).resolves.toBeUndefined();
+    });
+  });
 });

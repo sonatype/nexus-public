@@ -14,7 +14,7 @@ import React from 'react';
 
 import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
-import {NxFormGroup, NxTextInput, NxFormSelect} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxTextInput, NxFormSelect, NxReadOnly} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -28,8 +28,21 @@ const NUGET_VERSIONS = {
 export default function NugetProxyConfiguration({parentMachine}) {
   const [currentParent, sendParent] = parentMachine;
 
+  const {
+    pristineData: {name},
+    data: {url}
+  } = currentParent.context;
+  const isEdit = !!name;
+
   return (
     <>
+      {isEdit && url && (
+        <NxReadOnly>
+          <NxReadOnly.Label>{NUGET.SYMSRV_ENDPOINT.LABEL}</NxReadOnly.Label>
+          <NxReadOnly.Data>{`${url}/symbols`}</NxReadOnly.Data>
+        </NxReadOnly>
+      )}
+
       <NxFormGroup
         label={NUGET.PROTOCOL_VERSION.LABEL}
         className="nxrm-form-group-nuget-protocol-version"
@@ -58,6 +71,7 @@ export default function NugetProxyConfiguration({parentMachine}) {
           onChange={FormUtils.handleUpdate('nugetProxy.queryCacheItemMaxAge', sendParent)}
         />
       </NxFormGroup>
+
     </>
   );
 }

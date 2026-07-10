@@ -49,15 +49,19 @@ export default class ExtJS {
 
   static state = jest.fn(() => ExtJS._stateInstance);
 
-  // Consistent state instance for when() calls
+  // Consistent state instance for when() calls - WITH USERTOKEN CAPABILITY
   static _stateInstance = {
-    getValue: jest.fn(),
+    getValue: jest.fn((key) => {
+      if (key === 'capabilityActiveTypes') return ['usertoken'];
+      if (key === 'anonymousUsername') return 'anonymous';
+      return undefined;
+    }),
     getEdition: jest.fn(() => 'OSS'),
     getUser: jest.fn(() => ({ id: 'test-user', authenticated: true }))
   };
 
   static formatDate = jest.fn((_date, _format) => '2024-01-01');
-  static isProEdition = jest.fn(() => false);
+  static isProEdition = jest.fn(() => true);
   static checkPermission = jest.fn(() => true);
 
   static useUser = jest.fn(() => ({

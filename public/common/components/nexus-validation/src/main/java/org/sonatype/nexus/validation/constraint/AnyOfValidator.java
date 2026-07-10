@@ -15,7 +15,7 @@ package org.sonatype.nexus.validation.constraint;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;

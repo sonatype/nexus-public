@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.selfhosted.blobstore;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.ConnectionChecker;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;

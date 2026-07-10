@@ -15,8 +15,8 @@ package org.sonatype.nexus.coreui;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.security.realm.RealmManager;

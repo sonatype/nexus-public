@@ -14,29 +14,27 @@ package org.sonatype.nexus.repository.rest.internal.resources.doc;
 
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiCreateRequest;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiResponse;
 import org.sonatype.nexus.repository.rest.api.ContentSelectorApiUpdateRequest;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-
-import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
-import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
-import static org.sonatype.nexus.repository.http.HttpStatus.NO_CONTENT;
-import static org.sonatype.nexus.repository.http.HttpStatus.OK;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 
 /**
  * Swagger documentation for {@link org.sonatype.nexus.repository.rest.internal.resources.ContentSelectorsApiResource}
  *
  * @since 3.19
  */
-@Api(value = "Content selectors")
+@Tag(name = "Content selectors")
 public interface ContentSelectorsResourceDoc
 {
   String NAME_DESCRIPTION = "The content selector name cannot be changed after creation";
@@ -55,45 +53,47 @@ public interface ContentSelectorsResourceDoc
 
   String EXPRESSION_NOTES = "See http://links.sonatype.com/products/nexus/selectors/docs for more details";
 
-  @ApiOperation("List content selectors")
+  @Operation(summary = "List content selectors")
   @ApiResponses({
-      @ApiResponse(code = OK, message = "successful operation", response = ContentSelectorApiResponse.class,
-          responseContainer = "List"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to read content selectors")
+      @ApiResponse(responseCode = "200", description = "successful operation",
+          content = @Content(
+              array = @ArraySchema(schema = @Schema(implementation = ContentSelectorApiResponse.class)))),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to read content selectors")
   })
   List<ContentSelectorApiResponse> getContentSelectors();
 
-  @ApiOperation("Create a new content selector")
+  @Operation(summary = "Create a new content selector")
   @ApiResponses({
-      @ApiResponse(code = NO_CONTENT, message = "Content selector successfully created"),
-      @ApiResponse(code = BAD_REQUEST, message = "Invalid request"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to create content selectors")
+      @ApiResponse(responseCode = "204", description = "Content selector successfully created"),
+      @ApiResponse(responseCode = "400", description = "Invalid request"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to create content selectors")
   })
   void createContentSelector(@Valid final ContentSelectorApiCreateRequest request);
 
-  @ApiOperation("Get a content selector by name")
+  @Operation(summary = "Get a content selector by name")
   @ApiResponses({
-      @ApiResponse(code = OK, message = "successful operation", response = ContentSelectorApiResponse.class),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to read the content selector")
+      @ApiResponse(responseCode = "200", description = "successful operation",
+          content = @Content(schema = @Schema(implementation = ContentSelectorApiResponse.class))),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to read the content selector")
   })
   ContentSelectorApiResponse getContentSelector(
-      @ApiParam(required = true, value = "The content selector name") final String name);
+      @Parameter(required = true, description = "The content selector name") final String name);
 
-  @ApiOperation("Update a content selector")
+  @Operation(summary = "Update a content selector")
   @ApiResponses({
-      @ApiResponse(code = NO_CONTENT, message = "Content selector updated successfully"),
-      @ApiResponse(code = BAD_REQUEST, message = "Invalid request"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to update the content selector")
+      @ApiResponse(responseCode = "204", description = "Content selector updated successfully"),
+      @ApiResponse(responseCode = "400", description = "Invalid request"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to update the content selector")
   })
   void updateContentSelector(
-      @ApiParam(required = true, value = "The content selector name") final String name,
+      @Parameter(required = true, description = "The content selector name") final String name,
       @Valid final ContentSelectorApiUpdateRequest contentSelector);
 
-  @ApiOperation("Delete a content selector")
+  @Operation(summary = "Delete a content selector")
   @ApiResponses({
-      @ApiResponse(code = NO_CONTENT, message = "Content selector deleted successfully"),
-      @ApiResponse(code = BAD_REQUEST, message = "Invalid request"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to delete the content selector")
+      @ApiResponse(responseCode = "204", description = "Content selector deleted successfully"),
+      @ApiResponse(responseCode = "400", description = "Invalid request"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to delete the content selector")
   })
   void deleteContentSelector(final String name);
 }

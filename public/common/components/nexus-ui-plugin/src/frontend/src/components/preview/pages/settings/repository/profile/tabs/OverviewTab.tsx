@@ -26,7 +26,8 @@ import type {
   RepositoryProfileData,
   BlobStoreInfo,
   RepositoryMetrics,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
+import { ensureTrailingSlash } from '../../../../../../../utils/url';
 
 // =============================================================================
 // Types
@@ -113,7 +114,7 @@ export function OverviewTab({
           <Box className="profile-section__row">
             <Text className="profile-section__label">URL</Text>
             <Text className="profile-section__value profile-section__value--code">
-              {repository.url}
+              {ensureTrailingSlash(repository.url)}
             </Text>
           </Box>
 

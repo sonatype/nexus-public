@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 import org.sonatype.nexus.blobstore.SelectOption;
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;

@@ -20,8 +20,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import javax.validation.Validator;
-import javax.validation.executable.ExecutableValidator;
+import jakarta.validation.Validator;
+import jakarta.validation.executable.ExecutableValidator;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 

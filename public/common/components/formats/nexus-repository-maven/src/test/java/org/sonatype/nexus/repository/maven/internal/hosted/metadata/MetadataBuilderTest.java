@@ -216,4 +216,129 @@ public class MetadataBuilderTest
     assertThat(gmd.getGroupId(), nullValue());
     assertThat(gmd.getPlugins(), hasSize(1));
   }
+
+  @Test
+  public void multipleReleasesOutOfOrderSelectsHighestAsLatestAndRelease() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+
+    // versions are supplied out of natural order; Version.compareTo must drive selection
+    addArtifactPom("1.0");
+    addArtifactPom("3.0");
+    addArtifactPom("2.0");
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(3));
+    // TreeSet<Version> exposes the versions in ascending order
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.0", "2.0", "3.0"));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("3.0"));
+    assertThat(amd.getBaseVersions().getRelease(), equalTo("3.0"));
+  }
+
+  @Test
+  public void semanticOrderingPrefersNumericallyHigherVersion() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+
+    // lexical ordering would place "1.10" before "1.9"; numeric ordering must win
+    addArtifactPom("1.9");
+    addArtifactPom("1.10");
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(2));
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.9", "1.10"));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("1.10"));
+    assertThat(amd.getBaseVersions().getRelease(), equalTo("1.10"));
+  }
+
+  @Test
+  public void qualifierOrderingPlacesPreReleaseBelowReleases() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+
+    // GenericVersionScheme orders the "alpha" qualifier below the bare release
+    addArtifactPom("1.0-alpha");
+    addArtifactPom("1.0");
+    addArtifactPom("2.0");
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(3));
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.0-alpha", "1.0", "2.0"));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("2.0"));
+    assertThat(amd.getBaseVersions().getRelease(), equalTo("2.0"));
+  }
+
+  @Test
+  public void latestMayBeSnapshotWhileReleaseFallsBackToHighestNonSnapshot() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+
+    // a release plus a higher snapshot: latest is the snapshot, release skips it
+    addArtifactPom("1.0");
+    addArtifactPom("2.0-SNAPSHOT");
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(2));
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.0", "2.0-SNAPSHOT"));
+    // latest is the highest version even though it is a snapshot
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("2.0-SNAPSHOT"));
+    // release walks down past snapshots to the highest non-snapshot version
+    assertThat(amd.getBaseVersions().getRelease(), equalTo("1.0"));
+  }
+
+  @Test
+  public void multipleSnapshotsHaveNoReleaseAndLatestIsHighestSnapshot() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+
+    addArtifactPom("1.0-SNAPSHOT");
+    addArtifactPom("2.0-SNAPSHOT");
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(2));
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.0-SNAPSHOT", "2.0-SNAPSHOT"));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("2.0-SNAPSHOT"));
+    // every version is a snapshot, so there is no release
+    assertThat(amd.getBaseVersions().getRelease(), nullValue());
+  }
+
+  @Test
+  public void lenientVersionSchemeRetainsNonStandardVersions() {
+    // NEXUS-53142: GenericVersionScheme.parseVersion(...) returns a GenericVersion for ANY
+    // input and never throws InvalidVersionSpecificationException, so
+    // MetadataBuilder.parseVersion never returns null and the "could not parse, omit it"
+    // branch is unreachable with this scheme. Lock the actual lenient behavior instead:
+    // non-standard version strings are still parsed, retained, and ordered as strings via
+    // Version.compareTo without any exception being thrown.
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+
+    addArtifactPom("foo");
+    addArtifactPom("zar");
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(2));
+    // both non-standard versions are retained, ordered case-insensitively: foo < zar
+    assertThat(amd.getBaseVersions().getVersions(), contains("foo", "zar"));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("zar"));
+    // neither ends with SNAPSHOT, so release equals latest
+    assertThat(amd.getBaseVersions().getRelease(), equalTo("zar"));
+  }
+
+  /**
+   * Adds the main POM artifact for the given base version under {@code group:artifact}, mirroring
+   * the single-version flow used by the other tests but for multi-version scenarios.
+   */
+  private void addArtifactPom(final String version) {
+    testSubject.onEnterBaseVersion(version);
+    testSubject.addArtifactVersion(
+        mavenPathParser.parsePath(String.format("/group/artifact/%s/artifact-%s.pom", version, version)));
+    testSubject.onExitBaseVersion();
+  }
 }

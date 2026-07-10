@@ -12,22 +12,22 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model which describes replication capabilities for a repository.
  */
 public class ReplicationAttributes
 {
-  @ApiModelProperty(value = "Whether pre-emptive pull is enabled", example = "false")
+  @Schema(description = "Whether pre-emptive pull is enabled", example = "false")
   @NotNull
   protected final Boolean preemptivePullEnabled;
 
-  @ApiModelProperty(value = "Regular Expression of Asset Paths to pull pre-emptively pull")
+  @Schema(description = "Regular Expression of Asset Paths to pull pre-emptively pull")
   protected final String assetPathRegex;
 
   @JsonCreator

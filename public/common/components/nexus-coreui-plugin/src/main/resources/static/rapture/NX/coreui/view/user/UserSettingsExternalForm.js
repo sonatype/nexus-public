@@ -131,11 +131,8 @@ Ext.define('NX.coreui.view.user.UserSettingsExternalForm', {
        * Join external roles using '\n' so they are shown as a role / line.
        */
       setValue: function(value) {
-        var formattedValue = value;
-        if (Ext.isArray(formattedValue)) {
-          formattedValue = [formattedValue.join('\n')];
-        }
-        this.callParent(formattedValue);
+        var displayValue = Ext.isArray(value) ? value.join('\n') : (value || '');
+        this.callParent([displayValue]);
       }
     });
 

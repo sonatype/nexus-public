@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.inject.Provider;
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.rest.ValidationErrorsException;
 

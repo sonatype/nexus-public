@@ -17,8 +17,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -142,7 +142,9 @@ class LegacyViewServletTest
 
   @Test
   void sendNotFoundWhenLegacyUrlAndFormatDoesNotMatch() throws Exception {
-    when(repository.getFormat()).thenReturn(new Format("yum") { });
+    when(repository.getFormat()).thenReturn(new Format("yum")
+    {
+    });
     when(request.getPathInfo()).thenReturn("/test-repo/content.txt");
     when(request.getRequestURI()).thenReturn("/content/sites/test-repo/content.txt");
 

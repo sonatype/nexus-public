@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-api-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-api-rest-common</artifactId>
@@ -59,9 +59,17 @@
       <artifactId>nexus-test-common</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- NEXUS-46395: replaced jersey-common (Jersey 2.22, javax-era; ships no
+         META-INF/services/jakarta.ws.rs.ext.RuntimeDelegate) with resteasy-core,
+         which is the JAX-RS implementation we actually use at runtime and provides
+         org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl as the
+         RuntimeDelegate via ServiceLoader. StatusResourceTest constructs Response
+         objects, which trigger RuntimeDelegate resolution; without this dep the
+         tests blew up with "Provider for jakarta.ws.rs.ext.RuntimeDelegate cannot
+         be found". -->
     <dependency>
-      <groupId>org.glassfish.jersey.core</groupId>
-      <artifactId>jersey-common</artifactId>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-core</artifactId>
       <scope>test</scope>
     </dependency>
 

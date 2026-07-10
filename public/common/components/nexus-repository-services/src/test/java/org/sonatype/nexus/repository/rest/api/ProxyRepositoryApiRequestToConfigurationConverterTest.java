@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenti
 import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
+import org.sonatype.nexus.repository.rest.api.model.FirewallAttributes;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import org.junit.Before;
@@ -30,6 +31,8 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -192,6 +195,16 @@ public class ProxyRepositoryApiRequestToConfigurationConverterTest
     assertThat(httpClientConfig, is(notNullValue()));
     assertThat(httpClientConfig.get("blocked"), is(false));
     assertThat(httpClientConfig.get("autoBlock"), is(true));
+  }
+
+  @Test
+  public void testConvert_withPccsMode_throwsForUnsupportedFormat() {
+    FirewallAttributes firewall = new FirewallAttributes("PCCS");
+    when(request.getFirewall()).thenReturn(firewall);
+
+    IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> underTest.convert(request));
+    assertTrue(ex.getMessage().contains("PCCS"));
+    assertTrue(ex.getMessage().contains("npm") && ex.getMessage().contains("pypi"));
   }
 
   @Test

@@ -28,6 +28,7 @@ interface GoogleBlobStoreSettingsProps {
   onChange: (path: string, value: unknown) => void;
   disabled?: boolean;
   isEdit?: boolean;
+  errors?: Record<string, string | null>;
 }
 
 const STRINGS = {
@@ -96,7 +97,8 @@ export default function GoogleBlobStoreSettings({
   data,
   onChange,
   disabled = false,
-  isEdit = false
+  isEdit = false,
+  errors = {},
 }: GoogleBlobStoreSettingsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -163,6 +165,7 @@ export default function GoogleBlobStoreSettings({
           onChange={(value) => updateBucket('name', value)}
           helpText={STRINGS.BASIC.BUCKET.helpText}
           placeholder={STRINGS.BASIC.BUCKET.placeholder}
+          error={errors['bucketConfiguration.bucket.name'] ?? undefined}
           required
           disabled={disabled}
         />

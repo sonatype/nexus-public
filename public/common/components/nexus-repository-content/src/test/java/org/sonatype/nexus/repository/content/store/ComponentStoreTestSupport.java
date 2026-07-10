@@ -21,6 +21,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
@@ -91,6 +92,7 @@ public abstract class ComponentStoreTestSupport
     testContext.registerBean(ContentFacetFinder.class, () -> contentFacetFinder);
     testContext.registerBean(EventManager.class, () -> eventManager);
     testContext.registerBean(DataSessionSupplier.class, () -> sessionRule);
+    testContext.registerBean(GlobalRepositorySettings.class, GlobalRepositorySettings::new);
     new TestBespokeStoreProvider().postProcessBeanDefinitionRegistry(testContext);
     testContext.refresh();
 

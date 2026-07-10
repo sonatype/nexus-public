@@ -28,6 +28,8 @@ import {
   RepositoryReference,
 } from '../types';
 
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+
 import './GroupFacet.scss';
 
 interface GroupFacetProps {
@@ -100,13 +102,30 @@ export function GroupFacet({
   };
 
   return (
-    <SettingsFormSection title="Group">
+    <SettingsFormSection title={UIStrings.GROUP.SECTION.title}>
+      {/* Writable Member - shown FIRST for formats that support it */}
+      {showWritableMember && (
+        <SettingsSelect
+          name="group-writableMember"
+          label={UIStrings.GROUP.WRITABLE_MEMBER.label}
+          value={formData.group?.writableMember || ''}
+          onChange={(value) => onNestedChange('group', { writableMember: value || null })}
+          helpText={UIStrings.GROUP.WRITABLE_MEMBER.helpText}
+          options={[
+            { value: '', label: UIStrings.GROUP.WRITABLE_MEMBER.noneOption },
+            ...memberOptions
+              .filter((opt) => currentMembers.includes(opt.name) && opt.type === 'hosted')
+              .map((opt) => ({ value: opt.name, label: opt.name })),
+          ]}
+        />
+      )}
+
       <Box className="group-facet">
         <Text size="2" className="group-facet__label">
-          Member Repositories <span className="group-facet__required">*</span>
+          {UIStrings.GROUP.MEMBER_REPOSITORIES.label} <span className="group-facet__required">*</span>
         </Text>
         <Text size="1" className="group-facet__help">
-          Select repositories to include in this group. Order determines search priority.
+          {UIStrings.GROUP.MEMBER_REPOSITORIES.helpText}
         </Text>
 
         {errors?.group?.memberNames && (
@@ -122,7 +141,7 @@ export function GroupFacet({
           value=""
           onChange={handleAddMember}
           options={[
-            { value: '', label: 'Add a member repository...' },
+            { value: '', label: UIStrings.GROUP.MEMBER_REPOSITORIES.addPlaceholder },
             ...availableOptions.map((opt) => ({
               value: opt.name,
               label: `${opt.name} (${opt.type || 'unknown'})`,
@@ -152,8 +171,8 @@ export function GroupFacet({
                     onClick={() => handleMoveMember(index, 'up')}
                     disabled={index === 0}
                     className="group-facet__move-btn"
-                    title="Move up"
-                    aria-label="Move up"
+                    title={UIStrings.GROUP.BUTTONS.moveUp}
+                    aria-label={UIStrings.GROUP.BUTTONS.moveUp}
                   >
                     <ChevronUp size={14} />
                   </button>
@@ -162,8 +181,8 @@ export function GroupFacet({
                     onClick={() => handleMoveMember(index, 'down')}
                     disabled={index === currentMembers.length - 1}
                     className="group-facet__move-btn"
-                    title="Move down"
-                    aria-label="Move down"
+                    title={UIStrings.GROUP.BUTTONS.moveDown}
+                    aria-label={UIStrings.GROUP.BUTTONS.moveDown}
                   >
                     <ChevronDown size={14} />
                   </button>
@@ -171,8 +190,8 @@ export function GroupFacet({
                     type="button"
                     onClick={() => handleRemoveMember(member)}
                     className="group-facet__remove-btn"
-                    title="Remove"
-                    aria-label="Remove"
+                    title={UIStrings.GROUP.BUTTONS.remove}
+                    aria-label={UIStrings.GROUP.BUTTONS.remove}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -184,26 +203,10 @@ export function GroupFacet({
 
         {currentMembers.length === 0 && (
           <Box className="group-facet__empty">
-            <Text size="2">No member repositories selected</Text>
+            <Text size="2">{UIStrings.GROUP.MEMBER_REPOSITORIES.emptyMessage}</Text>
           </Box>
         )}
       </Box>
-
-      {showWritableMember && (
-        <SettingsSelect
-          name="group-writableMember"
-          label="Writable Repository"
-          value={formData.group?.writableMember || ''}
-          onChange={(value) => onNestedChange('group', { writableMember: value || null })}
-          helpText="The member repository that POST and PUT requests will be routed to"
-          options={[
-            { value: '', label: '(None)' },
-            ...memberOptions
-              .filter((opt) => currentMembers.includes(opt.name) && opt.type === 'hosted')
-              .map((opt) => ({ value: opt.name, label: opt.name })),
-          ]}
-        />
-      )}
     </SettingsFormSection>
   );
 }

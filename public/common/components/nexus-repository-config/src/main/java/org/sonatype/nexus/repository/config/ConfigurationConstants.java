@@ -42,4 +42,12 @@ public interface ConfigurationConstants
   String COMPONENT = "component";
 
   String PROPRIETARY_COMPONENTS = "proprietaryComponents";
+
+  /**
+   * Attribute key for the per-repository firewall configuration sub-map (mode etc.).
+   * Mirrors the literal already used by the typed REST API converters and downstream readers;
+   * exposed here so non-REST-API callers (e.g. {@code BaseRepositoryManager}) do not have to
+   * import {@code rest.api.model.FirewallAttributes}.
+   */
+  String FIREWALL = "firewall";
 }

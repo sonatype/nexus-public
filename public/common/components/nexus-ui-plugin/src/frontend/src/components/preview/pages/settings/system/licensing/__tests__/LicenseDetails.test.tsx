@@ -30,7 +30,7 @@ describe('LicenseDetails', () => {
     effectiveDate: '2024-01-15T00:00:00Z',
     expirationDate: '2025-12-31T23:59:59Z',
     licenseType: 'PRO, Enterprise',
-    licensedUsers: 100,
+    licensedUsers: '100',
     fingerprint: 'abc123def456',
   };
 
@@ -66,10 +66,22 @@ describe('LicenseDetails', () => {
     expect(screen.getByText('100')).toBeInTheDocument();
   });
 
+  it('displays licensed users when value is Unlimited', () => {
+    const licenseWithUnlimited = {
+      ...mockLicense,
+      licensedUsers: 'Unlimited',
+    };
+
+    render(<LicenseDetails license={licenseWithUnlimited} />, { wrapper: TestWrapper });
+
+    expect(screen.getByText('Number of Licensed Users')).toBeInTheDocument();
+    expect(screen.getByText('Unlimited')).toBeInTheDocument();
+  });
+
   it('does not display licensed users when zero', () => {
     const licenseWithoutUsers = {
       ...mockLicense,
-      licensedUsers: 0,
+      licensedUsers: '0',
     };
 
     render(<LicenseDetails license={licenseWithoutUsers} />, { wrapper: TestWrapper });
@@ -81,6 +93,17 @@ describe('LicenseDetails', () => {
     const licenseWithoutUsers = {
       ...mockLicense,
       licensedUsers: undefined,
+    };
+
+    render(<LicenseDetails license={licenseWithoutUsers} />, { wrapper: TestWrapper });
+
+    expect(screen.queryByText('Number of Licensed Users')).not.toBeInTheDocument();
+  });
+
+  it('does not display licensed users when empty string', () => {
+    const licenseWithoutUsers = {
+      ...mockLicense,
+      licensedUsers: '',
     };
 
     render(<LicenseDetails license={licenseWithoutUsers} />, { wrapper: TestWrapper });

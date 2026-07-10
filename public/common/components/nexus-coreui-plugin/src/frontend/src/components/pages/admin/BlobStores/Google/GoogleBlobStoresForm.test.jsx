@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -30,6 +30,16 @@ import {enableSoftQueryReadOnlyAndChangeLimit} from '../testUtils/enableSoftQuer
 import UIStrings from '../../../../../constants/UIStrings';
 import { useCurrentStateAndParams } from '@uirouter/react';
 import { ROUTE_NAMES } from '../../../../../routerConfig/routeNames/routeNames';
+
+jest.mock('../BlobStoreTypes', () => ({
+  __esModule: true,
+  default: {
+    google: {
+      Settings: require('./GoogleBlobStoreSettings').default,
+      Actions: require('./GoogleBlobStoreActions').default
+    }
+  }
+}));
 
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
@@ -83,13 +93,6 @@ const selectors = {
 };
 
 describe('BlobStoresForm-GCP', () => {
-  window.BlobStoreTypes = {
-    google: {
-      Settings: GoogleBlobStoreSettings,
-      Actions: GoogleBlobStoreActions
-    }
-  };
-
   beforeEach(() => {
     ExtJS.isProEdition.mockReturnValue(false);
     when(axios.get).calledWith(URLs.blobStoreTypesUrl).mockResolvedValue(blobstoreTypes);
@@ -148,19 +151,18 @@ describe('BlobStoresForm-GCP', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.selectOptions(selectors.queryTypeSelect(), 'Google Cloud Platform');
-    userEvent.type(selectors.queryName(), data.name);
-    userEvent.type(selectors.queryBucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(selectors.queryPrefix(), data.bucketConfiguration.bucket.prefix);
+    fireEvent.change(selectors.queryName(), {target: {value: data.name}});
+    fireEvent.change(selectors.queryBucket(), {target: {value: data.bucketConfiguration.bucket.name}});
+    fireEvent.change(selectors.queryPrefix(), {target: {value: data.bucketConfiguration.bucket.prefix}});
 
     enableSoftQueryReadOnlyAndChangeLimit('1');
 
     userEvent.click(selectors.querySubmitButton());
-    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         'service/rest/v1/blobstores/google',
         data
-    );
+    ));
   });
 
   it('creates a new GCP blob store with JSON credentials authentication', async function() {
@@ -190,8 +192,8 @@ describe('BlobStoresForm-GCP', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.selectOptions(selectors.queryTypeSelect(), 'Google Cloud Platform');
-    userEvent.type(selectors.queryName(), data.name);
-    userEvent.type(selectors.queryBucket(), data.bucketConfiguration.bucket.name);
+    fireEvent.change(selectors.queryName(), {target: {value: data.name}});
+    fireEvent.change(selectors.queryBucket(), {target: {value: data.bucketConfiguration.bucket.name}});
     userEvent.click(selectors.queryCredentialAuthentication());
 
     const file = new File([new ArrayBuffer(1)], 'credentials.json', {type: 'application/json'});
@@ -201,12 +203,11 @@ describe('BlobStoresForm-GCP', () => {
     await file.text();
 
     userEvent.click(selectors.querySubmitButton());
-    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         'service/rest/v1/blobstores/google',
         data
-    );
+    ));
   });
 
   it('creates a new GCP blob store with default encryption', async function() {
@@ -236,19 +237,18 @@ describe('BlobStoresForm-GCP', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.selectOptions(selectors.queryTypeSelect(), 'Google Cloud Platform');
-    userEvent.type(selectors.queryName(), data.name);
-    userEvent.type(selectors.queryBucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(selectors.queryPrefix(), data.bucketConfiguration.bucket.prefix);
+    fireEvent.change(selectors.queryName(), {target: {value: data.name}});
+    fireEvent.change(selectors.queryBucket(), {target: {value: data.bucketConfiguration.bucket.name}});
+    fireEvent.change(selectors.queryPrefix(), {target: {value: data.bucketConfiguration.bucket.prefix}});
 
     enableSoftQueryReadOnlyAndChangeLimit('1');
 
     userEvent.click(selectors.querySubmitButton());
-    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         'service/rest/v1/blobstores/google',
         data
-    );
+    ));
   });
 
   it('creates a new GCP blob store with KMS encryption', async function() {
@@ -279,21 +279,19 @@ describe('BlobStoresForm-GCP', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.selectOptions(selectors.queryTypeSelect(), 'Google Cloud Platform');
-    userEvent.type(selectors.queryName(), data.name);
-    userEvent.type(selectors.queryBucket(), data.bucketConfiguration.bucket.name);
-    userEvent.type(selectors.queryPrefix(), data.bucketConfiguration.bucket.prefix);
+    fireEvent.change(selectors.queryName(), {target: {value: data.name}});
+    fireEvent.change(selectors.queryBucket(), {target: {value: data.bucketConfiguration.bucket.name}});
+    fireEvent.change(selectors.queryPrefix(), {target: {value: data.bucketConfiguration.bucket.prefix}});
     userEvent.click(selectors.queryKmsEncryption());
-    userEvent.type(selectors.queryKmsKeyResourceName(), data.bucketConfiguration.encryption.encryptionKey);
+    fireEvent.change(selectors.queryKmsKeyResourceName(), {target: {value: data.bucketConfiguration.encryption.encryptionKey}});
 
     enableSoftQueryReadOnlyAndChangeLimit('1');
 
     userEvent.click(selectors.querySubmitButton());
 
-    await waitForElementToBeRemoved(selectors.querySavingMask());
-
-    expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         'service/rest/v1/blobstores/google',
         data
-    );
+    ));
   });
 });

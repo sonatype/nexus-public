@@ -192,7 +192,7 @@ describe('ThemeContext', () => {
       expect(localStorage.getItem('nexus-theme-preference')).toBe(THEMES.DARK);
     });
 
-    it('should load theme preference from localStorage on mount', () => {
+    it('should load theme preference from localStorage on mount but keep effectiveTheme light outside Preview UI', () => {
       localStorage.setItem('nexus-theme-preference', THEMES.DARK);
 
       const { result } = renderHook(() => useTheme(), {
@@ -200,7 +200,7 @@ describe('ThemeContext', () => {
       });
 
       expect(result.current.theme).toBe(THEMES.DARK);
-      expect(result.current.effectiveTheme).toBe(THEMES.DARK);
+      expect(result.current.effectiveTheme).toBe(THEMES.LIGHT);
     });
 
     it('should handle localStorage errors gracefully', () => {
@@ -224,6 +224,65 @@ describe('ThemeContext', () => {
 
       mockSetItem.mockRestore();
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('Classic UI / Preview UI transition (NEXUS-52210)', () => {
+    afterEach(() => {
+      window.location.hash = '';
+    });
+
+    it('should initialize effectiveTheme as light when not in Preview UI, even if localStorage has dark', () => {
+      localStorage.setItem('nexus-theme-preference', THEMES.DARK);
+      window.location.hash = '#browse/welcome';
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      expect(result.current.theme).toBe(THEMES.DARK);
+      expect(result.current.effectiveTheme).toBe(THEMES.LIGHT);
+    });
+
+    it('should reset effectiveTheme to light when navigating from Preview UI to Classic UI', () => {
+      localStorage.setItem('nexus-theme-preference', THEMES.DARK);
+      window.location.hash = '#preview/browse/welcome';
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      expect(result.current.effectiveTheme).toBe(THEMES.DARK);
+
+      act(() => {
+        window.location.hash = '#browse/welcome';
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      });
+
+      expect(result.current.effectiveTheme).toBe(THEMES.LIGHT);
+    });
+
+    it('should restore dark effectiveTheme when navigating back to Preview UI after Classic UI visit', () => {
+      localStorage.setItem('nexus-theme-preference', THEMES.DARK);
+      window.location.hash = '#preview/browse/welcome';
+
+      const { result } = renderHook(() => useTheme(), {
+        wrapper: ThemeProvider,
+      });
+
+      act(() => {
+        window.location.hash = '#browse/welcome';
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      });
+
+      expect(result.current.effectiveTheme).toBe(THEMES.LIGHT);
+
+      act(() => {
+        window.location.hash = '#preview/browse/welcome';
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      });
+
+      expect(result.current.effectiveTheme).toBe(THEMES.DARK);
     });
   });
 

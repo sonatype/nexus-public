@@ -61,6 +61,7 @@ public class DefaultSearchMappings
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
       new SearchMapping(KEYWORD_ALIAS, "keyword", "Query by keyword", KEYWORDS, false),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name", SearchField.REPOSITORY_NAME),
+      new SearchMapping("repositoryName", REPOSITORY_NAME, "Repository name", SearchField.REPOSITORY_NAME),
       new SearchMapping("format", "format", "Query by format", FORMAT),
       new SearchMapping("group", GROUP_RAW, "Component group", NAMESPACE),
       new SearchMapping(NAME_RAW_ALIAS, NAME_RAW, "Component name", NAME),

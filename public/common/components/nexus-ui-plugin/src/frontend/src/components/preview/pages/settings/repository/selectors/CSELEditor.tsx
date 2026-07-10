@@ -63,6 +63,7 @@ export function CSELEditor({
   rows = 4,
 }: CSELEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -76,8 +77,10 @@ export function CSELEditor({
     onValidationChange?.(validation);
   }, [validation, onValidationChange]);
 
-  // Generate suggestions based on cursor context
-  const updateSuggestions = useCallback(() => {
+  // Generate suggestions based on cursor context.
+  // Accepts an optional focusOverride to handle initial focus where
+  // setIsFocused(true) hasn't updated the closed-over isFocused yet.
+  const updateSuggestions = useCallback((focusOverride?: boolean) => {
     if (!textareaRef.current || disabled) {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -109,7 +112,7 @@ export function CSELEditor({
           }));
         break;
 
-      case 'afterAttribute':
+      case 'afterAttribute': {
         // Suggest operators for the current attribute
         const operators = context.currentAttribute
           ? getOperatorsForAttribute(context.currentAttribute)
@@ -125,6 +128,7 @@ export function CSELEditor({
           };
         });
         break;
+      }
 
       case 'afterOperator':
         // Suggest a value placeholder
@@ -155,9 +159,15 @@ export function CSELEditor({
     }
 
     setSuggestions(newSuggestions);
-    setShowSuggestions(newSuggestions.length > 0);
     setSelectedIndex(0);
-  }, [value, disabled]);
+    // Update showSuggestions immediately to avoid one-render lag.
+    // Use focusOverride when provided (e.g., from handleFocus where
+    // setIsFocused hasn't updated isFocused yet), otherwise use isFocused.
+    const shouldShow = focusOverride !== undefined ? focusOverride : isFocused;
+    if (shouldShow) {
+      setShowSuggestions(newSuggestions.length > 0);
+    }
+  }, [value, disabled, isFocused]);
 
   // Handle input change
   const handleChange = useCallback(
@@ -174,6 +184,7 @@ export function CSELEditor({
 
   // Handle blur
   const handleBlur = useCallback(() => {
+    setIsFocused(false);
     // Delay hiding suggestions to allow click on suggestion
     setTimeout(() => {
       setShowSuggestions(false);
@@ -182,7 +193,10 @@ export function CSELEditor({
 
   // Handle focus
   const handleFocus = useCallback(() => {
-    updateSuggestions();
+    setIsFocused(true);
+    // Pass true to ensure suggestions show immediately on focus,
+    // since setIsFocused(true) hasn't updated isFocused yet.
+    updateSuggestions(true);
   }, [updateSuggestions]);
 
   // Insert suggestion at cursor
@@ -273,11 +287,12 @@ export function CSELEditor({
     [showSuggestions, suggestions, selectedIndex, insertSuggestion]
   );
 
-  // Update suggestions when value changes
+  // Update suggestions when value changes (only while focused)
   useEffect(() => {
+    if (!isFocused) return;
     const timer = setTimeout(updateSuggestions, 100);
     return () => clearTimeout(timer);
-  }, [value, updateSuggestions]);
+  }, [value, isFocused, updateSuggestions]);
 
   // Get category color
   const getCategoryColor = (category: string) => {
@@ -386,5 +401,3 @@ function ValidationMessageItem({ message }: { message: ValidationMessage }) {
 }
 
 export default CSELEditor;
-
-

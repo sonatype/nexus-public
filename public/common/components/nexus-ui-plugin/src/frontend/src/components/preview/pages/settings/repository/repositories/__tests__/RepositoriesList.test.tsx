@@ -19,6 +19,7 @@ import { Theme } from '@radix-ui/themes';
 import { RepositoriesList } from '../RepositoriesList';
 import { useRepositoriesApi } from '../useRepositoriesApi';
 import { ToastProvider } from '../../../../../shared';
+import { restClient, ENDPOINTS } from '../../../../../../../interface/api';
 
 // Mock Radix UI DropdownMenu to avoid portal issues in tests
 // (Portals don't render reliably in jsdom - see SettingsSelect.test.tsx for same pattern)
@@ -432,6 +433,33 @@ describe('RepositoriesList', () => {
 
       const firewallHeader = screen.queryByRole('columnheader', { name: /firewall report/i });
       expect(firewallHeader).not.toBeInTheDocument();
+    });
+
+    it('fetches firewall status from the lightweight summary endpoint, not the full IQ endpoint', async () => {
+      const FIREWALL_STATUS_FULL_URL = '/service/rest/internal/ui/firewall/status';
+      const FIREWALL_STATUS_SUMMARY_URL = '/service/rest/internal/ui/firewall/status/summary';
+      const getSpy = jest.spyOn(restClient, 'get').mockResolvedValue([]);
+
+      try {
+        renderWithTheme(
+          <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByText('maven-central')).toBeInTheDocument();
+        });
+
+        // Sanity-check the constants are wired up the way this assertion assumes.
+        expect(ENDPOINTS.FIREWALL_STATUS).toBe(FIREWALL_STATUS_FULL_URL);
+        expect(ENDPOINTS.FIREWALL_STATUS_SUMMARY).toBe(FIREWALL_STATUS_SUMMARY_URL);
+
+        await waitFor(() => {
+          expect(getSpy).toHaveBeenCalledWith(ENDPOINTS.FIREWALL_STATUS_SUMMARY);
+        });
+        expect(getSpy).not.toHaveBeenCalledWith(ENDPOINTS.FIREWALL_STATUS);
+      } finally {
+        getSpy.mockRestore();
+      }
     });
   });
 

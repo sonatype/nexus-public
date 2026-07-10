@@ -25,13 +25,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletRequest;
-import javax.servlet.annotation.WebInitParam;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.annotation.WebInitParam;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
@@ -108,7 +108,26 @@ public class ExtDirectServlet
 
   @Override
   public void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-    HttpServletRequest wrappedRequest = new HttpServletRequestWrapper(request)
+    HttpServletRequest wrappedRequest = wrapRequest(request);
+
+    // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
+    // note that we don't apply this logic for FORM_UPLOAD_POST as extjs means of uploading files uses a hidden iframe
+    // which a value of DENY will not be allowed to load
+    if (StringUtils.isBlank(response.getHeader(X_FRAME_OPTIONS))
+        && !FORM_UPLOAD_POST.equals(getFromRequestContentType(wrappedRequest))) {
+      response.setHeader(X_FRAME_OPTIONS, DENY);
+    }
+
+    super.doPost(wrappedRequest, response);
+  }
+
+  /**
+   * Wraps the request to normalize null pathInfo to an empty string.
+   * DirectJNgine's RequestRouter.isSourceRequest requires non-null pathInfo; fuzzing requests
+   * may arrive without a path component (NEXUS-52996).
+   */
+  protected HttpServletRequest wrapRequest(final HttpServletRequest request) {
+    return new HttpServletRequestWrapper(request)
     {
       private BufferedReader reader;
 
@@ -126,17 +145,13 @@ public class ExtDirectServlet
         }
         return reader;
       }
+
+      @Override
+      public String getPathInfo() {
+        String pathInfo = super.getPathInfo();
+        return pathInfo != null ? pathInfo : "";
+      }
     };
-
-    // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
-    // note that we don't apply this logic for FORM_UPLOAD_POST as extjs means of uploading files uses a hidden iframe
-    // which a value of DENY will not be allowed to load
-    if (StringUtils.isBlank(response.getHeader(X_FRAME_OPTIONS))
-        && !FORM_UPLOAD_POST.equals(getFromRequestContentType(request))) {
-      response.setHeader(X_FRAME_OPTIONS, DENY);
-    }
-
-    super.doPost(wrappedRequest, response);
   }
 
   @Override

@@ -76,6 +76,7 @@ function restToEmailConfig(rest: RestEmailConfiguration): EmailConfiguration {
     enabled: rest.enabled ?? false,
     host: rest.host ?? '',
     port: rest.port ?? 25,
+    useAuthentication: (rest.username ?? '') !== '',
     username: rest.username ?? '',
     password: rest.password ?? '',
     fromAddress: rest.fromAddress ?? '',
@@ -96,8 +97,8 @@ function emailConfigToRest(config: EmailConfiguration): RestEmailConfiguration {
     enabled: config.enabled,
     host: config.host,
     port: config.port,
-    username: config.username,
-    password: config.password,
+    username: config.useAuthentication ? config.username : '',
+    password: config.useAuthentication ? config.password : '',
     fromAddress: config.fromAddress,
     subjectPrefix: config.subjectPrefix,
     startTlsEnabled: config.startTlsEnabled,
@@ -117,6 +118,7 @@ function emailConfigToRest(config: EmailConfiguration): RestEmailConfiguration {
 export function createEmailFormMachine() {
   return createFormMachine<EmailConfiguration>({
     id: 'email-form',
+    resetAfterSave: true,
     context: {
       data: { ...DEFAULT_EMAIL_CONFIGURATION },
     },

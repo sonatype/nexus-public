@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.app;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.inject.Provider;
 import org.junit.Before;
@@ -109,7 +109,7 @@ public class BaseUrlManagerImplTest
     testRelativePath("..", "", "/foo/");
     testRelativePath("..", "", "/foo/bar");
     testRelativePath("../..", "", "/foo/bar/");
-    testRelativePath("../..", "", "/foo//bar/");
+    testRelativePath("../../..", "", "/foo//bar/");
   }
 
   @Test
@@ -118,7 +118,13 @@ public class BaseUrlManagerImplTest
     testRelativePath("..", "/nexus", "/foo/");
     testRelativePath("..", "/nexus", "/foo/bar");
     testRelativePath("../..", "/nexus", "/foo/bar/");
-    testRelativePath("../..", "/nexus", "/foo//bar/");
+    testRelativePath("../../..", "/nexus", "/foo//bar/");
+  }
+
+  @Test
+  public void testDetectRelativePath_doubleSlash() {
+    // NEXUS-48254: double slash in URL must not cause off-by-one in relative path depth
+    testRelativePath("../../../../../..", "", "/repository/maven-central//junit/junit/4.12/junit-5.12.jar");
   }
 
   @Test

@@ -55,7 +55,6 @@ import {
   useToast,
 } from '../../shared';
 import MalwareBanner from '../../shared/security/MalwareBanner';
-import TelemetryWarningBanner from '../../shared/telemetry/TelemetryWarningBanner';
 import { BrowseFilterSidebar } from './repository-list/BrowseFilterSidebar';
 import { MobileFilterDrawer } from '../search/unified/MobileFilterDrawer';
 import { Breadcrumbs } from '../search/details/Breadcrumbs';
@@ -178,6 +177,15 @@ export function BrowsePage(): JSX.Element {
                 blobUpdated: asset.lastModified || null,
                 lastDownloaded: asset.lastDownloaded || null,
                 path: asset.path || asset.name,
+                downloadUrl: asset.downloadUrl, // absolute URL from server — includes context path, preferred over client-generated URL
+                blobRef: asset.blobRef,
+                createdBy: asset.createdBy,
+                createdByIp: asset.createdByIp, // intentionally not rendered — privacy concern
+                checksum: asset.checksum,
+                // Pass through format-specific attributes (e.g. attributes.docker)
+                // so the Attributes tab can surface image metadata (NEXUS-51972).
+                attributes: asset.attributes,
+                registryUrl: asset.registryUrl,
               } as AssetData,
               component: comp ? {
                 id: comp.id,
@@ -591,15 +599,16 @@ export function BrowsePage(): JSX.Element {
   }, [send, selectedRepository, selectedNode, router]);
 
   /**
-   * Copy repository URL to clipboard.
+   * Copy the current Preview UI page URL to clipboard so that opening it in a
+   * new tab re-opens the same Browse view instead of navigating to Classic UI.
    */
   const handleCopyUrl = useCallback(() => {
-    if (repositoryUrl) {
-      navigator.clipboard.writeText(repositoryUrl).then(() => {
+    if (selectedRepository) {
+      navigator.clipboard.writeText(window.location.href).then(() => {
         toast.success(STRINGS.urlCopied);
       });
     }
-  }, [repositoryUrl, toast]);
+  }, [selectedRepository, toast]);
 
   /**
    * Handle search result selection - navigate and potentially load component directly.
@@ -861,8 +870,6 @@ export function BrowsePage(): JSX.Element {
           <Flex direction="column" gap="6" width="100%" style={{ minWidth: 0 }}>
             {/* Malware Alert Banner — repository list view */}
             <MalwareBanner />
-            {/* Telemetry Warning Banner */}
-            <TelemetryWarningBanner />
             <Grid
               columns={{ initial: '1', sm: '250px 1fr' }}
               gap="6"
@@ -1015,9 +1022,6 @@ export function BrowsePage(): JSX.Element {
 
           {/* Malware Alert Banner */}
           <MalwareBanner />
-
-          {/* Telemetry Warning Banner */}
-          <TelemetryWarningBanner />
 
           {/* Search bar and actions */}
           <Box p="4">

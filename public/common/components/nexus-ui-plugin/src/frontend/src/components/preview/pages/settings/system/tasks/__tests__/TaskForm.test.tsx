@@ -23,6 +23,12 @@ import { Task, TaskType } from '../types';
 jest.mock('../useTasksApi');
 jest.mock('../useTasksForm');
 
+// Mock the internal API module used by tasksFormMachine so it does not fire real
+// network requests for /tasks/templates (see taskApiMock for details). (NEXUS-52612)
+jest.mock('../../../../../../../interface/api', () =>
+  require('./taskApiMock').createTaskApiMock()
+);
+
 // Mock TaskTypeSelector and TaskScheduler
 jest.mock('../TaskTypeSelector', () => ({
   TaskTypeSelector: ({ taskTypes, onSelect, loading, error }) => (
@@ -58,10 +64,13 @@ jest.mock('../TaskTypeSelector', () => ({
 }));
 
 jest.mock('../TaskScheduler', () => ({
-  TaskScheduler: ({ value, onChange, errors, disabled }) => (
-    <div data-testid="task-scheduler">
-      <select 
-        value={value.schedule} 
+  TaskScheduler: ({ value, onChange, errors, disabled, allowedSchedules }) => (
+    <div
+      data-testid="task-scheduler"
+      data-allowed-schedules={allowedSchedules ? JSON.stringify(allowedSchedules) : undefined}
+    >
+      <select
+        value={value.schedule}
         onChange={(e) => onChange({ ...value, schedule: e.target.value })}
         disabled={disabled}
       >
@@ -76,23 +85,36 @@ jest.mock('../TaskScheduler', () => ({
 
 // Mock shared form components
 jest.mock('../../../../../shared/form', () => ({
-  WizardForm: ({ children, steps, currentStep, onStepChange, onComplete, onCancel, completeLabel, canAdvance, loading, error, testId, footerExtra }) => (
-    <div data-testid={testId || 'wizard-form'}>
-      <div data-testid={`${testId || 'wizard-form'}-steps`}>
-        {steps.map((step, i) => (
-          <div key={step.id} data-testid={`wizard-step-${step.id}`}>
-            {step.label}
-          </div>
-        ))}
+  WizardForm: ({ children, steps, currentStep, onStepChange, onComplete, onCancel, completeLabel, canAdvance, loading, error, testId, footerExtra, submitAnalyticsId }) => {
+    const isLastStep = currentStep === steps.length - 1;
+    return (
+      <div data-testid={testId || 'wizard-form'}>
+        <div data-testid={`${testId || 'wizard-form'}-steps`}>
+          {steps.map((step) => (
+            <div key={step.id} data-testid={`wizard-step-${step.id}`}>
+              {step.label}
+            </div>
+          ))}
+        </div>
+        <div data-step-index={currentStep}>
+          {children}
+        </div>
+        <button onClick={onCancel} disabled={loading}>Cancel</button>
+        {isLastStep ? (
+          <button onClick={onComplete} disabled={!canAdvance || loading} {...(submitAnalyticsId ? {'data-analytics-id': submitAnalyticsId} : {})}>{completeLabel || 'Complete'}</button>
+        ) : (
+          <button
+            onClick={() => onStepChange && onStepChange(currentStep + 1)}
+            disabled={!canAdvance || loading}
+            data-testid="wizard-next"
+          >
+            Next
+          </button>
+        )}
+        {footerExtra}
       </div>
-      <div data-step-index={currentStep}>
-        {children}
-      </div>
-      <button onClick={onCancel} disabled={loading}>Cancel</button>
-      <button onClick={onComplete} disabled={!canAdvance || loading}>{completeLabel || 'Complete'}</button>
-      {footerExtra}
-    </div>
-  ),
+    );
+  },
   SettingsFormSection: ({ children, title }) => (
     <div data-testid="settings-form-section">
       <h2>{title}</h2>
@@ -129,8 +151,8 @@ jest.mock('../../../../../shared/form', () => ({
     </div>
   ),
   SettingsAlert: ({ children }) => <div data-testid="alert">{children}</div>,
-  SettingsButton: ({ children, onClick, disabled, variant, icon: Icon, testId }) => (
-    <button onClick={onClick} disabled={disabled} data-variant={variant} data-testid={testId}>
+  SettingsButton: ({ children, onClick, disabled, variant, icon: Icon, testId, ...rest }) => (
+    <button onClick={onClick} disabled={disabled} data-variant={variant} data-testid={testId} {...rest}>
       {Icon && <Icon />}
       {children}
     </button>
@@ -288,6 +310,56 @@ describe('TaskForm', () => {
 
       expect(defaultProps.onCancel).toHaveBeenCalled();
     });
+
+    /**
+     * NEXUS-52435 — regression: classic UI kept the create button disabled until
+     * every required descriptor field was filled. canAdvance on the configure
+     * step must respect formField.required so e.g. an empty repositoryName
+     * blocks the wizard from moving forward.
+     */
+    describe('required dynamic fields gate the configure step', () => {
+      // Leave formData.typeId empty so TaskForm's initialTypeId effect kicks
+      // in: it sets the local selectedTaskTypeObj, advances internalStep to 1
+      // (the configure step) — exactly the state we want to assert on.
+      function withCreateAtConfigStep(properties: Record<string, string>) {
+        mockUseTasksForm.mockImplementation(() => ({
+          form: createMockTaskForm({
+            id: '', enabled: true, name: 'Filled name', typeId: '',
+            alertEmail: '', notificationCondition: 'FAILURE',
+            properties, schedule: 'manual',
+            startDate: null, recurringDays: [], cronExpression: '', timeZoneOffset: '',
+          }, mockTaskTypes),
+          task: null,
+          taskTypes: mockTaskTypes,
+          selectedTaskType: null,
+          isCreate: true,
+        } as any));
+      }
+
+      it('disables Next when a required dynamic field is empty', () => {
+        withCreateAtConfigStep({});
+        renderWithTheme(<TaskForm {...defaultProps} initialTypeId="repository.cleanup" />);
+
+        const nextButton = screen.getByTestId('wizard-next');
+        expect(nextButton).toBeDisabled();
+      });
+
+      it('enables Next once the required dynamic field has a value', () => {
+        withCreateAtConfigStep({ repositoryName: 'maven-central' });
+        renderWithTheme(<TaskForm {...defaultProps} initialTypeId="repository.cleanup" />);
+
+        const nextButton = screen.getByTestId('wizard-next');
+        expect(nextButton).not.toBeDisabled();
+      });
+
+      it('disables Next when a required dynamic field is whitespace only', () => {
+        withCreateAtConfigStep({ repositoryName: '   ' });
+        renderWithTheme(<TaskForm {...defaultProps} initialTypeId="repository.cleanup" />);
+
+        const nextButton = screen.getByTestId('wizard-next');
+        expect(nextButton).toBeDisabled();
+      });
+    });
   });
 
   describe('edit mode', () => {
@@ -323,4 +395,169 @@ describe('TaskForm', () => {
       expect(screen.queryByPlaceholderText('Search task category...')).not.toBeInTheDocument();
     });
   });
+
+  describe('schedule restrictions', () => {
+    const moveTaskType: TaskType = {
+      id: 'repository.move',
+      name: 'Admin - Change repository blob store',
+      exposed: true,
+      concurrentRun: false,
+      formFields: [],
+    };
+
+    const moveTask: Task = {
+      id: 'task-move',
+      enabled: true,
+      name: 'Move repos',
+      typeId: 'repository.move',
+      typeName: 'Admin - Change repository blob store',
+      status: 'WAITING',
+      statusDescription: 'Waiting',
+      nextRun: null,
+      lastRun: null,
+      lastRunResult: null,
+      runnable: true,
+      stoppable: false,
+      properties: {},
+      schedule: 'manual',
+      recurringDays: [],
+      cronExpression: '',
+      timeZoneOffset: '+00:00',
+    };
+
+    it('passes allowedSchedules=[manual,once] when selected task type has concurrentRun:false', () => {
+      const allTypes = [...mockTaskTypes, moveTaskType];
+      mockUseTasksForm.mockImplementation(() => ({
+        form: createMockTaskForm(
+          { schedule: 'manual', typeId: 'repository.move', enabled: true, name: 'Move repos',
+            alertEmail: '', notificationCondition: 'FAILURE', properties: {},
+            startDate: null, recurringDays: [], cronExpression: '', timeZoneOffset: '' },
+          allTypes,
+        ),
+        task: moveTask,
+        taskTypes: allTypes,
+        selectedTaskType: moveTaskType,
+        isCreate: false,
+      } as any));
+
+      renderWithTheme(
+        <TaskForm
+          taskTypes={allTypes}
+          isCreate={false}
+          task={moveTask}
+          onSave={jest.fn()}
+          onCancel={jest.fn()}
+        />,
+      );
+
+      // Advance from config step (0) to schedule step (1)
+      fireEvent.click(screen.getByTestId('wizard-next'));
+
+      const scheduler = screen.getByTestId('task-scheduler');
+      expect(scheduler).toHaveAttribute(
+        'data-allowed-schedules',
+        JSON.stringify(['manual', 'once']),
+      );
+    });
+
+    it('resets schedule to manual when the selected task type restricts schedules and the current schedule is not allowed', () => {
+      const mockSend = jest.fn();
+      const allTypes = [...mockTaskTypes, moveTaskType];
+
+      mockUseTasksForm.mockImplementation(() => ({
+        form: {
+          ...createMockTaskForm(
+            { schedule: 'daily', typeId: 'repository.move', enabled: true, name: 'Move repos',
+              alertEmail: '', notificationCondition: 'FAILURE', properties: {},
+              startDate: null, recurringDays: [], cronExpression: '', timeZoneOffset: '' },
+            allTypes,
+          ),
+          send: mockSend,
+        },
+        task: { ...moveTask, schedule: 'daily' },
+        taskTypes: allTypes,
+        selectedTaskType: moveTaskType,
+        isCreate: false,
+      } as any));
+
+      renderWithTheme(
+        <TaskForm
+          taskTypes={allTypes}
+          isCreate={false}
+          task={{ ...moveTask, schedule: 'daily' }}
+          onSave={jest.fn()}
+          onCancel={jest.fn()}
+        />,
+      );
+
+      expect(mockSend).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'SCHEDULE_CHANGE', value: 'manual' }),
+      );
+    });
+  });
+
+  describe('analytics ids', () => {
+    const EDIT_TASK = {
+      id: 'task-1', enabled: true, name: 'Test', typeId: 'repository.cleanup',
+      typeName: 'Cleanup', status: 'WAITING', statusDescription: '',
+      nextRun: null, lastRun: null, lastRunResult: '', runnable: true, stoppable: false,
+      alertEmail: '', notificationCondition: 'FAILURE', properties: {}, schedule: 'manual',
+      startDate: null, recurringDays: [], cronExpression: '', timeZoneOffset: '',
+    };
+
+    function renderEditTask(extra: Record<string, unknown> = {}) {
+      mockUseTasksForm.mockImplementation(({task}: any) => ({
+        form: createMockTaskForm(
+          // repositoryName must be filled so canAdvance lets the wizard reach the Schedule step
+          // (the wizard's Save button only appears on the last step).
+          {id: 'task-1', enabled: true, name: 'Test', typeId: 'repository.cleanup',
+            alertEmail: '', notificationCondition: 'FAILURE',
+            properties: {repositoryName: 'maven-central'}, schedule: 'manual',
+            startDate: null, recurringDays: [], cronExpression: '', timeZoneOffset: ''},
+          defaultProps.taskTypes,
+        ),
+        task: task || null,
+        taskTypes: defaultProps.taskTypes,
+        selectedTaskType: defaultProps.taskTypes[0],
+        isCreate: false,
+      } as any));
+
+      return renderWithTheme(
+        <TaskForm
+          taskTypes={defaultProps.taskTypes}
+          isCreate={false}
+          task={EDIT_TASK as any}
+          onSave={jest.fn()}
+          onCancel={jest.fn()}
+          {...extra}
+        />,
+      );
+    }
+
+    it('Save button carries data-analytics-id="nxrm-task-save" in edit mode', () => {
+      renderEditTask();
+
+      // In edit mode: 2 steps, wizard shows Complete (Save Task) button on step 1.
+      // Advance to schedule step to make the Save button appear.
+      fireEvent.click(screen.getByTestId('wizard-next'));
+      const saveBtn = screen.getByRole('button', {name: /save task/i});
+      expect(saveBtn).toHaveAttribute('data-analytics-id', 'nxrm-task-save');
+    });
+
+    it('Delete button in footerExtra carries data-analytics-id="nxrm-task-delete"', () => {
+      renderEditTask();
+
+      const deleteBtn = screen.getByRole('button', {name: /delete/i});
+      expect(deleteBtn).toHaveAttribute('data-analytics-id', 'nxrm-task-delete');
+    });
+
+    it('Run Now button in footerExtra carries data-analytics-id="nxrm-task-run"', () => {
+      const onRun = jest.fn();
+      renderEditTask({onRun});
+
+      const runBtn = screen.getByRole('button', {name: /run now/i});
+      expect(runBtn).toHaveAttribute('data-analytics-id', 'nxrm-task-run');
+    });
+  });
+
 });

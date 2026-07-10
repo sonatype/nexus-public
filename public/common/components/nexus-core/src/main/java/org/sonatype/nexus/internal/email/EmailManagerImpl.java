@@ -18,7 +18,7 @@ import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import javax.mail.Session;
+import jakarta.mail.Session;
 import javax.net.ssl.SSLContext;
 
 import org.sonatype.nexus.common.concurrent.Mutex;
@@ -41,10 +41,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.mail.Email;
-import org.apache.commons.mail.EmailConstants;
-import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.SimpleEmail;
+import org.apache.commons.mail2.jakarta.Email;
+import org.apache.commons.mail2.core.EmailConstants;
+import org.apache.commons.mail2.core.EmailException;
+import org.apache.commons.mail2.jakarta.SimpleEmail;
 import org.springframework.context.annotation.Lazy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -315,8 +315,9 @@ public class EmailManagerImpl
   private void sendMail(final Email mail) throws EmailException {
     ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
     try {
-      // make sure javax.mail loaded, required for java 11+
-      Thread.currentThread().setContextClassLoader(javax.mail.Session.class.getClassLoader());
+      // NEXUS-46395: javax.mail → jakarta.mail. Setting the TCCL to the mail session
+      // class's classloader is still required so the Mail SPI can find providers.
+      Thread.currentThread().setContextClassLoader(jakarta.mail.Session.class.getClassLoader());
       mail.send();
     }
     finally {

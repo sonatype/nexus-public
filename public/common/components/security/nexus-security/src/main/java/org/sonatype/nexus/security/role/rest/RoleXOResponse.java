@@ -18,29 +18,29 @@ import java.util.Set;
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 import org.sonatype.nexus.security.role.Role;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class RoleXOResponse
 {
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_ID_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_ID_DESCRIPTION)
   private String id;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_SOURCE_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_SOURCE_DESCRIPTION)
   private String source;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_NAME_DESCRIPTION)
   private String name;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_DESCRIPTION_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_DESCRIPTION_DESCRIPTION)
   private String description;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_READONLY_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_READONLY_DESCRIPTION)
   private boolean readOnly;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_PRIVILEGES_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_PRIVILEGES_DESCRIPTION)
   private Set<String> privileges;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLE_ROLES_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLE_ROLES_DESCRIPTION)
   private Set<String> roles;
 
   public void setSource(final String source) {

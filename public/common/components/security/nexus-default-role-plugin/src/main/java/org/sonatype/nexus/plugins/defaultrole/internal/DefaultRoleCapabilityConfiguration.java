@@ -16,6 +16,9 @@ import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 import org.sonatype.nexus.security.role.RoleExistsString;
+import org.sonatype.nexus.validation.group.Create;
+import org.sonatype.nexus.validation.group.CreateNonExposed;
+import org.sonatype.nexus.validation.group.Update;
 
 /**
  * Simple configuration for {@link DefaultRoleCapability} containing a single roleId.
@@ -27,7 +30,7 @@ public class DefaultRoleCapabilityConfiguration
 {
   public static final String P_ROLE = "role";
 
-  @RoleExistsString
+  @RoleExistsString(groups = {Create.class, CreateNonExposed.class, Update.class})
   private String role;
 
   public DefaultRoleCapabilityConfiguration(final Map<String, String> properties) {

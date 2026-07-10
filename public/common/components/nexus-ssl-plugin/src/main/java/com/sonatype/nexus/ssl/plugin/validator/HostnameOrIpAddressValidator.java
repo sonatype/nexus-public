@@ -12,7 +12,7 @@
  */
 package com.sonatype.nexus.ssl.plugin.validator;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 

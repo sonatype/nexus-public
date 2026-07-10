@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;

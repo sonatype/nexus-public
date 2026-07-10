@@ -12,23 +12,26 @@
  */
 package org.sonatype.nexus.rest.jackson2.internal;
 
-import jakarta.inject.Provider;
+import java.util.List;
+
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapDeserializer;
 import org.sonatype.nexus.common.collect.json.NestedAttributesMapSerializer;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 /**
  * Jackson {@link ObjectMapper} provider for use with Siesta.
@@ -44,7 +47,7 @@ public class ObjectMapperProvider
 
   private final ObjectMapper mapper;
 
-  public ObjectMapperProvider() {
+  public ObjectMapperProvider(final List<Module> modules) {
     this.mapper = new ObjectMapper()
         .enable(SerializationFeature.INDENT_OUTPUT)
         .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -55,6 +58,8 @@ public class ObjectMapperProvider
     mapper.registerModule(new SimpleModule()
         .addSerializer(NestedAttributesMap.class, new NestedAttributesMapSerializer())
         .addDeserializer(NestedAttributesMap.class, new NestedAttributesMapDeserializer()));
+    modules.forEach(mapper::registerModule);
+
   }
 
   @Override

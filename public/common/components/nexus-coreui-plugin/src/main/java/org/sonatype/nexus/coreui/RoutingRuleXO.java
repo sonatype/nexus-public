@@ -14,8 +14,8 @@ package org.sonatype.nexus.coreui;
 
 import java.util.List;
 import java.util.Objects;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;

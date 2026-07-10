@@ -22,6 +22,7 @@ import {
 } from '../../../../../shared/form';
 
 import { RepositoryFormData, RepositoryFormErrors } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 interface YumFacetProps {
   formData: RepositoryFormData;
@@ -34,8 +35,8 @@ interface YumFacetProps {
 }
 
 const DEPLOY_POLICY_OPTIONS = [
-  { value: 'STRICT', label: 'Strict' },
-  { value: 'PERMISSIVE', label: 'Permissive' },
+  { value: 'STRICT', label: UIStrings.YUM.HOSTED.DEPLOY_POLICY.STRICT },
+  { value: 'PERMISSIVE', label: UIStrings.YUM.HOSTED.DEPLOY_POLICY.PERMISSIVE },
 ];
 
 /**
@@ -59,25 +60,25 @@ export function YumFacet({
     <>
       {showSigning && (
         <SettingsFormSection
-          title="Yum Settings"
-          description="GPG signing configuration for verifying Yum repodata files"
+          title={UIStrings.YUM.SIGNING.title}
+          description={UIStrings.YUM.SIGNING.description}
         >
           <SettingsTextArea
             name="yumSigning-keypair"
-            label="Signing Key"
+            label={UIStrings.YUM.SIGNING.KEYPAIR.label}
             value={formData.yumSigning?.keypair || ''}
             onChange={(value) => onNestedChange('yumSigning', { keypair: value })}
-            helpText="PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)"
+            helpText={UIStrings.YUM.SIGNING.KEYPAIR.helpText}
             rows={8}
             monospace
           />
 
           <SettingsPasswordInput
             name="yumSigning-passphrase"
-            label="Passphrase"
+            label={UIStrings.YUM.SIGNING.PASSPHRASE.label}
             value={formData.yumSigning?.passphrase || ''}
             onChange={(value) => onNestedChange('yumSigning', { passphrase: value })}
-            helpText="Passphrase for the GPG signing key (leave empty if key has no passphrase)"
+            helpText={UIStrings.YUM.SIGNING.PASSPHRASE.helpText}
             showToggle={false}
           />
         </SettingsFormSection>
@@ -85,19 +86,19 @@ export function YumFacet({
 
       {isHosted && (
         <SettingsFormSection
-          title="Yum Settings"
-          description="Yum/RPM repository configuration"
+          title={UIStrings.YUM.HOSTED.title}
+          description={UIStrings.YUM.HOSTED.description}
         >
           <SettingsTextInput
             name="yum-repodataDepth"
-            label="Repodata Depth"
+            label={UIStrings.YUM.HOSTED.REPODATA_DEPTH.label}
             value={formData.yum?.repodataDepth?.toString() || '0'}
             onChange={(value) => {
               const parsed = parseInt(value, 10);
               const clamped = isNaN(parsed) ? 0 : Math.max(0, Math.min(5, parsed));
               onNestedChange('yum', { repodataDepth: clamped });
             }}
-            helpText="Specifies the repository depth where repodata folder(s) are created (0-5)"
+            helpText={UIStrings.YUM.HOSTED.REPODATA_DEPTH.helpText}
             type="number"
             min={0}
             max={5}
@@ -106,11 +107,11 @@ export function YumFacet({
 
           <SettingsSelect
             name="yum-deployPolicy"
-            label="Deploy Policy"
+            label={UIStrings.YUM.HOSTED.DEPLOY_POLICY.label}
             value={formData.yum?.deployPolicy || 'STRICT'}
             onChange={(value) => onNestedChange('yum', { deployPolicy: value as 'STRICT' | 'PERMISSIVE' })}
             options={DEPLOY_POLICY_OPTIONS}
-            helpText="Validate that RPM deployments comply with the deployed version"
+            helpText={UIStrings.YUM.HOSTED.DEPLOY_POLICY.helpText}
           />
         </SettingsFormSection>
       )}

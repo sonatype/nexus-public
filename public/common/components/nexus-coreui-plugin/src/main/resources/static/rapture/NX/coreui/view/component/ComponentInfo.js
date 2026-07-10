@@ -94,27 +94,21 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
   setModel: function(componentModel) {
     var me = this,
         summary = this.summary,
-        componentName = Ext.htmlEncode(componentModel.get('name')),
+        componentName = componentModel.get('name'),
         attributesPanel = this.lookup('attributesPanel');
 
     this.componentModel = componentModel;
 
-    console.log("=== COMPONENT INFO DEBUG === ComponentModel:", componentModel);
-    console.log("=== COMPONENT INFO DEBUG === Attributes panel found:", attributesPanel);
-
-    summary[NX.I18n.get('Search_Assets_Repository')] = Ext.htmlEncode(componentModel.get('repositoryName'));
-    summary[NX.I18n.get('Search_Assets_Format')] = Ext.htmlEncode(componentModel.get('format'));
-    summary[NX.I18n.get('Search_Assets_Group')] = Ext.htmlEncode(componentModel.get('group'));
-    summary[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(componentModel.get('name'));
-    summary[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(componentModel.get('version'));
+    summary[NX.I18n.get('Search_Assets_Repository')] = componentModel.get('repositoryName');
+    summary[NX.I18n.get('Search_Assets_Format')] = componentModel.get('format');
+    summary[NX.I18n.get('Search_Assets_Group')] = componentModel.get('group');
+    summary[NX.I18n.get('Search_Assets_Name')] = componentModel.get('name');
+    summary[NX.I18n.get('Search_Assets_Version')] = componentModel.get('version');
 
     me.showInfo();
 
     if (attributesPanel) {
-      console.log("=== COMPONENT INFO DEBUG === Setting attributes panel model");
       attributesPanel.setAssetModel(componentModel);
-    } else {
-      console.error("=== COMPONENT INFO DEBUG === Attributes panel NOT FOUND!");
     }
 
     Ext.tip.QuickTipManager.unregister(me.down('title').getId());

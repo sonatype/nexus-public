@@ -23,10 +23,14 @@ import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
 import org.sonatype.nexus.swagger.ParameterContributor;
 
 import com.google.common.collect.ImmutableList;
-import io.swagger.models.HttpMethod;
-import io.swagger.models.parameters.QueryParameter;
+// NEXUS-46395: migrated from Swagger 1.x parameters to OpenAPI 3.x.
+// QueryParameter still exists in OpenAPI 3 (different package); the schema/type is now
+// modeled via Parameter.schema(new StringSchema()) instead of Parameter.type("string").
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.QueryParameter;
 
-import static io.swagger.models.HttpMethod.GET;
+import static io.swagger.v3.oas.models.PathItem.HttpMethod.GET;
 import static java.util.stream.Collectors.toList;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +55,10 @@ public class SearchParameterContributor
 
   private static Collection<QueryParameter> transformMappings(final Iterable<SearchMapping> searchMappings) { // NOSONAR
     return StreamSupport.stream(searchMappings.spliterator(), false)
-        .map(m -> new QueryParameter().name(m.getAlias()).type("string").description(m.getDescription()))
+        .map(m -> (QueryParameter) new QueryParameter()
+            .name(m.getAlias())
+            .schema(new StringSchema())
+            .description(m.getDescription()))
         .collect(toList());
   }
 }

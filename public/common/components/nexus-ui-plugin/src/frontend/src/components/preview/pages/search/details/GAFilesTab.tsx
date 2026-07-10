@@ -46,6 +46,7 @@ import {
   type SortDirection,
 } from '../../../shared';
 import { MobileFilterDrawer } from '../unified/MobileFilterDrawer';
+import { exportToCsv } from '../../../shared';
 
 interface GAFilesTabProps {
   assets: readonly GAAsset[];
@@ -321,15 +322,34 @@ export function GAFilesTab({
                     Filter
                   </Button>
                 </Box>
-                <Button size="2" variant="outline" color="gray">
-                  <Download size={14} />
-                  <Box
-                    asChild
-                    display={{ initial: 'none', sm: 'inline' }}
-                    style={{ marginLeft: 6 }}
+                <Button asChild size="2" variant="outline" color="gray">
+                  <button
+                    disabled={sortedAssets.length === 0}
+                    aria-label="Export all filtered results as CSV"
+                    onClick={() =>
+                      exportToCsv(
+                        sortedAssets.map((a) => ({
+                          file: a.path.split('/').pop() || a.path,
+                          extension: a.extension,
+                          classifier: a.classifier,
+                          size: a.size,
+                          lastModified: a.lastModified,
+                          downloadUrl: a.downloadUrl,
+                        })),
+                        'files.csv',
+                        ['file', 'extension', 'classifier', 'size', 'lastModified', 'downloadUrl'],
+                      )
+                    }
                   >
-                    <span>Export CSV</span>
-                  </Box>
+                    <Download size={14} />
+                    <Box
+                      asChild
+                      display={{ initial: 'none', sm: 'inline' }}
+                      style={{ marginLeft: 6 }}
+                    >
+                      <span>Export CSV</span>
+                    </Box>
+                  </button>
                 </Button>
               </Flex>
             </Flex>

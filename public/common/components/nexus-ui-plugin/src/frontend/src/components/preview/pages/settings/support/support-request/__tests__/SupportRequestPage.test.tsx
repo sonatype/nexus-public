@@ -56,7 +56,7 @@ describe('SupportRequestPage', () => {
     it('renders the page header', () => {
       render(<SupportRequestPage />, { wrapper: TestWrapper });
 
-      expect(screen.getByText('Support Request')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Support Request' })).toBeInTheDocument();
       expect(screen.getByText('Submit a support request to Sonatype')).toBeInTheDocument();
     });
 
@@ -170,6 +170,37 @@ describe('SupportRequestPage', () => {
       render(<SupportRequestPage />, { wrapper: TestWrapper });
 
       expect(screen.getByTestId('support-request-page')).toHaveAttribute('data-permission', 'denied');
+    });
+  });
+
+  describe('Breadcrumb navigation', () => {
+    beforeEach(() => {
+      mockCheckPermission.mockReturnValue(true);
+      mockIsProEdition.mockReturnValue(true);
+    });
+
+    it('renders breadcrumbs with Settings link', () => {
+      render(<SupportRequestPage />, { wrapper: TestWrapper });
+
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    });
+
+    it('renders Support Request as current page in breadcrumbs', () => {
+      const { container } = render(<SupportRequestPage />, { wrapper: TestWrapper });
+
+      // Support Request should be the current page (span with aria-current)
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('Support Request');
+    });
+
+    it('navigates to Settings when Settings breadcrumb is clicked', () => {
+      render(<SupportRequestPage />, { wrapper: TestWrapper });
+
+      const originalHash = window.location.hash;
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+      window.location.hash = originalHash;
     });
   });
 });

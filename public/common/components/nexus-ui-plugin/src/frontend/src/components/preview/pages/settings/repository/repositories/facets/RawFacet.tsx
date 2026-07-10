@@ -14,6 +14,8 @@
 import React from 'react';
 import { SettingsAlert, SettingsFormSection, SettingsSelect } from '../../../../../shared/form';
 import { RepositoryFormData } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 interface RawFacetProps {
   formData: RepositoryFormData;
@@ -21,29 +23,34 @@ interface RawFacetProps {
 }
 
 const CONTENT_DISPOSITION_OPTIONS = [
-  { value: 'INLINE', label: 'Inline' },
-  { value: 'ATTACHMENT', label: 'Attachment' },
+  { value: 'INLINE', label: UIStrings.RAW.CONTENT_DISPOSITION.INLINE },
+  { value: 'ATTACHMENT', label: UIStrings.RAW.CONTENT_DISPOSITION.ATTACHMENT },
 ];
 
 /**
  * RawFacet - Raw format content disposition setting
  */
 export function RawFacet({ formData, onNestedChange }: RawFacetProps) {
+  const isCloud = ExtJS.useState?.(() => ExtJS.state()?.getValue?.('isCloud'));
+
+  if (isCloud) {
+    return null;
+  }
+
   return (
-    <SettingsFormSection title="Raw Settings" description="Raw repository configuration">
+    <SettingsFormSection title={UIStrings.RAW.SECTION.title} description={UIStrings.RAW.SECTION.description}>
       <SettingsSelect
         name="raw-contentDisposition"
-        label="Content Disposition"
+        label={UIStrings.RAW.CONTENT_DISPOSITION.label}
         value={formData.raw?.contentDisposition || 'ATTACHMENT'}
         onChange={(value) => onNestedChange('raw', { contentDisposition: value as 'INLINE' | 'ATTACHMENT' })}
         options={CONTENT_DISPOSITION_OPTIONS}
-        helpText="Controls whether content is displayed inline in the browser or downloaded as an attachment"
+        helpText={UIStrings.RAW.CONTENT_DISPOSITION.helpText}
       />
 
       {(formData.raw?.contentDisposition || 'ATTACHMENT') === 'INLINE' && (
         <SettingsAlert type="warning">
-          Serving content inline allows uploaded HTML to render on a trusted Nexus URL, which
-          can be exploited for phishing attacks against other users.
+          {UIStrings.RAW.CONTENT_DISPOSITION.inlineWarning}
         </SettingsAlert>
       )}
     </SettingsFormSection>

@@ -307,7 +307,16 @@ public class HttpClientFacetImpl
 
   private void createHttpClient() {
     HttpClientConfiguration delegateConfig = getHttpClientConfiguration(httpClientManager, config);
-    CloseableHttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
+
+    CloseableHttpClient delegate;
+    try {
+      delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
+    }
+    catch (CipherException e) {
+      log.debug("Failed to create HTTP client for repository '{}' while applying repository HTTP client authentication",
+          getRepository().getName(), e);
+      throw e;
+    }
 
     boolean online = getRepository().getConfiguration().isOnline();
     // wrap delegate with auto-block aware client

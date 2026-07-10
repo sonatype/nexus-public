@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-bootstrap-spring</artifactId>
@@ -35,21 +35,24 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-loader</artifactId>
     </dependency>
+    <!-- NEXUS-46395: javax.servlet-api 4.0.1 → jakarta.servlet-api 6.0 (Jakarta EE 10 / RESTEasy 7) -->
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
+    <!-- NEXUS-46395: this module previously declared a direct dependency on
+         javax.inject:javax.inject:1; it has been removed. Source code uses jakarta.inject.*
+         exclusively, the licensing 4.0.1 bump cleared the last transitive that put
+         javax.inject-1.jar on the runtime classpath, and the distribution-level enforcer
+         ban on javax.inject:* keeps it out. -->
+
     <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.ee8</groupId>
-      <artifactId>jetty-ee8-webapp</artifactId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
+      <artifactId>jetty-ee10-webapp</artifactId>
       <exclusions>
         <exclusion>
-          <groupId>org.eclipse.jetty.ee8</groupId>
-          <artifactId>jetty-ee8-nested</artifactId>
+          <groupId>org.eclipse.jetty.ee10</groupId>
+          <artifactId>jetty-ee10-servlet</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.eclipse.jetty</groupId>

@@ -20,11 +20,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
 
+import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.upgrade.events.UpgradeCompletedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeFailedEvent;
 import org.sonatype.nexus.common.upgrade.events.UpgradeStartedEvent;
@@ -45,9 +48,14 @@ import org.flywaydb.core.api.migration.JavaMigration;
 import org.flywaydb.core.api.output.MigrateResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.stereotype.Component;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Support class for upgrade managers.
@@ -55,16 +63,21 @@ import org.springframework.stereotype.Component;
  * @since 3.29
  */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@ManagedLifecycle(phase = UPGRADE)
 public class UpgradeManagerImpl
+    extends StateGuardLifecycleSupport
     implements UpgradeManager
 {
-  protected final Logger log = LoggerFactory.getLogger(getClass());
+  protected static final Logger log = LoggerFactory.getLogger(UpgradeManagerImpl.class);
+
+  private final DataStoreManager dataStoreManager;
 
   private final List<DatabaseMigrationStep> migrations;
 
   private final PostStartupUpgradeAuditor auditor;
 
-  private final DataStoreManager dataStoreManager;
+  private Flyway flyway;
 
   @Autowired
   public UpgradeManagerImpl(
@@ -72,15 +85,19 @@ public class UpgradeManagerImpl
       final PostStartupUpgradeAuditor auditor,
       final List<DatabaseMigrationStep> migrations)
   {
-    this.dataStoreManager = checkNotNull(dataStoreManager);
     this.migrations = checkVersionedMigrations(migrations);
+    this.dataStoreManager = checkNotNull(dataStoreManager);
     this.auditor = checkNotNull(auditor);
   }
 
   @Override
-  public void migrate(@Nullable final String user, final Collection<String> nodeIds) throws UpgradeException {
-    Flyway flyway = createFlyway();
+  protected void doStart() throws Exception {
+    flyway = createFlyway(migrations, dataStoreManager);
+  }
 
+  @Guarded(by = STARTED)
+  @Override
+  public void migrate(@Nullable final String user, final Collection<String> nodeIds) throws UpgradeException {
     // Compute current state
     MigrationInfoService info = flyway.info();
 
@@ -99,8 +116,11 @@ public class UpgradeManagerImpl
       result = flyway.migrate();
     }
     catch (FlywayException e) {
-      emitFailed(user, flyway, e.getMessage());
-      throw new UpgradeException(e.getMessage(), e);
+      String message = sanitizeFlywayMessage(e.getMessage());
+      emitFailed(user, flyway, message);
+      RuntimeException sanitizedCause = new RuntimeException(message);
+      sanitizedCause.setStackTrace(e.getStackTrace());
+      throw new UpgradeException(message, sanitizedCause);
     }
 
     emitCompleted(user, nodeIds, result);
@@ -122,17 +142,20 @@ public class UpgradeManagerImpl
     }
   }
 
+  @Guarded(by = STARTED)
   @Override
   public boolean requiresMigration() {
-    return createFlyway().info().pending().length > 0;
+    return flyway.info().pending().length > 0;
   }
 
+  @Guarded(by = STARTED)
   @Override
   public Optional<MigrationVersion> getCurrentVersion() {
-    return Optional.ofNullable(createFlyway().info().current())
+    return Optional.ofNullable(flyway.info().current())
         .map(MigrationInfo::getVersion);
   }
 
+  @Guarded(by = STARTED)
   @Override
   public void checkBaseline(final String target) {
     Optional<MigrationVersion> version = getCurrentVersion();
@@ -168,17 +191,19 @@ public class UpgradeManagerImpl
         .findFirst();
   }
 
+  @Guarded(by = STARTED)
   @Override
   public Optional<MigrationVersion> getMaxMigrationVersion() {
-    return Arrays.stream(getMigrations())
+    return Stream.of(getMigrations(migrations))
         .map(JavaMigration::getVersion)
         .filter(Objects::nonNull)
         .max(MigrationVersion::compareTo);
   }
 
+  @Guarded(by = STARTED)
   @Override
   public void checkSchemaVersionIsAcceptable() throws UpgradeException {
-    checkSchemaVersionIsAcceptable(createFlyway().info());
+    checkSchemaVersionIsAcceptable(flyway.info());
   }
 
   /**
@@ -248,15 +273,18 @@ public class UpgradeManagerImpl
   /*
    * Creates a Flyway instances with the known migrations for use within the UpgradeManager
    */
-  private Flyway createFlyway() {
-    JavaMigration[] flywayMigrations = getMigrations();
+  private static Flyway createFlyway(
+      final List<DatabaseMigrationStep> migrations,
+      final DataStoreManager dataStoreManager)
+  {
+    JavaMigration[] flywayMigrations = getMigrations(migrations);
 
     if (log.isDebugEnabled()) {
       migrations.forEach(m -> log.debug("Found migration: {} version:{}", m.getClass(), m.version()));
     }
 
     return Flyway.configure()
-        .dataSource(dataSource())
+        .dataSource(dataSource(dataStoreManager))
         .javaMigrations(flywayMigrations)
         .callbacks(log.isTraceEnabled() ? new Callback[]{new TraceLoggingCallback()} : new Callback[0])
         .cleanDisabled(true) // don't empty the database
@@ -270,7 +298,7 @@ public class UpgradeManagerImpl
         .load();
   }
 
-  private JavaMigration[] getMigrations() {
+  private static JavaMigration[] getMigrations(final List<DatabaseMigrationStep> migrations) {
     return new SimpleDependencyResolver(migrations).resolve()
         .stream()
         .toArray(JavaMigration[]::new);
@@ -278,15 +306,31 @@ public class UpgradeManagerImpl
 
   @Override
   public boolean isMigrationApplied(final Class<? extends DatabaseMigrationStep> step) {
-    return Arrays.stream(createFlyway().info().applied())
+    return Arrays.stream(flyway.info().applied())
         .map(MigrationInfo::getDescription)
         .anyMatch(NexusJavaMigration.nameMatcher(step));
   }
 
-  private DataSource dataSource() {
+  private static DataSource dataSource(final DataStoreManager dataStoreManager) {
     return dataStoreManager.get(DataStoreManager.DEFAULT_DATASTORE_NAME)
         .orElseThrow(
             () -> new IllegalStateException("Missing DataStore named: " + DataStoreManager.DEFAULT_DATASTORE_NAME))
         .getDataSource();
+  }
+
+  @VisibleForTesting
+  static String sanitizeFlywayMessage(final String message) {
+    if (message == null) {
+      return null;
+    }
+    // Strip Flyway advertising: promotional questions followed by "Learn more: URL".
+    // [^.!?]* stops at sentence boundaries so only the immediately preceding question is removed.
+    // First pattern handles "question? Learn more: URL" (with optional leading whitespace for start-of-message)
+    // Second pattern handles standalone "Learn more: URL" without preceding question.
+    String sanitized = message
+        .replaceAll("(?:^|\\s)[^.!?]*\\?\\s+Learn more:\\s+https://\\S+", "")
+        .replaceAll("(?:^|\\s+)Learn more:\\s+https://\\S+", "")
+        .trim();
+    return sanitized.isEmpty() ? message : sanitized;
   }
 }

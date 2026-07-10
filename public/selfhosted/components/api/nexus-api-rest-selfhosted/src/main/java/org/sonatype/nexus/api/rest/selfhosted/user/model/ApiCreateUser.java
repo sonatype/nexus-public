@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
@@ -25,10 +25,10 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 3.17
@@ -36,31 +36,31 @@ import javax.validation.constraints.NotEmpty;
 public class ApiCreateUser
 {
   @NotBlank
-  @ApiModelProperty(NexusSecurityApiConstants.USER_ID_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.USER_ID_DESCRIPTION)
   private String userId;
 
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.FIRST_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.FIRST_NAME_DESCRIPTION)
   private String firstName;
 
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.LAST_NAME_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.LAST_NAME_DESCRIPTION)
   private String lastName;
 
   @Email
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.EMAIL_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.EMAIL_DESCRIPTION)
   private String emailAddress;
 
   @NotEmpty
-  @ApiModelProperty("The password for the new user.")
+  @Schema(description = "The password for the new user.")
   private String password;
 
   @NotNull
-  @ApiModelProperty(NexusSecurityApiConstants.STATUS_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.STATUS_DESCRIPTION)
   private ApiUserStatus status;
 
-  @ApiModelProperty(NexusSecurityApiConstants.ROLES_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.ROLES_DESCRIPTION)
   private Set<String> roles;
 
   @SuppressWarnings("unused")

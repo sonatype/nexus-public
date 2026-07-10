@@ -175,4 +175,22 @@ class UnversionedAssetDAOTest
   protected void testAssetRecordsExist() {
     super.testAssetRecordsExist();
   }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedNeverDownloadedUpdatesRow() {
+    super.testMarkAsDownloadedNeverDownloadedUpdatesRow();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedRecentlyDownloadedSkipsUpdate() {
+    super.testMarkAsDownloadedRecentlyDownloadedSkipsUpdate();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedZeroIntervalAlwaysUpdates() {
+    super.testMarkAsDownloadedZeroIntervalAlwaysUpdates();
+  }
 }

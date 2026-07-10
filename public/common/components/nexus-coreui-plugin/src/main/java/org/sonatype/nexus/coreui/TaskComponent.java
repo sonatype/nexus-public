@@ -29,12 +29,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import javax.validation.Valid;
-import javax.validation.Validator;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.groups.Default;
-import javax.ws.rs.NotFoundException;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
+import jakarta.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.blobstore.api.tasks.ReconcileTaskConstants;
 import org.sonatype.nexus.common.time.UTC;

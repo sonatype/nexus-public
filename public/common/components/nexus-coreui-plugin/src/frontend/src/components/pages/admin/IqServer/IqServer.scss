@@ -197,7 +197,7 @@
     }
 
     a, .nx-text-link {
-      color: #0061fe !important;
+      color: var(--nx-color-text-link);
       text-decoration: none;
 
       &:hover {

@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.selfhosted.security.usersource;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
 import org.sonatype.nexus.security.user.UserManager;

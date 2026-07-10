@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.api;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.apt.AptFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;

@@ -16,9 +16,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
-import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 import org.sonatype.nexus.webhooks.GlobalWebhook;
 
@@ -29,28 +28,31 @@ import org.springframework.stereotype.Component;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
+/**
+ * Validates that every entry in the configured list of Global Webhook event names corresponds to a
+ * discovered {@link GlobalWebhook} bean.
+ * <p>
+ * Historically this validator also gated the {@code firewall_quarantine} event on the presence of
+ * an enabled {@code clm} capability and an enabled {@code firewall.audit} capability with
+ * {@code quarantine=true}. Those capability-based prerequisites were removed as part of NEXUS-53667:
+ * firewall configuration is now stored on each repository (see
+ * {@code FirewallCapabilityToRepositoryConfigMigrationStep_2_143}) and the {@code firewall.audit}
+ * capability rows no longer exist post-migration, so that check always failed. The event pipeline
+ * (see {@code FirewallContributedHandler}) already gates on
+ * {@code FirewallConfigurationHelper.isFirewallEnabled(repository)} and
+ * {@code clmConnector.isEnabled()} at fire time, so a webhook subscribed to a
+ * {@code firewall_quarantine} event that no repository will ever raise is harmless.
+ */
 @Component
 @Scope(SCOPE_PROTOTYPE)
 public class GlobalWebhookTypeValidator
     extends ConstraintValidatorSupport<GlobalWebhookType, List<String>>
 {
-  private static final String FIREWALL_QUARANTINE_WEBHOOK = "firewall_quarantine";
-
-  private static final String CLM_CAPABILITY_TYPE = "clm";
-
-  private static final String FIREWALL_AUDIT_CAPABILITY_TYPE = "firewall.audit";
-
   private final List<GlobalWebhook> globalWebhooks;
 
-  private final CapabilityRegistry capabilityRegistry;
-
   @Autowired
-  public GlobalWebhookTypeValidator(
-      final List<GlobalWebhook> globalWebhooks,
-      final CapabilityRegistry capabilityRegistry)
-  {
+  public GlobalWebhookTypeValidator(final List<GlobalWebhook> globalWebhooks) {
     this.globalWebhooks = checkNotNull(globalWebhooks);
-    this.capabilityRegistry = checkNotNull(capabilityRegistry);
   }
 
   @Override
@@ -62,71 +64,6 @@ public class GlobalWebhookTypeValidator
     Set<String> webhookNames =
         globalWebhooks.stream().map(GlobalWebhook::getName).collect(Collectors.toUnmodifiableSet());
 
-    // Check if all names in the provided list are valid webhook names
-    if (!webhookNames.containsAll(names)) {
-      return false;
-    }
-
-    // Additional validation for firewall_quarantine webhook
-    if (names.contains(FIREWALL_QUARANTINE_WEBHOOK)) {
-      return validateFirewallQuarantinePrerequisites(constraintValidatorContext);
-    }
-
-    return true;
-  }
-
-  /**
-   * Validates that prerequisites for firewall_quarantine webhook are met:
-   * 1. IQ Server capability must be configured
-   * 2. At least one Firewall Audit capability must exist and be enabled
-   */
-  private boolean validateFirewallQuarantinePrerequisites(final ConstraintValidatorContext context) {
-    // Check 1: IQ Server capability must be configured and enabled
-    boolean clmConfigured = capabilityRegistry.getAll()
-        .stream()
-        .anyMatch(cap -> CLM_CAPABILITY_TYPE.equals(cap.context().type().toString())
-            && cap.context().isEnabled());
-
-    if (!clmConfigured) {
-      context.disableDefaultConstraintViolation();
-      context.buildConstraintViolationWithTemplate(
-          "The 'firewall_quarantine' webhook event requires IQ Server to be configured. " +
-              "Please configure IQ Server first.")
-          .addConstraintViolation();
-      return false;
-    }
-
-    // Check 2: At least one Firewall Audit capability must exist and be enabled
-    boolean firewallEnabled = capabilityRegistry.getAll()
-        .stream()
-        .anyMatch(cap -> FIREWALL_AUDIT_CAPABILITY_TYPE.equals(cap.context().type().toString())
-            && cap.context().isEnabled());
-
-    if (!firewallEnabled) {
-      context.disableDefaultConstraintViolation();
-      context.buildConstraintViolationWithTemplate(
-          "The 'firewall_quarantine' webhook event requires Repository Firewall to be enabled. " +
-              "Please create a 'Firewall Audit and Quarantine' capability first with at least one repository configured")
-          .addConstraintViolation();
-      return false;
-    }
-
-    // Check 3: At least one enabled Firewall Audit capability must have quarantine enabled
-    boolean quarantineEnabled = capabilityRegistry.getAll()
-        .stream()
-        .anyMatch(cap -> FIREWALL_AUDIT_CAPABILITY_TYPE.equals(cap.context().type().toString())
-            && cap.context().isEnabled()
-            && "true".equalsIgnoreCase(cap.context().properties().get("quarantine")));
-
-    if (!quarantineEnabled) {
-      context.disableDefaultConstraintViolation();
-      context.buildConstraintViolationWithTemplate(
-          "The 'firewall_quarantine' webhook event requires quarantine to be enabled in at least one " +
-              "'Firewall Audit and Quarantine' capability. Please enable the 'Quarantine components' option")
-          .addConstraintViolation();
-      return false;
-    }
-
-    return true;
+    return webhookNames.containsAll(names);
   }
 }

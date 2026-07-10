@@ -13,60 +13,83 @@
 
 import { useState, useCallback } from 'react';
 import { restClient, parseApiError } from '../../../../../../interface/api';
-import { SupportZipParams, SupportZipResponse, SUPPORT_ZIP_API } from './types';
+import { APIConstants } from '../../../../../../constants/APIConstants';
+import { SupportZipParams, SupportZipResponse, NodeInfo, SUPPORT_ZIP_API } from './types';
+
+const { REST } = APIConstants;
+
+interface SupportZipNodeRequest extends SupportZipParams {
+  hostname: string;
+}
 
 /**
- * Custom hook for Support ZIP API operations
+ * Custom hook for Support ZIP API operations.
+ *
+ * Single-node uses the legacy /v1/support/supportzippath endpoint.
+ * HA uses the per-node internal endpoints under /service/rest/internal/ui/supportzip/.
  */
 export function useSupportZipApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Create a support ZIP for single node
-   */
-  const createSupportZip = useCallback(async (
-    params: SupportZipParams
-  ): Promise<SupportZipResponse> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await restClient.post<SupportZipResponse>(SUPPORT_ZIP_API.CREATE, params);
-      return data;
-    } catch (err: any) {
-      const apiError = parseApiError(err);
-      const message = apiError.message || 'Failed to create support ZIP';
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const wrap = useCallback(
+    async <T,>(action: () => Promise<T>, fallbackMessage: string): Promise<T> => {
+      setLoading(true);
+      setError(null);
+      try {
+        return await action();
+      } catch (err) {
+        const message = parseApiError(err).message || fallbackMessage;
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
-  /**
-   * Create support ZIPs for all HA nodes
-   */
-  const createHaSupportZips = useCallback(async (
-    params: SupportZipParams
-  ): Promise<SupportZipResponse[]> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await restClient.post<SupportZipResponse[]>(SUPPORT_ZIP_API.CREATE_HA, params);
-      return data;
-    } catch (err: any) {
-      const apiError = parseApiError(err);
-      const message = apiError.message || 'Failed to create support ZIPs';
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const createSupportZip = useCallback(
+    (params: SupportZipParams) =>
+      wrap(
+        () => restClient.post<SupportZipResponse>(SUPPORT_ZIP_API.CREATE, params),
+        'Failed to create support ZIP'
+      ),
+    [wrap]
+  );
 
-  /**
-   * Get download URL for a support ZIP file
-   */
+  const fetchActiveNodes = useCallback(
+    () =>
+      wrap(
+        () => restClient.get<NodeInfo[]>(REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES),
+        'Failed to fetch active nodes'
+      ),
+    [wrap]
+  );
+
+  const fetchNodeStatus = useCallback(
+    (nodeId: string) =>
+      restClient.get<NodeInfo>(`${REST.INTERNAL.GET_ZIP_STATUS}${nodeId}`),
+    []
+  );
+
+  const clearNode = useCallback(
+    (nodeId: string) =>
+      restClient.delete<void>(`${REST.INTERNAL.CLEAR_SUPPORT_ZIP_HISTORY}${nodeId}`),
+    []
+  );
+
+  const generateForNode = useCallback(
+    (nodeId: string, params: SupportZipParams, hostname: string) => {
+      const body: SupportZipNodeRequest = { ...params, hostname };
+      return wrap(
+        () => restClient.post<NodeInfo>(`${REST.INTERNAL.SUPPORT_ZIP}${nodeId}`, body),
+        'Failed to generate support ZIP for node'
+      );
+    },
+    [wrap]
+  );
+
   const getDownloadUrl = useCallback((filename: string): string => {
     return SUPPORT_ZIP_API.DOWNLOAD(filename);
   }, []);
@@ -76,11 +99,12 @@ export function useSupportZipApi() {
     error,
     setError,
     createSupportZip,
-    createHaSupportZips,
+    fetchActiveNodes,
+    fetchNodeStatus,
+    generateForNode,
+    clearNode,
     getDownloadUrl,
   };
 }
 
 export default useSupportZipApi;
-
-

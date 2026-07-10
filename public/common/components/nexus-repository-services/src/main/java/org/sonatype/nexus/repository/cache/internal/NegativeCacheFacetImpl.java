@@ -18,9 +18,9 @@ import javax.cache.Cache;
 import javax.cache.Cache.Entry;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.cache.CacheHelper;

@@ -109,4 +109,27 @@ describe('StorageFacet', () => {
       expect(screen.queryByText('Select the blob store used to store repository contents')).not.toBeInTheDocument();
     });
   });
+
+  describe('strict content type validation by format', () => {
+    it('shouldRenderContentValidationForMaven2Format', () => {
+      renderStorageFacet({ formData: { ...defaultFormData, format: 'maven2' } });
+
+      expect(screen.getByTestId(CONTENT_VALIDATION_TESTID)).toBeInTheDocument();
+    });
+
+    it('shouldRenderContentValidationForNpmFormat', () => {
+      renderStorageFacet({ formData: { ...defaultFormData, format: 'npm' } });
+
+      expect(screen.getByTestId(CONTENT_VALIDATION_TESTID)).toBeInTheDocument();
+    });
+
+    it('shouldRenderContentValidationForTerraformFormat', () => {
+      // The Terraform backend honors strictContentTypeValidation (see
+      // TerraformContentValidator.determineContentType), so the toggle must stay
+      // available — matching classic UI behavior across formats.
+      renderStorageFacet({ formData: { ...defaultFormData, format: 'terraform' } });
+
+      expect(screen.getByTestId(CONTENT_VALIDATION_TESTID)).toBeInTheDocument();
+    });
+  });
 });

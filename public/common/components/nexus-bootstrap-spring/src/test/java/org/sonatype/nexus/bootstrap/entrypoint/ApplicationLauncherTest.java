@@ -22,9 +22,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -57,13 +60,17 @@ class ApplicationLauncherTest
 
   private ApplicationLauncher applicationLauncher;
 
+  private ConfigurableConversionService conversionService;
+
   @BeforeEach
   void setUp() {
     // Mock the Spring environment
     ConfigurableEnvironment environment = mock(ConfigurableEnvironment.class);
     MutablePropertySources propertySources = new MutablePropertySources();
+    conversionService = mock(ConfigurableConversionService.class);
     when(context.getEnvironment()).thenReturn(environment);
     when(environment.getPropertySources()).thenReturn(propertySources);
+    when(environment.getConversionService()).thenReturn(conversionService);
 
     applicationLauncher = new ApplicationLauncher(
         nexusEditionSelector,
@@ -73,9 +80,9 @@ class ApplicationLauncherTest
 
     // Setup mock editions - use lenient() since not all tests use all editions
     lenient().when(communityEdition.getId()).thenReturn(COMMUNITY);
-    lenient().when(communityEdition.getShortName()).thenReturn("Community Edition");
+    lenient().when(communityEdition.getShortName()).thenReturn("COMMUNITY");
     lenient().when(proEdition.getId()).thenReturn(PRO_EDITION_ID);
-    lenient().when(proEdition.getShortName()).thenReturn("Pro Edition");
+    lenient().when(proEdition.getShortName()).thenReturn("PRO");
   }
 
   @Test
@@ -128,5 +135,14 @@ class ApplicationLauncherTest
     applicationLauncher.initialize();
 
     verify(nexusProperties, never()).enforceCommunityEditionAnalytics();
+  }
+
+  @Test
+  void initialize_RegistersNexusEditionToStringConverter() {
+    when(nexusEditionSelector.getCurrent()).thenReturn(proEdition);
+
+    applicationLauncher.initialize();
+
+    verify(conversionService).addConverter(eq(NexusEdition.class), eq(String.class), any());
   }
 }

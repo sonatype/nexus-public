@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import org.sonatype.nexus.repository.maven.api.MavenAttributes;
@@ -56,7 +56,7 @@ public class MavenProxyRepositoryApiRequest
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributesWithPreemptiveAuth httpClient,
-      @JsonProperty("routingRule") @JsonAlias("routingRuleName") final String routingRule,
+      @JsonProperty("routingRuleName") @JsonAlias("routingRule") final String routingRule,
       @JsonProperty("maven") final MavenAttributes maven,
       @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY,
           content = Include.NON_NULL) final ReplicationAttributes replication)

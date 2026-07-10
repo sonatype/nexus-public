@@ -10,20 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Flex, Text, Heading, Grid } from '@radix-ui/themes';
-import { Activity, Loader2, Download, RefreshCw, Info, ExternalLink, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
+import { Box, Flex, Text, Grid } from '@radix-ui/themes';
+import { Loader2, Download, RefreshCw, Info, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsAlert, SettingsButton } from '../../../../shared/form';
-import { useToast } from '../../../../shared';
+import { useToast, PageHeader } from '../../../../shared';
 import { MetricHealthList } from './MetricHealthList';
 import { MetricHealthDetail } from './MetricHealthDetail';
 import { useMetricHealthApi } from './useMetricHealthApi';
@@ -181,19 +174,25 @@ export function MetricHealthPage({ className }: MetricHealthPageProps) {
     );
   }
 
+  // Navigation helper for Settings breadcrumb
+  const navigateToSettings = () => {
+    window.location.hash = '#preview/admin/settings';
+  };
+
   // No permission state
   if (!canRead) {
+    const breadcrumbs = [
+      { label: 'Settings', onClick: navigateToSettings },
+      { label: 'Metric Health' },
+    ];
     return (
       <Box className={`metric-health-page ${className || ''}`.trim()} data-testid="metric-health-page">
-        <Flex align="center" gap="3" className="metric-health-page__header">
-          <Activity size={24} className="metric-health-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">Status</Heading>
-            <Text size="2" className="metric-health-page__description">
-              View system health checks and diagnostics
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Status"
+          description="View system health checks and diagnostics"
+          breadcrumbs={breadcrumbs}
+          className="metric-health-page__header"
+        />
 
         <SettingsAlert type="warning">
           You do not have permission to view metric health.
@@ -251,55 +250,62 @@ export function MetricHealthPage({ className }: MetricHealthPageProps) {
   return (
     <Box className={`metric-health-page ${className || ''}`.trim()} data-testid="metric-health-page" data-loading={loading}>
       {/* Header */}
-      <Flex align="center" justify="between" className="metric-health-page__header">
-        <Flex align="center" gap="3">
-          {isClusteredMode && selectedNode && (
-            <SettingsButton
-              variant="ghost"
-              onClick={handleBackToNodes}
-              aria-label="Back to nodes"
-              data-testid="back-to-nodes-button"
-              icon={ArrowLeft}
-            />
-          )}
-          <Activity size={24} className="metric-health-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">Status</Heading>
-            <Text size="2" className="metric-health-page__description">
-              {isClusteredMode && selectedNode
-                ? `Health checks for ${nodes.find(n => n.nodeId === selectedNode)?.hostname || selectedNode}`
-                : 'View system health checks and diagnostics'}
-            </Text>
-          </Box>
-        </Flex>
+      {(() => {
+        const description = selectedCheck
+          ? selectedCheck
+          : (isClusteredMode && selectedNode
+            ? `Health checks for ${nodes.find(n => n.nodeId === selectedNode)?.hostname || selectedNode}`
+            : 'View system health checks and diagnostics');
 
-        {/* Action buttons */}
-        <Flex gap="2" className="metric-health-page__actions">
-          <SettingsButton
-            variant="ghost"
-            onClick={handleRefresh}
-            disabled={refreshing || loading}
-            aria-label="Refresh"
-            icon={RefreshCw}
-            className={refreshing ? 'metric-health-page__spinning' : ''}
-            data-testid="refresh-button"
-          >
-            Refresh
-          </SettingsButton>
-          {(!isClusteredMode || selectedNode) && (
+        const breadcrumbs = selectedCheck
+          ? [
+              { label: 'Settings', onClick: navigateToSettings },
+              { label: 'Metric Health', onClick: isClusteredMode && selectedNode ? handleBackToNodes : undefined },
+              { label: selectedCheck },
+            ]
+          : [
+              { label: 'Settings', onClick: navigateToSettings },
+              { label: 'Metric Health' },
+            ];
+
+        const actions = (
+          <Flex gap="2" className="metric-health-page__actions">
             <SettingsButton
               variant="ghost"
-              onClick={handleDownload}
-              disabled={checks.length === 0 || loading}
-              aria-label="Download"
-              icon={Download}
-              data-testid="download-button"
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+              aria-label="Refresh"
+              icon={RefreshCw}
+              className={refreshing ? 'metric-health-page__spinning' : ''}
+              data-testid="refresh-button"
             >
-              Download
+              Refresh
             </SettingsButton>
-          )}
-        </Flex>
-      </Flex>
+            {(!isClusteredMode || selectedNode) && (
+              <SettingsButton
+                variant="ghost"
+                onClick={handleDownload}
+                disabled={checks.length === 0 || loading}
+                aria-label="Download"
+                icon={Download}
+                data-testid="download-button"
+              >
+                Download
+              </SettingsButton>
+            )}
+          </Flex>
+        );
+
+        return (
+          <PageHeader
+            title="Status"
+            description={description}
+            breadcrumbs={breadcrumbs}
+            actions={actions}
+            className="metric-health-page__header"
+          />
+        );
+      })()}
 
       {/* Error Alert */}
       {error && (

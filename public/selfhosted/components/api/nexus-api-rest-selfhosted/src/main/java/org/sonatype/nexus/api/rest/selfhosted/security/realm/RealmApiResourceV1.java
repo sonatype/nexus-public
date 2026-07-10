@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.rest.selfhosted.security.realm;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.realm.RealmManager;

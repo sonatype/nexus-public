@@ -16,14 +16,14 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ConstraintViolation;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Response;
+import jakarta.validation.ConstraintViolation;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.repository.Repository;
@@ -34,13 +34,12 @@ import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.Sets;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
@@ -161,10 +160,10 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
 
   @GET
   @Path("/{repositoryName}")
-  @ApiOperation(value = "Get repository", response = SimpleApiGroupRepository.class)
+  @Operation(summary = "Get repository")
   @Override
   public AbstractApiRepository getRepository(
-      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @Parameter(hidden = true) @BeanParam final FormatAndType formatAndType,
       @PathParam("repositoryName") final String repositoryName)
   {
     return super.getRepository(formatAndType, repositoryName);

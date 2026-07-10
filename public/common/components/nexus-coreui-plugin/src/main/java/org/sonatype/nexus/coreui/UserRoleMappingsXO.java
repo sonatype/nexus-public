@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.Set;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 import org.sonatype.nexus.security.realm.RealmExists;
 import org.sonatype.nexus.security.role.RolesExist;

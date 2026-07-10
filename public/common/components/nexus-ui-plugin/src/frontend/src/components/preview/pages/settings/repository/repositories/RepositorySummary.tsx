@@ -24,9 +24,11 @@ interface RepositorySummaryProps {
   repository: Repository;
   formData: RepositoryFormData;
   onNavigateToTab: (tab: string) => void;
+  /** Hide blob store section for Cloud distribution where storage is managed internally */
+  isCloud?: boolean;
 }
 
-export function RepositorySummary({ repository, formData, onNavigateToTab }: RepositorySummaryProps) {
+export function RepositorySummary({ repository, formData, onNavigateToTab, isCloud = false }: RepositorySummaryProps) {
   const isOnline = repository.status?.online ?? repository.online ?? true;
   const blobStoreName = formData.storage?.blobStoreName || '-';
   const remoteUrl = formData.proxy?.remoteUrl;
@@ -57,13 +59,13 @@ export function RepositorySummary({ repository, formData, onNavigateToTab }: Rep
         />
 
         {/* URL Section */}
-        <SummaryItem 
-          label="URL" 
+        <SummaryItem
+          label="URL"
           value={
             <Flex align="center" gap="2">
-              <Text size="2" className="repository-summary__url">{repository.url}</Text>
+              <Text size="2" className="repository-summary__url">{repository.url + '/'}</Text>
               <Tooltip content="Open in new tab">
-                <a href={repository.url} target="_blank" rel="noopener noreferrer" className="repository-summary__link">
+                <a href={repository.url + '/'} target="_blank" rel="noopener noreferrer" className="repository-summary__link">
                   <ExternalLink size={14} />
                 </a>
               </Tooltip>
@@ -71,26 +73,28 @@ export function RepositorySummary({ repository, formData, onNavigateToTab }: Rep
           }
         />
 
-        {/* Storage Section */}
-        <SummaryItem 
-          label="Blob Store" 
-          value={
-            <Flex align="center" gap="2">
-              <HardDrive size={14} className="repository-summary__icon" />
-              <Text size="2">{blobStoreName}</Text>
-            </Flex>
-          }
-          onClick={() => onNavigateToTab('settings')}
-        />
-
         {/* Proxy-specific: Remote URL */}
         {remoteUrl && (
-          <SummaryItem 
-            label="Remote Storage" 
+          <SummaryItem
+            label="Remote Storage"
             value={
               <Flex align="center" gap="2">
                 <Globe size={14} className="repository-summary__icon" />
                 <Text size="2" className="repository-summary__url">{remoteUrl}</Text>
+              </Flex>
+            }
+            onClick={() => onNavigateToTab('settings')}
+          />
+        )}
+
+        {/* Storage Section - hidden in Cloud distribution */}
+        {!isCloud && (
+          <SummaryItem
+            label="Blob Store"
+            value={
+              <Flex align="center" gap="2">
+                <HardDrive size={14} className="repository-summary__icon" />
+                <Text size="2">{blobStoreName}</Text>
               </Flex>
             }
             onClick={() => onNavigateToTab('settings')}

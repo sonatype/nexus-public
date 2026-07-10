@@ -16,8 +16,11 @@ import java.net.URI;
 import java.util.Locale;
 import java.util.Objects;
 
-import javax.annotation.Nullable;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
+import com.google.common.base.Throwables;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ValidationException;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -27,9 +30,11 @@ import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.LOCATION;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP;
 
@@ -82,6 +87,32 @@ public class NexusRedirectStrategy
 
   private static final Logger log = LoggerFactory.getLogger(NexusRedirectStrategy.class);
 
+  private final AntiSsrfService antiSsrfService;
+
+  @Autowired
+  public NexusRedirectStrategy(final AntiSsrfService antiSsrfService) {
+    this.antiSsrfService = checkNotNull(antiSsrfService);
+  }
+
+  /**
+   * Validates that the redirect target host doesn't resolve to a private/local network address.
+   *
+   * @param uri the URI to validate
+   * @throws ProtocolException if the host is blocked by SSRF protection
+   */
+  private void validateRedirectHost(final URI uri) throws ProtocolException {
+    String host = uri.getHost();
+    // expected when host is null its a relative URI
+    if (host != null) {
+      try {
+        antiSsrfService.validateHost(host);
+      }
+      catch (ValidationException e) {
+        throw new ProtocolException("Redirect to private network blocked: " + e.getMessage(), e);
+      }
+    }
+  }
+
   @Override
   public boolean isRedirected(
       final HttpRequest request,
@@ -133,6 +164,9 @@ public class NexusRedirectStrategy
         }
       }
 
+      // Validate redirect target doesn't resolve to private/local network (SSRF protection)
+      validateRedirectHost(targetUri);
+
       log.debug("Following redirection {} -> {}", sourceUri, targetUri);
       return true;
     }
@@ -148,7 +182,10 @@ public class NexusRedirectStrategy
   {
     if (!shouldPreserveEncoding(context)) {
       // When preserveEncodedCharacters is false or not set, use default behavior (normalize)
-      return super.getLocationURI(request, response, context);
+      URI uri = super.getLocationURI(request, response, context);
+      // Validate redirect target doesn't resolve to private/local network (SSRF protection)
+      validateRedirectHost(uri);
+      return uri;
     }
 
     // When preserveEncodedCharacters is true, handle redirect URL with encoding preservation
@@ -159,13 +196,17 @@ public class NexusRedirectStrategy
       // Handle path traversal attacks (security takes precedence over encoding preservation)
       URI secureUri = handlePathTraversalIfNeeded(redirectUri);
       if (secureUri != redirectUri) {
+        validateRedirectHost(secureUri);
         return secureUri;
       }
 
       // Encode special characters for signed URLs (AWS S3, Cloudflare R2, etc.)
-      return encodeSpecialCharactersIfNeeded(redirectUri);
+      URI encodedUri = encodeSpecialCharactersIfNeeded(redirectUri);
+      validateRedirectHost(encodedUri);
+      return encodedUri;
     }
     catch (Exception e) {
+      Throwables.throwIfInstanceOf(e, ProtocolException.class);
       throw new ProtocolException("Invalid redirect URI: " + response.getFirstHeader(LOCATION).getValue(), e);
     }
   }

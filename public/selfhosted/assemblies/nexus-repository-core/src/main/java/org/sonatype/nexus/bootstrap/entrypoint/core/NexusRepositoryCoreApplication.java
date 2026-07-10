@@ -15,16 +15,26 @@ package org.sonatype.nexus.bootstrap.entrypoint.core;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusDirectoryConfiguration;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
 
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import static org.springframework.boot.Banner.Mode.OFF;
 
 // Minimalist list of root packages to scan, to start bootstrapping
-@SpringBootApplication(scanBasePackages = {
-    "org.sonatype.nexus.bootstrap.entrypoint"
-})
+// NEXUS-46395: exclude ValidationAutoConfiguration from the parent context.
+// See SonatypeNexusRepositoryApplication.java for the full rationale; this is the same fix
+// applied to the OSS core distribution. Without it, Spring Boot's auto-configured
+// LocalValidatorFactoryBean lives in the parent context bound to the parent BeanFactory and
+// cannot resolve child-context beans like CapabilityFactoryRegistry, causing
+// CapabilityTypeExistsValidator (and other constraint validators) to fail on boot.
+@SpringBootApplication(
+    scanBasePackages = {
+        "org.sonatype.nexus.bootstrap.entrypoint"
+    },
+    exclude = {ValidationAutoConfiguration.class})
 public class NexusRepositoryCoreApplication
 {
   public static void main(final String[] args) {
@@ -43,6 +53,7 @@ public class NexusRepositoryCoreApplication
     new SpringApplicationBuilder(NexusRepositoryCoreApplication.class)
         .bannerMode(OFF)
         .initializers(NexusRepositoryCoreApplication::initialize)
+        .web(WebApplicationType.NONE)
         .run(args);
   }
 

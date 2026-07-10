@@ -31,6 +31,7 @@ Ext.define('NX.coreui.view.repository.recipe.NugetProxy', {
     'NX.coreui.view.repository.facet.HttpClientFacet',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
     'NX.coreui.view.repository.facet.NugetProxyFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet',
     'NX.coreui.view.repository.facet.CleanupPolicyFacet'
   ],
 
@@ -39,6 +40,7 @@ Ext.define('NX.coreui.view.repository.recipe.NugetProxy', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-nugetproxy-facet'},
+      {xtype: 'nx-coreui-repository-firewall-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},
@@ -50,5 +52,30 @@ Ext.define('NX.coreui.view.repository.recipe.NugetProxy', {
     me.callParent();
 
     me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Nuget_Remote_HelpText'));
+
+    var container = me.down('#remoteUrl').ownerCt;
+    var remoteUrlIndex = container.items.indexOf(me.down('#remoteUrl'));
+
+    container.insert(remoteUrlIndex + 1,
+        {
+          xtype: 'nx-url',
+          name: 'attributes.nugetProxy.symbolServerUrl',
+          fieldLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_SymbolServerUrl_FieldLabel'),
+          helpText: NX.I18n.get('Repository_Facet_NugetProxyFacet_SymbolServerUrl_HelpText'),
+          allowBlank: true,
+          itemCls: ''
+        }
+    );
+
+    container.insert(remoteUrlIndex + 2,
+        {
+          xtype: 'checkbox',
+          name: 'attributes.nugetProxy.allowAnonymousSymbolAccess',
+          fieldLabel: NX.I18n.get('Repository_Facet_NugetProxyFacet_AllowAnonymousSymbolAccess_FieldLabel'),
+          helpText: NX.I18n.get('Repository_Facet_NugetProxyFacet_AllowAnonymousSymbolAccess_HelpText'),
+          value: true,
+          itemCls: ''
+        }
+    );
   }
 });

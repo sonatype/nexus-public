@@ -15,10 +15,16 @@ package org.sonatype.nexus.internal.jwt.datastore;
 import java.time.OffsetDateTime;
 
 /**
- * Data object representing a revoked JWT session.
+ * Data object representing a revoked JWT session or a user-wide JWT invalidation.
+ * The {@link #type} discriminates: {@code "SESSION"} for per-session revocations (from logout),
+ * {@code "USER_INVALIDATION"} for per-user cutoffs (from password change).
  */
 public class JwtSessionData
 {
+  public static final String TYPE_SESSION = "SESSION";
+
+  public static final String TYPE_USER_INVALIDATION = "USER_INVALIDATION";
+
   private String userSessionId;
 
   private String username;
@@ -28,6 +34,8 @@ public class JwtSessionData
   private OffsetDateTime revokedAt;
 
   private OffsetDateTime expiresAt;
+
+  private String type = TYPE_SESSION;
 
   public String getUserSessionId() {
     return userSessionId;
@@ -67,5 +75,13 @@ public class JwtSessionData
 
   public void setExpiresAt(final OffsetDateTime expiresAt) {
     this.expiresAt = expiresAt;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(final String type) {
+    this.type = type;
   }
 }

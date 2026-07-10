@@ -33,6 +33,8 @@ import LayoutPolicyConfiguration from './facets/LayoutPolicyConfiguration';
 import RepositoryConnectorsConfiguration from './facets/RepositoryConnectorsConfiguration';
 import RegistryApiSupportConfiguration from './facets/RegistryApiSupportConfiguration';
 import NugetProxyConfiguration from './facets/NugetProxyConfiguration';
+import NugetSymbolServerConfiguration from './facets/NugetSymbolServerConfiguration';
+import NugetHostedConfiguration from './facets/NugetHostedConfiguration';
 import NugetGroupConfiguration from './facets/NugetGroupConfiguration';
 import WritableRepositoryConfiguration from './facets/WritableRepositoryConfiguration';
 import PreEmptiveAuthConfiguration from './facets/PreEmptiveAuthConfiguration';
@@ -41,6 +43,7 @@ import AptEnforceDistributionConfiguration from './facets/AptEnforceDistribution
 import AptSigningConfiguration from './facets/AptSigningConfiguration';
 import AptFlatConfiguration from './facets/AptFlatConfiguration';
 import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
+import TerraformStateBackendEncryptionConfiguration from './facets/TerraformStateBackendEncryptionConfiguration';
 import AlpineSigningConfiguration from './facets/AlpineSigningConfiguration';
 import RawQueryParamsConfiguration from './facets/RawQueryParamsConfiguration';
 
@@ -220,7 +223,7 @@ const repositoryFormats = {
       },
       maven: {
         layoutPolicy: 'STRICT',
-        contentDisposition: 'INLINE',
+        contentDisposition: 'ATTACHMENT',
         versionPolicy: 'RELEASE'
       }
     },
@@ -240,7 +243,7 @@ const repositoryFormats = {
       ...replicationDefaultValue,
       maven: {
         layoutPolicy: 'STRICT',
-        contentDisposition: 'INLINE',
+        contentDisposition: 'ATTACHMENT',
         versionPolicy: 'RELEASE'
       }
     },
@@ -371,13 +374,32 @@ const repositoryFormats = {
       }
     })
   },
+  nuget_hosted: {
+    facets: [NugetHostedConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...genericDefaultValues.hosted
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
   nuget_proxy: {
-    facets: [NugetProxyConfiguration, ...genericFacets.proxy],
+    facets: [
+      NugetProxyConfiguration,
+      GenericStorageConfiguration,
+      GenericProxyConfiguration,
+      NugetSymbolServerConfiguration,
+      GenericOptionsConfiguration,
+      GenericCleanupConfiguration,
+      GenericHttpAuthConfiguration,
+      GenericHttpReqConfiguration
+    ],
     defaultValues: {
       ...genericDefaultValues.proxy,
       nugetProxy: {
         queryCacheItemMaxAge: 3600,
-        nugetVersion: 'V3'
+        nugetVersion: 'V3',
+        symbolServerUrl: ''
       }
     },
     validators: (data) => ({
@@ -427,6 +449,35 @@ const repositoryFormats = {
       ...genericValidators.group(data)
     })
   },
+  terraformbackend_hosted: {
+    facets: [TerraformStateBackendEncryptionConfiguration, ...genericFacets.hosted],
+    defaultValues: {
+      ...genericDefaultValues.hosted,
+      terraformStateBackend: {
+        encryption: {
+          enabled: true,  // Always enabled - encryption is mandatory
+          encryptionKey: ''
+        },
+        lockTimeoutMinutes: 30,
+        maxStateSizeMB: 256
+      }
+    },
+    validators: (data) => {
+      const baseValidators = genericValidators.hosted(data);
+
+      // Encryption is MANDATORY - always validate encryption key
+      return {
+        ...baseValidators,
+        terraformStateBackend: {
+          encryption: {
+            encryptionKey: ValidationUtils.validateNotBlank(data.terraformStateBackend?.encryption?.encryptionKey)
+          },
+          lockTimeoutMinutes: validateLockTimeout(data.terraformStateBackend?.lockTimeoutMinutes),
+          maxStateSizeMB: validateMaxStateSize(data.terraformStateBackend?.maxStateSizeMB)
+        }
+      };
+    }
+  },
   conda_hosted: {
     facets: [...genericFacets.hosted],
     defaultValues: {
@@ -464,7 +515,27 @@ const repositoryFormats = {
         validators: (data) => ({
             ...genericValidators.group(data)
         })
-    }
+    },
+  composer_hosted: {
+    facets: [...genericFacets.hosted],
+    defaultValues: {
+      ...mergeDeepRight(genericDefaultValues.hosted, {
+        storage: {writePolicy: 'ALLOW'}
+      })
+    },
+    validators: (data) => ({
+      ...genericValidators.hosted(data)
+    })
+  },
+  composer_group: {
+    facets: [...genericFacets.group],
+    defaultValues: {
+      ...genericDefaultValues.group
+    },
+    validators: (data) => ({
+      ...genericValidators.group(data)
+    })
+  }
 };
 
 export const getFacets = (format, type) =>
@@ -475,3 +546,20 @@ export const getDefaultValues = (format, type) =>
 
 export const getValidators = (format, type) =>
   repositoryFormats[`${format}_${type}`]?.validators || genericValidators[type] || (() => ({}));
+
+// Terraform State Backend validators
+const validateLockTimeout = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  return ValidationUtils.isInRange({value, min: 1, max: 1440, allowDecimals: false}) ||
+    ValidationUtils.validateNotBlank(value);
+};
+
+const validateMaxStateSize = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  return ValidationUtils.isInRange({value, min: 1, max: 512, allowDecimals: false}) ||
+    ValidationUtils.validateNotBlank(value);
+};

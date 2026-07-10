@@ -26,7 +26,9 @@ import {
 import {
   RepositoryFormData,
   RepositoryFormErrors,
+  HttpClientAuthenticationConfig,
 } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 import './HttpClientFacet.scss';
 
@@ -37,7 +39,9 @@ interface HttpClientFacetProps {
     key: K,
     updates: Partial<RepositoryFormData[K]>
   ) => void;
-  errors?: RepositoryFormErrors;
+  // errors may be either a nested RepositoryFormErrors object or a flat Record<string, string>
+  // from the form machine's validationErrors (dot-notation keys).
+  errors?: RepositoryFormErrors | Record<string, string | undefined>;
   showPreemptiveAuth?: boolean;
   originalRemoteUrl?: string;
   isEdit?: boolean;
@@ -46,16 +50,76 @@ interface HttpClientFacetProps {
   format?: string;
 }
 
+/**
+ * Resolve an error value from either a flat dot-notation errors map or a nested errors object.
+ */
+function resolveError(
+  errors: RepositoryFormErrors | Record<string, string | undefined> | undefined,
+  flatKey: string,
+  nested: (e: RepositoryFormErrors) => string | undefined
+): string | undefined {
+  if (!errors) return undefined;
+  // Try flat key first (form machine produces flat dot-notation keys)
+  const flat = (errors as Record<string, string | undefined>)[flatKey];
+  if (flat) return flat;
+  // Fall back to nested access
+  return nested(errors as RepositoryFormErrors);
+}
+
+// Matches ECR registry hostnames: 123456789012.dkr.ecr.us-east-1.amazonaws.com
+const ECR_HOST_PATTERN = /^(\d{12})\.dkr\.ecr\.([\w-]+)\.amazonaws\.com$/i;
+
+export function parseEcrUrl(remoteUrl: string): { registryId: string; awsRegion: string } | null {
+  if (!remoteUrl) return null;
+  const schemeEnd = remoteUrl.indexOf('://');
+  let rest = schemeEnd >= 0 ? remoteUrl.substring(schemeEnd + 3) : remoteUrl;
+  const slashIdx = rest.indexOf('/');
+  if (slashIdx >= 0) rest = rest.substring(0, slashIdx);
+  const colonIdx = rest.lastIndexOf(':');
+  if (colonIdx >= 0) rest = rest.substring(0, colonIdx);
+  const m = ECR_HOST_PATTERN.exec(rest);
+  return m ? { registryId: m[1], awsRegion: m[2] } : null;
+}
+
 // Formats that support Bearer Token authentication (mirrors Classic UI BearerHttpClientFacet usage)
 const BEARER_TOKEN_FORMATS = new Set(['npm', 'pub', 'composer', 'terraform', 'swift', 'cargo', 'huggingface']);
 
 const BASE_AUTH_TYPE_OPTIONS = [
-  { value: '', label: 'No authentication' },
-  { value: 'username', label: 'Username' },
-  { value: 'ntlm', label: 'Windows NTLM' },
+  { value: '', label: UIStrings.HTTP_CLIENT.AUTH_TYPE.NONE },
+  { value: 'username', label: UIStrings.HTTP_CLIENT.AUTH_TYPE.USERNAME },
+  { value: 'ntlm', label: UIStrings.HTTP_CLIENT.AUTH_TYPE.NTLM },
 ];
 
-const BEARER_AUTH_TYPE_OPTION = { value: 'bearer', label: 'Bearer Token' };
+const BEARER_AUTH_TYPE_OPTION = { value: 'bearer', label: UIStrings.HTTP_CLIENT.AUTH_TYPE.BEARER };
+
+/**
+ * Creates the Authentication Type change handler. Exported as a pure factory for direct unit
+ * testing because the Radix-backed SettingsSelect does not render its options in jsdom.
+ *
+ * - Selecting None clears HTTP auth.
+ * - Selecting username/ntlm/bearer sets the auth type.
+ */
+export function createAuthTypeChangeHandler(
+  onNestedChange: HttpClientFacetProps['onNestedChange'],
+  context: {
+    existingAuth: HttpClientAuthenticationConfig | null | undefined;
+  }
+) {
+  const { existingAuth } = context;
+  return (value: string) => {
+    if (!value) {
+      onNestedChange('httpClient', { authentication: null });
+    } else {
+      onNestedChange('httpClient', {
+        authentication: {
+          type: value as 'username' | 'ntlm' | 'bearer',
+          username: existingAuth?.username || '',
+          password: existingAuth?.password || '',
+        },
+      });
+    }
+  };
+}
 
 /**
  * HttpClientFacet - HTTP client and authentication settings
@@ -72,7 +136,7 @@ export function HttpClientFacet({
   onOriginChangeWarning,
   format,
 }: HttpClientFacetProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(true);
   const originResetDone = useRef(false);
 
   const httpClient = useMemo(() => formData.httpClient || {
@@ -119,19 +183,9 @@ export function HttpClientFacet({
     }
   }, [formData.proxy?.remoteUrl, isEdit, originalRemoteUrl, hadAuthOnLoad, onOriginChangeWarning, onNestedChange]);
 
-  const handleAuthTypeChange = (value: string) => {
-    if (!value) {
-      onNestedChange('httpClient', { authentication: null });
-    } else {
-      onNestedChange('httpClient', {
-        authentication: {
-          type: value as 'username' | 'ntlm' | 'bearer',
-          username: httpClient.authentication?.username || '',
-          password: httpClient.authentication?.password || '',
-        },
-      });
-    }
-  };
+  const handleAuthTypeChange = createAuthTypeChangeHandler(onNestedChange, {
+    existingAuth: httpClient.authentication,
+  });
 
   const handleAuthFieldChange = (field: string, value: string | boolean) => {
     // spreads null safely (evaluates to {}), but caller must ensure `type` is set via handleAuthTypeChange first
@@ -144,54 +198,74 @@ export function HttpClientFacet({
   };
 
   const handleConnectionFieldChange = (field: string, value: string | number | boolean) => {
+    // Spread from existing connection (or empty object when connection is null/undefined)
+    const existingConnection = httpClient.connection ?? {};
     onNestedChange('httpClient', {
       connection: {
-        ...httpClient.connection,
+        ...existingConnection,
         [field]: value,
       },
     });
   };
 
   const authType = httpClient.authentication?.type || '';
-  const authTypeOptions = format && BEARER_TOKEN_FORMATS.has(format)
-    ? [...BASE_AUTH_TYPE_OPTIONS, BEARER_AUTH_TYPE_OPTION]
-    : BASE_AUTH_TYPE_OPTIONS;
+  const authTypeOptions = [
+    ...BASE_AUTH_TYPE_OPTIONS,
+    ...(format && BEARER_TOKEN_FORMATS.has(format) ? [BEARER_AUTH_TYPE_OPTION] : []),
+  ];
+
+  // Pre-emptive auth requires HTTPS - check remote URL
+  const remoteUrl = formData.proxy?.remoteUrl || '';
+  const isSecureRemoteUrl = remoteUrl.startsWith('https://');
+  const isPreemptiveAuthDisabled = !isSecureRemoteUrl;
+
+  const isDocker = format === 'docker';
+  const ecrEnabled = isDocker && Boolean(parseEcrUrl(remoteUrl));
 
   return (
-    <SettingsFormSection title="HTTP">
-      {/* Authentication */}
-      <SettingsSelect
-        name="httpClient-authType"
-        label="Authentication Type"
-        value={authType}
-        onChange={handleAuthTypeChange}
-        options={authTypeOptions}
-        helpText="Type of authentication used to connect to the remote repository"
-      />
+    <SettingsFormSection title={UIStrings.HTTP_CLIENT.SECTION.title}>
+      {/* Authentication Type dropdown is hidden when ECR auth is auto-active (URL is ECR) */}
+      {!ecrEnabled && (
+        <SettingsSelect
+          name="httpClient-authType"
+          label={UIStrings.HTTP_CLIENT.AUTH_TYPE.label}
+          value={authType}
+          onChange={handleAuthTypeChange}
+          options={authTypeOptions}
+          helpText={UIStrings.HTTP_CLIENT.AUTH_TYPE.helpText}
+        />
+      )}
 
         {authType === 'username' && (
           <>
             <SettingsTextInput
               name="httpClient-username"
-              label="Username"
+              label={UIStrings.HTTP_CLIENT.USERNAME.label}
               value={httpClient.authentication?.username || ''}
               onChange={(v) => handleAuthFieldChange('username', v)}
-              error={errors?.httpClient?.authentication?.username}
+              error={resolveError(errors, 'httpClient.authentication.username', (e) => e.httpClient?.authentication?.username)}
+              required
             />
             <SettingsPasswordInput
               name="httpClient-password"
-              label="Password"
+              label={UIStrings.HTTP_CLIENT.PASSWORD.label}
               value={httpClient.authentication?.password || ''}
               onChange={(v) => handleAuthFieldChange('password', v)}
-              error={errors?.httpClient?.authentication?.password}
+              error={resolveError(errors, 'httpClient.authentication.password', (e) => e.httpClient?.authentication?.password)}
+              required
             />
             {showPreemptiveAuth && (
               <SettingsCheckbox
                 name="httpClient-preemptiveAuth"
-                label="Use pre-emptive authentication"
+                label={UIStrings.HTTP_CLIENT.PREEMPTIVE_AUTH.label}
                 checked={httpClient.authentication?.preemptive ?? false}
                 onChange={(v) => handleAuthFieldChange('preemptive', v)}
-                description="Caution! Use this only when absolutely necessary. Enabling this option means configured authentication credentials will be sent to the remote URL regardless of whether the remote server has asked for them or not."
+                disabled={isPreemptiveAuthDisabled}
+                description={
+                  isPreemptiveAuthDisabled
+                    ? UIStrings.HTTP_CLIENT.PREEMPTIVE_AUTH.disabledDescription
+                    : UIStrings.HTTP_CLIENT.PREEMPTIVE_AUTH.description
+                }
               />
             )}
           </>
@@ -201,27 +275,35 @@ export function HttpClientFacet({
           <>
             <SettingsTextInput
               name="httpClient-username"
-              label="Username"
+              label={UIStrings.HTTP_CLIENT.USERNAME.label}
               value={httpClient.authentication?.username || ''}
               onChange={(v) => handleAuthFieldChange('username', v)}
+              error={resolveError(errors, 'httpClient.authentication.username', (e) => e.httpClient?.authentication?.username)}
+              required
             />
             <SettingsPasswordInput
               name="httpClient-password"
-              label="Password"
+              label={UIStrings.HTTP_CLIENT.PASSWORD.label}
               value={httpClient.authentication?.password || ''}
               onChange={(v) => handleAuthFieldChange('password', v)}
+              error={resolveError(errors, 'httpClient.authentication.password', (e) => e.httpClient?.authentication?.password)}
+              required
             />
             <SettingsTextInput
               name="httpClient-ntlmHost"
-              label="NTLM Host"
+              label={UIStrings.HTTP_CLIENT.NTLM_HOST.label}
               value={httpClient.authentication?.ntlmHost || ''}
               onChange={(v) => handleAuthFieldChange('ntlmHost', v)}
+              error={resolveError(errors, 'httpClient.authentication.ntlmHost', (e) => (e.httpClient?.authentication as Record<string, string | undefined>)?.ntlmHost)}
+              required
             />
             <SettingsTextInput
               name="httpClient-ntlmDomain"
-              label="NTLM Domain"
+              label={UIStrings.HTTP_CLIENT.NTLM_DOMAIN.label}
               value={httpClient.authentication?.ntlmDomain || ''}
               onChange={(v) => handleAuthFieldChange('ntlmDomain', v)}
+              error={resolveError(errors, 'httpClient.authentication.ntlmDomain', (e) => (e.httpClient?.authentication as Record<string, string | undefined>)?.ntlmDomain)}
+              required
             />
           </>
         )}
@@ -229,9 +311,11 @@ export function HttpClientFacet({
         {authType === 'bearer' && (
           <SettingsPasswordInput
             name="httpClient-bearerToken"
-            label="Bearer Token"
+            label={UIStrings.HTTP_CLIENT.BEARER_TOKEN.label}
             value={httpClient.authentication?.bearerToken || ''}
             onChange={(v) => handleAuthFieldChange('bearerToken', v)}
+            error={resolveError(errors, 'httpClient.authentication.bearerToken', (e) => (e.httpClient?.authentication as Record<string, string | undefined>)?.bearerToken)}
+            required
           />
         )}
 
@@ -244,7 +328,7 @@ export function HttpClientFacet({
         >
           <Flex align="center" gap="2">
             {showAdvanced ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            <Text size="2" weight="medium">HTTP Request Settings</Text>
+            <Text size="2" weight="medium">{UIStrings.HTTP_CLIENT.ADVANCED.toggleLabel}</Text>
           </Flex>
         </button>
 
@@ -252,44 +336,58 @@ export function HttpClientFacet({
           <Box className="http-client-facet__advanced-content">
             <SettingsTextInput
               name="httpClient-userAgentSuffix"
-              label="User-Agent Suffix"
+              label={UIStrings.HTTP_CLIENT.USER_AGENT_SUFFIX.label}
               value={httpClient.connection?.userAgentSuffix || ''}
               onChange={(v) => handleConnectionFieldChange('userAgentSuffix', v)}
-              helpText="Custom fragment to append to the User-Agent header"
+              helpText={UIStrings.HTTP_CLIENT.USER_AGENT_SUFFIX.helpText}
             />
 
             <SettingsTextInput
               name="httpClient-retries"
-              label="Connection Retries"
-              value={String(httpClient.connection?.retries ?? '')}
-              onChange={(v) => handleConnectionFieldChange('retries', parseInt(v, 10) || 0)}
+              label={UIStrings.HTTP_CLIENT.RETRIES.label}
+              value={httpClient.connection?.retries != null ? String(httpClient.connection.retries) : ''}
+              onChange={(v) => {
+                if (v === '') {
+                  handleConnectionFieldChange('retries', 0);
+                } else {
+                  const n = parseInt(v, 10);
+                  if (!isNaN(n)) handleConnectionFieldChange('retries', n);
+                }
+              }}
               type="number"
-              helpText="Total retries if the initial connection attempt suffers a timeout"
+              helpText={UIStrings.HTTP_CLIENT.RETRIES.helpText}
             />
 
             <SettingsTextInput
               name="httpClient-timeout"
-              label="Connection/Socket Timeout"
-              value={String(httpClient.connection?.timeout ?? '')}
-              onChange={(v) => handleConnectionFieldChange('timeout', parseInt(v, 10) || 0)}
+              label={UIStrings.HTTP_CLIENT.TIMEOUT.label}
+              value={httpClient.connection?.timeout != null ? String(httpClient.connection.timeout) : ''}
+              onChange={(v) => {
+                if (v === '') {
+                  handleConnectionFieldChange('timeout', 0);
+                } else {
+                  const n = parseInt(v, 10);
+                  if (!isNaN(n)) handleConnectionFieldChange('timeout', n);
+                }
+              }}
               type="number"
-              helpText="Seconds to wait for activity before stopping and retrying the connection"
+              helpText={UIStrings.HTTP_CLIENT.TIMEOUT.helpText}
             />
 
             <SettingsCheckbox
               name="httpClient-enableCircularRedirects"
-              label="Enable circular redirects"
+              label={UIStrings.HTTP_CLIENT.CIRCULAR_REDIRECTS.label}
               checked={httpClient.connection?.enableCircularRedirects ?? false}
               onChange={(v) => handleConnectionFieldChange('enableCircularRedirects', v)}
-              description="Enable redirects to the same location"
+              description={UIStrings.HTTP_CLIENT.CIRCULAR_REDIRECTS.description}
             />
 
             <SettingsCheckbox
               name="httpClient-enableCookies"
-              label="Enable cookies"
+              label={UIStrings.HTTP_CLIENT.COOKIES.label}
               checked={httpClient.connection?.enableCookies ?? false}
               onChange={(v) => handleConnectionFieldChange('enableCookies', v)}
-              description="Allow cookies to be stored and used"
+              description={UIStrings.HTTP_CLIENT.COOKIES.description}
             />
           </Box>
         )}

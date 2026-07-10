@@ -13,36 +13,9 @@
 import useSideNavbarCollapsedState from './useSideNavbarCollapsedState';
 import { act, renderHook } from '@testing-library/react';
 
-// Setup transition capture
-let transitionSuccessCallback = null;
-
-jest.mock('@uirouter/react', () => ({
-  useTransitionHook: (hookName, criteria, callback) => {
-    if (hookName === 'onSuccess') {
-      transitionSuccessCallback = callback;
-    }
-  }
-}));
-
-// Create fake transition objects
-const createMockTransition = (from, to) => ({
-  from: () => ({ name: from }),
-  to: () => ({ name: to })
-});
-
 describe('useSideNavbarCollapsedState', () => {
-  beforeEach(() => {
-    transitionSuccessCallback = null;
-  });
-
   const setup = (initialOpen = true) => {
     return renderHook(() => useSideNavbarCollapsedState(initialOpen));
-  };
-
-  const fireTransition = (from, to) => {
-    act(() => {
-      transitionSuccessCallback(createMockTransition(from, to));
-    });
   };
 
   it('should initialize correctly', () => {
@@ -63,44 +36,51 @@ describe('useSideNavbarCollapsedState', () => {
     expect(isOpen).toBe(false);
   });
 
-  it('should collapse when navigating into admin', () => {
-    const { result } = setup(true);
+  describe('nx-sidebar-toggle window event', () => {
+    it('should toggle isOpen when nx-sidebar-toggle event is dispatched without detail', () => {
+      const { result } = setup(true);
 
-    fireTransition('home', 'admin.directory.users');
+      act(() => {
+        window.dispatchEvent(new CustomEvent('nx-sidebar-toggle'));
+      });
 
-    const [isOpen] = result.current;
-    expect(isOpen).toBe(false);
-  });
+      const [isOpen] = result.current;
+      expect(isOpen).toBe(false);
+    });
 
-  it('should restore saved open state when navigating out of admin', () => {
-    const { result } = setup(true);
+    it('should set isOpen to true when nx-sidebar-toggle event has detail.open=true', () => {
+      const { result } = setup(false);
 
-    fireTransition('home', 'admin.directory.users'); // into admin
+      act(() => {
+        window.dispatchEvent(new CustomEvent('nx-sidebar-toggle', { detail: { open: true } }));
+      });
 
-    let [isOpen] = result.current;
-    expect(isOpen).toBe(false);
+      const [isOpen] = result.current;
+      expect(isOpen).toBe(true);
+    });
 
-    fireTransition('admin.directory.users', 'home'); // out of admin
+    it('should set isOpen to false when nx-sidebar-toggle event has detail.open=false', () => {
+      const { result } = setup(true);
 
-    [isOpen] = result.current;
-    expect(isOpen).toBe(true);
-  });
+      act(() => {
+        window.dispatchEvent(new CustomEvent('nx-sidebar-toggle', { detail: { open: false } }));
+      });
 
-  it('should not change when navigating inside admin', () => {
-    const { result } = setup(true);
+      const [isOpen] = result.current;
+      expect(isOpen).toBe(false);
+    });
 
-    fireTransition('admin.directory.users', 'admin.directory.groups');
+    it('should remove the event listener on unmount', () => {
+      const { result, unmount } = setup(true);
 
-    const [isOpen] = result.current;
-    expect(isOpen).toBe(true);
-  });
+      unmount();
 
-  it('should not change when navigating outside admin', () => {
-    const { result } = setup(true);
+      expect(() => {
+        window.dispatchEvent(new CustomEvent('nx-sidebar-toggle'));
+      }).not.toThrow();
 
-    fireTransition('home', 'dashboard');
-
-    const [isOpen] = result.current;
-    expect(isOpen).toBe(true);
+      const [isOpen] = result.current;
+      expect(isOpen).toBe(true);
+    });
   });
 });

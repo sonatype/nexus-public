@@ -16,9 +16,8 @@
  */
 /**
  * Preview Browse Routes - SUPER UX Migration
- * 
- * Implemented formats show their Radix-based search pages.
- * Unimplemented formats show the ComingSoonPage placeholder.
+ *
+ * Search uses the unified search page for all formats.
  */
 
 import {UIView} from '@uirouter/react';
@@ -28,7 +27,6 @@ import {
   HealthReportPage,
   FirewallReportPage,
   WelcomeSuper,
-  ProtectHub,
   MalwareRemediationWizard,
   MaliciousPackagesPage,
   MalwareRiskPageSuper,
@@ -40,36 +38,12 @@ import {
   UploadFormPage,
   ApiPage,
   RemediatePage,
-  GASearchPage,
   GADetailPage,
-  GenericSearchPage,
   CustomSearchPage,
-  NpmSearchPage,
-  NpmDetailPage,
-  NuGetSearchPage,
-  NuGetDetailPage,
-  DockerSearchPage,
-  DockerDetailPage,
-  PyPISearchPage,
-  PyPIDetailPage,
-  HelmSearchPage,
-  HelmDetailPage,
-  GolangSearchPage,
-  GolangDetailPage,
-  RawSearchPage,
-  RawDetailPage,
-  YumSearchPage,
-  YumDetailPage,
-  AptSearchPage,
-  AptDetailPage,
-  RubyGemsSearchPage,
-  RubyGemsDetailPage,
   UnifiedSearchPage,
   AssetDetailPage,
-  ComingSoonPage,
 } from '@sonatype/nexus-ui-plugin';
 import {lazyLoad} from './lazyLoad';
-import FeatureFlags from '../../constants/FeatureFlags';
 
 // Audit Log Page lives in coreui (not relocated to preview subtree).
 const AuditLogPage = lazyLoad(() => import('../../components/pages/admin/audit/AuditLogPage'));
@@ -473,19 +447,8 @@ export const previewBrowseRoutes = [
   },
 
   // =============================================================================
-  // IMPLEMENTED SEARCH FORMATS (Legacy - kept for backward compatibility)
+  // ASSET DETAIL
   // =============================================================================
-
-  // Generic Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.generic',
-    url: '/generic:keyword',
-    component: GenericSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Generic Search'},
-  },
-
-  // Asset Detail - Unified asset detail with Component Tags ✅
   {
     name: 'preview.browse.search.asset',
     url: '/asset/:repositoryName/:assetId',
@@ -498,25 +461,19 @@ export const previewBrowseRoutes = [
     data: {title: 'Asset Details'},
   },
 
-  // Custom Search - IMPLEMENTED ✅
+  // =============================================================================
+  // CUSTOM SEARCH
+  // =============================================================================
   {
     name: 'preview.browse.search.custom',
     url: '/custom',
     component: CustomSearchPage,
     data: {title: 'Custom Search'},
   },
-  
-  // Maven Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.maven',
-    url: '/maven/:keyword',
-    component: GASearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Maven Search'},
-  },
-  // Component Detail - child of preview.browse.search (NOT maven)
-  // This makes it a SIBLING of maven/npm/etc search pages,
-  // so it replaces the search view entirely instead of nesting inside GASearchPage
+
+  // =============================================================================
+  // COMPONENT DETAIL
+  // =============================================================================
   {
     name: 'preview.browse.search.component',
     url: '/component/:gaId?version',
@@ -580,277 +537,5 @@ export const previewBrowseRoutes = [
       { token: 'version', deps: ['$stateParams'], resolveFn: ($stateParams) => $stateParams.version },
     ],
     data: {title: 'Security'},
-  },
-  
-  // npm Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.npm',
-    url: '/npm/:keyword',
-    component: NpmSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'npm Search'},
-  },
-  {
-    name: 'preview.browse.search.npm.detail',
-    url: '/:packageId',
-    component: NpmDetailPage,
-    params: {packageId: {type: 'string', raw: true}},
-    data: {title: 'npm Package Details'},
-  },
-
-  // NuGet Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.nuget',
-    url: '/nuget/:keyword',
-    component: NuGetSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'NuGet Search'},
-  },
-  {
-    name: 'preview.browse.search.nuget.detail',
-    url: '/:packageId',
-    component: NuGetDetailPage,
-    params: {packageId: {type: 'string', raw: true}},
-    data: {title: 'NuGet Package Details'},
-  },
-
-  // Docker Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.docker',
-    url: '/docker/:keyword',
-    component: DockerSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Docker Search'},
-  },
-  {
-    name: 'preview.browse.search.docker.detail',
-    url: '/:imageId',
-    component: DockerDetailPage,
-    params: {imageId: {type: 'string', raw: true}},
-    data: {title: 'Docker Image Details'},
-  },
-
-  // PyPI Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.pypi',
-    url: '/pypi/:keyword',
-    component: PyPISearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'PyPI Search'},
-  },
-  {
-    name: 'preview.browse.search.pypi.detail',
-    url: '/:packageId',
-    component: PyPIDetailPage,
-    params: {packageId: {type: 'string', raw: true}},
-    data: {title: 'PyPI Package Details'},
-  },
-
-  // Helm Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.helm',
-    url: '/helm/:keyword',
-    component: HelmSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Helm Search'},
-  },
-  {
-    name: 'preview.browse.search.helm.detail',
-    url: '/:chartId',
-    component: HelmDetailPage,
-    params: {chartId: {type: 'string', raw: true}},
-    data: {title: 'Helm Chart Details'},
-  },
-
-  // Golang Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.golang',
-    url: '/go/:keyword',
-    component: GolangSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Go Search'},
-  },
-  {
-    name: 'preview.browse.search.golang.detail',
-    url: '/:moduleId',
-    component: GolangDetailPage,
-    params: {moduleId: {type: 'string', raw: true}},
-    data: {title: 'Go Module Details'},
-  },
-
-  // Raw Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.raw',
-    url: '/raw/:keyword',
-    component: RawSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Raw Search'},
-  },
-  {
-    name: 'preview.browse.search.raw.detail',
-    url: '/:assetId',
-    component: RawDetailPage,
-    params: {assetId: {type: 'string', raw: true}},
-    data: {title: 'Raw Asset Details'},
-  },
-
-  // Yum Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.yum',
-    url: '/yum/:keyword',
-    component: YumSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Yum Search'},
-  },
-  {
-    name: 'preview.browse.search.yum.detail',
-    url: '/:packageId',
-    component: YumDetailPage,
-    params: {packageId: {type: 'string', raw: true}},
-    data: {title: 'Yum Package Details'},
-  },
-
-  // Apt Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.apt',
-    url: '/apt/:keyword',
-    component: AptSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Apt Search'},
-  },
-  {
-    name: 'preview.browse.search.apt.detail',
-    url: '/:packageId',
-    component: AptDetailPage,
-    params: {packageId: {type: 'string', raw: true}},
-    data: {title: 'Apt Package Details'},
-  },
-
-  // RubyGems Search - IMPLEMENTED ✅
-  {
-    name: 'preview.browse.search.rubygems',
-    url: '/rubygems/:keyword',
-    component: RubyGemsSearchPage,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'RubyGems Search'},
-  },
-  {
-    name: 'preview.browse.search.rubygems.detail',
-    url: '/:gemId',
-    component: RubyGemsDetailPage,
-    params: {gemId: {type: 'string', raw: true}},
-    data: {title: 'RubyGems Details'},
-  },
-
-  // =============================================================================
-  // COMING SOON SEARCH FORMATS
-  // =============================================================================
-
-  // Alpine - COMING SOON
-  {
-    name: 'preview.browse.search.alpine',
-    url: '/alpine/:keyword',
-    component: () => <ComingSoonPage featureName="Alpine Search" description="Alpine APK package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Alpine Search'},
-  },
-
-  // Cargo - COMING SOON
-  {
-    name: 'preview.browse.search.cargo',
-    url: '/cargo/:keyword',
-    component: () => <ComingSoonPage featureName="Cargo Search" description="Cargo/Rust package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Cargo Search'},
-  },
-
-  // Cocoapods - COMING SOON
-  {
-    name: 'preview.browse.search.cocoapods',
-    url: '/cocoapods/:keyword',
-    component: () => <ComingSoonPage featureName="Cocoapods Search" description="Cocoapods package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Cocoapods Search'},
-  },
-
-  // Composer - COMING SOON
-  {
-    name: 'preview.browse.search.composer',
-    url: '/composer/:keyword',
-    component: () => <ComingSoonPage featureName="Composer Search" description="PHP Composer package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Composer Search'},
-  },
-
-  // Conan - COMING SOON
-  {
-    name: 'preview.browse.search.conan',
-    url: '/conan/:keyword',
-    component: () => <ComingSoonPage featureName="Conan Search" description="Conan C/C++ package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Conan Search'},
-  },
-
-  // Conda - COMING SOON
-  {
-    name: 'preview.browse.search.conda',
-    url: '/conda/:keyword',
-    component: () => <ComingSoonPage featureName="Conda Search" description="Conda package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Conda Search'},
-  },
-
-  // Git LFS - COMING SOON
-  {
-    name: 'preview.browse.search.gitlfs',
-    url: '/gitlfs/:keyword',
-    component: () => <ComingSoonPage featureName="Git LFS Search" description="Git LFS search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Git LFS Search'},
-  },
-
-  // HuggingFace - COMING SOON
-  {
-    name: 'preview.browse.search.hugging_face',
-    url: '/huggingface/:keyword',
-    component: () => <ComingSoonPage featureName="HuggingFace Search" description="HuggingFace model search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'HuggingFace Search'},
-  },
-
-  // P2 - COMING SOON
-  {
-    name: 'preview.browse.search.p2',
-    url: '/p2/:keyword',
-    component: () => <ComingSoonPage featureName="P2 Search" description="Eclipse P2 search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'P2 Search'},
-  },
-
-  // R - COMING SOON
-  {
-    name: 'preview.browse.search.r',
-    url: '/r/:keyword',
-    component: () => <ComingSoonPage featureName="R Search" description="R package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'R Search'},
-  },
-
-  // Terraform - COMING SOON
-  {
-    name: 'preview.browse.search.terraform',
-    url: '/terraform/:keyword',
-    component: () => <ComingSoonPage featureName="Terraform Search" description="Terraform module search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Terraform Search'},
-  },
-
-  // Swift - COMING SOON
-  {
-    name: 'preview.browse.search.swift',
-    url: '/swift/:keyword',
-    component: () => <ComingSoonPage featureName="Swift Search" description="Swift package search is being migrated to the new Radix UI design." />,
-    params: {keyword: {value: null, raw: true, dynamic: true}},
-    data: {title: 'Swift Search'},
   },
 ];

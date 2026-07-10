@@ -14,9 +14,8 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * REST API model for describing authentication for HTTP connections used by a proxy repository.
@@ -25,33 +24,37 @@ import javax.validation.constraints.NotEmpty;
  */
 public class HttpClientConnectionAuthenticationAttributes
 {
-  @ApiModelProperty(value = "Authentication type", allowableValues = "username,ntlm,bearerToken")
+  @Schema(description = "Authentication type")
   @NotEmpty
   protected final String type;
 
-  @ApiModelProperty
+  @Schema
   protected final String username;
 
-  @ApiModelProperty(access = "writeOnly")
+  @Schema(accessMode = Schema.AccessMode.WRITE_ONLY)
   protected final String password;
 
-  @ApiModelProperty
+  @Schema
   protected final String ntlmHost;
 
-  @ApiModelProperty
+  @Schema
   protected final String ntlmDomain;
 
-  @ApiModelProperty
+  @Schema
   protected final String bearerToken;
 
   @JsonCreator
   public HttpClientConnectionAuthenticationAttributes(
       @JsonProperty("type") final String type,
       @JsonProperty("username") final String username,
-      @JsonProperty(value = "password", access = Access.WRITE_ONLY) final String password,
+      // NEXUS-46395: Access.WRITE_ONLY keeps Jackson from serializing this field on outbound
+      // GET responses (e.g. repository configuration listings). The @Schema(accessMode=WRITE_ONLY)
+      // annotation on the field is OpenAPI documentation only and does not influence Jackson;
+      // the JsonProperty access mode is the actual gate.
+      @JsonProperty(value = "password", access = JsonProperty.Access.WRITE_ONLY) final String password,
       @JsonProperty("ntlmHost") final String ntlmHost,
       @JsonProperty("ntlmDomain") final String ntlmDomain,
-      @JsonProperty(value = "bearerToken", access = Access.WRITE_ONLY) final String bearerToken)
+      @JsonProperty(value = "bearerToken", access = JsonProperty.Access.WRITE_ONLY) final String bearerToken)
   {
     this.type = type;
     this.username = username;

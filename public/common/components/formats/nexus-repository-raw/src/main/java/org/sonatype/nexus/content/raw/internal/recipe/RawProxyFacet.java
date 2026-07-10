@@ -116,11 +116,11 @@ public class RawProxyFacet
   @Override
   protected String encodeUrl(final String url) throws UnsupportedEncodingException {
     // ALWAYS apply format-specific raw encoding (required for raw repos to work correctly)
-    // When preserveEncodedCharacters is true, EncodingHelper already encoded: #, ?, [, ]
-    // So we only encode chars unique to raw format: ^, \u202F
-    // When preserveEncodedCharacters is false, encode all raw-specific chars
+    // When EncodingHelper is active, it already encoded: #, ?, [, ]
+    // So we only encode chars unique to raw format: ^, \u202F (avoid double-encoding)
+    // When EncodingHelper is null (feature disabled), encode all raw-specific chars
     ImmutableSet<String> charsToEncode =
-        (getEncodingHelper() != null && getEncodingHelper().shouldPreserveEncodedCharacters())
+        getEncodingHelper() != null
             ? CHARS_UNIQUE_TO_RAW // Only encode ^, \u202F (avoid double-encoding #, ?, [, ])
             : CHARS_ALL_RAW; // Encode all when feature disabled
 

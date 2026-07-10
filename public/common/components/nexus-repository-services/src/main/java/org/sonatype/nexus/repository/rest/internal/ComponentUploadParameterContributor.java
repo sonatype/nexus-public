@@ -22,10 +22,17 @@ import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.swagger.ParameterContributor;
 
 import com.google.common.collect.ImmutableList;
-import io.swagger.models.HttpMethod;
-import io.swagger.models.parameters.FormParameter;
+// NEXUS-46395 spike: OpenAPI 3.x DROPPED FormParameter as a Parameter type. In OpenAPI 3,
+// form/multipart inputs are modeled inside a RequestBody's Content.Schema, not as Parameter
+// objects. A faithful migration of this contributor needs to switch from extending
+// ParameterContributor to a different mechanism that mutates the Operation's RequestBody.
+//
+// Out of scope for the D1 spike: stubbed below using a generic Parameter so the surrounding
+// code compiles and the Phase 3 migration team has a clear marker.
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
+import io.swagger.v3.oas.models.parameters.Parameter;
 
-import static io.swagger.models.HttpMethod.POST;
+import static io.swagger.v3.oas.models.PathItem.HttpMethod.POST;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +41,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ComponentUploadParameterContributor
-    extends ParameterContributor<FormParameter>
+    extends ParameterContributor<Parameter>
 {
   private static final List<HttpMethod> HTTP_METHODS = ImmutableList.of(POST);
 
@@ -45,36 +52,14 @@ public class ComponentUploadParameterContributor
     super(HTTP_METHODS, PATHS, transformUploadDefinitions(uploadManager.getAvailableDefinitions()));
   }
 
-  private static Collection<FormParameter> transformUploadDefinitions(
+  /**
+   * NEXUS-46395 SPIKE STUB: returns an empty parameter collection. The proper OpenAPI 3.x
+   * design for form data is to mutate the Operation's RequestBody's Content schema rather
+   * than push parameters via ParameterContributor. Real Phase 3 work item.
+   */
+  private static Collection<Parameter> transformUploadDefinitions(
       final Collection<UploadDefinition> uploadDefinitions)
   {
-    Collection<FormParameter> parameters = new ArrayList<>();
-
-    for (UploadDefinition uploadDefinition : uploadDefinitions) {
-      uploadDefinition.getComponentFields()
-          .forEach(uploadFieldDefinition -> parameters.add(new FormParameter()
-              .name(uploadDefinition.getFormat() + "." + uploadFieldDefinition.getName())
-              .type(uploadFieldDefinition.getType().name().toLowerCase())
-              .description(uploadDefinition.getFormat() + " " + uploadFieldDefinition.getDisplayName())));
-
-      for (int i = 1; i <= (uploadDefinition.isMultipleUpload() ? 3 : 1); i++) {
-        String assetIndex = uploadDefinition.isMultipleUpload() ? Integer.toString(i) : "";
-        String assetName = uploadDefinition.getFormat() + ".asset" + assetIndex;
-        String assetDisplayName = uploadDefinition.getFormat() + " Asset " + assetIndex;
-
-        parameters.add(new FormParameter()
-            .name(assetName)
-            .type("file")
-            .description(assetDisplayName));
-
-        uploadDefinition.getAssetFields()
-            .forEach(uploadFieldDefinition -> parameters.add(new FormParameter()
-                .name(assetName + "." + uploadFieldDefinition.getName())
-                .type(uploadFieldDefinition.getType().name().toLowerCase())
-                .description(assetDisplayName + " " + uploadFieldDefinition.getDisplayName())));
-      }
-    }
-
-    return parameters;
+    return new ArrayList<>();
   }
 }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.internal.email;
 
-import org.apache.commons.mail.EmailConstants;
+import org.apache.commons.mail2.core.EmailConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,8 +26,8 @@ import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.security.UserIdHelper;
 import org.sonatype.nexus.ssl.TrustStore;
 
-import org.apache.commons.mail.Email;
-import org.apache.commons.mail.SimpleEmail;
+import org.apache.commons.mail2.jakarta.Email;
+import org.apache.commons.mail2.jakarta.SimpleEmail;
 import org.mockito.MockedStatic;
 
 import jakarta.inject.Provider;

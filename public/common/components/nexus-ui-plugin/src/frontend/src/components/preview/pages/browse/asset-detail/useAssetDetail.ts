@@ -74,7 +74,10 @@ export function useAssetDetail({
    * Fetch asset data from API.
    */
   const fetchAssetData = useCallback(async () => {
-    if (!repositoryName || !assetId) return;
+    if (!repositoryName || !assetId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -108,7 +111,7 @@ export function useAssetDetail({
           blobRef: assetData.blobRef,
           uploader: assetData.uploader,
           uploaderIp: assetData.uploaderIp,
-          downloadUrl: assetData.downloadUrl || `/repository/${repositoryName}/${assetData.path}`,
+          downloadUrl: assetData.downloadUrl ?? `/repository/${repositoryName}/${assetData.path}`,
           checksum: assetData.checksum,
           attributes: assetData.attributes,
         });

@@ -168,6 +168,29 @@ public class SecurePathNormalizerTest
   }
 
   @Test
+  public void containsPathTraversal_DoesNotFlagConsecutiveSlashes_NEXUS_52769() {
+    // Cloudflare R2 / AWS S3 signed redirects can contain '//' between path segments.
+    // The signature is computed against the exact path bytes, so '//' must not be
+    // misclassified as path traversal — collapsing it to '/' invalidates the signature
+    // and the storage backend returns 403.
+
+    // Customer's exact path from the JIRA debug log
+    assertThat(SecurePathNormalizer.containsPathTraversal(
+        "/chainguard-apk-prod/Q1Zk/UAXY46oqyudp6UGE5F6W//gI"), is(false));
+
+    // Synthetic cases
+    assertThat(SecurePathNormalizer.containsPathTraversal("/a//b"), is(false));
+    assertThat(SecurePathNormalizer.containsPathTraversal("/a///b"), is(false));
+    assertThat(SecurePathNormalizer.containsPathTraversal("//"), is(false));
+
+    // Mixed: real '..' alongside '//' must still be flagged
+    assertThat(SecurePathNormalizer.containsPathTraversal("/a//b/../c"), is(true));
+
+    // Trailing '//' at end of path
+    assertThat(SecurePathNormalizer.containsPathTraversal("/a/b//"), is(false));
+  }
+
+  @Test
   public void encodeSpecialCharacters_EncodesLiteralPlus() {
     // Literal + should be encoded to %2B
     assertThat(SecurePathNormalizer.encodeSpecialCharacters("/path/Q1Hny+sM/file.txt"),

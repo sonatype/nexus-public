@@ -13,7 +13,7 @@
 import React from 'react';
 import axios from 'axios';
 import {when} from 'jest-when';
-import {render, screen, waitForElementToBeRemoved} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -27,6 +27,16 @@ import AzureBlobStoreActions from './AzureBlobStoreActions';
 import {blobStoreFormSelectors} from '../testUtils/blobStoreFormSelectors';
 import {enableSoftQueryReadOnlyAndChangeLimit} from '../testUtils/enableSoftQueryReadOnlyAndChangeLimit';
 import BlobStoresForm from '../BlobStoresForm';
+
+jest.mock('../BlobStoreTypes', () => ({
+  __esModule: true,
+  default: {
+    azure: {
+      Settings: require('./AzureBlobStoreSettings').default,
+      Actions: require('./AzureBlobStoreActions').default
+    }
+  }
+}));
 import { UIRouter, useCurrentStateAndParams, useRouter } from '@uirouter/react';
 import { ROUTE_NAMES } from '../../../../../routerConfig/routeNames/routeNames';
 
@@ -77,13 +87,6 @@ const selectors = {
 };
 
 describe('BlobStoresForm-Azure', () => {
-  window.BlobStoreTypes = {
-    azure: {
-      Settings: AzureBlobStoreSettings,
-      Actions: AzureBlobStoreActions
-    }
-  };
-
   beforeEach(() => {
     ExtJS.isProEdition.mockReturnValue(false);
     when(axios.get).calledWith(URLs.blobStoreTypesUrl).mockResolvedValue(blobstoreTypes);
@@ -106,16 +109,15 @@ describe('BlobStoresForm-Azure', () => {
     await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
     userEvent.selectOptions(selectors.queryTypeSelect(), 'Azure Cloud Storage');
-    userEvent.type(selectors.queryName(), name);
-    userEvent.type(selectors.queryAccountName(), accountName);
-    userEvent.type(selectors.queryContainerName(), containerName);
+    fireEvent.change(selectors.queryName(), {target: {value: name}});
+    fireEvent.change(selectors.queryAccountName(), {target: {value: accountName}});
+    fireEvent.change(selectors.queryContainerName(), {target: {value: containerName}});
 
     enableSoftQueryReadOnlyAndChangeLimit('1')
 
     userEvent.click(selectors.querySubmitButton());
-    await waitForElementToBeRemoved(selectors.querySavingMask());
 
-    expect(axios.post).toHaveBeenCalledWith(
+    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(
         'service/rest/v1/blobstores/azure',
         {
           name,
@@ -132,6 +134,6 @@ describe('BlobStoresForm-Azure', () => {
             enabled: true
           }
         }
-    );
+    ));
   });
 });

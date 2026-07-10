@@ -22,7 +22,8 @@ import {helperFunctions} from '../../../../widgets/SystemStatusAlerts/CELimits/U
 
 const {
   useGracePeriodEndsDate,
-  useThrottlingStatusValue
+  useThrottlingStatusValue,
+  useEdition
 } = helperFunctions;
 
 jest.mock('axios', () => ({
@@ -62,13 +63,15 @@ describe('CEHardLimitAlerts', () => {
         .calledWith('nexus.malware.count')
         .mockReturnValue({totalCount: 3});
 
-    when(ExtJS.useState)
-      .calledWith(useThrottlingStatusValue)
-      .mockReturnValue(throttlingStatus);
-
-    when(ExtJS.useState)
-      .calledWith(useGracePeriodEndsDate)
-      .mockReturnValue(new Date(gracePeriodEnd));
+    // Use mockImplementation to handle all useState calls, including
+    // useEdition which is passed as a function reference
+    ExtJS.useState.mockImplementation((arg) => {
+      if (arg === useThrottlingStatusValue) return throttlingStatus;
+      if (arg === useGracePeriodEndsDate) return new Date(gracePeriodEnd);
+      // For function arguments (like useEdition), call the function
+      if (typeof arg === 'function') return arg();
+      return arg;
+    });
 
     return render(<CEHardLimitAlerts onClose={jest.fn()} />);
   }

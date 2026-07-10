@@ -73,26 +73,26 @@ export const PREVIEW_FEATURE_FLAGS = {
   // =============================================================================
   // REPOSITORY SECTION - ALL Coming Soon (per customer release spec)
   // =============================================================================
-  'repository.repositories': false,  // Coming Soon
-  'repository.blobstores': false,    // Coming Soon
-  'repository.selectors': false,     // Coming Soon
+  'repository.repositories': true,   // Enabled - NEXUS-52792
+  'repository.blobstores': true,     // Enabled - NEXUS-52793
+  'repository.selectors': true,      // Enabled - NEXUS-52782
   'repository.cleanuppolicies': true, // Enabled — NEXUS-52569
   'repository.routingrules': true,  // NEXUS-51919
-  'repository.datastore': false,     // Coming Soon
-  'repository.proprietary': false,   // Coming Soon
+  'repository.datastore': true,      // Enabled — NEXUS-52795
+  'repository.proprietary': true,    // Enabled — NEXUS-52796
 
   // =============================================================================
   // SECURITY SECTION - Mixed (per customer release spec)
   // =============================================================================
-  'security.privileges': false,      // Coming Soon
+  'security.privileges': true,       // Enabled — NEXUS-52808
   'security.roles': true,            // Sprint 14 - ENABLED
-  'security.users': false,           // Coming Soon
-  'security.anonymous': false,       // Coming Soon
+  'security.users': true,            // Enabled — NEXUS-52807
+  'security.anonymous': true,        // Enabled — NEXUS-51085
   'security.ldap': false,            // Coming Soon
-  'security.saml': false,            // Coming Soon
+  'security.saml': true,            // Enabled — NEXUS-52595
   'security.oauth2': false,          // Coming Soon
   'security.crowd': false,           // Coming Soon
-  'security.realms': false,          // Coming Soon
+  'security.realms': true,           // Enabled — NEXUS-51085
   'security.sslcertificates': false, // Coming Soon
   'security.usertokens': false,      // Coming Soon
 
@@ -111,9 +111,9 @@ export const PREVIEW_FEATURE_FLAGS = {
   // =============================================================================
   'system.tasks': true,            // Sprint 16 - ENABLED
   'system.capabilities': true,     // Sprint 16 - ENABLED
-  'system.emailserver': false,     // Coming Soon
-  'system.http': false,           // Coming Soon
-  'system.licensing': false,     // Coming Soon (broken API endpoint)
+  'system.emailserver': true,      // NEXUS-52591 - ENABLED
+  'system.http': true,            // Enabled — NEXUS-52594
+  'system.licensing': true,        // Enabled — NEXUS-52900
   'system.nodes': true,          // Sprint 15 - ENABLED (node list)
   'system.upgrade': false,       // Coming Soon
   'system.api': true,             // Sprint 12 - ENABLED

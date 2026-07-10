@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.validation.Validator;
-import javax.ws.rs.NotFoundException;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.extender.internal;
 
-import javax.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextEvent;
 
 import org.sonatype.nexus.bootstrap.entrypoint.EditionVersionFormatter;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;

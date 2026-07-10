@@ -88,11 +88,24 @@ export default function SonatypeLifecycle() {
       return UIStrings.SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.description;
     }
 
-    const {activityTimeFrame, artifactLatestVersions, policyEvaluationStage, monitoredRepoCount, totalRepoCount} = globalSettings;
-    const monitoredText = (monitoredRepoCount !== null && monitoredRepoCount !== undefined && totalRepoCount !== null && totalRepoCount !== undefined)
-      ? `${monitoredRepoCount}/${totalRepoCount}`
+    const {activityTimeFrame, artifactLatestVersions, versionDepth, policyEvaluationStage, monitoredRepoCount, totalRepoCount, numberOfCustomRepositories} = globalSettings;
+    const globalCount = (monitoredRepoCount !== null && monitoredRepoCount !== undefined && numberOfCustomRepositories !== null && numberOfCustomRepositories !== undefined)
+      ? Math.max(0, monitoredRepoCount - numberOfCustomRepositories)
+      : monitoredRepoCount;
+    const globalEvalText = (globalCount !== null && globalCount !== undefined && totalRepoCount !== null && totalRepoCount !== undefined)
+      ? `${globalCount}/${totalRepoCount}`
       : 'N/A';
-    return `Last ${activityTimeFrame} Days | ${artifactLatestVersions} Artifact Latest Versions | ${policyEvaluationStage} | Monitored: ${monitoredText}`;
+    const customEvalText = (numberOfCustomRepositories !== null && numberOfCustomRepositories !== undefined)
+      ? numberOfCustomRepositories
+      : 'N/A';
+    // Format policyEvaluationStage from 'STAGE_RELEASE' → 'Stage Release' for display
+    const stageLabel = policyEvaluationStage
+      ? policyEvaluationStage.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
+      : policyEvaluationStage;
+    const depthDescription = (versionDepth > 0)
+      ? `${artifactLatestVersions} Latest Deployed Versions`
+      : `Last ${activityTimeFrame} Days`;
+    return `${depthDescription} | ${stageLabel} | Global Evaluation: ${globalEvalText} | Custom Evaluation: ${customEvalText}`;
   }, [loading, globalSettings]);
 
   return <Page>

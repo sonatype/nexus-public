@@ -13,18 +13,18 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 
 import static org.sonatype.nexus.repository.rest.internal.resources.RoutingRulesApiResourceBeta.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 import org.springframework.stereotype.Component;
 
-@Api(hidden = true)
+@Hidden
 @Component
 @Path(RESOURCE_URI)
 @Deprecated

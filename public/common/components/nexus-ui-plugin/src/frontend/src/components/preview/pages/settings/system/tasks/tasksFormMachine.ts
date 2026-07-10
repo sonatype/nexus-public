@@ -15,6 +15,7 @@ import { assign } from 'xstate';
 import { ENDPOINTS, restClient } from '../../../../../../interface/api';
 import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
 
+import { restTemplateToTaskType, type RestTaskTemplate } from './taskTransformers';
 import {
   Task,
   TaskType,
@@ -26,6 +27,33 @@ import {
   isValidCronExpression,
   isValidEmail,
 } from './types';
+import { TASK_FIELD_UI } from './taskFieldMetadata';
+
+// =============================================================================
+// CHECKBOX NORMALIZATION
+// =============================================================================
+
+/**
+ * Fill in 'false' for any checkbox field that is recognized in TASK_FIELD_UI but
+ * absent from the current properties map. Mirrors Classic/ExtJS behavior: unchecked
+ * checkboxes always serialize as 'false', never as absent.
+ *
+ * Only iterates formFields supplied by the API template — never synthesizes a checkbox
+ * for a task type that does not declare it.
+ */
+function normalizeCheckboxProperties(
+  properties: Record<string, string>,
+  formFields: FormField[] | null | undefined
+): Record<string, string> {
+  if (!formFields) return properties;
+  const normalized = { ...properties };
+  for (const field of formFields) {
+    if (TASK_FIELD_UI[field.id]?.type === 'checkbox' && !(field.id in normalized)) {
+      normalized[field.id] = 'false';
+    }
+  }
+  return normalized;
+}
 
 // =============================================================================
 // TASK FORM DATA (extended with schedule metadata for machine context)
@@ -62,6 +90,10 @@ const isScheduleGuard = (targetSchedule: ScheduleType) =>
 /**
  * Validate task form data.
  * Returns an object with field names as keys and error messages as values.
+ *
+ * Required dynamic descriptor fields (e.g. RepositoryCombobox on most repo tasks)
+ * are validated by the per-property loop below — TASK_FIELD_UI metadata is the
+ * single source of truth for the required flag, type, min/max and custom validate.
  */
 function validateTask(data: TaskMachineFormData): ValidationErrors {
   const errors: ValidationErrors = {};
@@ -112,6 +144,46 @@ function validateTask(data: TaskMachineFormData): ValidationErrors {
     }
   }
 
+  // Per-property validation driven by TASK_FIELD_UI metadata.
+  // Collected into a nested map so TaskForm can read validationErrors.properties[key].
+  const properties = data.properties || {};
+  const propertyErrors: Record<string, string> = {};
+  for (const [key, value] of Object.entries(properties)) {
+    const meta = TASK_FIELD_UI[key];
+    if (!meta) continue;
+
+    const isRequired = meta.required !== false && meta.type !== 'checkbox' && !meta.hidden;
+    const isEmpty = value === '' || value === null || value === undefined;
+    if (isRequired && isEmpty) {
+      propertyErrors[key] = `${meta.label} is required`;
+      continue;
+    }
+
+    if (meta.type === 'number' && !isEmpty) {
+      const n = Number(value);
+      if (Number.isNaN(n)) {
+        propertyErrors[key] = `${meta.label} must be a number`;
+      } else if (meta.min !== undefined && n < meta.min) {
+        propertyErrors[key] = `${meta.label} must be ${meta.min} or greater`;
+      } else if (meta.max !== undefined && n > meta.max) {
+        propertyErrors[key] = `${meta.label} must be ${meta.max} or less`;
+      }
+    }
+
+    if (meta.validate && !propertyErrors[key]) {
+      const v = String(value ?? '');
+      const err = meta.validate(v);
+      if (err) {
+        propertyErrors[key] = err;
+      }
+    }
+  }
+  if (Object.keys(propertyErrors).length > 0) {
+    // hasValidationErrors() treats any non-null value as an error, so a nested object
+    // here disables Save without widening the shared ValidationErrors type alias.
+    (errors as Record<string, unknown>).properties = propertyErrors;
+  }
+
   return errors;
 }
 
@@ -122,29 +194,17 @@ function validateTask(data: TaskMachineFormData): ValidationErrors {
 const TASKS_TEMPLATES_URL = `${ENDPOINTS.TASKS}/templates`;
 
 /**
- * Fetch task types from REST API
+ * Fetch task types from REST API. Reuses the same `restTemplateToTaskType`
+ * transformer the API hook uses on CREATE so the EDIT flow gets identical
+ * `formFields` enrichment (TASK_FIELD_UI labels/types/required, etc.). A
+ * second, bare-bones implementation was the source of the edit-flow drift
+ * fixed under NEXUS-53044.
  */
 async function fetchTaskTypes(): Promise<TaskType[]> {
   try {
     const data = await restClient.get(TASKS_TEMPLATES_URL);
     if (!Array.isArray(data)) return [];
-    return data.map((template: any) => {
-      const formFields = Object.entries(template.properties || {}).map(
-        ([key, value]: [string, unknown]) => ({
-          id: key,
-          type: 'string' as const,
-          label: key,
-          required: false,
-          initialValue: value as string,
-        })
-      );
-      return {
-        id: template.type,
-        name: template.name,
-        exposed: true,
-        formFields: formFields.length > 0 ? formFields : undefined,
-      } as TaskType;
-    });
+    return data.map((template) => restTemplateToTaskType(template as RestTaskTemplate));
   } catch (err) {
     console.error('Failed to load task types:', err);
     return [];
@@ -153,12 +213,15 @@ async function fetchTaskTypes(): Promise<TaskType[]> {
 
 /**
  * Fetch a single task by ID
+ * The GET /v1/tasks/{id} response is flat — cronExpression, recurringDays, etc.
+ * are top-level fields on the response, not nested under a "frequency" object.
  */
 async function fetchTask(taskId: string): Promise<Task | null> {
   try {
     const data = await restClient.get(`${ENDPOINTS.TASKS}/${encodeURIComponent(taskId)}`);
     if (!data) return null;
     const rest = data as any;
+    const schedule = (rest.schedule || 'manual') === 'cron' ? 'advanced' : (rest.schedule || 'manual');
     return {
       id: rest.id,
       enabled: rest.enabled,
@@ -173,11 +236,13 @@ async function fetchTask(taskId: string): Promise<Task | null> {
       runnable: rest.currentState !== 'RUNNING',
       stoppable: rest.currentState === 'RUNNING',
       properties: rest.properties || {},
-      schedule: (rest.frequency?.schedule || rest.schedule || 'manual') === 'cron' ? 'advanced' : (rest.frequency?.schedule || rest.schedule || 'manual'),
-      startDate: rest.frequency?.startDate ? new Date(rest.frequency.startDate) : null,
-      recurringDays: rest.frequency?.recurringDays || [],
-      cronExpression: rest.frequency?.cronExpression || '',
-      timeZoneOffset: rest.frequency?.timeZoneOffset || '',
+      alertEmail: rest.alertEmail || '',
+      notificationCondition: rest.notificationCondition || 'FAILURE',
+      schedule,
+      startDate: rest.startDate ? new Date(rest.startDate) : null,
+      recurringDays: rest.recurringDays || [],
+      cronExpression: rest.cronExpression || '',
+      timeZoneOffset: rest.timeZoneOffset || '',
     } as Task;
   } catch (err) {
     console.error('Failed to load task:', err);
@@ -232,8 +297,10 @@ export function createTaskFormMachine(
             properties[field.id] = String(field.initialValue);
           }
         });
+        // Absent checkbox fields default to 'false' — matches Classic/ExtJS parity
+        const normalizedProperties = normalizeCheckboxProperties(properties, taskType?.formFields);
 
-        const newData = { ...context.data, typeId, properties };
+        const newData = { ...context.data, typeId, properties: normalizedProperties };
         return {
           data: newData,
           // Reset pristine baseline so type selection is NOT treated as a user edit
@@ -242,23 +309,26 @@ export function createTaskFormMachine(
           selectedTaskType: taskType,
         };
       }),
-      // Custom action: update schedule type and reset schedule-specific fields
+      // Custom action: update schedule type and reset schedule-specific fields.
       changeSchedule: assign((context: any, event: any) => {
         const schedule = event.value as ScheduleType;
-        // Use data from event if provided (from TaskScheduler), otherwise compute defaults
         const scheduleData = event.data as ScheduleData | undefined;
+        const isTimeBased = ['once', 'hourly', 'daily', 'weekly', 'monthly'].includes(schedule);
+
+        const carriedStartDate = scheduleData?.startDate !== undefined
+          ? scheduleData.startDate
+          : (context.data.startDate as Date | null | undefined);
+        const resolvedStartDate: Date | null = isTimeBased
+          ? (carriedStartDate ? new Date(carriedStartDate as any) : new Date())
+          : null;
+
         return {
           data: {
             ...context.data,
             schedule,
-            // Use values from scheduleData if available, otherwise reset to defaults
-            startDate: scheduleData?.startDate ?? (
-              ['once', 'hourly', 'daily', 'weekly', 'monthly'].includes(schedule)
-                ? context.data.startDate || new Date()
-                : null
-            ),
+            startDate: resolvedStartDate,
             startTime: scheduleData?.startTime ?? (
-              ['once', 'hourly', 'daily', 'weekly', 'monthly'].includes(schedule)
+              isTimeBased
                 ? context.data.startTime || '00:00'
                 : undefined
             ),
@@ -306,27 +376,36 @@ export function createTaskFormMachine(
           ? taskTypes.find((t) => t.id === task.typeId) ?? null
           : null;
 
+        // The REST GET response carries `type` (the type ID) but not the human-readable
+        // type label, so fetchTask sets typeName to the ID as a placeholder. Once the
+        // matching task type is resolved, swap in its `name` so the header and Summary
+        // tab show "Admin - Cleanup repositories" instead of "repository.cleanup",
+        // matching the classic UI's behaviour.
+        const enrichedTask = task && selectedTaskType
+          ? { ...task, typeName: selectedTaskType.name }
+          : task;
+
         // Build initial form data
-        const initialData: TaskMachineFormData = task
+        const initialData: TaskMachineFormData = enrichedTask
           ? {
-              id: task.id,
-              enabled: task.enabled,
-              name: task.name,
-              typeId: task.typeId,
-              alertEmail: task.alertEmail || '',
-              notificationCondition: task.notificationCondition || 'FAILURE',
-              properties: { ...task.properties },
-              schedule: task.schedule || 'manual',
-              startDate: task.startDate ? new Date(task.startDate as string | number) : null,
-              startTime: task.startDate
+              id: enrichedTask.id,
+              enabled: enrichedTask.enabled,
+              name: enrichedTask.name,
+              typeId: enrichedTask.typeId,
+              alertEmail: enrichedTask.alertEmail || '',
+              notificationCondition: enrichedTask.notificationCondition || 'FAILURE',
+              properties: normalizeCheckboxProperties({ ...enrichedTask.properties }, selectedTaskType?.formFields),
+              schedule: enrichedTask.schedule || 'manual',
+              startDate: enrichedTask.startDate ? new Date(enrichedTask.startDate as string | number) : null,
+              startTime: enrichedTask.startDate
                 ? (() => {
-                    const d = new Date(task.startDate as string | number);
+                    const d = new Date(enrichedTask.startDate as string | number);
                     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
                   })()
                 : '00:00',
-              recurringDays: task.recurringDays || [],
-              cronExpression: task.cronExpression || '',
-              timeZoneOffset: task.timeZoneOffset || '',
+              recurringDays: enrichedTask.recurringDays || [],
+              cronExpression: enrichedTask.cronExpression || '',
+              timeZoneOffset: enrichedTask.timeZoneOffset || '',
             }
           : {
               ...DEFAULT_TASK_FORM_DATA,
@@ -335,7 +414,7 @@ export function createTaskFormMachine(
 
         return {
           data: initialData,
-          task,
+          task: enrichedTask,
           taskTypes,
           selectedTaskType,
         };

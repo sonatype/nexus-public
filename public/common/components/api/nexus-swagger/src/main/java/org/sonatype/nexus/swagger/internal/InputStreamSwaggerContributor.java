@@ -12,19 +12,22 @@
  */
 package org.sonatype.nexus.swagger.internal;
 
-import java.util.Map;
-
 import org.sonatype.nexus.swagger.SwaggerContributor;
 
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.Swagger;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import jakarta.inject.Named;
 
 /**
- * SwaggerContributor that post-processes the Swagger model to fix the InputStream model definition.
- * Changes the InputStream definition from type: object to type: string, format: binary.
- * This fixes all endpoints that reference #/definitions/InputStream (e.g., POST /v1/system/license).
+ * SwaggerContributor that post-processes the OpenAPI model to fix the InputStream schema.
+ * Changes the InputStream schema from type: object to type: string, format: binary.
+ * This fixes all endpoints that reference #/components/schemas/InputStream (e.g., POST /v1/system/license).
+ *
+ * <p>
+ * NEXUS-46395: migrated from Swagger 1.x to OpenAPI 3.x. The {@code definitions} map at the top
+ * level was relocated under {@code components.schemas} in OpenAPI 3.0.
  */
 @Named
 public class InputStreamSwaggerContributor
@@ -32,14 +35,18 @@ public class InputStreamSwaggerContributor
 {
 
   @Override
-  public void contribute(final Swagger swagger) {
-    // Fix the InputStream model definition to be binary type
-    Map<String, Model> definitions = swagger.getDefinitions();
-    if (definitions != null && definitions.containsKey("InputStream")) {
-      ModelImpl binaryModel = new ModelImpl();
-      binaryModel.setType("string");
-      binaryModel.setFormat("binary");
-      definitions.put("InputStream", binaryModel);
+  public void contribute(final OpenAPI openApi) {
+    Components components = openApi.getComponents();
+    if (components == null) {
+      return;
     }
+    if (components.getSchemas() == null) {
+      return;
+    }
+    if (!components.getSchemas().containsKey("InputStream")) {
+      return;
+    }
+    Schema<?> binarySchema = new StringSchema().format("binary");
+    components.getSchemas().put("InputStream", binarySchema);
   }
 }

@@ -14,12 +14,12 @@ package org.sonatype.nexus.api.rest.selfhosted.security.ssrf.model;
 
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.validation.ssrf.SsrfProtectionConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -30,14 +30,15 @@ public class SsrfProtectionConfigurationXO
 {
   @NotNull
   @JsonProperty(required = true)
-  @ApiModelProperty(value = "Whether SSRF protection is enabled", example = "true", required = true)
+  @Schema(description = "Whether SSRF protection is enabled", example = "true",
+      requiredMode = Schema.RequiredMode.REQUIRED)
   private Boolean enabled;
 
-  @ApiModelProperty(value = "List of IP addresses allowed to bypass SSRF protection",
+  @Schema(description = "List of IP addresses allowed to bypass SSRF protection",
       example = "[\"10.0.0.50\", \"192.168.1.100\"]")
   private Set<String> allowedIPs = Set.of();
 
-  @ApiModelProperty(value = "List of domain names allowed to bypass SSRF protection",
+  @Schema(description = "List of domain names allowed to bypass SSRF protection",
       example = "[\"internal.corp.com\", \"registry.local\"]")
   private Set<String> allowedDomains = Set.of();
 

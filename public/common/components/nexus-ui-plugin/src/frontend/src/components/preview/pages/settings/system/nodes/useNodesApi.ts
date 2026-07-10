@@ -11,47 +11,44 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-/**
- * Nodes API Hook
- *
- * Migration Status:
- * - fetchNodes: ExtDirect (REST API is Pro-only and limited)
- *
- * BACKEND BLOCKER: Nodes REST API is Pro-only and only returns node IDs.
- * Full node info requires ExtDirect.
- */
-
 import { useCallback } from 'react';
 import { ExtAPIUtils } from '../../../../../../interface/ExtAPIUtils';
+import { APIConstants } from '../../../../../../constants/APIConstants';
+import { restClient, parseApiError } from '../../../../../../interface/api';
 import { NodeInfo } from './types';
 
-// ExtDirect API action for nodes (no REST available)
+const { REST } = APIConstants;
+const ACTIVE_NODES_URL = REST.INTERNAL.GET_SUPPORT_ZIP_ACTIVE_NODES;
 const NODE_ACTION = 'node_NodeAccess';
 
-/**
- * Custom hook for Nodes API operations
- */
+interface ActiveNodeData {
+  nodeId: string;
+  hostname: string;
+}
+
 export function useNodesApi() {
-  /**
-   * Fetch all nodes in the cluster using ExtDirect
-   * NOTE: REST API is Pro-only and returns limited info
-   */
   const fetchNodes = useCallback(async (): Promise<NodeInfo[]> => {
+    const response = await ExtAPIUtils.extAPIRequest(NODE_ACTION, 'nodes');
+    ExtAPIUtils.checkForError(response);
+    const extNodes: Array<{ name: string; local: boolean }> =
+      Array.isArray(response?.data?.result?.data) ? response.data.result.data : [];
+
+    let hostnameByNodeId = new Map<string, string>();
     try {
-      const response = await ExtAPIUtils.extAPIRequest(NODE_ACTION, 'nodes');
-      ExtAPIUtils.checkForError(response);
-      const data = response?.data?.result?.data;
-      return Array.isArray(data) ? data : [];
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load nodes';
-      console.error('Failed to fetch nodes:', err);
-      throw new Error(message);
+      const activeNodes = await restClient.get<ActiveNodeData[]>(ACTIVE_NODES_URL);
+      hostnameByNodeId = new Map((activeNodes ?? []).map((n) => [n.nodeId, n.hostname]));
+    } catch (err) {
+      console.debug('Active nodes endpoint not available (non-HA):', parseApiError(err).message);
     }
+
+    return extNodes.map((node) => ({
+      name: node.name,
+      displayName: hostnameByNodeId.get(node.name) || node.name,
+      local: node.local,
+    }));
   }, []);
 
-  return {
-    fetchNodes,
-  };
+  return { fetchNodes };
 }
 
 export default useNodesApi;

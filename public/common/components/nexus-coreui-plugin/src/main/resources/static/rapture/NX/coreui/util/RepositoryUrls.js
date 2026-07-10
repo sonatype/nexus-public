@@ -202,6 +202,11 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
           var repositoryName = assetModel.get('repositoryName'),
               assetName = assetModel.get('name');
           return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + encodePath(assetName), assetName);
+      },
+      terraformbackend: function (me, assetModel) {
+          var repositoryName = assetModel.get('repositoryName'),
+              assetName = assetModel.get('name');
+          return NX.util.Url.asLink(NX.util.Url.relativePath + '/repository/' + encodeURIComponent(repositoryName) + encodePath(assetName), assetName);
       }
   },
 

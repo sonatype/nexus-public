@@ -19,9 +19,7 @@ import {
   Shield,
   Key,
   Info,
-  ArrowLeft,
   Pencil,
-  ChevronRight,
 } from 'lucide-react';
 
 import {
@@ -31,6 +29,7 @@ import {
   EmptyState,
   TableColumn,
   MetadataGrid,
+  PageHeader,
   StatusBadge,
 } from '../../../../shared';
 import { SettingsFormSection, SettingsButton } from '../../../../shared/form';
@@ -312,59 +311,43 @@ export function UserProfilePage({
 
   return (
     <Box className="user-profile-page" data-testid="user-profile-page">
-      <Card className="user-profile-page__hero">
-        <Flex justify="between" align="start" gap="4">
-          <Flex gap="4" align="center" style={{ flex: 1 }}>
-            <Box className="user-profile-page__hero-icon">
-              <UserIcon size={40} aria-hidden="true" />
-            </Box>
-            <Box className="user-profile-page__hero-content">
-              <nav className="user-profile-page__breadcrumbs" aria-label="Breadcrumb">
-                <ol className="user-profile-page__breadcrumb-list">
-                  <li className="user-profile-page__breadcrumb-item">
-                    <button
-                      type="button"
-                      className="user-profile-page__breadcrumb-link"
-                      onClick={onBack}
-                    >
-                      Users
-                    </button>
-                    <ChevronRight size={14} className="user-profile-page__breadcrumb-sep" aria-hidden="true" />
-                  </li>
-                  <li className="user-profile-page__breadcrumb-item">
-                    <span className="user-profile-page__breadcrumb-text" aria-current="page">
-                      {user.userId} ({sourceLabel})
-                    </span>
-                  </li>
-                </ol>
-              </nav>
-              <Flex align="center" gap="3" className="user-profile-page__title-row">
-                <Heading as="h1" size="5" weight="bold" className="user-profile-page__title">
-                  {user.userId}
-                </Heading>
-                <StatusBadge
-                  status={isActive ? 'online' : 'offline'}
-                  size="small"
-                  label={isActive ? 'Active' : 'Disabled'}
-                />
-                <Badge color="blue" variant="soft">
-                  {sourceLabel}
-                </Badge>
-              </Flex>
-            </Box>
-          </Flex>
-          {!embedMode && (
-            <Flex gap="2">
-              {canEdit && onEdit && (
-                <SettingsButton variant="primary" onClick={onEdit} icon={Pencil}>
-                  Edit User
-                </SettingsButton>
-              )}
-              <SettingsButton variant="ghost" onClick={onBack} icon={ArrowLeft}>
-                Back to List
+      <PageHeader
+        title={user.userId}
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+          { label: 'Users', onClick: onBack },
+          { label: user.userId }
+        ]}
+        actions={!embedMode ? (
+          <Flex gap="2">
+            {canEdit && onEdit && (
+              <SettingsButton variant="primary" onClick={onEdit} icon={Pencil}>
+                Edit User
               </SettingsButton>
+            )}
+          </Flex>
+        ) : undefined}
+      />
+      <Card className="user-profile-page__hero">
+        <Flex gap="4" align="center">
+          <Box className="user-profile-page__hero-icon">
+            <UserIcon size={40} aria-hidden="true" />
+          </Box>
+          <Box className="user-profile-page__hero-content">
+            <Flex align="center" gap="3" className="user-profile-page__title-row">
+              <Heading as="h2" size="5" weight="bold" className="user-profile-page__title">
+                {user.userId}
+              </Heading>
+              <StatusBadge
+                status={isActive ? 'online' : 'offline'}
+                size="small"
+                label={isActive ? 'Active' : 'Disabled'}
+              />
+              <Badge color="blue" variant="soft">
+                {sourceLabel}
+              </Badge>
             </Flex>
-          )}
+          </Box>
         </Flex>
       </Card>
 

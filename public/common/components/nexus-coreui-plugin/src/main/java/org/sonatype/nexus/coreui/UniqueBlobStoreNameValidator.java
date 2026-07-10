@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;

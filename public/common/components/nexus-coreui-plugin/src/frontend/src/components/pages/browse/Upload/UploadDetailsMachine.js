@@ -72,6 +72,7 @@ import { APIConstants, ExtJS, FormUtils, ValidationUtils, ExtAPIUtils, UIStrings
   from '@sonatype/nexus-ui-plugin';
 
 import { repoSupportsUiUpload } from '../BrowseUtils';
+import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrings';
 import {
   COMPOUND_FIELD_PARENT_NAME,
   ASSET_NUM_MATCHER,
@@ -88,7 +89,56 @@ import {
   TERRAFORM_UPLOAD_TYPE_MODULE,
   TERRAFORM_UPLOAD_TYPE_PROVIDER
 } from './UploadDetailsUtils';
-import UploadStrings from '../../../../constants/pages/browse/upload/UploadStrings';
+
+// CLM-39871: structured error marker used to carry sync enforcement block/unavailable
+// details from saveData() to the view layer while keeping the FormUtils generic error
+// path working for every other failure mode.
+export const HOSTED_ENFORCEMENT_ERROR_PREFIX = 'HOSTED_ENFORCEMENT::';
+
+const HOSTED_ENFORCEMENT_CODES = new Set([
+  'HOSTED_DEPLOYMENT_BLOCKED',
+  'HOSTED_ENFORCEMENT_UNAVAILABLE'
+]);
+
+export function extractEnforcementPayload(response) {
+  if (!response) {
+    return null;
+  }
+  const status = response.status;
+  if (status !== 403 && status !== 503) {
+    return null;
+  }
+  const body = response.data;
+  if (!body || typeof body !== 'object' || !HOSTED_ENFORCEMENT_CODES.has(body.errorCode)) {
+    return null;
+  }
+  // CLM-40150: evaluationUrl is no longer carried by the BE response and the FE
+  // banner no longer renders a link, so we don't include it on the parsed object
+  // either. Dropping the field here keeps the parsed shape consistent with what
+  // the BE actually emits and prevents future code from re-adding a stale link.
+  return {
+    errorCode: body.errorCode,
+    assetName: body.assetName ?? null,
+    repositoryName: body.repositoryName ?? null,
+    reason: body.reason ?? null,
+    correlationId: body.correlationId ?? null
+  };
+}
+
+export function parseHostedEnforcementError(saveError) {
+  if (!saveError || typeof saveError !== 'string') {
+    return null;
+  }
+  if (!saveError.startsWith(HOSTED_ENFORCEMENT_ERROR_PREFIX)) {
+    return null;
+  }
+  try {
+    return JSON.parse(saveError.substring(HOSTED_ENFORCEMENT_ERROR_PREFIX.length));
+  }
+  catch (_) {
+    return null;
+  }
+}
 
 /**
  * @param defs a list of componentField or assetField definition objects as returned by the backend
@@ -393,6 +443,49 @@ export default FormUtils.buildFormMachine({
       multipleUpload: (_, { data: { uploadDefinition: { multipleUpload } } }) => multipleUpload
     }),
 
+    // CLM-39871: when the saveData service throws a HOSTED_ENFORCEMENT-tagged error,
+    // suppress the generic RSC "An error occurred saving data" banner by clearing
+    // saveError, and surface the parsed payload via a dedicated context field that
+    // UploadDetails.jsx renders as the policy-specific banner.
+    // For any other error, behave identically to the default FormUtils.setSaveError.
+    setSaveError: assign({
+      saveErrorData: ({data}) => data,
+      saveError: (_, event) => {
+        const message = event?.data?.message;
+        if (typeof message === 'string' && message.startsWith(HOSTED_ENFORCEMENT_ERROR_PREFIX)) {
+          // Hide the raw tagged string from the generic banner — our custom banner renders it.
+          return null;
+        }
+        return FormUtils.extractSaveErrorMessage(event);
+      },
+      saveErrors: (_, event) => {
+        const data = event.data?.response?.data;
+        if (Array.isArray(data)) {
+          const saveErrors = {};
+          data.forEach(({id, message}) => {
+            if (id) {
+              saveErrors[id.replace(/^field:/, '').replace(/^parameter:/, '').replace(/^helperBean\./, '')] =
+                  message;
+            }
+          });
+          return saveErrors;
+        }
+        return {};
+      },
+      // CLM-39871: route through the exported parseHostedEnforcementError so the
+      // prefix-strip + JSON.parse logic lives in one place; previously this re-
+      // implemented the same parser inline and would silently drift if the
+      // prefix or schema changed.
+      hostedEnforcementError: (_, event) => parseHostedEnforcementError(event?.data?.message)
+    }),
+
+    clearSaveError: assign({
+      saveErrorData: () => ({}),
+      saveError: () => undefined,
+      saveErrors: () => ({}),
+      hostedEnforcementError: () => null
+    }),
+
     addAsset: assign({
       data: context => {
         const { data, assetFields } = context,
@@ -542,12 +635,37 @@ export default FormUtils.buildFormMachine({
         }
       }
 
-      const postResponse =
-          await axios.post(`${APIConstants.REST.INTERNAL.UPLOAD}${encodeURIComponent(name)}`, formData);
+      let postResponse;
+      try {
+        postResponse = await axios.post(
+            `${APIConstants.REST.INTERNAL.UPLOAD}${encodeURIComponent(name)}`,
+            formData);
+      }
+      catch (err) {
+        // CLM-39871: the synchronous hosted-repository enforcement path returns
+        // HTTP 403 / 503 with a structured JSON body. Preserve that body so the
+        // view layer can render a policy-specific banner.
+        const enforcementPayload = extractEnforcementPayload(err?.response);
+        if (enforcementPayload) {
+          // The payload is encoded into the Error message string with the
+          // HOSTED_ENFORCEMENT_ERROR_PREFIX so the existing FormUtils-shaped
+          // saveError pipeline carries it through unchanged. setSaveError
+          // re-parses it via parseHostedEnforcementError(); a typed sibling
+          // field on the Error would be dead weight today.
+          throw new Error(HOSTED_ENFORCEMENT_ERROR_PREFIX + JSON.stringify(enforcementPayload));
+        }
+        throw err;
+      }
 
-      // This REST API reports errors in a weird way
+      // This REST API reports errors in a weird way: 200 OK with an array whose
+      // first element has success=false and a message string. CLM-39871: for the
+      // UI path, enforcement rejections arrive here with the HOSTED_ENFORCEMENT::
+      // prefix already embedded in that message by the backend, so the tagged
+      // error simply forwards it — parseHostedEnforcementError() in the view layer
+      // then unpacks it.
       if (postResponse.data?.success !== true) {
-        throw new Error(postResponse.data?.[0]?.message ?? 'Unknown Error');
+        const rawMessage = postResponse.data?.[0]?.message ?? 'Unknown Error';
+        throw new Error(rawMessage);
       }
 
       // The Search page's backing data gets updated asynchronously and isn't necessarily

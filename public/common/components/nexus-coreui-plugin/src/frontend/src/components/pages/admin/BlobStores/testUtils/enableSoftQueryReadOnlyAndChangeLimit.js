@@ -14,6 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {blobStoreFormSelectors as selectors} from './blobStoreFormSelectors';
 
@@ -21,6 +22,6 @@ export function enableSoftQueryReadOnlyAndChangeLimit(softQuotaLimit) {
   userEvent.click(selectors.softQuota.queryEnabled());
   expect(selectors.softQuota.queryType()).not.toBeInTheDocument();
   expect(selectors.softQuota.querySpaceUsedQuotaReadOnly()).toBeInTheDocument();
-  userEvent.type(selectors.softQuota.queryLimit(), softQuotaLimit);
+  fireEvent.change(selectors.softQuota.queryLimit(), {target: {value: softQuotaLimit}});
   expect(selectors.softQuota.queryLimit()).toHaveValue(softQuotaLimit);
 }

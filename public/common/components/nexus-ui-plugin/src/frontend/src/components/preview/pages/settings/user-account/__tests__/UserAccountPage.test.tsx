@@ -25,15 +25,30 @@ jest.mock('../../../../../../interface/ExtJS', () => ({
   },
 }));
 
-const mockUser = {
-  id: 'testuser',
+// Mock restClient
+jest.mock('../../../../../../interface/api', () => ({
+  restClient: {
+    get: jest.fn(),
+    put: jest.fn(),
+  },
+  ENDPOINTS: {
+    USER_ACCOUNT: '/service/rest/internal/ui/user',
+  },
+}));
+
+const mockApiUser = {
+  userId: 'testuser',
   firstName: 'Test',
   lastName: 'User',
   email: 'test@example.com',
-  source: 'default',
-  status: 'active',
-  roles: ['nx-admin', 'nx-anonymous'],
   external: false,
+};
+
+const mockExtJsUser = {
+  id: 'testuser',
+  authenticated: true,
+  administrator: true,
+  authenticatedRealms: ['NexusAuthenticatingRealm'],
 };
 
 // Wrapper component for Radix Theme
@@ -45,7 +60,10 @@ describe('UserAccountPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const { ExtJS } = require('../../../../../../interface/ExtJS');
-    ExtJS.useUser.mockReturnValue(mockUser);
+    ExtJS.useUser.mockReturnValue(mockExtJsUser);
+
+    const { restClient } = require('../../../../../../interface/api');
+    restClient.get.mockResolvedValue(mockApiUser);
   });
 
   it('renders the page header', async () => {
@@ -58,37 +76,85 @@ describe('UserAccountPage', () => {
     expect(screen.getByText('Manage your account settings')).toBeInTheDocument();
   });
 
-  it('displays user information', async () => {
+  it('fetches user account data from the internal API on mount', async () => {
+    const { restClient, ENDPOINTS } = require('../../../../../../interface/api');
+
     render(<UserAccountPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('testuser')).toBeInTheDocument();
+      expect(restClient.get).toHaveBeenCalledWith(ENDPOINTS.USER_ACCOUNT);
     });
-
-    expect(screen.getByText('test@example.com')).toBeInTheDocument();
-    expect(screen.getByText('Test User')).toBeInTheDocument();
   });
 
-  it('displays user roles', async () => {
+  it('displays real Name from API response', async () => {
     render(<UserAccountPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('nx-admin')).toBeInTheDocument();
+      expect(screen.getByText('Test User')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('nx-anonymous')).toBeInTheDocument();
   });
 
-  it('shows password change form for local users', async () => {
+  it('displays real Email from API response', async () => {
     render(<UserAccountPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      // Use heading role to distinguish from button
+      expect(screen.getByText('test@example.com')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show "Not set" when API returns real name and email', async () => {
+    render(<UserAccountPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Not set')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows "Not set" in the Name row when API returns empty firstName and lastName', async () => {
+    const { restClient } = require('../../../../../../interface/api');
+    restClient.get.mockResolvedValue({ ...mockApiUser, firstName: '', lastName: '' });
+
+    const { container } = render(<UserAccountPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      const nameRow = container.querySelector('.user-account-page__info-row:nth-child(3)');
+      expect(nameRow).toHaveTextContent('Not set');
+    });
+  });
+
+  it('shows "Not set" in the Email row when API returns empty email', async () => {
+    const { restClient } = require('../../../../../../interface/api');
+    restClient.get.mockResolvedValue({ ...mockApiUser, email: '' });
+
+    const { container } = render(<UserAccountPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      const emailRow = container.querySelector('.user-account-page__info-row:nth-child(2)');
+      expect(emailRow).toHaveTextContent('Not set');
+    });
+  });
+
+  it('hides password form when API fetch fails', async () => {
+    const { restClient } = require('../../../../../../interface/api');
+    restClient.get.mockRejectedValue(new Error('Network error'));
+
+    render(<UserAccountPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to load account information/)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('heading', { name: 'Change Password' })).not.toBeInTheDocument();
+  });
+
+  it('shows password change form for internal (non-external) users', async () => {
+    render(<UserAccountPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Change Password' })).toBeInTheDocument();
     });
 
     expect(screen.getByLabelText(/Current Password/)).toBeInTheDocument();
-    // Use testId for unique identification of password fields
     expect(screen.getByTestId('password-newPassword')).toBeInTheDocument();
     expect(screen.getByTestId('password-confirmPassword')).toBeInTheDocument();
   });
@@ -105,7 +171,6 @@ describe('UserAccountPage', () => {
     fireEvent.blur(newPasswordInput);
 
     await waitFor(() => {
-      // Check for the error message element specifically
       const errorEl = document.getElementById('settings-error-newPassword');
       expect(errorEl).toBeInTheDocument();
       expect(errorEl).toHaveTextContent(/at least.*characters/i);
@@ -131,13 +196,9 @@ describe('UserAccountPage', () => {
     });
   });
 
-  it('shows external user message for LDAP users', async () => {
-    const { ExtJS } = require('../../../../../../interface/ExtJS');
-    ExtJS.useUser.mockReturnValue({
-      ...mockUser,
-      source: 'LDAP',
-      external: true,
-    });
+  it('shows external user message when API returns external=true', async () => {
+    const { restClient } = require('../../../../../../interface/api');
+    restClient.get.mockResolvedValue({ ...mockApiUser, external: true });
 
     render(<UserAccountPage />, { wrapper: TestWrapper });
 
@@ -146,7 +207,7 @@ describe('UserAccountPage', () => {
     });
   });
 
-  it('shows warning when not logged in', async () => {
+  it('shows warning when not logged in (no ExtJS user)', async () => {
     const { ExtJS } = require('../../../../../../interface/ExtJS');
     ExtJS.useUser.mockReturnValue(null);
 
@@ -218,5 +279,3 @@ describe('UserAccountPage', () => {
     });
   });
 });
-
-

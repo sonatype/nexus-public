@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-rapture</artifactId>
@@ -55,6 +55,23 @@
       <artifactId>nexus-base</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: rapture uses GsonBuilder directly in StateComponent,
+         WebResource constants in RaptureWebResourceBundle, and MimeSupport in
+         PublicFilesWebResourceBundle. These previously came in transitively but are
+         no longer reachable. Declare explicitly. -->
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-webresources-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-mime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-annotation</artifactId>
@@ -81,11 +98,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-scheduling</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib-nodep</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

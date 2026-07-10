@@ -17,7 +17,7 @@ import java.util.Map;
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 import org.sonatype.nexus.validation.constraint.UrlString;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

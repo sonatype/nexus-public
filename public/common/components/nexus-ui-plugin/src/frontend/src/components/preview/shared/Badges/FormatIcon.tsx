@@ -62,6 +62,7 @@ const FORMAT_ICONS: Record<string, any> = {
   cargo: Package,
   huggingface: Cloud,
   terraform: Layers,
+  terraformbackend: Database,
   alpine: Package,
   swift: Code,
   pub: Package,

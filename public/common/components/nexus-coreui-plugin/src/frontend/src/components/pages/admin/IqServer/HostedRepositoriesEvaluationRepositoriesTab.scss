@@ -20,6 +20,20 @@
     }
   }
 
+  .nxrm-repo-count-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .nx-p {
+      margin: 0;
+    }
+
+    .nx-btn-bar {
+      margin: 0;
+    }
+  }
+
   .repository-name-cell {
     display: flex;
     align-items: center;

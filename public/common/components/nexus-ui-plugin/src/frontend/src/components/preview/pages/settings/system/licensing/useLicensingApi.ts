@@ -41,7 +41,14 @@ export function useLicensingApi() {
       const data = await restClient.get<LicenseData>(LICENSE_API.BASE_URL);
       return data || {};
     } catch (err) {
-      console.error('Failed to fetch license:', err);
+      // Check the raw response status before delegating to parseApiError so a plain Error
+      // (e.g. network timeout) with no .response never accidentally matches 402.
+      // 402 Payment Required = no license installed; treat as empty, not a user-visible error.
+      if ((err as any)?.response?.status === 402) {
+        return {};
+      }
+      const apiError = parseApiError(err);
+      console.error('Failed to fetch license:', apiError.message);
       throw new Error('Failed to load license information');
     }
   }, []);
@@ -49,16 +56,17 @@ export function useLicensingApi() {
   /**
    * Upload license file
    */
-  const uploadLicense = useCallback(async (file: File): Promise<void> => {
+  const uploadLicense = useCallback(async (file: File): Promise<LicenseData> => {
     setLoading(true);
     setError(null);
     try {
       const fileData = await readFileAsArrayBuffer(file);
-      await restClient.post(LICENSE_API.BASE_URL, fileData, {
+      const licenseData = await restClient.post<LicenseData>(LICENSE_API.BASE_URL, fileData, {
         headers: {
           'Content-Type': 'application/octet-stream',
         },
       });
+      return licenseData || {};
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       setError(apiError.message);
@@ -90,5 +98,3 @@ export function useLicensingApi() {
 }
 
 export default useLicensingApi;
-
-

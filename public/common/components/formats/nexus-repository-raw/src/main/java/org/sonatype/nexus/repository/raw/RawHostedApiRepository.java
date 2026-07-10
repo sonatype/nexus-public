@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.raw;
 
-import javax.validation.constraints.NotNull;
-
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
@@ -22,6 +20,7 @@ import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 3.41

@@ -15,7 +15,7 @@ package org.sonatype.nexus.httpclient.config;
 import java.util.Arrays;
 
 import javax.annotation.Nullable;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 /**
  * Proxy configuration.

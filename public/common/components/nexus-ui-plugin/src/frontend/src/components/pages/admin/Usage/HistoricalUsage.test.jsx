@@ -212,4 +212,81 @@ describe('Licensing Historical Usage', () => {
       expect(screen.getByTestId('usage-insights-chart')).toBeInTheDocument();
     });
   });
+
+  describe('Permission Error Handling', () => {
+    it('displays permission error alert when API returns 403', async () => {
+      jest.spyOn(Axios, 'get').mockRejectedValue({
+        response: { status: 403 }
+      });
+
+      await renderView();
+
+      await waitFor(() => {
+        expect(screen.getByText('Insufficient Permissions: You need administrator privileges to view usage data.')).toBeInTheDocument();
+      });
+    });
+
+    it('does not display table when permission error occurs', async () => {
+      jest.spyOn(Axios, 'get').mockRejectedValue({
+        response: { status: 403 }
+      });
+
+      await renderView();
+
+      await waitFor(() => {
+        expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      });
+    });
+
+    it('does not display description when permission error occurs', async () => {
+      jest.spyOn(Axios, 'get').mockRejectedValue({
+        response: { status: 403 }
+      });
+
+      await renderView();
+
+      await waitFor(() => {
+        expect(screen.queryByText('Monitor your storage usage trends over time.')).not.toBeInTheDocument();
+      });
+    });
+
+    it('displays generic error alert for non-403 errors', async () => {
+      const errorMessage = 'Network Error';
+      jest.spyOn(Axios, 'get').mockRejectedValue({
+        message: errorMessage
+      });
+
+      await renderView();
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      });
+    });
+
+    it('displays fallback error message when error has no message', async () => {
+      jest.spyOn(Axios, 'get').mockRejectedValue({});
+
+      await renderView();
+
+      await waitFor(() => {
+        expect(screen.getByText('Unable to load historical usage data. Please try again later.')).toBeInTheDocument();
+      });
+    });
+
+    it('displays error message from response data', async () => {
+      const errorMessage = 'Custom error from server';
+      jest.spyOn(Axios, 'get').mockRejectedValue({
+        response: {
+          status: 500,
+          data: { message: errorMessage }
+        }
+      });
+
+      await renderView();
+
+      await waitFor(() => {
+        expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      });
+    });
+  });
 });

@@ -60,6 +60,7 @@ export function TryItTab({ fullSwagger, row, accessDenied }: TryItTabProps) {
           requestInterceptor={swaggerRequestInterceptor}
           responseInterceptor={swaggerResponseInterceptor}
           defaultModelsExpandDepth={-1}
+          docExpansion="full"
         />
       </Box>
     </Box>

@@ -27,8 +27,7 @@ Ext.define('NX.controller.Logging', {
   requires: [
     'NX.Log',
     'NX.util.log.StoreSink',
-    'NX.util.log.ConsoleSink',
-    'NX.util.log.RemoteSink'
+    'NX.util.log.ConsoleSink'
   ],
   mixins: {
     stateful: 'Ext.state.Stateful'
@@ -85,8 +84,7 @@ Ext.define('NX.controller.Logging', {
   init: function () {
     this.sinks = {
       store: Ext.create('NX.util.log.StoreSink', this.getStore('LogEvent')),
-      console: Ext.create('NX.util.log.ConsoleSink'),
-      remote: Ext.create('NX.util.log.RemoteSink')
+      console: Ext.create('NX.util.log.ConsoleSink')
     };
     // build array of all sink objects for faster evaluation
     this.sinkRefs = Ext.Object.getValues(this.sinks);

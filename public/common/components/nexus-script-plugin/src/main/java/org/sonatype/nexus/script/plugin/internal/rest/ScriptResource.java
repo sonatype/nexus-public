@@ -13,15 +13,15 @@
 package org.sonatype.nexus.script.plugin.internal.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.script.ScriptService;
@@ -39,10 +39,10 @@ import org.sonatype.nexus.security.SecurityHelper;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.stereotype.Component;
 
 /**
@@ -68,7 +68,7 @@ import org.springframework.stereotype.Component;
 @Path(ScriptResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-@Api("Script")
+@Tag(name = "Script")
 public class ScriptResource
     implements ScriptClient, Resource
 {
@@ -100,7 +100,7 @@ public class ScriptResource
   @Override
   @Timed
   @ExceptionMetered
-  @ApiOperation("List all stored scripts")
+  @Operation(summary = "List all stored scripts")
   @RequiresPermissions("nexus:script:*:browse")
   public List<ScriptXO> browse() {
     List<ScriptXO> storedScripts = new ArrayList<>();
@@ -112,8 +112,8 @@ public class ScriptResource
   @Override
   @Timed
   @ExceptionMetered
-  @ApiOperation("Read stored script by name")
-  @ApiResponses(@ApiResponse(code = 404, message = "No script with the specified name"))
+  @Operation(summary = "Read stored script by name")
+  @ApiResponses(@ApiResponse(responseCode = "404", description = "No script with the specified name"))
   public ScriptXO read(@PathParam("name") final String name) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.READ));
     return convert(findOr404(name));
@@ -122,11 +122,11 @@ public class ScriptResource
   @Override
   @Timed
   @ExceptionMetered
-  @ApiOperation("Update stored script by name")
+  @Operation(summary = "Update stored script by name")
   @ApiResponses({
-      @ApiResponse(code = 204, message = "Script was updated"),
-      @ApiResponse(code = 404, message = "No script with the specified name"),
-      @ApiResponse(code = 410, message = "Script updating is disabled")
+      @ApiResponse(responseCode = "204", description = "Script was updated"),
+      @ApiResponse(responseCode = "404", description = "No script with the specified name"),
+      @ApiResponse(responseCode = "410", description = "Script updating is disabled")
   })
   public void edit(@PathParam("name") final String name, @NotNull @Valid final ScriptXO scriptXO) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.EDIT));
@@ -147,10 +147,10 @@ public class ScriptResource
   @Override
   @Timed
   @ExceptionMetered
-  @ApiOperation("Add a new script")
+  @Operation(summary = "Add a new script")
   @ApiResponses({
-      @ApiResponse(code = 204, message = "Script was added"),
-      @ApiResponse(code = 410, message = "Script creation is disabled")
+      @ApiResponse(responseCode = "204", description = "Script was added"),
+      @ApiResponse(responseCode = "410", description = "Script creation is disabled")
   })
   @RequiresPermissions("nexus:script:*:add")
   public void add(@NotNull @Valid final ScriptXO scriptXO) {
@@ -168,10 +168,10 @@ public class ScriptResource
   @Override
   @Timed
   @ExceptionMetered
-  @ApiOperation("Delete stored script by name")
+  @Operation(summary = "Delete stored script by name")
   @ApiResponses({
-      @ApiResponse(code = 204, message = "Script was deleted"),
-      @ApiResponse(code = 404, message = "No script with the specified name")
+      @ApiResponse(responseCode = "204", description = "Script was deleted"),
+      @ApiResponse(responseCode = "404", description = "No script with the specified name")
   })
   public void delete(@PathParam("name") final String name) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.DELETE));
@@ -182,10 +182,10 @@ public class ScriptResource
   @Override
   @Timed
   @ExceptionMetered
-  @ApiOperation("Run stored script by name")
+  @Operation(summary = "Run stored script by name")
   @ApiResponses({
-      @ApiResponse(code = 404, message = "No script with the specified name"),
-      @ApiResponse(code = 500, message = "Script execution failed with exception")
+      @ApiResponse(responseCode = "404", description = "No script with the specified name"),
+      @ApiResponse(responseCode = "500", description = "Script execution failed with exception")
   })
   public ScriptResultXO run(@PathParam("name") final String name, final String args) {
     securityHelper.ensurePermitted(scriptPermission(name, RUN_ACTION));

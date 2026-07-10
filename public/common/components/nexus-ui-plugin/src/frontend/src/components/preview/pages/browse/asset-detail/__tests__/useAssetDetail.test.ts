@@ -45,6 +45,34 @@ import { ExtAPIUtils } from '../../../../../../interface/ExtAPIUtils';
 const mockExtAPIRequest = ExtAPIUtils.extAPIRequest as jest.MockedFunction<typeof ExtAPIUtils.extAPIRequest>;
 const mockCheckForError = ExtAPIUtils.checkForError as jest.MockedFunction<typeof ExtAPIUtils.checkForError>;
 
+describe('useAssetDetail - missing params', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('sets loading to false immediately when repositoryName is missing', async () => {
+    const { result } = renderHook(() =>
+      useAssetDetail({ repositoryName: '', assetId: 'some-id' })
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+    expect(mockExtAPIRequest).not.toHaveBeenCalled();
+  });
+
+  it('sets loading to false immediately when assetId is missing', async () => {
+    const { result } = renderHook(() =>
+      useAssetDetail({ repositoryName: 'maven-releases', assetId: '' })
+    );
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+    expect(mockExtAPIRequest).not.toHaveBeenCalled();
+  });
+});
+
 describe('useAssetDetail - decodeAssetId', () => {
   beforeEach(() => {
     jest.clearAllMocks();

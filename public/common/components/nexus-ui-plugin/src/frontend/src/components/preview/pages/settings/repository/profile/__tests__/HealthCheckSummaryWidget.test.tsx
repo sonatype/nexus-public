@@ -17,7 +17,7 @@ import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
 import { HealthCheckSummaryWidget } from '../HealthCheckSummaryWidget';
-import type { HealthCheckData, FirewallData } from '../hooks/useRepositoryProfile';
+import type { HealthCheckData, FirewallData } from '../types';
 
 function renderWithTheme(ui: React.ReactElement) {
   return render(<Theme>{ui}</Theme>);

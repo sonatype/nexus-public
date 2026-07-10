@@ -12,7 +12,8 @@
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Text, Heading, Box, Card, Flex, Button } from '@radix-ui/themes';
+import { Text, Heading, Box, Card, Flex, Button, Progress } from '@radix-ui/themes';
+import { AlertCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ExtJS } from '../../../../../interface/ExtJS';
 import { Permissions } from '../../../../../constants/Permissions';
 import { useMetricHealthApi } from '../../settings/support/metric-health/useMetricHealthApi';
@@ -20,6 +21,7 @@ import { getHealthStatus } from '../../settings/support/metric-health/types';
 import { useCleanupPoliciesApi } from '../../settings/repository/cleanup/useCleanupPoliciesApi';
 import { useRepositoriesByFormat } from './useRepositoriesByFormat';
 import { useInstanceTotals } from './useInstanceTotals';
+import { CE_WARN_THRESHOLD } from './ceThresholds';
 import UIStrings from '../../../../../constants/UIStrings';
 
 import './QuickActionStatsPanel.scss';
@@ -104,8 +106,11 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
 
   // Check if user has permission to view cleanup policies (requires admin permission)
   const canViewCleanupPolicies = ExtJS.checkPermission(Permissions.ADMIN) && ExtJS.state().getUser();
+  const isCloud: boolean = ExtJS.state?.()?.getValue?.('isCloud', false) ?? false;
 
   useEffect(() => {
+    // On cloud the API returns 403; the catch handler sets counts to 0/0 so the card
+    // still renders — the href guard above prevents navigation to the missing route.
     let cancelled = false;
     fetchMetricHealth()
       .then((checks) => {
@@ -154,6 +159,14 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
   }, [reposByFormat.loading, reposByFormat.error, reposByFormat.data]);
 
   const componentCount = instanceTotals.data?.totalComponents ?? null;
+  const componentLimit = instanceTotals.data?.totalComponentsLimit || 0;
+  const hasComponentLimit = componentLimit > 0;
+  const componentRatio = hasComponentLimit && componentCount != null ? componentCount / componentLimit : 0;
+  const componentExceeding = hasComponentLimit && componentRatio >= 1;
+  const componentApproaching = hasComponentLimit && !componentExceeding && componentRatio >= CE_WARN_THRESHOLD;
+  const componentBarColor = componentExceeding ? 'red' : componentApproaching ? 'orange' : 'blue';
+  // peakRequestsPerDayLimit is intentionally not shown here — space constraints in the compact stat card.
+  // InstanceTotalsPanel shows the full progress bar for both limits.
 
   const systemHealthClassName =
     healthChecks != null
@@ -167,7 +180,7 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
       <div className="nxrm-quick-action-stats__grid">
         <StatCard
           title={SYSTEM_HEALTH.title}
-          href={SYSTEM_HEALTH_HREF}
+          href={isCloud ? undefined : SYSTEM_HEALTH_HREF}
           className={systemHealthClassName}
         >
           {healthChecks != null ? (
@@ -250,11 +263,40 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
         </StatCard>
 
         <StatCard title="Components">
-          {componentCount != null ? (
+          {instanceTotals.loading ? (
+            <Flex align="center" gap="2">
+              <RefreshCw size={16} className="nxrm-quick-action-stat-card__spinner" />
+              <Text size="2" color="gray">
+                Loading…
+              </Text>
+            </Flex>
+          ) : componentCount != null ? (
             <Flex direction="column" gap="3">
-              <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
-                {componentCount.toLocaleString()}
-              </Heading>
+              <Flex align="baseline" gap="2">
+                {componentExceeding && <AlertCircle size={16} style={{color: 'var(--red-9)', flexShrink: 0}} />}
+                {componentApproaching && <AlertTriangle size={16} style={{color: 'var(--orange-9)', flexShrink: 0}} />}
+                <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
+                  {componentCount.toLocaleString()}
+                </Heading>
+              </Flex>
+              {hasComponentLimit && (
+                <Box>
+                  <Progress
+                    value={Math.min(componentRatio * 100, 100)}
+                    max={100}
+                    color={componentBarColor}
+                    size="1"
+                  />
+                  <Flex justify="between" mt="1">
+                    <Text size="1" color="gray">
+                      {componentCount.toLocaleString()} of {componentLimit.toLocaleString()}
+                    </Text>
+                    <Text size="1" color="gray">
+                      limit
+                    </Text>
+                  </Flex>
+                </Box>
+              )}
               <Button
                 size="2"
                 variant="surface"

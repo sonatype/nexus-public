@@ -28,6 +28,7 @@ import {
   NxFontAwesomeIcon,
   NxFormGroup,
   NxFormSelect,
+  NxLoadWrapper,
   NxTextInput,
 } from '@sonatype/react-shared-components';
 
@@ -61,19 +62,24 @@ export default function LogViewer({itemId}) {
   const selectedSize = current.context.size;
   const mark = current.context.mark;
   const logText = current.context.data;
+  const loadError = current.matches('error') ? current.context.error : null;
   const textarea = useRef(null);
 
-  // scroll to bottom of text area
+  function retry() {
+    send({type: 'RETRY'});
+  }
+
+  // scroll to bottom of text area only when log content changes
   useEffect(() => {
     if (textarea.current) {
       textarea.current.scrollTop = textarea.current.scrollHeight;
     }
-  });
+  }, [logText]);
 
   function onChangePeriod(period) {
     const newPeriod = Number(period);
-    if (period == 0) {
-      send({type: 'MANUAL_REFRESH', period});
+    if (newPeriod === 0) {
+      send({type: 'MANUAL_REFRESH', period: newPeriod});
     }
     else {
       send({type: 'UPDATE_PERIOD', period: newPeriod});
@@ -93,7 +99,7 @@ export default function LogViewer({itemId}) {
       event.preventDefault();
       send({type: 'INSERT_MARK'});
     }
-  }  
+  }
 
   function insertMark() {
     send({type: 'INSERT_MARK'});
@@ -103,7 +109,14 @@ export default function LogViewer({itemId}) {
     <PageHeader>
       <PageTitle text={VIEW.TITLE(decodeURIComponent(itemId))}/>
       <PageActions>
-        <a download className="nx-btn nx-btn--primary" href={ExtJS.urlOf(`service/rest/internal/logging/logs/${itemId}`)}>{VIEW.DOWNLOAD}</a>
+        <a
+            download
+            className="nx-btn nx-btn--primary"
+            href={ExtJS.urlOf(`service/rest/internal/logging/logs/${itemId}`)}
+            data-analytics-id="nxrm-logs-download"
+        >
+          {VIEW.DOWNLOAD}
+        </a>
       </PageActions>
     </PageHeader>
     <ContentBody>
@@ -122,7 +135,7 @@ export default function LogViewer({itemId}) {
               />
             </NxFormGroup>
             <NxButtonBar>
-              <NxButton onClick={insertMark} id="insertMark">
+              <NxButton onClick={insertMark} id="insertMark" data-analytics-id="nxrm-logs-mark">
                 <NxFontAwesomeIcon icon={faStamp}/>
                 <span>{VIEW.MARK.INSERT}</span>
               </NxButton>
@@ -148,13 +161,16 @@ export default function LogViewer({itemId}) {
             </NxFormGroup>
           </div>
         </SectionToolbar>
-        <textarea
-            name="logs"
-            value={logText}
-            className="log-viewer-textarea"
-            ref={textarea}
-            readOnly
-        />
+        {/* loading={false} intentionally: existing content stays visible during background auto-refresh */}
+        <NxLoadWrapper loading={false} error={loadError} retryHandler={retry}>
+          <textarea
+              name="logs"
+              value={logText}
+              className="log-viewer-textarea"
+              ref={textarea}
+              readOnly
+          />
+        </NxLoadWrapper>
       </Section>
     </ContentBody>
   </div>;

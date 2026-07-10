@@ -25,9 +25,12 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
@@ -85,8 +88,6 @@ import software.amazon.awssdk.transfer.s3.model.CompletedUpload;
 import software.amazon.awssdk.transfer.s3.model.Upload;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -100,8 +101,6 @@ import static org.sonatype.nexus.blobstore.s3.ResponseInputStreamTestUtil.getRes
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_TYPE;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class EncryptingS3ClientTest
@@ -503,6 +502,52 @@ public class EncryptingS3ClientTest
   }
 
   @Test
+  void generatePresignedUrl_sanitizesMaliciousFilename() throws Exception {
+    final URL expected =
+        new URL(
+            "https://example.com/file.bin?response-content-disposition=attachment&response-content-type=application%2Foctet-stream");
+    final String bucketName = "test-bucket";
+    final String key = "file.bin";
+    final Duration duration = Duration.ofMinutes(10);
+    // Malicious filename that attempts to inject a second filename* parameter
+    final String maliciousFilename = "report.pdf\"; filename*=UTF-8''setup.exe";
+    final String contentType = "application/octet-stream";
+
+    try (final MockedStatic<S3Presigner> presignerMockStatic = mockStatic(S3Presigner.class)) {
+      final S3Presigner presigner = mock(S3Presigner.class);
+      final PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);
+      final S3ServiceClientConfiguration config = mock(S3ServiceClientConfiguration.class);
+      final S3Presigner.Builder presignerBuildMock = mock(S3Presigner.Builder.class);
+
+      presignerMockStatic.when(S3Presigner::builder).thenReturn(presignerBuildMock);
+      when(presignerBuildMock.build()).thenReturn(presigner);
+      when(presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presigned);
+      when(presigned.url()).thenReturn(expected);
+      when(delegate.serviceClientConfiguration()).thenReturn(config);
+
+      clientUnderTest = new EncryptingS3Client(delegate, blobStoreConfiguration, credentialsProvider);
+      final URL result = clientUnderTest.generatePresignedUrl(
+          bucketName,
+          key,
+          duration,
+          maliciousFilename,
+          contentType);
+
+      ArgumentCaptor<GetObjectPresignRequest> argumentCaptor = ArgumentCaptor.forClass(GetObjectPresignRequest.class);
+      verify(presigner).presignGetObject(argumentCaptor.capture());
+      final GetObjectPresignRequest objectPresignRequestBuilt = argumentCaptor.getValue();
+
+      // Verify that the quote and semicolon are sanitized, preventing parameter injection
+      assertEquals(
+          "attachment; filename=\"report.pdf__ filename*=UTF-8''setup.exe\"",
+          objectPresignRequestBuilt.getObjectRequest().responseContentDisposition());
+      assertEquals(contentType, objectPresignRequestBuilt.getObjectRequest().responseContentType());
+
+      assertSame(expected, result);
+    }
+  }
+
+  @Test
   void generatePresignedUrl_usesDefaultCredentialsProvider() throws Exception {
     final URL expected =
         new URL(
@@ -755,8 +800,6 @@ public class EncryptingS3ClientTest
 
   @Test
   void uploadWithTransferManger_createsAsyncClientAndUploads() throws Exception {
-    // The async client now uses DefaultCredentialsProvider.create() instead of
-    // sharing the delegate's credentials provider to avoid STS client shutdown issues with IRSA
     final String bucket = "test-bucket";
     final String key = "test-key";
     final InputStream contents = new ByteArrayInputStream("test content".getBytes());
@@ -779,8 +822,7 @@ public class EncryptingS3ClientTest
       final CompletableFuture<CompletedUpload> future = CompletableFuture.completedFuture(completedUpload);
 
       asyncClientMock.when(S3AsyncClient::builder).thenReturn(asyncClientBuilder);
-      // Accept any credentials provider (will be DefaultCredentialsProvider)
-      when(asyncClientBuilder.credentialsProvider(any())).thenReturn(asyncClientBuilder);
+      when(asyncClientBuilder.credentialsProvider(credentialsProvider)).thenReturn(asyncClientBuilder);
 
       when(asyncClientBuilder.region(region)).thenReturn(asyncClientBuilder);
       when(asyncClientBuilder.build()).thenReturn(asyncClient);
@@ -795,6 +837,7 @@ public class EncryptingS3ClientTest
       final CompletedUpload result = clientUnderTest.uploadWithTransferManger(bucket, key, contents);
 
       assertSame(completedUpload, result);
+      verify(asyncClientBuilder).credentialsProvider(credentialsProvider);
       verify(transferManager).upload(any(UploadRequest.class));
       // Verify async client was properly closed (try-with-resources)
       verify(asyncClient).close();

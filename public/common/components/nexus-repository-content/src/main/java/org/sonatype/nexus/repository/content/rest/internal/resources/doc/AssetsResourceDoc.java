@@ -16,47 +16,47 @@ import org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResou
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.rest.Page;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Swagger documentation for {@link AssetsResource}
  *
  * @since 3.4
  */
-@Api(value = "assets", description = "Operations to get and delete assets")
+@Tag(name = "assets", description = "Operations to get and delete assets")
 public interface AssetsResourceDoc
 {
-  @ApiOperation("List assets")
+  @Operation(summary = "List assets")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to list assets"),
-      @ApiResponse(code = 422, message = "Parameter 'repository' is required")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to list assets"),
+      @ApiResponse(responseCode = "422", description = "Parameter 'repository' is required")
   })
   Page<AssetXO> getAssets(
-      @ApiParam(
-          value = "A token returned by a prior request. If present, the next page of results are returned") final String continuationToken,
+      @Parameter(
+          description = "A token returned by a prior request. If present, the next page of results are returned") final String continuationToken,
 
-      @ApiParam(value = "Repository from which you would like to retrieve assets.",
+      @Parameter(description = "Repository from which you would like to retrieve assets.",
           required = true) final String repository);
 
-  @ApiOperation("Get a single asset")
+  @Operation(summary = "Get a single asset")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to get asset"),
-      @ApiResponse(code = 404, message = "Asset not found"),
-      @ApiResponse(code = 422, message = "Malformed ID")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to get asset"),
+      @ApiResponse(responseCode = "404", description = "Asset not found"),
+      @ApiResponse(responseCode = "422", description = "Malformed ID")
   })
-  AssetXO getAssetById(@ApiParam(value = "Id of the asset to get") final String id);
+  AssetXO getAssetById(@Parameter(description = "Id of the asset to get") final String id);
 
-  @ApiOperation(value = "Delete a single asset")
+  @Operation(summary = "Delete a single asset")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "Asset was successfully deleted"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to delete asset"),
-      @ApiResponse(code = 404, message = "Asset not found"),
-      @ApiResponse(code = 422, message = "Malformed ID")
+      @ApiResponse(responseCode = "204", description = "Asset was successfully deleted"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to delete asset"),
+      @ApiResponse(responseCode = "404", description = "Asset not found"),
+      @ApiResponse(responseCode = "422", description = "Malformed ID")
   })
-  void deleteAsset(@ApiParam(value = "Id of the asset to delete") final String id);
+  void deleteAsset(@Parameter(description = "Id of the asset to delete") final String id);
 
 }

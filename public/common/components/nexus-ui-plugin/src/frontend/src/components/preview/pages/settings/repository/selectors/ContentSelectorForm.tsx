@@ -23,6 +23,7 @@ import {
   SettingsAlert,
   ConfirmDialog,
 } from '../../../../shared/form';
+import { clearDirtyState } from '../../../../shared/hooks/useUnsavedChangesWarning';
 import { useContentSelectorsApi, PrivilegeReference } from './useContentSelectorsApi';
 import { useContentSelectorForm } from './useContentSelectorForm';
 import { ContentSelectorPreview } from './ContentSelectorPreview';
@@ -79,6 +80,18 @@ export function ContentSelectorForm({
   // State for attached privileges (only for edit mode)
   const [attachedPrivileges, setAttachedPrivileges] = useState<PrivilegeReference[]>([]);
   const [loadingPrivileges, setLoadingPrivileges] = useState(false);
+
+  // Form ID must match contentSelectorFormMachine's id exactly:
+  // - Edit mode: `content-selector-form-${selectorName}`
+  // - Create mode: `content-selector-form-new`
+  // This formId is used to clear dirty state on discard.
+  const formId = `content-selector-form-${selector?.name ?? 'new'}`;
+
+  // Handle discard confirmation - clear machine's dirty state before navigating
+  const handleDiscardConfirm = useCallback(() => {
+    clearDirtyState(formId);
+    onCancel();
+  }, [formId, onCancel]);
 
   // Fetch attached privileges when editing an existing selector
   useEffect(() => {
@@ -157,13 +170,17 @@ export function ContentSelectorForm({
         <SettingsForm
           onSubmit={() => form.submit()}
           onCancel={onCancel}
+          onDiscardConfirm={handleDiscardConfirm}
           loading={isSaving || isDeleting || loading}
           pristine={form.isPristine || isInDeleteFlow}
+          externalDirtyTracking={true}
           error={error || form.saveError || undefined}
           submitLabel={isCreate ? 'Create' : 'Save'}
           noDirtyTracking={isInDeleteFlow}
           confirmDiscard={true}
           testId="content-selector-form"
+          submitAnalyticsId={isCreate ? 'nxrm-content-selector-create' : 'nxrm-content-selector-save'}
+          cancelAnalyticsId="nxrm-content-selector-cancel"
           data-mode={isCreate ? 'create' : 'edit'}
           data-loading={loading ? 'true' : 'false'}
           data-dirty={!form.isPristine ? 'true' : 'false'}
@@ -188,6 +205,7 @@ export function ContentSelectorForm({
           <ConfirmDialog
             open={form.isConfirmingDelete}
             testId="delete-content-selector-dialog"
+            analyticsId="nxrm-content-selector-delete"
             onOpenChange={(open) => { if (!open) form.cancelDelete(); }}
             title="Delete Content Selector"
             message={`Are you sure you want to delete the content selector "${formData?.name}"? This action cannot be undone.`}

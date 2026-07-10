@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import static org.sonatype.nexus.repository.rest.api.RepositorySettingsApiResourceV1.RESOURCE_URI;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;

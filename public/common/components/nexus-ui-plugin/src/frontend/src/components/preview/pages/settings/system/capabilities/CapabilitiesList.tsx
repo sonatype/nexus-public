@@ -42,7 +42,8 @@ const CAPABILITY_CATEGORIES: Record<string, string> = {
   crowd: 'Security',
   customs3regions: 'Core',
   defaultrole: 'Security',
-  'firewall.audit': 'Security',
+  // 'firewall.audit' deliberately omitted: filtered out at fetchCapabilities() and not
+  // advertised by /v1/capabilities/types post-migration. See useCapabilitiesApi.ts.
   healthcheck: 'Health Check',
   'license-expiration': 'Core',
   LegacyUrlCapability: 'Core',

@@ -18,6 +18,9 @@ export interface EmailConfiguration {
   enabled: boolean;
   host: string;
   port: number;
+  // UI-only derived field: set to `username !== ''` on load, not persisted in the REST API.
+  // On save, emailConfigToRest gates username/password on this flag but does not send it.
+  useAuthentication: boolean;
   username: string;
   password: string;
   fromAddress: string;
@@ -51,6 +54,7 @@ export const DEFAULT_EMAIL_CONFIGURATION: EmailConfiguration = {
   enabled: false,
   host: '',
   port: 25,
+  useAuthentication: false,
   username: '',
   password: '',
   fromAddress: '',
@@ -70,5 +74,3 @@ export interface EmailValidationErrors {
   port?: string;
   fromAddress?: string;
 }
-
-

@@ -12,10 +12,6 @@
  */
 
 
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
 
 import React from 'react';
 import { Box, Flex, Text, Heading, Card, Badge } from '@radix-ui/themes';
@@ -23,6 +19,7 @@ import { ArrowUpCircle, ExternalLink, CheckCircle, Info, BookOpen } from 'lucide
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsButton, SettingsAlert } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 
 import './UpgradePage.scss';
 
@@ -46,15 +43,14 @@ export function UpgradePage({ className }: UpgradePageProps) {
   return (
     <Box className={`upgrade-page ${className || ''}`.trim()}>
       {/* Header */}
-      <Flex align="center" gap="3" className="upgrade-page__header">
-        <ArrowUpCircle size={24} className="upgrade-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">Upgrade</Heading>
-          <Text size="2" className="upgrade-page__description">
-            Version information and upgrade options
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title="Upgrade"
+        description="Version information and upgrade options"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+          { label: 'Upgrade' },
+        ]}
+      />
 
       {/* Current Version Card */}
       <Card className="upgrade-page__version-card">

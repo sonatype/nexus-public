@@ -18,6 +18,8 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.FirewallAttributes;
+import org.sonatype.nexus.repository.firewall.FirewallMode;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenticationAttributes;
@@ -64,7 +66,25 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     convertNegativeCache(request, configuration);
     convertHttpClient(request, configuration);
     convertReplication(request, configuration);
+    convertFirewall(request, configuration);
     return configuration;
+  }
+
+  protected boolean isPccsSupported() {
+    return false;
+  }
+
+  protected void convertFirewall(final T request, final Configuration configuration) {
+    FirewallAttributes firewall = request.getFirewall();
+    if (nonNull(firewall) && nonNull(firewall.getMode())) {
+      if (FirewallMode.PCCS == firewall.getMode() && !isPccsSupported()) {
+        throw new IllegalArgumentException(
+            "PCCS mode is only supported for npm and pypi repository formats.");
+      }
+      NestedAttributesMap firewallConfiguration =
+          configuration.attributes(FirewallAttributes.FIREWALL_CHILD_ATTRIBUTE_KEY);
+      firewallConfiguration.set(FirewallAttributes.MODE, firewall.getMode().name());
+    }
   }
 
   private void convertHttpClient(final T request, final Configuration configuration) {
@@ -154,7 +174,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
   }
 
   private void convertRoutingRule(final T request, final Configuration configuration) {
-    String routingRuleName = request.getRoutingRule();
+    String routingRuleName = request.getRoutingRuleName();
     if (!Strings2.isBlank(routingRuleName)) {
       RoutingRule routingRule = routingRuleStore.getByName(routingRuleName);
       if (nonNull(routingRule)) {
@@ -162,7 +182,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       }
       else {
         String errorMessage = String.format("Routing rule '%s' does not exist.", routingRuleName);
-        throw new ValidationErrorsException("routingRule", errorMessage);
+        throw new ValidationErrorsException("routingRuleName", errorMessage);
       }
     }
   }

@@ -402,9 +402,15 @@
         WHERE <include refid="assetMatch"/> AND asset_blob_id IS DISTINCT FROM #{assetBlobId};
   </update>
 
-  <update id="markAsDownloaded" parameterType="AssetData">
+  <update id="markAsDownloaded">
+    <bind name="repositoryId" value="asset.repositoryId"/>
+    <bind name="assetId" value="asset.assetId"/>
+    <bind name="path" value="asset.path"/>
+
     UPDATE ${format}_asset SET last_downloaded = CURRENT_TIMESTAMP, last_updated = CURRENT_TIMESTAMP
-        WHERE <include refid="assetMatch"/>;
+        WHERE <include refid="assetMatch"/>
+          AND (last_downloaded IS NULL
+               OR last_downloaded &lt; CURRENT_TIMESTAMP - CAST(#{intervalSeconds} AS INT) * INTERVAL '1' SECOND);
   </update>
 
   <update id="lastDownloaded">

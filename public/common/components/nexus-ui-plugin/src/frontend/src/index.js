@@ -106,7 +106,7 @@ export { default as GlobalEvaluationSettingsMachine } from './interface/GlobalEv
 
 // Preview UI: Context Providers (Sprint 13 - Shared Library Migration)
 export { AuthProvider, useAuth } from './contexts/AuthContext';
-export { PermissionsProvider, usePermissions } from './contexts/PermissionsContext';
+export { PermissionsProvider, usePermissions, usePermissionsLoading } from './contexts/PermissionsContext';
 export { ThemeProvider, useTheme, THEMES } from './contexts/ThemeContext';
 export { StateProvider, useAppState } from './contexts/StateContext';
 
@@ -358,7 +358,7 @@ export { default as PreviewUIStrings } from './components/preview/constants/UISt
 export { default as ComingSoonPage } from './components/preview/shared/ComingSoonPage';
 
 // FeatureGate / withFeatureGate: HOC used by coreui admin routes to wrap pages
-export { FeatureGate, withFeatureGate } from './components/preview/shared/FeatureGate';
+export { FeatureGate, withFeatureGate, withCloudExcluded } from './components/preview/shared/FeatureGate';
 
 // Preview UI: audit log data/types (relocated from coreui so ui-plugin has no
 // cross-package dependency on coreui). coreui's AuditLogPage and

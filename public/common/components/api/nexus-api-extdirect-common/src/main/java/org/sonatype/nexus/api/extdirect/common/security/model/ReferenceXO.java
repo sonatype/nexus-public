@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.extdirect.common.security.model;
 
 import java.util.Objects;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Reference exchange object.

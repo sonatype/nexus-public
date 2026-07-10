@@ -139,6 +139,8 @@ export default {
       MAX_COMP_AGE_SUBLABEL: 'How long (in minutes) to cache artifacts before re-checking the remote repository. Release repositories should use -1',
       MAX_META_AGE_LABEL: 'Maximum Metadata Age',
       MAX_META_AGE_SUBLABEL: 'How long (in minutes) to cache metadata before rechecking the remote repository',
+      PRESERVE_ENCODED_CHARS_LABEL: 'Preserve Encoded Characters',
+      PRESERVE_ENCODED_CHARS_SUBLABEL: 'When checked, keeps encoded characters like %2B (plus), %23 (hash), and %20 (space) in their encoded form when proxying to the remote repository. Enable when proxying to AWS S3, Cloudflare CDN, or Azure Blob Storage.',
       OPTIONS_CAPTION: 'Options',
       ROUTING_RULE_LABEL: 'Routing Rule',
       NEGATIVE_CACHE_LABEL: 'Negative Cache',
@@ -214,6 +216,50 @@ export default {
                 }
             }
         },
+        TERRAFORM_STATE_BACKEND: {
+          CAPTION: 'Terraform State Backend Settings',
+          ENCRYPTION: {
+            CAPTION: 'Encryption Settings',
+            ENCRYPTION_ENABLED: {
+              LABEL: 'Encryption',
+              DESCRIPTION: 'Enable encryption for Terraform state files'
+            },
+            ENCRYPTION_KEY: {
+              LABEL: 'Encryption Key',
+              SUBLABEL: 'Encryption key used to encrypt state files. This key cannot be retrieved after creation.'
+            },
+            ENCRYPTION_KEY_CONFIRM: {
+              LABEL: 'Confirm Encryption Key',
+              SUBLABEL: 'Re-enter the encryption key to confirm',
+              MISMATCH_ERROR: 'Encryption keys do not match'
+            },
+            LOCK_TIMEOUT_MINUTES: {
+              LABEL: 'Lock Timeout (Minutes)',
+              SUBLABEL: 'Duration in minutes before a state lock automatically expires (1-1440 minutes, default: 30)'
+            },
+            MAX_STATE_SIZE_MB: {
+              LABEL: 'Maximum State File Size (MB)',
+              SUBLABEL: 'Maximum allowed size for individual state files (1-512 MB, default: 256)'
+            },
+            ENCRYPTION_REQUIRED_INFO: 'Encryption is mandatory for Terraform State Backend repositories. State files contain sensitive infrastructure data including credentials, secrets, and resource identifiers that must be protected at rest.'
+          },
+          ENCRYPTION_MODAL: {
+            MODAL_TITLE: 'Rotate Encryption Key',
+            ENCRYPTION_KEY_LABEL: 'New Encryption Key',
+            ENCRYPTION_KEY_SUBLABEL: 'Enter the new encryption key for state files',
+            ENCRYPTION_KEY_CONFIRM_LABEL: 'Confirm New Encryption Key',
+            ENCRYPTION_KEY_CONFIRM_SUBLABEL: 'Re-enter the new encryption key to confirm',
+            KEY_MISMATCH_ERROR: 'Encryption keys do not match',
+            REENCRYPT_LABEL: 'Re-encryption Options',
+            REENCRYPT_DESCRIPTION: 'Re-encrypt all existing state files with the new key (triggers async job)',
+            EXISTING_KEY_MESSAGE: 'An encryption key is configured. For security, the key cannot be viewed.',
+            UPDATE_BUTTON: 'Update Key',
+            CANCEL_BUTTON: 'Cancel',
+            LOADING_ERROR: 'Failed to load repository information',
+            UPDATE_SUCCESS: 'Encryption key updated successfully',
+            UPDATE_ERROR: 'Failed to update encryption key'
+          }
+        },
         ALPINE: {
             CAPTION: 'Alpine Settings',
             SIGNING: {
@@ -266,6 +312,17 @@ export default {
           ADD_EXCLUSION: 'Add excluded parameter',
           REMOVE_EXCLUSION: 'Remove excluded parameter'
         }
+      },
+      FIREWALL: {
+        CAPTION: 'Sonatype Nexus Firewall',
+        LABEL: 'Sonatype Nexus Firewall',
+        SUBLABEL: 'Requires IQ Server connection configured in Capabilities',
+        WARNING: 'Requires IQ Server connection configured in Capabilities',
+        MODE_LABEL: 'Firewall Mode',
+        MODE_DISABLED: 'Disabled',
+        MODE_AUDIT: 'Audit Only - allow components that violate policy',
+        MODE_QUARANTINE: 'Quarantine - block components that violate policy',
+        MODE_PCCS: 'PCCS - Quarantine, plus metadata filtering to help clients select a policy compliant version',
       },
       LEARN_MORE: 'Learn more',
       REGISTRY_API_SUPPORT_CAPTION: 'Docker Registry API Support',
@@ -345,15 +402,77 @@ export default {
         ADD: 'Add URL pattern',
         REMOVE: 'Remove',
       },
+      OCI: {
+        CONNECTORS: {
+          CAPTION: 'OCI Repository Connectors',
+          HELP: 'Configure how OCI clients reach this repository: path-based routing, HTTP/HTTPS connector ports, optional subdomain routing, and force-basic-auth toggle.',
+          PATH_ENABLED: {
+            LABEL: 'Path-Based Routing',
+            DESCR: 'Expose this OCI repository under /repository/<name>. Required when no dedicated connector port is configured.',
+          },
+          HTTP: {
+            LABEL: 'HTTP Connector Port',
+            SUBLABEL: 'Create an HTTP connector at the specified port. Useful behind a TLS-terminating proxy.',
+            PLACEHOLDER: 'Enter a port number',
+          },
+          HTTPS: {
+            LABEL: 'HTTPS Connector Port',
+            SUBLABEL: 'Create an HTTPS connector at the specified port. Recommended for direct OCI client connections.',
+            PLACEHOLDER: 'Enter a port number',
+          },
+          SUBDOMAIN: {
+            LABEL: 'Subdomain',
+            SUBLABEL: 'Optional subdomain prefix for this OCI repository',
+            PLACEHOLDER: 'Enter a subdomain',
+          },
+          FORCE_BASIC_AUTH: {
+            LABEL: 'Force Basic Authentication',
+            DESCR: 'Require clients to authenticate with username/password instead of an anonymous Bearer token.',
+            // NEXUS-53064 B2: surfaced as a warning banner under the checkbox so
+            // admins do not silently leave a registry open to anonymous pulls.
+            WARNING: 'Disabling Force Basic Authentication allows clients to pull images without authentication. Anonymous OCI pulls require both Global Anonymous Access and the Docker Bearer Token Realm to be enabled. Confirm this is intended before saving.',
+          },
+        },
+        COSIGN: {
+          CAPTION: 'Cosign Keyless Policy',
+          HELP: 'Reject manifests whose Sigstore Fulcio identity or issuer does not match the configured regexes. Default mode is Off (no enforcement).',
+          // NEXUS-53064 / UX P0-1: the keyless verifier is currently a no-op at
+          // both upload AND pull time, so the legacy stub message would mislead
+          // admins into believing partial enforcement was in effect.
+          // The KEYLESS option is hidden in the dropdown (see OciConnectorSettings.jsx)
+          // until a real verifier ships; this string is retained so the field
+          // can be re-enabled without copy churn.
+          KEYLESS_STUB_WARNING: 'Cosign keyless verification is not yet enforced. The configured identity and issuer regexes are recorded for future use, but signatures are not validated at upload OR pull time. Do not rely on this setting for supply-chain enforcement.',
+          ENFORCEMENT: {
+            LABEL: 'Enforcement Mode',
+            SUBLABEL: 'Off (no cosign enforcement) | Keyless (require cosign signature)',
+            OPTIONS: {
+              NONE: 'Off (no cosign enforcement)',
+              KEYLESS: 'Keyless (require cosign signature)',
+            },
+          },
+          IDENTITY_REGEX: {
+            LABEL: 'Identity Regex',
+            SUBLABEL: 'Regex matched against the cosign signing identity (e.g. mailto: subject on the Fulcio certificate)',
+            PLACEHOLDER: '^mailto:.*@example\\.com$',
+          },
+          ISSUER_REGEX: {
+            LABEL: 'Issuer Regex',
+            SUBLABEL: 'Regex matched against the OIDC issuer extension on the Fulcio certificate',
+            PLACEHOLDER: '^https://accounts\\.example\\.com$',
+          },
+        },
+      },
       REMOTE_URL_EXAMPLES: {
         pub: ' (e.g., https://pub.dev)',
         docker: ' (e.g., https://registry-1.docker.io)',
         maven2: ' (e.g., https://repo1.maven.org/maven2/)',
         npm: ' (e.g., https://registry.npmjs.org)',
         nuget: ' (e.g., https://api.nuget.org/v3/index.json)',
+        r: ' (e.g., https://cran.r-project.org/)',
         pypi: ' (e.g., https://pypi.org)',
         rubygems: ' (e.g., https://rubygems.org)',
-        yum: ' (e.g., http://mirror.centos.org/centos/)',
+        yum: ' (e.g., https://mirror.stream.centos.org/)',
         default: ' (e.g., https://example.com)'
       },
       NUGET: {
@@ -365,6 +484,18 @@ export default {
         METADATA_QUERY_CACHE_AGE: {
           LABEL: 'Metadata Query Cache Age',
           SUBLABEL: 'How long to cache query results from the proxied repository (in seconds)'
+        },
+        SYMBOL_SERVER_URL: {
+          LABEL: 'Symbol Server URL',
+          SUBLABEL: 'Optional upstream symbol server URL. If empty, symbols are proxied from the remote storage URL.'
+        },
+        SYMSRV_ENDPOINT: {
+          LABEL: 'SymSrv Endpoint URL',
+          SUBLABEL: 'Configure your debugger to use this URL for symbol resolution.'
+        },
+        ALLOW_ANONYMOUS_SYMBOL_ACCESS: {
+          LABEL: 'Allow Anonymous Symbol Access',
+          SUBLABEL: 'Allow unauthenticated access to the symbol server (required for debugger integration)'
         },
         GROUP_VERSION: {
           LABEL: 'NuGet Type',

@@ -10,36 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
-import React, { useState, useCallback } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading } from '@radix-ui/themes';
-import { FileText, ArrowLeft, AlertTriangle } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { AlertTriangle } from 'lucide-react';
+import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
-import { SettingsButton, SettingsAlert } from '../../../../shared/form';
-import { HelpSection } from '../../../../shared';
+import { SettingsAlert } from '../../../../shared/form';
+import { HelpSection, PageHeader } from '../../../../shared';
 import { LogsList } from './LogsList';
 import { LogViewer } from './LogViewer';
 
 import './LogsPage.scss';
 
-type ViewMode = 'list' | 'detail';
+const ROUTE_LIST = 'preview.admin.support.logs.list';
+const ROUTE_DETAIL = 'preview.admin.support.logs.detail';
 
 /**
  * LogsPage - Main Logs management page for Preview UI
  *
  * Displays log file list and allows viewing individual log files.
  * Note: Logs are not available via the UI in clustered (HA) mode.
+ *
+ * The selected log file is stored in the route URL (/*filename param with
+ * raw: true so task log paths like tasks/foo.log are preserved). This means
+ * the global header Refresh button — which calls router.stateService.reload()
+ * — remounts the component with the same filename param and keeps the viewer
+ * open instead of navigating back to the list.
  */
 export function LogsPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [selectedLog, setSelectedLog] = useState<string | null>(null);
+  const router = useRouter();
+  const { params } = useCurrentStateAndParams();
+
+  // filename is the raw path from the URL; null/undefined when on the list route
+  const selectedLog: string | null = (params.filename as string) ?? null;
+  const viewMode = selectedLog ? 'detail' : 'list';
 
   // Permission check
   const canRead = ExtJS.checkPermission('nexus:logging:read');
@@ -48,70 +53,66 @@ export function LogsPage() {
   const isClustered = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
 
   const handleSelectLog = useCallback((filename: string) => {
-    setSelectedLog(encodeURIComponent(filename));
-    setViewMode('detail');
+    router.stateService.go(ROUTE_DETAIL, {filename});
   }, []);
 
   const handleBack = useCallback(() => {
-    setSelectedLog(null);
-    setViewMode('list');
+    router.stateService.go(ROUTE_LIST);
   }, []);
+
+  // Navigation helper for Settings breadcrumb
+  const navigateToSettings = () => {
+    window.location.hash = '#preview/admin/settings';
+  };
 
   // Render header based on view mode
   const renderHeader = () => {
     if (viewMode === 'list') {
+      const breadcrumbs = [
+        { label: 'Settings', onClick: navigateToSettings },
+        { label: 'Logs' },
+      ];
       return (
-        <Flex align="center" gap="3" className="logs-page__header">
-          <FileText size={24} className="logs-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">
-              Logs
-            </Heading>
-            <Text size="2" className="logs-page__description">
-              View the current log contents
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Logs"
+          description="View the current log contents"
+          breadcrumbs={breadcrumbs}
+          className="logs-page__header"
+        />
       );
     }
 
+    const decodedLog = selectedLog ?? '';
+    const breadcrumbs = [
+      { label: 'Settings', onClick: navigateToSettings },
+      { label: 'Logs', onClick: handleBack },
+      { label: decodedLog },
+    ];
+
     return (
-      <Flex align="center" gap="3" className="logs-page__header">
-        <SettingsButton
-          variant="ghost"
-          onClick={handleBack}
-          className="logs-page__back"
-          icon={ArrowLeft}
-        />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">
-            Log Viewer
-          </Heading>
-          {selectedLog && (
-            <Text size="2" className="logs-page__description">
-              {decodeURIComponent(selectedLog)}
-            </Text>
-          )}
-        </Box>
-      </Flex>
+      <PageHeader
+        title="Log Viewer"
+        description={decodedLog}
+        breadcrumbs={breadcrumbs}
+        className="logs-page__header"
+      />
     );
   };
 
   // No permission state
   if (!canRead) {
+    const breadcrumbs = [
+      { label: 'Settings', onClick: navigateToSettings },
+      { label: 'Logs' },
+    ];
     return (
       <Box className="logs-page" data-testid="logs-page">
-        <Flex align="center" gap="3" className="logs-page__header">
-          <FileText size={24} className="logs-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">
-              Logs
-            </Heading>
-            <Text size="2" className="logs-page__description">
-              View the current log contents
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Logs"
+          description="View the current log contents"
+          breadcrumbs={breadcrumbs}
+          className="logs-page__header"
+        />
 
         <SettingsAlert type="warning">
           You do not have permission to view logs.
@@ -166,5 +167,4 @@ export function LogsPage() {
 }
 
 export default LogsPage;
-
 

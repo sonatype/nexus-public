@@ -453,7 +453,7 @@ describe('PrivilegesDetails', function() {
       expect(actions()).toHaveTextContent("Browse, Read");
     });
 
-    it('transforms repository field when loading Repository Content Selector privilege with non-wildcard format', async () => {
+    it('does not transform repository field when loading Repository Content Selector privilege with specific repository', async () => {
       const {repository} = selectors;
       const testFormat = 'maven2';
       const PRIVILEGE_WITH_FORMAT = {
@@ -473,7 +473,31 @@ describe('PrivilegesDetails', function() {
 
       await renderAndWaitForLoad(testName);
 
-      // Repository field should be transformed to *-{format}
+      // Repository field should remain unchanged when it's a specific repository
+      expect(repository()).toHaveValue(testRepository);
+    });
+
+    it('transforms repository field when loading Repository Content Selector privilege with wildcard repository and non-wildcard format', async () => {
+      const {repository} = selectors;
+      const testFormat = 'maven2';
+      const PRIVILEGE_WITH_WILDCARD_REPO = {
+        type: TYPE_IDS.REPOSITORY_CONTENT_SELECTOR,
+        name: testName,
+        description: testDescription,
+        contentSelector: testContentSelector,
+        format: testFormat,
+        repository: '*',
+        actions: testContentSelectorActions.split(','),
+        readOnly: false,
+      };
+
+      when(Axios.get).calledWith(singlePrivilegeUrl(testName)).mockResolvedValue({
+        data: PRIVILEGE_WITH_WILDCARD_REPO
+      });
+
+      await renderAndWaitForLoad(testName);
+
+      // Repository field should be transformed to *-{format} when repository is '*' and format is specific
       expect(repository()).toHaveValue(`*-${testFormat}`);
     });
 

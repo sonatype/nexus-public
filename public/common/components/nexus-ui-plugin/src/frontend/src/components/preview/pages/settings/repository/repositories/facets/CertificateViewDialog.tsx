@@ -19,6 +19,7 @@ import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 
 import { SettingsButton, SettingsAlert } from '../../../../../shared/form';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 import './CertificateViewDialog.scss';
 
@@ -76,7 +77,7 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
     setError(null);
 
     if (!remoteUrl.startsWith('https://')) {
-      setError('Certificate inspection is only available for HTTPS URLs.');
+      setError(UIStrings.CERTIFICATE.DIALOG.httpsOnlyError);
       setLoading(false);
       return;
     }
@@ -104,7 +105,7 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
       }
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(e?.response?.data?.message || e?.message || 'Failed to retrieve certificate');
+      setError(e?.response?.data?.message || e?.message || UIStrings.CERTIFICATE.ERRORS.fetchFailed);
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
       setIsInTrustStore(true);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setActionError(e?.response?.data?.message || e?.message || 'Failed to add certificate to trust store');
+      setActionError(e?.response?.data?.message || e?.message || UIStrings.CERTIFICATE.ERRORS.addFailed);
     } finally {
       setActionLoading(false);
     }
@@ -138,7 +139,7 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
       setIsInTrustStore(false);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } }; message?: string };
-      setActionError(e?.response?.data?.message || e?.message || 'Failed to remove certificate from trust store');
+      setActionError(e?.response?.data?.message || e?.message || UIStrings.CERTIFICATE.ERRORS.removeFailed);
     } finally {
       setActionLoading(false);
     }
@@ -151,10 +152,10 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
         <Dialog.Content className="cert-view-dialog__content">
           <Flex justify="between" align="center" mb="4">
             <Dialog.Title asChild>
-              <Text size="4" weight="bold">Certificate Details</Text>
+              <Text size="4" weight="bold">{UIStrings.CERTIFICATE.DIALOG.title}</Text>
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button type="button" className="cert-view-dialog__close" aria-label="Close">
+              <button type="button" className="cert-view-dialog__close" aria-label={UIStrings.CERTIFICATE.ACTIONS.close}>
                 <X size={16} />
               </button>
             </Dialog.Close>
@@ -163,7 +164,7 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
           {loading && (
             <Flex justify="center" align="center" py="6" gap="2">
               <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
-              <Text size="2" color="gray">Retrieving certificate…</Text>
+              <Text size="2" color="gray">{UIStrings.CERTIFICATE.DIALOG.retrieving}</Text>
             </Flex>
           )}
 
@@ -171,9 +172,9 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
             <Box>
               <SettingsAlert type="error">{error}</SettingsAlert>
               <Flex justify="end" mt="4" gap="2">
-                <SettingsButton variant="secondary" onClick={loadCertificate}>Retry</SettingsButton>
+                <SettingsButton variant="secondary" onClick={loadCertificate}>{UIStrings.CERTIFICATE.ACTIONS.retry}</SettingsButton>
                 <Dialog.Close asChild>
-                  <SettingsButton variant="secondary">Close</SettingsButton>
+                  <SettingsButton variant="secondary">{UIStrings.CERTIFICATE.ACTIONS.close}</SettingsButton>
                 </Dialog.Close>
               </Flex>
             </Box>
@@ -182,28 +183,19 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
           {!loading && !error && cert && (
             <>
               <SettingsAlert type="warning">
-                Importing a SSL certificate is a security-sensitive operation. Make sure you trust this certificate before adding it to the trust store.
+                {UIStrings.CERTIFICATE.DIALOG.untrustedWarning}
               </SettingsAlert>
 
               <Box className="cert-view-dialog__details" mt="4">
-                <Text size="1" weight="medium" color="gray" mb="2" as="div">Subject</Text>
-                <CertRow label="Common Name" value={cert.subjectCommonName} />
-                <CertRow label="Organization" value={cert.subjectOrganization} />
-                <CertRow label="Organizational Unit" value={cert.subjectOrganizationalUnit} />
-
-                <Text size="1" weight="medium" color="gray" mt="4" mb="2" as="div">Issuer</Text>
-                <CertRow label="Common Name" value={cert.issuerCommonName} />
-                <CertRow label="Organization" value={cert.issuerOrganization} />
-                <CertRow label="Organizational Unit" value={cert.issuerOrganizationalUnit} />
-
-                <Text size="1" weight="medium" color="gray" mt="4" mb="2" as="div">Validity</Text>
-                <CertRow label="Issued" value={formatDate(cert.issuedOn)} />
-                <CertRow label="Expires" value={formatDate(cert.expiresOn)} />
-
-                <Text size="1" weight="medium" color="gray" mt="4" mb="2" as="div">Fingerprint</Text>
-                <Box className="cert-view-dialog__fingerprint">
-                  <Text size="1" style={{ wordBreak: 'break-all' }}>{cert.fingerprint}</Text>
-                </Box>
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.commonName} value={cert.subjectCommonName} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.organization} value={cert.subjectOrganization} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.unit} value={cert.subjectOrganizationalUnit} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.issuerCommonName} value={cert.issuerCommonName} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.issuerOrganization} value={cert.issuerOrganization} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.issuerUnit} value={cert.issuerOrganizationalUnit} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.issuedOn} value={formatDate(cert.issuedOn)} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.validUntil} value={formatDate(cert.expiresOn)} />
+                <CertRow label={UIStrings.CERTIFICATE.FIELDS.fingerprint} value={cert.fingerprint} />
               </Box>
 
               {actionError && (
@@ -212,37 +204,30 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
                 </Box>
               )}
 
-              <Flex justify="between" align="center" mt="4" gap="2">
-                <Box>
-                  {isInTrustStore === true && (
-                    <Text size="1" color="green">Certificate is in the trust store</Text>
-                  )}
-                </Box>
-                <Flex gap="2">
-                  {isInTrustStore === false && cert.pem && (
-                    <SettingsButton
-                      variant="primary"
-                      onClick={handleAddToTrustStore}
-                      disabled={!canCreate}
-                      loading={actionLoading}
-                    >
-                      Add to Trust Store
-                    </SettingsButton>
-                  )}
-                  {isInTrustStore === true && cert.id && (
-                    <SettingsButton
-                      variant="danger"
-                      onClick={handleRemoveFromTrustStore}
-                      disabled={!canDelete}
-                      loading={actionLoading}
-                    >
-                      Remove from Trust Store
-                    </SettingsButton>
-                  )}
-                  <Dialog.Close asChild>
-                    <SettingsButton variant="secondary">Close</SettingsButton>
-                  </Dialog.Close>
-                </Flex>
+              <Flex className="cert-view-dialog__footer" justify="end" align="center" mt="4" gap="3">
+                {isInTrustStore === false && cert.pem && (
+                  <SettingsButton
+                    variant="primary"
+                    onClick={handleAddToTrustStore}
+                    disabled={!canCreate}
+                    loading={actionLoading}
+                  >
+                    {UIStrings.CERTIFICATE.ACTIONS.addToTrustStore}
+                  </SettingsButton>
+                )}
+                {isInTrustStore === true && cert.id && (
+                  <SettingsButton
+                    variant="primary"
+                    onClick={handleRemoveFromTrustStore}
+                    disabled={!canDelete}
+                    loading={actionLoading}
+                  >
+                    {UIStrings.CERTIFICATE.ACTIONS.removeFromTrustStore}
+                  </SettingsButton>
+                )}
+                <Dialog.Close asChild>
+                  <SettingsButton variant="secondary">{UIStrings.CERTIFICATE.ACTIONS.close}</SettingsButton>
+                </Dialog.Close>
               </Flex>
             </>
           )}

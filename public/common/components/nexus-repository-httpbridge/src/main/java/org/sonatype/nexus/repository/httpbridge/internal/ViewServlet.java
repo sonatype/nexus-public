@@ -17,12 +17,12 @@ import java.util.Enumeration;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.BadRequestException;
@@ -48,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.web.util.WebUtils;
+import org.eclipse.jetty.http.BadMessageException;
 import org.eclipse.jetty.io.EofException;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
@@ -135,6 +136,10 @@ public class ViewServlet
     catch (BadRequestException e) { // NOSONAR
       log.warn("Bad request. Reason: {}", e.getMessage());
       send(null, HttpResponses.badRequest(e.getMessage()), httpResponse);
+    }
+    catch (BadMessageException e) { // NOSONAR
+      log.trace("Bad request (malformed content): {} {}", httpRequest.getMethod(), uri, e);
+      send(null, HttpResponses.badRequest(e.getReason()), httpResponse);
     }
     catch (Exception e) {
       if (isEofException(e)) {

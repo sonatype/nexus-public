@@ -86,7 +86,7 @@ export default function HostedRepositoriesEvaluation() {
   }, [globalConfigAvailable, existingSettings, settingsLoaded]);
 
   function navigateBack() {
-    if (isFormDirty || settingsData.activityTimeFrame || selectedRepositories.length > 0) {
+    if (isFormDirty || selectedRepositories.length > 0) {
       setPendingNavigationRoute(ROUTE_NAMES.ADMIN.IQ.SONATYPE_LIFECYCLE.ROOT);
       setShowUnsavedModal(true);
       return;
@@ -102,14 +102,6 @@ export default function HostedRepositoriesEvaluation() {
       setActiveTabIndex(1);
     }
     setIsFormDirty(false);
-  }
-
-  function handleBackToSettings() {
-    if (!globalConfigAvailable) {
-      setActiveStepIndex(0);
-    } else {
-      setActiveTabIndex(0);
-    }
   }
 
   function handleRepositorySelectionChange(newSelection) {
@@ -140,7 +132,7 @@ export default function HostedRepositoriesEvaluation() {
   function handleBreadcrumbClick(e, targetRoute) {
     e.preventDefault();
     e.stopPropagation();
-    if (isFormDirty || settingsData.activityTimeFrame || selectedRepositories.length > 0) {
+    if (isFormDirty || selectedRepositories.length > 0) {
       setPendingNavigationRoute(targetRoute);
       setShowUnsavedModal(true);
     } else {
@@ -196,10 +188,10 @@ export default function HostedRepositoriesEvaluation() {
               {activeStepIndex === 1 && (
                 <RepositoriesTab
                   settingsData={settingsData}
-                  onBack={handleBackToSettings}
                   initialSelectedRepositories={selectedRepositories}
                   onSelectionChange={handleRepositorySelectionChange}
                   globalConfigAvailable={globalConfigAvailable}
+                  onBack={() => setActiveStepIndex(0)}
                 />
               )}
             </>
@@ -224,12 +216,12 @@ export default function HostedRepositoriesEvaluation() {
                   onNext={handleNext}
                   onCancel={navigateBack}
                   onFormChange={() => setIsFormDirty(true)}
+                  globalConfigAvailable={globalConfigAvailable}
                 />
               </NxTabPanel>
               <NxTabPanel>
                 <RepositoriesTab
                   settingsData={settingsData}
-                  onBack={handleBackToSettings}
                   initialSelectedRepositories={selectedRepositories}
                   onSelectionChange={handleRepositorySelectionChange}
                   globalConfigAvailable={globalConfigAvailable}

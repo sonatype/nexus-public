@@ -145,6 +145,66 @@ describe('useTasksApi', () => {
       expect(task?.id).toBe('task-1');
     });
 
+    it('maps cron schedule, properties, and alert config from task response', async () => {
+      const mockCronTask = {
+        id: 'cron-task',
+        enabled: true,
+        name: 'my-repair',
+        type: 'create.browse.nodes',
+        currentState: 'WAITING' as const,
+        schedule: 'advanced',
+        cronExpression: '0 0 12 * * ?',
+        timeZoneOffset: '+00:00',
+        startDate: '2026-01-22T12:00:00.000Z',
+        recurringDays: null,
+        properties: { repositoryName: 'maven-public' },
+        alertEmail: 'admin@example.com',
+        notificationCondition: 'FAILURE',
+      };
+      mockRestClientGet.mockResolvedValueOnce(mockCronTask);
+
+      const { result } = renderHook(() => useTasksApi());
+
+      let task;
+      await act(async () => {
+        task = await result.current.fetchTask('cron-task');
+      });
+
+      expect(task?.schedule).toBe('advanced');
+      expect(task?.cronExpression).toBe('0 0 12 * * ?');
+      expect(task?.timeZoneOffset).toBe('+00:00');
+      expect(task?.startDate).toEqual(new Date('2026-01-22T12:00:00.000Z'));
+      expect(task?.recurringDays).toEqual([]);
+      expect(task?.properties).toEqual({ repositoryName: 'maven-public' });
+      expect(task?.alertEmail).toBe('admin@example.com');
+      expect(task?.notificationCondition).toBe('FAILURE');
+    });
+
+    it('maps weekly recurringDays from task response', async () => {
+      const mockWeeklyTask = {
+        id: 'weekly-task',
+        enabled: true,
+        name: 'weekly-backup',
+        type: 'db.backup',
+        currentState: 'WAITING' as const,
+        schedule: 'weekly',
+        recurringDays: [2, 4, 6],
+        startDate: '2026-01-22T09:00:00.000Z',
+        properties: {},
+      };
+      mockRestClientGet.mockResolvedValueOnce(mockWeeklyTask);
+
+      const { result } = renderHook(() => useTasksApi());
+
+      let task;
+      await act(async () => {
+        task = await result.current.fetchTask('weekly-task');
+      });
+
+      expect(task?.schedule).toBe('weekly');
+      expect(task?.recurringDays).toEqual([2, 4, 6]);
+    });
+
     it('returns null for 404', async () => {
       mockRestClientGet.mockRejectedValueOnce({ response: { status: 404 } });
 
@@ -246,6 +306,112 @@ describe('useTasksApi', () => {
       expect(task?.name).toBe('New Task');
     });
 
+    describe('checkbox property normalization', () => {
+      it('AT-001: serializes empty-string checkbox as "false" on create', async () => {
+        mockRestClientPost.mockResolvedValueOnce({
+          id: 'new-task', name: 'Tags Cleanup', type: 'tags.cleanup',
+          currentState: 'WAITING', message: '',
+        });
+
+        const { result } = renderHook(() => useTasksApi());
+
+        await act(async () => {
+          await result.current.createTask({
+            typeId: 'tags.cleanup',
+            name: 'Tags Cleanup',
+            enabled: true,
+            schedule: 'manual' as const,
+            properties: { deleteAssociatedComponents: '' },
+          } as any);
+        });
+
+        expect(mockRestClientPost).toHaveBeenCalledWith(
+          '/service/rest/v1/tasks',
+          expect.objectContaining({
+            properties: expect.objectContaining({ deleteAssociatedComponents: 'false' }),
+          }),
+        );
+      });
+
+      it('AT-002: preserves "true" checkbox value on create', async () => {
+        mockRestClientPost.mockResolvedValueOnce({
+          id: 'new-task', name: 'Tags Cleanup', type: 'tags.cleanup',
+          currentState: 'WAITING', message: '',
+        });
+
+        const { result } = renderHook(() => useTasksApi());
+
+        await act(async () => {
+          await result.current.createTask({
+            typeId: 'tags.cleanup',
+            name: 'Tags Cleanup',
+            enabled: true,
+            schedule: 'manual' as const,
+            properties: { deleteAssociatedComponents: 'true' },
+          } as any);
+        });
+
+        expect(mockRestClientPost).toHaveBeenCalledWith(
+          '/service/rest/v1/tasks',
+          expect.objectContaining({
+            properties: expect.objectContaining({ deleteAssociatedComponents: 'true' }),
+          }),
+        );
+      });
+
+      it('AT-003: preserves "false" checkbox value on create', async () => {
+        mockRestClientPost.mockResolvedValueOnce({
+          id: 'new-task', name: 'Tags Cleanup', type: 'tags.cleanup',
+          currentState: 'WAITING', message: '',
+        });
+
+        const { result } = renderHook(() => useTasksApi());
+
+        await act(async () => {
+          await result.current.createTask({
+            typeId: 'tags.cleanup',
+            name: 'Tags Cleanup',
+            enabled: true,
+            schedule: 'manual' as const,
+            properties: { deleteAssociatedComponents: 'false' },
+          } as any);
+        });
+
+        expect(mockRestClientPost).toHaveBeenCalledWith(
+          '/service/rest/v1/tasks',
+          expect.objectContaining({
+            properties: expect.objectContaining({ deleteAssociatedComponents: 'false' }),
+          }),
+        );
+      });
+
+      it('AT-005: does NOT coerce non-checkbox empty-string field on create', async () => {
+        mockRestClientPost.mockResolvedValueOnce({
+          id: 'new-task', name: 'Tags Cleanup', type: 'tags.cleanup',
+          currentState: 'WAITING', message: '',
+        });
+
+        const { result } = renderHook(() => useTasksApi());
+
+        await act(async () => {
+          await result.current.createTask({
+            typeId: 'tags.cleanup',
+            name: 'Tags Cleanup',
+            enabled: true,
+            schedule: 'manual' as const,
+            properties: { nameRegex: '' },
+          } as any);
+        });
+
+        expect(mockRestClientPost).toHaveBeenCalledWith(
+          '/service/rest/v1/tasks',
+          expect.objectContaining({
+            properties: expect.objectContaining({ nameRegex: '' }),
+          }),
+        );
+      });
+    });
+
     it('throws error on creation failure', async () => {
       mockRestClientPost.mockRejectedValueOnce({
         response: { data: { message: 'Validation failed' } },
@@ -326,6 +492,33 @@ describe('useTasksApi', () => {
       // PUT doesn't include type field
       expect(mockRestClientPut.mock.calls[0][1]).not.toHaveProperty('type');
       expect(task?.name).toBe('Updated Task');
+    });
+
+    it('AT-004: serializes empty-string checkbox as "false" on update', async () => {
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'task-1', name: 'Tags Cleanup', type: 'tags.cleanup',
+        currentState: 'WAITING', message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.updateTask('task-1', {
+          typeId: 'tags.cleanup',
+          name: 'Tags Cleanup',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties: { deleteAssociatedComponents: '' },
+        } as any);
+      });
+
+      expect(mockRestClientPut).toHaveBeenCalledWith(
+        '/service/rest/v1/tasks/task-1',
+        expect.objectContaining({
+          properties: expect.objectContaining({ deleteAssociatedComponents: 'false' }),
+        }),
+      );
     });
 
     it('throws error on update failure', async () => {
@@ -471,6 +664,159 @@ describe('useTasksApi', () => {
     });
   });
 
+  describe('APT checkbox persistence parity (NEXUS-53043)', () => {
+    // These tests verify the full serialization path for repository.apt.rebuild.metadata.
+    // The machine normalizes absent checkbox fields to '' (create) or 'false' (edit/load)
+    // before calling createTask/updateTask; the serializer must map both to 'false'.
+
+    it('APT create: unchecked checkboxes (empty string from template) submit as false', async () => {
+      mockRestClientPost.mockResolvedValueOnce({
+        id: 'apt-new', name: 'Rebuild APT', type: 'repository.apt.rebuild.metadata',
+        currentState: 'WAITING', message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.createTask({
+          typeId: 'repository.apt.rebuild.metadata',
+          name: 'Rebuild APT',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties: {
+            repositoryName: '*',
+            rebuildAptMetadataFullRebuild: '',  // machine init from template
+            resetProxyMetadata: '',              // machine init from template
+          },
+        } as any);
+      });
+
+      const body = mockRestClientPost.mock.calls[0][1] as any;
+      expect(body.properties.rebuildAptMetadataFullRebuild).toBe('false');
+      expect(body.properties.resetProxyMetadata).toBe('false');
+    });
+
+    it('APT create: visibleForRepoTypes-hidden checkbox value is preserved in serialized payload', async () => {
+      // Mirror of the update-side test: rebuildAptMetadataFullRebuild is hidden in the UI when
+      // a proxy repo is selected (visibleForRepoTypes: ['hosted']), but a value set before the
+      // proxy selection (or via the API) must NOT be dropped from the POST body.
+      // Only fields with hidden:true in TASK_FIELD_UI are filtered; visibleForRepoTypes does not filter.
+      mockRestClientPost.mockResolvedValueOnce({
+        id: 'apt-new', name: 'Rebuild APT', type: 'repository.apt.rebuild.metadata',
+        currentState: 'WAITING', message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.createTask({
+          typeId: 'repository.apt.rebuild.metadata',
+          name: 'Rebuild APT',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties: {
+            repositoryName: 'my-apt-proxy',
+            rebuildAptMetadataFullRebuild: 'true',  // UI-hidden for proxy — must still be in body
+            resetProxyMetadata: 'false',
+          },
+        } as any);
+      });
+
+      const body = mockRestClientPost.mock.calls[0][1] as any;
+      expect(body.properties.rebuildAptMetadataFullRebuild).toBe('true');
+      expect(body.properties.resetProxyMetadata).toBe('false');
+    });
+
+    it('APT save after edit: machine-normalized false values are sent as false', async () => {
+      // Old APT task was saved without checkbox fields; machine normalizes both to 'false'.
+      // updateTask should pass those 'false' values through to the PUT body.
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'apt-old', name: 'Rebuild APT', type: 'repository.apt.rebuild.metadata',
+        currentState: 'WAITING', message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.updateTask('apt-old', {
+          typeId: 'repository.apt.rebuild.metadata',
+          name: 'Rebuild APT',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties: {
+            repositoryName: '*',
+            rebuildAptMetadataFullRebuild: 'false',  // machine-normalized
+            resetProxyMetadata: 'false',              // machine-normalized
+          },
+        } as any);
+      });
+
+      const body = mockRestClientPut.mock.calls[0][1] as any;
+      expect(body.properties.rebuildAptMetadataFullRebuild).toBe('false');
+      expect(body.properties.resetProxyMetadata).toBe('false');
+    });
+
+    it('APT: visibleForRepoTypes-hidden checkbox value is preserved in serialized payload', async () => {
+      // rebuildAptMetadataFullRebuild is hidden in the UI when a proxy repo is selected
+      // (visibleForRepoTypes: ['hosted']), but it must NOT be dropped from the PUT payload.
+      // Only fields with hidden:true in TASK_FIELD_UI are filtered; visibleForRepoTypes does not filter.
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'apt-proxy', name: 'Rebuild APT', type: 'repository.apt.rebuild.metadata',
+        currentState: 'WAITING', message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.updateTask('apt-proxy', {
+          typeId: 'repository.apt.rebuild.metadata',
+          name: 'Rebuild APT',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties: {
+            repositoryName: 'my-apt-proxy',
+            rebuildAptMetadataFullRebuild: 'true',  // UI-hidden for proxy — must still be in body
+            resetProxyMetadata: 'false',
+          },
+        } as any);
+      });
+
+      const body = mockRestClientPut.mock.calls[0][1] as any;
+      expect(body.properties.rebuildAptMetadataFullRebuild).toBe('true');
+      expect(body.properties.resetProxyMetadata).toBe('false');
+    });
+
+    it('APT: existing true/false values are preserved on update', async () => {
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'apt-task', name: 'Rebuild APT', type: 'repository.apt.rebuild.metadata',
+        currentState: 'WAITING', message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.updateTask('apt-task', {
+          typeId: 'repository.apt.rebuild.metadata',
+          name: 'Rebuild APT',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties: {
+            repositoryName: 'my-apt-hosted',
+            rebuildAptMetadataFullRebuild: 'true',
+            resetProxyMetadata: 'false',
+          },
+        } as any);
+      });
+
+      const body = mockRestClientPut.mock.calls[0][1] as any;
+      expect(body.properties.rebuildAptMetadataFullRebuild).toBe('true');
+      expect(body.properties.resetProxyMetadata).toBe('false');
+    });
+  });
+
   describe('setError', () => {
     it('allows clearing error state', async () => {
       mockRestClientPost.mockRejectedValueOnce({ message: 'Some error' });
@@ -494,6 +840,79 @@ describe('useTasksApi', () => {
       });
 
       expect(result.current.error).toBeNull();
+    });
+  });
+
+  describe('property round-trip', () => {
+    it('preserves dot-prefixed properties when creating a task', async () => {
+      mockRestClientPost.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.createTask(
+          {
+            typeId: 'repository.cleanup',
+            name: 'Cleanup',
+            enabled: true,
+            schedule: 'manual',
+            properties: {
+              repositoryName: 'maven-public',
+              'repository.cleanup.policies': 'old,older',
+              'some.dotted.key': 'value',
+            },
+          } as any,
+          undefined,
+        );
+      });
+
+      expect(mockRestClientPost).toHaveBeenCalledWith(
+        '/service/rest/v1/tasks',
+        expect.objectContaining({
+          properties: {
+            repositoryName: 'maven-public',
+            'repository.cleanup.policies': 'old,older',
+            'some.dotted.key': 'value',
+          },
+        }),
+      );
+    });
+
+    it('preserves dot-prefixed properties when updating a task', async () => {
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'task-1',
+        enabled: true,
+        name: 'Cleanup',
+        type: 'repository.cleanup',
+        currentState: 'WAITING',
+        message: '',
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      await act(async () => {
+        await result.current.updateTask(
+          'task-1',
+          {
+            typeId: 'repository.cleanup',
+            name: 'Cleanup',
+            enabled: true,
+            schedule: 'manual',
+            properties: {
+              'repository.cleanup.policies': 'old,older',
+            },
+          } as any,
+          undefined,
+        );
+      });
+
+      expect(mockRestClientPut).toHaveBeenCalledWith(
+        '/service/rest/v1/tasks/task-1',
+        expect.objectContaining({
+          properties: { 'repository.cleanup.policies': 'old,older' },
+        }),
+      );
     });
   });
 });

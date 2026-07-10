@@ -667,7 +667,7 @@ export function DetectTable({
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortDir(field === 'name' ? 'asc' : 'asc');
+      setSortDir('asc');
     }
   };
 

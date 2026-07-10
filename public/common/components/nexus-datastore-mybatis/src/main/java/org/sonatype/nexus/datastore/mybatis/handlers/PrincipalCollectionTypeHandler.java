@@ -13,10 +13,23 @@
 
 package org.sonatype.nexus.datastore.mybatis.handlers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+
 import org.sonatype.nexus.datastore.mybatis.AbstractSerializableTypeHandler;
+import org.sonatype.nexus.security.NexusSimplePrincipalCollection;
+import org.sonatype.nexus.security.RealmCaseMapping;
+import org.sonatype.nexus.security.anonymous.AnonymousPrincipalCollection;
 
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 
 /**
  * MyBatis {@link TypeHandler} that serializes and encrypts {@link PrincipalCollection}s to/from SQL.
@@ -27,5 +40,33 @@ import org.apache.shiro.subject.PrincipalCollection;
 public class PrincipalCollectionTypeHandler
     extends AbstractSerializableTypeHandler<PrincipalCollection>
 {
-  // nothing to add
+  /**
+   * Allow-list for classes used by Shiro's {@code PrincipalCollection} serialization.
+   * Includes Shiro internals, Nexus security classes, and common JDK collection types.
+   */
+  private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
+      // Shiro PrincipalCollection classes
+      SimplePrincipalCollection.class,
+      // Nexus PrincipalCollection classes
+      AnonymousPrincipalCollection.class,
+      NexusSimplePrincipalCollection.class,
+      RealmCaseMapping.class,
+      // Common JDK types used by SimplePrincipalCollection
+      LinkedHashMap.class,
+      HashMap.class,
+      Map.Entry[].class,
+      Map.Entry.class,
+      LinkedHashSet.class,
+      HashSet.class,
+      LinkedList.class,
+      ArrayList.class,
+      String.class,
+      Integer.class,
+      Long.class,
+      Number.class);
+
+  @Override
+  protected Set<Class<?>> getAllowedClasses() {
+    return ALLOWED_CLASSES;
+  }
 }

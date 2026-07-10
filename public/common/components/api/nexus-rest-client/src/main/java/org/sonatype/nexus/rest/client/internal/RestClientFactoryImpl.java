@@ -16,8 +16,8 @@ import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.WebTarget;
 
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.httpclient.SSLContextSelector;
@@ -32,7 +32,12 @@ import org.apache.http.protocol.HttpContext;
 import org.jboss.resteasy.client.jaxrs.ClientHttpEngine;
 import org.jboss.resteasy.client.jaxrs.ProxyBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
-import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
+// NEXUS-46395: ApacheHttpClient4Engine (Apache HttpClient 4.x) was removed in RESTEasy 7.
+// We migrated to ApacheHttpClient43Engine (Apache HttpClient 4.3+) since the application-
+// wide HttpClient is still HttpClient 4.x; a future bump to Apache HttpClient 5 +
+// ApacheHttpClient5Engine is tracked separately.
+import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient43Engine;
+import org.jboss.resteasy.client.jaxrs.engines.HttpContextProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -72,20 +77,41 @@ public class RestClientFactoryImpl
     checkNotNull(configuration);
 
     try (TcclBlock tccl = TcclBlock.begin(ResteasyClientBuilder.class)) {
-      HttpContext httpContext = new BasicHttpContext();
-      if (configuration.getUseTrustStore()) {
-        httpContext.setAttribute(SSLContextSelector.USE_TRUST_STORE, true);
-      }
-      HttpClient client;
+      final HttpClient client;
       if (configuration.getHttpClient() != null) {
         client = checkNotNull(configuration.getHttpClient().get());
       }
       else {
         client = httpClient.get();
       }
-      ClientHttpEngine httpEngine = new ApacheHttpClient4Engine(client, httpContext);
 
-      ResteasyClientBuilder builder = new ResteasyClientBuilder().httpEngine(httpEngine);
+      // NEXUS-46395: build a fresh BasicHttpContext per request and route
+      // SSLContextSelector.USE_TRUST_STORE through it when the caller has asked for the
+      // Nexus-managed truststore. RESTEasy 7's ApacheHttpClient43Engine consumes the
+      // context via HttpContextProvider#getContext (replacing v3's plain (HttpClient,
+      // HttpContext) ctor); we hand it a fresh context per call so concurrent invocations
+      // don't share mutable state.
+      final boolean useTrustStore = configuration.getUseTrustStore();
+      HttpContextProvider contextProvider = () -> {
+        HttpContext ctx = new BasicHttpContext();
+        if (useTrustStore) {
+          ctx.setAttribute(SSLContextSelector.USE_TRUST_STORE, true);
+        }
+        return ctx;
+      };
+
+      // NEXUS-46395: the (HttpClient, HttpContextProvider) ctor sets
+      // closeHttpClient=false internally. The (HttpClient, boolean) ctor defaults that
+      // flag to true, which would dispose the application-wide pooled HttpClient on the
+      // first Client#close() and break every subsequent caller (replication, IQ, S3
+      // metadata, etc.). Always go through the provider form.
+      ClientHttpEngine httpEngine = new ApacheHttpClient43Engine(client, contextProvider);
+
+      // NEXUS-46395: ResteasyClientBuilder became abstract in RESTEasy 7; obtain an
+      // implementation through the JAX-RS ClientBuilder SPI and cast.
+      ResteasyClientBuilder builder =
+          (ResteasyClientBuilder) jakarta.ws.rs.client.ClientBuilder.newBuilder();
+      builder.httpEngine(httpEngine);
 
       if (configuration.getCustomizer() != null) {
         configuration.getCustomizer().apply(builder);

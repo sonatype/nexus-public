@@ -15,10 +15,10 @@ package org.sonatype.nexus.api.rest.selfhosted.user;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.ws.rs.core.Response.Status;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.core.Response.Status;
 
 import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import org.sonatype.nexus.rest.ValidationErrorXO;

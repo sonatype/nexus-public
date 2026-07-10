@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-metrics</artifactId>
@@ -29,7 +29,7 @@
 
   <properties>
     <metrics.version>4.2.30</metrics.version>
-    <prometheus.version>0.6.0</prometheus.version>
+    <prometheus.version>0.16.0</prometheus.version>
   </properties>
 
   <dependencyManagement>
@@ -56,6 +56,18 @@
             <artifactId>slf4j-api</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <!-- NEXUS-46395: Jakarta-namespace replacement for the legacy
+           com.codahale.metrics:metrics-servlet (which is locked on javax.servlet). The new
+           coordinates put InstrumentedFilter in the io.dropwizard.metrics.servlet package and
+           bind to jakarta.servlet.Filter. The metric NAMES emitted are unchanged when our
+           Spring InstrumentedFilter subclass extends it - getClass().getName() resolves to
+           our own subclass FQN, exactly as it did pre-migration with the codahale parent. -->
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-jakarta-servlet</artifactId>
+        <version>${metrics.version}</version>
       </dependency>
 
       <dependency>

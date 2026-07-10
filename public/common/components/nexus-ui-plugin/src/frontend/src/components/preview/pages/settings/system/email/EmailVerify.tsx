@@ -13,7 +13,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
-import { Send, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 
 import { SettingsTextInput, SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { EmailVerificationResult } from './types';
@@ -97,6 +97,7 @@ export function EmailVerify({ onSendTest, loading = false, disabled = false }: E
           loading={loading}
           className="email-verify__button"
           icon={Send}
+          data-analytics-id="nxrm-email-test"
         >
           Send Test
         </SettingsButton>
@@ -107,17 +108,11 @@ export function EmailVerify({ onSendTest, loading = false, disabled = false }: E
         <Box className="email-verify__result">
           {result.success ? (
             <SettingsAlert type="success">
-              <Flex align="center" gap="2">
-                <CheckCircle size={16} />
-                <Text>Test email sent successfully! Check your inbox.</Text>
-              </Flex>
+              <Text>Test email sent successfully! Check your inbox.</Text>
             </SettingsAlert>
           ) : (
             <SettingsAlert type="error">
-              <Flex align="center" gap="2">
-                <XCircle size={16} />
-                <Text>Failed to send test email: {result.reason || 'Unable to verify. Check email configuration and try again.'}</Text>
-              </Flex>
+              <Text>Failed to send test email: {result.reason || 'Unable to verify. Check email configuration and try again.'}</Text>
             </SettingsAlert>
           )}
         </Box>
@@ -135,5 +130,3 @@ export function EmailVerify({ onSendTest, loading = false, disabled = false }: E
 }
 
 export default EmailVerify;
-
-

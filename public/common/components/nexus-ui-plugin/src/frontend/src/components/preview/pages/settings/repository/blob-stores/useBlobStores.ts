@@ -37,6 +37,9 @@ const URLS = {
 // Convert MB to bytes (matching UnitUtil.megaBytesToBytes from Default UI)
 const megaBytesToBytes = (mb: number): number => mb * 1024 * 1024;
 
+// Convert bytes to MB — inverse of megaBytesToBytes, used when loading API responses
+const bytesToMegaBytes = (bytes: number): number => bytes / (1024 * 1024);
+
 // Deep trim all string values in an object
 const trimStrings = (obj: Record<string, unknown>): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
@@ -72,7 +75,7 @@ const formatBlobStoreData = (data: BlobStoreFormData): Record<string, unknown> =
 
   // Type-specific fields only
   const blobType = data.type?.toLowerCase();
-  if (blobType === 'file' || blobType === 'File') {
+  if (blobType === 'file') {
     if (data.path) result.path = data.path.trim();
   } else if (blobType === 's3' || blobType === 'azure' || blobType === 'google') {
     if (data.bucketConfiguration) result.bucketConfiguration = data.bucketConfiguration;
@@ -137,12 +140,18 @@ export function useBlobStoresList(): UseBlobStoresListResult {
       const responseData = await restClient.get<{ data?: BlobStore[] } | BlobStore[]>(URLS.BLOB_STORES_LIST);
       const data = (responseData as { data?: BlobStore[] })?.data || responseData || [];
       // Transform data to match expected format
-      const transformed = (Array.isArray(data) ? data : []).map((blobStore: BlobStore) => ({
-        ...blobStore,
+      // API returns 'typeName' but UI expects 'type' for display
+      const transformed = (Array.isArray(data) ? data : []).map((blobStore: Record<string, unknown>) => ({
+        name: blobStore.name,
+        type: blobStore.typeName as string,
+        typeId: blobStore.typeId as string,
+        path: blobStore.path as string | undefined,
         available: !blobStore.unavailable,
-        blobCount: blobStore.unavailable ? -1 : blobStore.blobCount,
-        totalSizeInBytes: blobStore.unavailable ? -1 : blobStore.totalSizeInBytes,
-        availableSpaceInBytes: blobStore.unlimited ? Infinity : blobStore.availableSpaceInBytes
+        unavailable: blobStore.unavailable as boolean | undefined,
+        blobCount: blobStore.unavailable ? -1 : (blobStore.blobCount as number),
+        totalSizeInBytes: blobStore.unavailable ? -1 : (blobStore.totalSizeInBytes as number),
+        availableSpaceInBytes: (blobStore.unlimited as boolean) ? Infinity : (blobStore.availableSpaceInBytes as number),
+        unlimited: blobStore.unlimited as boolean | undefined
       }));
       setBlobStores(transformed);
     } catch (err) {
@@ -236,9 +245,25 @@ export function useBlobStore(name?: string, type?: string): UseBlobStoreResult {
       setLoading(true);
       setError(null);
       try {
-        const blobStoreData = await restClient.get<BlobStoreFormData>(URLS.BLOB_STORE_SINGLE(type, name));
-        if (blobStoreData) {
-          setBlobStore(blobStoreData);
+        // The REST API URL requires a lowercase type segment (e.g. "file", not "File")
+        const rawData = await restClient.get<BlobStoreFormData>(URLS.BLOB_STORE_SINGLE(type.toLowerCase(), name));
+        if (rawData) {
+          // Transform the raw API response into the form data shape:
+          //  - softQuota.enabled is not returned by the API; derive it from presence of softQuota
+          //  - softQuota.limit is in bytes from the API; the form field works in MB
+          const transformed: BlobStoreFormData = {
+            ...rawData,
+            softQuota: rawData.softQuota
+              ? {
+                  ...rawData.softQuota,
+                  enabled: true,
+                  limit: rawData.softQuota.limit != null
+                    ? bytesToMegaBytes(rawData.softQuota.limit as unknown as number)
+                    : undefined,
+                }
+              : undefined,
+          };
+          setBlobStore(transformed);
         } else {
           setError('Failed to load blob store');
         }
@@ -274,12 +299,14 @@ export function useBlobStore(name?: string, type?: string): UseBlobStoreResult {
     const saveData = formatBlobStoreData(data);
     
     try {
+      // REST API URL segments require lowercase type (e.g. "file", not "File")
+      const typeSegment = data.type.toLowerCase();
       if (name) {
         // Update existing blob store
-        await restClient.put(URLS.BLOB_STORE_SINGLE(data.type, name), saveData);
+        await restClient.put(URLS.BLOB_STORE_SINGLE(typeSegment, name), saveData);
       } else {
         // Create new blob store
-        await restClient.post(URLS.BLOB_STORE_CREATE(data.type), saveData);
+        await restClient.post(URLS.BLOB_STORE_CREATE(typeSegment), saveData);
       }
     } catch (err: unknown) {
       // Parse the API error to extract meaningful message

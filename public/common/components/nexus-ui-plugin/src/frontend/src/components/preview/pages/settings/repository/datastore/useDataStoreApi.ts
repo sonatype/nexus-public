@@ -63,7 +63,6 @@ export function useDataStoreApi() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Updating datastore config:', JSON.stringify(config, null, 2));
       // restClient.put() returns data directly, not Axios response
       const result = await restClient.put<DataStoreConfig>(DATASTORE_URL, config);
       return result || config;

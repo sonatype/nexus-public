@@ -38,22 +38,23 @@ jest.mock('../../../../../shared/form', () => ({
       {children}
     </div>
   ),
-  SettingsTextInput: ({ label, value, onChange }) => (
+  SettingsTextInput: ({ label, value, onChange, error }) => (
     <div>
       <label>{label}</label>
-      <input 
-        value={value || ''} 
+      <input
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         data-testid={`input-${label}`}
       />
+      {error && <p data-testid={`error-${label}`}>{error}</p>}
     </div>
   ),
   SettingsPasswordInput: ({ label, value, onChange }) => (
     <div>
       <label>{label}</label>
-      <input 
+      <input
         type="password"
-        value={value || ''} 
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         data-testid={`password-${label}`}
       />
@@ -72,9 +73,9 @@ jest.mock('../../../../../shared/form', () => ({
   SettingsCheckbox: ({ label, checked, onChange }) => (
     <div>
       <label>
-        <input 
-          type="checkbox" 
-          checked={checked} 
+        <input
+          type="checkbox"
+          checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           data-testid={`checkbox-${label}`}
         />
@@ -177,6 +178,27 @@ describe('S3BlobStoreSettings', () => {
   it('shows documentation link', () => {
     render(<S3BlobStoreSettings {...defaultProps} />);
     expect(screen.getByText('View Documentation →')).toBeInTheDocument();
+  });
+
+  describe('field-level validation messages', () => {
+    it('shouldDisplayBucketNameErrorWhenProvided', () => {
+      render(
+        <S3BlobStoreSettings
+          {...defaultProps}
+          errors={{ 'bucketConfiguration.bucket.name': 'Bucket name must be between 3 and 63 characters' }}
+        />
+      );
+
+      expect(screen.getByTestId('error-Bucket')).toHaveTextContent(
+        'Bucket name must be between 3 and 63 characters'
+      );
+    });
+
+    it('shouldNotDisplayBucketNameErrorWhenAbsent', () => {
+      render(<S3BlobStoreSettings {...defaultProps} />);
+
+      expect(screen.queryByTestId('error-Bucket')).not.toBeInTheDocument();
+    });
   });
 });
 

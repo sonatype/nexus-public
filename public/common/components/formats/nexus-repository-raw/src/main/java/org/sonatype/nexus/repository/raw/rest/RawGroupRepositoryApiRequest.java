@@ -16,14 +16,17 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
+import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 3.24
  */
+@JsonFilter(SwaggerEditionVisibility.NAME)
 @JsonIgnoreProperties({"format", "type"})
 public class RawGroupRepositoryApiRequest
     extends GroupRepositoryApiRequest

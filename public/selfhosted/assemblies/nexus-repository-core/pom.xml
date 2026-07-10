@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.assemblies</groupId>
     <artifactId>nexus-selfhosted-assemblies-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-repository-core</artifactId>
@@ -71,10 +71,6 @@
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-servlets</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-servlet</artifactId>
     </dependency>
     <dependency>
@@ -94,16 +90,11 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-jmx</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.ee8</groupId>
-      <artifactId>jetty-ee8-servlet</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.eclipse.jetty.ee8</groupId>
-          <artifactId>jetty-ee8-nested</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!-- NEXUS-46395: the upstream org.eclipse.jetty.ee10:jetty-ee10-servlet is intentionally
+         NOT declared here. The Nexus-modified jetty-ee10-servlet arrives transitively via
+         nexus-spring (which depends on it directly). Other transitives that drag in the
+         upstream jar (e.g. jetty-ee10-webapp) exclude it via the pattern in
+         nexus-bootstrap-spring/pom.xml. -->
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna-platform</artifactId>
@@ -437,6 +428,52 @@
                   <excludes combine.children="append">
                     <!-- Ban private -->
                     <exclude>com.sonatype.nexus*</exclude>
+                    <!--
+                      NEXUS-46395: ban Java EE 8 (javax.*) coordinates that have Jakarta EE 10
+                      replacements. The runtime is fully Jakarta-native; these guard against any
+                      future dependency change accidentally re-introducing javax-* artifacts.
+                      Replacements (mechanical groupId/package rename per Jakarta EE 9+ spec):
+                        javax.servlet:*     -> jakarta.servlet:*
+                        javax.inject:*      -> jakarta.inject:*
+                        javax.ws.rs:*       -> jakarta.ws.rs:*
+                        javax.validation:*  -> jakarta.validation:*
+                        javax.enterprise:*  -> jakarta.enterprise:*       (CDI)
+                        javax.el:*          -> jakarta.el:*               (Expression Language)
+                        javax.interceptor:* -> jakarta.interceptor:*
+                        javax.transaction:* -> jakarta.transaction:*      (JTA)
+                        javax.xml.bind:*    -> jakarta.xml.bind:*         (JAXB)
+                        javax.activation:*  -> jakarta.activation:*       (Jakarta Activation)
+                        javax.mail:*        -> jakarta.mail:*             (Jakarta Mail; note our
+                                                                          Mail impl ships at
+                                                                          com.sun.mail:jakarta.mail,
+                                                                          a different groupId)
+                      Intentionally NOT banned:
+                        javax.annotation:*  Google Cloud gRPC stubs emit @javax.annotation.Generated
+                                            on generated classes; this is a third-party transitive
+                                            (via nexus-blobstore-google-cloud, only present in Pro)
+                                            we can't cleanly displace. Our own code is on
+                                            jakarta.annotation.{PostConstruct,PreDestroy,Resource,...}
+                                            for the JSR-250 lifecycle annotations; the JSR-305 nullness
+                                            annotations (javax.annotation.{Nullable,Nonnull,...}, ~960
+                                            uses across the codebase) come from
+                                            com.google.code.findbugs:jsr305 - a different groupId,
+                                            so this ban does not affect them.
+                        javax.cache:*       JSR-107 / JCache; group name unrelated to EE namespace,
+                                            no Jakarta replacement exists.
+                        com.google.code.findbugs:jsr305 provides javax.annotation.Nullable etc -
+                                            different group, JSR-305 stays javax.* by spec.
+                    -->
+                    <exclude>javax.servlet:*</exclude>
+                    <exclude>javax.inject:*</exclude>
+                    <exclude>javax.ws.rs:*</exclude>
+                    <exclude>javax.validation:*</exclude>
+                    <exclude>javax.enterprise:*</exclude>
+                    <exclude>javax.el:*</exclude>
+                    <exclude>javax.interceptor:*</exclude>
+                    <exclude>javax.transaction:*</exclude>
+                    <exclude>javax.xml.bind:*</exclude>
+                    <exclude>javax.activation:*</exclude>
+                    <exclude>javax.mail:*</exclude>
                   </excludes>
                 </bannedDependencies>
               </rules>

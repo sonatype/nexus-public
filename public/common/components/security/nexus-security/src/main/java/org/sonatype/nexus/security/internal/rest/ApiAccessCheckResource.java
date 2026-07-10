@@ -19,13 +19,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response.Status;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -44,11 +44,13 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -60,7 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 
 /**
@@ -71,7 +73,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENA
 @Produces(APPLICATION_JSON)
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path(ApiAccessCheckResource.RESOURCE_PATH)
-@Api(value = "Security management: API access")
+@Tag(name = "Security management: API access")
 public class ApiAccessCheckResource
     implements Resource, ApiAccessCheckResourceDoc
 {
@@ -157,15 +159,16 @@ public class ApiAccessCheckResource
   @POST
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:read")
-  @ApiOperation("Check if a user or role has access to an API endpoint")
+  @Operation(summary = "Check if a user or role has access to an API endpoint")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "Access check result", response = ApiAccessResultXo.class),
-      @ApiResponse(code = 400, message = "Invalid request - userId and roleId are mutually exclusive"),
-      @ApiResponse(code = 403, message = "Insufficient permissions"),
-      @ApiResponse(code = 404, message = "User or role not found")
+      @ApiResponse(responseCode = "200", description = "Access check result",
+          content = @Content(schema = @Schema(implementation = ApiAccessResultXo.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid request - userId and roleId are mutually exclusive"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions"),
+      @ApiResponse(responseCode = "404", description = "User or role not found")
   })
   public ApiAccessResultXo checkAccess(
-      @ApiParam(value = "Access check request", required = true) @NotNull @Valid final ApiAccessCheckXo request)
+      @Parameter(description = "Access check request", required = true) @NotNull @Valid final ApiAccessCheckXo request)
   {
     // Guard: if the registry has not yet been populated (e.g. onContextRefreshed failed or
     // has not fired yet), every getPermissionForEndpoint call returns null — which would

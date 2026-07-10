@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-security</artifactId>
@@ -69,6 +69,8 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
         <version>${apache-shiro.version}</version>
+        <!-- NEXUS-46395: jakarta classifier swaps Shiro to its Jakarta EE 9+ build (jakarta.servlet) -->
+        <classifier>jakarta</classifier>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -93,10 +95,34 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-web</artifactId>
         <version>${apache-shiro.version}</version>
+        <!-- NEXUS-46395: jakarta classifier swaps Shiro to its Jakarta EE 9+ build (jakarta.servlet) -->
+        <classifier>jakarta</classifier>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+          </exclusion>
+          <!--
+          NEXUS-46395: kill ALL transitive shiro modules from this declaration. The
+          ${apache-shiro.version}-jakarta classifier was packaged with a POM that still
+          references the unclassified (javax.servlet) shiro-core, which in turn drags in
+          shiro-lang/shiro-cache/shiro-crypto-*/shiro-config-core/shiro-event AND the
+          unclassified shiro-web. Both unclassified flavors then ship alongside our
+          desired :jakarta variants, producing a 109-class split-package collision in
+          org.apache.shiro.web.* (Shiro’s servlet integration) where ClassLoader.loadClass
+          becomes order-dependent. Excluding the whole org.apache.shiro group is safe
+          because shiro-core:jakarta is a fat-jar that already contains every support
+          module's classes (verified: shiro-cache 8/8, shiro-crypto-hash 25/25,
+          shiro-crypto-core 4/4, shiro-crypto-cipher 13/13, shiro-config-core 6/6,
+          shiro-event 13/13). This subsumes the previous shiro-config-ogdl exclusion.
+          -->
+          <exclusion>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -105,10 +131,22 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
         <version>${apache-shiro.version}</version>
+        <!-- NEXUS-46395: jakarta classifier swaps Shiro to its Jakarta EE 9+ build (jakarta.servlet) -->
+        <classifier>jakarta</classifier>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <!--
+          NEXUS-46395: shiro-spring:jakarta’s POM references the unclassified shiro-core
+          and shiro-web, smuggling the javax.servlet variant onto the runtime classpath
+          alongside our :jakarta declarations. Same fix as on shiro-web above. See the
+          comment block on shiro-web for the full justification.
+          -->
+          <exclusion>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

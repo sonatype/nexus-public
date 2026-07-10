@@ -28,7 +28,7 @@
       autoLoad: false,
       paramOrder: ['node', 'repositoryName', 'filter'],
       defaultRootId: '/',
-      folderSort: true,
+      folderSort: false,
       root: {
           node: '/',
           expanded: false

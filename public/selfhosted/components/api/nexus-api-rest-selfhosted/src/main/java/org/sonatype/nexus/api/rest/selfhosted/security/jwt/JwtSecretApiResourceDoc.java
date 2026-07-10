@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.jwt;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
@@ -27,13 +27,13 @@ import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
  *
  * @since 3.38
  */
-@Api(value = "Security management: JWT")
+@Tag(name = "Security management: JWT")
 public interface JwtSecretApiResourceDoc
 {
-  @ApiOperation("Reset JWT secret (note that session will be expired for the all logged-in users)")
+  @Operation(summary = "Reset JWT secret (note that session will be expired for the all logged-in users)")
   @ApiResponses(value = {
-      @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
+      @ApiResponse(responseCode = "401", description = AUTHENTICATION_REQUIRED),
+      @ApiResponse(responseCode = "403", description = INSUFFICIENT_PERMISSIONS)
   })
   Response resetSecret();
 }

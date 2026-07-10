@@ -14,11 +14,11 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 
 import org.sonatype.nexus.repository.rest.api.SuggestXO;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
@@ -27,11 +27,16 @@ import org.sonatype.nexus.repository.search.SearchResponse;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.rest.Resource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -39,7 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
@@ -52,7 +57,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Path(SuggestResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-@Api(value = "Search", description = "Search suggestions for autocomplete")
+@Tag(name = "Search", description = "Search suggestions for autocomplete")
 public class SuggestResource
     implements Resource
 {
@@ -74,23 +79,22 @@ public class SuggestResource
   }
 
   @GET
-  @ApiOperation(
-      value = "Get search suggestions for autocomplete",
-      notes = "Returns lightweight component suggestions matching the query. " +
-          "Optimized for fast typeahead with minimal response payload.",
-      response = SuggestXO.class,
-      responseContainer = "List")
+  @Operation(summary = "Get search suggestions for autocomplete",
+      description = "Returns lightweight component suggestions matching the query. " +
+          "Optimized for fast typeahead with minimal response payload.")
   @ApiResponses({
-      @ApiResponse(code = 200, message = "Suggestions returned successfully"),
-      @ApiResponse(code = 400, message = "Query too short (minimum 2 characters)")
+      @ApiResponse(responseCode = "200", description = "Suggestions returned successfully",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = SuggestXO.class)))),
+      @ApiResponse(responseCode = "400", description = "Query too short (minimum 2 characters)")
   })
   public List<SuggestXO> suggest(
-      @ApiParam(value = "Search query (minimum 2 characters)", required = true) @QueryParam("q") final String query,
+      @Parameter(description = "Search query (minimum 2 characters)",
+          required = true) @QueryParam("q") final String query,
 
-      @ApiParam(value = "Filter by format (e.g., maven2, npm, pypi)") @QueryParam("format") final String format,
+      @Parameter(description = "Filter by format (e.g., maven2, npm, pypi)") @QueryParam("format") final String format,
 
-      @ApiParam(
-          value = "Maximum number of suggestions (default: 10, max: 20)") @QueryParam("limit") final Integer limit)
+      @Parameter(
+          description = "Maximum number of suggestions (default: 10, max: 20)") @QueryParam("limit") final Integer limit)
   {
     // Validate query length
     if (query == null || query.trim().length() < MIN_QUERY_LENGTH) {

@@ -20,8 +20,10 @@ import * as tagsApi from '../tags.api';
 
 jest.mock('../hooks/useFilteredTags');
 jest.mock('../tags.api');
+const mockToastSuccess = jest.fn();
+const mockToastError = jest.fn();
 jest.mock('../../../shared/Toast', () => ({
-  useToast: () => ({ success: jest.fn(), error: jest.fn() }),
+  useToast: () => ({ success: mockToastSuccess, error: mockToastError }),
 }));
 
 const mockUseFilteredTags = useFilteredTags as jest.MockedFunction<typeof useFilteredTags>;
@@ -54,6 +56,7 @@ const defaultHookReturn = {
   currentPage: 0,
   pageSize: 20,
   totalItems: 2,
+  totalUnfilteredItems: 2,
   setFilters: jest.fn(),
   toggleSort: jest.fn(),
   setPage: jest.fn(),
@@ -116,6 +119,55 @@ describe('TagsPageRadix', () => {
       render(<TagsPageRadix />, { wrapper: TestWrapper });
       expect(screen.getByText('Showing')).toBeInTheDocument();
       expect(screen.getByText(/of 2/)).toBeInTheDocument();
+    });
+
+    it('renders total unfiltered count in page header description', () => {
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        totalUnfilteredItems: 150,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('page-header')).toHaveTextContent('150');
+    });
+
+    it('shows filtered count in header when name filter is active', () => {
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        filters: { ...defaultHookReturn.filters, nameFilter: 'release' },
+        tags: [mockTags[0]],
+        totalItems: 1,
+        totalUnfilteredItems: 150,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('page-header')).toHaveTextContent('1');
+    });
+
+    it('shows 0 in header when name filter matches nothing', () => {
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        filters: { ...defaultHookReturn.filters, nameFilter: 'nonexistent' },
+        tags: [],
+        totalItems: 0,
+        totalUnfilteredItems: 150,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('page-header')).toHaveTextContent('0');
+    });
+
+    it('shows "-" in header when loading, even if filter is active', () => {
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        loading: true,
+        filters: { ...defaultHookReturn.filters, nameFilter: 'release' },
+        tags: [],
+        totalItems: 0,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('page-header')).toHaveTextContent('-');
     });
 
     it('renders component count for each tag', () => {
@@ -536,6 +588,125 @@ describe('TagsPageRadix', () => {
     it('renders search input with placeholder', () => {
       render(<TagsPageRadix />, { wrapper: TestWrapper });
       expect(screen.getByPlaceholderText(/filter tags by name/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('create tag error handling', () => {
+    it('shows error toast when createTag API fails', async () => {
+      mockToastError.mockClear();
+      mockCreateTag.mockRejectedValue(new Error('Already exists'));
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      fireEvent.click(screen.getByTestId('create-tag-button'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\., release-1\.0/i)).toBeInTheDocument();
+      });
+
+      const tagNameInput = screen.getByPlaceholderText(/e\.g\., release-1\.0/i);
+      fireEvent.change(tagNameInput, { target: { value: 'new-tag' } });
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(mockCreateTag).toHaveBeenCalledWith('new-tag');
+        expect(mockToastError).toHaveBeenCalled();
+      });
+    });
+
+    it('creates tag on Enter keydown when name is valid', async () => {
+      mockCreateTag.mockResolvedValue({ name: 'new-tag', attributes: null } as any);
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      fireEvent.click(screen.getByTestId('create-tag-button'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\., release-1\.0/i)).toBeInTheDocument();
+      });
+
+      const tagNameInput = screen.getByPlaceholderText(/e\.g\., release-1\.0/i);
+      fireEvent.change(tagNameInput, { target: { value: 'new-tag' } });
+      fireEvent.keyDown(tagNameInput, { key: 'Enter' });
+
+      await waitFor(() => {
+        expect(mockCreateTag).toHaveBeenCalledWith('new-tag');
+      });
+    });
+  });
+
+  describe('activity days filter', () => {
+    it('calls setFilters when activity days option is checked', () => {
+      const mockSetFilters = jest.fn();
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        setFilters: mockSetFilters,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+
+      const activityLabel = screen.getByText('Active (< 30 days)');
+      const parentRow = activityLabel.parentElement;
+      const checkbox = parentRow?.querySelector('button[role="checkbox"]');
+      if (checkbox) {
+        fireEvent.click(checkbox);
+        expect(mockSetFilters).toHaveBeenCalledWith(
+          expect.objectContaining({ activityDays: expect.arrayContaining([30]) })
+        );
+      }
+    });
+
+    it('removes activity days filter when already checked', () => {
+      const mockSetFilters = jest.fn();
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        filters: { ...defaultHookReturn.filters, activityDays: [30] },
+        setFilters: mockSetFilters,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+
+      const activityLabel = screen.getByText('Active (< 30 days)');
+      const parentRow = activityLabel.parentElement;
+      const checkbox = parentRow?.querySelector('button[role="checkbox"]');
+      if (checkbox) {
+        fireEvent.click(checkbox);
+        expect(mockSetFilters).toHaveBeenCalledWith(
+          expect.objectContaining({ activityDays: [] })
+        );
+      }
+    });
+
+    it('removes component count range when already checked', () => {
+      const mockSetFilters = jest.fn();
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        filters: { ...defaultHookReturn.filters, componentCountRanges: ['1-10'] },
+        setFilters: mockSetFilters,
+      });
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+
+      const textEl = screen.getByText('1-10');
+      const parentRow = textEl.parentElement;
+      const checkbox = parentRow?.querySelector('button[role="checkbox"]');
+      if (checkbox) {
+        fireEvent.click(checkbox);
+        expect(mockSetFilters).toHaveBeenCalledWith(
+          expect.objectContaining({ componentCountRanges: [] })
+        );
+      }
+    });
+  });
+
+  describe('mobile filter drawer', () => {
+    it('renders mobile filter button and clicking it does not crash', async () => {
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      const filterButton = screen.getByRole('button', { name: /open filters/i });
+      expect(filterButton).toBeInTheDocument();
+      fireEvent.click(filterButton);
+      // Tag list remains rendered after click (drawer open doesn't unmount the page)
+      await waitFor(() => {
+        expect(screen.getByText('Tags')).toBeInTheDocument();
+      });
     });
   });
 });

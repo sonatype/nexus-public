@@ -115,7 +115,7 @@ describe('ContentSelectorsPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('content-selectors-list')).toBeInTheDocument();
     });
-    expect(screen.getByText('Content Selectors')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Content Selectors' })).toBeInTheDocument();
   });
 
   it('shows create selector form when Create Selector button is clicked', async () => {

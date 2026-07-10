@@ -24,6 +24,7 @@ import {
   RepositoryFormErrors,
   BlobStore,
 } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
 
 interface StorageFacetProps {
   formData: RepositoryFormData;
@@ -64,30 +65,30 @@ export function StorageFacet({
   }));
 
   return (
-    <SettingsFormSection title="Storage">
+    <SettingsFormSection title={UIStrings.STORAGE.SECTION.title}>
       {!isCloud && (
         <SettingsSelect
           name="storage-blobStoreName"
-          label="Blob Store"
+          label={UIStrings.STORAGE.BLOB_STORE.label}
           value={formData.storage?.blobStoreName || ''}
           onChange={handleBlobStoreChange}
           options={[
-            { value: '', label: 'Select a blob store...' },
+            { value: '', label: UIStrings.STORAGE.BLOB_STORE.selectPlaceholder },
             ...blobStoreOptions,
           ]}
           error={errors?.storage?.blobStoreName}
           disabled={isEdit}
           required
-          helpText={isEdit ? 'Blob store cannot be changed after creation' : 'Select the blob store used to store repository contents'}
+          helpText={isEdit ? UIStrings.STORAGE.BLOB_STORE.editHelpText : UIStrings.STORAGE.BLOB_STORE.helpText}
         />
       )}
 
       <SettingsCheckbox
         name="storage-strictContentTypeValidation"
-        label="Strict Content Type Validation"
+        label={UIStrings.STORAGE.STRICT_CONTENT_VALIDATION.label}
         checked={formData.storage?.strictContentTypeValidation ?? true}
         onChange={handleContentValidationChange}
-        description="Validate that all content uploaded to this repository is of a MIME type appropriate for the repository format"
+        description={UIStrings.STORAGE.STRICT_CONTENT_VALIDATION.description}
       />
     </SettingsFormSection>
   );

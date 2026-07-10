@@ -14,15 +14,51 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import React from 'react';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {indexBy, pathOr, prop} from 'ramda';
 
-const OVER_LIMITS = 'Over limits';
-const NEAR_LIMITS = '75% usage';
-const UNDER_LIMITS = 'Under limits';
+// CE throttle status values
+export const OVER_LIMITS = 'Over limits';
+export const NEAR_LIMITS = '75% usage';
+export const UNDER_LIMITS = 'Under limits';
+
+// CE threshold constants
+export const CE_REQUESTS_HARD_THRESHOLD = 100000;
+export const CE_COMPONENTS_HARD_THRESHOLD = 40000;
+
+// localStorage keys for Test Hub scenarios
+export const STORAGE_KEY_CE_THROTTLING_STATUS = 'SONATYPE_TEST_CE_THROTTLING_STATUS';
+export const STORAGE_KEY_CE_GRACE_PERIOD_ENDS = 'SONATYPE_TEST_CE_GRACE_PERIOD_ENDS';
+export const STORAGE_KEY_CE_COMPONENTS = 'SONATYPE_TEST_CE_COMPONENTS';
+export const STORAGE_KEY_CE_REQUESTS = 'SONATYPE_TEST_CE_REQUESTS';
 
 function getMetricData(usage, metricName) {
-  const data = usage?.find(m => m.metricName === metricName) ?? {};
+  // Check for test override values (used by Test Hub scenarios)
+  // Only use localStorage if it has truthy values (Test Hub explicitly sets values)
+  const testComponents = typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_TEST_CE_COMPONENTS');
+  const testRequests = typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_TEST_CE_REQUESTS');
+
+  // If test overrides are set, use them for metric values
+  let data = usage?.find(m => m.metricName === metricName) ?? {};
+  if (testComponents || testRequests) {
+    if (metricName === 'component_total_count' && testComponents) {
+      data = {
+        ...data,
+        metricValue: parseInt(testComponents, 10),
+        thresholds: [{ thresholdName: 'HARD_THRESHOLD', thresholdValue: CE_COMPONENTS_HARD_THRESHOLD }],
+        aggregates: [{ name: 'component_total_count', value: parseInt(testComponents, 10), period: 'peak_recorded_count_30d' }]
+      };
+    } else if (metricName === 'peak_requests_per_day' && testRequests) {
+      data = {
+        ...data,
+        metricValue: parseInt(testRequests, 10),
+        thresholds: [{ thresholdName: 'HARD_THRESHOLD', thresholdValue: CE_REQUESTS_HARD_THRESHOLD }],
+        aggregates: [{ name: 'content_request_count', value: parseInt(testRequests, 10), period: 'peak_recorded_count_30d' }]
+      };
+    }
+  }
+
   const { aggregates = [], thresholds = [], metricValue = 0 } = data;
   // Handle null values from API after session timeout by providing empty arrays
   const safeThresholds = thresholds ?? [];
@@ -65,11 +101,41 @@ function useViewLearnMoreUrl() {
 }
 
 function useGracePeriodEndsDate() {
+  // Check for test override first (used by Test Hub scenarios)
+  // Only use localStorage if it has a truthy value (Test Hub explicitly sets values)
+  const testGracePeriod = typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_TEST_CE_GRACE_PERIOD_ENDS');
+  if (testGracePeriod) {
+    return new Date(testGracePeriod);
+  }
   return new Date(ExtJS.state().getValue('nexus.community.gracePeriodEnds'));
 }
 
 function useThrottlingStatusValue () {
+  // Check for test override first (used by Test Hub scenarios)
+  // Only use localStorage if it has a truthy value (Test Hub explicitly sets values)
+  const testOverride = typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_TEST_CE_THROTTLING_STATUS');
+  if (testOverride) {
+    return testOverride;
+  }
   return ExtJS.state().getValue('nexus.community.throttlingStatus');
+}
+
+function useEdition() {
+  return ExtJS.useState(() => ExtJS.state().getEdition());
+}
+
+function useCommunityEdition() {
+  // Always call useEdition() to maintain hook ordering (React Rules of Hooks)
+  const edition = useEdition();
+
+  // Check for test override after hook call (used by Test Hub scenarios)
+  // Only use localStorage if it has a truthy value (Test Hub explicitly sets values)
+  const testOverride = typeof localStorage !== 'undefined' && localStorage.getItem('SONATYPE_TEST_CE_THROTTLING_STATUS');
+  if (testOverride) {
+    return true; // Test scenarios always simulate CE mode
+  }
+
+  return edition === 'COMMUNITY';
 }
 
 function useGracePeriodEndDate() {
@@ -114,6 +180,27 @@ function useThrottlingStatus() {
   return 'NO_THROTTLING';
 }
 
+/**
+ * Custom hook to force re-render when specified localStorage keys change.
+ * Used by Test Hub scenarios to enable live preview of different CE states.
+ *
+ * @param {string[]} storageKeys - Array of localStorage keys to watch
+ * @returns {void} - Triggers re-render when any watched key changes
+ */
+export function useTestOverrideDetection(storageKeys) {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+
+  React.useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (storageKeys.includes(e.key)) {
+        forceUpdate();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [storageKeys]);
+}
+
 export const helperFunctions = {
   useViewLearnMoreUrl,
   useViewPurchaseALicenseUrl,
@@ -122,8 +209,10 @@ export const helperFunctions = {
   useGracePeriodEndsDate,
   useThrottlingStatusValue,
   getMetricData,
+  useDaysUntilGracePeriodEnds,
+  useEdition,
+  useCommunityEdition,
   OVER_LIMITS,
   NEAR_LIMITS,
   UNDER_LIMITS,
-  useDaysUntilGracePeriodEnds,
 };

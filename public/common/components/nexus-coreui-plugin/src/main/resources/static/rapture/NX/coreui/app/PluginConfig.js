@@ -324,6 +324,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
           }
       },
     {
+      id: 'NX.coreui.controller.SearchTerraformbackend',
+      active: function() {
+        return NX.app.Application.bundleActive('nexus-repository-terraform');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchSwift',
       active: function() {
         return NX.app.Application.bundleActive('nexus-repository-swift');

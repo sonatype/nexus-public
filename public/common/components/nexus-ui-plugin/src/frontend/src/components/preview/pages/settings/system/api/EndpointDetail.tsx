@@ -86,7 +86,7 @@ export function EndpointDetail({ row, fullSwagger, access }: EndpointDetailProps
   return (
     <Box className="api-endpoint-detail" aria-live="polite" data-testid="api-endpoint-detail">
       <Tabs.Root value={tab} onValueChange={setTab}>
-        <Box className="api-endpoint-detail__sticky-bar">
+        <Box className="api-endpoint-detail__detail-bar">
           <Box className="api-endpoint-detail__header" mb="2">
             <Flex align="center" gap="2" wrap="wrap" mb="2">
               <Badge size="2" color="blue">

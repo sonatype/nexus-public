@@ -19,6 +19,23 @@ import { SystemInformation, HASystemInformation, HANode } from './types';
 
 const { REST } = APIConstants;
 
+// Backend shape: { [sectionName]: { [nodeId]: sectionData } }
+// Frontend shape: { [nodeId]: { [sectionName]: sectionData } }
+function transposeHASystemInfo(
+  raw: Record<string, Record<string, unknown>>
+): HASystemInformation {
+  const result: HASystemInformation = {};
+  for (const [section, nodeMap] of Object.entries(raw)) {
+    if (nodeMap && typeof nodeMap === 'object') {
+      for (const [nodeId, sectionData] of Object.entries(nodeMap)) {
+        if (!result[nodeId]) result[nodeId] = {};
+        (result[nodeId] as Record<string, unknown>)[section] = sectionData;
+      }
+    }
+  }
+  return result;
+}
+
 // API endpoints
 const SYSTEM_INFO_URL = REST.SYSTEM_INFORMATION;
 const SYSTEM_INFO_HA_URL = REST.SYSTEM_INFORMATION_HA;
@@ -57,8 +74,8 @@ export function useSystemInfoApi() {
     setLoading(true);
     setError(null);
     try {
-      const data = await restClient.get<HASystemInformation>(SYSTEM_INFO_HA_URL);
-      return data || {};
+      const data = await restClient.get<Record<string, Record<string, unknown>>>(SYSTEM_INFO_HA_URL);
+      return transposeHASystemInfo(data || {});
     } catch (err: any) {
       const apiError = parseApiError(err);
       const message = apiError.message || 'Failed to load HA system information';
@@ -130,5 +147,3 @@ export function useSystemInfoApi() {
 }
 
 export default useSystemInfoApi;
-
-

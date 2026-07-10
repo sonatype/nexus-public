@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 import org.sonatype.nexus.security.privilege.Privilege;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 3.19
@@ -33,7 +33,7 @@ public abstract class ApiPrivilegeWithActionsRequest
   public static final String ACTIONS_KEY = "actions";
 
   @NotEmpty
-  @ApiModelProperty(NexusSecurityApiConstants.PRIVILEGE_ACTION_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.PRIVILEGE_ACTION_DESCRIPTION)
   private Collection<PrivilegeAction> actions;
 
   public ApiPrivilegeWithActionsRequest() {

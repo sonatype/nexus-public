@@ -46,13 +46,15 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
-import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD;
 
 /**
  * Tests for {@link AuthorizingRealmImpl}.
@@ -63,11 +65,11 @@ import static org.mockito.Mockito.when;
 public class AuthorizingRealmImplTest
     extends AbstractSecurityTest
 {
-  private AuthorizingRealmImpl realm;
+  protected AuthorizingRealmImpl realm;
 
-  private SecurityConfigurationManager configurationManager;
+  protected SecurityConfigurationManager configurationManager;
 
-  private SimplePrincipalCollection principal;
+  protected SimplePrincipalCollection principal;
 
   private MockedStatic<SecurityUtils> securityUtilsMock;
 
@@ -102,6 +104,7 @@ public class AuthorizingRealmImplTest
     securityUtilsMock.when(SecurityUtils::getSubject).thenReturn(mockSubject);
   }
 
+  @Override
   @AfterEach
   public void tearDown() throws Exception {
     if (securityUtilsMock != null) {
@@ -129,27 +132,50 @@ public class AuthorizingRealmImplTest
   }
 
   /**
-   * Verifies that repeated isPermitted calls for the same (principal, permission) pair return
-   * the cached result without re-scanning the full permission set (NEXUS-52583).
-   *
-   * The RolePermissionResolver is spied so we can count how many times the role->permission
-   * expansion runs. With the result cache in place it should only run once per unique permission,
-   * not once per isPermitted call.
+   * Verifies that the principal-level cache (NEXUS-52583) prevents repeated role expansion:
+   * PermissionsState is built at most once per principal, regardless of how many isPermitted
+   * calls are made. The RolePermissionResolver spy lets us assert that the expensive DB
+   * round-trip (resolvePermissionsInRole) runs at most once across all calls.
    */
   @Test
-  public void testIsPermittedResultIsCached() {
+  public void testIsPermittedResultIsCached() throws Exception {
+    RolePermissionResolver spyResolver = spy(lookup(RolePermissionResolver.class));
+    realm.setRolePermissionResolver(spyResolver);
+
     WildcardPermission granted = new WildcardPermission("app:config:read");
     WildcardPermission denied = new WildcardPermission("app:config:delete");
 
-    // First calls: permission set is built and results computed
+    // First calls: PermissionsState is built (role expansion runs once)
     assertTrue(realm.isPermitted(principal, granted));
     assertFalse(realm.isPermitted(principal, denied));
 
-    // Repeated calls for the same permissions must return the same result from the result cache
+    // Repeated calls: principal-level cache returns the same PermissionsState, so role
+    // expansion must not run again regardless of how many isPermitted calls are made.
     for (int i = 0; i < 10; i++) {
       assertTrue(realm.isPermitted(principal, granted));
       assertFalse(realm.isPermitted(principal, denied));
     }
+
+    // resolvePermissionsInRole called at most once — proves PermissionsState is built once,
+    // not once per isPermitted call (NEXUS-52583 principal-level cache, not per-permission cache).
+    verify(spyResolver, atMostOnce()).resolvePermissionsInRole(org.mockito.ArgumentMatchers.anyString());
+  }
+
+  /**
+   * Verifies that an exact permission (no wildcard) takes the O(1) HashSet fast path
+   * in PermissionsState.implies() rather than iterating the wildcard list.
+   * Indirectly verified by confirming correctness — if the fast path were broken,
+   * the granted exact permission would silently fall through to false.
+   */
+  @Test
+  public void testImpliesFastPathForExactPermission() {
+    WildcardPermission exact = new WildcardPermission("app:config:read");
+    WildcardPermission wildcard = new WildcardPermission("app:*");
+
+    // Exact match — should hit exactPermissions HashSet
+    assertTrue(realm.isPermitted(principal, exact));
+    // Wildcard request — exact fast path does not apply; wildcard loop handles it
+    assertFalse(realm.isPermitted(principal, wildcard));
   }
 
   /**
@@ -250,11 +276,32 @@ public class AuthorizingRealmImplTest
     assertFalse(realm.isPermitted(otherPrincipal, denied));
   }
 
+  /**
+   * Verifies the linearScan code path used when the principal permissions cache is disabled.
+   * This is a separate inner class so it can carry its own @TestPropertySource.
+   */
+  @Import(AuthorizingRealmImplTestConfiguration.class)
+  @TestPropertySource(properties = {"nexus.security.principal.permissions.cache.enabled=false"})
+  @DirtiesContext(classMode = BEFORE_EACH_TEST_METHOD)
+  static class CacheDisabledTest
+      extends AuthorizingRealmImplTest
+  {
+    @Test
+    public void testAuthorizationWithCacheDisabled() {
+      // Exact permission: granted
+      assertTrue(realm.isPermitted(principal, new WildcardPermission("app:config:read")));
+      // Exact permission: denied
+      assertFalse(realm.isPermitted(principal, new WildcardPermission("app:config:create")));
+      // Wildcard check: no granted permission implies app:config:* (exercises the wildcard loop)
+      assertFalse(realm.isPermitted(principal, new WildcardPermission("app:config:*")));
+    }
+  }
+
   private void buildTestAuthorizationConfig() throws Exception {
     buildTestAuthorizationConfig("username");
   }
 
-  private void buildTestAuthorizationConfig(String userId) throws Exception {
+  private void buildTestAuthorizationConfig(final String userId) throws Exception {
     CPrivilege priv = WildcardPrivilegeDescriptor.privilege("app:config:read");
     configurationManager.createPrivilege(priv);
 

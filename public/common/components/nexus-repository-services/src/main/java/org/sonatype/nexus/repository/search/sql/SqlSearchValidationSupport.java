@@ -24,7 +24,8 @@ public abstract class SqlSearchValidationSupport
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   /*
-   * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
+   * For SQL search we prohibit leading wildcards and short prefixes with wildcards for performance reasons.
+   * The minimum prefix length is configurable via the nexus.search.wildcard.minPrefixLength property.
    */
   protected Collection<String> getValidTokens(final Collection<String> tokens) {
     return SqlSearchWildcardValidator.getValidTokens(tokens);

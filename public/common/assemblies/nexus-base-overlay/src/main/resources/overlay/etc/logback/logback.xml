@@ -137,12 +137,14 @@
   <appender name="metrics" class="org.sonatype.nexus.common.log.InstrumentedAppender"/>
 
   <logger name="ch.qos.logback" level="WARN"/>
-  <logger name="org.eclipse.jetty.ee8.webapp" level="INFO"/>
-  <logger name="org.eclipse.jetty.ee8.webapp.StandardDescriptorProcessor" level="WARN"/>
+  <logger name="org.eclipse.jetty.ee10.webapp" level="INFO"/>
+  <logger name="org.eclipse.jetty.ee10.webapp.StandardDescriptorProcessor" level="WARN"/>
 
   <logger name="software.amazon.awssdk.services.ec2metadata" level="ERROR"/>
   <logger name="software.amazon.awssdk.auth.credentials" level="ERROR"/>
   <logger name="software.amazon.awssdk.regions" level="ERROR"/>
+
+  <logger name="org.flywaydb.core.FlywayExecutor" level="WARN"/>
 
   <!-- Suppress noisy INFO output from the PortEx library used during IQ Server
        Firewall scanning of PE binaries (DLL/EXE) in Docker layers. See NEXUS-52197. -->

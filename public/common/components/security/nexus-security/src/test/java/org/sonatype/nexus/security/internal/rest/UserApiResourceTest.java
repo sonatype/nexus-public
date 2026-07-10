@@ -14,9 +14,9 @@ package org.sonatype.nexus.security.internal.rest;
 
 import java.util.Collection;
 import java.util.Collections;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.ws.rs.core.Response.Status;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.ws.rs.core.Response.Status;
 
 import static org.hamcrest.beans.SamePropertyValuesAs.samePropertyValuesAs;
 import org.sonatype.nexus.rest.WebApplicationMessageException;

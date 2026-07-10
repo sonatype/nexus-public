@@ -32,6 +32,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
 import org.junit.After;
@@ -247,6 +248,17 @@ public class RepositoryPermissionCheckerTest
     when(securityHelper.anyPermitted(same(subject), eq(appPermissions))).thenReturn(false);
     underTest.ensureUserHasAnyPermissionOrAdminAccess(appPermissions, READ, repositories);
     verify(securityHelper).ensureAnyPermitted(subject, repositoryPermissions);
+  }
+
+  @Test(expected = AuthorizationException.class)
+  public void testEnsureUserHasAnyPermissionOrAdminAccess_emptyRepositoriesThrowsAuthorizationException() {
+    ApplicationPermission appPerm = new ApplicationPermission("blobstores", READ);
+    Iterable<Permission> appPermissions = singletonList(appPerm);
+
+    when(securityHelper.anyPermitted(same(subject), eq(appPermissions))).thenReturn(false);
+
+    // NEXUS-53000: must throw AuthorizationException, not IllegalArgumentException, when repositories is empty
+    underTest.ensureUserHasAnyPermissionOrAdminAccess(appPermissions, READ, Collections.emptyList());
   }
 
   private Permission[] createAdminPermissions(

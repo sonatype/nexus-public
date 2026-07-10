@@ -12,10 +12,10 @@
  */
 
 import React from 'react';
-import { render, screen, act, cleanup } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
-import { HttpClientFacet } from '../HttpClientFacet';
+import { HttpClientFacet, createAuthTypeChangeHandler, parseEcrUrl } from '../HttpClientFacet';
 import { RepositoryFormData } from '../../types';
 
 const defaultFormData: RepositoryFormData = {
@@ -83,10 +83,8 @@ describe('HttpClientFacet', () => {
         hadAuthOnLoad: true,
       });
 
-      // onOriginChangeWarning should be called with true
       expect(mockOnOriginChangeWarning).toHaveBeenCalledWith(true);
 
-      // onNestedChange should be called to reset auth (clears all auth type fields)
       expect(mockOnNestedChange).toHaveBeenCalledWith('httpClient', {
         authentication: {
           type: 'username',
@@ -131,10 +129,8 @@ describe('HttpClientFacet', () => {
         hadAuthOnLoad: true,
       });
 
-      // onOriginChangeWarning should be called with true (any URL change triggers warning)
       expect(mockOnOriginChangeWarning).toHaveBeenCalledWith(true);
 
-      // onNestedChange should be called to reset auth
       expect(mockOnNestedChange).toHaveBeenCalledWith('httpClient', {
         authentication: {
           type: 'username',
@@ -174,10 +170,7 @@ describe('HttpClientFacet', () => {
         originalRemoteUrl: 'https://repo1.maven.org/maven2/',
       });
 
-      // onOriginChangeWarning should NOT be called
       expect(mockOnOriginChangeWarning).not.toHaveBeenCalled();
-
-      // onNestedChange should NOT be called
       expect(mockOnNestedChange).not.toHaveBeenCalled();
     });
 
@@ -325,6 +318,116 @@ describe('HttpClientFacet', () => {
       );
 
       expect(mockOnOriginChangeWarning).toHaveBeenCalledWith(false);
+    });
+  });
+
+  // Regression guard for NEXUS-53319: parseEcrUrl was called but never defined, causing a
+  // ReferenceError that white-screened the docker proxy repository form (introduced by NEXUS-51703).
+  describe('parseEcrUrl', () => {
+    it('parses a valid ECR URL with https scheme', () => {
+      const result = parseEcrUrl('https://123456789012.dkr.ecr.us-east-1.amazonaws.com');
+      expect(result).toEqual({ registryId: '123456789012', awsRegion: 'us-east-1' });
+    });
+
+    it('parses a valid ECR URL with a path suffix', () => {
+      const result = parseEcrUrl('https://123456789012.dkr.ecr.eu-west-2.amazonaws.com/my-repo');
+      expect(result).toEqual({ registryId: '123456789012', awsRegion: 'eu-west-2' });
+    });
+
+    it('parses a valid ECR URL with a port', () => {
+      const result = parseEcrUrl('https://123456789012.dkr.ecr.us-west-2.amazonaws.com:443');
+      expect(result).toEqual({ registryId: '123456789012', awsRegion: 'us-west-2' });
+    });
+
+    it('parses a valid ECR URL without a scheme', () => {
+      const result = parseEcrUrl('123456789012.dkr.ecr.ap-southeast-1.amazonaws.com');
+      expect(result).toEqual({ registryId: '123456789012', awsRegion: 'ap-southeast-1' });
+    });
+
+    it('returns null for a non-ECR URL', () => {
+      expect(parseEcrUrl('https://registry-1.docker.io')).toBeNull();
+    });
+
+    it('returns null for an empty string', () => {
+      expect(parseEcrUrl('')).toBeNull();
+    });
+
+    it('returns null for a URL with fewer than 12 account-id digits', () => {
+      expect(parseEcrUrl('https://12345.dkr.ecr.us-east-1.amazonaws.com')).toBeNull();
+    });
+  });
+
+  describe('ECR docker proxy form — auth type dropdown hidden for ECR URL', () => {
+    it('hides the auth type dropdown when the remote URL is an ECR registry URL', () => {
+      renderFacet({
+        format: 'docker',
+        formData: {
+          ...defaultFormData,
+          proxy: {
+            remoteUrl: 'https://123456789012.dkr.ecr.us-east-1.amazonaws.com',
+            contentMaxAge: 1440,
+            metadataMaxAge: 1440,
+          },
+        },
+      });
+      expect(screen.queryByRole('combobox', { name: /authentication type/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the auth type dropdown for a non-ECR docker proxy URL', () => {
+      renderFacet({
+        format: 'docker',
+        formData: {
+          ...defaultFormData,
+          proxy: {
+            remoteUrl: 'https://registry-1.docker.io',
+            contentMaxAge: 1440,
+            metadataMaxAge: 1440,
+          },
+        },
+      });
+      // Radix Select renders a button not a native combobox — verify the label is present
+      expect(screen.getByText(/authentication type/i)).toBeInTheDocument();
+    });
+  });
+
+  // The Authentication Type select is a Radix Select, whose options are not rendered into
+  // jsdom, so the type-change behavior is exercised through the exported pure handler factory.
+  describe('auth type handler', () => {
+    it('clears HTTP auth when None is selected', () => {
+      const onNestedChange = jest.fn();
+      const handler = createAuthTypeChangeHandler(onNestedChange, {
+        existingAuth: { type: 'username', username: 'user', password: 'pass' },
+      });
+
+      handler('');
+
+      expect(onNestedChange).toHaveBeenCalledWith('httpClient', { authentication: null });
+    });
+
+    it('sets the auth type and preserves existing credentials when a type is selected', () => {
+      const onNestedChange = jest.fn();
+      const handler = createAuthTypeChangeHandler(onNestedChange, {
+        existingAuth: { type: 'username', username: 'existingUser', password: 'existingPass' },
+      });
+
+      handler('username');
+
+      expect(onNestedChange).toHaveBeenCalledWith('httpClient', {
+        authentication: { type: 'username', username: 'existingUser', password: 'existingPass' },
+      });
+    });
+
+    it('initializes with empty credentials when no existing auth', () => {
+      const onNestedChange = jest.fn();
+      const handler = createAuthTypeChangeHandler(onNestedChange, {
+        existingAuth: null,
+      });
+
+      handler('ntlm');
+
+      expect(onNestedChange).toHaveBeenCalledWith('httpClient', {
+        authentication: { type: 'ntlm', username: '', password: '' },
+      });
     });
   });
 });

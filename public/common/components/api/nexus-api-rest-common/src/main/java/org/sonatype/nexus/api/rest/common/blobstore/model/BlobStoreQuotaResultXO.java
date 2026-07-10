@@ -14,7 +14,7 @@ package org.sonatype.nexus.api.rest.common.blobstore.model;
 
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 3.14

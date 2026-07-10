@@ -35,6 +35,8 @@ public class RepositoryDetailXO
 
   private Long assetCount;
 
+  private String blobStoreName;
+
   public RepositoryDetailXO(
       final String name,
       final String type,
@@ -91,5 +93,13 @@ public class RepositoryDetailXO
 
   public void setAssetCount(final Long assetCount) {
     this.assetCount = assetCount;
+  }
+
+  public String getBlobStoreName() {
+    return blobStoreName;
+  }
+
+  public void setBlobStoreName(final String blobStoreName) {
+    this.blobStoreName = blobStoreName;
   }
 }

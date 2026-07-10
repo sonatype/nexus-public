@@ -20,15 +20,13 @@ import { useState, useEffect } from 'react';
  * @returns {boolean} True if the current route is in Preview UI mode
  */
 export function useIsPreviewUI(): boolean {
-  const [isPreview, setIsPreview] = useState(false);
+  const [isPreview, setIsPreview] = useState(() => window.location.hash.startsWith('#preview'));
 
   useEffect(() => {
     function checkPreview() {
-      const hash = window.location.hash;
-      setIsPreview(hash.startsWith('#preview'));
+      setIsPreview(window.location.hash.startsWith('#preview'));
     }
 
-    checkPreview();
     window.addEventListener('hashchange', checkPreview);
     return () => window.removeEventListener('hashchange', checkPreview);
   }, []);

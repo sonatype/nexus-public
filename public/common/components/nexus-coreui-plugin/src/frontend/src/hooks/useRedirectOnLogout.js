@@ -20,6 +20,34 @@ import { useEffect, useState } from "react";
 import { ExtJS, isVisible } from '@sonatype/nexus-ui-plugin';
 import { isExtJSLoaded, onExtJSLoad } from '../utils/extJsLoader';
 
+/**
+ * Checks if a state or any of its ancestors requires authentication/permissions.
+ * Unlike isVisible() from NavigationUtils, this does NOT use the NXSESSIONID cookie
+ * fallback — it simply detects whether the route has permission-type requirements.
+ * This is appropriate for the logout hook because we already know from ExtJS.useUser()
+ * that the user is no longer authenticated.
+ *
+ * Note: edition-only constraints (e.g., PRO-only routes) are intentionally not checked
+ * here because they don't require authentication — a route locked to PRO edition is
+ * still accessible anonymously if the instance is PRO.
+ */
+function hasPermissionRequirements(state) {
+  let current = state;
+  while (current && current.name) {
+    const reqs = current.data?.visibilityRequirements;
+    if (reqs) {
+      const { permissions, requiresPermission, requiresAnyPermission,
+              permissionPrefix, permissionPrefixes, requiresUser } = reqs;
+      if (permissions || requiresPermission || requiresAnyPermission ||
+          permissionPrefix || permissionPrefixes || requiresUser) {
+        return true;
+      }
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
 const PERMISSIONS_UPDATE_DELAY_MS = 100;
 
 function clearUnsavedChanges() {
@@ -47,47 +75,72 @@ export function useRedirectOnLogout() {
   // Always call the hook; ExtJS.useUser is now guarded internally.
   const userIsAuthenticated = !!ExtJS.useUser();
   const { state } = useCurrentStateAndParams();
-  const visibilityRequirements = state.data?.visibilityRequirements;
   const [lastAuthenticationChange, setLastAuthenticationChange] = useState(null);
 
   useEffect(() => {
+    let unmounted = false;
+    let registeredController = null;
+    let registeredHandler = null;
+
     // Only set up ExtJS listeners after ExtJS is loaded
     if (!isExtJSLoaded()) {
       // Wait for ExtJS to load, then set up listeners
       onExtJSLoad(() => {
-        if (window.Ext?.getApplication) {
-          const permissionsController = window.Ext.getApplication().getController("Permissions");
-          const handleChange = () => setLastAuthenticationChange(new Date());
-          permissionsController.on("changed", handleChange);
-        }
+        if (unmounted || !window.Ext?.getApplication) return;
+        const permissionsController = window.Ext.getApplication().getController("Permissions");
+        registeredHandler = () => setLastAuthenticationChange(new Date());
+        registeredController = permissionsController;
+        permissionsController.on("changed", registeredHandler);
       });
-      return;
+      return () => {
+        unmounted = true;
+        if (registeredController && registeredHandler) {
+          registeredController.un("changed", registeredHandler);
+        }
+      };
     }
 
     const permissionsController = window.Ext.getApplication().getController("Permissions");
     const handleChange = () => setLastAuthenticationChange(new Date());
+    registeredController = permissionsController;
+    registeredHandler = handleChange;
     permissionsController.on("changed", handleChange);
 
     return () => {
-      permissionsController.un("changed", handleChange);
+      unmounted = true;
+      if (registeredController && registeredHandler) {
+        registeredController.un("changed", registeredHandler);
+      }
     };
   }, []);
 
   useEffect(() => {
-    const shouldRedirect = !isVisible(visibilityRequirements) && !userIsAuthenticated;
     const timer = setTimeout(() => {
+      // Read router.globals.$current inside the timer so we evaluate the actual state
+      // at redirect time, not when the effect was scheduled. This avoids a stale closure
+      // if the user navigates away within the PERMISSIONS_UPDATE_DELAY_MS window.
+      // We use $current (a StateObject) because it has the resolved .parent chain needed
+      // by hasPermissionRequirements(); useCurrentStateAndParams returns a StateDeclaration
+      // which lacks .parent.
+      const currentState = router.globals.$current;
+      const shouldRedirect = !userIsAuthenticated
+          && hasPermissionRequirements(currentState)
+          && !isVisible(currentState?.data?.visibilityRequirements);
       if (shouldRedirect) {
         console.debug("Redirecting to login page with return URL. Not enough permissions");
         clearUnsavedChanges();
 
-        // Pass returnTo so user returns to current page after re-login
         const url = router.urlService.url();
-        const returnTo = btoa(`#${url}`);
-        router.stateService.go('login', { returnTo });
+        if (url) {
+          const returnTo = btoa(`#${url}`);
+          router.stateService.go('login', { returnTo });
+        } else {
+          router.stateService.go('login');
+        }
       }
     }, PERMISSIONS_UPDATE_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [lastAuthenticationChange, userIsAuthenticated, visibilityRequirements, state?.name, router]);
+  }, [lastAuthenticationChange, userIsAuthenticated, state, router]);
 }
 

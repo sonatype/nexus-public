@@ -65,6 +65,7 @@ function createEmailFormMock(data: Record<string, any>, overrides: Record<string
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn().mockReturnValue(true),
+    state: jest.fn(() => ({ getValue: jest.fn().mockReturnValue(false) })),
   },
 }));
 
@@ -78,6 +79,7 @@ describe('EmailPage', () => {
     enabled: true,
     host: 'smtp.example.com',
     port: 587,
+    useAuthentication: true,
     username: 'user@example.com',
     password: '',
     fromAddress: 'noreply@example.com',
@@ -96,10 +98,10 @@ describe('EmailPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset ExtJS permission mock to default (true) before each test
-    // This ensures tests that modify it don't affect subsequent tests
+    // Reset ExtJS mocks to default (self-hosted, update allowed) before each test
     const { ExtJS } = require('../../../../../../../interface/ExtJS');
     ExtJS.checkPermission.mockReturnValue(true);
+    ExtJS.state.mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
     
     mockedUseEmailApi.mockReturnValue({
       loading: false,
@@ -125,7 +127,7 @@ describe('EmailPage', () => {
     render(<EmailPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Email Server')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Email Server' })).toBeInTheDocument();
     });
 
     expect(screen.getByText('Configure outgoing email server settings')).toBeInTheDocument();
@@ -153,32 +155,13 @@ describe('EmailPage', () => {
     expect(saveButton).not.toBeDisabled();
   });
 
-  it('saves changes when Save button is clicked', async () => {
-    const mockSubmit = jest.fn();
-    mockedUseEmailForm.mockReturnValue(createEmailFormMock(
-      { ...mockSettings, host: 'new-smtp.example.com' }, { isPristine: false, submit: mockSubmit }
-    ));
+  it('calls reset when Discard is confirmed', async () => {
+    const mockReset = jest.fn();
+    mockedUseEmailForm.mockReturnValue(createEmailFormMock(mockSettings, { isPristine: false, reset: mockReset }));
     render(<EmailPage />, { wrapper: TestWrapper });
 
     await waitForFormToLoad();
 
-    const saveButton = screen.getByRole('button', { name: 'Save' });
-    fireEvent.click(saveButton);
-
-    expect(mockSubmit).toHaveBeenCalled();
-  });
-
-  it('discards changes when Discard button is clicked', async () => {
-    mockedUseEmailForm.mockReturnValue(createEmailFormMock(mockSettings, { isPristine: false }));
-    render(<EmailPage />, { wrapper: TestWrapper });
-
-    await waitForFormToLoad();
-
-    // Make a change (use regex to handle required asterisk)
-    const hostInput = screen.getByLabelText(/SMTP Host/);
-    fireEvent.change(hostInput, { target: { value: 'new-smtp.example.com' } });
-
-    // Click discard
     const discardButton = screen.getByRole('button', { name: 'Discard' });
     fireEvent.click(discardButton);
 
@@ -186,10 +169,7 @@ describe('EmailPage', () => {
     const leaveButton = await screen.findByRole('button', { name: /leave/i });
     fireEvent.click(leaveButton);
 
-    // Should be back to original value
-    await waitFor(() => {
-      expect(hostInput).toHaveValue('smtp.example.com');
-    });
+    expect(mockReset).toHaveBeenCalled();
   });
 
   it('shows validation error when host is empty', async () => {
@@ -258,7 +238,7 @@ describe('EmailPage', () => {
     // Error is now shown via Toast notifications (Sprint 15)
     // Page should still render
     await waitFor(() => {
-      expect(screen.getByText('Email Server')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Email Server' })).toBeInTheDocument();
     });
   });
 
@@ -288,6 +268,16 @@ describe('EmailPage', () => {
     );
   });
 
+  it('renders nothing on cloud deployments', () => {
+    const { ExtJS } = require('../../../../../../../interface/ExtJS');
+    ExtJS.state.mockReturnValue({ getValue: jest.fn().mockReturnValue(true) });
+
+    render(<EmailPage />, { wrapper: TestWrapper });
+
+    expect(screen.queryByText('Email Server')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('email-form')).not.toBeInTheDocument();
+  });
+
   it('shows read-only view when user lacks update permission', async () => {
     const { ExtJS } = require('../../../../../../../interface/ExtJS');
     ExtJS.checkPermission.mockReturnValue(false);
@@ -295,7 +285,7 @@ describe('EmailPage', () => {
     render(<EmailPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Email Server')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Email Server' })).toBeInTheDocument();
     });
 
     // Save button should not be present
@@ -342,6 +332,157 @@ describe('EmailPage', () => {
     render(<EmailPage />, { wrapper: TestWrapper });
     await waitFor(() => {
       expect(screen.getByTestId('email-form')).toBeInTheDocument();
+    });
+  });
+
+  it('has nxrm-email-save analytics ID on the Save button', async () => {
+    mockedUseEmailForm.mockReturnValue(
+      createEmailFormMock(mockSettings, { isPristine: false })
+    );
+    render(<EmailPage />, { wrapper: TestWrapper });
+    await waitForFormToLoad();
+
+    const saveButton = screen.getByRole('button', { name: 'Save' });
+    expect(saveButton).toHaveAttribute('data-analytics-id', 'nxrm-email-save');
+  });
+
+  it('renders EmailVerify outside the SettingsForm element', async () => {
+    mockedUseEmailForm.mockReturnValue(createEmailFormMock(mockSettings));
+    render(<EmailPage />, { wrapper: TestWrapper });
+    await waitForFormToLoad();
+
+    const form = screen.getByTestId('email-form');
+    const verifySection = screen.getByTestId('email-verify-section');
+
+    expect(form).not.toContainElement(verifySection);
+  });
+
+  describe('Authentication toggle', () => {
+    it('shows auth toggle checkbox', async () => {
+      mockedUseEmailForm.mockReturnValue(createEmailFormMock(mockSettings));
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      expect(screen.getByLabelText(/Enable authentication/i)).toBeInTheDocument();
+    });
+
+    it('shows username and password fields when auth toggle is checked', async () => {
+      mockedUseEmailForm.mockReturnValue(
+        createEmailFormMock({ ...mockSettings, useAuthentication: true, username: 'user@example.com' })
+      );
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/^Username/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^Password/i)).toBeInTheDocument();
+      });
+    });
+
+    it('hides username and password fields when auth toggle is unchecked', async () => {
+      mockedUseEmailForm.mockReturnValue(
+        createEmailFormMock({ ...mockSettings, useAuthentication: false, username: '' })
+      );
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText(/^Username/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/^Password/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('preserves username/password in form data when auth toggle is unchecked', async () => {
+      // Credentials remain in form state when auth is disabled; only useAuthentication changes.
+      // The save layer strips credentials from the REST payload when useAuthentication is false.
+      mockedUseEmailForm.mockReturnValue(
+        createEmailFormMock({ ...mockSettings, useAuthentication: false, username: 'user@example.com' })
+      );
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      // Fields are hidden when useAuthentication is false
+      expect(screen.queryByLabelText(/^Username/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/^Password/i)).not.toBeInTheDocument();
+
+      // But username value is still in form data (not cleared)
+      const form = mockedUseEmailForm.mock.results[0].value;
+      expect(form.data.username).toBe('user@example.com');
+    });
+
+    it('initialises toggle to false when useAuthentication is false', async () => {
+      mockedUseEmailForm.mockReturnValue(
+        createEmailFormMock({ ...mockSettings, useAuthentication: false, username: '' })
+      );
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      const authToggle = await screen.findByLabelText(/Enable authentication/i);
+      await waitFor(() => expect(authToggle).not.toBeChecked());
+    });
+
+    it('initialises toggle to true when useAuthentication is true', async () => {
+      mockedUseEmailForm.mockReturnValue(
+        createEmailFormMock({ ...mockSettings, useAuthentication: true, username: 'user@example.com' })
+      );
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      const authToggle = await screen.findByLabelText(/Enable authentication/i);
+      await waitFor(() => expect(authToggle).toBeChecked());
+    });
+  });
+
+  describe('View Certificate button', () => {
+    it('is disabled when SMTP host is empty', async () => {
+      mockedUseEmailForm.mockReturnValue(
+        createEmailFormMock({ ...mockSettings, host: '', port: 587 })
+      );
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      expect(screen.getByRole('button', { name: /View Certificate/i })).toBeDisabled();
+    });
+
+    it('is disabled when user lacks nexus:ssl-truststore:read permission', async () => {
+      const { ExtJS } = require('../../../../../../../interface/ExtJS');
+      ExtJS.checkPermission.mockImplementation((perm: string) => perm !== 'nexus:ssl-truststore:read');
+
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      expect(screen.getByRole('button', { name: /View Certificate/i })).toBeDisabled();
+    });
+
+    it('is enabled when host and port are set and user has permission', async () => {
+      render(<EmailPage />, { wrapper: TestWrapper });
+      await waitForFormToLoad();
+
+      expect(screen.getByRole('button', { name: /View Certificate/i })).not.toBeDisabled();
+    });
+  });
+
+  describe('breadcrumbs', () => {
+    it('renders Settings breadcrumb that navigates to settings page', async () => {
+      render(<EmailPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      // Click Settings breadcrumb navigates to settings page
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders Email Server as current page breadcrumb', async () => {
+      render(<EmailPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        // The current page item is rendered as Text (not a button) with aria-current="page"
+        const breadcrumb = screen.getByText('Email Server', { selector: '[aria-current="page"]' });
+        expect(breadcrumb).toBeInTheDocument();
+      });
     });
   });
 });

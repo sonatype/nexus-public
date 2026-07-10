@@ -168,17 +168,17 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
     if (me.healthCheckAllowed) {
       if (model) {
         if (panel.setInfo) {
-          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label'), me.renderMostPopularVersion(model));
-          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Age_Label'), me.renderAge(model));
-          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Popularity_Label'), me.renderPopularity(model));
+          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label'), NX.view.info.Entry.rawHtml(me.renderMostPopularVersion(model)));
+          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Age_Label'), NX.view.info.Entry.rawHtml(me.renderAge(model)));
+          panel.setInfo('healthCheckInfo', NX.I18n.get('HealthCheckInfo_Popularity_Label'), NX.view.info.Entry.rawHtml(me.renderPopularity(model)));
           panel.showInfo();
         }
         else {
           infoPanel = me.getOrAddInfoPanel(panel);
           if (infoPanel) {
-            info[NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label')] = me.renderMostPopularVersion(model);
-            info[NX.I18n.get('HealthCheckInfo_Age_Label')] = me.renderAge(model);
-            info[NX.I18n.get('HealthCheckInfo_Popularity_Label')] = me.renderPopularity(model);
+            info[NX.I18n.get('HealthCheckInfo_Most_Popular_Version_Label')] = NX.view.info.Entry.rawHtml(me.renderMostPopularVersion(model));
+            info[NX.I18n.get('HealthCheckInfo_Age_Label')] = NX.view.info.Entry.rawHtml(me.renderAge(model));
+            info[NX.I18n.get('HealthCheckInfo_Popularity_Label')] = NX.view.info.Entry.rawHtml(me.renderPopularity(model));
             infoPanel.showInfo(info);
           }
         }

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-validation</artifactId>
@@ -37,14 +37,19 @@
       <artifactId>jakarta.validation-api</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: hibernate-validator moved to org.hibernate.validator groupId in 7.x -->
     <dependency>
-      <groupId>org.hibernate</groupId>
+      <groupId>org.hibernate.validator</groupId>
       <artifactId>hibernate-validator</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: Jakarta EL 5.0 implementation, required by Hibernate Validator 8
+         to compile and evaluate constraint message templates. Replaces the misnamed
+         org.glassfish:jakarta.el:3.0.4 that ships javax.el.* under a jakarta.el
+         artifactId. -->
     <dependency>
-      <groupId>org.glassfish</groupId>
-      <artifactId>jakarta.el</artifactId>
+      <groupId>org.glassfish.expressly</groupId>
+      <artifactId>expressly</artifactId>
     </dependency>
 
     <dependency>

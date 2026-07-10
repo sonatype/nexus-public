@@ -14,8 +14,8 @@ package org.sonatype.nexus.validation.internal;
 
 import java.lang.reflect.Constructor;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorFactory;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;

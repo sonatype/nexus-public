@@ -23,9 +23,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.common.event.EventManager;
@@ -68,6 +68,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.selector.SelectorConfiguration.EXPRESSION;
+
+import org.sonatype.nexus.rest.WebApplicationMessageException;
+
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -274,6 +277,43 @@ public class ContentSelectorsApiResourceTest
     // Note: We should NOT call findByName() anywhere in the create flow after the fix
     // The original bug was: create() -> findByName() -> 404 due to stale cache
     // The fix: create() returns the configuration, no findByName() needed
+  }
+
+  @Test
+  public void testDeleteContentSelector_Success() {
+    // Given
+    String name = "test-selector";
+
+    SelectorConfiguration mockConfig = mock(SelectorConfiguration.class);
+    when(selectorManager.findByName(name)).thenReturn(java.util.Optional.of(mockConfig));
+
+    // When
+    underTest.deleteContentSelector(name);
+
+    // Then
+    verify(selectorManager).delete(mockConfig);
+    verify(eventManager).post(any());
+  }
+
+  @Test(expected = WebApplicationMessageException.class)
+  public void testDeleteContentSelector_InUse_ThrowsBadRequest() {
+    // This test verifies the fix for NEXUS-52868: attempting to delete an in-use content selector
+    // should return a 400 Bad Request instead of a 500 Internal Server Error
+
+    // Given
+    String name = "in-use-selector";
+    String errorMessage = "Content selector " + name + " is in use and cannot be deleted";
+
+    SelectorConfiguration mockConfig = mock(SelectorConfiguration.class);
+    when(selectorManager.findByName(name)).thenReturn(java.util.Optional.of(mockConfig));
+
+    // Mock delete to throw IllegalStateException when selector is in use
+    org.mockito.Mockito.doThrow(new IllegalStateException(errorMessage))
+        .when(selectorManager)
+        .delete(mockConfig);
+
+    // When - should throw WebApplicationMessageException with BAD_REQUEST status
+    underTest.deleteContentSelector(name);
   }
 
   /**

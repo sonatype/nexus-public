@@ -85,8 +85,12 @@ export default function LoginAndUserButtonRadix() {
 
   const onSignInClick = () => {
     const url = router.urlService.url();
-    const returnTo = btoa(`#${url}`);
-    router.stateService.go(ROUTE_NAMES.LOGIN, {returnTo});
+    if (url) {
+      const returnTo = btoa(`#${url}`);
+      router.stateService.go(ROUTE_NAMES.LOGIN, {returnTo});
+    } else {
+      router.stateService.go(ROUTE_NAMES.LOGIN);
+    }
   };
 
   function onSignOutClick() {
@@ -128,7 +132,7 @@ export default function LoginAndUserButtonRadix() {
     <DropdownMenu.Root>
       <Tooltip content="My Account">
         <DropdownMenu.Trigger>
-          <IconButton variant="outline" size="2" color="gray" aria-label="My Account" data-testid="user-menu">
+          <IconButton variant="outline" size="2" color="gray" aria-label="My Account" data-testid="user-menu" data-analytics-id="nxrm-header-user-menu">
             <User size={16} />
           </IconButton>
         </DropdownMenu.Trigger>
@@ -169,7 +173,7 @@ export default function LoginAndUserButtonRadix() {
 
         <DropdownMenu.Separator />
 
-        <DropdownMenu.Item onClick={onSignOutClick}>
+        <DropdownMenu.Item onClick={onSignOutClick} data-analytics-id="nxrm-header-sign-out">
           <Flex align="center" justify="start" gap="3">
             <LogOut size={16} />
             <Text size="2">Log Out</Text>

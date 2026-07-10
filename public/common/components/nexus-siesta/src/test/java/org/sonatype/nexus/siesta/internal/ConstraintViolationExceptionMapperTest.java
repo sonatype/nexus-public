@@ -16,12 +16,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import javax.validation.ElementKind;
-import javax.validation.Path;
-import javax.validation.Path.Node;
-import javax.ws.rs.core.Response.Status;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.ElementKind;
+import jakarta.validation.Path;
+import jakarta.validation.Path.Node;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.rest.ValidationErrorXO;
 

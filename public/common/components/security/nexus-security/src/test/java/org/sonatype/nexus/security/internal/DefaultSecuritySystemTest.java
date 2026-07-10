@@ -29,6 +29,7 @@ import org.sonatype.nexus.security.authz.MockAuthorizationManagerB;
 import org.sonatype.nexus.security.internal.DefaultSecuritySystemTest.DefaultSecuritySystemTestConfiguration;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.session.SessionInvalidator;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -47,15 +48,19 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -67,6 +72,9 @@ import static org.mockito.Mockito.verify;
 public class DefaultSecuritySystemTest
     extends AbstractSecurityTest
 {
+  @MockitoBean
+  protected SessionInvalidator sessionInvalidator;
+
   public static class DefaultSecuritySystemTestConfiguration
       extends BaseSecurityConfiguration
   {
@@ -256,6 +264,22 @@ public class DefaultSecuritySystemTest
   }
 
   @Test
+  void testChangePassword_selfChange_usesShiroRealmAsInvalidationSource() {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+    Subject subject = securitySystem.getSubject();
+    subject.login(new UsernamePasswordToken("jcoder", "jcoder"));
+
+    assertDoesNotThrow(() -> securitySystem.changePassword("jcoder", "newpassword2"));
+
+    // The invalidation source should be the Shiro realm name from the authenticated Subject,
+    // not the UserManager "default" source of the internal user record.
+    ArgumentCaptor<String> sourceCaptor = ArgumentCaptor.forClass(String.class);
+    verify(sessionInvalidator).invalidateSessionsForUser(eq("jcoder"), sourceCaptor.capture());
+    assertThat(sourceCaptor.getValue(), not(is("default")));
+    assertNotNull(sourceCaptor.getValue());
+  }
+
+  @Test
   void testDefaultSecuritySystem_SearchUsersPreservesOrder() throws Exception {
     // use a unique prefix so we can filter out pre-existing users added in test setup
     final String prefixForTest = "testDefaultSecuritySystem_SearchUsersPreservesOrder_";
@@ -320,7 +344,7 @@ public class DefaultSecuritySystemTest
     return user;
   }
 
-  private <T> void verifyEventPosted(final int totalEvents, final Class<T> eventClass, Consumer<T> assertions) {
+  private <T> void verifyEventPosted(final int totalEvents, final Class<T> eventClass, final Consumer<T> assertions) {
     ArgumentCaptor<T> eventArgument = ArgumentCaptor.forClass(eventClass);
     verify(lookup(EventManager.class), times(totalEvents)).post(eventArgument.capture());
     assertions.accept(eventArgument.getValue());

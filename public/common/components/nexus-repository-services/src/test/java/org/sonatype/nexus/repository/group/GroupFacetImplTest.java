@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.group;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;

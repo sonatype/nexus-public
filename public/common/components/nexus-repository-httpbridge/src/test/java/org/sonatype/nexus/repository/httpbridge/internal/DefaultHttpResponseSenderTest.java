@@ -16,9 +16,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -28,14 +27,13 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
-import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
+import org.eclipse.jetty.ee10.servlet.ServletApiResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,7 +44,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -162,25 +159,68 @@ public class DefaultHttpResponseSenderTest
     verify(httpServletResponse).sendError(403, "You can't see this");
   }
 
+  /**
+   * NEXUS-46395: when an error response carries a payload (e.g. Repository Firewall
+   * quarantine bodies returning 403/409 with an RFC 9457 / format-specific report),
+   * the {@code sendError} path is bypassed. We must still forward the custom HTTP/1.1
+   * reason phrase to Jetty's core {@link org.eclipse.jetty.server.Response#setReason}
+   * so HTTP/1.1 clients (notably Maven 3.9.x) can read it off the status line.
+   */
   @Test
-  public void customStatusMessageIsMaintainedWithPayload() throws Exception {
-    org.eclipse.jetty.ee8.nested.Response nestedResponse = Mockito.mock(org.eclipse.jetty.ee8.nested.Response.class);
-    HttpServletResponseWrapper httpServletResponseWrapper = new HttpServletResponseWrapper(nestedResponse);
-    ShiroHttpServletResponse shiroHttpServletResponse = Mockito.mock(ShiroHttpServletResponse.class);
-    when(shiroHttpServletResponse.getResponse()).thenReturn(httpServletResponseWrapper);
-    when(shiroHttpServletResponse.getOutputStream()).thenReturn(output);
-
+  public void customStatusMessageWithPayloadIsForwardedToCoreJettyResponse() throws Exception {
     when(request.getAction()).thenReturn(HttpMethods.GET);
 
-    Payload detailedReason = new StringPayload("Please authenticate and try again", "text/plain");
+    ServletApiResponse servletApiResponse = org.mockito.Mockito.mock(ServletApiResponse.class);
+    org.eclipse.jetty.server.Response coreResponse =
+        org.mockito.Mockito.mock(org.eclipse.jetty.server.Response.class);
+    when(servletApiResponse.getStatus()).thenReturn(403);
+    when(servletApiResponse.getOutputStream()).thenReturn(output);
+    when(servletApiResponse.getResponse()).thenReturn(coreResponse);
 
     Response response = new Response.Builder()
-        .status(Status.failure(FORBIDDEN, "You can't see this"))
-        .payload(detailedReason)
+        .status(Status.failure(403, "package-quarantined"))
+        .payload(payload)
         .build();
 
-    underTest.send(request, response, shiroHttpServletResponse);
+    underTest.send(request, response, servletApiResponse);
 
-    verify(nestedResponse).setStatusWithReason(403, "You can't see this");
+    verify(servletApiResponse).setStatus(403);
+    verify(coreResponse).setReason("package-quarantined");
+  }
+
+  /**
+   * NEXUS-53114: in production the servlet response handed to
+   * {@link DefaultHttpResponseSender} is wrapped by Shiro's
+   * {@link ShiroHttpServletResponse}. Verify the unwrap path traverses Shiro and
+   * still forwards the custom reason phrase to the core Jetty
+   * {@link org.eclipse.jetty.server.Response}.
+   */
+  @Test
+  public void customStatusMessageWithPayload_unwrapsThroughShiro() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+
+    ServletApiResponse servletApiResponse = org.mockito.Mockito.mock(ServletApiResponse.class);
+    org.eclipse.jetty.server.Response coreResponse =
+        org.mockito.Mockito.mock(org.eclipse.jetty.server.Response.class);
+    when(servletApiResponse.getResponse()).thenReturn(coreResponse);
+
+    // ShiroHttpServletResponse is a concrete class that wraps an HttpServletResponse.
+    // Build a real instance so the production-shape unwrap (ShiroHttpServletResponse
+    // -> HttpServletResponseWrapper(s) -> ServletApiResponse) is exercised end-to-end.
+    ShiroHttpServletResponse shiroResponse =
+        new ShiroHttpServletResponse(servletApiResponse, null, null);
+    when(servletApiResponse.getOutputStream()).thenReturn(output);
+
+    Response response = new Response.Builder()
+        .status(Status.failure(403, "package-quarantined"))
+        .payload(payload)
+        .build();
+
+    underTest.send(request, response, shiroResponse);
+
+    // setStatus is called on the outer ShiroHttpServletResponse, which delegates to
+    // the wrapped servletApiResponse.
+    verify(servletApiResponse).setStatus(403);
+    verify(coreResponse).setReason("package-quarantined");
   }
 }

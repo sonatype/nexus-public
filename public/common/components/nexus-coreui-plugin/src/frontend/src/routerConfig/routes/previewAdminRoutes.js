@@ -35,6 +35,7 @@ import {UIView} from '@uirouter/react';
 import {
   Permissions,
   withFeatureGate,
+  withCloudExcluded,
   SettingsPageLayoutRadix,
   SettingsHubPage,
   SonatypeTestHub,
@@ -168,9 +169,15 @@ const SamlPage = withFeatureGate(SamlPageRaw, 'security.saml', 'SAML');
 const SslCertificatesPage = withFeatureGate(SslCertificatesPageRaw, 'security.sslcertificates', 'SSL Certificates');
 const UserTokensPage = withFeatureGate(UserTokensPageRaw, 'security.usertokens', 'User Tokens');
 
-// Support - Gated
-const LogsPage = withFeatureGate(LogsPageRaw, 'support.logs', 'Logs');
-const LoggingConfigPage = withFeatureGate(LoggingConfigPageRaw, 'support.logging', 'Logging Configuration');
+// Support - Gated (Logs and Logging Configuration are self-hosted only)
+const LogsPage = withCloudExcluded(
+  withFeatureGate(LogsPageRaw, 'support.logs', 'Logs'),
+  'Logs',
+);
+const LoggingConfigPage = withCloudExcluded(
+  withFeatureGate(LoggingConfigPageRaw, 'support.logging', 'Logging Configuration'),
+  'Logging Configuration',
+);
 const SystemInfoPage = withFeatureGate(SystemInfoPageRaw, 'support.systeminfo', 'System Information');
 const MetricHealthPage = withFeatureGate(MetricHealthPageRaw, 'support.metrics', 'Metric Health');
 const SupportRequestPage = withFeatureGate(SupportRequestPageRaw, 'support.supportrequest', 'Support Request');
@@ -180,8 +187,14 @@ const SupportZipPage = withFeatureGate(SupportZipPageRaw, 'support.supportzip', 
 const TasksPage = withFeatureGate(TasksPageRaw, 'system.tasks', 'Tasks');
 const CapabilitiesPage = withFeatureGate(CapabilitiesPageRaw, 'system.capabilities', 'Capabilities');
 const EmailPage = withFeatureGate(EmailPageRaw, 'system.emailserver', 'Email Server');
-const HttpPage = withFeatureGate(HttpPageRaw, 'system.http', 'HTTP');
-const LicensingPage = withFeatureGate(LicensingPageRaw, 'system.licensing', 'Licensing');
+const HttpPage = withCloudExcluded(
+  withFeatureGate(HttpPageRaw, 'system.http', 'HTTP'),
+  'HTTP',
+);
+const LicensingPage = withCloudExcluded(
+  withFeatureGate(LicensingPageRaw, 'system.licensing', 'Licensing'),
+  'Licensing',
+);
 const NodesPage = withFeatureGate(NodesPageRaw, 'system.nodes', 'Nodes');
 const UpgradePage = withFeatureGate(UpgradePageRaw, 'system.upgrade', 'Upgrade');
 
@@ -299,7 +312,12 @@ export const previewAdminRoutes = [
     url: '/repositories',
     abstract: true,
     component: UIView,
-    data: { title: 'Repositories' },
+    data: {
+      title: 'Repositories',
+      visibilityRequirements: {
+        requiresPermission: Permissions.REPOSITORY_ADMIN.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.repository.repositories.list',
@@ -350,7 +368,12 @@ export const previewAdminRoutes = [
     url: '/blobstores',
     abstract: true,
     component: UIView,
-    data: { title: 'Blob Stores' },
+    data: {
+      title: 'Blob Stores',
+      visibilityRequirements: {
+        requiresPermission: Permissions.BLOB_STORES.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.repository.blobstores.list',
@@ -375,7 +398,12 @@ export const previewAdminRoutes = [
     url: '/selectors',
     abstract: true,
     component: UIView,
-    data: { title: 'Content Selectors' },
+    data: {
+      title: 'Content Selectors',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SELECTORS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.repository.selectors.list',
@@ -400,7 +428,12 @@ export const previewAdminRoutes = [
     url: '/cleanup-policies',
     abstract: true,
     component: UIView,
-    data: { title: 'Cleanup Policies' },
+    data: {
+      title: 'Cleanup Policies',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.repository.cleanuppolicies.list',
@@ -426,7 +459,12 @@ export const previewAdminRoutes = [
     abstract: true,
     redirectTo: 'preview.admin.repository.routingrules.list',
     component: UIView,
-    data: { title: 'Routing Rules' },
+    data: {
+      title: 'Routing Rules',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.repository.routingrules.list',
@@ -456,13 +494,23 @@ export const previewAdminRoutes = [
     name: 'preview.admin.repository.datastore',
     url: '/datastore',
     component: DataStorePage,
-    data: { title: 'Data Store' },
+    data: {
+      title: 'Data Store',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.repository.proprietary',
     url: '/proprietary',
     component: ProprietaryPage,
-    data: { title: 'Proprietary Repositories' },
+    data: {
+      title: 'Proprietary Repositories',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
 
   // =============================================================================
@@ -481,7 +529,12 @@ export const previewAdminRoutes = [
     url: '/privileges',
     abstract: true,
     component: UIView,
-    data: { title: 'Privileges' },
+    data: {
+      title: 'Privileges',
+      visibilityRequirements: {
+        requiresPermission: 'nexus:privileges:read',
+      },
+    },
   },
   {
     name: 'preview.admin.security.privileges.list',
@@ -489,9 +542,6 @@ export const previewAdminRoutes = [
     component: PrivilegesPage,
     data: {
       title: 'Privileges',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:privileges:read',
-      },
     },
   },
   {
@@ -524,7 +574,12 @@ export const previewAdminRoutes = [
     url: '/roles',
     abstract: true,
     component: UIView,
-    data: { title: 'Roles' },
+    data: {
+      title: 'Roles',
+      visibilityRequirements: {
+        requiresPermission: 'nexus:roles:read',
+      },
+    },
   },
   {
     name: 'preview.admin.security.roles.list',
@@ -532,9 +587,6 @@ export const previewAdminRoutes = [
     component: RolesPage,
     data: {
       title: 'Roles',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:roles:read',
-      },
     },
   },
   {
@@ -610,14 +662,24 @@ export const previewAdminRoutes = [
     name: 'preview.admin.security.anonymous',
     url: '/anonymous',
     component: AnonymousPage,
-    data: { title: 'Anonymous Access' },
+    data: {
+      title: 'Anonymous Access',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.security.ldap',
     url: '/ldap',
     abstract: true,
     component: UIView,
-    data: { title: 'LDAP' },
+    data: {
+      title: 'LDAP',
+      visibilityRequirements: {
+        requiresPermission: Permissions.LDAP.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.security.ldap.list',
@@ -641,7 +703,12 @@ export const previewAdminRoutes = [
     name: 'preview.admin.security.realms',
     url: '/realms',
     component: RealmsPage,
-    data: { title: 'Realms' },
+    data: {
+      title: 'Realms',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.security.sslcertificates',
@@ -659,36 +726,51 @@ export const previewAdminRoutes = [
     name: 'preview.admin.security.sslcertificates.list',
     url: '',
     component: SslCertificatesPage,
-    data: { 
-      title: 'SSL Certificates',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:ssl-truststore:read',
-      },
-    },
+    data: { title: 'SSL Certificates' },
   },
   {
     name: 'preview.admin.security.usertoken',
     url: '/user-tokens',
     component: UserTokensPage,
-    data: { title: 'User Tokens' },
+    data: {
+      title: 'User Tokens',
+      visibilityRequirements: {
+        requiresPermission: Permissions.USER_TOKENS_SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.security.saml',
     url: '/saml',
     component: SamlPage,
-    data: { title: 'SAML' },
+    data: {
+      title: 'SAML',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.security.oauth2',
     url: '/oauth2',
     component: OAuth2Page,
-    data: { title: 'OAuth 2.0' },
+    data: {
+      title: 'OAuth 2.0',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.security.crowd',
     url: '/crowd',
     component: CrowdPage,
-    data: { title: 'Atlassian Crowd' },
+    data: {
+      title: 'Atlassian Crowd',
+      visibilityRequirements: {
+        permissions: ['nexus:crowd:read'],
+      },
+    },
   },
   {
     name: 'preview.admin.security.ip-allowlist',
@@ -719,7 +801,12 @@ export const previewAdminRoutes = [
     url: '/logs',
     abstract: true,
     component: UIView,
-    data: { title: 'Logs' },
+    data: {
+      title: 'Logs',
+      visibilityRequirements: {
+        requiresPermission: Permissions.LOGGING.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.support.logs.list',
@@ -727,20 +814,19 @@ export const previewAdminRoutes = [
     component: LogsPage,
     data: {
       title: 'Logs',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:logging:read',
-      },
     },
   },
   {
     name: 'preview.admin.support.logs.detail',
-    url: '/:filename',
+    url: '/*filename',
     component: LogsPage,
+    params: {
+      // raw: true preserves '/' in task log paths (e.g. tasks/foo.log)
+      // without it UIRouter would treat slashes as segment separators
+      filename: {value: null, raw: true, dynamic: true},
+    },
     data: {
       title: 'Log Viewer',
-      visibilityRequirements: {
-        requiresPermission: 'nexus:logging:read',
-      },
     },
   },
   {
@@ -748,7 +834,12 @@ export const previewAdminRoutes = [
     url: '/logging',
     abstract: true,
     component: UIView,
-    data: { title: 'Logging' },
+    data: {
+      title: 'Logging',
+      visibilityRequirements: {
+        requiresPermission: Permissions.LOGGING.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.support.logging.list',
@@ -757,7 +848,7 @@ export const previewAdminRoutes = [
     data: {
       title: 'Logging',
       visibilityRequirements: {
-        requiresPermission: 'nexus:logconfig:read',
+        requiresPermission: Permissions.LOGGING.READ,
       },
     },
   },
@@ -768,7 +859,7 @@ export const previewAdminRoutes = [
     data: {
       title: 'Create Logger',
       visibilityRequirements: {
-        requiresPermission: 'nexus:logconfig:create',
+        requiresPermission: Permissions.LOGGING.UPDATE,
       },
     },
   },
@@ -779,7 +870,7 @@ export const previewAdminRoutes = [
     data: {
       title: 'Logger Details',
       visibilityRequirements: {
-        requiresPermission: 'nexus:logconfig:read',
+        requiresPermission: Permissions.LOGGING.READ,
       },
     },
   },
@@ -844,7 +935,12 @@ export const previewAdminRoutes = [
     url: '/tasks',
     abstract: true,
     component: UIView,
-    data: { title: 'Tasks' },
+    data: {
+      title: 'Tasks',
+      visibilityRequirements: {
+        requiresPermission: Permissions.TASKS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.tasks.list',
@@ -875,7 +971,12 @@ export const previewAdminRoutes = [
     url: '/capabilities',
     abstract: true,
     component: UIView,
-    data: { title: 'Capabilities' },
+    data: {
+      title: 'Capabilities',
+      visibilityRequirements: {
+        requiresPermission: Permissions.CAPABILITIES.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.capabilities.list',
@@ -918,31 +1019,56 @@ export const previewAdminRoutes = [
     name: 'preview.admin.system.emailserver',
     url: '/emailserver',
     component: EmailPage,
-    data: { title: 'Email Server' },
+    data: {
+      title: 'Email Server',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.http',
     url: '/http',
     component: HttpPage,
-    data: { title: 'HTTP' },
+    data: {
+      title: 'HTTP',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.licensing',
     url: '/licensing',
     component: LicensingPage,
-    data: { title: 'Licensing' },
+    data: {
+      title: 'Licensing',
+      visibilityRequirements: {
+        requiresPermission: Permissions.LICENSING.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.nodes',
     url: '/nodes',
     component: NodesPage,
-    data: { title: 'Nodes' },
+    data: {
+      title: 'Nodes',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.upgrade',
     url: '/upgrade',
     component: UpgradePage,
-    data: { title: 'Upgrade' },
+    data: {
+      title: 'Upgrade',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SETTINGS.READ,
+      },
+    },
   },
   {
     name: 'preview.admin.system.usage',

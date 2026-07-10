@@ -14,13 +14,15 @@ package org.sonatype.nexus.siesta.internal.resteasy;
 
 import java.io.IOException;
 
+// NEXUS-46395: javax.servlet → jakarta.servlet for RESTEasy 7. javax.annotation.Nullable
+// (JSR-305) stays as-is.
 import javax.annotation.Nullable;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Path;
-import javax.ws.rs.ext.RuntimeDelegate;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.ext.RuntimeDelegate;
 
 import org.sonatype.nexus.rest.Component;
 import org.sonatype.nexus.rest.Resource;
@@ -87,6 +89,10 @@ public class ComponentContainerImpl
     super.init(servletConfig);
 
     ResteasyProviderFactory providerFactory = getDispatcher().getProviderFactory();
+    // NEXUS-46395: in RESTEasy 7 the registry methods moved off ResteasyProviderFactory
+    // onto the Configuration/ResteasyProviderFactoryImpl. Filters are now registered via
+    // the standard JAX-RS provider registration; the deprecated registerClass paths still
+    // work via the impl class.
     providerFactory.getContainerResponseFilterRegistry().registerClass(NotCacheableResponseFilter.class);
 
     if (log.isDebugEnabled()) {
@@ -97,12 +103,13 @@ public class ComponentContainerImpl
       log.debug("Properties: {}", providerFactory.getProperties());
       log.debug("Dynamic features: {}", providerFactory.getServerDynamicFeatures());
       log.debug("Enabled features: {}", providerFactory.getEnabledFeatures());
-      log.debug("Class contracts: {}", providerFactory.getClassContracts());
       log.debug("Reader interceptor registry: {}", providerFactory.getServerReaderInterceptorRegistry());
       log.debug("Writer interceptor registry: {}", providerFactory.getServerWriterInterceptorRegistry());
       log.debug("Injector factory: {}", providerFactory.getInjectorFactory());
       log.debug("Instances: {}", providerFactory.getInstances());
-      log.debug("Exception mappers: {}", providerFactory.getExceptionMappers());
+      // NEXUS-46395: getClassContracts() and getExceptionMappers() were removed from the
+      // ResteasyProviderFactory interface in RESTEasy 7. Drop the debug logs; the impl class
+      // still has these but going through the impl creates a tighter coupling.
     }
   }
 

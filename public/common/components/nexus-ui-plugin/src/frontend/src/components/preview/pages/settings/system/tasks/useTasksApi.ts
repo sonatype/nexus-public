@@ -29,6 +29,11 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { restClient, parseApiError, urlBuilder } from '../../../../../../interface/api';
 import { TASK_FIELD_UI } from './taskFieldMetadata';
 import {
+  humanizePropertyKey,
+  restTemplateToTaskType,
+  RestTaskTemplate,
+} from './taskTransformers';
+import {
   Task,
   TaskType,
   TaskFormData,
@@ -36,12 +41,16 @@ import {
   combineDateAndTime,
 } from './types';
 
+// Re-export from the shared transformer module so existing imports still resolve.
+export { humanizePropertyKey };
+
 // =============================================================================
 // REST API RESPONSE TYPES
 // =============================================================================
 
 /**
  * REST API Task shape (from TaskXO.java)
+ * All schedule and configuration fields are returned flat (not nested under "frequency").
  */
 interface RestTask {
   id: string;
@@ -54,6 +63,14 @@ interface RestTask {
   nextRun?: string | null;
   lastRun?: string | null;
   schedule?: string | null;
+  // Configuration fields present on GET /v1/tasks/{id}
+  properties?: Record<string, string> | null;
+  alertEmail?: string | null;
+  notificationCondition?: string | null;
+  startDate?: string | null;
+  recurringDays?: number[] | null;
+  cronExpression?: string | null;
+  timeZoneOffset?: string | null;
 }
 
 /**
@@ -76,29 +93,15 @@ interface RestFrequency {
 }
 
 /**
- * REST API Task Template shape (from TaskTemplateXO.java)
+ * Strict shape for POST/PUT bodies — narrows the canonical `RestTaskTemplate` so
+ * `frequency`/`notificationCondition` are well-typed when we build the request.
+ * GET responses keep using `RestTaskTemplate` from taskTransformers (loose since
+ * the transformer doesn't read frequency).
  */
-interface RestTaskTemplate {
-  type: string;
-  name: string;
-  enabled: boolean;
-  alertEmail?: string | null;
-  notificationCondition: 'FAILURE' | 'SUCCESS_FAILURE';
+type RestTaskCreatePayload = Omit<RestTaskTemplate, 'frequency' | 'notificationCondition'> & {
   frequency: RestFrequency;
-  properties: Record<string, string>;
-}
-
-/**
- * REST API Task Template for Create (type required)
- */
-interface RestTaskTemplateCreate extends RestTaskTemplate {
-  type: string;
-}
-
-/**
- * REST API Task Template for Update (type omitted)
- */
-interface RestTaskTemplateUpdate extends Omit<RestTaskTemplate, 'type'> {}
+  notificationCondition: 'FAILURE' | 'SUCCESS_FAILURE';
+};
 
 // =============================================================================
 // TRANSFORMERS
@@ -137,69 +140,24 @@ function restToTask(rest: RestTask): Task {
     lastRunResult: rest.lastRunResult || null,
     runnable: rest.currentState !== 'RUNNING',
     stoppable: rest.currentState === 'RUNNING',
-    properties: {},
+    properties: rest.properties || {},
+    alertEmail: rest.alertEmail || '',
+    notificationCondition: (rest.notificationCondition as Task['notificationCondition']) || 'FAILURE',
     schedule: rest.schedule === 'cron' ? 'advanced' : ((rest.schedule as Task['schedule']) || 'manual'),
-    startDate: null,
+    startDate: rest.startDate ? new Date(rest.startDate) : null,
+    recurringDays: rest.recurringDays || [],
+    cronExpression: rest.cronExpression || '',
+    timeZoneOffset: rest.timeZoneOffset || '',
   };
 }
 
 /**
- * Transform REST Task Template to UI TaskType shape
+ * Both `humanizePropertyKey` and `restTemplateToTaskType` now live in
+ * `taskTransformers.ts` and are imported above. They were extracted so the
+ * XState form machine can reuse them without `jest.mock('../useTasksApi')`
+ * stubbing them out in tests (which broke the EDIT flow's formFields
+ * enrichment).
  */
-
-/**
- * Humanize a camelCase property key into a readable label.
- */
-function humanizePropertyKey(key: string): string {
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (s) => s.toUpperCase())
-    .trim();
-}
-
-function restTemplateToTaskType(rest: RestTaskTemplate): TaskType {
-  const formFields = Object.entries(rest.properties || {}).map(([key, value]) => {
-    const meta = TASK_FIELD_UI[key];
-
-    if (meta) {
-      return {
-        id: key,
-        type: (meta.type || 'string') as any,
-        label: meta.label + (meta.label.includes('*') ? '' : ' *'),
-        helpText: meta.helpText || '',
-        required: true,
-        initialValue: value || meta.placeholder || '',
-        attributes: (meta.min !== undefined || meta.max !== undefined) ? {
-          minValue: meta.min,
-          maxValue: meta.max,
-        } : undefined,
-      };
-    }
-
-    // Fallback: smart detection for unknown fields
-    const keyLower = key.toLowerCase();
-    const isRepo = keyLower.includes('repository');
-    const isBlobStore = keyLower.includes('blobstore') || keyLower.includes('member') || keyLower.includes('group');
-    const isBoolean = value === '' || value === 'true' || value === 'false';
-
-    return {
-      id: key,
-      type: isRepo ? 'repo' : isBlobStore ? 'blobstore' : isBoolean ? 'checkbox' : 'string',
-      label: humanizePropertyKey(key) + ' *',
-      helpText: '',
-      required: true,
-      initialValue: value,
-    };
-  });
-
-  return {
-    id: rest.type,
-    name: rest.name,
-    exposed: true, // REST only returns exposed task types
-    concurrentRun: undefined,
-    formFields: formFields.length > 0 ? formFields : null,
-  };
-}
 
 /**
  * Convert UI task form data to REST FrequencyXO format
@@ -238,14 +196,19 @@ function toRestFrequency(
 function toRestTaskCreate(
   data: TaskFormData,
   startTime?: string
-): RestTaskTemplate {
-  // Filter out internal properties with dots
-  const properties: Record<string, string> = {};
-  Object.entries(data.properties).forEach(([key, value]) => {
-    if (!key.includes('.')) {
-      properties[key] = value;
-    }
-  });
+): RestTaskCreatePayload {
+  // Pass properties through, but strip any known-hidden fields (server-managed internals
+  // like moveInitialBlobstore that the backend rejects when sent via PUT/POST).
+  const properties: Record<string, string> = Object.fromEntries(
+    Object.entries(data.properties || {})
+      .filter(([key]) => !TASK_FIELD_UI[key]?.hidden)
+      .map(([key, value]) => {
+        if (TASK_FIELD_UI[key]?.type === 'checkbox') {
+          return [key, value === 'true' ? 'true' : 'false'];
+        }
+        return [key, value];
+      })
+  );
 
   // Combine date and time
   let startDate = data.startDate;
@@ -258,7 +221,7 @@ function toRestTaskCreate(
     name: data.name,
     enabled: data.enabled,
     alertEmail: data.alertEmail || null,
-    notificationCondition: (data.notificationCondition || 'FAILURE') as RestTaskTemplate['notificationCondition'],
+    notificationCondition: (data.notificationCondition || 'FAILURE') as RestTaskCreatePayload['notificationCondition'],
     frequency: toRestFrequency(
       data.schedule,
       startDate,
@@ -277,14 +240,19 @@ function toRestTaskCreate(
 function toRestTaskUpdate(
   data: TaskFormData,
   startTime?: string
-): Omit<RestTaskTemplate, 'type'> {
-  // Filter out internal properties with dots
-  const properties: Record<string, string> = {};
-  Object.entries(data.properties).forEach(([key, value]) => {
-    if (!key.includes('.')) {
-      properties[key] = value;
-    }
-  });
+): Omit<RestTaskCreatePayload, 'type'> {
+  // Pass properties through, but strip any known-hidden fields (server-managed internals
+  // like moveInitialBlobstore that the backend rejects when sent via PUT/POST).
+  const properties: Record<string, string> = Object.fromEntries(
+    Object.entries(data.properties || {})
+      .filter(([key]) => !TASK_FIELD_UI[key]?.hidden)
+      .map(([key, value]) => {
+        if (TASK_FIELD_UI[key]?.type === 'checkbox') {
+          return [key, value === 'true' ? 'true' : 'false'];
+        }
+        return [key, value];
+      })
+  );
 
   // Combine date and time
   let startDate = data.startDate;
@@ -296,7 +264,7 @@ function toRestTaskUpdate(
     name: data.name,
     enabled: data.enabled,
     alertEmail: data.alertEmail || null,
-    notificationCondition: (data.notificationCondition || 'FAILURE') as RestTaskTemplate['notificationCondition'],
+    notificationCondition: (data.notificationCondition || 'FAILURE') as RestTaskCreatePayload['notificationCondition'],
     frequency: toRestFrequency(
       data.schedule,
       startDate,
@@ -316,17 +284,20 @@ function toRestTaskUpdate(
  * Custom hook for Tasks API operations
  */
 export function useTasksApi() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [loading, setLoadingRaw] = useState(false);
+  const [error, setErrorRaw] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  const setLoading = useCallback((val: boolean) => {
+    if (isMountedRef.current) setLoadingRaw(val);
+  }, []);
+
+  const setError = useCallback((val: string | null) => {
+    if (isMountedRef.current) setErrorRaw(val);
   }, []);
 
   /**

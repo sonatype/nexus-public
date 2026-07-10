@@ -14,7 +14,7 @@
 .sonatype-lifecycle-header {
   .nx-breadcrumb {
     .nx-breadcrumb__link {
-      color: #0061fe !important;
+      color: var(--nx-color-text-link);
       text-decoration: none;
 
       &:hover {
@@ -24,7 +24,7 @@
 
     .nx-breadcrumb__list-item:last-child {
       .nx-breadcrumb__link {
-        color: var(--nx-color-text) !important;
+        color: var(--nx-color-text);
         pointer-events: none;
         cursor: default;
 
@@ -38,12 +38,11 @@
 
 .nx-page-main .nx-tabs {
   .nx-tab {
-    white-space: nowrap;
-    overflow: visible;
-    text-overflow: clip;
+    max-width: none;
 
     .nx-counter {
       margin-left: var(--nx-spacing-2x);
+      margin-right: var(--nx-spacing-2x);
     }
   }
 }

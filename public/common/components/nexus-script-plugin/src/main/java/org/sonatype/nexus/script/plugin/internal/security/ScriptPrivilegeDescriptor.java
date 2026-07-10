@@ -15,8 +15,8 @@ package org.sonatype.nexus.script.plugin.internal.security;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;

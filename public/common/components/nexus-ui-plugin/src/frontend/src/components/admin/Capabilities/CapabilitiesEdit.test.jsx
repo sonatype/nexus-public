@@ -1326,6 +1326,70 @@ describe('CapabilitiesEdit', () => {
     expect(deleteButton).not.toBeInTheDocument();
   });
 
+  describe('delete modal does not trigger form validation banner', () => {
+    it('does not show form validation error banner when delete modal opens on a capability with required fields', async () => {
+      // clicking Delete shows the confirmation modal but the form behind it must NOT show a validation error banner
+      mockSuccessfulLoad(createBaseUrlCapability(), CAPABILITY_TYPES);
+      render(<CapabilitiesEdit />);
+      await waitForCapabilityToLoad('Base URL - Test');
+
+      await openDeleteModal();
+
+      // The form validation error banner must not appear while the delete modal is open
+      expect(screen.queryByText(/There were validation errors/i)).not.toBeInTheDocument();
+    });
+
+    it('does not show form validation error banner when delete modal opens on a capability with no form fields', async () => {
+      mockSuccessfulLoad(createCapability(), CAPABILITY_TYPES);
+      render(<CapabilitiesEdit />);
+      await waitForCapabilityToLoad('Audit - Enabled');
+
+      await openDeleteModal();
+
+      expect(screen.queryByText(/There were validation errors/i)).not.toBeInTheDocument();
+    });
+
+    it('restores normal validation behaviour after delete modal is cancelled', async () => {
+      mockSuccessfulLoad(createBaseUrlCapability(), CAPABILITY_TYPES);
+      render(<CapabilitiesEdit />);
+      await waitForCapabilityToLoad('Base URL - Test');
+
+      const dialog = await openDeleteModal();
+      userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+      // Clear the required field and attempt save — validation banner must reappear normally
+      const baseUrlField = screen.getByLabelText('Base URL');
+      userEvent.clear(baseUrlField);
+      userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(screen.getByText(/This field is required/i)).toBeVisible();
+    });
+
+    it('hides already-visible validation banner when delete modal opens, restores it on cancel', async () => {
+      // Scenario: user clears a required field, clicks Save (banner appears), then clicks
+      // Delete without fixing the error. The banner must disappear while the modal is open
+      // and come back after cancelling — without requiring another save attempt.
+      mockSuccessfulLoad(createBaseUrlCapability(), CAPABILITY_TYPES);
+      render(<CapabilitiesEdit />);
+      await waitForCapabilityToLoad('Base URL - Test');
+
+      // Trigger the validation banner by clearing a required field and submitting
+      const baseUrlField = screen.getByLabelText('Base URL');
+      userEvent.clear(baseUrlField);
+      userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(screen.getByText(/There were validation errors/i)).toBeVisible();
+
+      const dialog = await openDeleteModal();
+      expect(screen.queryByText(/There were validation errors/i)).not.toBeInTheDocument();
+
+      userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(screen.getByText(/There were validation errors/i)).toBeVisible();
+    });
+  });
+
   it('should not show the delete button when capability is a system capability', async () => {
     // Mock successful capability load with isSystem flag
     mockSuccessfulLoad(

@@ -289,11 +289,17 @@ public interface AssetDAO
       @Param("updateComponentEntityVersion") boolean updateComponentEntityVersion);
 
   /**
-   * Updates the last downloaded time of the given asset in the content data store.
+   * Updates the last downloaded time of the given asset, but only when the asset has never been
+   * downloaded or its last_downloaded timestamp is older than {@code intervalSeconds}. The
+   * conditional WHERE clause makes this safe to call concurrently from multiple threads or nodes —
+   * exactly one caller will affect a row per interval.
    *
    * @param asset the asset to update
+   * @param intervalSeconds the minimum age (in seconds) the existing last_downloaded must have for
+   *          the update to apply; pass {@code 0} for unconditional update
+   * @return number of rows affected (0 or 1)
    */
-  void markAsDownloaded(Asset asset);
+  int markAsDownloaded(@Param("asset") Asset asset, @Param("intervalSeconds") long intervalSeconds);
 
   /**
    * Deletes an asset from the content data store.

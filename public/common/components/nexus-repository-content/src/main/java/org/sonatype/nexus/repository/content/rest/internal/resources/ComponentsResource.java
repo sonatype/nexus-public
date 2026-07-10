@@ -18,20 +18,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response.Status;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -52,6 +52,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadRepositoryContext;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -64,7 +65,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -189,7 +190,15 @@ public class ComponentsResource
 
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
+    // CLM-39871: bind the repository on the upload thread so the hosted-policy
+    // enforcement ComponentUploadExtension (UiUploadEnforcementInterceptor) can
+    // resolve it from validate(ComponentUpload). The UI service does the same
+    // bind+clear pair; without it, REST uploads silently bypass the policy gate.
+    // set() lives inside the try so any future code added between repository
+    // resolution and this point cannot leave a stale binding on the thread when
+    // it throws — finally always clears.
     try {
+      UploadRepositoryContext.set(repository);
       uploadManager.handle(repository, request);
     }
     catch (IllegalOperationException e) {
@@ -215,6 +224,28 @@ public class ComponentsResource
       throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
           "\"" + e.getMessage() + "\"",
           MediaType.APPLICATION_JSON);
+    }
+    catch (RuntimeException e) {
+      // CLM-39871: hosted-policy block / unavailable surfaces as a RuntimeException
+      // whose message is prefixed with the HOSTED_ENFORCEMENT:: contract. Detect by
+      // the prefix because the throwing exception class lives in a private module
+      // that the public REST module cannot depend on. Strip the prefix and pick the
+      // HTTP status from the errorCode in the JSON envelope: BLOCKED → 403 (permanent
+      // policy rejection, do not retry); UNAVAILABLE → 503 (transient IQ issue, safe
+      // to retry). Routing UNAVAILABLE through 403 would tell CI pipelines that treat
+      // 403 as fatal to stop retrying on every transient IQ blip.
+      String message = e.getMessage();
+      if (message != null && message.startsWith("HOSTED_ENFORCEMENT::")) {
+        String json = message.substring("HOSTED_ENFORCEMENT::".length());
+        Status status = json.contains("HOSTED_ENFORCEMENT_UNAVAILABLE")
+            ? Status.SERVICE_UNAVAILABLE
+            : Status.FORBIDDEN;
+        throw new WebApplicationMessageException(status, json, MediaType.APPLICATION_JSON);
+      }
+      throw e;
+    }
+    finally {
+      UploadRepositoryContext.clear();
     }
   }
 

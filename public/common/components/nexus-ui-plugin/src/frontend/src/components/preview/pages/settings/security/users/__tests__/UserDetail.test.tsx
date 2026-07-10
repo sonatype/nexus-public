@@ -33,7 +33,12 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn().mockReturnValue(true),
     isProEdition: jest.fn().mockReturnValue(true),
     state: jest.fn().mockReturnValue({
-      getValue: jest.fn().mockReturnValue('anonymous'),
+      getValue: jest.fn((key: string) => {
+        if (key === 'capabilityActiveTypes') {
+          return ['usertoken'];
+        }
+        return 'anonymous';
+      }),
       getUser: jest.fn().mockReturnValue({ id: 'currentuser' }),
     }),
   },
@@ -568,6 +573,71 @@ describe('UserDetail', () => {
 
     // resetUserToken should not have been called
     expect(mockResetUserToken).not.toHaveBeenCalled();
+  });
+
+  it('hides reset token button when usertoken capability is not active', async () => {
+    // Override the mock to return no usertoken capability
+    const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
+    ExtJS.state.mockReturnValue({
+      getValue: jest.fn((key: string) => {
+        if (key === 'capabilityActiveTypes') {
+          return []; // No usertoken capability
+        }
+        return 'anonymous';
+      }),
+      getUser: jest.fn().mockReturnValue({ id: 'currentuser' }),
+    });
+
+    render(
+      <UserDetail
+        user={mockUser}
+        loading={false}
+        canEdit={true}
+        canDelete={true}
+        onSave={mockOnSave}
+        onDelete={mockOnDelete}
+        onCancel={mockOnCancel}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user-form')).toBeInTheDocument();
+    });
+
+    // Reset Token button should NOT be visible
+    expect(screen.queryByText('Reset Token')).not.toBeInTheDocument();
+  });
+
+  it('hides reset token button when user lacks usertoken-user:delete permission', async () => {
+    // Override the mock to return false for usertoken permission
+    const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
+    ExtJS.checkPermission.mockImplementation((permission: string) => {
+      if (permission === 'nexus:usertoken-user:delete') {
+        return false;
+      }
+      return true;
+    });
+
+    render(
+      <UserDetail
+        user={mockUser}
+        loading={false}
+        canEdit={true}
+        canDelete={true}
+        onSave={mockOnSave}
+        onDelete={mockOnDelete}
+        onCancel={mockOnCancel}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user-form')).toBeInTheDocument();
+    });
+
+    // Reset Token button should NOT be visible
+    expect(screen.queryByText('Reset Token')).not.toBeInTheDocument();
   });
 });
 

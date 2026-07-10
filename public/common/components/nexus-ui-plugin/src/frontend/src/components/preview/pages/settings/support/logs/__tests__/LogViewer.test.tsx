@@ -229,8 +229,10 @@ describe('LogViewer', () => {
     });
   });
 
-  it('decodes URL-encoded filenames', async () => {
-    render(<LogViewer filename="test%20log.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
+  it('displays raw filenames including spaces and special characters', async () => {
+    // With raw: true on the route param, filenames arrive unencoded.
+    // A space is a literal space in the filename, not %20.
+    render(<LogViewer filename="test log.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('Viewing test log.log')).toBeInTheDocument();

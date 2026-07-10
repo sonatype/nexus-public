@@ -41,14 +41,25 @@ export function SessionExpiryModal({
   const router = useRouter();
 
   const handleSignIn = () => {
-    // Store current URL for redirect after login
+    // Get current URL
     const currentUrl = window.location.hash;
-    if (currentUrl) {
+
+    // Don't return to test hub or other internal routes after login
+    // These routes require debug mode and special localStorage flags
+    const isInternalRoute = currentUrl?.includes('/test') ||
+                            currentUrl?.includes('preview.test');
+
+    // Store URL for redirect after login (but not for internal routes)
+    if (currentUrl && !isInternalRoute) {
       sessionStorage.setItem('nexus:returnTo', currentUrl);
+    } else {
+      // Clear any previous return path for internal routes
+      sessionStorage.removeItem('nexus:returnTo');
     }
 
     // Redirect to login page
-    const returnTo = btoa(currentUrl || '#/');
+    // For internal routes, return to welcome page after login
+    const returnTo = isInternalRoute ? btoa('#browse/welcome') : btoa(currentUrl || '#/');
     router.stateService.go('login', { returnTo });
     onClose();
   };

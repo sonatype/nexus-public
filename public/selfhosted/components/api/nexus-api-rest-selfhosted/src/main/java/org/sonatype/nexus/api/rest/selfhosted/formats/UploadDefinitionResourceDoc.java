@@ -16,21 +16,21 @@ import java.util.List;
 
 import org.sonatype.nexus.api.rest.selfhosted.formats.model.UploadDefinitionXO;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 /**
  * Swagger documentation for {@link UploadDefinitionResource}
  *
  * @since 3.10
  */
-@Api(value = "Formats")
+@Tag(name = "Formats")
 public interface UploadDefinitionResourceDoc
 {
-  @ApiOperation("Get upload field requirements for each supported format")
+  @Operation(summary = "Get upload field requirements for each supported format")
   List<UploadDefinitionXO> get();
 
-  @ApiOperation("Get upload field requirements for the desired format")
-  UploadDefinitionXO get(@ApiParam(value = "The desired repository format") final String format);
+  @Operation(summary = "Get upload field requirements for the desired format")
+  UploadDefinitionXO get(@Parameter(description = "The desired repository format") final String format);
 }

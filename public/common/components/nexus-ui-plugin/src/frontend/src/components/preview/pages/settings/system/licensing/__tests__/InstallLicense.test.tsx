@@ -51,8 +51,14 @@ jest.mock('../LicenseAgreementModal', () => ({
     ) : null,
 }));
 
-// NOTE: Using global mock from setup.js for @sonatype/nexus-ui-plugin
-// which includes ExtJS.checkPermission returning true
+// Mock ExtJS so we can control checkPermission per-test
+jest.mock('../../../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    checkPermission: jest.fn().mockReturnValue(true),
+  },
+}));
+
+const { ExtJS } = require('../../../../../../../interface/ExtJS');
 
 const renderWithTheme = (component: React.ReactElement) => {
   return render(<Theme>{component}</Theme>);
@@ -61,13 +67,26 @@ const renderWithTheme = (component: React.ReactElement) => {
 describe('InstallLicense', () => {
   const mockOnLicenseInstalled = jest.fn();
 
+  const mockLicenseData = {
+    contactCompany: 'Acme Corp',
+    contactName: 'John Doe',
+    contactEmail: 'john@acme.com',
+    effectiveDate: '2024-01-01T00:00:00Z',
+    expirationDate: '2025-12-31T23:59:59Z',
+    licenseType: 'PRO',
+    licensedUsers: '100',
+    fingerprint: 'abc123',
+  };
+
   beforeEach(() => {
+    jest.clearAllMocks();
+    ExtJS.checkPermission.mockReturnValue(true);
     mockedUseLicensingApi.mockReturnValue({
       loading: false,
       error: null,
       setError: jest.fn(),
       fetchLicense: jest.fn(),
-      uploadLicense: jest.fn().mockResolvedValue(undefined),
+      uploadLicense: jest.fn().mockResolvedValue(mockLicenseData),
       getLicenseAgreementUrl: jest.fn().mockReturnValue('https://example.com/license'),
     });
   });
@@ -75,28 +94,68 @@ describe('InstallLicense', () => {
   it('renders the install license section', () => {
     renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
 
-    // Should show the install license title
     expect(screen.getByText('Install License')).toBeInTheDocument();
   });
 
-  it('shows read-only message when permission denied', () => {
-    // Component checks permission using ExtJS.checkPermission
-    // If it returns false, shows the read-only message
+  it('shows file dropzone when user has upload permission', () => {
+    // Global mock returns true for checkPermission — no override needed
     renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
 
-    // The global mock returns true for checkPermission, so file dropzone should render
-    // OR it shows the permission message - either is valid for the component
-    const hasDropzone = screen.queryByTestId('file-dropzone');
-    const hasPermissionMessage = screen.queryByText(/permission/i);
-    
-    // One of these should be present depending on permission state
-    expect(hasDropzone || hasPermissionMessage).toBeTruthy();
+    expect(screen.getByTestId('file-dropzone')).toBeInTheDocument();
+    expect(screen.queryByText(/do not have permission/i)).not.toBeInTheDocument();
+  });
+
+  it('shows read-only message and hides dropzone when permission is denied', () => {
+    ExtJS.checkPermission.mockReturnValueOnce(false);
+
+    renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
+
+    expect(screen.getByText(/do not have permission/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('file-dropzone')).not.toBeInTheDocument();
   });
 
   it('useLicensingApi hook is called', () => {
     renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
 
-    // The component should use the licensing API hook
     expect(mockedUseLicensingApi).toHaveBeenCalled();
+  });
+
+  it('upload button has data-analytics-id="nxrm-licensing-upload"', () => {
+    renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
+
+    const uploadButton = screen.getByRole('button', { name: 'Upload License' });
+    expect(uploadButton).toHaveAttribute('data-analytics-id', 'nxrm-licensing-upload');
+  });
+
+  it('disables upload button when licenseUrl is missing', () => {
+    mockedUseLicensingApi.mockReturnValue({
+      loading: false,
+      error: null,
+      setError: jest.fn(),
+      fetchLicense: jest.fn(),
+      uploadLicense: jest.fn(),
+      getLicenseAgreementUrl: jest.fn().mockReturnValue(null),
+    });
+
+    renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
+
+    const uploadButton = screen.getByRole('button', { name: 'Upload License' });
+    expect(uploadButton).toBeDisabled();
+  });
+
+  it('disables upload button when licenseUrl is empty string', () => {
+    mockedUseLicensingApi.mockReturnValue({
+      loading: false,
+      error: null,
+      setError: jest.fn(),
+      fetchLicense: jest.fn(),
+      uploadLicense: jest.fn(),
+      getLicenseAgreementUrl: jest.fn().mockReturnValue(''),
+    });
+
+    renderWithTheme(<InstallLicense hasExistingLicense={false} onLicenseInstalled={mockOnLicenseInstalled} />);
+
+    const uploadButton = screen.getByRole('button', { name: 'Upload License' });
+    expect(uploadButton).toBeDisabled();
   });
 });

@@ -132,4 +132,65 @@ describe('RepositoryTypeSelector', () => {
       expect(screen.getByText('Group')).toBeInTheDocument();
     });
   });
+
+  it('filters format cards live as the user types in the search input', async () => {
+    renderWithTheme(
+      <RepositoryTypeSelector onSelect={mockOnSelect} onCancel={mockOnCancel} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Maven')).toBeInTheDocument();
+      expect(screen.getByText('npm')).toBeInTheDocument();
+      expect(screen.getByText('Docker')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search technology/i);
+    await userEvent.type(searchInput, 'mav');
+
+    expect(screen.getByText('Maven')).toBeInTheDocument();
+    expect(screen.queryByText('npm')).not.toBeInTheDocument();
+    expect(screen.queryByText('Docker')).not.toBeInTheDocument();
+  });
+
+  it('does not match formats by their description text', async () => {
+    renderWithTheme(
+      <RepositoryTypeSelector onSelect={mockOnSelect} onCancel={mockOnCancel} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Maven')).toBeInTheDocument();
+    });
+
+    // The letter 'm' appears in many format DESCRIPTIONS (e.g. "Container
+    // image registry" for Docker), but does NOT appear in the Docker label
+    // or key. The filter must not pull Docker in via its description.
+    const searchInput = screen.getByPlaceholderText(/search technology/i);
+    await userEvent.type(searchInput, 'm');
+
+    // Maven and npm match by label/key (both contain 'm').
+    expect(screen.getByText('Maven')).toBeInTheDocument();
+    expect(screen.getByText('npm')).toBeInTheDocument();
+    // Docker has 'm' only in its description; it must be excluded.
+    expect(screen.queryByText('Docker')).not.toBeInTheDocument();
+  });
+
+  it('restores all format cards when the search input is cleared', async () => {
+    renderWithTheme(
+      <RepositoryTypeSelector onSelect={mockOnSelect} onCancel={mockOnCancel} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Maven')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search technology/i) as HTMLInputElement;
+    await userEvent.type(searchInput, 'mav');
+    expect(screen.queryByText('Docker')).not.toBeInTheDocument();
+
+    await userEvent.clear(searchInput);
+
+    expect(screen.getByText('Maven')).toBeInTheDocument();
+    expect(screen.getByText('npm')).toBeInTheDocument();
+    expect(screen.getByText('Docker')).toBeInTheDocument();
+  });
 });

@@ -79,6 +79,10 @@
     color: var(--gray-11);
     line-height: 1.5;
   }
+
+  &__description-text {
+    display: block;
+  }
 }
 
 @keyframes task-form-spin {

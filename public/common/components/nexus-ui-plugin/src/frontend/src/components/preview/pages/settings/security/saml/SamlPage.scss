@@ -18,6 +18,24 @@
     margin-bottom: var(--space-4);
   }
 
+  // Fix: Ensure SettingsAlert displays horizontally
+  // Radix Box has display: block by default, we need flex for proper layout
+  .settings-alert {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  // SAML IdP Metadata textarea: explicit 734px width to match other input fields
+  // Scoped to SAML page only - wraps long XML lines
+  .saml-idp-metadata-textarea .settings-textarea__input {
+    width: 100%;
+    max-width: 734px;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
   .metadata-url-container {
     background: var(--gray-a2);
     border: 1px solid var(--gray-a6);

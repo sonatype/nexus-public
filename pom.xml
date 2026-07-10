@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.93.2-01</version>
+  <version>3.94.0-12</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.93.2-01</nexus.version>
+    <nexus.version>3.94.0-12</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>3.5.15</spring-boot.version>
@@ -189,46 +189,10 @@
           <version>3.3.1</version>
         </plugin>
 
-        <!--
-        For maven-plugins which still need Plexus descriptors.
-        -->
-        <plugin>
-          <groupId>org.codehaus.plexus</groupId>
-          <artifactId>plexus-component-metadata</artifactId>
-          <version>1.6</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>generate-metadata</goal>
-                <goal>generate-test-metadata</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>org.codehaus.gmavenplus</groupId>
-          <artifactId>gmavenplus-plugin</artifactId>
-          <version>1.5</version>
-          <dependencies>
-            <dependency>
-              <groupId>org.codehaus.groovy</groupId>
-              <artifactId>groovy-ant</artifactId>
-              <version>3.0.25</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <!--
-            Workaround https://github.com/groovy/GMavenPlus/issues/56
-            -->
-            <allowSystemExits>true</allowSystemExits>
-          </configuration>
-        </plugin>
-
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.93.2-01</version>
+          <version>3.94.0-12</version>
           <executions>
             <execution>
               <goals>
@@ -644,7 +608,7 @@
           </configuration>
         </plugin>
         <plugin>
-          <!-- see developer-documentation/development/formatting.md -->
+          <!-- see private/developer-documentation/getting-started/formatting.md -->
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
           <version>3.1.0</version>
@@ -802,12 +766,6 @@
                     <exclude>xmlrpc:*</exclude>
 
                     <!--
-                    Require use of sisu plexus integration.
-                    -->
-                    <exclude>*:plexus-container-default</exclude>
-                    <exclude>*:plexus-component-api</exclude>
-
-                    <!--
                     Ban old versions of apache shiro.
                     -->
                     <exclude>*:jsecurity</exclude>
@@ -860,11 +818,6 @@
                     <exclude>org.sonatype.spice:plexus-ehcache</exclude>
 
                     <!--
-                    Ban old litmus.
-                    -->
-                    <exclude>org.sonatype.sisu.litmus:litmus-testsupport:(,1.3]</exclude>
-
-                    <!--
                     Ban log4j.
                     -->
                     <exclude>log4j:*</exclude>
@@ -886,11 +839,6 @@
                     <exclude>bouncycastle:*-jdk15:*</exclude>
 
                     <!--
-                    Ban snappy-java as there are lingering issues on OSGi when restarting.
-                    -->
-                    <exclude>org.xerial.snappy:snappy-java:*</exclude>
-
-                    <!--
                     Ban old javax.mail
                     -->
                     <exclude>javax.mail:mail:*</exclude>
@@ -909,6 +857,11 @@
                     <exclude>org.sonatype.goodies:goodies-prefs</exclude>
                     <exclude>org.sonatype.goodies:goodies-common</exclude>
                     <exclude>org.sonatype.goodies:goodies-i18n</exclude>
+
+                    <!--
+                      Ban gRCP's shaded netty, use grpc-netty if netty is still part of Nexus
+                    -->
+                    <exclude>io.grpc:grpc-netty-shaded:*</exclude>
                   </excludes>
 
                   <!--
@@ -1432,6 +1385,24 @@
         </plugins>
       </build>
     </profile>
+
+    <!--
+    Includes the OCI integration-test module (NEXUS-42721) when its pom is present.
+    The module is never built by default; it is built only when invoked explicitly with
+    `-pl testsuite/oci-integration-tests -am` and exercised via `-Pit` which wires failsafe.
+    -->
+    <profile>
+      <id>include-oci-integration-tests</id>
+      <activation>
+        <file>
+          <exists>testsuite/oci-integration-tests/pom.xml</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>testsuite/oci-integration-tests</module>
+      </modules>
+    </profile>
+
   </profiles>
 
 </project>

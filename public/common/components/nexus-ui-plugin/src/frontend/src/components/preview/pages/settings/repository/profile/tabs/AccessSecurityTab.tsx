@@ -29,7 +29,7 @@ import type {
   RoleInfo,
   UserWithAccess,
   AnonymousAccess,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
 
 // =============================================================================
 // Types

@@ -88,6 +88,11 @@
     margin: 0;
   }
 
+  &__spinner {
+    animation: nxrm-spin 1s linear infinite;
+    color: var(--color-text-tertiary, #737373);
+  }
+
   &__icon--healthy {
     color: var(--green-9);
     flex-shrink: 0;

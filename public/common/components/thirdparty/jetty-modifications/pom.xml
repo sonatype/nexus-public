@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-thirdparty-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-components-thirdparty-jetty-modifications-parent</artifactId>
@@ -30,7 +30,10 @@
   <modules>
     <module>jetty-server</module>
     <module>jetty-security</module>
-    <module>jetty-ee8-nested</module>
+    <!-- NEXUS-46395: jetty-ee10-servlet replaces the retired jetty-ee8-nested module.
+         Holds re-ports of jetty.ee10.servlet classes that need our reason-phrase /
+         response-handling tweaks. Consumed by nexus-spring and tests in nexus-base. -->
+    <module>jetty-ee10-servlet</module>
   </modules>
 
   <dependencyManagement>
@@ -40,7 +43,7 @@
         <groupId>org.sonatype.nexus.common.buildsupport</groupId>
         <artifactId>nexus-common-buildsupport-jetty</artifactId>
         <type>pom</type>
-        <version>3.93.2-01</version>
+        <version>3.94.0-12</version>
         <scope>import</scope>
       </dependency>
 

@@ -17,8 +17,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 import org.apache.shiro.authz.AuthorizationException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;

@@ -15,7 +15,7 @@ package org.sonatype.nexus.coreui;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * Asset exchange object.
@@ -64,6 +64,14 @@ public class AssetXO
 
   @NotEmpty
   private Map<String, Object> attributes;
+
+  /**
+   * Top-level docker registry URL (e.g. {@code localhost:8081/my-repo}) computed at read
+   * time from the repository's connector configuration. Only populated for docker assets;
+   * intentionally kept off {@code attributes.docker} so it does not appear in the
+   * Attributes panel — used solely for pull-snippet rendering.
+   */
+  private String registryUrl;
 
   public String getId() {
     return id;
@@ -191,6 +199,14 @@ public class AssetXO
 
   public void setAttributes(Map<String, Object> attributes) {
     this.attributes = attributes;
+  }
+
+  public String getRegistryUrl() {
+    return registryUrl;
+  }
+
+  public void setRegistryUrl(String registryUrl) {
+    this.registryUrl = registryUrl;
   }
 
   @Override

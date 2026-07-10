@@ -46,11 +46,16 @@ import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.net.HttpHeaders;
+import org.sonatype.nexus.common.template.EscapeHelper;
+
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.Configurable;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.message.BasicHeader;
@@ -72,6 +77,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,6 +88,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.withSettings;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -101,7 +108,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ProxyFacetSupportTest
 {
   @Mock
-  ThrottlerInterceptor throttlerInterceptor;
+  ThrottlerInterceptor contentUsageThrottlerInterceptor;
 
   @Mock
   GracePeriodInterceptor gracePeriodInterceptor;
@@ -562,6 +569,41 @@ public class ProxyFacetSupportTest
   }
 
   @Test
+  public void doConfigure_preserveEncodedCharactersTrue_encodingHelperIsNotNull() throws Exception {
+    ConfigurationFacet configurationFacet = mock(ConfigurationFacet.class);
+    ProxyFacetSupport.ProxyConfig config = new ProxyFacetSupport.ProxyConfig();
+    config.remoteUrl = new URI("http://example.com");
+    config.preserveEncodedCharacters = true;
+
+    when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+    when(configurationFacet.readSection(any(Configuration.class), anyString(), eq(ProxyFacetSupport.ProxyConfig.class)))
+        .thenReturn(config);
+
+    underTest.configureUrlEscapeRules(null);
+    underTest.setRepositoryAttributeService(repositoryAttributeService);
+    underTest.doConfigure(mock(Configuration.class));
+
+    assertNotNull(underTest.getEncodingHelper());
+  }
+
+  @Test
+  public void doConfigure_preserveEncodedCharactersFalse_encodingHelperIsNull() throws Exception {
+    ConfigurationFacet configurationFacet = mock(ConfigurationFacet.class);
+    ProxyFacetSupport.ProxyConfig config = new ProxyFacetSupport.ProxyConfig();
+    config.remoteUrl = new URI("http://example.com");
+    config.preserveEncodedCharacters = false;
+
+    when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+    when(configurationFacet.readSection(any(Configuration.class), anyString(), eq(ProxyFacetSupport.ProxyConfig.class)))
+        .thenReturn(config);
+
+    underTest.setRepositoryAttributeService(repositoryAttributeService);
+    underTest.doConfigure(mock(Configuration.class));
+
+    assertNull(underTest.getEncodingHelper());
+  }
+
+  @Test
   public void normalizeURLPath() throws Exception {
     assertEquals(
         URI.create("https://remoteserver/com/foo/this%20is%20a%20space/"),
@@ -578,7 +620,7 @@ public class ProxyFacetSupportTest
 
   @Test
   public void testGetPostsBlockedEvents() throws IOException {
-    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+    when(contentUsageThrottlerInterceptor.shouldBlock()).thenReturn(true);
     when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(false);
     doReturn(null).when(underTest).getCachedContent(cachedContext);
 
@@ -591,7 +633,7 @@ public class ProxyFacetSupportTest
 
   @Test
   public void testGetPostsGracePeriodEvents() throws IOException {
-    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+    when(contentUsageThrottlerInterceptor.shouldBlock()).thenReturn(true);
     when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(true);
 
     doReturn(content).when(underTest).getCachedContent(cachedContext);
@@ -713,7 +755,7 @@ public class ProxyFacetSupportTest
 
     when(cacheController.isStale(cacheInfo)).thenReturn(true);
     when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(true);
-    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+    when(contentUsageThrottlerInterceptor.shouldBlock()).thenReturn(true);
 
     Content actual = underTest.get(cachedContext);
     verify(eventManager).post(any(ProxyThrottledRequestEvent.class));
@@ -727,7 +769,7 @@ public class ProxyFacetSupportTest
 
     when(cacheController.isStale(cacheInfo)).thenReturn(true);
     when(gracePeriodInterceptor.isInGracePeriod()).thenReturn(true);
-    when(throttlerInterceptor.shouldBlock()).thenReturn(true);
+    when(contentUsageThrottlerInterceptor.shouldBlock()).thenReturn(true);
 
     Content actual = underTest.get(cachedContext);
     verify(eventManager, never()).post(any(ProxyThrottledRequestEvent.class));
@@ -975,5 +1017,68 @@ public class ProxyFacetSupportTest
 
     assertThat(result, is(storedContent));
     verify(noSkipStore, times(1)).store(cachedContext, reFetchedContent);
+  }
+
+  @Test
+  public void execute_setsNormalizeUriFalse_whenEncodingHelperIsSet() throws Exception {
+    setField(underTest, "encodingHelper", new EncodingHelper(new EscapeHelper()));
+
+    HttpGet request = new HttpGet("http://example.com/path");
+    // Plain mock does not implement Configurable — exercises the RequestConfig.DEFAULT fallback
+    HttpClient httpClient = mock(HttpClient.class);
+    BasicHttpResponse stubResponse = new BasicHttpResponse(
+        new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+    when(httpClient.execute(any(HttpRequestBase.class), any(HttpContext.class))).thenReturn(stubResponse);
+
+    underTest.execute(cachedContext, httpClient, request);
+
+    assertThat(request.getConfig().isNormalizeUri(), is(false));
+    // RequestConfig.DEFAULT has -1 (unset) for all timeouts — nothing was shadowed
+    assertThat(request.getConfig().getSocketTimeout(), is(-1));
+  }
+
+  @Test
+  public void execute_preservesExistingRequestConfig_whenMergingNormalizeUri() throws Exception {
+    setField(underTest, "encodingHelper", new EncodingHelper(new EscapeHelper()));
+
+    HttpGet request = new HttpGet("http://example.com/path");
+    int expectedTimeout = 42_000;
+    request.setConfig(RequestConfig.custom()
+        .setSocketTimeout(expectedTimeout)
+        .build());
+
+    HttpClient httpClient = mock(HttpClient.class);
+    BasicHttpResponse stubResponse = new BasicHttpResponse(
+        new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+    when(httpClient.execute(any(HttpRequestBase.class), any(HttpContext.class))).thenReturn(stubResponse);
+
+    underTest.execute(cachedContext, httpClient, request);
+
+    assertThat(request.getConfig().isNormalizeUri(), is(false));
+    assertThat(request.getConfig().getSocketTimeout(), is(expectedTimeout));
+  }
+
+  @Test
+  public void execute_usesClientDefaultConfig_whenRequestHasNoConfig() throws Exception {
+    setField(underTest, "encodingHelper", new EncodingHelper(new EscapeHelper()));
+
+    HttpGet request = new HttpGet("http://example.com/path");
+    int clientSocketTimeout = 99_000;
+    RequestConfig clientDefault = RequestConfig.custom()
+        .setSocketTimeout(clientSocketTimeout)
+        .build();
+
+    // A Configurable HttpClient that exposes its default RequestConfig (e.g. InternalHttpClient)
+    HttpClient configurableClient = mock(HttpClient.class, withSettings().extraInterfaces(Configurable.class));
+    when(((Configurable) configurableClient).getConfig()).thenReturn(clientDefault);
+    BasicHttpResponse stubResponse = new BasicHttpResponse(
+        new ProtocolVersion("HTTP", 1, 1), 200, "OK");
+    when(configurableClient.execute(any(HttpRequestBase.class), any(HttpContext.class))).thenReturn(stubResponse);
+
+    underTest.execute(cachedContext, configurableClient, request);
+
+    // normalizeUri must be disabled and the client's timeout preserved
+    assertThat(request.getConfig().isNormalizeUri(), is(false));
+    assertThat(request.getConfig().getSocketTimeout(), is(clientSocketTimeout));
   }
 }

@@ -23,7 +23,6 @@ export { AlpineFacet } from './AlpineFacet';
 export { AptFacet } from './AptFacet';
 export { DockerFacet } from './DockerFacet';
 export { MavenFacet } from './MavenFacet';
-export { NpmFacet } from './NpmFacet';
 export { NugetFacet } from './NugetFacet';
 export { PyPiFacet } from './PyPiFacet';
 export { RawFacet } from './RawFacet';

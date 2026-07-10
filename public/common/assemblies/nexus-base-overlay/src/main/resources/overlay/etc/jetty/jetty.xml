@@ -31,7 +31,8 @@
     <Set name="maxErrorDispatches" property="jetty.httpConfig.maxErrorDispatches"/>
     <Set name="persistentConnectionsEnabled" property="jetty.httpConfig.persistentConnectionsEnabled"/>
     <Set name="httpCompliance"><Call class="org.eclipse.jetty.http.HttpCompliance" name="from"><Arg><Property name="jetty.httpConfig.compliance" deprecated="jetty.http.compliance" default="RFC7230"/></Arg></Call></Set>
-    <Set name="uriCompliance"><Call class="org.eclipse.jetty.http.UriCompliance" name="from"><Arg><Property name="jetty.httpConfig.uriCompliance" default="DEFAULT"/></Arg></Call></Set>
+    <!-- uriCompliance is configured below with default="LEGACY"; see the cargo/npm scoped-
+         package comment for context. -->
     <Set name="requestCookieCompliance"><Call class="org.eclipse.jetty.http.CookieCompliance" name="from"><Arg><Property name="jetty.httpConfig.requestCookieCompliance" default="RFC6265"/></Arg></Call></Set>
     <Set name="responseCookieCompliance"><Call class="org.eclipse.jetty.http.CookieCompliance" name="from"><Arg><Property name="jetty.httpConfig.responseCookieCompliance" default="RFC6265"/></Arg></Call></Set>
     <Set name="relativeRedirectAllowed"><Property name="jetty.httpConfig.relativeRedirectAllowed" default="false"/></Set>
@@ -59,7 +60,7 @@
     <!-- ForwardedRequestCustomizer must always be the first customizer -->
     <Call name="addCustomizer">
       <Arg>
-        <New class="org.eclipse.jetty.server.ForwardedRequestCustomizer">
+        <New id="forwardedRequestCustomizer" class="org.sonatype.nexus.bootstrap.jetty.CustomForwardedRequestCustomizer">
           <Set name="forwardedOnly" property="jetty.httpConfig.forwardedOnly"/>
           <Set name="proxyAsAuthority" property="jetty.httpConfig.forwardedProxyAsAuthority"/>
           <Set name="forwardedPortAsAuthority" property="jetty.httpConfig.forwardedPortAsAuthority"/>
@@ -80,7 +81,7 @@
   <Set name="defaultHandler">
     <New id="NexusHandler" class="org.sonatype.nexus.bootstrap.jetty.InstrumentedHandler">
       <Arg>
-        <New id="NexusWebAppContext" class="org.eclipse.jetty.ee8.webapp.WebAppContext">
+        <New id="NexusWebAppContext" class="org.eclipse.jetty.ee10.webapp.WebAppContext">
           <Set name="descriptor"><Property name="jetty.etc"/>/nexus-web.xml</Set>
           <Set name="parentLoaderPriority">true</Set>
           <Set name="defaultsDescriptor"><Property name="jetty.etc"/>/override-default-web.xml</Set>
@@ -88,9 +89,20 @@
           <Set name="throwUnavailableOnStartupException">true</Set>
           <Set name="configurationClasses">
             <Array type="java.lang.String">
-              <Item>org.eclipse.jetty.ee8.webapp.WebXmlConfiguration</Item>
+              <Item>org.eclipse.jetty.ee10.webapp.WebXmlConfiguration</Item>
             </Array>
           </Set>
+          <!--
+           Allow the EE10 servlet layer to forward requests whose URI contains violations
+           that are already permitted by the configured UriCompliance mode (LEGACY by default).
+           Without this, ServletContextRequest.newServletApiRequest() returns an AmbiguousURI
+           error (e.g. "Ambiguous URI encoding: AMBIGUOUS_PATH_SEPARATOR") for npm scoped
+           package publishes such as PUT /repository/npm-internal/@scope%2fname, even though
+           UriCompliance permits AMBIGUOUS_PATH_SEPARATOR. See NEXUS-53113.
+           -->
+          <Get name="servletHandler">
+            <Set name="decodeAmbiguousURIs">true</Set>
+          </Get>
         </New>
       </Arg>
     </New>
@@ -156,7 +168,7 @@
   </Set>
 
   <Set name="stopAtShutdown"><Property name="jetty.server.stopAtShutdown" default="true"/></Set>
-  <Set name="stopTimeout"><Property name="jetty.server.tempDirectory" default="5000"/></Set>
+  <Set name="stopTimeout"><Property name="jetty.server.stopTimeout" default="5000"/></Set>
   <Set name="dumpAfterStart" property="jetty.server.dumpAfterStart"/>
   <Set name="dumpBeforeStop" property="jetty.server.dumpBeforeStop"/>
   <Set name="tempDirectory" property="jetty.server.tempDirectory"/>

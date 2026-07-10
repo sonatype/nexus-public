@@ -19,6 +19,11 @@ import {replace} from 'ramda';
 import UIStrings from '../../../../constants/UIStrings';
 import {helperFunctions} from '../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 
+// localStorage keys for Test Hub scenarios
+const STORAGE_KEY_CE_THROTTLING_STATUS = 'SONATYPE_TEST_CE_THROTTLING_STATUS';
+const STORAGE_KEY_CE_COMPONENTS = 'SONATYPE_TEST_CE_COMPONENTS';
+const STORAGE_KEY_CE_REQUESTS = 'SONATYPE_TEST_CE_REQUESTS';
+
 const {
   getMetricData,
 } = helperFunctions;
@@ -194,6 +199,21 @@ function MonthlyMetricsCard({usage}) {
 }
 
 export default function UsageCenter() {
+  // Force re-render when test overrides change (Test Hub scenarios)
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+
+  React.useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY_CE_THROTTLING_STATUS ||
+          e.key === STORAGE_KEY_CE_COMPONENTS ||
+          e.key === STORAGE_KEY_CE_REQUESTS) {
+        forceUpdate();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const isProEdition = ExtJS.isProEdition();
   const isCommunityEdition = ExtJS.state().getEdition() === COMMUNITY;
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);

@@ -46,6 +46,7 @@ import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_REMOTE_FETCH_SKIP_MARKER;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_TELEMETRY_BLOCKING_MARKER;
 import static org.sonatype.nexus.repository.proxy.ThrottlerInterceptor.PAYMENT_REQUIRED_MESSAGE;
 
 /**
@@ -59,6 +60,11 @@ import static org.sonatype.nexus.repository.proxy.ThrottlerInterceptor.PAYMENT_R
 public class ProxyHandler
     implements Handler
 {
+  private static final String TELEMETRY_BLOCKING_MESSAGE =
+      "TELEMETRY REQUIRED: This instance has failed to submit required telemetry data. " +
+          "Please check network configuration or contact support. " +
+          "See https://links.sonatype.com/telemetry-troubleshooting. INSTANCE ID: ";
+
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
   @Autowired
@@ -77,9 +83,11 @@ public class ProxyHandler
       if (payload != null) {
         return buildPayloadResponse(context, payload);
       }
-      if (context.getAttributes() != null && context.getAttributes().contains(PROXY_REMOTE_FETCH_SKIP_MARKER) &&
-          context.getAttributes().get(PROXY_REMOTE_FETCH_SKIP_MARKER).equals(TRUE)) {
+      if (isMarkerSet(context, PROXY_REMOTE_FETCH_SKIP_MARKER)) {
         return buildPaymentRequiredResponse(context);
+      }
+      if (isMarkerSet(context, PROXY_TELEMETRY_BLOCKING_MARKER)) {
+        return buildTelemetryBlockingResponse(context);
       }
       return buildNotFoundResponse(context);
     }
@@ -153,12 +161,28 @@ public class ProxyHandler
   }
 
   protected Response buildPaymentRequiredResponse(final Context context) {
-    if (context.getRepository().getFormat().getValue().equals("nuget")) {
+    if ("nuget".equals(context.getRepository().getFormat().getValue())) {
       return HttpResponses.conflict(PAYMENT_REQUIRED_MESSAGE.concat(nodeAccess.getId()));
     }
     else {
       return HttpResponses.forbidden(PAYMENT_REQUIRED_MESSAGE.concat(nodeAccess.getId()));
     }
+  }
+
+  private Response buildTelemetryBlockingResponse(final Context context) {
+    String message = TELEMETRY_BLOCKING_MESSAGE + nodeAccess.getId();
+    if ("nuget".equals(context.getRepository().getFormat().getValue())) {
+      return HttpResponses.conflict(message);
+    }
+    else {
+      return HttpResponses.forbidden(message);
+    }
+  }
+
+  private static boolean isMarkerSet(final Context context, final String markerName) {
+    return context.getAttributes() != null &&
+        context.getAttributes().contains(markerName) &&
+        TRUE.equals(context.getAttributes().get(markerName));
   }
 
   protected Response buildHttpErrorResponse(final BypassHttpErrorException proxyErrorsException) {

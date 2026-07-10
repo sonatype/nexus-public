@@ -14,27 +14,34 @@ package org.sonatype.nexus.httpclient.internal;
 
 import java.net.URI;
 
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
+
+import jakarta.validation.ValidationException;
 import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolException;
 import org.apache.http.StatusLine;
-import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.net.HttpHeaders.LOCATION;
 import static org.apache.http.HttpStatus.SC_MOVED_TEMPORARILY;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 import static org.sonatype.nexus.httpclient.internal.NexusRedirectStrategy.CONTENT_RETRIEVAL_MARKER_KEY;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Tests for {@link NexusRedirectStrategy}.
@@ -48,13 +55,18 @@ public class NexusRedirectStrategyTest
   @Mock
   private StatusLine statusLine;
 
+  @Mock
+  private AntiSsrfService antiSsrfService;
+
+  @InjectMocks
+  NexusRedirectStrategy underTest;
+
   private HttpGet request;
 
   @Test
   public void doNotFollowRedirectsToDirIndex() throws Exception {
     when(response.getStatusLine()).thenReturn(statusLine);
 
-    final RedirectStrategy underTest = new NexusRedirectStrategy();
     HttpContext httpContext;
 
     // no location header
@@ -87,8 +99,6 @@ public class NexusRedirectStrategyTest
   public void doFollowCrossSiteRedirects() throws Exception {
     when(response.getStatusLine()).thenReturn(statusLine);
 
-    final RedirectStrategy underTest = new NexusRedirectStrategy();
-
     // simple cross redirect
     request = new HttpGet("http://hostA/dir");
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
@@ -109,8 +119,6 @@ public class NexusRedirectStrategyTest
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
 
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
-
     // Test when preserveEncodedCharacters is true, keeps %2B as %2B
     request = new HttpGet("http://localhost/file%2Bname.txt");
     HttpContext httpContext = new BasicHttpContext();
@@ -129,8 +137,6 @@ public class NexusRedirectStrategyTest
   public void preserveEncodedCharactersFalse_KeepsLiteralPlusCharacters() throws Exception {
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
-
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
 
     // Test when preserveEncodedCharacters is false, keeps + as + (default behavior for crates.io compatibility)
     request = new HttpGet("http://localhost/libgit2-sys-0.13.1+1.4.2.crate");
@@ -151,8 +157,6 @@ public class NexusRedirectStrategyTest
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
 
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
-
     // Test when preserveEncodedCharacters is false, uses default behavior (normalization)
     request = new HttpGet("http://localhost/file+name.txt");
     HttpContext httpContext = new BasicHttpContext();
@@ -171,8 +175,6 @@ public class NexusRedirectStrategyTest
   public void preserveEncodedCharactersNotSet_UsesDefaultBehavior() throws Exception {
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
-
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
 
     // Test when preserveEncodedCharacters is not set in context (legacy behavior)
     request = new HttpGet("http://localhost/file+name.txt");
@@ -193,8 +195,6 @@ public class NexusRedirectStrategyTest
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
 
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
-
     // Real-world AWS S3 scenario: C++ package with %2B encoding
     // When preserveEncodedCharacters is true, keeps %2B as %2B
     request = new HttpGet("http://localhost/packages/ncurses-c%2B%2B-libs-6.2-4.rpm");
@@ -214,8 +214,6 @@ public class NexusRedirectStrategyTest
   public void preserveEncodedCharactersFalse_RealWorldCratesIoRedirect() throws Exception {
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
-
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
 
     // Real-world crates.io scenario: version with literal +
     // When preserveEncodedCharacters is false (default), preserves + for backward compatibility
@@ -239,8 +237,6 @@ public class NexusRedirectStrategyTest
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
 
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
-
     // Test that path traversal sequences are normalized (security fix)
     request = new HttpGet("http://localhost/packages/file.rpm");
     HttpContext httpContext = new BasicHttpContext();
@@ -259,8 +255,6 @@ public class NexusRedirectStrategyTest
   public void preserveEncodedCharactersTrue_NormalizesEncodedPathTraversal() throws Exception {
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
-
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
 
     // Test that encoded path traversal sequences are normalized
     request = new HttpGet("http://localhost/packages/file.rpm");
@@ -281,8 +275,6 @@ public class NexusRedirectStrategyTest
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
 
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
-
     // Test that percent-encoding is preserved when there's no path traversal
     request = new HttpGet("http://localhost/packages/file.rpm");
     HttpContext httpContext = new BasicHttpContext();
@@ -302,8 +294,6 @@ public class NexusRedirectStrategyTest
     when(response.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
 
-    final NexusRedirectStrategy underTest = new NexusRedirectStrategy();
-
     // Test that current directory references (.) are normalized
     request = new HttpGet("http://localhost/packages/file.rpm");
     HttpContext httpContext = new BasicHttpContext();
@@ -316,5 +306,85 @@ public class NexusRedirectStrategyTest
 
     // Current directory references should be removed: /bucket/./subdir/./file.rpm -> /bucket/subdir/file.rpm
     assertThat(redirectUri.toString(), is("https://s3.amazonaws.com/bucket/subdir/file.rpm"));
+  }
+
+  @Test
+  public void redirectBlockedForPrivateIp() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    request = new HttpGet("http://localhost/file");
+    HttpContext httpContext = new BasicHttpContext();
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://10.0.0.1/internal"));
+
+    doThrow(new ValidationException("Host resolves to private network address"))
+        .when(antiSsrfService)
+        .validateHost("10.0.0.1");
+
+    ProtocolException ex = assertThrows(ProtocolException.class,
+        () -> underTest.getLocationURI(request, response, httpContext));
+    assertThat(ex.getMessage(), containsString("private network blocked"));
+  }
+
+  @Test
+  public void redirectBlockedForLocalhost() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    request = new HttpGet("http://public-host/file");
+    HttpContext httpContext = new BasicHttpContext();
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://localhost/internal"));
+
+    doThrow(new ValidationException("Host resolves to loopback address"))
+        .when(antiSsrfService)
+        .validateHost("localhost");
+
+    ProtocolException ex = assertThrows(ProtocolException.class,
+        () -> underTest.getLocationURI(request, response, httpContext));
+    assertThat(ex.getMessage(), containsString("private network blocked"));
+  }
+
+  @Test
+  public void redirectBlockedForPrivateIpInIsRedirected() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    request = new HttpGet("http://public-host/file");
+    HttpContext httpContext = new BasicHttpContext();
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://192.168.1.1/internal"));
+
+    doThrow(new ValidationException("Host resolves to private network address"))
+        .when(antiSsrfService)
+        .validateHost("192.168.1.1");
+
+    assertThrows(ProtocolException.class,
+        () -> underTest.isRedirected(request, response, httpContext));
+  }
+
+  @Test
+  public void preserveEncodedCharactersTrue_BlocksSsrfRedirect() throws Exception {
+    when(response.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_MOVED_TEMPORARILY);
+
+    request = new HttpGet("http://public-host/packages/file.rpm");
+    HttpContext httpContext = new BasicHttpContext();
+    httpContext.setAttribute("preserveEncodedCharacters", Boolean.TRUE);
+
+    when(response.getFirstHeader(argThat(equalToIgnoringCase(LOCATION))))
+        .thenReturn(new BasicHeader(LOCATION, "http://10.0.0.1/internal/file%2Bname.rpm"));
+
+    doThrow(new ValidationException("Host resolves to private network address"))
+        .when(antiSsrfService)
+        .validateHost("10.0.0.1");
+
+    ProtocolException ex = assertThrows(ProtocolException.class,
+        () -> underTest.getLocationURI(request, response, httpContext));
+    assertThat(ex.getMessage(), containsString("private network blocked"));
   }
 }

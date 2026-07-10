@@ -12,11 +12,22 @@
  */
 
 .nxrm-monitoring-settings-form {
+  .nx-sub-label {
+    margin-bottom: var(--nx-spacing-2x);
+    color: var(--nx-color-text-placeholder);
+  }
+
   .new-hosted-repos-container {
     margin-bottom: 24px;
   }
 
   .new-hosted-repos-checkbox {
     margin-top: 8px;
+  }
+
+  .nxrm-version-depth-hint {
+    margin-top: calc(-1 * var(--nx-spacing-6x));
+    font-size: var(--nx-font-size-s);
+    color: var(--nx-color-text-placeholder);
   }
 }

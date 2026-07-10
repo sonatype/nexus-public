@@ -12,24 +12,30 @@
  */
 package org.sonatype.nexus.swagger.internal;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 
-import io.swagger.converter.ModelConverter;
-import io.swagger.converter.ModelConverterContext;
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.properties.Property;
-import io.swagger.models.properties.StringProperty;
+import com.fasterxml.jackson.databind.JavaType;
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.core.converter.ModelConverter;
+import io.swagger.v3.core.converter.ModelConverterContext;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import org.slf4j.LoggerFactory;
 
 /**
  * ModelConverter to fix missing OpenAPI schema fields and incorrect examples for Repository API models.
  * Addresses missing format, type, and url fields in repository API schemas and corrects hardcoded "npm" examples.
  *
- * @since 3.81.1
+ * <p>
+ * NEXUS-46395: migrated from Swagger 1.x ModelConverter SPI to OpenAPI 3.x:
+ * <ul>
+ * <li>{@code Model} \u2192 {@link Schema}, {@code ModelImpl} \u2192 {@link Schema} (no separate impl)</li>
+ * <li>{@code Property}/{@code StringProperty} \u2192 {@link Schema}/{@link StringSchema}</li>
+ * <li>Single {@code resolve(AnnotatedType, ...)} method replaces both {@code resolve(Type)}
+ * and {@code resolveProperty(Type)} from Swagger 1.x.</li>
+ * </ul>
  */
 public class RepositoryApiModelConverter
     implements ModelConverter
@@ -40,32 +46,22 @@ public class RepositoryApiModelConverter
   private static final org.slf4j.Logger log = LoggerFactory.getLogger(RepositoryApiModelConverter.class);
 
   @Override
-  public Model resolve(
-      final Type type,
+  public Schema<?> resolve(
+      final AnnotatedType annotatedType,
       final ModelConverterContext context,
       final Iterator<ModelConverter> chain)
   {
-    Model model = chain.hasNext() ? chain.next().resolve(type, context, chain) : null;
+    Schema<?> schema = chain.hasNext() ? chain.next().resolve(annotatedType, context, chain) : null;
 
-    if (model != null && isRepositoryApiModel(type)) {
-      fixRepositoryApiModel(model, type);
+    if (schema != null && isRepositoryApiModel(annotatedType.getType())) {
+      fixRepositoryApiModel(schema, annotatedType.getType());
     }
 
-    return model;
-  }
-
-  @Override
-  public Property resolveProperty(
-      final Type type,
-      final ModelConverterContext context,
-      final Annotation[] annotations,
-      final Iterator<ModelConverter> chain)
-  {
-    return chain.hasNext() ? chain.next().resolveProperty(type, context, annotations, chain) : null;
+    return schema;
   }
 
   private boolean isRepositoryApiModel(final Type type) {
-    String typeName = type.getTypeName();
+    String typeName = typeName(type);
 
     // Check if it's a repository API model by name pattern
     if (typeName.contains("ApiRepository") && !typeName.contains("Request")) {
@@ -81,6 +77,13 @@ public class RepositoryApiModelConverter
     }
   }
 
+  private static String typeName(final Type type) {
+    if (type instanceof JavaType javaType) {
+      return javaType.getRawClass().getName();
+    }
+    return type.getTypeName();
+  }
+
   private boolean isAssignableFromAbstractApiRepository(final Class<?> clazz) {
     try {
       Class<?> abstractApiRepository = Class.forName(ABSTRACT_API_REPOSITORY_CLASS);
@@ -91,34 +94,30 @@ public class RepositoryApiModelConverter
     }
   }
 
-  private void fixRepositoryApiModel(final Model model, final Type type) {
-    if (!(model instanceof ModelImpl)) {
-      return;
-    }
-
-    ModelImpl modelImpl = (ModelImpl) model;
-    String className = getSimpleClassName(type.getTypeName());
+  private void fixRepositoryApiModel(final Schema<?> schema, final Type type) {
+    String className = getSimpleClassName(typeName(type));
     String format = determineFormat(className);
 
     // Ensure format, type, and url fields are visible and have correct examples
-    ensureFieldVisible(modelImpl, "format", format);
-    ensureFieldVisible(modelImpl, "type", getTypeExample(className));
-    ensureFieldVisible(modelImpl, "url", "http://localhost:8081/repository/" + format + "-example");
+    ensureFieldVisible(schema, "format", format);
+    ensureFieldVisible(schema, "type", getTypeExample(className));
+    ensureFieldVisible(schema, "url", "http://localhost:8081/repository/" + format + "-example");
   }
 
-  private void ensureFieldVisible(final ModelImpl model, final String fieldName, final String example) {
-    if (model.getProperties() == null) {
-      model.setProperties(new java.util.LinkedHashMap<>());
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void ensureFieldVisible(final Schema<?> schema, final String fieldName, final String example) {
+    if (schema.getProperties() == null) {
+      schema.setProperties(new java.util.LinkedHashMap<>());
     }
 
-    Property property = model.getProperties().get(fieldName);
+    Schema property = schema.getProperties().get(fieldName);
 
     if (property == null) {
       // Add missing property
-      StringProperty stringProperty = new StringProperty();
+      StringSchema stringProperty = new StringSchema();
       stringProperty.setExample(example);
       stringProperty.setDescription(getFieldDescription(fieldName));
-      model.getProperties().put(fieldName, stringProperty);
+      ((java.util.Map) schema.getProperties()).put(fieldName, stringProperty);
     }
     else {
       // Update the existing property example

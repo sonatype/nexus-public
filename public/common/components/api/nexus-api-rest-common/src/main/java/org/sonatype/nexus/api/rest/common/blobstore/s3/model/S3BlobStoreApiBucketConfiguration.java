@@ -15,13 +15,13 @@ package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
-import io.swagger.annotations.ApiModelProperty.AccessMode;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.AccessMode;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -39,32 +39,32 @@ public class S3BlobStoreApiBucketConfiguration
 
   @Valid
   @NotNull
-  @ApiModelProperty(value = "Details of the S3 bucket such as name and region", required = true)
+  @Schema(description = "Details of the S3 bucket such as name and region", requiredMode = Schema.RequiredMode.REQUIRED)
   private final S3BlobStoreApiBucket bucket;
 
-  @ApiModelProperty("Security details for granting access the S3 API")
+  @Schema(description = "Security details for granting access the S3 API")
   private final S3BlobStoreApiBucketSecurity bucketSecurity;
 
-  @ApiModelProperty("The type of encryption to use if any")
+  @Schema(description = "The type of encryption to use if any")
   private final S3BlobStoreApiEncryption encryption;
 
-  @ApiModelProperty("A custom endpoint URL, signer type and whether path style access is enabled")
+  @Schema(description = "A custom endpoint URL, signer type and whether path style access is enabled")
   private final S3BlobStoreApiAdvancedBucketConnection advancedBucketConnection;
 
   @Valid
   @Nullable
-  @ApiModelProperty(
-      value = "A list of secondary buckets which have bidirectional replication enabled and should be used when Nexus is running in the region",
+  @Schema(
+      description = "A list of secondary buckets which have bidirectional replication enabled and should be used when Nexus is running in the region",
       accessMode = AccessMode.READ_WRITE)
   private final List<S3BlobStoreApiFailoverBucket> failoverBuckets;
 
   @Nullable
-  @ApiModelProperty(
-      value = "The active region based on bucket configuration, failover buckets, and EC2 region Nexus is running.",
+  @Schema(
+      description = "The active region based on bucket configuration, failover buckets, and EC2 region Nexus is running.",
       accessMode = AccessMode.READ_ONLY)
   private final String activeRegion;
 
-  @ApiModelProperty(value = "Whether pre assigned URL is enabled or not.", example = "true",
+  @Schema(description = "Whether pre assigned URL is enabled or not.", example = "true",
       accessMode = AccessMode.READ_WRITE)
   private final Boolean preSignedUrlEnabled;
 

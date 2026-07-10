@@ -13,7 +13,7 @@
 package org.sonatype.nexus.cleanup.storage.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;

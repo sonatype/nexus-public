@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Flex, Text, Checkbox } from '@radix-ui/themes';
 import { Trash2, AlertCircle, Info, Loader2 } from 'lucide-react';
 
@@ -23,6 +23,7 @@ import {
   SettingsSelect,
   SettingsButton,
   SettingsAlert,
+  SettingsTransferList,
 } from '../../../../shared/form';
 import { CleanupPolicyPreview } from './CleanupPolicyPreview';
 import { CleanupPolicyDryRun } from './CleanupPolicyDryRun';
@@ -32,10 +33,12 @@ import {
   CleanupPolicy,
   CleanupPolicyFormData,
   FormatCriteria,
+  RepositoryOption,
   RELEASE_TYPES,
   SORT_BY_OPTIONS,
   NOTES_MAX_LENGTH,
   isRetainSupportedFormat,
+  isRepositoriesFieldSupportedFormat,
   isReleaseType,
 } from './types';
 
@@ -68,12 +71,55 @@ export function CleanupPolicyForm({
   loading,
   error,
 }: CleanupPolicyFormProps) {
-  const { createCleanupPolicy, updateCleanupPolicy, isPreviewEnabled, isRetainEnabled: checkRetainEnabled } = useCleanupPoliciesApi();
+  const {
+    createCleanupPolicy,
+    updateCleanupPolicy,
+    isPreviewEnabled,
+    isRetainEnabled: checkRetainEnabled,
+    isRetainAllFormatsEnabled,
+    fetchRepositories,
+  } = useCleanupPoliciesApi();
 
-  // Use XState form hook
+  const isEnhancedCleanupEnabled = useMemo(() => isRetainAllFormatsEnabled(), [isRetainAllFormatsEnabled]);
+
+  const [availableRepos, setAvailableRepos] = useState<RepositoryOption[]>([]);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
+  const [reposLoading, setReposLoading] = useState(false);
+
+  // Baseline repo selection used to compute dirty state for the Repositories section.
+  // The XState form machine doesn't track repositories, so we OR this into pristine ourselves.
+  // This MUST be state (not a ref) so that `reposDirty` recomputes after we refresh the
+  // baseline post-save — ref mutations don't trigger renders and would leave reposDirty stale.
+  const [initialRepos, setInitialRepos] = useState<string[]>([]);
+
+  const reposDirty = useMemo(() => {
+    const a = [...selectedRepos].sort();
+    const b = [...initialRepos].sort();
+    if (a.length !== b.length) return true;
+    return a.some((v, i) => v !== b[i]);
+  }, [selectedRepos, initialRepos]);
+
+  // Refs let the save-time getter passed to the form hook read the latest
+  // selection without the hook needing `selectedRepos`/`reposDirty` in deps
+  // (which would break the memoized machine).
+  const selectedReposRef = useRef<string[]>(selectedRepos);
+  const reposDirtyRef = useRef<boolean>(reposDirty);
+  useEffect(() => {
+    selectedReposRef.current = selectedRepos;
+  }, [selectedRepos]);
+  useEffect(() => {
+    reposDirtyRef.current = reposDirty;
+  }, [reposDirty]);
+
+  // Use XState form hook. We pass a getter for `repositories` so the
+  // machine's save service can pull the latest selection at save time —
+  // the machine itself does not track repository state. The selection is
+  // included in the backend payload per the contract:
+  //   - returns undefined -> omit field (preserve existing attachments)
+  //   - returns []        -> clear all attachments
+  //   - returns [a, b]    -> set attachments to exactly {a, b}
   const {
     form,
-    policy: loadedPolicy,
     criteriaEnabled,
     changeFormat,
     toggleCriteria,
@@ -82,13 +128,66 @@ export function CleanupPolicyForm({
     policyName: isCreate ? undefined : policy?.name,
     policy: policy || null,
     formatCriteria,
-    onSave,
+    onSave: async () => {
+      // Post-save hook: refresh baseline so subsequent edits compute dirty
+      // state against the just-persisted selection.
+      setInitialRepos((current) => [...selectedReposRef.current ?? current]);
+    },
     onCancel,
     createPolicy: createCleanupPolicy,
     updatePolicy: updateCleanupPolicy,
+    getRepositories: () => {
+      const fmt = (form?.data as CleanupPolicyFormData | undefined)?.format;
+      if (!fmt) return undefined;
+      if (!isRetainAllFormatsEnabled()) return undefined;
+      if (!isRepositoriesFieldSupportedFormat(fmt)) return undefined;
+      const sel = selectedReposRef.current;
+      const dirty = reposDirtyRef.current;
+      return sel.length > 0 || dirty ? sel : undefined;
+    },
   });
 
   const formData = form.data as CleanupPolicyFormData;
+
+  // Load repos when format changes
+  useEffect(() => {
+    if (formData.format) {
+      setReposLoading(true);
+      setSelectedRepos([]);
+      setInitialRepos([]);
+      fetchRepositories(formData.format)
+        .then(setAvailableRepos)
+        .catch(() => setAvailableRepos([]))
+        .finally(() => setReposLoading(false));
+    } else {
+      setAvailableRepos([]);
+      setSelectedRepos([]);
+      setInitialRepos([]);
+    }
+  }, [formData.format, fetchRepositories]);
+
+  // Pre-populate repos on edit. The backend now includes `repositories` inline
+  // on GET /cleanup-policies/{name}, so we read directly from the loaded policy
+  // instead of issuing a second request. We deliberately key only on
+  // `policy?.name` and `formData.format` so that in-session edits to
+  // `selectedRepos` are not clobbered when a parent re-renders with a
+  // referentially-new `policy.repositories` array carrying the same values.
+  useEffect(() => {
+    if (isCreate || !policy?.name || !formData.format) {
+      return;
+    }
+    const incomingRepos = policy.repositories ?? [];
+    setSelectedRepos(incomingRepos);
+    setInitialRepos(incomingRepos);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCreate, policy?.name, formData.format]);
+
+  const handleReposChange = useCallback(
+    (items: RepositoryOption[]) => {
+      setSelectedRepos(items.map((r) => r.name));
+    },
+    []
+  );
 
   // Get current format's available criteria
   const currentFormatCriteria = useMemo(() => {
@@ -114,23 +213,58 @@ export function CleanupPolicyForm({
     );
   }, [formData.criteriaLastBlobUpdated, formData.criteriaLastDownloaded, formData.criteriaAssetRegex]);
 
-  const isRetainDisabled = useMemo(() => {
-    if (formData.format === 'docker') {
-      return !hasOtherCriteriaSelected;
+  const isMaven = formData.format === 'maven2';
+
+  // Whether the current format exposes the Release Type dropdown. Formats like docker do not,
+  // so the release-type requirement must not gate Retain for them.
+  const releaseTypeApplicable = isFieldApplicable('isPrerelease');
+
+  // For maven2, only the "Releases" release type enables Retain — Pre-Releases/Snapshots and the
+  // combined default are not valid because Maven treats only -SNAPSHOT as a pre-release, and the
+  // retain-by-version semantics are meaningful only against release versions.
+  // For other formats that show the Release Type dropdown, either "Releases" or "Pre-Releases"
+  // satisfies the requirement.
+  // For formats without a Release Type dropdown (e.g. docker), this requirement is treated as
+  // satisfied so Retain depends only on a cleanup criterion being selected.
+  const hasReleaseTypeSelected = useMemo(() => {
+    if (!releaseTypeApplicable) {
+      return true;
     }
-    return !isReleaseType(formData.criteriaReleaseType);
-  }, [formData.format, formData.criteriaReleaseType, hasOtherCriteriaSelected]);
+    if (isMaven) {
+      return formData.criteriaReleaseType === 'RELEASES';
+    }
+    return !!formData.criteriaReleaseType && formData.criteriaReleaseType !== '';
+  }, [formData.criteriaReleaseType, isMaven, releaseTypeApplicable]);
+
+  const isRetainDisabled = useMemo(() => {
+    return !hasOtherCriteriaSelected || !hasReleaseTypeSelected;
+  }, [hasOtherCriteriaSelected, hasReleaseTypeSelected]);
 
   const retainDisabledReason = useMemo(() => {
-    if (formData.format === 'docker') {
-      if (!hasOtherCriteriaSelected) return 'Select at least one other criterion to enable this option.';
-      return null;
+    if (isMaven && !hasReleaseTypeSelected && !hasOtherCriteriaSelected) {
+      return 'This option is only applicable to releases. Select "Releases" and at least one cleanup criterion to enable this option.';
     }
-    if (!isReleaseType(formData.criteriaReleaseType)) return 'This option is only applicable to releases';
+    if (isMaven && !hasReleaseTypeSelected) {
+      return 'This option is only applicable to releases. Select "Releases" from the Release Type dropdown to enable this option.';
+    }
+    if (!hasOtherCriteriaSelected && !hasReleaseTypeSelected) {
+      return 'Select a release type and at least one other criterion to enable this option.';
+    }
+    if (!hasReleaseTypeSelected) {
+      return 'Select a release type (Releases or Pre-Releases) to enable this option.';
+    }
+    if (!hasOtherCriteriaSelected) {
+      return 'Only after selecting the cleanup criteria, retain can be enabled.';
+    }
     return null;
-  }, [formData.format, formData.criteriaReleaseType, hasOtherCriteriaSelected]);
+  }, [hasOtherCriteriaSelected, hasReleaseTypeSelected, isMaven]);
 
   const showPreview = useMemo(() => isPreviewEnabled(), [isPreviewEnabled]);
+
+  const showRepositoriesSection = useMemo(
+    () => isEnhancedCleanupEnabled && !!formData.format && isRepositoriesFieldSupportedFormat(formData.format),
+    [isEnhancedCleanupEnabled, formData.format]
+  );
 
   // Check if criteria section should show
   const showCriteriaSection = useMemo(() => {
@@ -160,7 +294,7 @@ export function CleanupPolicyForm({
           onSubmit={() => form.send('SUBMIT')}
           onCancel={onCancel}
           loading={form.isSaving}
-          pristine={form.isPristine}
+          pristine={form.isPristine && !reposDirty}
           error={error || form.saveError || undefined}
           submitLabel={isCreate ? 'Create' : 'Save'}
           cancelLabel="Cancel"
@@ -219,8 +353,37 @@ export function CleanupPolicyForm({
               label="Description"
               helpText="Optional notes about why this policy exists"
               maxLength={NOTES_MAX_LENGTH}
+              className="cleanup-policy-form__notes-textarea"
             />
           </SettingsFormSection>
+
+          {/* Repository Selection — gated by feature flag and supported format set */}
+          {showRepositoriesSection && (
+            <SettingsFormSection title="Repositories" description="Select the repositories this policy will apply to.">
+              {reposLoading ? (
+                <Flex align="center" gap="2">
+                  <Loader2 size={16} className="cleanup-policy-form__spinner" />
+                  <Text size="2">Loading repositories...</Text>
+                </Flex>
+              ) : availableRepos.length === 0 ? (
+                <Text size="2" color="gray">No repositories available for this format.</Text>
+              ) : (
+                <SettingsTransferList
+                  name="cleanup-policy-repositories"
+                  label="Repositories"
+                  availableItems={availableRepos}
+                  selectedItems={availableRepos.filter((r) => selectedRepos.includes(r.name))}
+                  onChange={handleReposChange}
+                  availableLabel="Available Repositories"
+                  selectedLabel="Applied Repositories"
+                  getItemId={(r: RepositoryOption) => r.name}
+                  getItemLabel={(r: RepositoryOption) => r.name}
+                  helpText="Select repositories to apply this policy to"
+                  testId="cleanup-policy-repositories-transfer-list"
+                />
+              )}
+            </SettingsFormSection>
+          )}
 
           {/* Release Type (for applicable formats) */}
           {isFieldApplicable('isPrerelease') && (
@@ -343,7 +506,7 @@ export function CleanupPolicyForm({
                         regular expression pattern
                       </Text>
                       {criteriaEnabled?.assetRegex && (
-                        <Box className="cleanup-policy-form__criteria-input">
+                        <Box className="cleanup-policy-form__criteria-input cleanup-policy-form__criteria-input--wide">
                           <SettingsTextInput
                             {...form.field('criteriaAssetRegex')}
                             label=""
@@ -412,14 +575,18 @@ export function CleanupPolicyForm({
           {/* Preview Section */}
           {showPreview && formData.format && (
             <SettingsFormSection title="Preview Cleanup Policy Results">
-              <CleanupPolicyDryRun policyData={formData} policyName={policy?.name} />
+              <CleanupPolicyDryRun
+                policyData={formData}
+                policyName={policy?.name}
+                selectedRepositories={selectedRepos}
+              />
             </SettingsFormSection>
           )}
         </SettingsForm>
 
       {/* Legacy Preview (for non-PostgreSQL) */}
       {!showPreview && formData.format && (
-        <CleanupPolicyPreview policyData={formData} />
+        <CleanupPolicyPreview policyData={formData} selectedRepositories={selectedRepos} />
       )}
     </Box>
   );

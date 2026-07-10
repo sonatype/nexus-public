@@ -13,6 +13,7 @@
 package org.sonatype.nexus.self.hosted.repository.manager;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.repository.manager.internal.GroupMemberMappingCache;
 import org.sonatype.nexus.repository.manager.internal.HttpAuthenticationSecretEncoder;
 import org.sonatype.nexus.repository.manager.internal.RepositoryAdminSecurityContributor;
 import org.sonatype.nexus.repository.manager.internal.RepositoryFactory;
+import org.sonatype.nexus.repository.manager.internal.SecretEncoder;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
@@ -66,10 +68,11 @@ public class RepositoryManagerImpl
       final GroupMemberMappingCache groupMemberMappingCache,
       final List<ConfigurationValidator> configurationValidators,
       final HttpAuthenticationSecretEncoder httpAuthenticationSecretEncoder,
-      final FailedRepositoryTracker failedRepositoryTracker)
+      final FailedRepositoryTracker failedRepositoryTracker,
+      final Optional<SecretEncoder> ecrSecretEncoder)
   {
     super(eventManager, store, factory, configFacet, recipes, securityContributor, defaultRepositoriesContributors,
         skipDefaultRepositories, blobStoreManager, groupMemberMappingCache, configurationValidators,
-        httpAuthenticationSecretEncoder, failedRepositoryTracker);
+        httpAuthenticationSecretEncoder, failedRepositoryTracker, ecrSecretEncoder.orElse(null));
   }
 }

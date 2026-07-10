@@ -16,6 +16,7 @@ import { Box, Flex, Text } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
+import { PageHeader } from '../../../../shared';
 import {
   SettingsForm,
   SettingsTextInput,
@@ -27,6 +28,10 @@ import { useOAuth2Api } from './useOAuth2Api';
 import { OAuth2Config, DEFAULT_OAUTH2_CONFIG, OAuth2PageProps } from './types';
 
 import './OAuth2Page.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 export function OAuth2Page({ className }: OAuth2PageProps) {
   const { loading, error, setError, fetchConfig, saveConfig } = useOAuth2Api();
@@ -130,10 +135,17 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
   }
 
   return (
-    <SettingsForm
-      title="OAuth2"
-      description="Configure OpenID Connect (OIDC) authentication settings"
-      onSave={handleSave}
+    <>
+      <PageHeader
+        title="OAuth2"
+        description="Configure OpenID Connect (OIDC) authentication settings"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'OAuth2' }
+        ]}
+      />
+      <SettingsForm
+        onSave={handleSave}
       onCancel={handleDiscard}
       dirty={!isPristine}
       saving={loading}
@@ -315,6 +327,7 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
         />
       </SettingsFormSection>
     </SettingsForm>
+    </>
   );
 }
 

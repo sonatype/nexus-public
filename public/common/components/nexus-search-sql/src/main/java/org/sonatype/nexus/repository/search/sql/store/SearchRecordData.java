@@ -64,10 +64,33 @@ public class SearchRecordData
   protected static final int MAX_TOTAL_SEARCH_PARAMS = 60000;
 
   /**
+   * Maximum estimated byte size for each tsvector column (keywords, paths).
+   * PostgreSQL enforces a hard 1MB (1,048,576 bytes) limit on tsvector columns.
+   * We use 900,000 bytes (~86% of 1MB) as a safety margin to account for PostgreSQL's
+   * internal tsvector overhead (position data, length prefixes) not tracked here.
+   *
+   * See NEXUS-52625 for details.
+   */
+  @VisibleForTesting
+  static final int MAX_TSVECTOR_BYTES = 900_000;
+
+  /**
    * Flag to track if we've already logged a warning about hitting the parameter limit.
    * Prevents log spam when the limit is exceeded.
    */
   private boolean paramLimitWarningLogged = false;
+
+  /** Prevents duplicate log warnings when the keywords tsvector byte limit is reached. */
+  private boolean keywordByteLimitWarningLogged = false;
+
+  /** Prevents duplicate log warnings when the paths tsvector byte limit is reached. */
+  private boolean pathByteLimitWarningLogged = false;
+
+  /** Running estimate of bytes accumulated in the keywords tsvector column. */
+  private int keywordsBytesEstimate = 0;
+
+  /** Running estimate of bytes accumulated in the paths tsvector column. */
+  private int pathsBytesEstimate = 0;
 
   /**
    * The repository ID from the repository record, it is part of the primary identifier of the record (PK).
@@ -528,7 +551,12 @@ public class SearchRecordData
   public void addPath(final String path) {
     if (isNotBlank(path) && canAddSearchParam()) {
       String pathValue = usePostgreSQLFormat ? tsEscape(path) : path.toLowerCase();
+      int byteLen = getUtf8ByteLength(pathValue);
+      if (!canAddPathBytes(byteLen)) {
+        return;
+      }
       this.paths.add(pathValue);
+      pathsBytesEstimate += byteLen;
     }
   }
 
@@ -677,11 +705,21 @@ public class SearchRecordData
       return;
     }
 
+    // Byte-size guard applies to the keywords collection here. The paths collection
+    // is guarded separately in addPath(). Other collections (namespace, version,
+    // uploaders, formatFields) are small and bounded, so no guard is needed.
+    boolean isKeywords = (collection == this.keywords);
+
     // For H2, store plain values without PostgreSQL's tsEscape formatting
     if (usePostgreSQLFormat) {
       String escapedPhrase = tsEscape(phrase);
-      if (getUtf8ByteLength(escapedPhrase) <= MAX_TSVECTOR_WORD_BYTES && canAddSearchParam()) {
+      int phraseBytes = getUtf8ByteLength(escapedPhrase);
+      if (phraseBytes <= MAX_TSVECTOR_WORD_BYTES && canAddSearchParam() &&
+          (!isKeywords || canAddKeywordBytes(phraseBytes))) {
         collection.add(escapedPhrase);
+        if (isKeywords) {
+          keywordsBytesEstimate += phraseBytes;
+        }
       }
       else if (log.isDebugEnabled()) {
         log.debug("Phrase too long. preventTokenization={} phrase={}", preventTokenization, phrase);
@@ -708,10 +746,12 @@ public class SearchRecordData
         }
 
         // Only add if there is more than one token and we haven't hit the limit
-        if (i > 1 && canAddSearchParam()) {
+        if (i > 1 && canAddSearchParam() && (!isKeywords || canAddKeywordBytes(accumulatedBytes))) {
           sb.deleteCharAt(sb.length() - 1);
-
           collection.add(sb.toString());
+          if (isKeywords) {
+            keywordsBytesEstimate += accumulatedBytes;
+          }
         }
       }
     }
@@ -772,6 +812,40 @@ public class SearchRecordData
           "Component {} has reached maximum search parameter limit of {} (actual SQL params: {}), additional items will not be indexed",
           componentId, MAX_TOTAL_SEARCH_PARAMS, actualSqlParamCount);
       paramLimitWarningLogged = true;
+    }
+    return false;
+  }
+
+  /**
+   * Checks if adding bytes to the keywords tsvector would exceed the byte limit.
+   */
+  private boolean canAddKeywordBytes(final int additionalBytes) {
+    if (keywordsBytesEstimate + additionalBytes < MAX_TSVECTOR_BYTES) {
+      return true;
+    }
+    if (!keywordByteLimitWarningLogged) {
+      log.warn(
+          "Component {} has reached keywords tsvector byte size limit of {} bytes " +
+              "(current: {} bytes), additional data will not be searchable by keyword",
+          componentId, MAX_TSVECTOR_BYTES, keywordsBytesEstimate);
+      keywordByteLimitWarningLogged = true;
+    }
+    return false;
+  }
+
+  /**
+   * Checks if adding bytes to the paths tsvector would exceed the byte limit.
+   */
+  private boolean canAddPathBytes(final int additionalBytes) {
+    if (pathsBytesEstimate + additionalBytes < MAX_TSVECTOR_BYTES) {
+      return true;
+    }
+    if (!pathByteLimitWarningLogged) {
+      log.warn(
+          "Component {} has reached paths tsvector byte size limit of {} bytes " +
+              "(current: {} bytes), additional paths will not be indexed",
+          componentId, MAX_TSVECTOR_BYTES, pathsBytesEstimate);
+      pathByteLimitWarningLogged = true;
     }
     return false;
   }

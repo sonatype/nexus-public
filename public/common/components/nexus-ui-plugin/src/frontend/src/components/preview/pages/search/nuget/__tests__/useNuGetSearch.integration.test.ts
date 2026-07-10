@@ -200,6 +200,141 @@ describe('useNuGetSearch Integration Tests', () => {
       });
     });
 
+    it('maps asset lastModified to lastUpdated', async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          items: [
+            {
+              id: '1', repository: 'nuget-proxy', format: 'nuget', group: null,
+              name: 'Newtonsoft.Json', version: '13.0.3',
+              assets: [{ id: 'a1', path: '/x', downloadUrl: '/dl', lastModified: '2024-06-15T10:00:00.000+00:00' }],
+            },
+          ],
+          continuationToken: null,
+        },
+      });
+
+      const { result } = renderHook(() => useNuGetSearch());
+
+      await act(async () => {
+        await result.current.search({ query: 'Newtonsoft' });
+      });
+
+      await waitFor(() => {
+        expect(result.current.state.results[0].lastUpdated).toBe('2024-06-15T10:00:00.000+00:00');
+      });
+    });
+
+    it('uses empty string for lastUpdated when assets array is empty', async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          items: [
+            { id: '1', repository: 'nuget-proxy', format: 'nuget', group: null, name: 'Serilog', version: '3.1.1', assets: [] },
+          ],
+          continuationToken: null,
+        },
+      });
+
+      const { result } = renderHook(() => useNuGetSearch());
+
+      await act(async () => {
+        await result.current.search({ query: 'Serilog' });
+      });
+
+      await waitFor(() => {
+        expect(result.current.state.results[0].lastUpdated).toBe('');
+      });
+    });
+
+    it('uses empty string for lastUpdated when asset has no lastModified', async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          items: [
+            {
+              id: '1', repository: 'nuget-proxy', format: 'nuget', group: null,
+              name: 'AutoMapper', version: '12.0.1',
+              assets: [{ id: 'a1', path: '/x', downloadUrl: '/dl' }],
+            },
+          ],
+          continuationToken: null,
+        },
+      });
+
+      const { result } = renderHook(() => useNuGetSearch());
+
+      await act(async () => {
+        await result.current.search({ query: 'AutoMapper' });
+      });
+
+      await waitFor(() => {
+        expect(result.current.state.results[0].lastUpdated).toBe('');
+      });
+    });
+
+    it('keeps the most recent lastModified across multiple versions', async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          items: [
+            {
+              id: '1', repository: 'nuget-proxy', format: 'nuget', group: null,
+              name: 'Newtonsoft.Json', version: '12.0.1',
+              assets: [{ id: 'a1', path: '/x', downloadUrl: '/dl', lastModified: '2023-01-01T00:00:00.000+00:00' }],
+            },
+            {
+              id: '2', repository: 'nuget-proxy', format: 'nuget', group: null,
+              name: 'Newtonsoft.Json', version: '13.0.3',
+              assets: [{ id: 'a2', path: '/y', downloadUrl: '/dl', lastModified: '2024-06-15T10:00:00.000+00:00' }],
+            },
+            {
+              id: '3', repository: 'nuget-proxy', format: 'nuget', group: null,
+              name: 'Newtonsoft.Json', version: '11.0.2',
+              assets: [{ id: 'a3', path: '/z', downloadUrl: '/dl', lastModified: '2022-03-20T00:00:00.000+00:00' }],
+            },
+          ],
+          continuationToken: null,
+        },
+      });
+
+      const { result } = renderHook(() => useNuGetSearch());
+
+      await act(async () => {
+        await result.current.search({ query: 'Newtonsoft' });
+      });
+
+      await waitFor(() => {
+        expect(result.current.state.results[0].lastUpdated).toBe('2024-06-15T10:00:00.000+00:00');
+      });
+    });
+
+    it('picks the most recent lastModified across multiple assets for a single version', async () => {
+      mockedAxios.get.mockResolvedValue({
+        data: {
+          items: [
+            {
+              id: '1', repository: 'nuget-proxy', format: 'nuget', group: null,
+              name: 'Newtonsoft.Json', version: '13.0.3',
+              assets: [
+                { id: 'a1', path: '/x.nupkg', downloadUrl: '/dl/nupkg', lastModified: '2024-01-01T00:00:00.000Z' },
+                { id: 'a2', path: '/x.nuspec', downloadUrl: '/dl/nuspec', lastModified: '2024-06-15T10:00:00.000Z' },
+                { id: 'a3', path: '/x.sha512', downloadUrl: '/dl/sha', lastModified: '2023-12-01T00:00:00.000Z' },
+              ],
+            },
+          ],
+          continuationToken: null,
+        },
+      });
+
+      const { result } = renderHook(() => useNuGetSearch());
+
+      await act(async () => {
+        await result.current.search({ query: 'Newtonsoft' });
+      });
+
+      await waitFor(() => {
+        expect(result.current.state.results[0].lastUpdated).toBe('2024-06-15T10:00:00.000Z');
+      });
+    });
+
     it('handles case-insensitive package aggregation', async () => {
       mockedAxios.get.mockResolvedValue({
         data: {

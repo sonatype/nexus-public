@@ -36,6 +36,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import Axios from 'axios';
+import { APIConstants } from '../../../../constants/APIConstants';
 import { ExtJS } from '../../../../interface/ExtJS';
 import { useToast } from '../../shared';
 import { ConfirmDialog } from '../../shared/form';
@@ -45,17 +46,26 @@ import { ConfirmDialog } from '../../shared/form';
 // ---------------------------------------------------------------------------
 
 const USER_TOKEN_BASE = '/service/rest/internal/current-user/user-token';
-const USER_TOKEN_TIMESTAMP = '/service/rest/internal/current-user/user-token-timestamp';
+const ATTRIBUTES_URL = `/${APIConstants.REST.USER_TOKEN_TIMESTAMP}`;
 const USER_TOKENS_SETTINGS = '/service/rest/v1/security/user-tokens';
 
-async function fetchTimestamp(): Promise<{ created: string } | null> {
+interface UserTokenAttributes {
+  expirationTimeTimestamp?: string; // epoch ms as string
+}
+
+type AttributesResult =
+  | { kind: 'present'; attributes: UserTokenAttributes }
+  | { kind: 'absent' }
+  | { kind: 'expired' };
+
+async function fetchAttributes(): Promise<AttributesResult> {
   try {
-    const res = await Axios.get(USER_TOKEN_TIMESTAMP);
-    return res.data ?? null;
+    const res = await Axios.get<UserTokenAttributes>(ATTRIBUTES_URL);
+    return { kind: 'present', attributes: res.data ?? {} };
   } catch (err: unknown) {
-    // 404 = no token exists yet — this is the normal "no token" state, not an error
-    if ((err as { response?: { status?: number } })?.response?.status === 404) {
-      return null;
+    if (Axios.isAxiosError(err)) {
+      if (err.response?.status === 404) return { kind: 'absent' };
+      if (err.response?.status === 410) return { kind: 'expired' };
     }
     throw err;
   }
@@ -145,7 +155,7 @@ function TokenRevealDialog({ nameCode, passCode, onClose }: TokenRevealDialogPro
 
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <Dialog.Content maxWidth="520px" data-testid="token-reveal-dialog">
+      <Dialog.Content maxWidth="680px" data-testid="token-reveal-dialog">
         <Dialog.Title>User Token</Dialog.Title>
 
         <Callout.Root color="amber" mb="4">
@@ -206,12 +216,7 @@ function TokenRevealDialog({ nameCode, passCode, onClose }: TokenRevealDialogPro
 // UserTokenPage
 // ---------------------------------------------------------------------------
 
-type PageState = 'loading' | 'disabled' | 'no-token' | 'has-token';
-
-interface TokenTimestamp {
-  created: string;
-  expires?: string;
-}
+type PageState = 'loading' | 'disabled' | 'no-token' | 'has-token' | 'expired-token' | 'error';
 
 interface RevealedToken {
   nameCode: string;
@@ -224,7 +229,7 @@ export function UserTokenPage() {
   toastRef.current = toast;
 
   const [pageState, setPageState] = useState<PageState>('loading');
-  const [timestamp, setTimestamp] = useState<TokenTimestamp | null>(null);
+  const [expirationTimeTimestamp, setExpirationTimeTimestamp] = useState<string | undefined>(undefined);
   const [revealedToken, setRevealedToken] = useState<RevealedToken | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -234,21 +239,24 @@ export function UserTokenPage() {
   const load = useCallback(async () => {
     setPageState('loading');
     try {
-      const [enabled, ts] = await Promise.all([fetchTokensEnabled(), fetchTimestamp()]);
+      const [enabled, result] = await Promise.all([fetchTokensEnabled(), fetchAttributes()]);
       if (!enabled) {
         setPageState('disabled');
         return;
       }
-      if (ts?.created) {
-        setTimestamp(ts as TokenTimestamp);
+      if (result.kind === 'present') {
+        setExpirationTimeTimestamp(result.attributes.expirationTimeTimestamp);
         setPageState('has-token');
+      } else if (result.kind === 'expired') {
+        setExpirationTimeTimestamp(undefined);
+        setPageState('expired-token');
       } else {
-        setTimestamp(null);
+        setExpirationTimeTimestamp(undefined);
         setPageState('no-token');
       }
     } catch {
       toastRef.current.error('Failed to load user token status.');
-      setPageState('no-token');
+      setPageState('error');
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -296,30 +304,29 @@ export function UserTokenPage() {
       );
       await Axios.delete(tokenUrl(authToken));
       toastRef.current.success('User token reset successfully.');
-      setTimestamp(null);
-      setPageState('no-token');
+      await load();
     } catch {
       toastRef.current.error('Failed to reset user token. Please check your credentials.');
     } finally {
       setActionLoading(false);
     }
-  }, []);
+  }, [load]);
 
-  const formatDate = (iso: string) => {
+  const formatEpochMs = (epochMs: string) => {
     try {
-      return new Date(iso).toLocaleDateString(undefined, {
+      return new Date(Number(epochMs)).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
       });
     } catch {
-      return iso;
+      return epochMs;
     }
   };
 
-  const expiryBadge = (expires?: string) => {
-    if (!expires) return null;
-    const diff = new Date(expires).getTime() - Date.now();
+  const expiryBadge = (epochMs: string) => {
+    if (!epochMs || isNaN(Number(epochMs))) return null;
+    const diff = Number(epochMs) - Date.now();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     if (diff < 0) return <Badge color="red" variant="soft">Expired</Badge>;
     if (days < 7) return <Badge color="amber" variant="soft">Expires in {days}d</Badge>;
@@ -356,8 +363,22 @@ export function UserTokenPage() {
         </Callout.Root>
       )}
 
-      {/* States 2 + 3: Token Status card */}
-      {(pageState === 'no-token' || pageState === 'has-token') && (
+      {/* State: API error (non-404 failure — 401, 403, 500, network) */}
+      {pageState === 'error' && (
+        <Callout.Root color="red" data-testid="error-state">
+          <Callout.Text>
+            Failed to load your user token status. This may be a temporary issue.
+          </Callout.Text>
+          <Box mt="3">
+            <Button variant="soft" color="red" onClick={load} data-testid="retry-btn">
+              Retry
+            </Button>
+          </Box>
+        </Callout.Root>
+      )}
+
+      {/* States 2, 3, 4: Token Status card */}
+      {(pageState === 'no-token' || pageState === 'has-token' || pageState === 'expired-token') && (
         <>
           <Card mb="4" data-testid="token-status-card">
             <Heading size="3" mb="3">Token Status</Heading>
@@ -384,25 +405,21 @@ export function UserTokenPage() {
               </Flex>
             )}
 
-            {pageState === 'has-token' && timestamp && (
+            {pageState === 'has-token' && (
               <Flex direction="column" gap="3" data-testid="has-token-state">
                 <Flex align="center" gap="2">
                   <CheckCircle size={20} color="var(--green-9)" />
                   <Text weight="medium" color="green">Token active</Text>
                 </Flex>
-                <Flex direction="column" gap="1">
-                  <Flex gap="2" align="center">
-                    <Text size="2" color="gray" style={{ minWidth: 70 }}>Created</Text>
-                    <Text size="2">{formatDate(timestamp.created)}</Text>
-                  </Flex>
-                  {timestamp.expires && (
-                    <Flex gap="2" align="center">
+                {expirationTimeTimestamp && (
+                  <Flex direction="column" gap="1">
+                    <Flex gap="2" align="center" data-testid="expires-row">
                       <Text size="2" color="gray" style={{ minWidth: 70 }}>Expires</Text>
-                      <Text size="2">{formatDate(timestamp.expires)}</Text>
-                      {expiryBadge(timestamp.expires)}
+                      <Text size="2">{formatEpochMs(expirationTimeTimestamp)}</Text>
+                      {expiryBadge(expirationTimeTimestamp)}
                     </Flex>
-                  )}
-                </Flex>
+                  </Flex>
+                )}
                 <Flex gap="2" mt="1">
                   <Button
                     variant="soft"
@@ -413,6 +430,38 @@ export function UserTokenPage() {
                   >
                     {actionLoading && <Spinner size="1" />}
                     Access Token
+                  </Button>
+                  <Button
+                    variant="soft"
+                    color="red"
+                    onClick={() => setShowResetConfirm(true)}
+                    disabled={actionLoading}
+                    data-testid="reset-token-btn"
+                  >
+                    Reset Token
+                  </Button>
+                </Flex>
+              </Flex>
+            )}
+
+            {pageState === 'expired-token' && (
+              <Flex direction="column" gap="3" data-testid="expired-token-state">
+                <Callout.Root color="red">
+                  <Callout.Text>
+                    Your user token has expired. Generate a new one to restore API access.
+                  </Callout.Text>
+                </Callout.Root>
+                <Flex gap="2">
+                  <Button
+                    variant="solid"
+                    color="blue"
+                    highContrast
+                    onClick={handleGenerate}
+                    disabled={actionLoading}
+                    data-testid="generate-token-btn"
+                  >
+                    {actionLoading && <Spinner size="1" />}
+                    Generate Token
                   </Button>
                   <Button
                     variant="soft"
@@ -438,7 +487,7 @@ export function UserTokenPage() {
         </>
       )}
 
-      {/* State 4: Token Revealed modal */}
+      {/* State 5: Token Revealed modal */}
       {revealedToken && (
         <TokenRevealDialog
           nameCode={revealedToken.nameCode}
@@ -447,7 +496,7 @@ export function UserTokenPage() {
         />
       )}
 
-      {/* State 5: Reset Confirmation */}
+      {/* State 6: Reset Confirmation */}
       <ConfirmDialog
         open={showResetConfirm}
         onOpenChange={setShowResetConfirm}

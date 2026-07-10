@@ -27,14 +27,15 @@ import {replace} from 'ramda';
 import classNames from 'classnames';
 
 import UIStrings from '../../../../../constants/UIStrings';
-import {helperFunctions} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
+import {helperFunctions, useTestOverrideDetection, STORAGE_KEY_CE_THROTTLING_STATUS, STORAGE_KEY_CE_COMPONENTS, STORAGE_KEY_CE_REQUESTS} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 import './UsageCenter.scss';
 
 const {
   getMetricData,
   OVER_LIMITS,
   NEAR_LIMITS,
-  UNDER_LIMITS
+  UNDER_LIMITS,
+  useCommunityEdition
 } = helperFunctions;
 
 const {
@@ -189,8 +190,12 @@ function MonthlyMetricsCard({usage}) {
 
 function UsageCenterHeader() {
   const isProEdition = ExtJS.isProEdition();
-  const isCommunityEdition = ExtJS.state().getEdition() === COMMUNITY;
-  const throttlingStatus = ExtJS.useState(() => ExtJS.state().getValue('nexus.community.throttlingStatus'));
+  const isCommunityEdition = useCommunityEdition();
+  // Use helper function which checks for test overrides
+  const throttlingStatus = ExtJS.useState(() => {
+    const testOverride = localStorage.getItem('SONATYPE_TEST_CE_THROTTLING_STATUS');
+    return testOverride || ExtJS.state().getValue('nexus.community.throttlingStatus');
+  });
 
   const utmParams = {
     utm_medium: 'product',
@@ -241,8 +246,15 @@ function UsageCenterHeader() {
 }
 
 export default function UsageCenter() {
+  // Force re-render when test overrides change (Test Hub scenarios)
+  useTestOverrideDetection([
+    STORAGE_KEY_CE_THROTTLING_STATUS,
+    STORAGE_KEY_CE_COMPONENTS,
+    STORAGE_KEY_CE_REQUESTS,
+  ]);
+
   const isProEdition = ExtJS.isProEdition();
-  const isCommunityEdition = ExtJS.state().getEdition() === COMMUNITY;
+  const isCommunityEdition = useCommunityEdition();
   const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
   const componentCountLimitDateLastExceeded = ExtJS.state().getValue('nexus.community.componentCountLimitDateLastExceeded');
   const requestPer24HoursLimitDateLastExceeded = ExtJS.state().getValue('nexus.community.requestPer24HoursLimitDateLastExceeded');

@@ -14,9 +14,9 @@ package org.sonatype.nexus.validation.internal;
 
 import java.lang.annotation.ElementType;
 
-import javax.validation.Path;
-import javax.validation.Path.Node;
-import javax.validation.TraversableResolver;
+import jakarta.validation.Path;
+import jakarta.validation.Path.Node;
+import jakarta.validation.TraversableResolver;
 
 /**
  * Always {@link TraversableResolver} to disable JPA reachability.

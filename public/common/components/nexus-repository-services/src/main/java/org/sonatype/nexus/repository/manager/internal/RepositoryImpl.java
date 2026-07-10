@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import javax.annotation.Nonnull;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 import org.sonatype.nexus.common.failure.MultipleFailures;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -197,7 +197,7 @@ public class RepositoryImpl
         facet.init();
       }
       catch (Throwable t) {
-        log.error("Failed to initialize facet: {}", facet, t);
+        log.error("Failed to initialize facet '{}' for repository '{}'", facet, name, t);
         failures.add(t);
       }
     }

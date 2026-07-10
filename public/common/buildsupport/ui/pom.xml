@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-ui</artifactId>
@@ -37,16 +37,14 @@
         <version>7.0</version>
       </dependency>
 
+      <!-- NEXUS-46395: directjngine 2.3.0 is the Jakarta Servlet 6 / Jakarta EE 10 release
+           (commit f6a1d5d; published to Maven Central). It depends on
+           commons-fileupload2-jakarta-servlet6 directly, so the legacy
+           commons-fileupload exclusion is no longer needed. -->
       <dependency>
         <groupId>org.sonatype.directjngine</groupId>
         <artifactId>directjngine</artifactId>
-        <version>2.2.10-01</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>2.3.0</version>
       </dependency>
 
       <dependency>

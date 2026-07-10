@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.config;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.repository.Facet;
 

@@ -13,9 +13,9 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.Map;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.security.privilege.UniquePrivilegeId;
 import org.sonatype.nexus.security.privilege.UniquePrivilegeName;

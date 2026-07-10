@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Box, Flex, Text, ScrollArea, Heading } from '@radix-ui/themes';
-import { Users, Plus, ArrowLeft, UserPlus } from 'lucide-react';
+import { Users, Plus, UserPlus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, PageHeader } from '../../../../shared';
@@ -95,6 +95,7 @@ export function UsersPage() {
   const [listDeleteUserName, setListDeleteUserName] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(0);
   const [isStep1Valid, setIsStep1Valid] = useState(false);
+  const [formDirty, setFormDirty] = useState(false);
 
   // Toast notifications (app-level provider)
   const toast = useToast();
@@ -118,7 +119,8 @@ export function UsersPage() {
       const newState = parseRoute(window.location.hash);
       setRouteState(newState);
       setError(null);
-      setWizardStep(0); // Reset wizard step on route change
+      setWizardStep(0);
+      setFormDirty(false);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
@@ -234,33 +236,18 @@ export function UsersPage() {
           icon: Users,
           title: 'Create User',
           description: wizardStep === 0 ? 'Step 1: Setup user details' : 'Step 2: Assign roles',
-          actions: (
-            <SettingsButton testId="back-to-list-button" variant="ghost" onClick={handleBack} icon={ArrowLeft}>
-              Back to List
-            </SettingsButton>
-          )
         };
       case 'detail':
         return {
           icon: Users,
           title: user ? `Edit ${getFullName(user)}` : 'User Details',
           description: wizardStep === 0 ? 'Step 1: Edit user details' : 'Step 2: Manage roles',
-          actions: (
-            <SettingsButton testId="back-to-list-button" variant="ghost" onClick={handleBack} icon={ArrowLeft}>
-              Back to List
-            </SettingsButton>
-          )
         };
       case 'invite':
         return {
           icon: Users,
           title: 'Invite User',
           description: 'Send an invitation to a new user',
-          actions: (
-            <SettingsButton testId="back-to-list-button" variant="ghost" onClick={handleBack} icon={ArrowLeft}>
-              Back to List
-            </SettingsButton>
-          )
         };
       default:
         return {
@@ -269,7 +256,7 @@ export function UsersPage() {
           description: 'Manage users'
         };
     }
-  }, [routeState.viewMode, user, canCreate, isCloud, handleCreate, handleInvite, handleBack, wizardStep]);
+  }, [routeState.viewMode, user, canCreate, isCloud, handleCreate, handleInvite, wizardStep]);
 
   return (
     <Box 
@@ -279,17 +266,25 @@ export function UsersPage() {
       data-loading={loading ? 'true' : 'false'}
     >
       {routeState.viewMode !== 'profile' && (
-        <PageHeader 
-          icon={headerProps.icon} 
-          title={headerProps.title} 
-          description={headerProps.description} 
-          actions={headerProps.actions} 
-        
-          breadcrumbs={[
-            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-            { label: 'Users' }
-          ]}
-/>
+        <PageHeader
+          icon={headerProps.icon}
+          title={headerProps.title}
+          description={headerProps.description}
+          actions={routeState.viewMode === 'list' ? headerProps.actions : undefined}
+          breadcrumbs={routeState.viewMode === 'list'
+            ? [
+                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                { label: 'Users' }
+              ]
+            : [
+                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+                { label: 'Users', onClick: handleBack },
+                { label: routeState.viewMode === 'create' ? 'Create'
+                  : routeState.viewMode === 'invite' ? 'Invite'
+                  : user?.userId || 'Loading...' }
+              ]
+          }
+        />
       )}
 
       {/* Alerts */}
@@ -328,10 +323,9 @@ export function UsersPage() {
             onCancel={handleBack}
             completeLabel={routeState.viewMode === 'create' ? 'Create User' : 'Save'}
             submitAnalyticsId={routeState.viewMode === 'create' ? 'nxrm-user-create' : 'nxrm-user-save'}
-            dirty={false}
+            dirty={formDirty}
             canAdvance={wizardStep === 0 ? isStep1Valid : true}
             loading={loading && wizardStep === 1}
-            noDirtyTracking={true}
           >
             <UserForm
               user={user}
@@ -346,6 +340,7 @@ export function UsersPage() {
               wizardStep={wizardStep}
               hideActions={true}
               onValidationChange={setIsStep1Valid}
+              onDirtyChange={setFormDirty}
               onSubmitRef={userFormSubmitRef}
             />
           </WizardForm>

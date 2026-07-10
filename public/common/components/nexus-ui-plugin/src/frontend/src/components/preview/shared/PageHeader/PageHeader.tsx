@@ -24,8 +24,8 @@ export interface BreadcrumbItem {
 }
 
 export interface PageHeaderProps {
-  /** Page title */
-  title: string;
+  /** Page title (omit for breadcrumbs-only mode) */
+  title?: string;
   /** Optional description text */
   description?: string;
   /** Optional action buttons (rendered on the right) */
@@ -124,26 +124,30 @@ export function PageHeader({
         </Box>
       )}
 
-      {/* Main Header */}
-      <Flex align="center" justify="between" gap="4">
-        <Flex direction="column" gap="1">
-          <Heading as="h1" size="6" weight="bold">
-            {title}
-          </Heading>
-          {description && (
-            <Text as="p" size="2" color="gray">
-              {description}
-            </Text>
+      {/* Main Header — omitted when title is absent (breadcrumbs-only mode) */}
+      {(title || actions) && (
+        <Flex align="center" justify="between" gap="4">
+          <Flex direction="column" gap="1">
+            {title && (
+              <Heading as="h1" size="6" weight="bold">
+                {title}
+              </Heading>
+            )}
+            {description && (
+              <Text as="p" size="2" color="gray">
+                {description}
+              </Text>
+            )}
+          </Flex>
+
+          {/* Actions */}
+          {actions && (
+            <Flex gap="2" style={{ flexShrink: 0 }}>
+              {actions}
+            </Flex>
           )}
         </Flex>
-
-        {/* Actions */}
-        {actions && (
-          <Flex gap="2" style={{ flexShrink: 0 }}>
-            {actions}
-          </Flex>
-        )}
-      </Flex>
+      )}
 
       {/* Children (e.g., filters, search inputs) */}
       {children && <Box mt="3">{children}</Box>}

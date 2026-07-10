@@ -14,18 +14,30 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 
 import { useSupportZipApi } from '../useSupportZipApi';
-import { SUPPORT_ZIP_API, DEFAULT_SUPPORT_ZIP_PARAMS } from '../types';
+import { SUPPORT_ZIP_API, DEFAULT_SUPPORT_ZIP_PARAMS, NodeInfo } from '../types';
 
-// Mock the local API module used by useSupportZipApi
 jest.mock('../../../../../../../interface/api', () => ({
   restClient: {
+    get: jest.fn(),
     post: jest.fn(),
+    delete: jest.fn(),
   },
-  parseApiError: jest.fn((err: any) => ({ message: err.message || 'Unknown error' })),
+  parseApiError: jest.fn((err: any) => ({ message: err?.message || 'Unknown error' })),
 }));
 
 import { restClient } from '../../../../../../../interface/api';
 const mockedRestClient = restClient as jest.Mocked<typeof restClient>;
+
+const SUPPORT_ZIP_BASE = 'service/rest/internal/ui/supportzip/';
+const ACTIVE_NODES_URL = 'service/rest/internal/ui/supportzip/activenodes';
+const STATUS_BASE = 'service/rest/internal/ui/supportzip/status/';
+const CLEAR_BASE = 'service/rest/internal/ui/supportzip/clear/';
+
+const sampleNode: NodeInfo = {
+  nodeId: 'node-a',
+  hostname: 'host-a',
+  status: 'NOT_CREATED',
+};
 
 describe('useSupportZipApi', () => {
   beforeEach(() => {
@@ -40,7 +52,6 @@ describe('useSupportZipApi', () => {
         size: '10 MB',
         truncated: false,
       };
-      // restClient returns data directly, not { data: ... }
       mockedRestClient.post.mockResolvedValueOnce(mockResponse);
 
       const { result } = renderHook(() => useSupportZipApi());
@@ -58,18 +69,17 @@ describe('useSupportZipApi', () => {
     });
 
     it('handles create error', async () => {
-      const errorMessage = 'Failed to create ZIP';
-      mockedRestClient.post.mockRejectedValueOnce(new Error(errorMessage));
+      mockedRestClient.post.mockRejectedValueOnce(new Error('Failed to create ZIP'));
 
       const { result } = renderHook(() => useSupportZipApi());
 
       await act(async () => {
         await expect(
           result.current.createSupportZip(DEFAULT_SUPPORT_ZIP_PARAMS)
-        ).rejects.toThrow(errorMessage);
+        ).rejects.toThrow('Failed to create ZIP');
       });
 
-      expect(result.current.error).toBe(errorMessage);
+      expect(result.current.error).toBe('Failed to create ZIP');
     });
 
     it('sets loading state while creating', async () => {
@@ -88,7 +98,6 @@ describe('useSupportZipApi', () => {
       });
 
       await act(async () => {
-        // restClient returns data directly
         resolvePromise!({ file: 'test.zip', name: 'test', size: '1MB', truncated: false });
         await createPromise;
       });
@@ -97,42 +106,78 @@ describe('useSupportZipApi', () => {
     });
   });
 
-  describe('createHaSupportZips', () => {
-    it('creates HA support ZIPs successfully', async () => {
-      const mockResponses = [
-        { file: '/path/to/node1.zip', name: 'node1.zip', size: '10 MB', truncated: false },
-        { file: '/path/to/node2.zip', name: 'node2.zip', size: '12 MB', truncated: false },
-      ];
-      // restClient returns data directly, not { data: ... }
-      mockedRestClient.post.mockResolvedValueOnce(mockResponses);
+  describe('fetchActiveNodes', () => {
+    it('GETs the active nodes endpoint', async () => {
+      mockedRestClient.get.mockResolvedValueOnce([sampleNode]);
 
       const { result } = renderHook(() => useSupportZipApi());
 
-      let responses: any;
+      let nodes: NodeInfo[] = [];
       await act(async () => {
-        responses = await result.current.createHaSupportZips(DEFAULT_SUPPORT_ZIP_PARAMS);
+        nodes = await result.current.fetchActiveNodes();
       });
 
-      expect(mockedRestClient.post).toHaveBeenCalledWith(
-        SUPPORT_ZIP_API.CREATE_HA,
-        DEFAULT_SUPPORT_ZIP_PARAMS
-      );
-      expect(responses).toEqual(mockResponses);
+      expect(mockedRestClient.get).toHaveBeenCalledWith(ACTIVE_NODES_URL);
+      expect(nodes).toEqual([sampleNode]);
     });
 
-    it('handles HA create error', async () => {
-      const errorMessage = 'Failed to create HA ZIPs';
-      mockedRestClient.post.mockRejectedValueOnce(new Error(errorMessage));
+    it('captures fetch errors on the hook state', async () => {
+      mockedRestClient.get.mockRejectedValueOnce(new Error('boom'));
 
       const { result } = renderHook(() => useSupportZipApi());
 
       await act(async () => {
-        await expect(
-          result.current.createHaSupportZips(DEFAULT_SUPPORT_ZIP_PARAMS)
-        ).rejects.toThrow(errorMessage);
+        await expect(result.current.fetchActiveNodes()).rejects.toThrow('boom');
       });
 
-      expect(result.current.error).toBe(errorMessage);
+      expect(result.current.error).toBe('boom');
+    });
+  });
+
+  describe('fetchNodeStatus', () => {
+    it('GETs the per-node status endpoint', async () => {
+      mockedRestClient.get.mockResolvedValueOnce(sampleNode);
+
+      const { result } = renderHook(() => useSupportZipApi());
+
+      let node: NodeInfo;
+      await act(async () => {
+        node = await result.current.fetchNodeStatus('node-a');
+      });
+
+      expect(mockedRestClient.get).toHaveBeenCalledWith(`${STATUS_BASE}node-a`);
+      expect(node!).toEqual(sampleNode);
+    });
+  });
+
+  describe('generateForNode', () => {
+    it('POSTs to the per-node supportzip endpoint with hostname in body', async () => {
+      mockedRestClient.post.mockResolvedValueOnce({ ...sampleNode, status: 'CREATING' });
+
+      const { result } = renderHook(() => useSupportZipApi());
+
+      await act(async () => {
+        await result.current.generateForNode('node-a', DEFAULT_SUPPORT_ZIP_PARAMS, 'host-a');
+      });
+
+      expect(mockedRestClient.post).toHaveBeenCalledWith(`${SUPPORT_ZIP_BASE}node-a`, {
+        ...DEFAULT_SUPPORT_ZIP_PARAMS,
+        hostname: 'host-a',
+      });
+    });
+  });
+
+  describe('clearNode', () => {
+    it('DELETEs the per-node clear endpoint', async () => {
+      mockedRestClient.delete.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useSupportZipApi());
+
+      await act(async () => {
+        await result.current.clearNode('node-a');
+      });
+
+      expect(mockedRestClient.delete).toHaveBeenCalledWith(`${CLEAR_BASE}node-a`);
     });
   });
 
@@ -164,4 +209,3 @@ describe('useSupportZipApi', () => {
     });
   });
 });
-

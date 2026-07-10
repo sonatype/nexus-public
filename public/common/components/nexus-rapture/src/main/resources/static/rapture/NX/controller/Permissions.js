@@ -19,6 +19,11 @@
 /**
  * Permissions management controller.
  *
+ * Fires the following events on the controller:
+ * @event loading Fired before the Permission store load begins (NEXUS-52583).
+ * @event changed Fired after permissions are successfully loaded and installed.
+ * @event loaderror Fired when the Permission store load fails; receives the failed operation.
+ *
  * @since 3.0
  */
 Ext.define('NX.controller.Permissions', {
@@ -84,7 +89,20 @@ Ext.define('NX.controller.Permissions', {
     me.logDebug('Fetching permissions...');
     //</if>
 
-    me.getStore('Permission').load();
+    // Fire 'loading' event so UI can show appropriate state (NEXUS-52583)
+    me.fireEvent('loading');
+
+    me.getStore('Permission').load({
+      callback: function(records, operation, success) {
+        if (!success) {
+          //<if debug>
+          me.logError('Failed to load permissions');
+          //</if>
+          me.fireEvent('loaderror', operation);
+        }
+        // Note: 'load' event fires firePermissionsChanged on success automatically
+      }
+    });
   },
 
   /**

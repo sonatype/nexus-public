@@ -196,6 +196,12 @@ export const FORMATS: Record<SearchFormat, FormatInfo> = {
     apiFormat: 'terraform',
     placeholder: 'Search by module name',
   },
+  terraformbackend: {
+    id: 'terraformbackend',
+    label: 'Terraform Backend',
+    apiFormat: 'terraformbackend',
+    placeholder: 'Search by state file path',
+  },
   yum: {
     id: 'yum',
     label: 'Yum (RPM)',
@@ -673,6 +679,12 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
+  // Terraform Backend - minimal filters (state files)
+  terraformbackend: {
+    format: FORMATS.terraformbackend,
+    filters: [REPOSITORY_FILTER],
+  },
+
   // Yum (RPM) - uses yum.name instead of global name
   yum: {
     format: FORMATS.yum,
@@ -704,7 +716,7 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
 export const FORMAT_ORDER: SearchFormat[] = [
   'alpine', 'ansiblegalaxy', 'apt', 'cargo', 'cocoapods', 'composer', 'conan', 'conda', 'docker', 'gitlfs',
   'go', 'helm', 'huggingface', 'maven', 'npm', 'nuget', 'p2', 'pub', 'pypi', 'r',
-  'raw', 'rubygems', 'swift', 'terraform', 'yum',
+  'raw', 'rubygems', 'swift', 'terraform', 'terraformbackend', 'yum',
 ];
 
 // =============================================================================

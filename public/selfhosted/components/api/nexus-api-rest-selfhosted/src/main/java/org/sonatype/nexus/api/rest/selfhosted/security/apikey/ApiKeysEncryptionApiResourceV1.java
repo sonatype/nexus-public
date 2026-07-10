@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.apikey;
 
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.crypto.apikey.ApiKeysReEncryptService;
 

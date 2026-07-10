@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.extdirect.model;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Ext.Direct response builder.

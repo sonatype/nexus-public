@@ -48,6 +48,7 @@ import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryC
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryPreDeleteEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
@@ -137,6 +138,7 @@ class FormatStoreManagerTest
     testContext.registerBean(ContentFacetFinder.class, () -> contentFacetFinder);
     testContext.registerBean(EventManager.class, () -> eventManager);
     testContext.registerBean(DataSessionSupplier.class, () -> dataSessionSupplier);
+    testContext.registerBean(GlobalRepositorySettings.class, GlobalRepositorySettings::new);
   }
 
   @AfterEach

@@ -123,7 +123,7 @@ describe('RoutingRulesPage', () => {
   it('should render the page header', () => {
     render(<RoutingRulesPage />, { wrapper: TestWrapper });
     
-    expect(screen.getByText('Routing Rules')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Routing Rules' })).toBeInTheDocument();
     expect(screen.getByText('Control which requests are allowed or blocked for repositories')).toBeInTheDocument();
   });
 
@@ -295,7 +295,7 @@ describe('RoutingRulesPage', () => {
     });
   });
 
-  it('accessibility: back button in preview view has aria-label', async () => {
+  it('breadcrumb navigation in preview view has clickable Routing Rules link', async () => {
     render(<RoutingRulesPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getAllByRole('button', { name: /preview/i })[0]);
@@ -304,10 +304,11 @@ describe('RoutingRulesPage', () => {
       expect(screen.getByTestId('routing-rule-preview')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: 'Back to Routing Rules' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Routing Rules' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 
-  it('accessibility: back button in create view has aria-label (C-2)', async () => {
+  it('breadcrumb navigation in create view has clickable Routing Rules link', async () => {
     render(<RoutingRulesPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getAllByRole('button', { name: /create rule/i })[0]);
@@ -316,10 +317,11 @@ describe('RoutingRulesPage', () => {
       expect(screen.getByTestId('routing-rule-form')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: 'Back to Routing Rules' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Routing Rules' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 
-  it('accessibility: back button in detail view has aria-label (C-2)', async () => {
+  it('breadcrumb navigation in detail view has clickable Routing Rules link', async () => {
     render(<RoutingRulesPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByText('Select Rule'));
@@ -328,7 +330,8 @@ describe('RoutingRulesPage', () => {
       expect(screen.getByTestId('routing-rule-form')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: 'Back to Routing Rules' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Routing Rules' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 
   describe('routing rule form view deletion', () => {

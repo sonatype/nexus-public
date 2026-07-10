@@ -30,6 +30,7 @@ interface AzureBlobStoreSettingsProps {
   onChange: (path: string, value: unknown) => void;
   disabled?: boolean;
   isEdit?: boolean;
+  errors?: Record<string, string | null>;
 }
 
 const STRINGS = {
@@ -83,7 +84,8 @@ export default function AzureBlobStoreSettings({
   data,
   onChange,
   disabled = false,
-  isEdit = false
+  isEdit = false,
+  errors = {},
 }: AzureBlobStoreSettingsProps) {
   const { testing, result, testConnection, reset } = useAzureConnectionTest();
 
@@ -129,6 +131,7 @@ export default function AzureBlobStoreSettings({
           onChange={(value) => updateConfig('accountName', value)}
           helpText={STRINGS.ACCOUNT_NAME.helpText}
           placeholder={STRINGS.ACCOUNT_NAME.placeholder}
+          error={errors['bucketConfiguration.accountName'] ?? undefined}
           required
           disabled={disabled}
         />
@@ -140,6 +143,7 @@ export default function AzureBlobStoreSettings({
           onChange={(value) => updateConfig('containerName', value)}
           helpText={STRINGS.CONTAINER_NAME.helpText}
           placeholder={STRINGS.CONTAINER_NAME.placeholder}
+          error={errors['bucketConfiguration.containerName'] ?? undefined}
           required
           disabled={disabled}
         />

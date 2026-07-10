@@ -36,7 +36,45 @@ public final class SqlSearchWildcardValidator
 
   private static final char ANY_CHARACTER = '?';
 
-  private static final int MIN_ALLOWED_SYMBOLS_TO_SEARCH = 3;
+  /**
+   * Minimum characters required before a trailing wildcard.
+   * Configured by {@link SqlSearchWildcardConfiguration} during Spring initialization.
+   * Default of 3 used if Spring configuration unavailable (e.g., test context or startup failure).
+   *
+   * <p>
+   * Thread-safety: This field is volatile to ensure safe publication when set during Spring initialization.
+   * The value is set once at startup (before any search requests) and then read by multiple threads during
+   * search operations. The volatile modifier ensures the write is visible to all threads immediately.
+   */
+  private static volatile int minAllowedSymbolsToSearch = 3;
+
+  /**
+   * Sets the minimum prefix length for wildcard searches.
+   * Called by {@link SqlSearchWildcardConfiguration} during Spring initialization.
+   *
+   * <p>
+   * Validation is performed by {@link SqlSearchWildcardConfiguration} before calling this method.
+   * This method performs no validation to avoid duplication - the Configuration class is the
+   * single authority for validation logic.
+   *
+   * <p>
+   * Package-private to allow testing. Should only be called during initialization or tests.
+   *
+   * @param value the minimum number of characters required before a trailing wildcard (must be 1-100)
+   */
+  static void setMinAllowedSymbolsToSearch(final int value) {
+    minAllowedSymbolsToSearch = value;
+  }
+
+  /**
+   * Returns the currently configured minimum prefix length for wildcard searches.
+   * Package-private for testing purposes.
+   *
+   * @return the minimum number of characters required before a trailing wildcard
+   */
+  static int getMinAllowedSymbolsToSearch() {
+    return minAllowedSymbolsToSearch;
+  }
 
   private static final int MIN_ALLOWED_FOR_SPECIAL_CHAR_AND_WILDCARD = 2;
 
@@ -45,7 +83,8 @@ public final class SqlSearchWildcardValidator
   }
 
   /**
-   * For SQL search we prohibit leading wildcards and less than 3 characters with wildcards for performance reasons.
+   * For SQL search we prohibit leading wildcards and short prefixes with wildcards for performance reasons.
+   * The minimum prefix length is configurable via the {@code nexus.search.wildcard.minPrefixLength} property.
    *
    * @param tokens the collection of tokens to validate
    * @return a new set containing only valid tokens
@@ -83,7 +122,7 @@ public final class SqlSearchWildcardValidator
         .collect(Collectors.toSet());
     if (!invalidTokens.isEmpty()) {
       String errorMsg = String.format("%d characters or more are required with a trailing wildcard (*)",
-          MIN_ALLOWED_SYMBOLS_TO_SEARCH);
+          minAllowedSymbolsToSearch);
       validation.withError(errorMsg);
       log.debug("{} for tokens: {}", errorMsg, invalidTokens);
       validTokens.removeAll(invalidTokens);
@@ -158,7 +197,7 @@ public final class SqlSearchWildcardValidator
     String trimmedToken = token.trim();
     Pair<Boolean, Integer> wildcard = checkTrailingAsterisk(trimmedToken);
     if (wildcard.getKey()) {
-      return wildcard.getValue() < MIN_ALLOWED_SYMBOLS_TO_SEARCH;
+      return wildcard.getValue() < minAllowedSymbolsToSearch;
     }
 
     return false;

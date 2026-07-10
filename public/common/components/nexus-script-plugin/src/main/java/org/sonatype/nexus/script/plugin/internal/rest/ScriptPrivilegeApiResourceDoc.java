@@ -12,37 +12,39 @@
  */
 package org.sonatype.nexus.script.plugin.internal.rest;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * @since 3.19
  */
-@Api(value = "Security management: privileges")
+@Tag(name = "Security management: privileges")
 public interface ScriptPrivilegeApiResourceDoc
 {
-  @ApiOperation("Create a script type privilege.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 201, message = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
+  @Operation(summary = "Create a script type privilege.")
+  @ApiResponses(
+      value = {@ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
+          @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+          @ApiResponse(responseCode = "201", description = NexusSecurityApiConstants.PRIVILEGE_CREATED)})
   Response createPrivilege(
-      @ApiParam("The privilege to create.") @NotNull @Valid final ApiPrivilegeScriptRequest privilege);
+      @Parameter(description = "The privilege to create.") @NotNull @Valid final ApiPrivilegeScriptRequest privilege);
 
-  @ApiOperation("Update a script type privilege.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
-      @ApiResponse(code = 204, message = NexusSecurityApiConstants.SUCCESS)})
+  @Operation(summary = "Update a script type privilege.")
+  @ApiResponses(
+      value = {@ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
+          @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+          @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
+          @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)})
   void updatePrivilege(
-      @ApiParam("The name of the privilege to update.") @NotNull final String privilegeName,
-      @ApiParam("The privilege to update.") @NotNull @Valid final ApiPrivilegeScriptRequest privilege);
+      @Parameter(description = "The name of the privilege to update.") @NotNull final String privilegeName,
+      @Parameter(description = "The privilege to update.") @NotNull @Valid final ApiPrivilegeScriptRequest privilege);
 }

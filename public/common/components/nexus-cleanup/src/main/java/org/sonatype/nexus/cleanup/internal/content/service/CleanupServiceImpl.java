@@ -103,13 +103,14 @@ public class CleanupServiceImpl
     AtomicLong totalDeletedCount = new AtomicLong(0L);
     repositoryManager.browse().forEach(repository -> {
       if (!cancelledCheck.getAsBoolean() && !repository.getType().equals(groupType)) {
-        totalDeletedCount.addAndGet(this.cleanup(repository, cancelledCheck));
+        totalDeletedCount.addAndGet(this.cleanupRepository(repository, cancelledCheck));
       }
     });
     log.info("{} assets cleaned up across all repositories", totalDeletedCount.get());
   }
 
-  private Long cleanup(final Repository repository, final BooleanSupplier cancelledCheck) {
+  @Override
+  public long cleanupRepository(final Repository repository, final BooleanSupplier cancelledCheck) {
     AtomicLong deleted = new AtomicLong(0L);
     findPolicies(repository).forEach(policy -> {
       CleanupComponentBrowse browseService = browseServiceFactory.get(repository.getFormat());
@@ -117,6 +118,18 @@ public class CleanupServiceImpl
       log.info("{} assets cleaned up for repository {} in total", deleted, repository.getName());
     });
     return deleted.get();
+  }
+
+  @Override
+  public long dryRunCount(final Repository repository) {
+    AtomicLong count = new AtomicLong(0L);
+    findPolicies(repository).forEach(policy -> {
+      if (!shouldSkip(repository, policy) && !policy.getCriteria().isEmpty()) {
+        CleanupComponentBrowse browseService = browseServiceFactory.get(repository.getFormat());
+        count.addAndGet(browseService.browse(policy, repository).count());
+      }
+    });
+    return count.get();
   }
 
   protected Long deleteByPolicy(

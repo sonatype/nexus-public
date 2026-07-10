@@ -14,19 +14,20 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import PropTypes from "prop-types";
 
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, scrollToUsageCenter} from '@sonatype/nexus-ui-plugin';
 import {
   NxTextLink,
 } from '@sonatype/react-shared-components';
 import CEHardLimitBannersMachine from './CEHardLimitBannersMachine';
 
-import {helperFunctions} from './UsageHelper';
+import {helperFunctions, useTestOverrideDetection, STORAGE_KEY_CE_THROTTLING_STATUS, STORAGE_KEY_CE_GRACE_PERIOD_ENDS} from './UsageHelper';
 
 const {
   useGracePeriodEndDate,
   useViewPurchaseALicenseUrl,
   useThrottlingStatus,
-  useDaysUntilGracePeriodEnds
+  useDaysUntilGracePeriodEnds,
+  useCommunityEdition
 } = helperFunctions;
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -46,10 +47,16 @@ export default function CEHardLimitAlert() {
     devTools: true
   });
 
+  // Force re-render when test overrides change (Test Hub scenarios)
+  useTestOverrideDetection([
+    STORAGE_KEY_CE_THROTTLING_STATUS,
+    STORAGE_KEY_CE_GRACE_PERIOD_ENDS,
+  ]);
+
   const user = ExtJS.useUser();
   const isAdmin = user?.administrator;
   const isHa = ExtJS.state().getValue('nexus.datastore.clustered.enabled');
-  const isCommunityEdition = ExtJS.state().getEdition() === 'COMMUNITY';
+  const isCommunityEdition = useCommunityEdition();
 
   const gracePeriodEndDate = useGracePeriodEndDate();
   const throttlingStatus = useThrottlingStatus();
@@ -64,7 +71,7 @@ export default function CEHardLimitAlert() {
   if (isAdmin) {
     return <>
       {throttlingStatus === 'NEAR_LIMITS_NEVER_IN_GRACE' &&
-          <SystemNotice noticeLevel="warning" additionalAlertClassNames="ce-banner-near-limit-never-in-grace-period">
+          <SystemNotice noticeLevel="warning" title={BANNERS.NEAR_LIMITS_TITLE} additionalAlertClassNames="ce-banner-near-limit-never-in-grace-period">
             {BANNERS.NEAR_LIMITS} <ContactLinks scrollToUsageCenter={scrollToUsageCenter}/>
           </SystemNotice>
       }
@@ -97,7 +104,7 @@ export default function CEHardLimitAlert() {
           </SystemNotice>
       }
     </>;
-  } else if (!isAdmin) {
+  } else {
     return <>
       {throttlingStatus === 'NON_ADMIN_OVER_LIMITS_GRACE_PERIOD_ENDED' &&
           <SystemNotice additionalAlertClassNames="ce-banner-over-limit-non-admin" noticeLevel="error" >
@@ -110,27 +117,6 @@ export default function CEHardLimitAlert() {
           </SystemNotice>
       }
     </>;
-  } else {
-    return null;
-  }
-
-  function scrollToUsageCenter() {
-    const targetPath = '#browse/welcome';
-    const targetElementId = 'nxrm-usage-center';
-
-    function scrollToElement() {
-      const usageCenterElement = document.getElementById(targetElementId);
-      if (usageCenterElement) {
-        usageCenterElement.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-
-    if (window.location.hash !== targetPath) {
-      window.location.hash = targetPath;
-      setTimeout(scrollToElement, 200);
-    } else {
-      scrollToElement();
-    }
   }
 
   function dismissBelowLimitOutofGrace() {
@@ -144,7 +130,7 @@ CEHardLimitAlert.propTypes = {
 };
 
 function ContactLinks({ scrollToUsageCenter }) {
-  return <>
+  return <span>
     <button
         data-analytics-id="nxrm-ce-hard-limit-banner-scroll-to-usage"
         className="nx-text-link review-usage-link" onClick={scrollToUsageCenter}
@@ -158,7 +144,7 @@ function ContactLinks({ scrollToUsageCenter }) {
     >
       purchase a license to remove limits.
     </NxTextLink>
-  </>
+  </span>
 }
 
 function NonAdminContactLink() {

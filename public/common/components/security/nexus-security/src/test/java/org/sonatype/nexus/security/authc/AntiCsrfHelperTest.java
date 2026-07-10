@@ -12,15 +12,11 @@
  */
 package org.sonatype.nexus.security.authc;
 
-import java.util.Collections;
-import java.util.List;
-
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.HttpMethod;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.HttpMethod;
 
 import com.google.common.net.HttpHeaders;
-import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
@@ -34,9 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -63,7 +57,7 @@ class AntiCsrfHelperTest
 
   @BeforeEach
   void setup() {
-    underTest = new AntiCsrfHelper(true, true, List.of());
+    underTest = new AntiCsrfHelper(true, true);
     lenient().when(httpServletRequest.getRequestURI()).thenReturn("/somepath");
     lenient().when(httpServletRequest.getHeader(HttpHeaders.SEC_FETCH_SITE)).thenReturn(null);
 
@@ -78,74 +72,11 @@ class AntiCsrfHelperTest
   }
 
   /*
-   * Test that an exception is not thrown when the CSRF protection is disabled.
-   */
-  @Test
-  void testRequireValidToken_Disabled() {
-    underTest = new AntiCsrfHelper(false, true, List.of());
-    underTest.requireValidToken(httpServletRequest, "a-token");
-    verifyNoInteractions(httpServletRequest);
-  }
-
-  /*
-   * Requests with a session but no token are invalid.
-   */
-  @Test
-  void testRequireValidToken_Session_NoToken() {
-    setupBrowserSubject();
-    assertThrows(UnauthorizedException.class, () -> underTest.requireValidToken(httpServletRequest, null));
-  }
-
-  /*
-   * Requests without a UserAgent or with an arbitrary UserAgent are likely non-browser clients.
-   */
-  @Test
-  void testRequireValidToken_NoSessionAndNoReferrer() {
-    underTest.requireValidToken(httpServletRequest, null);
-
-    setupClientSubject();
-    try {
-      underTest.requireValidToken(httpServletRequest, null);
-    }
-    catch (Exception e) {
-      fail("expected requiring a valid token to succeed");
-    }
-  }
-
-  /*
-   * Browser requests with a valid token are allowed
-   */
-  @Test
-  void testRequireValidToken() {
-    setupBrowserSubject();
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[]{new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value")});
-    try {
-      underTest.requireValidToken(httpServletRequest, "a-value");
-    }
-    catch (Exception e) {
-      fail("expected requiring a valid token to succeed");
-    }
-  }
-
-  /*
-   * Requests with a browser UserAgent and mismatched tokens are invalid.
-   */
-  @Test
-  void testRequireValidToken_tokenMismatch() {
-    setupBrowserSubject();
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[]{new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value")});
-    assertThrows(UnauthorizedException.class,
-        () -> underTest.requireValidToken(httpServletRequest, "a-different-value"));
-  }
-
-  /*
    * Test that the filter passes requests when disabled
    */
   @Test
   void testIsAccessAllowed_Disabled() {
-    underTest = new AntiCsrfHelper(false, true, List.of());
+    underTest = new AntiCsrfHelper(false, true);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
     verifyNoInteractions(httpServletRequest);
   }
@@ -209,7 +140,7 @@ class AntiCsrfHelperTest
   @Test
   void shouldAllowAccessWhenMissingSubject() {
     ThreadContext.unbindSubject();
-    underTest = new AntiCsrfHelper(true, true, List.of());
+    underTest = new AntiCsrfHelper(true, true);
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
   }
@@ -279,43 +210,6 @@ class AntiCsrfHelperTest
   }
 
   /*
-   * Test that a request missing a CSRF cookie but with exempt path is allowed
-   */
-  @Test
-  void testIsAccessAllowed_MissingCsrfCookie_ExemptTelemetryPath() {
-    underTest = new AntiCsrfHelper(true, true, Collections.singletonList(() -> "user-telemetry/events"));
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    setupBrowserSubject();
-    lenient().when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
-
-    when(httpServletRequest.getRequestURI()).thenReturn("/service/rest/v1/user-telemetry/events/rte/v2/command");
-    lenient().when(httpServletRequest.getServletPath())
-        .thenThrow(
-            new RuntimeException("getServletPath() should not be used! Use getRequestURI() instead."));
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-  }
-
-  /*
-   * Test that a request missing a CSRF header but with exempt path is allowed
-   */
-  @Test
-  void testIsAccessAllowed_MissingCsrfHeader_ExemptTelemetryPath() {
-    underTest = new AntiCsrfHelper(true, true, Collections.singletonList(() -> "user-telemetry/events"));
-    setupBrowserSubject();
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    // NX-ANTI-CSRF-TOKEN header not set
-    lenient().when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[]{new Cookie("NX-ANTI-CSRF-TOKEN", "avalue")});
-
-    when(httpServletRequest.getRequestURI()).thenReturn("/service/rest/v1/user-telemetry/events/rte/v2/command");
-    lenient().when(httpServletRequest.getServletPath())
-        .thenThrow(new RuntimeException("getServletPath() should not be used! Use getRequestURI() instead."));
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-  }
-
-  /*
    * Verify variations of Sec-Fetch-Site headers
    */
   @Test
@@ -355,7 +249,7 @@ class AntiCsrfHelperTest
    */
   @Test
   void testIsCrossSite_disabled() {
-    underTest = new AntiCsrfHelper(true, false, List.of());
+    underTest = new AntiCsrfHelper(true, false);
 
     lenient().when(httpServletRequest.getHeader(HttpHeaders.SEC_FETCH_SITE)).thenReturn(null);
     assertFalse(underTest.isCrossSiteRequest(httpServletRequest), "Missing header not considered cross-site");

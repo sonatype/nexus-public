@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.rapture.internal.security;
 
+import java.io.IOException;
+
 import javax.annotation.Nullable;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.WebFilterPriority;
 import org.sonatype.nexus.common.event.EventManager;
@@ -33,7 +35,6 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,18 +105,46 @@ public class SessionAuthenticationFilter
 
   @Override
   protected boolean onAccessDenied(final ServletRequest request, final ServletResponse response) throws Exception {
-    boolean authenticated = false;
     if (isLoginRequest(request, response)) {
+      // Pre-authentication rate limit check: reject blocked users before hitting the auth backend.
+      if (rateLimiterService != null && (ssoDetector == null || !ssoDetector.isSsoEnabled())) {
+        String username = decodeBase64Param(request, P_USERNAME);
+        if (username != null) {
+          RateLimitResult limitResult = rateLimiterService.check(username);
+          if (limitResult != null) {
+            log.debug("Pre-auth rate limit blocking login attempt for user '{}'", username);
+            if (eventManager != null) {
+              String clientIp = WebUtils.toHttp(request).getRemoteAddr();
+              eventManager.post(
+                  new AuthRateLimitedEvent(username, limitResult.attemptCount(), limitResult.retryAfterSeconds(),
+                      clientIp, "UI"));
+            }
+            try {
+              HttpServletResponse httpResponse = WebUtils.toHttp(response);
+              httpResponse.setHeader("Retry-After", String.valueOf(limitResult.retryAfterSeconds()));
+              httpResponse.sendError(429, "Too many authentication attempts");
+            }
+            catch (IOException ex) {
+              log.error("Failed to send 429 response", ex);
+              denied(response);
+            }
+            return false;
+          }
+        }
+      }
+
       log.trace("Attempting authentication");
-      authenticated = executeLogin(request, response);
+      boolean authenticated = executeLogin(request, response);
+      if (!authenticated) {
+        log.trace("Access denied");
+        denied(response);
+      }
+      return authenticated;
     }
 
-    if (!authenticated) {
-      log.trace("Access denied");
-      denied(response);
-    }
-
-    return authenticated;
+    log.trace("Access denied");
+    denied(response);
+    return false;
   }
 
   @Override
@@ -171,26 +200,15 @@ public class SessionAuthenticationFilter
   {
     log.debug("Failure: token={}", token, e);
     if (rateLimiterService != null && (ssoDetector == null || !ssoDetector.isSsoEnabled())) {
+      // Record the failure to advance the backoff counter. The 429 response is handled by
+      // the pre-auth check in onAccessDenied on subsequent attempts.
       String username = token.getPrincipal().toString();
-      // IP is captured for audit trail only; rate-limit decisions are username-only (OWASP-aligned)
-      String clientIp = WebUtils.toHttp(request).getRemoteAddr();
       RateLimitResult limitResult = rateLimiterService.checkAndRecord(username);
-      if (limitResult != null) {
-        log.debug("Rate limiting login attempt for user '{}'", username);
-        if (eventManager != null) {
-          eventManager.post(
-              new AuthRateLimitedEvent(username, limitResult.attemptCount(), limitResult.retryAfterSeconds(),
-                  clientIp, "UI"));
-        }
-        try {
-          HttpServletResponse httpResponse = WebUtils.toHttp(response);
-          httpResponse.setHeader("Retry-After", String.valueOf(limitResult.retryAfterSeconds()));
-          httpResponse.sendError(429, "Too many authentication attempts");
-        }
-        catch (IOException ex) {
-          log.error("Failed to send 429 response", ex);
-        }
-        return false;
+      if (limitResult != null && eventManager != null) {
+        String clientIp = WebUtils.toHttp(request).getRemoteAddr();
+        eventManager.post(
+            new AuthRateLimitedEvent(username, limitResult.attemptCount(), limitResult.retryAfterSeconds(),
+                clientIp, "UI"));
       }
     }
     denied(response);

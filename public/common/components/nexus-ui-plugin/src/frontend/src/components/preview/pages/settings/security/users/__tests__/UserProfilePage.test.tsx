@@ -94,7 +94,7 @@ describe('UserProfilePage', () => {
       </Theme>
     );
 
-    expect(await screen.findByRole('heading', { name: 'deployer' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'deployer', level: 1 })).toBeInTheDocument();
 
     expect(screen.getByText('Deploy')).toBeInTheDocument();
     expect(screen.getByText('User')).toBeInTheDocument();
@@ -117,7 +117,7 @@ describe('UserProfilePage', () => {
     expect(screen.getByRole('tab', { name: /security tree/i })).toBeInTheDocument();
   });
 
-  it('calls onBack when Back to List is clicked', async () => {
+  it('calls onBack when Users breadcrumb is clicked', async () => {
     const onBack = jest.fn();
     render(
       <Theme>
@@ -126,10 +126,10 @@ describe('UserProfilePage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /back to list/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Users' })).toBeInTheDocument();
     });
 
-    screen.getByRole('button', { name: /back to list/i }).click();
+    screen.getByRole('button', { name: 'Users' }).click();
     expect(onBack).toHaveBeenCalled();
   });
 });

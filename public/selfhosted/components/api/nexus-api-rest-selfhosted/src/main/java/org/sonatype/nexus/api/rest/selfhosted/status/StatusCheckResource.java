@@ -14,10 +14,10 @@ package org.sonatype.nexus.api.rest.selfhosted.status;
 
 import java.util.SortedMap;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 
 import org.sonatype.nexus.rest.Resource;
 
@@ -30,7 +30,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.api.rest.selfhosted.status.StatusCheckResource.RESOURCE_PATH;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 

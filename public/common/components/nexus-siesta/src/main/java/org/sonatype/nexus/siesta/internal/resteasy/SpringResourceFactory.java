@@ -53,7 +53,10 @@ public class SpringResourceFactory
       final ResteasyProviderFactory factory)
   {
     Object component = context.getBean(beanName);
-    propertyInjector.inject(request, response, component);
+    // NEXUS-46395: RESTEasy 7 PropertyInjector#inject signature added a boolean unwrapAsync
+    // tail argument and returns CompletionStage<Void>. We block on the result by passing
+    // unwrapAsync=true so this code path stays synchronous (matching the previous behavior).
+    propertyInjector.inject(request, response, component, true);
     return component;
   }
 

@@ -247,10 +247,10 @@ class H2SearchTest
   private static List<SqlSearchQueryContribution> searchQueryContributions() {
     SearchMappingService mapping = new SearchMappingService(searchMappings());
     DefaultSqlSearchQueryContribution def = new DefaultSqlSearchQueryContribution();
-    def.init(mapping);
+    def.init(mapping, false);
 
     KeywordSqlSearchQueryContribution keyword = new KeywordSqlSearchQueryContribution();
-    keyword.init(mapping);
+    keyword.init(mapping, false);
 
     return List.of(def, keyword);
   }

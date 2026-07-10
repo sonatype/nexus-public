@@ -14,9 +14,8 @@ package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
@@ -24,10 +23,10 @@ import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
 import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.servlet.XFrameOptions;
 
-import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.eclipse.jetty.ee10.servlet.ServletContextResponse;
+import org.eclipse.jetty.server.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -35,6 +34,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,11 +64,15 @@ class ErrorPageServiceTest
   @InjectMocks
   ErrorPageService underTest;
 
+  // NEXUS-46395: HttpServletResponse.setStatus(int, String) was removed in Servlet 6,
+  // and the production ErrorPageService now calls setStatus(int) only. The custom HTTP
+  // reason phrase is preserved via Jetty's core Response#setReason(); the propagation
+  // tests below exercise that path through the EE10 ServletContextResponse helper.
   @Test
   void testWriteErrorResponse() throws IOException {
     underTest.writeErrorResponse(new ErrorInfo(500, "Something Bad"), request, response);
 
-    verify(response).setStatus(500, "Something Bad");
+    verify(response).setStatus(500);
     verify(templateHelper).render(any(), paramCaptor.capture());
     assertParameters(paramCaptor.getValue(), 500, "Internal Server Error", "Something Bad");
   }
@@ -86,45 +90,54 @@ class ErrorPageServiceTest
   void testWriteErrorResponse_nullErrorCode() throws IOException {
     underTest.writeErrorResponse(new ErrorInfo(null, null), request, response);
 
-    verify(response).setStatus(404, "Not found");
+    verify(response).setStatus(404);
     verify(templateHelper).render(any(), paramCaptor.capture());
     assertParameters(paramCaptor.getValue(), 404, "Not Found", "Not found");
   }
 
+  /**
+   * NEXUS-46395: the reason phrase the caller passes (e.g. "Quarantined" for the Firewall block
+   * path) must reach the patched core Jetty {@code Response#setReason} so it appears on the HTTP/1.1
+   * status line. The EE10 unwrap helper {@code ServletContextResponse.getServletContextResponse}
+   * is responsible for walking through Shiro / wrapper chains to the underlying Jetty response;
+   * we stub it here to assert that the reason value flows through correctly.
+   */
   @Test
   void testWriteErrorResponse_errorMessagePropagation() throws IOException {
-    org.eclipse.jetty.ee8.nested.Response jettyResponse = mock(Answers.RETURNS_MOCKS);
+    Response coreResponse = mock(Response.class);
+    ServletContextResponse contextResponse = mock(ServletContextResponse.class);
+    when(contextResponse.getResponse()).thenReturn(coreResponse);
 
-    underTest.writeErrorResponse(new ErrorInfo(403, "Quarantined"), request, jettyResponse);
+    try (MockedStatic<ServletContextResponse> staticMock = Mockito.mockStatic(ServletContextResponse.class)) {
+      staticMock.when(() -> ServletContextResponse.getServletContextResponse(response))
+          .thenReturn(contextResponse);
 
-    verify(jettyResponse).setStatusWithReason(403, "Quarantined");
+      underTest.writeErrorResponse(new ErrorInfo(403, "Quarantined"), request, response);
+    }
+
+    verify(response).setStatus(403);
+    verify(coreResponse).setReason("Quarantined");
   }
 
+  /**
+   * NEXUS-46395: when the response is not a Jetty response (test harness mocks, hypothetical
+   * non-Jetty deployment) the unwrap helper throws {@link IllegalStateException}. The service
+   * must log and continue, so the rendered error page still goes out — the only thing missing
+   * is the (advisory) HTTP/1.1 reason phrase. Catches a future regression where someone
+   * propagates the IllegalStateException and breaks every error page in test environments.
+   */
   @Test
-  void testWriteErrorResponse_wrappedErrorMessagePropagation() throws IOException {
-    ShiroHttpServletResponse shiroResponse = mock(Answers.RETURNS_MOCKS);
-    org.eclipse.jetty.ee8.nested.Response jettyResponse = mock();
-    when(shiroResponse.getResponse()).thenReturn(jettyResponse);
+  void testWriteErrorResponse_nonJettyResponseDoesNotFail() throws IOException {
+    try (MockedStatic<ServletContextResponse> staticMock = Mockito.mockStatic(ServletContextResponse.class)) {
+      staticMock.when(() -> ServletContextResponse.getServletContextResponse(response))
+          .thenThrow(new IllegalStateException("could not find ServletContextResponse for mock"));
 
-    underTest.writeErrorResponse(new ErrorInfo(403, "Quarantined"), request, shiroResponse);
+      underTest.writeErrorResponse(new ErrorInfo(403, "Quarantined"), request, response);
+    }
 
-    verify(shiroResponse).getResponse();
-    verify(jettyResponse).setStatusWithReason(403, "Quarantined");
-  }
-
-  @Test
-  void testWriteErrorResponse_nestedWrappedErrorMessagePropagation() throws IOException {
-    ShiroHttpServletResponse shiroResponse = mock(Answers.RETURNS_MOCKS);
-    HttpServletResponseWrapper wrappedResponse = mock();
-    when(shiroResponse.getResponse()).thenReturn(wrappedResponse);
-    org.eclipse.jetty.ee8.nested.Response jettyResponse = mock();
-    when(wrappedResponse.getResponse()).thenReturn(jettyResponse);
-
-    underTest.writeErrorResponse(new ErrorInfo(403, "Quarantined"), request, shiroResponse);
-
-    verify(shiroResponse).getResponse();
-    verify(wrappedResponse).getResponse();
-    verify(jettyResponse).setStatusWithReason(403, "Quarantined");
+    verify(response).setStatus(403);
+    verify(templateHelper).render(any(), paramCaptor.capture());
+    assertParameters(paramCaptor.getValue(), 403, "Forbidden", "Quarantined");
   }
 
   @Test

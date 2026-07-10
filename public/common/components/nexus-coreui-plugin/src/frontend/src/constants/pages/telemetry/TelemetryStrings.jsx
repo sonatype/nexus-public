@@ -11,13 +11,27 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+const SHARED = {
+  DESCRIPTION: 'Please check your network configuration or contact support. You can manually retry by running the Telemetry Upload Retry task.',
+  VIEW_TASKS: 'Go to Tasks',
+}
+
 export default {
   TELEMETRY: {
     WARNING_BANNER: {
       TITLE: 'Telemetry Required - Connectivity Issue',
       MESSAGE: 'Telemetry is required per license agreement but submissions have failed for {count}+ days.',
-      DESCRIPTION: 'Please check your network configuration or contact support. You can manually retry by running the Telemetry Upload Retry task.',
-      VIEW_TASKS: 'Go to Tasks',
+      ...SHARED,
+    },
+    READONLY_BANNER: {
+      TITLE: 'Telemetry Required - Read-Only Mode',
+      MESSAGE: 'Telemetry submissions have failed beyond the grace period. This instance is now in read-only mode.',
+      ...SHARED,
+    },
+    INTRODUCED_WARNING_BANNER: {
+      TITLE: 'Telemetry Required - Connectivity Issue',
+      MESSAGE: 'Telemetry connectivity issues detected. Submissions have failed for {count}+ consecutive days. Telemetry will become mandatory in an upcoming release.',
+      ...SHARED,
     },
   },
 }

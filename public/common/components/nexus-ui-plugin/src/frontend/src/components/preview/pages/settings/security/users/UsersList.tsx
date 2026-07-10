@@ -68,7 +68,7 @@ export function UsersList({
 
   const { error, setError, fetchUsers } = useUsersApi();
 
-  const activeSource = isCloud ? CLOUD_SOURCE : DEFAULT_SOURCE;
+  const activeSource = isCloud ? CLOUD_SOURCE : undefined;
 
   // Load all users
   useEffect(() => {

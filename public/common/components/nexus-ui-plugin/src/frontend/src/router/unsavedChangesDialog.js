@@ -45,6 +45,7 @@ export function setDialogSetter(fn) {
 // between test cases under slow CI timing. Test setup calls this between
 // cases to guarantee a clean slate.
 export function resetDialogState() {
+  setVisible(false);
   resolveFn = undefined;
   setVisible = () => {};
 }

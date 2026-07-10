@@ -13,18 +13,17 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 /**
  * @since 3.28
@@ -48,10 +47,10 @@ public class AbstractHostedRepositoriesApiResource<T extends HostedRepositoryApi
 
   @GET
   @Path("/{repositoryName}")
-  @ApiOperation(value = "Get repository", response = SimpleApiHostedRepository.class)
+  @Operation(summary = "Get repository")
   @Override
   public AbstractApiRepository getRepository(
-      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @Parameter(hidden = true) @BeanParam final FormatAndType formatAndType,
       @PathParam("repositoryName") final String repositoryName)
   {
     return super.getRepository(formatAndType, repositoryName);

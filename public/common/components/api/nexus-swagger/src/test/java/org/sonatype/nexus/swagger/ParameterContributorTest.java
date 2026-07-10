@@ -13,22 +13,23 @@
 package org.sonatype.nexus.swagger;
 
 import java.util.Collection;
+import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import io.swagger.models.HttpMethod;
-import io.swagger.models.Operation;
-import io.swagger.models.Path;
-import io.swagger.models.Swagger;
-import io.swagger.models.parameters.Parameter;
-import io.swagger.models.parameters.QueryParameter;
+// NEXUS-46395: migrated from Swagger 1.x to OpenAPI 3.x model types.
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.QueryParameter;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Spy;
 
-import static io.swagger.models.HttpMethod.GET;
-import static io.swagger.models.HttpMethod.POST;
+import static io.swagger.v3.oas.models.PathItem.HttpMethod.GET;
+import static io.swagger.v3.oas.models.PathItem.HttpMethod.POST;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -47,14 +48,16 @@ public class ParameterContributorTest
 
   private static final String TEST_PATH_2 = "/bar/{id}";
 
-  private static final Collection<HttpMethod> HTTP_METHODS = ImmutableList.of(GET, POST);
+  private static final Collection<HttpMethod> HTTP_METHODS = List.of(GET, POST);
 
-  private static final Collection<String> PATHS = ImmutableList.of(TEST_PATH_1, TEST_PATH_2);
+  private static final Collection<String> PATHS = List.of(TEST_PATH_1, TEST_PATH_2);
 
-  private static final Collection<QueryParameter> PARAMS = ImmutableList.of(new QueryParameter().name("id"));
+  private static final Collection<QueryParameter> PARAMS = List.of(
+      (QueryParameter) new QueryParameter().name("id"));
 
+  // NEXUS-46395: io.swagger.models.Swagger -> io.swagger.v3.oas.models.OpenAPI
   @Mock
-  private Swagger swagger;
+  private OpenAPI openApi;
 
   @Spy
   private Operation getOperationPath1, postOperationPath1;
@@ -66,9 +69,12 @@ public class ParameterContributorTest
 
   @Before
   public void setup() {
-    when(swagger.getPaths()).thenReturn(ImmutableMap.of(
-        TEST_PATH_1, new Path().get(getOperationPath1).post(postOperationPath1),
-        TEST_PATH_2, new Path().get(getOperationPath2).post(postOperationPath2)));
+    // NEXUS-46395: OpenAPI.getPaths() returns Paths (extends LinkedHashMap<String, PathItem>);
+    // construct via addPathItem rather than ImmutableMap.
+    Paths paths = new Paths();
+    paths.addPathItem(TEST_PATH_1, new PathItem().get(getOperationPath1).post(postOperationPath1));
+    paths.addPathItem(TEST_PATH_2, new PathItem().get(getOperationPath2).post(postOperationPath2));
+    when(openApi.getPaths()).thenReturn(paths);
 
     underTest = new TestParameterContributor(HTTP_METHODS, PATHS, PARAMS);
   }
@@ -81,23 +87,24 @@ public class ParameterContributorTest
 
   @Test
   public void testContribute() {
-    underTest.contribute(swagger);
+    // NEXUS-46395: contribute now takes OpenAPI; addParameter -> addParametersItem.
+    underTest.contribute(openApi);
 
     assertContributedMap(true);
 
     Parameter param = PARAMS.iterator().next();
-    verify(getOperationPath1).addParameter(param);
-    verify(postOperationPath1).addParameter(param);
-    verify(getOperationPath2).addParameter(param);
-    verify(postOperationPath2).addParameter(param);
+    verify(getOperationPath1).addParametersItem(param);
+    verify(postOperationPath1).addParametersItem(param);
+    verify(getOperationPath2).addParametersItem(param);
+    verify(postOperationPath2).addParametersItem(param);
 
     // call it again for short-circuit use case
     reset(getOperationPath1, postOperationPath1, getOperationPath2, postOperationPath2);
-    underTest.contribute(swagger);
-    verify(getOperationPath1, never()).addParameter(param);
-    verify(postOperationPath1, never()).addParameter(param);
-    verify(getOperationPath2, never()).addParameter(param);
-    verify(postOperationPath2, never()).addParameter(param);
+    underTest.contribute(openApi);
+    verify(getOperationPath1, never()).addParametersItem(param);
+    verify(postOperationPath1, never()).addParametersItem(param);
+    verify(getOperationPath2, never()).addParametersItem(param);
+    verify(postOperationPath2, never()).addParametersItem(param);
   }
 
   private void assertContributedMap(final boolean result) {

@@ -15,8 +15,8 @@ package org.sonatype.nexus.extender.internal;
 import java.lang.management.ManagementFactory;
 import java.util.EnumSet;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 import org.sonatype.nexus.bootstrap.entrypoint.EditionVersionFormatter;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;

@@ -40,7 +40,7 @@ public class MavenBaseVersionSqlSearchQueryContributionTest
   @Before
   public void setup() {
     underTest = new MavenBaseVersionSqlSearchQueryContribution();
-    underTest.init(new SearchMappingService(Arrays.asList(new MavenSearchMappings())));
+    underTest.init(new SearchMappingService(Arrays.asList(new MavenSearchMappings())), false);
   }
 
   @Test

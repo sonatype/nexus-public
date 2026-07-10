@@ -14,24 +14,25 @@ package org.sonatype.nexus.scheduling.constraints;
 
 import java.util.Date;
 
-import javax.validation.ConstraintValidatorContext;
-
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 
+import jakarta.validation.ConstraintValidatorContext;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class CronExpressionValidatorTest
 {
   private CronExpressionValidator validator;
@@ -47,8 +48,6 @@ public class CronExpressionValidatorTest
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
-
     when(taskScheduler.getScheduleFactory()).thenReturn(scheduleFactory);
 
     validator = new CronExpressionValidator(taskScheduler);

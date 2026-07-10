@@ -103,7 +103,7 @@ public class RepositoryWebhookCapability
 
   @Override
   protected RepositoryWebhookCapabilityConfiguration createConfig(final Map<String, String> properties) {
-    return new RepositoryWebhookCapabilityConfiguration(properties, secretsService(), secretsStore());
+    return new RepositoryWebhookCapabilityConfiguration(properties, secretsService());
   }
 
   @Override

@@ -35,6 +35,8 @@ import GoogleBlobStoreSettings from './GoogleBlobStoreSettings';
 import GroupBlobStoreSettings from './GroupBlobStoreSettings';
 import ConvertToGroupModal from './ConvertToGroupModal';
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
+import { DangerousEditConfirmDialog } from './DangerousEditConfirmDialog';
+import { hasDangerousFieldChanges, getDangerousFieldsChanged } from './dangerousFields';
 import type { BlobStoreFormData, SoftQuota } from './types';
 import './BlobStoresForm.scss';
 
@@ -126,9 +128,19 @@ export default function BlobStoresForm() {
   // Convert to group state
   const [showConvertModal, setShowConvertModal] = useState(false);
 
+  // Dangerous edit confirmation state
+  const [showDangerousEditDialog, setShowDangerousEditDialog] = useState(false);
+
   // Update field via machine
   const updateField = useCallback((field: string, value: unknown) => {
     form.send({ type: 'UPDATE', name: field, value });
+  }, [form]);
+
+  // Handle name field changes - also updates path for file blob stores
+  const handleNameChange = useCallback((value: string) => {
+    form.send({ type: 'UPDATE', name: 'name', value });
+    // Also send NAME_CHANGE to trigger path update for file blob stores
+    form.send({ type: 'NAME_CHANGE', value });
   }, [form]);
 
   const updateNestedField = useCallback((path: string, value: unknown) => {
@@ -195,6 +207,27 @@ export default function BlobStoresForm() {
     }
   }, [name, promote, handleBack]);
 
+  // Dangerous edit detection - intercept save for edit mode
+  const pristineData = (form.state as any).context.pristineData as BlobStoreFormData | undefined;
+
+  const handleSave = useCallback(() => {
+    if (isEdit && pristineData && hasDangerousFieldChanges(pristineData, formData, selectedType)) {
+      setShowDangerousEditDialog(true);
+    } else {
+      form.send('SUBMIT');
+    }
+  }, [isEdit, pristineData, formData, selectedType, form]);
+
+  const handleConfirmDangerousEdit = useCallback(() => {
+    setShowDangerousEditDialog(false);
+    form.send('SUBMIT');
+  }, [form]);
+
+  const dangerousFieldsChanged = useMemo(() => {
+    if (!isEdit || !pristineData) return [];
+    return getDangerousFieldsChanged(pristineData, formData, selectedType);
+  }, [isEdit, pristineData, formData, selectedType]);
+
   // Get current type configuration
   const currentType = types.find(t => t.id === selectedType || t.id === typeFromUrl);
   const canDelete = blobStoreUsage === 0 && repositoryUsage === 0 && hasDeletePermission;
@@ -217,7 +250,7 @@ export default function BlobStoresForm() {
         testId="blobstore-form"
         title={isEdit ? STRINGS.EDIT_TITLE(name!) : STRINGS.CREATE_TITLE}
         description={isEdit && currentType ? STRINGS.EDIT_DESCRIPTION(currentType.name) : undefined}
-        onSave={hasUpdatePermissions ? () => form.send('SUBMIT') : undefined}
+        onSave={hasUpdatePermissions ? handleSave : undefined}
         onCancel={handleBack}
         saving={form.isSaving}
         dirty={!form.isPristine}
@@ -309,6 +342,7 @@ export default function BlobStoresForm() {
               helpText="Unique name for this blob store. Cannot be changed after creation."
               required
               disabled={!hasUpdatePermissions}
+              onChange={handleNameChange}
             />
           </SettingsFormSection>
         )}
@@ -320,6 +354,7 @@ export default function BlobStoresForm() {
             onChange={updateNestedField}
             disabled={!hasUpdatePermissions}
             isEdit={isEdit}
+            errors={form.validationErrors}
           />
         )}
 
@@ -329,6 +364,7 @@ export default function BlobStoresForm() {
             onChange={updateNestedField}
             disabled={!hasUpdatePermissions}
             isEdit={isEdit}
+            errors={form.validationErrors}
           />
         )}
 
@@ -338,6 +374,7 @@ export default function BlobStoresForm() {
             onChange={updateNestedField}
             disabled={!hasUpdatePermissions}
             isEdit={isEdit}
+            errors={form.validationErrors}
           />
         )}
 
@@ -347,6 +384,7 @@ export default function BlobStoresForm() {
             onChange={updateNestedField}
             disabled={!hasUpdatePermissions}
             isEdit={isEdit}
+            errors={form.validationErrors}
           />
         )}
 
@@ -419,6 +457,15 @@ export default function BlobStoresForm() {
         entityName={name}
         entityType="blob store"
         loading={form.isDeleting}
+      />
+
+      {/* Dangerous Edit Confirmation Dialog */}
+      <DangerousEditConfirmDialog
+        open={showDangerousEditDialog}
+        onClose={() => setShowDangerousEditDialog(false)}
+        onConfirm={handleConfirmDangerousEdit}
+        blobStoreName={name || ''}
+        changedFields={dangerousFieldsChanged}
       />
     </div>
   );

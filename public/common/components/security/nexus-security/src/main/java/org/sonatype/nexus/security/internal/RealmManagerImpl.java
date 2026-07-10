@@ -303,13 +303,22 @@ public class RealmManagerImpl
 
     if (!enableAuthorizationRealmManagement && AuthorizingRealmImpl.NAME.equals(realmName)) {
       log.error("Cannot disable the {} realm", AuthorizingRealmImpl.NAME);
+      return;
     }
-    else {
-      log.debug("Disabling realm: {}", realmName);
-      RealmConfiguration model = getConfiguration();
-      model.getRealmNames().remove(realmName);
-      setConfiguration(model);
+
+    RealmConfiguration model = getConfiguration();
+    if (!model.getRealmNames().contains(realmName)) {
+      // Realm is not enabled; do nothing rather than persist an unchanged configuration.
+      // Persisting here would force this manager to load and cache its configuration (using
+      // defaults if the store is empty), defeating any later configuration writes that bypass
+      // RealmManager (NEXUS-47898).
+      log.debug("Realm not enabled, skipping disable: {}", realmName);
+      return;
     }
+
+    log.debug("Disabling realm: {}", realmName);
+    model.getRealmNames().remove(realmName);
+    setConfiguration(model);
   }
 
   //

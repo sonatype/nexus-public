@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 import java.util.Objects;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Routing Rule Preview grid row transfer object.

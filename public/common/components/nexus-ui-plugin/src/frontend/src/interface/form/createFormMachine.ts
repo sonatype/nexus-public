@@ -81,6 +81,13 @@ export interface FormMachineConfig<TData> {
   on?: Record<string, { actions: string | string[] } | Array<{ target: string; cond?: string; actions: string | string[] }>>;
 
   /**
+   * When true, transitions directly from saving → editing, bypassing the saved state.
+   * Use this for forms that should remain editable after save (no post-save navigation).
+   * Default: false (saves to 'saved' state for post-save navigation flows).
+   */
+  stayEditableAfterSave?: boolean;
+
+  /**
    * Optional configuration for type variant sub-states within the editing state.
    * When provided, the editing state becomes a compound state with sub-states.
    *
@@ -107,6 +114,14 @@ export interface FormMachineConfig<TData> {
     /** Sub-state definitions. Keys are state names, values contain metadata. */
     states: Record<string, { meta?: Record<string, unknown> }>;
   };
+
+  /**
+   * When true, the saved state transitions back to editing after a 0ms delay,
+   * allowing the form to be edited again after a successful save (settings pages).
+   * When false (default), saved is a terminal state — consumers use isComplete to
+   * detect save completion and navigate away (creation/edit dialogs).
+   */
+  resetAfterSave?: boolean;
 }
 
 /**
@@ -157,7 +172,7 @@ function getDefaultContext<TData>(data: TData): FormContext<TData> {
  * ```
  */
 export function createFormMachine<TData>(config: FormMachineConfig<TData>) {
-  const { id, context: userContext, actions: userActions, services = {}, guards: userGuards, on: customEvents, editingConfig } = config;
+  const { id, context: userContext, actions: userActions, services = {}, guards: userGuards, on: customEvents, editingConfig, stayEditableAfterSave = false, resetAfterSave = false } = config;
 
   const hasLoad = Boolean(services.load);
   const hasDelete = Boolean(services.delete);
@@ -278,7 +293,7 @@ export function createFormMachine<TData>(config: FormMachineConfig<TData>) {
           invoke: {
             src: 'save',
             onDone: {
-              target: 'saved',
+              target: stayEditableAfterSave ? 'editing' : 'saved',
               actions: 'onSaveSuccess',
             },
             onError: {
@@ -289,7 +304,7 @@ export function createFormMachine<TData>(config: FormMachineConfig<TData>) {
         },
 
         saved: {
-          type: 'final',
+          ...(resetAfterSave ? { after: { 0: 'editing' } } : { type: 'final' as const }),
         },
 
         // ============================================

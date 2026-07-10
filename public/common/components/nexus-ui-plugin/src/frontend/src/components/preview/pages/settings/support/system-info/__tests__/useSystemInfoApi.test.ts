@@ -112,13 +112,32 @@ describe('useSystemInfoApi', () => {
   });
 
   describe('fetchSystemInfoHA', () => {
-    it('fetches HA system information successfully', async () => {
-      const mockData = {
-        'node-1': { 'nexus-status': { version: '3.88.0' } },
-        'node-2': { 'nexus-status': { version: '3.88.0' } },
+    it('transposes backend sectionName→nodeId→data shape to nodeId→sectionName→data shape', async () => {
+      // Actual backend shape: top-level keys are section names, second-level keys are node IDs
+      const backendShape = {
+        'nexus-status': {
+          'node-1': { edition: 'PRO', version: '3.88.0' },
+          'node-2': { edition: 'PRO', version: '3.88.0' },
+        },
+        'nexus-node': {
+          'node-1': { nodeId: 'node-1', clustered: true },
+          'node-2': { nodeId: 'node-2', clustered: true },
+        },
       };
 
-      mockGet.mockResolvedValueOnce(mockData);
+      // Expected frontend shape: top-level keys are node IDs, second-level keys are section names
+      const expectedFrontendShape = {
+        'node-1': {
+          'nexus-status': { edition: 'PRO', version: '3.88.0' },
+          'nexus-node': { nodeId: 'node-1', clustered: true },
+        },
+        'node-2': {
+          'nexus-status': { edition: 'PRO', version: '3.88.0' },
+          'nexus-node': { nodeId: 'node-2', clustered: true },
+        },
+      };
+
+      mockGet.mockResolvedValueOnce(backendShape);
 
       const { result } = renderHook(() => useSystemInfoApi());
 
@@ -128,7 +147,33 @@ describe('useSystemInfoApi', () => {
       });
 
       expect(mockGet).toHaveBeenCalledWith('service/rest/beta/system/information');
-      expect(data).toEqual(mockData);
+      expect(data).toEqual(expectedFrontendShape);
+    });
+
+    it('returns empty object when backend returns empty response', async () => {
+      mockGet.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useSystemInfoApi());
+
+      let data;
+      await act(async () => {
+        data = await result.current.fetchSystemInfoHA();
+      });
+
+      expect(data).toEqual({});
+    });
+
+    it('returns empty object when backend returns null', async () => {
+      mockGet.mockResolvedValueOnce(null);
+
+      const { result } = renderHook(() => useSystemInfoApi());
+
+      let data;
+      await act(async () => {
+        data = await result.current.fetchSystemInfoHA();
+      });
+
+      expect(data).toEqual({});
     });
   });
 

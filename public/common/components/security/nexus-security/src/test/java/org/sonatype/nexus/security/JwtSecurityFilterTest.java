@@ -13,9 +13,9 @@
 package org.sonatype.nexus.security;
 
 import java.util.Date;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditRecorder;
@@ -375,6 +375,106 @@ public class JwtSecurityFilterTest
     // Should fall back to unauthenticated subject when realm is null
     assertThat(subject, notNullValue());
     verify(jwtHelper).verifyJwt(jwtToken);
+  }
+
+  @Test
+  public void testCreateSubject_userInvalidatedAfterJwtIat_returns401_andClearsCookie() throws Exception {
+    String userSessionId = "valid-session-id";
+    String username = "alice";
+    Date issuedAt = new Date(System.currentTimeMillis() - 5000);
+    String jwtToken = createJwtWithIat(username, "default", userSessionId, issuedAt);
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+    when(jwtSessionRevocationService.isRevoked(userSessionId)).thenReturn(false);
+    when(jwtSessionRevocationService.isUserInvalidatedAfter(
+        org.mockito.ArgumentMatchers.eq(username),
+        any())).thenReturn(true);
+    when(auditRecorder.isEnabled()).thenReturn(true);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    assertThat(subject, notNullValue());
+    // Not authenticated — fell through to fallback subject
+    assertThat(subject, is(fallbackSubject));
+
+    // Cookie expired
+    ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+    verify(response).addCookie(cookieCaptor.capture());
+    Cookie expired = cookieCaptor.getValue();
+    assertThat(expired.getValue(), is(""));
+    assertThat(expired.getMaxAge(), is(0));
+
+    // Audit recorded under same domain as other revocation events
+    ArgumentCaptor<AuditData> auditCaptor = ArgumentCaptor.forClass(AuditData.class);
+    verify(auditRecorder).record(auditCaptor.capture());
+    AuditData data = auditCaptor.getValue();
+    assertThat(data.getDomain(), is("security.jwt"));
+    assertThat(data.getType(), is("revoked-token-attempt"));
+    assertThat(data.getAttributes().get("username"), is(username));
+  }
+
+  @Test
+  public void testCreateSubject_userInvalidatedBeforeJwtIat_allows() throws Exception {
+    String userSessionId = "valid-session-id";
+    String username = "alice";
+    Date issuedAt = new Date(System.currentTimeMillis() - 1000);
+    String jwtToken = createJwtWithIat(username, "default", userSessionId, issuedAt);
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+    when(jwtHelper.getExpirySeconds()).thenReturn(1800);
+    when(jwtSessionRevocationService.isRevoked(userSessionId)).thenReturn(false);
+    when(jwtSessionRevocationService.isUserInvalidatedAfter(
+        anyString(), any())).thenReturn(false);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    assertThat(subject, notNullValue());
+    assertThat(subject.isAuthenticated(), is(true));
+    verify(jwtSessionRevocationService).isUserInvalidatedAfter(
+        org.mockito.ArgumentMatchers.eq(username),
+        any());
+    verify(response, never()).addCookie(any(Cookie.class));
+  }
+
+  @Test
+  public void testCreateSubject_noIat_skipsUserInvalidationCheck() throws Exception {
+    // createJwtWithUserSessionId does not set iat — invalidation check is skipped
+    String userSessionId = "valid-session-id";
+    String jwtToken = createJwtWithUserSessionId("alice", "default", userSessionId);
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+    when(jwtHelper.getExpirySeconds()).thenReturn(1800);
+    when(jwtSessionRevocationService.isRevoked(userSessionId)).thenReturn(false);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    assertThat(subject, notNullValue());
+    assertThat(subject.isAuthenticated(), is(true));
+    verify(jwtSessionRevocationService, never()).isUserInvalidatedAfter(anyString(), any());
+  }
+
+  /**
+   * Helper to create a JWT with an explicit issuedAt claim.
+   */
+  private String createJwtWithIat(String username, String realm, String userSessionId, Date issuedAt) {
+    Date expiresAt = new Date(issuedAt.getTime() + 1800000);
+    return JWT.create()
+        .withIssuer("sonatype")
+        .withClaim("user", username)
+        .withClaim("realm", realm)
+        .withClaim("userSessionId", userSessionId)
+        .withIssuedAt(issuedAt)
+        .withExpiresAt(expiresAt)
+        .sign(Algorithm.HMAC256("test-secret"));
   }
 
   /**

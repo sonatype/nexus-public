@@ -28,6 +28,8 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.metrics.publishers.cloudwatch.CloudWatchMetricPublisher;
 import software.amazon.awssdk.regions.Region;
@@ -99,6 +101,8 @@ public class AmazonS3FactoryTest
     when(s3ClientBuilder.forcePathStyle(anyBoolean())).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.endpointOverride(any(URI.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
+    when(s3ClientBuilder.requestChecksumCalculation(any(RequestChecksumCalculation.class))).thenReturn(s3ClientBuilder);
+    when(s3ClientBuilder.responseChecksumValidation(any(ResponseChecksumValidation.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.build()).thenReturn(client);
 
     when(client.serviceClientConfiguration()).thenReturn(s3Serviceconfiguration);
@@ -163,6 +167,16 @@ public class AmazonS3FactoryTest
 
     verify(s3ClientBuilder).region(Region.US_WEST_2);
     verify(s3ClientBuilder).forcePathStyle(true);
+  }
+
+  @Test
+  public void checksumConfigurationIsAppliedToBuilder() {
+    amazonS3Factory.create(config);
+
+    verify(s3ClientBuilder).requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED);
+    verify(s3ClientBuilder).responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED);
+
+    verify(s3ClientBuilder).build();
   }
 
   @Test

@@ -14,38 +14,39 @@ package org.sonatype.nexus.repository.raw.rest;
 
 import java.util.List;
 
-import javax.validation.constraints.Size;
-
 import org.sonatype.nexus.repository.raw.ContentDisposition;
+import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 
 /**
  * REST API model of raw attributes for repositories API
  *
  * @since 3.25
  */
+@JsonFilter(SwaggerEditionVisibility.NAME)
 public class RawAttributes
 {
-
   public static final String CONTENT_DISPOSITION = "contentDisposition";
 
   public static final String FORWARD_QUERY_PARAMETERS = "forwardQueryParameters";
 
   public static final String EXCLUDED_QUERY_PARAMETERS = "excludedQueryParameters";
 
-  @ApiModelProperty(value = "Content Disposition",
-      allowableValues = "INLINE,ATTACHMENT", example = "ATTACHMENT")
+  @Schema(description = "Content Disposition", example = "ATTACHMENT")
+  @SwaggerEditionVisibility(cloud = false, note = "Hide content-disposition from cloud")
   private final ContentDisposition contentDisposition;
 
-  @ApiModelProperty(value = "Whether to forward query parameters to the upstream repository",
+  @Schema(description = "Whether to forward query parameters to the upstream repository",
       example = "true")
   private final Boolean forwardQueryParameters;
 
-  @ApiModelProperty(
-      value = "List of query parameter names to exclude from forwarding (case-insensitive). Maximum 100 entries.",
+  @Schema(
+      description = "List of query parameter names to exclude from forwarding (case-insensitive). Maximum 100 entries.",
       example = "[\"apiKey\", \"token\"]")
   @Size(max = 100, message = "excludedQueryParameters may contain at most 100 entries")
   private final List<String> excludedQueryParameters;

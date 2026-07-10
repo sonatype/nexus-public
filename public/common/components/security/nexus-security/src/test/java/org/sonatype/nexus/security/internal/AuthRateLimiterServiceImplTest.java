@@ -12,10 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.sonatype.nexus.security.authc.RateLimitResult;
 
@@ -41,7 +38,7 @@ public class AuthRateLimiterServiceImplTest
 
   @After
   public void tearDown() {
-    service.stop();
+    // nothing to stop — Guava cache uses no background threads by default
   }
 
   @Test
@@ -67,7 +64,6 @@ public class AuthRateLimiterServiceImplTest
 
   @Test
   public void testCheckAndRecord_exponentialBackoff() {
-    // Exhaust initial free attempts
     for (int i = 0; i < 5; i++) {
       service.checkAndRecord("alice");
     }
@@ -83,19 +79,60 @@ public class AuthRateLimiterServiceImplTest
   @Test
   public void testCheckAndRecord_capsAtMaxDelay() {
     AuthRateLimiterServiceImpl shortService = new AuthRateLimiterServiceImpl(1, 30L, 60L, 10000);
-    try {
-      // Attempt 1: allowed
-      shortService.checkAndRecord("bob");
-      // Attempt 2: blocked — 30 * 2^0 = 30s
-      assertThat(shortService.checkAndRecord("bob").retryAfterSeconds(), is(30L));
-      // Attempt 3: 30 * 2^1 = 60s (at cap)
-      assertThat(shortService.checkAndRecord("bob").retryAfterSeconds(), is(60L));
-      // Attempt 4: 30 * 2^2 = 120s → capped at 60s
-      assertThat(shortService.checkAndRecord("bob").retryAfterSeconds(), is(60L));
+    // Attempt 1: allowed
+    shortService.checkAndRecord("bob");
+    // Attempt 2: blocked — 30 * 2^0 = 30s
+    assertThat(shortService.checkAndRecord("bob").retryAfterSeconds(), is(30L));
+    // Attempt 3: 30 * 2^1 = 60s (at cap)
+    assertThat(shortService.checkAndRecord("bob").retryAfterSeconds(), is(60L));
+    // Attempt 4: 30 * 2^2 = 120s → capped at 60s
+    assertThat(shortService.checkAndRecord("bob").retryAfterSeconds(), is(60L));
+  }
+
+  @Test
+  public void testCheck_returnsNullWhenNotBlocked() {
+    // No prior attempts — check should pass
+    assertThat(service.check("alice"), is(nullValue()));
+  }
+
+  @Test
+  public void testCheck_returnsNullWhenBelowThreshold() {
+    for (int i = 0; i < 5; i++) {
+      service.checkAndRecord("alice");
     }
-    finally {
-      shortService.stop();
+    // Exactly at threshold — not yet blocked
+    assertThat(service.check("alice"), is(nullValue()));
+  }
+
+  @Test
+  public void testCheck_returnsResultWhenBlocked() {
+    for (int i = 0; i <= 5; i++) {
+      service.checkAndRecord("alice");
     }
+    // alice is now blocked; check should reflect that without incrementing
+    RateLimitResult result = service.check("alice");
+    assertThat(result, is(notNullValue()));
+    assertThat(result.retryAfterSeconds(), is(30L));
+  }
+
+  @Test
+  public void testCheck_doesNotIncrementCounter() {
+    for (int i = 0; i < 5; i++) {
+      service.checkAndRecord("alice");
+    }
+    // Drive alice to first block
+    service.checkAndRecord("alice"); // attempt 6 → retryAfter=30s
+
+    // check() several times — should not advance backoff
+    service.check("alice");
+    service.check("alice");
+    service.check("alice");
+
+    // Next record call should still see attempt 7 backoff (60s), not further advanced
+    RateLimitResult result = service.checkAndRecord("alice");
+    assertThat(result, is(notNullValue()));
+    assertThat(result.retryAfterSeconds(), is(60L));
+    assertThat(result.attemptCount(), is(7));
   }
 
   @Test
@@ -106,7 +143,6 @@ public class AuthRateLimiterServiceImplTest
 
     service.recordSuccess("alice");
 
-    // Counter cleared — first attempt allowed again
     assertThat(service.checkAndRecord("alice"), is(nullValue()));
   }
 
@@ -118,7 +154,6 @@ public class AuthRateLimiterServiceImplTest
 
     service.reset("alice");
 
-    // Counter cleared — first attempt allowed again
     assertThat(service.checkAndRecord("alice"), is(nullValue()));
   }
 
@@ -128,37 +163,8 @@ public class AuthRateLimiterServiceImplTest
       service.checkAndRecord("alice");
     }
 
-    // alice is rate-limited, but bob has a clean slate
     assertThat(service.checkAndRecord("alice"), is(notNullValue()));
     assertThat(service.checkAndRecord("bob"), is(nullValue()));
-  }
-
-  @Test
-  public void testCleanup_evictsStaleEntries() throws Exception {
-    // Populate an entry for alice
-    for (int i = 0; i < 5; i++) {
-      service.checkAndRecord("alice");
-    }
-    assertThat(service.checkAndRecord("alice"), is(notNullValue())); // alice is rate-limited
-
-    // Set lastFailureTimeMs to epoch so the entry is beyond maxDelaySeconds old
-    Field attemptsField = AuthRateLimiterServiceImpl.class.getDeclaredField("attempts");
-    attemptsField.setAccessible(true);
-    @SuppressWarnings("unchecked")
-    ConcurrentHashMap<String, Object> attempts =
-        (ConcurrentHashMap<String, Object>) attemptsField.get(service);
-    Object record = attempts.get("user::alice");
-    Field lastFailureField = record.getClass().getDeclaredField("lastFailureTimeMs");
-    lastFailureField.setAccessible(true);
-    lastFailureField.setLong(record, 0L); // epoch — older than maxDelaySeconds
-
-    // Invoke the private cleanup() method
-    Method cleanupMethod = AuthRateLimiterServiceImpl.class.getDeclaredMethod("cleanup");
-    cleanupMethod.setAccessible(true);
-    cleanupMethod.invoke(service);
-
-    // Stale entry was evicted; alice's counter starts fresh
-    assertThat(service.checkAndRecord("alice"), is(nullValue()));
   }
 
   @Test
@@ -173,8 +179,6 @@ public class AuthRateLimiterServiceImplTest
 
   @Test
   public void testCheckAndRecord_overflowSafeAtHighAttemptCount() {
-    // With maxAttempts=5, at failureCount=70, shift=64 which wraps to 0 without the overflow fix,
-    // collapsing retryAfter back to baseDelaySeconds instead of remaining capped at maxDelaySeconds.
     for (int i = 0; i < 5 + 65; i++) {
       service.checkAndRecord("overflow-user");
     }
@@ -182,6 +186,138 @@ public class AuthRateLimiterServiceImplTest
     RateLimitResult result = service.checkAndRecord("overflow-user");
 
     assertThat(result, is(notNullValue()));
-    assertThat(result.retryAfterSeconds(), is(3600L)); // must remain capped, not collapse to 30
+    assertThat(result.retryAfterSeconds(), is(3600L));
+  }
+
+  // Token-based rate limiting tests
+
+  @Test
+  public void testCheckByToken_allowsAttemptsUpToMax() {
+    String tokenHash = "abc123def456";
+    for (int i = 0; i < 5; i++) {
+      assertThat("attempt " + (i + 1) + " should be allowed",
+          service.checkByToken(tokenHash), is(nullValue()));
+    }
+  }
+
+  @Test
+  public void testCheckByToken_blocksAfterMaxAttempts() {
+    String tokenHash = "abc123def456";
+    for (int i = 0; i < 5; i++) {
+      service.checkAndRecordByToken(tokenHash);
+    }
+
+    RateLimitResult result = service.checkAndRecordByToken(tokenHash);
+
+    assertThat(result, is(notNullValue()));
+    assertThat(result.retryAfterSeconds(), is(30L));
+    assertThat(result.attemptCount(), is(6));
+  }
+
+  @Test
+  public void testCheckAndRecordByToken_exponentialBackoff() {
+    String tokenHash = "abc123def456";
+    for (int i = 0; i < 5; i++) {
+      service.checkAndRecordByToken(tokenHash);
+    }
+
+    // Attempt 6: baseDelay * 2^0 = 30s
+    assertThat(service.checkAndRecordByToken(tokenHash).retryAfterSeconds(), is(30L));
+    // Attempt 7: baseDelay * 2^1 = 60s
+    assertThat(service.checkAndRecordByToken(tokenHash).retryAfterSeconds(), is(60L));
+  }
+
+  @Test
+  public void testCheckByToken_returnsNullWhenNotBlocked() {
+    String tokenHash = "abc123def456";
+    // No prior attempts — check should pass
+    assertThat(service.checkByToken(tokenHash), is(nullValue()));
+  }
+
+  @Test
+  public void testCheckByToken_returnsResultWhenBlocked() {
+    String tokenHash = "abc123def456";
+    for (int i = 0; i <= 5; i++) {
+      service.checkAndRecordByToken(tokenHash);
+    }
+
+    RateLimitResult result = service.checkByToken(tokenHash);
+    assertThat(result, is(notNullValue()));
+    assertThat(result.retryAfterSeconds(), is(30L));
+  }
+
+  @Test
+  public void testRecordSuccessByToken_resetsCounter() {
+    String tokenHash = "abc123def456";
+    for (int i = 0; i < 5; i++) {
+      service.checkAndRecordByToken(tokenHash);
+    }
+
+    service.recordSuccessByToken(tokenHash);
+
+    assertThat(service.checkAndRecordByToken(tokenHash), is(nullValue()));
+  }
+
+  @Test
+  public void testIsolation_differentTokensTrackedSeparately() {
+    String tokenHash1 = "token-hash-1";
+    String tokenHash2 = "token-hash-2";
+
+    // Block token1
+    for (int i = 0; i <= 5; i++) {
+      service.checkAndRecordByToken(tokenHash1);
+    }
+
+    // token1 should be blocked
+    assertThat(service.checkAndRecordByToken(tokenHash1), is(notNullValue()));
+    // token2 should still be allowed
+    assertThat(service.checkAndRecordByToken(tokenHash2), is(nullValue()));
+  }
+
+  @Test
+  public void testIsolation_tokensAndUsersTrackedSeparately() {
+    String username = "alice";
+    String tokenHash = "abc123def456";
+
+    // Block the username
+    for (int i = 0; i <= 5; i++) {
+      service.checkAndRecord(username);
+    }
+
+    // Username should be blocked
+    assertThat(service.checkAndRecord(username), is(notNullValue()));
+    // Token should still be allowed (tracked separately)
+    assertThat(service.checkAndRecordByToken(tokenHash), is(nullValue()));
+
+    // Now block the token
+    for (int i = 0; i <= 5; i++) {
+      service.checkAndRecordByToken(tokenHash);
+    }
+
+    // Token should be blocked
+    assertThat(service.checkAndRecordByToken(tokenHash), is(notNullValue()));
+    // A different username should still be allowed
+    assertThat(service.checkAndRecord("bob"), is(nullValue()));
+  }
+
+  @Test
+  public void testCheckByToken_doesNotIncrementCounter() {
+    String tokenHash = "abc123def456";
+    for (int i = 0; i < 5; i++) {
+      service.checkAndRecordByToken(tokenHash);
+    }
+    // Drive to first block
+    service.checkAndRecordByToken(tokenHash); // attempt 6 → retryAfter=30s
+
+    // check() several times — should not advance backoff
+    service.checkByToken(tokenHash);
+    service.checkByToken(tokenHash);
+    service.checkByToken(tokenHash);
+
+    // Next record call should still see attempt 7 backoff (60s), not further advanced
+    RateLimitResult result = service.checkAndRecordByToken(tokenHash);
+    assertThat(result, is(notNullValue()));
+    assertThat(result.retryAfterSeconds(), is(60L));
+    assertThat(result.attemptCount(), is(7));
   }
 }

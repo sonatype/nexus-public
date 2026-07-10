@@ -302,7 +302,8 @@ describe('GlobalHeader', () => {
         {
           [extStateUserKey]: { id: userKey },
           ['usertoken']: true,
-          ['userTokenRealmEnabled']: true
+          ['userTokenRealmEnabled']: true,
+          ['nugetApiKeyRealmEnabled']: true
           // given is not on pro edition
         },
         'COMMUNITY'
@@ -362,7 +363,8 @@ describe('GlobalHeader', () => {
           [extStateUserKey]: { id: userKey },
           ['usertoken']: false,
           // given realm is not enabled (realm is the gating factor)
-          ['userTokenRealmEnabled']: false
+          ['userTokenRealmEnabled']: false,
+          ['nugetApiKeyRealmEnabled']: true
         },
         'PRO'
       );
@@ -382,7 +384,8 @@ describe('GlobalHeader', () => {
           [extStateUserKey]: { id: userKey },
           ['usertoken']: true,
           // given realm is not enabled
-          ['userTokenRealmEnabled']: false
+          ['userTokenRealmEnabled']: false,
+          ['nugetApiKeyRealmEnabled']: true
         },
         'PRO'
       );
@@ -867,7 +870,8 @@ describe('GlobalHeader', () => {
         [extStateUserKey]: { id: userKey },
         // given usertoken satesEnabled
         ['usertoken']: true,
-        ['userTokenRealmEnabled']: true
+        ['userTokenRealmEnabled']: true,
+        ['nugetApiKeyRealmEnabled']: true
       },
       'PRO'
     );

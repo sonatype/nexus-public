@@ -17,10 +17,24 @@ import { Theme } from '@radix-ui/themes';
 import { AptFacet } from '../AptFacet';
 import { YumFacet } from '../YumFacet';
 import { NugetFacet } from '../NugetFacet';
-import { NpmFacet } from '../NpmFacet';
 import { PyPiFacet } from '../PyPiFacet';
 import { RawFacet } from '../RawFacet';
 import { RepositoryFormData } from '../../types';
+import UIStrings from '../../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+
+const mockGetValue = jest.fn((key: string) => {
+  if (key === 'isCloud') return false;
+  return false;
+});
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ExtJS: {
+    useState: (fn: () => any) => fn(),
+    state: () => ({
+      getValue: mockGetValue,
+    }),
+  },
+}));
 
 const baseFormData: RepositoryFormData = {
   name: 'test',
@@ -188,9 +202,9 @@ describe('NugetFacet', () => {
         />
       </Theme>
     );
-    expect(screen.getByText('NuGet Settings')).toBeInTheDocument();
-    expect(screen.getByText('Query Cache Item Max Age')).toBeInTheDocument();
-    expect(screen.getByText('NuGet Protocol Version')).toBeInTheDocument();
+    expect(screen.getByText(UIStrings.NUGET.SECTION.title)).toBeInTheDocument();
+    expect(screen.getByText(UIStrings.NUGET.QUERY_CACHE_AGE.label)).toBeInTheDocument();
+    expect(screen.getByText(UIStrings.NUGET.PROTOCOL_VERSION.label)).toBeInTheDocument();
   });
 
   it('displays validation error for query cache age', () => {
@@ -221,39 +235,57 @@ describe('NugetFacet', () => {
     fireEvent.change(input, { target: { value: '7200' } });
     expect(onNestedChange).toHaveBeenCalledWith('nugetProxy', { queryCacheItemMaxAge: 7200 });
   });
+
+  describe('queryCacheItemMaxAge input edge cases (issue: stuck at 3600)', () => {
+    // These tests cover the input handler behavior that fixed the user-reported
+    // "cannot set a number that does not start with 3" symptom. The handler
+    // must push undefined (not silently keep stale state) for empty/lone-dash/NaN
+    // inputs so the controlled value isn't trapped on the last-valid number.
+    function setup() {
+      const onNestedChange = jest.fn();
+      render(
+        <Theme>
+          <NugetFacet
+            formData={{ ...baseFormData, format: 'nuget', nugetProxy: { queryCacheItemMaxAge: 3600, nugetVersion: 'V3' } }}
+            onNestedChange={onNestedChange}
+            errors={{}}
+          />
+        </Theme>
+      );
+      return { input: screen.getByDisplayValue('3600'), onNestedChange };
+    }
+
+    it('clears the field when input is empty', () => {
+      const { input, onNestedChange } = setup();
+      fireEvent.change(input, { target: { value: '' } });
+      expect(onNestedChange).toHaveBeenCalledWith('nugetProxy', { queryCacheItemMaxAge: undefined });
+    });
+
+    it('clears the field on a lone dash', () => {
+      const { input, onNestedChange } = setup();
+      fireEvent.change(input, { target: { value: '-' } });
+      expect(onNestedChange).toHaveBeenCalledWith('nugetProxy', { queryCacheItemMaxAge: undefined });
+    });
+
+    it('clamps negative values to 0 (cache age can never be negative)', () => {
+      const { input, onNestedChange } = setup();
+      fireEvent.change(input, { target: { value: '-5' } });
+      expect(onNestedChange).toHaveBeenCalledWith('nugetProxy', { queryCacheItemMaxAge: 0 });
+    });
+
+    it('accepts a value not starting with 3', () => {
+      // The originally-reported symptom: typing a number that didn't start with 3
+      // appeared to be silently rejected. With the hardened handler this works.
+      const { input, onNestedChange } = setup();
+      fireEvent.change(input, { target: { value: '7200' } });
+      expect(onNestedChange).toHaveBeenCalledWith('nugetProxy', { queryCacheItemMaxAge: 7200 });
+    });
+  });
 });
 
-describe('NpmFacet', () => {
-  it('renders npm Settings section when firewall features enabled', () => {
-    render(
-      <Theme>
-        <NpmFacet formData={{ ...baseFormData, format: 'npm' }} onNestedChange={jest.fn()} showFirewallFeatures />
-      </Theme>
-    );
-    expect(screen.getByText('npm Settings')).toBeInTheDocument();
-    expect(screen.getByText('Filter component versions that fail Sonatype Repository Firewall policy')).toBeInTheDocument();
-  });
-
-  it('does not render when firewall features disabled', () => {
-    render(
-      <Theme>
-        <NpmFacet formData={{ ...baseFormData, format: 'npm' }} onNestedChange={jest.fn()} />
-      </Theme>
-    );
-    expect(screen.queryByText('npm Settings')).not.toBeInTheDocument();
-  });
-
-  it('calls onNestedChange when checkbox toggled', () => {
-    const onNestedChange = jest.fn();
-    render(
-      <Theme>
-        <NpmFacet formData={{ ...baseFormData, format: 'npm' }} onNestedChange={onNestedChange} showFirewallFeatures />
-      </Theme>
-    );
-    fireEvent.click(screen.getByRole('checkbox'));
-    expect(onNestedChange).toHaveBeenCalledWith('npm', { removeQuarantinedVersions: true });
-  });
-});
+// `NpmFacet` was removed post-migration STL-381 — the legacy `removeQuarantinedVersions`
+// checkbox was its only content, and that field is now redundant with `firewall.mode = "PCCS"`
+// (set via the Firewall tab). No replacement npm-specific facet exists at the moment.
 
 describe('PyPiFacet', () => {
   it('renders PyPI Settings section with Remote Index Path', () => {
@@ -286,26 +318,30 @@ describe('PyPiFacet', () => {
     expect(onNestedChange).toHaveBeenCalledWith('pypi', { indexPath: '' });
   });
 
-  it('shows firewall checkbox when showFirewallFeatures is true', () => {
-    render(
-      <Theme>
-        <PyPiFacet formData={{ ...baseFormData, format: 'pypi' }} onNestedChange={jest.fn()} showFirewallFeatures />
-      </Theme>
-    );
-    expect(screen.getByText('Filter component versions that fail Sonatype Repository Firewall policy')).toBeInTheDocument();
-  });
-
-  it('hides firewall checkbox when showFirewallFeatures is false', () => {
+  it('does not render the legacy removeQuarantinedVersions checkbox (post-migration cleanup)', () => {
     render(
       <Theme>
         <PyPiFacet formData={{ ...baseFormData, format: 'pypi' }} onNestedChange={jest.fn()} />
       </Theme>
     );
-    expect(screen.queryByText('Filter component versions that fail Sonatype Repository Firewall policy')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Filter component versions that fail Sonatype Repository Firewall policy'),
+    ).not.toBeInTheDocument();
   });
 });
 
 describe('RawFacet', () => {
+  beforeEach(() => {
+    mockGetValue.mockImplementation((key: string) => {
+      if (key === 'isCloud') return false;
+      return false;
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders Raw Settings section', () => {
     render(
       <Theme>
@@ -341,5 +377,19 @@ describe('RawFacet', () => {
       </Theme>
     );
     expect(screen.getByText(/phishing/i)).toBeInTheDocument();
+  });
+
+  it('does not render when isCloud is true', () => {
+    mockGetValue.mockImplementation((key: string) => {
+      if (key === 'isCloud') return true;
+      return false;
+    });
+    const { container } = render(
+      <Theme>
+        <RawFacet formData={{ ...baseFormData, format: 'raw' }} onNestedChange={jest.fn()} />
+      </Theme>
+    );
+    expect(screen.queryByText('Raw Settings')).not.toBeInTheDocument();
+    expect(screen.queryByText('Content Disposition')).not.toBeInTheDocument();
   });
 });

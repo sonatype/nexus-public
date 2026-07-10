@@ -17,7 +17,7 @@ import java.util.Set;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

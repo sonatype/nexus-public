@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.components</groupId>
     <artifactId>nexus-selfhosted-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-self-hosted</artifactId>
@@ -63,6 +63,16 @@
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-repository-services</artifactId>
     </dependency>
+    <!-- NEXUS-46395: provides io.dropwizard.metrics.servlet.InstrumentedFilter (jakarta.servlet
+         flavor) which our Spring InstrumentedFilter extends to restore per-status-code
+         response meters (responseCodes.ok / .created / .noContent / .badRequest /
+         .notFound / .serverError / .other) plus 'requests' timer, 'activeRequests' counter,
+         'errors' meter, and 'timeouts' meter. -->
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-jakarta-servlet</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-test-common</artifactId>

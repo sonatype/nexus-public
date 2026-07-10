@@ -93,10 +93,13 @@ describe('MetricHealthPage', () => {
     render(<MetricHealthPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Status')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Status' })).toBeInTheDocument();
     });
 
-    expect(screen.getByText('View system health checks and diagnostics')).toBeInTheDocument();
+    // Breadcrumb should show the selected check (first unhealthy check is auto-selected)
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    // The breadcrumb trail includes the auto-selected check name
+    expect(screen.getAllByText('memoryHealthCheck').length).toBeGreaterThan(0);
   });
 
   it('displays health checks in single-node mode', async () => {
@@ -128,7 +131,7 @@ describe('MetricHealthPage', () => {
     render(<MetricHealthPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Status')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Status' })).toBeInTheDocument();
     });
 
     const refreshButton = screen.getByTestId('refresh-button');
@@ -145,7 +148,7 @@ describe('MetricHealthPage', () => {
     render(<MetricHealthPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Status')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Status' })).toBeInTheDocument();
     });
 
     const downloadButton = screen.getByTestId('download-button');
@@ -193,6 +196,58 @@ describe('MetricHealthPage', () => {
       'href',
       'http://links.sonatype.com/products/nxrm3/docs/metrics'
     );
+  });
+
+  describe('Breadcrumb navigation for list view', () => {
+    it('renders breadcrumbs with Settings link', async () => {
+      render(<MetricHealthPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+    });
+
+    it('navigates to Settings when Settings breadcrumb is clicked', async () => {
+      render(<MetricHealthPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      const originalHash = window.location.hash;
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+      window.location.hash = originalHash;
+    });
+  });
+
+  describe('Breadcrumb navigation for detail view', () => {
+    it('renders breadcrumb with check name as current page in detail view', async () => {
+      const { container } = render(<MetricHealthPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Status' })).toBeInTheDocument();
+      });
+
+      // First unhealthy check (memoryHealthCheck) is auto-selected, so check name appears in breadcrumb
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('memoryHealthCheck');
+    });
+
+    it('renders Metric Health as non-clickable breadcrumb when a check is selected in single-node mode', async () => {
+      const { container } = render(<MetricHealthPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Status' })).toBeInTheDocument();
+      });
+
+      // In single-node mode, Metric Health does NOT have an onClick handler when a check is selected
+      // It should appear as text, not a button
+      expect(screen.queryByRole('button', { name: 'Metric Health' })).not.toBeInTheDocument();
+      // But it should still appear in the breadcrumb trail
+      expect(container.textContent).toContain('Metric Health');
+    });
   });
 
   it('shows empty state when no health checks', async () => {
@@ -263,7 +318,7 @@ describe('MetricHealthPage', () => {
       expect(screen.getByText('Thread Deadlock')).toBeInTheDocument();
     });
 
-    it('shows back button when viewing node details', async () => {
+    it('shows breadcrumb navigation when viewing node details', async () => {
       render(<MetricHealthPage />, { wrapper: TestWrapper });
 
       await waitFor(() => {
@@ -273,12 +328,13 @@ describe('MetricHealthPage', () => {
       const nodeButton = screen.getByTestId('node-item-node-1');
       fireEvent.click(nodeButton);
 
+      // After selecting a node, the breadcrumb shows "Metric Health" as a clickable button
       await waitFor(() => {
-        expect(screen.getByTestId('back-to-nodes-button')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Metric Health' })).toBeInTheDocument();
       });
     });
 
-    it('navigates back to node list when clicking back button', async () => {
+    it('navigates back to node list when clicking Metric Health breadcrumb', async () => {
       render(<MetricHealthPage />, { wrapper: TestWrapper });
 
       await waitFor(() => {
@@ -289,13 +345,14 @@ describe('MetricHealthPage', () => {
       const nodeButton = screen.getByTestId('node-item-node-1');
       fireEvent.click(nodeButton);
 
+      // Wait for breadcrumb to appear
       await waitFor(() => {
-        expect(screen.getByTestId('back-to-nodes-button')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Metric Health' })).toBeInTheDocument();
       });
 
-      // Click back
-      const backButton = screen.getByTestId('back-to-nodes-button');
-      fireEvent.click(backButton);
+      // Click the Metric Health breadcrumb button to go back to node list
+      const metricHealthBreadcrumb = screen.getByRole('button', { name: 'Metric Health' });
+      fireEvent.click(metricHealthBreadcrumb);
 
       await waitFor(() => {
         expect(screen.getByText('Select a node to view health checks')).toBeInTheDocument();

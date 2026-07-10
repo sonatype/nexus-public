@@ -158,7 +158,7 @@ describe('UserToken', () => {
   });
 
   it('Renders user token alert with close button when expired', async () => {
-    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {data: 'User Token expired'}});
+    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {status: 410}});
     const service = interpret(UserTokenMachine).start();
     const {
       userTokenStatusText,
@@ -180,7 +180,7 @@ describe('UserToken', () => {
   });
 
   it('Renders generate user token button when expired', async () => {
-    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {data: 'User Token expired'}});
+    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {status: 410}});
     const service = interpret(UserTokenMachine).start();
     const {generateTokenButton} = renderView(<UserTokenForm service={service}/>);
     await waitFor(() => expect(service.state.value).toBe('loaded'));
@@ -189,7 +189,7 @@ describe('UserToken', () => {
   });
 
   it('Generates user token requires authentication and displays the token', async () => {
-    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {data: 'User Token expired'}});
+    when(axios.get).calledWith(API_URL).mockRejectedValue({response: {status: 410}});
     const service = interpret(UserTokenMachine).start();
     const {
       generateTokenButton,

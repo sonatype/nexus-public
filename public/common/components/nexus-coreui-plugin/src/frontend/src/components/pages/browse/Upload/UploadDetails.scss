@@ -32,4 +32,14 @@
       }
     }
   }
+
+  // CLM-39871: small footer rendered inside the policy banners to surface the
+  // per-deploy correlation id. Support engineers paste this into log searches
+  // when triaging "why was my upload blocked" tickets.
+  &__correlation-id {
+    display: block;
+    margin-top: var(--nx-spacing-2x);
+    font-size: var(--nx-font-size-s);
+    color: var(--nx-color-text-stark);
+  }
 }

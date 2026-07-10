@@ -22,11 +22,12 @@ import { Shield, ShieldCheck, ExternalLink } from 'lucide-react';
 import {
   useFirewallEnable,
   fetchIqAuditStatus,
+  fetchPccsSupportedFormats,
   type IqAuditStatus,
 } from '../../../../shared/security/useFirewallEnable';
 import { ProtectionLevelSelector, type ProtectionLevel } from './ProtectionLevelSelector';
 import { useRepositoriesApi } from './useRepositoriesApi';
-import { restClient } from '../../../../../../interface/api';
+import { restClient, ENDPOINTS } from '../../../../../../interface/api';
 
 export interface RepositoryFirewallConfigTabProps {
   repositoryName: string;
@@ -38,11 +39,21 @@ export interface RepositoryFirewallConfigTabProps {
   showFirewall?: boolean;
   /** Show the Health Check section (default true) */
   showHealthCheck?: boolean;
+  /**
+   * Repository format (e.g. 'maven2', 'npm', 'pypi'). Used to decide whether to offer the
+   * PCCS protection level. Optional for backward compatibility — when omitted, PCCS is hidden
+   * (matching the pre-PCCS behaviour). Future callers should always pass this through.
+   */
+  format?: string;
 }
 
 interface HealthCheckStatus {
   enabled?: boolean;
   analyzing?: boolean;
+}
+
+interface HealthCheckListEntry extends HealthCheckStatus {
+  repositoryName: string;
 }
 
 export function RepositoryFirewallConfigTab({
@@ -51,13 +62,16 @@ export function RepositoryFirewallConfigTab({
   onEnableSuccess,
   showFirewall = true,
   showHealthCheck = true,
+  format,
 }: RepositoryFirewallConfigTabProps): JSX.Element {
   const [status, setStatus] = useState<IqAuditStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [healthCheck, setHealthCheck] = useState<HealthCheckStatus | null>(null);
   const [healthCheckLoading, setHealthCheckLoading] = useState(true);
-  const { enableAudit, enableQuarantine, disable, loading, error } = useFirewallEnable(repositoryName);
-  const { enableHealthCheck } = useRepositoriesApi();
+  const [pccsSupported, setPccsSupported] = useState(false);
+  const { enableAudit, enableQuarantine, enablePccs, disable, loading, error } =
+    useFirewallEnable(repositoryName);
+  const { enableHealthCheck, disableHealthCheck } = useRepositoriesApi();
 
   const fetchStatus = useCallback(async () => {
     if (!hasFirewallLicense) {
@@ -80,13 +94,42 @@ export function RepositoryFirewallConfigTab({
     fetchStatus();
   }, [fetchStatus]);
 
+  // Resolve whether this repository's format supports PCCS. We do not gate on
+  // `hasFirewallLicense` here — the format-capabilities query is a cheap server lookup that
+  // is independent of license state, and gating PCCS visibility on format alone matches the
+  // legacy ExtJS form behaviour.
   useEffect(() => {
+    if (!format) {
+      setPccsSupported(false);
+      return;
+    }
+    let cancelled = false;
+    fetchPccsSupportedFormats().then((formats) => {
+      if (!cancelled) {
+        setPccsSupported(formats.includes(format));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [format]);
+
+  useEffect(() => {
+    if (!showHealthCheck) {
+      setHealthCheck(null);
+      setHealthCheckLoading(false);
+      return;
+    }
     let cancelled = false;
     setHealthCheckLoading(true);
     restClient
-      .get<HealthCheckStatus>(`/service/rest/v1/repositories/${encodeURIComponent(repositoryName)}/health-check`)
+      .get<HealthCheckListEntry[]>(ENDPOINTS.HEALTH_CHECK)
       .then((data) => {
-        if (!cancelled) setHealthCheck(data ?? null);
+        if (cancelled) return;
+        const entry = Array.isArray(data)
+          ? data.find((r) => r.repositoryName === repositoryName)
+          : undefined;
+        setHealthCheck(entry ?? null);
       })
       .catch(() => {
         if (!cancelled) setHealthCheck(null);
@@ -97,21 +140,43 @@ export function RepositoryFirewallConfigTab({
     return () => {
       cancelled = true;
     };
-  }, [repositoryName]);
+  }, [repositoryName, showHealthCheck]);
 
+  // Map the 4-mode firewall state down to the protection level the selector understands.
+  // We deliberately read `status.mode` (post-migration full state) when available and only
+  // fall back to the boolean view for legacy callers — otherwise QUARANTINE and PCCS would
+  // both render as 'quarantine'.
   const protectionLevel: ProtectionLevel =
-    status?.enabled && status?.enabledQuarantine
-      ? 'quarantine'
-      : status?.enabled
-        ? 'audit'
-        : 'none';
+    status?.mode === 'PCCS'
+      ? 'pccs'
+      : status?.mode === 'QUARANTINE'
+        ? 'quarantine'
+        : status?.mode === 'AUDIT'
+          ? 'audit'
+          : status?.enabled && status?.enabledQuarantine
+            ? 'quarantine'
+            : status?.enabled
+              ? 'audit'
+              : 'none';
 
   const handleProtectionChange = async (level: ProtectionLevel) => {
-    const base = { repositoryName, enabled: false, enabledQuarantine: false };
+    // Optimistically update the local status so the selector reflects the chosen button
+    // before the next fetch round-trips. The server-side mode is the source of truth on
+    // subsequent reads.
+    const applyOptimistic = (mode: 'DISABLED' | 'AUDIT' | 'QUARANTINE' | 'PCCS') => {
+      setStatus((prev) => ({
+        repositoryName: prev?.repositoryName ?? repositoryName,
+        enabled: mode !== 'DISABLED',
+        enabledQuarantine: mode === 'QUARANTINE' || mode === 'PCCS',
+        mode,
+      }));
+      onEnableSuccess?.();
+    };
     try {
-      if (level === 'none') await disable(() => { setStatus((p) => ({ ...(p ?? base), enabled: false, enabledQuarantine: false })); onEnableSuccess?.(); });
-      else if (level === 'audit') await enableAudit(() => { setStatus((p) => ({ ...(p ?? base), enabled: true, enabledQuarantine: false })); onEnableSuccess?.(); });
-      else await enableQuarantine(() => { setStatus((p) => ({ ...(p ?? base), enabled: true, enabledQuarantine: true })); onEnableSuccess?.(); });
+      if (level === 'none') await disable(() => applyOptimistic('DISABLED'));
+      else if (level === 'audit') await enableAudit(() => applyOptimistic('AUDIT'));
+      else if (level === 'quarantine') await enableQuarantine(() => applyOptimistic('QUARANTINE'));
+      else await enablePccs(() => applyOptimistic('PCCS'));
     } catch {
       // Error shown inline via useFirewallEnable error state
     }
@@ -120,7 +185,17 @@ export function RepositoryFirewallConfigTab({
   const handleEnableHealthCheck = async () => {
     try {
       await enableHealthCheck(repositoryName);
-      setHealthCheck((p) => (p ? { ...p, enabled: true } : { enabled: true }));
+      setHealthCheck((p) => (p ? { ...p, enabled: true, analyzing: true } : { enabled: true, analyzing: true }));
+      onEnableSuccess?.();
+    } catch {
+      // Best effort
+    }
+  };
+
+  const handleDisableHealthCheck = async () => {
+    try {
+      await disableHealthCheck(repositoryName);
+      setHealthCheck((p) => (p ? { ...p, enabled: false, analyzing: false } : { enabled: false }));
       onEnableSuccess?.();
     } catch {
       // Best effort
@@ -170,6 +245,7 @@ export function RepositoryFirewallConfigTab({
                   onChange={handleProtectionChange}
                   disabled={loading}
                   size="2"
+                  pccsSupported={pccsSupported}
                 />
                 <Text size="1" color="gray" mt="2">
                   Audit trail: Configuration change history will be available in a future release.
@@ -183,7 +259,7 @@ export function RepositoryFirewallConfigTab({
                 <Flex gap="2" wrap="wrap">
                   <Button variant="ghost" size="2" asChild>
                     <a
-                      href="https://help.sonatype.com/iqserver/product-information/repository-firewall"
+                      href="https://links.sonatype.com/nexus-repository-firewall"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -192,7 +268,7 @@ export function RepositoryFirewallConfigTab({
                     </a>
                   </Button>
                   <Button variant="ghost" size="2" asChild>
-                    <a href="http://links.sonatype.com/contact" target="_blank" rel="noopener noreferrer">
+                    <a href="https://links.sonatype.com/contact-sales" target="_blank" rel="noopener noreferrer">
                       Contact sales
                     </a>
                   </Button>
@@ -211,10 +287,10 @@ export function RepositoryFirewallConfigTab({
             <Flex align="center" gap="3">
               <ShieldCheck size={24} color="var(--blue-9)" aria-hidden />
               <Box>
-                <Text size="4" weight="bold">
+                <Text size="4" weight="bold" as="div" mb="1">
                   Repository Health Check
                 </Text>
-                <Text size="2" color="gray">
+                <Text size="2" color="gray" as="div">
                   Repository Health Check analyzes components for security vulnerabilities and license issues.
                 </Text>
               </Box>
@@ -225,30 +301,56 @@ export function RepositoryFirewallConfigTab({
                 Loading…
               </Text>
             ) : healthCheck?.enabled ? (
-              <Flex align="center" gap="2">
-                <Text size="2" weight="medium">
-                  {healthCheck.analyzing ? 'Analyzing' : 'Enabled'}
-                </Text>
+              <Flex direction="column" gap="3">
+                <Flex align="center" gap="2">
+                  <Box
+                    style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      backgroundColor: healthCheck.analyzing ? 'var(--orange-9)' : 'var(--green-9)',
+                    }}
+                  />
+                  <Text size="2" weight="medium" color={healthCheck.analyzing ? 'orange' : 'green'}>
+                    {healthCheck.analyzing ? 'Analyzing…' : 'Enabled'}
+                  </Text>
+                </Flex>
+                <Flex gap="2">
+                  <Button
+                    type="button"
+                    variant="soft"
+                    color="red"
+                    size="2"
+                    onClick={handleDisableHealthCheck}
+                  >
+                    Disable Health Check
+                  </Button>
+                </Flex>
               </Flex>
             ) : (
-              <Flex gap="2" wrap="wrap">
-                <Button
-                  type="button"
-                  variant="solid"
-                  color="blue"
-                  size="2"
-                  onClick={handleEnableHealthCheck}
-                >
-                  Enable Health Check
-                </Button>
-                <Button type="button" variant="soft" size="2" disabled>
-                  None
-                </Button>
+              <Flex direction="column" gap="3">
+                <Flex align="center" gap="2">
+                  <Box
+                    style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      backgroundColor: 'var(--gray-8)',
+                    }}
+                  />
+                  <Text size="2" weight="medium" color="gray">
+                    Disabled
+                  </Text>
+                </Flex>
+                <Flex gap="2">
+                  <Button
+                    type="button"
+                    variant="solid"
+                    color="blue"
+                    size="2"
+                    onClick={handleEnableHealthCheck}
+                  >
+                    Enable Health Check
+                  </Button>
+                </Flex>
               </Flex>
             )}
-            <Text size="1" color="gray" mt="2">
-              Audit trail: Configuration change history will be available in a future release.
-            </Text>
           </Flex>
         </Card>
       )}

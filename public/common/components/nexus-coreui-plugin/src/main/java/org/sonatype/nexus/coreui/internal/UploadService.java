@@ -16,13 +16,14 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
+import org.sonatype.nexus.repository.upload.UploadRepositoryContext;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 
 import com.google.common.collect.Iterables;
@@ -49,6 +50,8 @@ public class UploadService
   private static final String NPM_FORMAT = "npm";
 
   private static final String HELM_FORMAT = "helm";
+
+  private static final String TERRAFORM_FORMAT = "terraform";
 
   @Autowired
   public UploadService(
@@ -84,7 +87,19 @@ public class UploadService
 
     Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
-    UploadResponse uploadResponse = uploadManager.handle(repository, request);
+    // CLM-39871: bind the repository on this thread so any
+    // ComponentUploadExtension.validate(...) impl that runs inside
+    // uploadManager.handle(...) can reach it. Cleared in finally.
+    log.debug("UploadService.upload entered for repo={} format={}",
+        repositoryName, repository.getFormat().getValue());
+    UploadResponse uploadResponse;
+    try {
+      UploadRepositoryContext.set(repository);
+      uploadResponse = uploadManager.handle(repository, request);
+    }
+    finally {
+      UploadRepositoryContext.clear();
+    }
 
     if (NPM_FORMAT.equals(repository.getFormat().getValue())) {
       repositoryManager.findContainingGroups(repositoryName)
@@ -194,6 +209,14 @@ public class UploadService
       return convertHelmPathToName(pathPrefix);
     }
 
+    // Terraform asset paths are HTTP-Registry-namespaced:
+    // /v1/modules/{namespace}/{name}/{provider}/{version}
+    // Strip the /v1/modules prefix and the version suffix, returning
+    // {namespace}/{name}/{provider} to mirror the Search page's Name column.
+    if (TERRAFORM_FORMAT.equalsIgnoreCase(format)) {
+      return convertTerraformPathToModuleId(pathPrefix);
+    }
+
     // For other formats, extract name from path by removing leading/trailing slashes
     // and using the last meaningful segment
     String cleaned = pathPrefix.replaceAll("^/+", "").replaceAll("/+$", "");
@@ -205,6 +228,38 @@ public class UploadService
     // For formats like npm, docker, etc., the path typically contains the package name
     // Return cleaned path segments joined by spaces for better keyword matching
     return cleaned.replace("/", " ");
+  }
+
+  /**
+   * Convert a Terraform module asset path to a tight search identifier.
+   *
+   * Terraform Registry HTTP API paths take the form:
+   * /v1/modules/{namespace}/{name}/{provider}/{version}[/...]
+   *
+   * Returns {namespace}/{name}/{provider} so the post-upload Search redirect
+   * shows a keyword that matches the Search page's Name column. Falls back
+   * to the cleaned path if the structure doesn't match.
+   */
+  private String convertTerraformPathToModuleId(final String pathPrefix) {
+    // Null/empty paths are passed through unchanged; the caller's existing
+    // empty-cleaned check downstream treats this as "no usable search term".
+    if (pathPrefix == null || pathPrefix.isEmpty()) {
+      return pathPrefix;
+    }
+
+    String cleaned = pathPrefix.replaceAll("^/+", "").replaceAll("/+$", "");
+    String[] segments = cleaned.split("/");
+
+    // segments[0]=v1, [1]=modules, [2]=namespace, [3]=name, [4]=provider, [5+]=version (optional, not accessed)
+    if (segments.length >= 5
+        && "v1".equalsIgnoreCase(segments[0])
+        && "modules".equalsIgnoreCase(segments[1])) {
+      return segments[2] + "/" + segments[3] + "/" + segments[4];
+    }
+
+    // Defensive fallback: return the cleaned path with slashes preserved
+    // so downstream search splitting at least gets coherent segments.
+    return cleaned;
   }
 
   /**

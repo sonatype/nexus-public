@@ -27,7 +27,9 @@ import { useSref } from '@uirouter/react';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 
 export function MissingRoutePage()  {
-  const { href: dashboardHref } = useSref(ROUTE_NAMES.BROWSE.WELCOME.ROOT);
+  const isPreviewUI = window.location.hash.startsWith('#preview');
+  const { href: classicDashboardHref } = useSref(ROUTE_NAMES.BROWSE.WELCOME.ROOT);
+  const dashboardHref = isPreviewUI ? '#preview/browse/welcome' : classicDashboardHref;
 
   return <Page>
     <div className="nxrm-missing-route-page-content">

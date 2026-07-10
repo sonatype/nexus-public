@@ -88,7 +88,7 @@ export default function BlobStoresList() {
     <PageHeader>
       <PageTitle icon={faServer} {...BLOB_STORES.MENU} />
       <PageActions>
-        <NxButton variant="primary" onClick={onCreate} disabled={!canCreate}>{BLOB_STORES.LIST.CREATE_BUTTON}</NxButton>
+        <NxButton variant="primary" onClick={onCreate} disabled={!canCreate} data-analytics-id="nxrm-blobstore-create">{BLOB_STORES.LIST.CREATE_BUTTON}</NxButton>
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-blob-stores-list">
@@ -97,6 +97,10 @@ export default function BlobStoresList() {
           <div className="nxrm-spacer"/>
           <NxFilterInput
               id="filter"
+              inputAttributes={{
+                'aria-label': 'Filter blob stores by name',
+                'data-analytics-id': 'nxrm-blobstore-filter'
+              }}
               onChange={filter}
               value={filterText}
               placeholder={BLOB_STORES.LIST.FILTER_PLACEHOLDER}/>

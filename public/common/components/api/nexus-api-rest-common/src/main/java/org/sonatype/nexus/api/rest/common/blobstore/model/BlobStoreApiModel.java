@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.common.blobstore.model;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
@@ -26,7 +26,7 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
  */
 public abstract class BlobStoreApiModel
 {
-  @ApiModelProperty("Settings to control the soft quota")
+  @Schema(description = "Settings to control the soft quota")
   private BlobStoreApiSoftQuota softQuota;
 
   public BlobStoreApiModel() {

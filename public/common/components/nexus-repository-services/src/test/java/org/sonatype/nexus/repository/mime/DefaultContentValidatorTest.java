@@ -321,4 +321,26 @@ public class DefaultContentValidatorTest
     // Should not throw InvalidContentException and should return first expected type
     assertThat(type, equalTo("application/x-executable"));
   }
+
+  @Test
+  public void machoUniversalBinaryStrictWithExe() throws IOException {
+    // Mach-O universal (fat) binary header (detected as application/x-mach-o-universal) (NEXUS-52799)
+    byte[] machoUniversal = {
+        (byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE, // magic: FAT_MAGIC
+        0x00, 0x00, 0x00, 0x02, // nfat_arch: 2 architectures
+        0x00, 0x00, 0x00, 0x0C, // cputype: ARM64
+        0x00, 0x00, 0x00, 0x00, // cpusubtype
+        0x00, 0x00, 0x00, 0x00, // offset
+        0x00, 0x00, 0x00, 0x00, // size
+        0x00, 0x00, 0x00, 0x00 // align
+    };
+
+    String type = testSubject.determineContentType(
+        true,
+        supplier(machoUniversal),
+        MimeRulesSource.NOOP,
+        "protoc-gen-grpc-java-1.80.0-osx-aarch_64.exe",
+        null);
+    assertThat(type, equalTo("application/x-executable"));
+  }
 }

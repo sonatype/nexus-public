@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-spring</artifactId>
@@ -35,24 +35,23 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-loader</artifactId>
     </dependency>
+    <!-- NEXUS-46395: javax.servlet-api 4.0.1 → jakarta.servlet-api 6.0 (Jakarta EE 10 / RESTEasy 7) -->
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-xml</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.ee8</groupId>
-      <artifactId>jetty-ee8-servlet</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.eclipse.jetty.ee8</groupId>
-          <artifactId>jetty-ee8-nested</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!-- NEXUS-46395: the upstream org.eclipse.jetty.ee10:jetty-ee10-servlet is intentionally
+         NOT declared as a direct dep. The Nexus-modified
+         org.sonatype.nexus.common.components:jetty-ee10-servlet (declared below) carries the
+         HTTP/1.1 reason-phrase patch the Firewall depends on; we want it - and only it - on
+         the runtime classpath. Other transitives (jetty-ee10-webapp etc.) exclude the
+         upstream via the pattern in nexus-bootstrap-spring/pom.xml. The previous self-
+         referential exclusion block (excluding jetty-ee10-servlet from itself) was a Maven
+         no-op and let both jars ship together with classpath-order-dependent class loading. -->
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>jetty-server</artifactId>
@@ -77,7 +76,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
-      <artifactId>jetty-ee8-nested</artifactId>
+      <artifactId>jetty-ee10-servlet</artifactId>
     </dependency>
 
     <dependency>

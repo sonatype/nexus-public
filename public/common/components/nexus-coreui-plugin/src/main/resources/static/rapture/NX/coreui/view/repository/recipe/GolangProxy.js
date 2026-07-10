@@ -25,6 +25,7 @@ Ext.define('NX.coreui.view.repository.recipe.GolangProxy', {
     extend: 'NX.coreui.view.repository.RepositorySettingsForm',
     alias: 'widget.nx-coreui-repository-go-proxy',
     requires: [
+        'NX.coreui.view.repository.facet.FirewallFacet',
         'NX.coreui.view.repository.facet.ProxyFacet',
         'NX.coreui.view.repository.facet.RoutingRuleFacet',
         'NX.coreui.view.repository.facet.StorageFacet',
@@ -40,6 +41,7 @@ Ext.define('NX.coreui.view.repository.recipe.GolangProxy', {
         var me = this;
 
         me.items = [
+            {xtype: 'nx-coreui-repository-firewall-facet'},
             {xtype: 'nx-coreui-repository-proxy-facet'},
             {xtype: 'nx-coreui-repository-routing-rule-facet'},
             {xtype: 'nx-coreui-repository-storage-facet'},

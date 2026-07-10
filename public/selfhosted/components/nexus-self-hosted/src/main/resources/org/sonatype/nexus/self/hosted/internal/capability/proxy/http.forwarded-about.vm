@@ -1,0 +1,26 @@
+<p>
+  This capability controls the processing of forwarded HTTP headers such as
+  <code>X-Forwarded-For</code>, <code>X-Forwarded-Proto</code>, and related headers.
+</p>
+
+<p>
+  When enabled (the default), Nexus will process these headers to extract the original
+  client IP address, protocol, and other connection information from requests that pass
+  through load balancers, reverse proxies, or CDN systems.
+</p>
+
+<p>
+  <strong>Security Note:</strong> When disabled, the client IP address used for audit logging
+  and IP-based access control will be the immediate connection source (typically your load balancer
+  or proxy), not the original client. This may affect security policies that rely on client IP
+  identification.
+</p>
+
+<p>
+  <strong>Use Cases:</strong>
+</p>
+<ul>
+  <li>Disable when Nexus is directly accessible to clients and not behind a proxy</li>
+  <li>Disable if you want to preserve the original connection information</li>
+  <li>Enable when running behind a trusted load balancer or reverse proxy</li>
+</ul>

@@ -33,6 +33,7 @@ interface RawSearchItem {
     id: string;
     path: string;
     downloadUrl: string;
+    lastModified?: string;
   }>;
 }
 
@@ -43,6 +44,8 @@ interface RawSearchResponse {
   items: RawSearchItem[];
   continuationToken?: string;
 }
+
+const toMs = (s: string): number => (s ? new Date(s).getTime() : 0);
 
 /**
  * Search NuGet packages using the real API.
@@ -79,16 +82,19 @@ async function searchNuGetApi(
     const packageKey = packageId.toLowerCase();
 
     const existing = packageMap.get(packageKey);
+    const itemLastModified = item.assets?.reduce((max, asset) => {
+      const t = asset.lastModified ?? '';
+      return toMs(t) > toMs(max) ? t : max;
+    }, '') ?? '';
+
     if (existing) {
-      // Update existing entry
-      const updatedResult: NuGetResult = {
+      packageMap.set(packageKey, {
         ...existing,
         versionsCount: existing.versionsCount + 1,
         latestVersion: item.version > existing.latestVersion ? item.version : existing.latestVersion,
-      };
-      packageMap.set(packageKey, updatedResult);
+        lastUpdated: toMs(itemLastModified) > toMs(existing.lastUpdated) ? itemLastModified : existing.lastUpdated,
+      });
     } else {
-      // Create new entry
       packageMap.set(packageKey, {
         id: `nuget:${packageId}`,
         packageId,
@@ -96,7 +102,7 @@ async function searchNuGetApi(
         latestVersion: item.version,
         versionsCount: 1,
         repositoriesCount: 1,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: itemLastModified,
       });
     }
   }
@@ -274,5 +280,3 @@ export function useNuGetSearch(initialParams?: NuGetSearchParams): UseNuGetSearc
 }
 
 export default useNuGetSearch;
-
-

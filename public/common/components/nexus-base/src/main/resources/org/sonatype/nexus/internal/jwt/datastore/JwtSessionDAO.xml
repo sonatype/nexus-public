@@ -23,29 +23,77 @@
         user_source     VARCHAR(200) NOT NULL,
         revoked_at      TIMESTAMP WITH TIME ZONE NOT NULL,
         expires_at      TIMESTAMP WITH TIME ZONE NOT NULL,
+        type            VARCHAR(32) NOT NULL DEFAULT 'SESSION',
 
         CONSTRAINT pk_jwt_session_user_session_id PRIMARY KEY (user_session_id)
     );
 
-  -- INDEX provided by JwtSessionIndexMigrationStep_2_103
+  -- INDEX idx_jwt_session_expires provided by JwtSessionIndexMigrationStep_2_103
   </insert>
 
   <insert id="revokeSession" parameterType="org.sonatype.nexus.internal.jwt.datastore.JwtSessionData">
-    MERGE INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at)
+    MERGE INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at, type)
     KEY(user_session_id)
-    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource}, #{session.revokedAt}, #{session.expiresAt});
+    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource},
+            #{session.revokedAt}, #{session.expiresAt}, 'SESSION');
   </insert>
 
   <insert id="revokeSession" parameterType="org.sonatype.nexus.internal.jwt.datastore.JwtSessionData" databaseId="PostgreSQL">
-    INSERT INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at)
-    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource}, #{session.revokedAt}, #{session.expiresAt})
+    INSERT INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at, type)
+    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource},
+            #{session.revokedAt}, #{session.expiresAt}, 'SESSION')
     ON CONFLICT (user_session_id) DO NOTHING;
+  </insert>
+
+  <insert id="revokeSessionLegacy" parameterType="org.sonatype.nexus.internal.jwt.datastore.JwtSessionData">
+    MERGE INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at)
+    KEY(user_session_id)
+    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource},
+            #{session.revokedAt}, #{session.expiresAt});
+  </insert>
+
+  <insert id="revokeSessionLegacy" parameterType="org.sonatype.nexus.internal.jwt.datastore.JwtSessionData" databaseId="PostgreSQL">
+    INSERT INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at)
+    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource},
+            #{session.revokedAt}, #{session.expiresAt})
+    ON CONFLICT (user_session_id) DO NOTHING;
+  </insert>
+
+  <insert id="invalidateUser" parameterType="org.sonatype.nexus.internal.jwt.datastore.JwtSessionData">
+    INSERT INTO jwt_session (user_session_id, username, user_source, revoked_at, expires_at, type)
+    VALUES (#{session.userSessionId}, #{session.username}, #{session.userSource},
+            #{session.revokedAt}, #{session.expiresAt}, 'USER_INVALIDATION');
   </insert>
 
   <select id="isRevoked" resultType="boolean">
     SELECT EXISTS(
       SELECT 1 FROM jwt_session
       WHERE user_session_id = #{userSessionId}
+        AND type = 'SESSION'
+    );
+  </select>
+
+  <!-- Omits type filter for ZDU compatibility when the type column has not yet been added (pre-2.127) -->
+  <select id="isRevokedLegacy" resultType="boolean">
+    SELECT EXISTS(
+      SELECT 1 FROM jwt_session
+      WHERE user_session_id = #{userSessionId}
+    );
+  </select>
+
+  <!--
+    A password change globally invalidates every JWT session for the given username, across all
+    realms the user may be authenticating through. The match is keyed on username only: any
+    USER_INVALIDATION row for the username whose revoked_at is later than the JWT's iat is a hit,
+    regardless of the realm the JWT was issued from. The user_source column is stored on insert
+    for audit/forensic purposes and is not used for matching.
+  -->
+  <select id="isUserInvalidatedAfter" resultType="boolean">
+    SELECT EXISTS(
+      SELECT 1 FROM jwt_session
+      WHERE type = 'USER_INVALIDATION'
+        AND username = #{username}
+        AND revoked_at &gt; #{iat}
     );
   </select>
 

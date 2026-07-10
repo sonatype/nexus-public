@@ -141,7 +141,7 @@ describe('CleanupPoliciesPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('cleanup-policies-list')).toBeInTheDocument();
     });
-    expect(screen.getByText('Cleanup Policies')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Cleanup Policies' })).toBeInTheDocument();
     expect(screen.getByText('Manage component removal configuration')).toBeInTheDocument();
   });
 
@@ -200,7 +200,7 @@ describe('CleanupPoliciesPage', () => {
     render(<CleanupPoliciesPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('Cleanup Policies')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Cleanup Policies' })).toBeInTheDocument();
     });
     expect(screen.getByText('Manage component removal configuration')).toBeInTheDocument();
   });

@@ -43,10 +43,15 @@ import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
+import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigurationConverter;
+import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
+import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import jakarta.inject.Provider;
+import jakarta.validation.ConstraintViolation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,6 +73,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -314,11 +320,18 @@ public class BaseRepositoryManagerTest
   private BaseRepositoryManager<BlobStoreManager> initializeAndStartRepositoryManager(
       final boolean skipDefaultRepositories) throws Exception
   {
+    return initializeAndStartRepositoryManager(skipDefaultRepositories, List.of());
+  }
+
+  private BaseRepositoryManager<BlobStoreManager> initializeAndStartRepositoryManager(
+      final boolean skipDefaultRepositories,
+      final List<ConfigurationValidator> validators) throws Exception
+  {
     when(QualifierUtil.buildQualifierBeanMap(any())).thenReturn(Map.of(recipeName, recipe));
     repositoryManager = new BaseRepositoryManager<>(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, List.of(), securityContributor,
         defaultRepositoriesContributorList, skipDefaultRepositories, blobStoreManager,
-        groupMemberMappingCache, List.of(), httpAuthenticationSecretEncoder, failedRepositoryTracker)
+        groupMemberMappingCache, validators, httpAuthenticationSecretEncoder, failedRepositoryTracker)
     {
     };
 
@@ -1152,4 +1165,392 @@ public class BaseRepositoryManagerTest
     verify(failedRepositoryTracker).clearFailure(failedRepoName);
   }
 
+  /**
+   * Security: ConfigurationValidators must run on default-repository provisioning so that
+   * edition-specific guards (e.g. OciCloudEditionConfigurationValidator) cannot be bypassed
+   * by a DefaultRepositoriesContributor that supplies an illegal configuration. Per-repo
+   * rejections are tracked rather than aborting the entire provisioning loop, so a single
+   * misconfigured contributor cannot prevent the rest of the manager from booting.
+   */
+  @Test
+  public void testProvisionDefaultRepositories_runsConfigurationValidators() throws Exception {
+    // Validator that always rejects to prove provisionDefaultRepositories invokes it.
+    ConfigurationValidator alwaysRejects = config -> {
+      ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+      return violation;
+    };
+
+    // Empty store triggers provisionDefaultRepositories on start
+    when(configurationStore.list()).thenReturn(List.of());
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(alwaysRejects));
+
+    // All 8 contributor-supplied defaults are tracked rather than propagated. The exact count
+    // assertion proves the provisioning loop did NOT abort on the first failure — a regression
+    // to the prior fail-fast behavior would surface here as a count of 1.
+    verify(failedRepositoryTracker, times(8)).recordFailure(any(String.class), any(Exception.class));
+    verify(configurationStore, never()).create(any(Configuration.class));
+  }
+
+  /**
+   * Security: a single misconfigured DefaultRepositoriesContributor must not prevent other
+   * default repositories (or the rest of the manager) from starting. Verifies the per-repo
+   * fail-tracking soften behavior added under the second-pass review (NEXUS-42721).
+   */
+  @Test
+  public void testProvisionDefaultRepositories_oneBadContributorDoesNotBlockOthers() throws Exception {
+    // Validator that rejects exactly one default and allows the rest.
+    ConfigurationValidator selectiveValidator = config -> {
+      if (config != null && MAVEN_CENTRAL_NAME.equals(config.getRepositoryName())) {
+        return mock(ConstraintViolation.class);
+      }
+      return null;
+    };
+
+    // Empty store triggers provisionDefaultRepositories on start
+    when(configurationStore.list()).thenReturn(List.of());
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(selectiveValidator));
+
+    // mavenCentral was rejected and tracked.
+    verify(failedRepositoryTracker).recordFailure(eq(MAVEN_CENTRAL_NAME), any(Exception.class));
+    // The other 7 defaults still got created — provisioning loop did not abort on the rejection.
+    // Verifying both an early-list config (apacheSnapshots) AND a late-list config
+    // (ungroupedRepoConfiguration) proves the loop ran to completion, not just past the
+    // rejection point.
+    verify(configurationStore).create(apacheSnapshotsConfiguration);
+    verify(configurationStore).create(thirdPartyConfiguration);
+    verify(configurationStore).create(ungroupedRepoConfiguration);
+    verify(configurationStore, times(7)).create(any(Configuration.class));
+    verify(configurationStore, never()).create(mavenCentralConfiguration);
+  }
+
+  @Test
+  public void testProvisionDefaultRepositories_passesWhenValidatorAllows() throws Exception {
+    // Validator that returns null (no violation) for every configuration.
+    ConfigurationValidator allowsAll = config -> null;
+
+    // Empty initial store, then return configs after provisioning
+    when(configurationStore.list())
+        .thenReturn(List.of())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
+            ungroupedRepoConfiguration));
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(allowsAll));
+
+    // All defaults were created since validator allowed them
+    verify(configurationStore).create(mavenCentralConfiguration);
+    verify(configurationStore).create(apacheSnapshotsConfiguration);
+    verify(configurationStore).create(thirdPartyConfiguration);
+  }
+
+  /**
+   * Security: ConfigurationValidators must run on restore so a backup taken on a self-hosted
+   * node cannot smuggle a now-illegal configuration onto a cloud node. A failure here is
+   * caught by the per-repository try/catch block and tracked as a failed repository, while
+   * other repositories continue to start.
+   */
+  @Test
+  public void testRestoreRepositories_validatorFailureIsTrackedNotPropagated() throws Exception {
+    // Validator that rejects exactly one specific repository (mavenCentral) and allows others.
+    ConfigurationValidator selectiveValidator = config -> {
+      if (config != null && MAVEN_CENTRAL_NAME.equals(config.getRepositoryName())) {
+        return mock(ConstraintViolation.class);
+      }
+      return null;
+    };
+
+    // defaultsConfigured=true: store returns the existing repos and restore is invoked
+    when(configurationStore.list())
+        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
+            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
+            ungroupedRepoConfiguration));
+
+    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(selectiveValidator));
+
+    // Verify mavenCentral was tracked as a failure (validation rejected it before newRepository was invoked).
+    // This is the security-critical assertion: the rejected config is captured by the per-repo
+    // try/catch in restoreRepositories and surfaced via FailedRepositoryTracker rather than
+    // silently allowed through.
+    verify(failedRepositoryTracker).recordFailure(eq(MAVEN_CENTRAL_NAME), any(Exception.class));
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  // NEXUS-53393 — firewall preservation on partial update.
+  //
+  // The typed REST API converters build a fresh Configuration from the request body. Any
+  // optional sub-section the caller omits is absent from the converted Configuration; without
+  // preservation, BaseRepositoryManager.update() then writes that absence to storage, silently
+  // wiping the existing firewall.mode. Tests below exercise the static helper
+  // BaseRepositoryManager#preserveFirewallFromExistingIfAbsent directly because it is a pure
+  // function — keeping the tests focused on the rule ("absent in target ∧ present in existing
+  // ⇒ carry forward") rather than on the surrounding update-flow plumbing already covered
+  // above. The chain tests below additionally wire the real REST converter into the helper to
+  // pin the end-to-end fix shape.
+  // -----------------------------------------------------------------------------------------------
+
+  private static final String FIREWALL_TEST_REPO = "firewall-test-repo";
+
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_targetOmitsFirewall_existingHasIt_carriesForward() {
+    Configuration existing = configWithFirewallMode("PCCS");
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    assertThat(
+        "target should now carry the firewall block from the existing config",
+        target.getAttributes().containsKey("firewall"), is(true));
+    assertThat(target.attributes("firewall").get("mode"), is((Object) "PCCS"));
+  }
+
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_targetCarriesFirewall_leavesItAlone() {
+    // The caller explicitly addressed firewall — even if just to set DISABLED. Honour that.
+    Configuration existing = configWithFirewallMode("PCCS");
+    Configuration target = configWithFirewallMode("DISABLED");
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    assertThat(target.attributes("firewall").get("mode"), is((Object) "DISABLED"));
+  }
+
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_existingHasNoFirewall_leavesTargetAlone() {
+    // Common case: a repo that has never had firewall configured. Don't synthesise an empty
+    // firewall block on update.
+    Configuration existing = configWithoutFirewall();
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    Map<String, Map<String, Object>> attrs = target.getAttributes();
+    assertThat(attrs == null || !attrs.containsKey("firewall"), is(true));
+  }
+
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_existingHasEmptyFirewall_leavesTargetAlone() {
+    // Defensive: a stray empty firewall block on the existing config (shouldn't happen, but
+    // possible from old code paths or hand-edited storage) should not be propagated.
+    Configuration existing = configWithEmptyFirewallMap();
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    Map<String, Map<String, Object>> attrs = target.getAttributes();
+    assertThat(attrs == null || !attrs.containsKey("firewall"), is(true));
+  }
+
+  /**
+   * Pin the {@code existingAttrs == null} early-return branch in
+   * {@code preserveFirewallFromExistingIfAbsent}. A {@link ConfigurationData} on which
+   * {@code setAttributes} has never been called returns {@code null} from {@code getAttributes()};
+   * this helper must short-circuit cleanly without NPE.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_existingHasNullAttributes_leavesTargetAlone() {
+    ConfigurationData existing = new ConfigurationData(); // attributes field defaults to null
+    assertThat(existing.getAttributes(), is(nullValue()));
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    Map<String, Map<String, Object>> attrs = target.getAttributes();
+    assertThat(attrs == null || !attrs.containsKey("firewall"), is(true));
+  }
+
+  /**
+   * Pin the {@code targetAttrs == null} fall-through branch in
+   * {@code preserveFirewallFromExistingIfAbsent}. The chain tests below incidentally exercise
+   * this path (the typed REST converter produces a Configuration with null attributes when the
+   * request body has no sub-blocks), but the disjunctive {@code null || !containsKey} sanity
+   * assertion does not deterministically pin the branch — a future refactor making the
+   * converter populate attributes with a non-firewall key would still pass while this branch
+   * went uncovered. This test deterministically pins it: target's attributes are explicitly
+   * null, the helper falls through to the write path, and {@code Configuration.attributes(key)}
+   * lazy-inits both the outer attributes map and the firewall sub-map.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_targetHasNullAttributes_lazilyInitsAndPreserves() {
+    Configuration existing = configWithFirewallMode("PCCS");
+    ConfigurationData target = new ConfigurationData(); // attributes field defaults to null
+    assertThat(target.getAttributes(), is(nullValue()));
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    assertThat(
+        "target attributes should have been lazy-initialised by the preservation write",
+        target.getAttributes(), is(notNullValue()));
+    assertThat(target.attributes("firewall").get("mode"), is((Object) "PCCS"));
+  }
+
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_carriesAllFirewallKeysNotJustMode() {
+    // Future-proof: if the firewall block grows additional keys, all of them must travel.
+    ConfigurationData existing = new ConfigurationData();
+    Map<String, Map<String, Object>> existingAttrs = new HashMap<>();
+    Map<String, Object> firewall = new HashMap<>();
+    firewall.put("mode", "QUARANTINE");
+    firewall.put("someOtherKey", "someValue");
+    existingAttrs.put("firewall", firewall);
+    existing.setAttributes(existingAttrs);
+
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    assertThat(target.attributes("firewall").get("mode"), is((Object) "QUARANTINE"));
+    assertThat(target.attributes("firewall").get("someOtherKey"), is((Object) "someValue"));
+  }
+
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_mutatingExistingDoesNotAffectTarget() {
+    // Defensive copy direction 1: mutating EXISTING after preservation must not bleed into
+    // TARGET. Models the case where validation/encoder steps further down update() inspect
+    // the captured oldConfiguration (e.g. for rollback) after the helper has run.
+    Configuration existing = configWithFirewallMode("AUDIT");
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    existing.attributes("firewall").set("mode", "DISABLED");
+
+    assertThat(target.attributes("firewall").get("mode"), is((Object) "AUDIT"));
+  }
+
+  /**
+   * NEXUS-53393 (M3 review finding): the load-bearing direction for the defensive copy is the
+   * inverse of the prior test — subsequent mutations on TARGET (e.g. validation, secret
+   * encoding on the {@code httpclient} sub-block, the rollback path) must not bleed back into
+   * the captured {@code oldConfiguration}. This test pins that guarantee.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_mutatingTargetDoesNotAffectExisting() {
+    Configuration existing = configWithFirewallMode("AUDIT");
+    Configuration target = configWithoutFirewall();
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+
+    target.attributes("firewall").set("mode", "DISABLED");
+
+    assertThat(existing.attributes("firewall").get("mode"), is((Object) "AUDIT"));
+  }
+
+  /**
+   * H2b chain test (PCCS): wire the real REST converter into the helper to pin the end-to-end
+   * fix shape. A partial PUT body that omits the {@code firewall} field produces a
+   * Configuration that does not contain the {@code firewall} key; the helper must then carry
+   * the persisted PCCS mode forward. This reproduces the exact bug the user reported.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_afterConverterStripsOmittedFirewall_PCCSPreserved() {
+    Configuration converted = convertProxyRequestWithoutFirewall("pypi-proxy-test", "pypi");
+
+    // Sanity: converter omitted the firewall block (this is the bug condition).
+    Map<String, Map<String, Object>> convertedAttrs = converted.getAttributes();
+    assertThat(convertedAttrs == null || !convertedAttrs.containsKey("firewall"), is(true));
+
+    Configuration existing = configWithFirewallMode("PCCS");
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, converted, "pypi-proxy-test");
+
+    assertThat(converted.attributes("firewall").get("mode"), is((Object) "PCCS"));
+  }
+
+  /**
+   * H2b chain test (AUDIT, mode-agnostic variant per the user's pollinator investigation): the
+   * pre-fix bug is mode-agnostic; the converter strips an omitted firewall field for any mode.
+   * This test pins that the fix preserves AUDIT just as well as PCCS, refuting the
+   * selection-effect interpretation of the original repro.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_afterConverterStripsOmittedFirewall_AUDITPreserved() {
+    Configuration converted = convertProxyRequestWithoutFirewall("maven-proxy-test", "maven2");
+
+    Configuration existing = configWithFirewallMode("AUDIT");
+
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, converted, "maven-proxy-test");
+
+    assertThat(converted.attributes("firewall").get("mode"), is((Object) "AUDIT"));
+  }
+
+  /**
+   * H3 replication-gate test: the call site in {@link BaseRepositoryManager#update(Configuration)}
+   * gates the helper on {@code !EventHelper.isReplicating()}. Replication should faithfully
+   * apply the originator's authoritative state, not heuristically merge. This test mirrors
+   * the call-site gate inline (the helper itself is unconditional, matching the secret-encoder
+   * pattern in the same method) and asserts that {@link EventHelper#asReplicating(Runnable)}
+   * causes the gate to skip preservation.
+   */
+  @Test
+  public void preserveFirewallFromExistingIfAbsent_callSiteGate_skipsPreservationDuringReplication() {
+    Configuration existing = configWithFirewallMode("PCCS");
+    Configuration target = configWithoutFirewall();
+
+    EventHelper.asReplicating(() -> {
+      // Mirror the call-site gate from BaseRepositoryManager#update(Configuration) verbatim.
+      if (!EventHelper.isReplicating()) {
+        BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+      }
+    });
+
+    Map<String, Map<String, Object>> attrs = target.getAttributes();
+    assertThat(
+        "target should NOT have been mutated when replicating",
+        attrs == null || !attrs.containsKey("firewall"), is(true));
+
+    // Sanity: outside replication the gate opens and the helper preserves as expected.
+    BaseRepositoryManager.preserveFirewallFromExistingIfAbsent(existing, target, FIREWALL_TEST_REPO);
+    assertThat(target.attributes("firewall").get("mode"), is((Object) "PCCS"));
+  }
+
+  private static Configuration configWithFirewallMode(final String mode) {
+    ConfigurationData config = new ConfigurationData();
+    Map<String, Map<String, Object>> attrs = new HashMap<>();
+    Map<String, Object> firewall = new HashMap<>();
+    firewall.put("mode", mode);
+    attrs.put("firewall", firewall);
+    config.setAttributes(attrs);
+    return config;
+  }
+
+  private static Configuration configWithoutFirewall() {
+    ConfigurationData config = new ConfigurationData();
+    config.setAttributes(new HashMap<>());
+    return config;
+  }
+
+  private static Configuration configWithEmptyFirewallMap() {
+    ConfigurationData config = new ConfigurationData();
+    Map<String, Map<String, Object>> attrs = new HashMap<>();
+    attrs.put("firewall", new HashMap<>());
+    config.setAttributes(attrs);
+    return config;
+  }
+
+  /**
+   * Build a {@link ProxyRepositoryApiRequest} with no {@code firewall} field, run it through
+   * a real {@link ProxyRepositoryApiRequestToConfigurationConverter} backed by a fresh
+   * {@link ConfigurationData}, and return the converted Configuration. Mirrors the bug
+   * reproduction shape: a non-frontend client PUTs a partial body that does not re-state
+   * firewall.
+   */
+  private static Configuration convertProxyRequestWithoutFirewall(final String name, final String format) {
+    ProxyRepositoryApiRequest request = new ProxyRepositoryApiRequest(
+        name, format, /* online */ true,
+        /* storage */ null, /* cleanup */ null, /* proxy */ null,
+        /* negativeCache */ null, /* httpClient */ null,
+        /* routingRuleName */ null, /* replication */ null);
+    // Firewall field intentionally NOT set — reproduces the omitted-firewall PUT.
+
+    ConfigurationStore store = mock(ConfigurationStore.class);
+    when(store.newConfiguration()).thenReturn(new ConfigurationData());
+
+    ProxyRepositoryApiRequestToConfigurationConverter<ProxyRepositoryApiRequest> converter =
+        new ProxyRepositoryApiRequestToConfigurationConverter<>(mock(RoutingRuleStore.class));
+    converter.setConfigurationStore(store);
+
+    return converter.convert(request);
+  }
 }

@@ -15,8 +15,8 @@ package org.sonatype.nexus.security;
 import java.util.List;
 import java.util.Optional;
 
-import javax.servlet.Filter;
-import javax.servlet.annotation.WebFilter;
+import jakarta.servlet.Filter;
+import jakarta.servlet.annotation.WebFilter;
 
 import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.common.QualifierUtil;

@@ -14,16 +14,16 @@ package org.sonatype.nexus.repository.content.rest.internal.resources.doc;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.rest.Page;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
 /**
@@ -31,54 +31,54 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
  *
  * @since 3.24
  */
-@Api(value = "components")
+@Tag(name = "components")
 public interface ComponentsResourceDoc
 {
   /**
    * @since 3.26
    */
-  @ApiOperation("List components")
+  @Operation(summary = "List components")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to list components"),
-      @ApiResponse(code = 422, message = "Parameter 'repository' is required")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to list components"),
+      @ApiResponse(responseCode = "422", description = "Parameter 'repository' is required")
   })
   Page<ComponentXO> getComponents(
-      @ApiParam(
-          value = "A token returned by a prior request. If present, the next page of results are returned") final String continuationToken,
+      @Parameter(
+          description = "A token returned by a prior request. If present, the next page of results are returned") final String continuationToken,
 
-      @ApiParam(value = "Repository from which you would like to retrieve components",
+      @Parameter(description = "Repository from which you would like to retrieve components",
           required = true) final String repository);
 
   /**
    * @since 3.26
    */
-  @ApiOperation("Get a single component")
+  @Operation(summary = "Get a single component")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to get component"),
-      @ApiResponse(code = 404, message = "Component not found"),
-      @ApiResponse(code = 422, message = "Malformed ID")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to get component"),
+      @ApiResponse(responseCode = "404", description = "Component not found"),
+      @ApiResponse(responseCode = "422", description = "Malformed ID")
   })
-  ComponentXO getComponentById(@ApiParam(value = "ID of the component to retrieve") final String id);
+  ComponentXO getComponentById(@Parameter(description = "ID of the component to retrieve") final String id);
 
   /**
    * @since 3.26
    */
-  @ApiOperation(value = "Delete a single component")
+  @Operation(summary = "Delete a single component")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "Component was successfully deleted"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to delete component"),
-      @ApiResponse(code = 404, message = "Component not found"),
-      @ApiResponse(code = 422, message = "Malformed ID")
+      @ApiResponse(responseCode = "204", description = "Component was successfully deleted"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to delete component"),
+      @ApiResponse(responseCode = "404", description = "Component not found"),
+      @ApiResponse(responseCode = "422", description = "Malformed ID")
   })
-  void deleteComponent(@ApiParam(value = "ID of the component to delete") final String id);
+  void deleteComponent(@Parameter(description = "ID of the component to delete") final String id);
 
-  @ApiOperation(value = "Upload a single component")
+  @Operation(summary = "Upload a single component")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to upload a component"),
-      @ApiResponse(code = 422, message = "Parameter 'repository' is required")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to upload a component"),
+      @ApiResponse(responseCode = "422", description = "Parameter 'repository' is required")
   })
   void uploadComponent(
-      @ApiParam(value = "Name of the repository to which you would like to upload the component",
+      @Parameter(description = "Name of the repository to which you would like to upload the component",
           required = true) final String repository,
-      @ApiParam(hidden = true) @MultipartForm HttpServletRequest request) throws IOException;
+      @Parameter(hidden = true) @MultipartForm HttpServletRequest request) throws IOException;
 }

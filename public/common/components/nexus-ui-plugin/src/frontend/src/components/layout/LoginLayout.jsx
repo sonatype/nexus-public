@@ -43,7 +43,13 @@ export default function LoginLayout({ children, logoConfig }) {
         : "Core";
   }
 
-  const homeHref = contextPath ? `${contextPath}/#browse/welcome` : "/#browse/welcome";
+  const homeHash = '#browse/welcome';
+  const homeHref = contextPath ? `${contextPath}/${homeHash}` : `/${homeHash}`;
+
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    window.location.hash = homeHash;
+  };
 
   return (
     <div className="nxrm-login-layout">
@@ -53,6 +59,7 @@ export default function LoginLayout({ children, logoConfig }) {
           className="nxrm-login-header__link"
           title="Home"
           aria-label={`Sonatype Nexus Repository ${getEditionText()} home`}
+          onClick={handleLogoClick}
         >
           <img
             src={getLogo()}

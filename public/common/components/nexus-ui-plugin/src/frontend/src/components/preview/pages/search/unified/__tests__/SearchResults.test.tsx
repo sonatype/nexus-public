@@ -257,19 +257,47 @@ describe('SearchResults', () => {
       const onNameFilterChange = jest.fn();
       // Set initial nameFilter prop so localFilterValue is already set
       renderWithTheme(
-        <SearchResults 
-          {...defaultProps} 
-          nameFilter="lodash" 
-          onNameFilterChange={onNameFilterChange} 
+        <SearchResults
+          {...defaultProps}
+          nameFilter="lodash"
+          onNameFilterChange={onNameFilterChange}
         />
       );
       const filterInput = screen.getAllByPlaceholderText(/filter by component name/i)[0];
-      
+
       // Press Enter - should trigger callback with current filter value
       fireEvent.keyDown(filterInput, { key: 'Enter' });
-      
+
       // Should be called immediately
       expect(onNameFilterChange).toHaveBeenCalledWith('lodash');
+    });
+
+    it('hides the name filter input when a specific format is selected', () => {
+      renderWithTheme(
+        <SearchResults
+          {...defaultProps}
+          selectedFormat="maven"
+          nameFilter=""
+          onNameFilterChange={jest.fn()}
+        />,
+      );
+      expect(
+        screen.queryByPlaceholderText(/filter by component name or version/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows the name filter input when no format is selected (all formats)', () => {
+      renderWithTheme(
+        <SearchResults
+          {...defaultProps}
+          selectedFormat=""
+          nameFilter=""
+          onNameFilterChange={jest.fn()}
+        />,
+      );
+      expect(
+        screen.getAllByPlaceholderText(/filter by component name or version/i).length,
+      ).toBeGreaterThan(0);
     });
   });
 });

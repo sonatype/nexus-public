@@ -148,8 +148,20 @@ describe('SettingsCheckbox', () => {
 
   it('label is associated with checkbox via htmlFor', () => {
     render(<SettingsCheckbox {...defaultProps} />);
-    
+
     expect(screen.getByLabelText('Test Checkbox')).toBeInTheDocument();
+  });
+
+  it('sets data-analytics-id when analyticsId is provided', () => {
+    render(<SettingsCheckbox {...defaultProps} analyticsId="my-id" />);
+
+    expect(screen.getByRole('checkbox')).toHaveAttribute('data-analytics-id', 'my-id');
+  });
+
+  it('omits data-analytics-id when analyticsId is not provided', () => {
+    render(<SettingsCheckbox {...defaultProps} />);
+
+    expect(screen.getByRole('checkbox')).not.toHaveAttribute('data-analytics-id');
   });
 });
 

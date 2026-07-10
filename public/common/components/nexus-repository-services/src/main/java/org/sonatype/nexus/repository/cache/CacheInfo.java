@@ -110,10 +110,14 @@ public class CacheInfo
    */
   @Nullable
   public static CacheInfo fromMap(final Map<String, String> map) {
-    if (map != null) {
-      return new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN));
+    if (map == null) {
+      return null;
     }
-    return null;
+    String lastVerified = map.get(LAST_VERIFIED);
+    if (lastVerified == null) {
+      return null;
+    }
+    return new CacheInfo(new DateTime(lastVerified), map.get(CACHE_TOKEN));
   }
 
   /**
@@ -121,10 +125,14 @@ public class CacheInfo
    */
   @Nullable
   public static CacheInfo fromMap(final AttributesMap map) {
-    if (map != null) {
-      return new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN, String.class));
+    if (map == null) {
+      return null;
     }
-    return null;
+    Object lastVerified = map.get(LAST_VERIFIED);
+    if (lastVerified == null) {
+      return null;
+    }
+    return new CacheInfo(new DateTime(lastVerified), map.get(CACHE_TOKEN, String.class));
   }
 
   @Override

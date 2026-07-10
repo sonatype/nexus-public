@@ -17,7 +17,7 @@ import {FormUtils} from '@sonatype/nexus-ui-plugin';
 
 import {useRepositoriesService} from '../RepositoriesContextProvider';
 
-import {NxFormGroup, NxStatefulTransferList, NxFormSelect} from '@sonatype/react-shared-components';
+import {NxFormGroup, NxStatefulTransferList, NxFormSelect, NxReadOnly} from '@sonatype/react-shared-components';
 
 import UIStrings from '../../../../../constants/UIStrings';
 
@@ -46,10 +46,12 @@ export default function NugetGroupConfiguration({parentMachine}) {
 
   const {
     data: {
-      group: {memberNames = []}
+      group: {memberNames = []},
+      url
     },
     pristineData: {name}
   } = parentState.context;
+  const isEdit = !!name;
 
   const nugetRepositories = useMemo(
     () => calculateNugetRepositoriesData(allRepositories, name, setGroupVersion),
@@ -69,6 +71,12 @@ export default function NugetGroupConfiguration({parentMachine}) {
 
   return (
     <>
+      {isEdit && url && (
+        <NxReadOnly>
+          <NxReadOnly.Label>{NUGET.SYMSRV_ENDPOINT.LABEL}</NxReadOnly.Label>
+          <NxReadOnly.Data>{`${url}/symbols`}</NxReadOnly.Data>
+        </NxReadOnly>
+      )}
       <h2 className="nx-h2">{EDITOR.GROUP_CAPTION}</h2>
       <>
         <NxFormGroup

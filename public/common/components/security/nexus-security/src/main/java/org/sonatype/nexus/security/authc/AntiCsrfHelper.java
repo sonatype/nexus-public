@@ -12,27 +12,21 @@
  */
 package org.sonatype.nexus.security.authc;
 
-import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.MediaType;
-
-import org.sonatype.nexus.common.text.Strings2;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.HttpMethod;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.HttpHeaders;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.subject.Subject;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * @since 3.16
@@ -52,26 +46,21 @@ public class AntiCsrfHelper
 
   private final boolean enabled;
 
-  private final List<CsrfExemption> csrfExemptPaths;
-
   private final boolean secFetchHeaderEnabled;
 
   @Autowired
   public AntiCsrfHelper(
       @Value("${" + ENABLED + ":true}") final boolean enabled,
-      @Value("${" + SEC_FETCH_SITE_HEADER_ENABLED + ":true}") final boolean secFetchHeaderEnabled,
-      final List<CsrfExemption> csrfExemptPaths)
+      @Value("${" + SEC_FETCH_SITE_HEADER_ENABLED + ":true}") final boolean secFetchHeaderEnabled)
   {
     this.enabled = enabled;
     this.secFetchHeaderEnabled = secFetchHeaderEnabled;
-    this.csrfExemptPaths = csrfExemptPaths;
   }
 
   /**
    * Checks the request for CSRF if the token is invalid.
    *
-   * @return true if the token is valid or if the token does not require validation. Requests with a multipart form
-   *         content type should call {@link requireValidToken} once the field is extracted.
+   * @return true if the token is valid or if the token does not require validation.
    */
   public boolean isAccessAllowed(final HttpServletRequest httpRequest) {
     if (!enabled) {
@@ -85,28 +74,8 @@ public class AntiCsrfHelper
     }
 
     return safeHttpMethod
-        || isMultiPartFormDataPost(httpRequest) // token is passed as a form field instead of a custom header
-                                                // and is validated in the directnjine code so we just needed
-                                                // to create the cookie above
         || !isSessionAuthentication() // non-session auth
-        || isExemptRequest(httpRequest)
         || isAntiCsrfTokenValid(httpRequest, Optional.ofNullable(httpRequest.getHeader(ANTI_CSRF_TOKEN_NAME)));
-  }
-
-  /**
-   * Validate that the token passed as an argument matches the cookie in the request (if the request requires
-   * validation)
-   *
-   * @throws UnauthorizedException when the provided token is missing or does not match the request
-   */
-  public void requireValidToken(final HttpServletRequest httpRequest, @Nullable final String token) {
-    Optional<String> optToken = token == null
-        ? Optional.ofNullable(httpRequest.getHeader(ANTI_CSRF_TOKEN_NAME))
-        : Optional.of(token);
-    if (!enabled || !isSessionAuthentication() || isAntiCsrfTokenValid(httpRequest, optToken)) {
-      return;
-    }
-    throw new UnauthorizedException(ERROR_MESSAGE_TOKEN_MISMATCH);
   }
 
   @VisibleForTesting
@@ -129,18 +98,6 @@ public class AntiCsrfHelper
   private static boolean isSafeHttpMethod(final HttpServletRequest request) {
     String method = request.getMethod();
     return HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method);
-  }
-
-  private boolean isMultiPartFormDataPost(final HttpServletRequest request) {
-    String contentType = request.getContentType();
-    try {
-      return HttpMethod.POST.equals(request.getMethod()) && !Strings2.isBlank(contentType)
-          && MediaType.MULTIPART_FORM_DATA_TYPE.isCompatible(MediaType.valueOf(contentType));
-    }
-    catch (IllegalArgumentException e) {
-      log.debug("Failed to parse mediatype {}", contentType, e);
-      return false;
-    }
   }
 
   private static boolean isSessionAuthentication() {
@@ -169,13 +126,6 @@ public class AntiCsrfHelper
     Optional<String> cookie = getAntiCsrfTokenCookie(request);
 
     return token.isPresent() && token.equals(cookie);
-  }
-
-  private boolean isExemptRequest(final HttpServletRequest request) {
-    String requestPath = request.getRequestURI();
-    return csrfExemptPaths.stream()
-        .map(CsrfExemption::getPath)
-        .anyMatch(requestPath::contains);
   }
 
   /**

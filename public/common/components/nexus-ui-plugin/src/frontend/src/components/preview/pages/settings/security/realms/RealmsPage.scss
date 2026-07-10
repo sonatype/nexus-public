@@ -82,6 +82,7 @@
 
   &__search-input {
     width: 100%;
+    box-sizing: border-box;
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-6);
     font-size: var(--font-size-1);
     background: var(--color-background);

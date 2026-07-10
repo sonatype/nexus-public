@@ -14,11 +14,11 @@ package org.sonatype.nexus.rapture.internal.security;
 
 import java.io.IOException;
 import java.util.Optional;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authc.LoginEvent;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
-import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
+import static jakarta.servlet.http.HttpServletResponse.SC_NO_CONTENT;
 import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 

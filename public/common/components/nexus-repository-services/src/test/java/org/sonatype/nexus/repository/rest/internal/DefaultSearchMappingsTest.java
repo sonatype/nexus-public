@@ -86,4 +86,20 @@ public class DefaultSearchMappingsTest
     assertTrue("Should contain format mapping", hasFormatMapping);
     assertTrue("Should contain group mapping", hasGroupMapping);
   }
+
+  @Test
+  public void testGet_ContainsRepositoryNameAlias_NEXUS_52827() {
+    // The Search results grid in the UI sends sort property "repositoryName"
+    // (matching the column's dataIndex). Both "repository" and "repositoryName"
+    // must resolve to SearchField.REPOSITORY_NAME so that sorting by the
+    // Repository column does not raise "Invalid sort field".
+    Iterable<SearchMapping> mappings = underTest.get();
+
+    boolean hasRepositoryNameMapping = StreamSupport.stream(mappings.spliterator(), false)
+        .anyMatch(mapping -> "repositoryName".equals(mapping.getAlias())
+            && SearchField.REPOSITORY_NAME.equals(mapping.getField()));
+
+    assertTrue("Should contain repositoryName alias mapped to REPOSITORY_NAME field",
+        hasRepositoryNameMapping);
+  }
 }

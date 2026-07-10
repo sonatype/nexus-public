@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { Box, Flex, Text, Heading, Badge, Tabs, Spinner } from '@radix-ui/themes';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { Box, Flex, Text, Heading, Badge, Tabs, Skeleton } from '@radix-ui/themes';
 import {
   Trash2, Play, Square, FileText, Settings, Calendar, History, Edit3,
   CheckCircle, XCircle, AlertCircle, Clock, Mail, Info, Puzzle, RefreshCw,
@@ -25,8 +25,8 @@ import {
   SettingsToggle,
   SettingsSelect,
   SettingsButton,
+  ConfirmDialog,
 } from '../../../../shared/form';
-import { ConfirmDialog } from '../../../../shared';
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { TaskScheduler } from './TaskScheduler';
 import { DynamicFormFields } from './TaskTypeSelector';
@@ -39,6 +39,7 @@ import {
   TaskFormData,
   TaskDetailProps,
   ScheduleData,
+  ScheduleType,
   formatDate,
   getStatusColor,
   NOTIFICATION_CONDITIONS,
@@ -97,6 +98,14 @@ export function TaskDetail({
   const [confirmAction, setConfirmAction] = useState<'delete' | 'run' | 'stop' | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const firstEditableRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (activeTab === 'settings' && canEdit && firstEditableRef.current) {
+      const input = firstEditableRef.current.querySelector<HTMLInputElement>('input');
+      if (input) input.focus();
+    }
+  }, [activeTab, canEdit]);
+
   // Use the unified form hook - pass taskId from route when task not yet loaded
   const {
     form,
@@ -147,12 +156,21 @@ export function TaskDetail({
     timeZoneOffset: formData.timeZoneOffset || '',
   }), [formData]);
 
+  const allowedSchedules: ScheduleType[] | undefined = useMemo(
+    () => (selectedTaskType?.concurrentRun === false ? ['manual', 'once'] : undefined),
+    [selectedTaskType?.concurrentRun],
+  );
+
   if (initialLoading || !displayTask) {
     return (
-      <Box className="task-detail task-detail--loading">
-        <Flex align="center" justify="center" gap="3" p="6">
-          <Spinner size="3" />
-          <Text>Loading task details...</Text>
+      <Box className="task-detail task-detail--loading" data-testid="task-detail-skeleton">
+        <Flex direction="column" gap="3" p="4">
+          <Skeleton width="40%" height="28px" />
+          <Skeleton width="60%" height="18px" />
+          <Skeleton width="100%" height="18px" />
+          <Skeleton width="100%" height="18px" />
+          <Skeleton width="80%" height="18px" />
+          <Skeleton width="100%" height="18px" />
         </Flex>
       </Box>
     );
@@ -179,6 +197,7 @@ export function TaskDetail({
           }}
           disabled={form.isSaving}
           testId="form-delete"
+          data-analytics-id="nxrm-task-delete"
         >
           Delete
         </SettingsButton>
@@ -189,6 +208,7 @@ export function TaskDetail({
           icon={Square}
           onClick={() => setConfirmAction('stop')}
           testId="task-stop"
+          data-analytics-id="nxrm-task-stop"
         >
           Stop
         </SettingsButton>
@@ -198,6 +218,7 @@ export function TaskDetail({
           icon={Play}
           onClick={() => setConfirmAction('run')}
           testId="task-run"
+          data-analytics-id="nxrm-task-run"
         >
           Run Now
         </SettingsButton>
@@ -212,6 +233,9 @@ export function TaskDetail({
         onCancel={onCancel}
         loading={form.isSaving}
         pristine={form.isPristine}
+        // Visually disable Save when validation fails (e.g. required Repository cleared).
+        // Without this the canSave guard still blocks SUBMIT but the button looks enabled.
+        submitDisabled={form.hasValidationErrors}
         error={externalError || form.saveError || undefined}
         submitLabel="Save"
         cancelLabel="Back"
@@ -269,6 +293,11 @@ export function TaskDetail({
             {/* Summary Tab */}
             <Tabs.Content value="summary">
               <Box className="task-detail__summary-grid">
+                <SummaryItem
+                  icon={<Info size={16} />}
+                  label="ID"
+                  value={displayTask.id}
+                />
                 <SummaryItem
                   icon={<CheckCircle size={16} />}
                   label="Status"
@@ -355,6 +384,7 @@ export function TaskDetail({
                   disabled={!canEdit || form.isSaving}
                   helpText="Leave empty to disable notifications. Enter an email to receive alerts."
                   placeholder="admin@example.com"
+                  inputRef={firstEditableRef}
                 />
                 {formData.alertEmail && (
                   <SettingsSelect
@@ -396,6 +426,7 @@ export function TaskDetail({
                     cronExpression: form.touched?.cronExpression ? form.validationErrors?.cronExpression : undefined,
                   }}
                   disabled={!canEdit || form.isSaving}
+                  allowedSchedules={allowedSchedules}
                 />
               </SettingsFormSection>
             </Tabs.Content>

@@ -12,8 +12,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Flex, Text, Table, Badge } from '@radix-ui/themes';
-import { Server, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Box, Flex, Text, Table, Badge, Tooltip } from '@radix-ui/themes';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { NodeInfo } from './types';
 import { useNodesApi } from './useNodesApi';
 
@@ -52,8 +52,8 @@ export function NodesList({ refreshKey = 0 }: NodesListProps) {
 
   if (loading) {
     return (
-      <Flex align="center" justify="center" className="nodes-list__loading">
-        <Loader2 size={24} className="nodes-list__spinner" />
+      <Flex align="center" justify="center" className="nodes-list__loading" aria-live="polite" aria-busy="true">
+        <Loader2 size={24} className="nodes-list__spinner" aria-hidden="true" />
         <Text size="2">Loading nodes...</Text>
       </Flex>
     );
@@ -62,7 +62,7 @@ export function NodesList({ refreshKey = 0 }: NodesListProps) {
   if (error) {
     return (
       <Box className="nodes-list__error">
-        <AlertCircle size={20} />
+        <AlertCircle size={20} aria-hidden="true" />
         <Text size="2">{error}</Text>
       </Box>
     );
@@ -73,15 +73,14 @@ export function NodesList({ refreshKey = 0 }: NodesListProps) {
       <Table.Root className="nodes-list__table" variant="surface">
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeaderCell className="nodes-list__th">Node</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell className="nodes-list__th">Display Name</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell className="nodes-list__th">Status</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell className="nodes-list__th">Node Name</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell className="nodes-list__th">Node Identity</Table.ColumnHeaderCell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {nodes.length === 0 ? (
             <Table.Row>
-              <Table.Cell colSpan={3} className="nodes-list__empty">
+              <Table.Cell colSpan={2} className="nodes-list__empty">
                 No nodes found
               </Table.Cell>
             </Table.Row>
@@ -90,27 +89,18 @@ export function NodesList({ refreshKey = 0 }: NodesListProps) {
               <Table.Row key={node.name} className="nodes-list__row">
                 <Table.Cell className="nodes-list__cell">
                   <Flex align="center" gap="2">
-                    <Server size={16} className="nodes-list__node-icon" />
-                    <Text weight="medium">{node.name}</Text>
-                  </Flex>
-                </Table.Cell>
-                <Table.Cell className="nodes-list__cell">
-                  {node.displayName || node.name}
-                </Table.Cell>
-                <Table.Cell className="nodes-list__cell">
-                  <Flex align="center" gap="2">
-                    {node.local ? (
-                      <>
-                        <CheckCircle size={16} className="nodes-list__status-icon nodes-list__status-icon--active" />
-                        <Badge color="green" variant="soft">Local (Current)</Badge>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={16} className="nodes-list__status-icon nodes-list__status-icon--active" />
-                        <Badge color="blue" variant="soft">Remote</Badge>
-                      </>
+                    <Text weight="medium">{node.displayName || node.name}</Text>
+                    {node.local && (
+                      <Tooltip content="The node that you are currently connected to">
+                        <Badge color="gray" variant="soft" size="1">
+                          Current Node
+                        </Badge>
+                      </Tooltip>
                     )}
                   </Flex>
+                </Table.Cell>
+                <Table.Cell className="nodes-list__cell">
+                  {node.name}
                 </Table.Cell>
               </Table.Row>
             ))
@@ -122,5 +112,3 @@ export function NodesList({ refreshKey = 0 }: NodesListProps) {
 }
 
 export default NodesList;
-
-

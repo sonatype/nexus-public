@@ -177,6 +177,9 @@ public class RepositoryPermissionChecker
     Permission[] actionPermissions = StreamSupport.stream(repositories.spliterator(), false)
         .map(r -> new RepositoryAdminPermission(r, action))
         .toArray(Permission[]::new);
+    if (actionPermissions.length == 0) {
+      throw new AuthorizationException("User is not permitted.");
+    }
     securityHelper.ensureAnyPermitted(subject, actionPermissions);
   }
 

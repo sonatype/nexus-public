@@ -148,6 +148,9 @@ export function App() {
 
   const isLoginRoute = currentStateName === ROUTE_NAMES.LOGIN;
 
+  // Test hub routes are standalone - no sidebar, no header
+  const isTestHubRoute = currentStateName.startsWith('preview.test');
+
   // Read branding from ExtJS state (available because we wait for ExtJS before rendering)
   const branding = ExtJS.state().getValue('branding');
 
@@ -159,6 +162,25 @@ export function App() {
   // Render minimal layout for login route
   if (isLoginRoute) {
     return <UIView />;
+  }
+
+  // Render minimal layout for test hub routes (standalone, no navigation)
+  // SystemNotices renders ABOVE content (not in grid) since test hub uses full-width layout
+  if (isTestHubRoute) {
+    return (
+      <div className="nxrm-page nxrm-test-hub-page">
+        <SystemNotices />
+        <div className="nxrm-main-content nxrm-main-content--full-width">
+          <Theme appearance={effectiveTheme} accentColor="green" grayColor="slate" radius="medium">
+            <CoreuiToastProvider>
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <UIView />
+              </Suspense>
+            </CoreuiToastProvider>
+          </Theme>
+        </div>
+      </div>
+    );
   }
 
   // Render standard layout for all other routes
@@ -204,16 +226,16 @@ export function App() {
 }
 
 /**
- * Phase 2: React-First Bootstrap with REST Auth
+ * Phase 2: React-First Bootstrap with REST Auth (NEXUS-52583)
  *
- * 1. Fetch auth, permissions, and state via REST (~100ms)
- * 2. Seed window.NX globals so ExtJS.useUser(), checkPermission(),
- *    state().getValue() return real data immediately
- * 3. Render React with authenticated state
- * 4. ExtJS loads in background and overwrites NX globals when ready
+ * 1. ExtJS.waitForExtJs() now returns as soon as ExtJS app initializes
+ *    (does NOT wait for permissions to load)
+ * 2. React renders immediately with empty/REST-bootstrap permissions
+ * 3. Permissions load asynchronously in background
+ * 4. Components update via permission change events
  *
- * This replaces the old ExtJS.waitForExtJs() which blocked React
- * for 3-5 seconds while ExtJS booted.
+ * This enables UI interactivity within ~2 seconds even for users with 400+ roles,
+ * where permission loading can take 10-15 seconds.
  */
 function renderApp() {
   if (window.__nxAppRendered) {
@@ -241,19 +263,17 @@ function renderApp() {
 }
 
 /**
- * Phase 2: React Shell with Enhanced Fallbacks
+ * Phase 2: React Shell with Non-Blocking Bootstrap (NEXUS-52583)
  *
- * Boot sequence uses ExtJS.waitForExtJs() (proven reliable for session mgmt).
- * The Phase 2 value is in the ENHANCED FALLBACKS in ExtJS.js:
- *   - ExtJS.state().getValue() reads from __nxRestBootstrap when NX.State isn't ready
+ * Boot sequence uses ExtJS.waitForExtJs() which now returns immediately
+ * when ExtJS initializes (not waiting for permissions).
+ *
+ * Fallbacks in ExtJS.js handle permission checks during loading:
  *   - ExtJS.checkPermission() reads from __nxRestBootstrap when NX.Permissions isn't ready
- *   - ExtJS.useUser() reads from __nxRestBootstrap when NX.State.getUser isn't ready
+ *   - Components can use ExtJS.arePermissionsReady() to check loading state
  *
- * These fallbacks enable React-first rendering on port 3001 (NexusOne)
- * while keeping the reliable ExtJS session management on port 8081.
- *
- * Future: When the backend supports REST session auth (session cookies on
- * state poll responses), bootstrapFromREST() can replace waitForExtJs().
+ * This enables immediate UI rendering even for users with 400+ roles
+ * where permission loading can take 10-15 seconds on cold cache.
  */
 // Build identifier - check in browser console: window.__nxBuild
 window.__nxBuild = typeof __NX_BUILD_COMMIT__ !== 'undefined' ? __NX_BUILD_COMMIT__ : 'dev';

@@ -31,6 +31,7 @@ import {
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
   Copy,
   Download,
   ExternalLink,
@@ -48,6 +49,9 @@ import { ExtAPIUtils } from '../../../../../interface/ExtAPIUtils';
 
 import { useAssetDetail } from './useAssetDetail';
 import type { AssetDetailData, ComponentTag } from './asset-detail.types';
+import { sanitizeRegistryUrl } from '../detail/detail.utils';
+
+import { formatAttributeValue, shouldDisplayAttributeFacet } from '../browse.constants';
 
 import './AssetDetailPage.scss';
 
@@ -131,12 +135,12 @@ function formatDate(dateString?: string | null): string {
 /**
  * Simple data row component.
  */
-function DetailRow({ 
-  label, 
-  value, 
-  isPath = false 
-}: { 
-  label: string; 
+function DetailRow({
+  label,
+  value,
+  isPath = false
+}: {
+  label: string;
   value: string | null | undefined;
   isPath?: boolean;
 }): JSX.Element {
@@ -145,13 +149,75 @@ function DetailRow({
       <Text size="2" color="gray" className="asset-detail__row-label">
         {label}
       </Text>
-      <Text 
-        size="2" 
+      <Text
+        size="2"
         className={`asset-detail__row-value ${isPath ? 'asset-detail__row-value--path' : ''}`}
       >
         {value || '-'}
       </Text>
     </Flex>
+  );
+}
+
+/**
+ * AttributeSection - Collapsible section for displaying asset attributes.
+ * Matches Classic UI's behavior of showing all attribute facets as collapsible sections.
+ * Exported for testing accessibility behavior.
+ */
+export interface AttributeSectionProps {
+  title: string;
+  attributes: Record<string, unknown>;
+  defaultOpen?: boolean;
+}
+
+export function AttributeSection({ title, attributes, defaultOpen = false }: AttributeSectionProps): JSX.Element | null {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const displayableAttributes = Object.entries(attributes).filter(
+    ([, value]) => value !== null && value !== undefined
+  );
+
+  if (displayableAttributes.length === 0) {
+    return null;
+  }
+
+  const handleToggle = () => setIsOpen(!isOpen);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggle();
+    }
+  };
+
+  return (
+    <Box className="collapsible-section">
+      <Flex
+        className={`collapsible-section__header ${isOpen ? 'collapsible-section__header--open' : ''}`}
+        onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
+      >
+        <Text className="collapsible-section__title">{title}</Text>
+        <ChevronDown
+          size={16}
+          className={`collapsible-section__toggle ${isOpen ? 'collapsible-section__toggle--open' : ''}`}
+        />
+      </Flex>
+      {isOpen && (
+        <Box className="collapsible-section__content">
+          {displayableAttributes.map(([key, value]) => (
+            <Flex key={key} className="attributes-section__item">
+              <Text className="attributes-section__key">{key}</Text>
+              <Text className="attributes-section__value" style={{ whiteSpace: 'pre-wrap' }}>
+                {formatAttributeValue(value)}
+              </Text>
+            </Flex>
+          ))}
+        </Box>
+      )}
+    </Box>
   );
 }
 
@@ -162,12 +228,14 @@ function getUsageSnippets(
   format: string | undefined,
   group: string | null | undefined,
   name: string | undefined,
-  version: string | null | undefined
+  version: string | null | undefined,
+  registryUrl?: string | null
 ): { title: string; code: string }[] {
   if (!format || !name) return [];
   const snippets: { title: string; code: string }[] = [];
   const g = group || '';
   const v = version || 'LATEST';
+  const dockerPullTarget = sanitizeRegistryUrl(registryUrl) ? `${sanitizeRegistryUrl(registryUrl)}/${name}` : name;
 
   switch (format.toLowerCase()) {
     case 'maven2':
@@ -192,7 +260,7 @@ function getUsageSnippets(
       snippets.push({ title: '.NET CLI', code: `dotnet add package ${name} --version ${v}` });
       break;
     case 'docker':
-      snippets.push({ title: 'Docker', code: `docker pull ${name}:${v}` });
+      snippets.push({ title: 'Docker', code: `docker pull ${dockerPullTarget}:${v}` });
       break;
     case 'helm':
       snippets.push({ title: 'Helm', code: `helm install ${name} --version ${v}` });
@@ -416,15 +484,20 @@ export function AssetDetailPage({
     removeTag,
   } = useAssetDetail({ repositoryName, assetId, componentId });
 
+  const isProEdition = ExtJS.isProEdition?.() ?? false;
   const canEdit = ExtJS.checkPermission('nexus:tags:*');
   const canDelete = ExtJS.checkPermission('nexus:repository-admin:*:*:delete');
 
-  // Generate usage snippets
+  // Generate usage snippets — include docker registryUrl so docker pull commands
+  // carry the registry host (e.g. `docker pull host:port/image:tag`). Top-level field
+  // computed by the backend at read time (NEXUS-51972).
+  const dockerRegistryUrl = (asset as { registryUrl?: string } | null | undefined)?.registryUrl;
   const usageSnippets = getUsageSnippets(
     asset?.format,
     component?.group,
     component?.name || asset?.name,
-    component?.version
+    component?.version,
+    dockerRegistryUrl
   );
 
   const handleBack = useCallback(() => {
@@ -505,7 +578,7 @@ export function AssetDetailPage({
               <Tabs.Trigger value="summary">{STRINGS.tabs.summary}</Tabs.Trigger>
               <Tabs.Trigger value="usage">{STRINGS.tabs.usage}</Tabs.Trigger>
               <Tabs.Trigger value="attributes">{STRINGS.tabs.attributes}</Tabs.Trigger>
-              <Tabs.Trigger value="tags">{STRINGS.tabs.tags}</Tabs.Trigger>
+              {isProEdition && <Tabs.Trigger value="tags">{STRINGS.tabs.tags}</Tabs.Trigger>}
               <Tabs.Trigger value="lifecycle">{STRINGS.tabs.lifecycle}</Tabs.Trigger>
             </Tabs.List>
 
@@ -542,6 +615,7 @@ export function AssetDetailPage({
             {/* Attributes Tab */}
             <Tabs.Content value="attributes">
               <Box p="4">
+                {/* Basic info - always shown */}
                 <DetailRow label="Repository" value={repositoryName} />
                 <DetailRow label="Format" value={asset?.format} />
                 {component && (
@@ -559,19 +633,33 @@ export function AssetDetailPage({
                     {asset.checksum.md5 && <DetailRow label="MD5" value={asset.checksum.md5} />}
                   </>
                 )}
+                {/* Dynamic attribute facets - matches Classic UI behavior */}
+                {asset?.attributes &&
+                  Object.entries(asset.attributes)
+                    .filter(([key, value]) => shouldDisplayAttributeFacet(key, value))
+                    .map(([facetName, facetValues]) => (
+                      <AttributeSection
+                        key={facetName}
+                        title={facetName}
+                        attributes={facetValues as Record<string, unknown>}
+                        defaultOpen={facetName === 'firewall' || facetName === 'npm' || facetName === 'docker'}
+                      />
+                    ))}
               </Box>
             </Tabs.Content>
 
-            {/* Component Tags Tab */}
-            <Tabs.Content value="tags">
-              <TagsPanel
-                tags={tags}
-                onAddTag={addTag}
-                onRemoveTag={removeTag}
-                canEdit={canEdit}
-                loading={tagsLoading}
-              />
-            </Tabs.Content>
+            {/* Component Tags Tab — Pro feature: hidden in CE mode */}
+            {isProEdition && (
+              <Tabs.Content value="tags">
+                <TagsPanel
+                  tags={tags}
+                  onAddTag={addTag}
+                  onRemoveTag={removeTag}
+                  canEdit={canEdit}
+                  loading={tagsLoading}
+                />
+              </Tabs.Content>
+            )}
 
             {/* Sonatype Lifecycle Tab */}
             <Tabs.Content value="lifecycle">

@@ -13,14 +13,20 @@
 package org.sonatype.nexus.security.authc;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import javax.annotation.Nullable;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataAccessException;
@@ -146,6 +152,45 @@ public class NexusBasicHttpAuthenticationFilter
   }
 
   /**
+   * Pre-authentication rate limit guard. Short-circuits the normal challenge/login cycle for
+   * blocked usernames, sending 429 before Shiro evaluates credentials or issues a 401 challenge.
+   *
+   * <p>
+   * Overriding {@code onAccessDenied} (rather than {@code executeLogin}) is required because
+   * {@code HttpAuthenticationFilter.onAccessDenied} unconditionally calls {@code sendChallenge}
+   * after {@code executeLogin} returns false, which would overwrite our 429 with a 401.
+   */
+  @Override
+  protected boolean onAccessDenied(final ServletRequest request, final ServletResponse response) throws Exception {
+    if (rateLimiterService != null && isLoginAttempt(request, response)) {
+      AuthenticationToken token = createToken(request, response);
+      if (token != null) {
+        // Compute the rate limit key once and reuse — avoids double hashing for API key tokens
+        String rateLimitKey = getRateLimitKey(token);
+        RateLimitResult limitResult = checkRateLimitForKey(token, rateLimitKey);
+        if (limitResult != null) {
+          log.debug("Pre-auth rate limit blocking login attempt for key '{}'", truncateHash(rateLimitKey));
+          if (eventManager != null) {
+            String clientIp = WebUtils.toHttp(request).getRemoteAddr();
+            eventManager.post(new AuthRateLimitedEvent(rateLimitKey, limitResult.attemptCount(),
+                limitResult.retryAfterSeconds(), clientIp, "BASIC"));
+          }
+          try {
+            HttpServletResponse httpResponse = WebUtils.toHttp(response);
+            httpResponse.setHeader("Retry-After", String.valueOf(limitResult.retryAfterSeconds()));
+            httpResponse.sendError(429, "Too many authentication attempts");
+          }
+          catch (IOException ex) {
+            log.error("Failed to send 429 response", ex);
+          }
+          return false;
+        }
+      }
+    }
+    return super.onAccessDenied(request, response);
+  }
+
+  /**
    * Override to apply rate limiting after a confirmed credential failure and to handle
    * infrastructure exceptions.
    *
@@ -153,13 +198,10 @@ public class NexusBasicHttpAuthenticationFilter
    * Order of checks:
    * <ol>
    * <li>Infrastructure failure ({@link DataAccessException}) → 503, counter not incremented.</li>
-   * <li>Rate limit check ({@link AuthRateLimiterService#checkAndRecord}) → 429 if threshold exceeded.</li>
+   * <li>Rate limit counter increment ({@link AuthRateLimiterService#checkAndRecord}) — 429 for the
+   * <em>current</em> attempt if the threshold is now exceeded (race-safety), otherwise 401.</li>
    * <li>Delegate to super → 401.</li>
    * </ol>
-   *
-   * <p>
-   * Placing the rate limit check here (post-auth) ensures that correct credentials always
-   * reach Shiro and can reset the counter via {@link #onLoginSuccess}.
    */
   @Override
   protected boolean onLoginFailure(
@@ -193,14 +235,15 @@ public class NexusBasicHttpAuthenticationFilter
 
     // 2. Rate limiting — applied after confirmed credential failure
     if (rateLimiterService != null) {
-      String username = token.getPrincipal().toString();
-      RateLimitResult limitResult = rateLimiterService.checkAndRecord(username);
+      // Compute the rate limit key once and reuse — avoids double hashing for API key tokens
+      String rateLimitKey = getRateLimitKey(token);
+      RateLimitResult limitResult = recordFailedAttemptForKey(token, rateLimitKey);
       if (limitResult != null) {
-        log.debug("Rate limiting login attempt for user '{}'", username);
+        log.debug("Rate limiting login attempt for key '{}'", truncateHash(rateLimitKey));
         if (eventManager != null) {
-          // IP is captured for audit trail only; rate-limit decisions are username-only (OWASP-aligned)
+          // IP is captured for audit trail only; rate-limit decisions use username or token hash
           String clientIp = WebUtils.toHttp(request).getRemoteAddr();
-          eventManager.post(new AuthRateLimitedEvent(username, limitResult.attemptCount(),
+          eventManager.post(new AuthRateLimitedEvent(rateLimitKey, limitResult.attemptCount(),
               limitResult.retryAfterSeconds(), clientIp, "BASIC"));
         }
         try {
@@ -238,9 +281,7 @@ public class NexusBasicHttpAuthenticationFilter
       request.setAttribute(ATTR_USER_ID, principal.toString());
 
       if (rateLimiterService != null) {
-        // Use the token principal (raw username from Authorization header) to match
-        // the key used in checkAndRecord, which also reads from the Authorization header
-        rateLimiterService.recordSuccess(token.getPrincipal().toString());
+        clearRateLimitOnSuccess(token);
       }
     }
     return super.onLoginSuccess(token, subject, request, response);
@@ -258,5 +299,174 @@ public class NexusBasicHttpAuthenticationFilter
 
     String[] parts = authzHeader.split(" ");
     return parts.length > 1 && parts[1].equals(EMPTY_CREDENTIALS);
+  }
+
+  /**
+   * Returns the rate limit key for the given authentication token.
+   *
+   * <p>
+   * For API key authentication ({@link NexusApiKeyAuthenticationToken}), uses a SHA-256 hash
+   * of the token to isolate rate limits per token, preventing one bad token from affecting
+   * all users of the same format.
+   *
+   * <p>
+   * For regular username/password authentication, uses the principal (username).
+   *
+   * @param token the authentication token
+   * @return the rate limit key
+   */
+  protected String getRateLimitKey(final AuthenticationToken token) {
+    if (token instanceof NexusApiKeyAuthenticationToken) {
+      // For API keys, use a hash of the token to isolate rate limits per token
+      char[] credentials = getCredentialsSafely(token);
+      if (credentials == null) {
+        // Fallback to principal if credentials cannot be extracted as char[]
+        return token.getPrincipal().toString();
+      }
+      return hashToken(credentials);
+    }
+    // For regular auth (username/password), use the principal (username)
+    return token.getPrincipal().toString();
+  }
+
+  /**
+   * Checks if the given token is currently rate-limited without incrementing the counter,
+   * using a precomputed rate limit key to avoid recomputing the token hash.
+   */
+  private RateLimitResult checkRateLimitForKey(final AuthenticationToken token, final String rateLimitKey) {
+    if (token instanceof NexusApiKeyAuthenticationToken
+        && getCredentialsSafely(token) != null) {
+      return rateLimiterService.checkByToken(rateLimitKey);
+    }
+    return rateLimiterService.check(rateLimitKey);
+  }
+
+  /**
+   * Records a failed authentication attempt and checks if rate limiting should be applied,
+   * using a precomputed rate limit key to avoid recomputing the token hash.
+   */
+  private RateLimitResult recordFailedAttemptForKey(final AuthenticationToken token, final String rateLimitKey) {
+    if (token instanceof NexusApiKeyAuthenticationToken
+        && getCredentialsSafely(token) != null) {
+      return rateLimiterService.checkAndRecordByToken(rateLimitKey);
+    }
+    return rateLimiterService.checkAndRecord(rateLimitKey);
+  }
+
+  /**
+   * Clears the rate limit counter on successful authentication.
+   */
+  private void clearRateLimitOnSuccess(final AuthenticationToken token) {
+    String rateLimitKey = getRateLimitKey(token);
+    if (token instanceof NexusApiKeyAuthenticationToken
+        && getCredentialsSafely(token) != null) {
+      rateLimiterService.recordSuccessByToken(rateLimitKey);
+    }
+    else {
+      // Use the token principal (raw username from Authorization header) to match
+      // the key used in checkAndRecord, which also reads from the Authorization header
+      rateLimiterService.recordSuccess(rateLimitKey);
+    }
+  }
+
+  /**
+   * Safely extracts credentials from an authentication token with type-safe handling.
+   *
+   * <p>
+   * Returns {@code null} if the credentials are not a {@code char[]}. This protects the
+   * filter from a {@link ClassCastException} should
+   * {@link NexusApiKeyAuthenticationToken#getCredentials()} ever be changed to return a
+   * different type ({@code String}, {@code byte[]}, etc.).
+   *
+   * @param token the authentication token
+   * @return the credentials as char[], or null if not a char[] or null
+   */
+  @Nullable
+  private static char[] getCredentialsSafely(final AuthenticationToken token) {
+    Object credentials = token.getCredentials();
+    if (credentials instanceof char[]) {
+      return (char[]) credentials;
+    }
+    return null;
+  }
+
+  /**
+   * Computes a SHA-256 hash of the given token for use as a rate limit key.
+   * Uses CharBuffer/ByteBuffer to avoid creating intermediate String objects,
+   * preserving Shiro's char[] credential model for security.
+   *
+   * <p>
+   * The byte array used for hashing is zeroed after use to minimize exposure.
+   *
+   * @param token the token characters; must not be null
+   * @return a hex-encoded SHA-256 hash of the token
+   */
+  private static String hashToken(final char[] token) {
+    if (token == null || token.length == 0) {
+      throw new IllegalArgumentException("Token must not be null or empty");
+    }
+
+    byte[] tokenBytes = null;
+    boolean allocatedOwn = false;
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      // Convert char[] to byte[] without creating an intermediate String.
+      CharBuffer charBuffer = CharBuffer.wrap(token);
+      ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(charBuffer);
+
+      // StandardCharsets.UTF_8.encode() may return a direct ByteBuffer with no backing
+      // array; calling array() on it throws UnsupportedOperationException, which would
+      // let blocked requests bypass rate limiting. Handle both cases safely.
+      if (byteBuffer.hasArray()) {
+        tokenBytes = byteBuffer.array();
+      }
+      else {
+        tokenBytes = new byte[byteBuffer.remaining()];
+        byteBuffer.get(tokenBytes);
+        allocatedOwn = true;
+      }
+
+      byte[] hash = digest.digest(tokenBytes);
+      return bytesToHex(hash);
+    }
+    catch (NoSuchAlgorithmException e) {
+      // SHA-256 is guaranteed to be available on all Java platforms
+      throw new RuntimeException("SHA-256 algorithm not available", e);
+    }
+    finally {
+      // Zero out the byte array we allocated to minimize credential exposure.
+      if (allocatedOwn && tokenBytes != null) {
+        Arrays.fill(tokenBytes, (byte) 0);
+      }
+    }
+  }
+
+  /**
+   * Truncates a hash for logging purposes to avoid creating stable token fingerprints
+   * in shared logs. Returns first 8 characters followed by "...".
+   *
+   * <p>
+   * Non-hash keys (e.g. usernames) shorter than 9 characters are returned unchanged so
+   * username logs continue to read naturally.
+   *
+   * @param key the rate limit key (full hash or username)
+   * @return safe-to-log representation
+   */
+  private static String truncateHash(final String key) {
+    if (key == null || key.length() <= 8) {
+      return key;
+    }
+    return key.substring(0, 8) + "...";
+  }
+
+  /**
+   * Converts a byte array to a lowercase hex string.
+   */
+  private static String bytesToHex(final byte[] bytes) {
+    StringBuilder hexString = new StringBuilder(bytes.length * 2);
+    for (byte b : bytes) {
+      hexString.append(String.format("%02x", b));
+    }
+    return hexString.toString();
   }
 }

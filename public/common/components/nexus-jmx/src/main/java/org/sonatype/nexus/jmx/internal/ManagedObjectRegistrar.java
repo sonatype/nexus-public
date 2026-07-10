@@ -203,8 +203,8 @@ public class ManagedObjectRegistrar
   private static Optional<String> getJavaxNamed(final Object managedObject) {
     return Optional.ofNullable(managedObject)
         .map(Object::getClass)
-        .map(clazz -> clazz.getAnnotation(javax.inject.Named.class))
-        .map(javax.inject.Named::value);
+        .map(clazz -> clazz.getAnnotation(jakarta.inject.Named.class))
+        .map(jakarta.inject.Named::value);
   }
 
   /**

@@ -61,6 +61,7 @@ const FORMAT_LOGO_MAP: Record<string, string> = {
   rubygems,
   swift,
   terraform,
+  terraformbackend: terraform,
   yum,
 };
 

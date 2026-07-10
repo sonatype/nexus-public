@@ -14,7 +14,7 @@ package org.sonatype.nexus.siesta;
 
 import java.util.List;
 
-import javax.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.WebTarget;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
 import org.junit.jupiter.api.Test;

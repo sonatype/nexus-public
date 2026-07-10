@@ -40,6 +40,8 @@ export function SettingsTextInput({
   placeholder = '',
   helpText = '',
   error = '',
+  errorAction = null,
+  alwaysShowHelpText = false,
   required = false,
   disabled = false,
   readOnly = false,
@@ -73,7 +75,7 @@ export function SettingsTextInput({
           {required && <span className="settings-text-input__required" aria-hidden="true">*</span>}
         </label>
       )}
-      {helpText && !error && (
+      {helpText && (!error || alwaysShowHelpText) && (
         <Text as="p" size="1" id={helpId} className="settings-text-input__help">
           {helpText}
         </Text>
@@ -107,6 +109,7 @@ export function SettingsTextInput({
         <Text as="p" size="1" id={errorId} className="settings-text-input__error">
           <AlertCircle size={14} aria-hidden="true" />
           {error}
+          {errorAction}
         </Text>
       )}
     </div>
@@ -128,6 +131,10 @@ SettingsTextInput.propTypes = {
   helpText: PropTypes.string,
   /** Error message displayed below input (replaces help text when present) */
   error: PropTypes.string,
+  /** Optional action node rendered inline after the error message (e.g. a "Suggest" link) */
+  errorAction: PropTypes.node,
+  /** Keep helpText visible even when an error is shown */
+  alwaysShowHelpText: PropTypes.bool,
   /** Mark field as required */
   required: PropTypes.bool,
   /** Disable input */

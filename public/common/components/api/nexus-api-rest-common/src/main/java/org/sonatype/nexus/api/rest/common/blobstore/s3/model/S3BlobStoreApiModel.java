@@ -12,16 +12,16 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreApiSoftQuota;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 
@@ -34,15 +34,15 @@ public class S3BlobStoreApiModel
 {
   @NotNull
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
-  @ApiModelProperty(value = "The name of the S3 blob store.", example = "s3", required = true)
+  @Schema(description = "The name of the S3 blob store.", example = "s3", requiredMode = Schema.RequiredMode.REQUIRED)
   private String name;
 
-  @ApiModelProperty("Settings to control the soft quota.")
+  @Schema(description = "Settings to control the soft quota.")
   private final BlobStoreApiSoftQuota softQuota;
 
   @Valid
   @NotNull
-  @ApiModelProperty("The S3 specific configuration details for the S3 object that'll contain the blob store.")
+  @Schema(description = "The S3 specific configuration details for the S3 object that'll contain the blob store.")
   private final S3BlobStoreApiBucketConfiguration bucketConfiguration;
 
   @JsonCreator
@@ -68,7 +68,7 @@ public class S3BlobStoreApiModel
     return bucketConfiguration;
   }
 
-  @ApiModelProperty(value = "The blob store type.", readOnly = true, example = TYPE)
+  @Schema(description = "The blob store type.", example = TYPE)
   public String getType() {
     return TYPE;
   }

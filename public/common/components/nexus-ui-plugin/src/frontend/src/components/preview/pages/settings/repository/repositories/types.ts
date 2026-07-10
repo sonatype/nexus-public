@@ -50,6 +50,7 @@ export interface ProxyConfig {
   remoteUrl: string;
   contentMaxAge: number;
   metadataMaxAge: number;
+  preserveEncodedCharacters?: boolean;
 }
 
 /**
@@ -57,7 +58,7 @@ export interface ProxyConfig {
  */
 export interface NegativeCacheConfig {
   enabled: boolean;
-  timeToLive: number;
+  timeToLive?: number;
 }
 
 /**
@@ -151,6 +152,32 @@ export interface DockerConfig {
 }
 
 /**
+ * AWS ECR authentication configuration (access key / secret key).
+ *
+ * Conceptually a discriminated union on `enabled`: when `enabled` is false the
+ * other fields have no meaning and SHOULD be omitted from the API payload
+ * entirely (see useRepositoriesApi). When `enabled` is true, `awsRegion`,
+ * `accessKeyId`, and `secretAccessKey` are required at the form-validation
+ * layer; `registryId` is optional.
+ *
+ * Kept as a single interface (not a strict TS union) because the React form
+ * builds this object incrementally via `{...prev, fieldX: value}` patterns
+ * during user editing, and a strict union would force every callsite through
+ * a builder helper. Form-layer validators (see `validateEcr*` in this module)
+ * and the API-layer omission in useRepositoriesApi enforce the "enabled
+ * implies required fields" invariant at runtime.
+ *
+ * On edit, `secretAccessKey` may be omitted to keep the stored secret.
+ */
+export interface EcrAuthConfig {
+  enabled: boolean;
+  awsRegion?: string;
+  registryId?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+}
+
+/**
  * Docker proxy-specific configuration
  */
 export interface DockerProxyConfig {
@@ -158,28 +185,29 @@ export interface DockerProxyConfig {
   indexUrl?: string | null;
   cacheForeignLayers: boolean;
   foreignLayerUrlWhitelist: string[];
+  ecrAuth?: EcrAuthConfig | null;
 }
 
 /**
- * PyPI proxy configuration
+ * PyPI proxy configuration.
+ *
+ * The legacy `removeQuarantinedVersions` field that previously lived here was removed
+ * post-migration STL-381 — PCCS is expressed via {@code firewall.mode = "PCCS"} on the
+ * top-level repository config, and the migration step strips the field from migrated repos.
  */
 export interface PypiConfig {
   indexPath?: string;
-  removeQuarantinedVersions?: boolean;
 }
 
-/**
- * npm-specific configuration
- */
-export interface NpmConfig {
-  removeQuarantinedVersions?: boolean;
-}
+// `NpmConfig` was removed post-migration STL-381: its only field was the legacy
+// `removeQuarantinedVersions` flag, which is now redundant with `firewall.mode = "PCCS"`.
+// Any future npm-specific config should reintroduce a typed interface at that point.
 
 /**
  * NuGet proxy configuration
  */
 export interface NugetProxyConfig {
-  queryCacheItemMaxAge: number;
+  queryCacheItemMaxAge?: number;
   nugetVersion: 'V2' | 'V3';
 }
 
@@ -258,7 +286,6 @@ export interface RepositoryAttributes {
   maven?: MavenConfig;
   docker?: DockerConfig;
   dockerProxy?: DockerProxyConfig;
-  npm?: NpmConfig;
   nugetProxy?: NugetProxyConfig;
   apt?: AptConfig;
   aptSigning?: AptSigningConfig;
@@ -283,6 +310,7 @@ export interface Repository {
   size?: number;
   recipe?: string;
   routingRuleId?: string | null;
+  blobStoreName?: string;
   attributes?: RepositoryAttributes;
 }
 
@@ -307,7 +335,6 @@ export interface RepositoryFormData {
   maven?: MavenConfig;
   docker?: DockerConfig;
   dockerProxy?: DockerProxyConfig;
-  npm?: NpmConfig;
   nugetProxy?: NugetProxyConfig;
   apt?: AptConfig;
   aptSigning?: AptSigningConfig;
@@ -478,6 +505,12 @@ export interface RepositoryFormErrors {
   };
   dockerProxy?: {
     indexUrl?: string;
+    ecrAuth?: {
+      awsRegion?: string;
+      registryId?: string;
+      accessKeyId?: string;
+      secretAccessKey?: string;
+    };
   };
   nugetProxy?: {
     queryCacheItemMaxAge?: string;
@@ -529,6 +562,22 @@ export interface RepositoryFormProps {
   onSave: (data: RepositoryFormData) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => void;
+  /** Triggers a search-index rebuild for the repository being edited. Hidden for group repositories. */
+  onRebuildIndex?: () => void;
+  /** Invalidates cached metadata/content for the repository being edited. Hidden for hosted repositories. */
+  onInvalidateCache?: () => void;
+  /**
+   * Toggles the repository's online (system status) flag. The handler receives
+   * the next desired online value so the parent can show the right
+   * confirmation copy and PUT the right payload.
+   */
+  onToggleOnline?: (nextOnline: boolean) => void;
+  /**
+   * True while the parent is executing one of the action callbacks
+   * (rebuild/invalidate/toggle). When true, all action buttons should render
+   * disabled so the user cannot fire a second action concurrently.
+   */
+  isActionInFlight?: boolean;
   loading?: boolean;
   error?: string;
   /** Hide SettingsForm action buttons (for use in wizard mode) */
@@ -594,6 +643,7 @@ export const FORMAT_LABELS: Record<string, string> = {
   gitlfs: 'Git LFS',
   p2: 'p2',
   terraform: 'Terraform',
+  terraformbackend: 'Terraform Backend',
   composer: 'Composer',
   cargo: 'Cargo (Rust)',
   huggingface: 'Hugging Face',
@@ -664,6 +714,7 @@ export const DEFAULT_PROXY_VALUES: Partial<RepositoryFormData> = {
     remoteUrl: '',
     contentMaxAge: -1,
     metadataMaxAge: 1440,
+    preserveEncodedCharacters: false,
   },
   negativeCache: {
     enabled: true,
@@ -762,6 +813,56 @@ export function validateBlobStore(blobStoreName: string | undefined): string | u
 export function validateGroupMembers(members: string[] | undefined): string | undefined {
   if (!members || members.length === 0) {
     return 'At least one member repository is required';
+  }
+  return undefined;
+}
+
+// =============================================================================
+// AWS ECR Validation
+// =============================================================================
+
+/**
+ * AWS region: e.g., us-east-1, eu-west-2, ap-northeast-1, us-gov-west-1.
+ */
+// Allow 3 or 4 hyphen-separated segments so GovCloud (us-gov-west-1) and ISO (us-iso-east-1) regions validate.
+export const ECR_AWS_REGION_PATTERN = /^[a-z]{2,4}(-[a-z]+){1,2}-\d{1,2}$/;
+
+/**
+ * AWS Registry ID is a 12-digit AWS account number.
+ */
+export const ECR_REGISTRY_ID_PATTERN = /^\d{12}$/;
+
+/**
+ * AWS Access Key ID — 16-128 uppercase alphanumeric chars (covers AKIA, ASIA, etc.).
+ */
+export const ECR_ACCESS_KEY_ID_PATTERN = /^[A-Z0-9]{16,128}$/;
+
+export function validateEcrAwsRegion(value: string | undefined): string | undefined {
+  if (!value?.trim()) {
+    return 'AWS region is required';
+  }
+  if (!ECR_AWS_REGION_PATTERN.test(value.trim())) {
+    return 'Invalid AWS region format (e.g., us-east-1)';
+  }
+  return undefined;
+}
+
+export function validateEcrRegistryId(value: string | undefined): string | undefined {
+  if (!value?.trim()) {
+    return undefined; // optional field
+  }
+  if (!ECR_REGISTRY_ID_PATTERN.test(value.trim())) {
+    return 'Registry ID must be a 12-digit AWS account number';
+  }
+  return undefined;
+}
+
+export function validateEcrAccessKeyId(value: string | undefined): string | undefined {
+  if (!value?.trim()) {
+    return 'Access Key ID is required';
+  }
+  if (!ECR_ACCESS_KEY_ID_PATTERN.test(value.trim())) {
+    return 'Invalid AWS access key ID format';
   }
   return undefined;
 }

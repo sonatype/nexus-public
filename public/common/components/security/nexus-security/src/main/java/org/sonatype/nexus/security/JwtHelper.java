@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
@@ -133,20 +133,15 @@ public class JwtHelper
   }
 
   /**
-   * Verify jwt, refresh if it's valid and make new cookie
+   * Refresh a previously-verified JWT into a new cookie. Callers should obtain {@code decoded}
+   * from {@link #verifyJwt(String)}.
    */
-  public Cookie verifyAndRefreshJwtCookie(
-      final String jwt,
-      final boolean secureRequest) throws JwtVerificationException
-  {
-    checkNotNull(jwt);
-
-    DecodedJWT decoded = verifyJwt(jwt);
+  public Cookie refreshJwtCookie(final DecodedJWT decoded, final boolean secureRequest) {
+    checkNotNull(decoded);
     String newJwt = createToken(
         decoded.getClaim(USER).asString(),
         decoded.getClaim(REALM).asString(),
         decoded.getClaim(USER_SESSION_ID).asString());
-
     return createCookie(newJwt, secureRequest);
   }
 

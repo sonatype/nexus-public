@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -28,11 +28,10 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiEncryption
 {
-  @ApiModelProperty(value = "The type of S3 server side encryption to use.",
-      allowableValues = "s3ManagedEncryption,kmsManagedEncryption")
+  @Schema(description = "The type of S3 server side encryption to use.")
   private final String encryptionType;
 
-  @ApiModelProperty("The encryption key.")
+  @Schema(description = "The encryption key.")
   private final String encryptionKey;
 
   @JsonCreator

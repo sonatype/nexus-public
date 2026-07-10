@@ -13,8 +13,8 @@
 package org.sonatype.nexus.repository.security;
 
 import java.util.List;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;

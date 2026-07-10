@@ -23,7 +23,8 @@ import {
   Copy,
   Lock,
 } from 'lucide-react';
-import type { RepositoryProfileData } from '../hooks/useRepositoryProfile';
+import type { RepositoryProfileData } from '../types';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 // =============================================================================
 // Types
@@ -132,6 +133,8 @@ export function ConfigurationTab({ repository }: ConfigurationTabProps): JSX.Ele
   const isProxy = repository.type === 'proxy';
   const isHosted = repository.type === 'hosted';
   const isGroup = repository.type === 'group';
+
+  const isCloud = ExtJS.useState?.(() => ExtJS.state()?.getValue?.('isCloud'));
 
   return (
     <Box>
@@ -245,7 +248,7 @@ export function ConfigurationTab({ repository }: ConfigurationTabProps): JSX.Ele
         <ConfigSection title="Maven" icon={Settings}>
           <ConfigRow label="Version Policy" value={maven.versionPolicy} />
           <ConfigRow label="Layout Policy" value={maven.layoutPolicy} />
-          <ConfigRow label="Content Disposition" value={maven.contentDisposition} />
+          {!isCloud && <ConfigRow label="Content Disposition" value={maven.contentDisposition} />}
         </ConfigSection>
       )}
 
@@ -286,7 +289,7 @@ export function ConfigurationTab({ repository }: ConfigurationTabProps): JSX.Ele
         </ConfigSection>
       )}
 
-      {raw && (
+      {raw && !isCloud && (
         <ConfigSection title="Raw" icon={Settings}>
           <ConfigRow label="Content Disposition" value={raw.contentDisposition} />
         </ConfigSection>

@@ -12,16 +12,17 @@
  */
 package org.sonatype.nexus.siesta;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Path;
-
 import org.sonatype.nexus.siesta.internal.resteasy.ComponentContainerImpl;
 
+// NEXUS-46395: javax.servlet → jakarta.servlet for RESTEasy 7.
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.Path;
 import org.jboss.resteasy.core.ResourceMethodInvoker;
 import org.jboss.resteasy.core.SynchronousDispatcher;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletInputMessage;
 import org.jboss.resteasy.spi.HttpRequest;
+import org.jboss.resteasy.spi.ResourceInvoker;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 import static java.util.Objects.nonNull;
@@ -54,22 +55,24 @@ public class SiestaResourceMethodFinder
       final HttpServletResponse response)
   {
     StringBuilder buffer = new StringBuilder();
-    ResourceMethodInvoker method = getResourceMethod(request, response);
+    ResourceInvoker invoker = getResourceMethod(request, response);
 
-    Path classPath = method.getResourceClass().getAnnotation(Path.class);
-    if (nonNull(classPath)) {
-      buffer.append(maybePrependWithForwardSlash(classPath.value()));
-    }
+    if (invoker instanceof ResourceMethodInvoker method) {
+      Path classPath = method.getResourceClass().getAnnotation(Path.class);
+      if (nonNull(classPath)) {
+        buffer.append(maybePrependWithForwardSlash(classPath.value()));
+      }
 
-    Path methodPath = method.getMethod().getDeclaredAnnotation(Path.class);
-    if (nonNull(methodPath)) {
-      buffer.append(maybePrependWithForwardSlash(methodPath.value()));
+      Path methodPath = method.getMethod().getDeclaredAnnotation(Path.class);
+      if (nonNull(methodPath)) {
+        buffer.append(maybePrependWithForwardSlash(methodPath.value()));
+      }
     }
 
     return cleanForwardSlashes(buffer.toString());
   }
 
-  public ResourceMethodInvoker getResourceMethod(
+  public ResourceInvoker getResourceMethod(
       final HttpServletRequest request,
       final HttpServletResponse response)
   {
@@ -83,7 +86,7 @@ public class SiestaResourceMethodFinder
         request.getMethod(),
         (SynchronousDispatcher) this.componentContainer.getDispatcher());
 
-    return (ResourceMethodInvoker) deployment.getRegistry().getResourceInvoker(httpRequest);
+    return deployment.getRegistry().getResourceInvoker(httpRequest);
   }
 
   private static String maybePrependWithForwardSlash(final String value) {

@@ -83,7 +83,7 @@ export default FormUtils.buildFormMachine({
       const typesMap = modifyFormFields(types.data);
       const data = convertActionsToObject(privilege.data, typesMap);
       if(data.type === TYPES.REPOSITORY_CONTENT_SELECTOR) {
-        if(data.format !== '*') {
+        if(data.format !== '*' && data.repository === '*') {
           data.repository = `*-${data.format}`;
           data.format = '*';
         }

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttributes;

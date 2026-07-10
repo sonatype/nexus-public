@@ -13,8 +13,8 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.Set;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.sonatype.nexus.httpclient.config.NonProxyHosts;
 import org.sonatype.nexus.validation.constraint.Hostname;

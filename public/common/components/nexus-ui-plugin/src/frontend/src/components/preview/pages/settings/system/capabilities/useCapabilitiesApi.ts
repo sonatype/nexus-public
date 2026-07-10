@@ -28,6 +28,20 @@ import { useState, useCallback } from 'react';
 import { restClient, parseApiError, urlBuilder } from '../../../../../../interface/api';
 import { Capability, CapabilityType, CapabilityFormData } from './types';
 
+/**
+ * Capability type IDs that are deliberately hidden from the new UI even though the REST API
+ * still exposes them.
+ *
+ * `firewall.audit` was migrated to per-repository configuration; the legacy capability surface
+ * is preserved server-side (via FirewallCapabilityShimService) only for backward compatibility
+ * with hardcoded REST API clients (Terraform, Ansible, scripts). The new UI must never display
+ * it: firewall configuration belongs on the repository config page, not the capabilities page.
+ *
+ * If you remove an entry here, also re-evaluate whether the matching server-side shim should
+ * be retired entirely.
+ */
+const UI_HIDDEN_CAPABILITY_TYPE_IDS: ReadonlySet<string> = new Set(['firewall.audit']);
+
 // =============================================================================
 // REST API RESPONSE TYPES
 // =============================================================================
@@ -161,13 +175,20 @@ export function useCapabilitiesApi() {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetch all capabilities
+   * Fetch all capabilities.
+   *
+   * Filters out type IDs in {@link UI_HIDDEN_CAPABILITY_TYPE_IDS} (currently `firewall.audit`).
+   * The server-side shim still returns those for REST API backward compatibility, but the new
+   * UI must not surface them — see UI_HIDDEN_CAPABILITY_TYPE_IDS for the rationale. This is the
+   * single chokepoint: list view, deep-link resolver, and "existing types" used by the type
+   * picker all flow through here, so one filter covers every UI surface.
    */
   const fetchCapabilities = useCallback(async (): Promise<Capability[]> => {
     try {
       const url = urlBuilder.capabilities.list();
       const response = await restClient.get<RestCapability[]>(url);
-      return Array.isArray(response) ? response.map(restToCapability) : [];
+      const all = Array.isArray(response) ? response.map(restToCapability) : [];
+      return all.filter((c) => !UI_HIDDEN_CAPABILITY_TYPE_IDS.has(c.typeId));
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       console.error('Failed to fetch capabilities:', err);

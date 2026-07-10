@@ -64,6 +64,7 @@ describe('MonitoringSettingsForm', () => {
     expect(screen.getByText(STRINGS.packageFilePatterns.maven)).toBeInTheDocument();
     expect(screen.getByText(STRINGS.packageFilePatterns.npm)).toBeInTheDocument();
     expect(screen.getByText(STRINGS.packageFilePatterns.python)).toBeInTheDocument();
+    expect(screen.getByText(STRINGS.packageFilePatterns.docker)).toBeInTheDocument();
   });
 
   it('renders Cancel and Next buttons', () => {

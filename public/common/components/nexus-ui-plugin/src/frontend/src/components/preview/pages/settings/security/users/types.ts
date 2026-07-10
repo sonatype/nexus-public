@@ -137,6 +137,7 @@ export interface UserFormProps {
   wizardStep?: number;
   hideActions?: boolean;
   onValidationChange?: (isValid: boolean) => void;
+  onDirtyChange?: (isDirty: boolean) => void;
   onSubmitRef?: React.MutableRefObject<(() => void) | null>;
 }
 

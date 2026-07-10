@@ -12,66 +12,68 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailValidation;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Example;
-import io.swagger.annotations.ExampleProperty;
-
-import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
-import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
-import static org.sonatype.nexus.repository.http.HttpStatus.NO_CONTENT;
-import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 
 /**
  * Swagger documentation for {@link EmailConfigurationApiResource}
  *
  * @since 3.19
  */
-@Api(value = "Email")
+@Tag(name = "Email")
 public interface EmailConfigurationApiResourceDoc
 {
-  @ApiOperation("Retrieve the current email configuration")
+  @Operation(summary = "Retrieve the current email configuration")
   @ApiResponses(value = {
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to retrieve the email configuration")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to retrieve the email configuration")
   })
   ApiEmailConfiguration getEmailConfiguration();
 
-  @ApiOperation("Set the current email configuration")
+  @Operation(summary = "Set the current email configuration")
   @ApiResponses(value = {
-      @ApiResponse(code = NO_CONTENT, message = "Email configuration was successfully updated"),
-      @ApiResponse(code = BAD_REQUEST, message = "Invalid request"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to update the email configuration")
+      @ApiResponse(responseCode = "204", description = "Email configuration was successfully updated"),
+      @ApiResponse(responseCode = "400", description = "Invalid request"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to update the email configuration")
   })
-  void setEmailConfiguration(@ApiParam(required = true) @NotNull @Valid ApiEmailConfiguration emailConfiguration);
+  void setEmailConfiguration(@Parameter(required = true) @NotNull @Valid ApiEmailConfiguration emailConfiguration);
 
-  @ApiOperation("Send a test email to the email address provided in the request body")
+  @Operation(summary = "Send a test email to the email address provided in the request body")
   @ApiResponses(value = {
-      @ApiResponse(code = OK, message = "Test email was sent successfully",
-          response = ApiEmailValidation.class),
-      @ApiResponse(code = BAD_REQUEST, message = "There was a problem sending the test email",
-          response = ApiEmailValidation.class,
-          examples = @Example({
-              @ExampleProperty(mediaType = "application/json",
-                  value = "{ \"success\": false, \"message\": \"string\" }")
-          })),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to verify the email configuration")
+      @ApiResponse(responseCode = "200", description = "Test email was sent successfully",
+          content = @Content(schema = @Schema(implementation = ApiEmailValidation.class))),
+      @ApiResponse(responseCode = "400", description = "There was a problem sending the test email" /*
+                                                                                                     * NEXUS-46395
+                                                                                                     * TODO:
+                                                                                                     * examples=
+                                                                                                     * dropped; use
+                                                                                                     * OpenAPI
+                                                                                                     * 3 @Content(
+                                                                                                     * examples
+                                                                                                     * = @ExampleObject
+                                                                                                     * (...))
+                                                                                                     */,
+          content = @Content(schema = @Schema(implementation = ApiEmailValidation.class))),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to verify the email configuration")
   })
   Response testEmailConfiguration(
-      @ApiParam(required = true, value = "An email address to send a test email to") @NotNull String validationEmail);
+      @Parameter(required = true,
+          description = "An email address to send a test email to") @NotNull String validationEmail);
 
-  @ApiOperation("Disable and clear the email configuration")
+  @Operation(summary = "Disable and clear the email configuration")
   @ApiResponses(value = {
-      @ApiResponse(code = NO_CONTENT, message = "Email configuration was successfully cleared")
+      @ApiResponse(responseCode = "204", description = "Email configuration was successfully cleared")
   })
   void deleteEmailConfiguration();
 }

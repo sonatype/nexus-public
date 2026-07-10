@@ -12,19 +12,19 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class S3BlobStoreApiFailoverBucket
 {
   @NotNull
-  @ApiModelProperty("The region containing the bucket")
+  @Schema(description = "The region containing the bucket")
   private final String region;
 
   @NotNull
-  @ApiModelProperty("The name of the bucket in the region")
+  @Schema(description = "The name of the bucket in the region")
   private final String bucketName;
 
   public S3BlobStoreApiFailoverBucket(

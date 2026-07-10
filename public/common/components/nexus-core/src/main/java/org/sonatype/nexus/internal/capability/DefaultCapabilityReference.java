@@ -28,7 +28,6 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,8 +86,7 @@ public class DefaultCapabilityReference
       final CapabilityType type,
       final CapabilityDescriptor descriptor,
       final Capability capability,
-      final SecretsService secretsService,
-      final SecretsStore secretsStore)
+      final SecretsService secretsService)
   {
     this.capabilityRegistry = checkNotNull(capabilityRegistry);
     this.eventQueue = checkNotNull(eventQueue);
@@ -104,7 +102,7 @@ public class DefaultCapabilityReference
     activationHandler = checkNotNull(activationListenerFactory).create(this);
     validityHandler = checkNotNull(validityConditionHandlerFactory).create(this);
 
-    capability.init(this, secretsService, secretsStore);
+    capability.init(this, secretsService);
   }
 
   @Override

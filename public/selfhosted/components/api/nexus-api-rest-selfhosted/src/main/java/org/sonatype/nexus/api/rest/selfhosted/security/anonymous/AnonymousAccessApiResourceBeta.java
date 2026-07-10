@@ -13,13 +13,13 @@
 package org.sonatype.nexus.api.rest.selfhosted.security.anonymous;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
 
-import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.apache.shiro.mgt.RealmSecurityManager;
 
 import static org.sonatype.nexus.api.rest.selfhosted.security.anonymous.AnonymousAccessApiResourceBeta.RESOURCE_URI;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
  * @since 3.26
  * @deprecated beta prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX} instead
  */
-@Api(hidden = true)
+@Hidden
 @Component
 @Path(RESOURCE_URI)
 @Deprecated

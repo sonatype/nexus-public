@@ -19,12 +19,18 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.capability.CapabilityRegistryEvent.Ready;
+import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.common.upgrade.events.UpgradeEventSupport;
 
 import com.google.common.base.Throwables;
 import com.google.common.eventbus.Subscribe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Support for components which need to handle capability registration upon booting.
@@ -36,16 +42,52 @@ public abstract class CapabilityBooterSupport
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
+  private CapabilityRegistry registry;
+
+  private DatabaseCheck dbCheck;
+
+  private final String requiredVersion;
+
+  public CapabilityBooterSupport() {
+    this(null);
+  }
+
+  public CapabilityBooterSupport(final String version) {
+    this.requiredVersion = version;
+  }
+
+  @Autowired
+  public final void injectDependencies(final DatabaseCheck dbCheck, final CapabilityRegistry registry) {
+    this.dbCheck = checkNotNull(dbCheck);
+    this.registry = checkNotNull(registry);
+  }
+
   @Subscribe
   public void handle(final Ready event) {
-    final CapabilityRegistry registry = event.getCapabilityRegistry();
-    try {
-      boot(registry);
+    doBoot();
+  }
+
+  @Subscribe
+  public void handle(final UpgradeEventSupport event) {
+    if (!EventHelper.isReplicating()) {
+      doBoot();
     }
-    catch (Exception e) {
-      Throwables.throwIfUnchecked(e);
-      throw new RuntimeException(e);
+  }
+
+  private void doBoot() {
+    if (isRequiredVersion()) {
+      try {
+        boot(registry);
+      }
+      catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
+      }
     }
+  }
+
+  private boolean isRequiredVersion() {
+    return requiredVersion == null || dbCheck.isAtLeast(requiredVersion);
   }
 
   protected abstract void boot(final CapabilityRegistry registry) throws Exception;

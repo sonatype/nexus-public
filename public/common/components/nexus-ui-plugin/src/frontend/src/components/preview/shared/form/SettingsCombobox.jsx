@@ -79,6 +79,7 @@ export function SettingsCombobox({
   hideEmptyMessage = false,
   emptyMessage = null,
   loading = false,
+  showLabelForValue = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(multiple ? '' : value);
@@ -104,10 +105,19 @@ export function SettingsCombobox({
   const helpId = `settings-combobox-help-${name}`;
   const errorId = `settings-combobox-error-${name}`;
 
+  // Look up label for a value
+  const optionLabelMap = useMemo(() => {
+    const m = new Map();
+    for (const o of options) m.set(o.value, o.label);
+    return m;
+  }, [options]);
+
   // Sync input value with external value (single mode only)
   useEffect(() => {
-    if (!multiple) setInputValue(value);
-  }, [value, multiple]);
+    if (!multiple) {
+      setInputValue(showLabelForValue ? (optionLabelMap.get(value) ?? value) : value);
+    }
+  }, [value, multiple, showLabelForValue, optionLabelMap]);
 
   // Build selected set for O(1) lookups
   const selectedSet = useMemo(
@@ -115,9 +125,18 @@ export function SettingsCombobox({
     [multiple, selectedValues]
   );
 
+  // Filter query is empty when inputValue still matches the synced display text for the
+  // current selection — prevents the post-selection label (or raw value) from being
+  // re-applied as a filter when the user reopens the dropdown.
+  const filterQuery = useMemo(() => {
+    if (!inputValue) return '';
+    const currentDisplay = showLabelForValue ? (optionLabelMap.get(value) ?? value) : value;
+    return inputValue === currentDisplay ? '' : inputValue;
+  }, [inputValue, value, showLabelForValue, optionLabelMap]);
+
   // Filter options based on input text
   const filteredOptions = useMemo(() => {
-    const query = inputValue.toLowerCase();
+    const query = filterQuery.toLowerCase();
     return options.filter(option => {
       if (!query) return true;
       return (
@@ -126,7 +145,7 @@ export function SettingsCombobox({
         (option.description && option.description.toLowerCase().includes(query))
       );
     });
-  }, [options, inputValue]);
+  }, [options, filterQuery]);
 
   // Group filtered options when groupBy is provided
   const groupedOptions = useMemo(() => {
@@ -162,13 +181,6 @@ export function SettingsCombobox({
     onMultiChange(selectedValues.filter((v) => v !== val));
   }, [selectedValues, onMultiChange]);
 
-  // Look up label for a value
-  const optionLabelMap = useMemo(() => {
-    const m = new Map();
-    for (const o of options) m.set(o.value, o.label);
-    return m;
-  }, [options]);
-
   const handleInputChange = useCallback((e) => {
     const newValue = e.target.value;
     setInputValue(newValue);
@@ -199,32 +211,42 @@ export function SettingsCombobox({
       setIsOpen(true);
       inputRef.current?.focus();
     } else {
-      setInputValue(option.value);
+      // Cancel any pending blur timeout so it doesn't restore the old displayed value
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+        blurTimeoutRef.current = null;
+      }
+      setInputValue(showLabelForValue ? option.label : option.value);
       setIsOpen(false);
       setHighlightedIndex(-1);
       if (onChange) onChange(option.value);
     }
-  }, [onChange, multiple, toggleOption]);
+  }, [onChange, multiple, toggleOption, showLabelForValue]);
 
   const handleInputBlur = useCallback((e) => {
     // Use timeout to allow clicking on options before closing
     blurTimeoutRef.current = setTimeout(() => {
       setIsOpen(false);
       setHighlightedIndex(-1);
+      // Restore the displayed text to the current selection. Mirror the sync
+      // effect: use the option label when showLabelForValue is true so that
+      // synthetic values like '*-maven2' continue showing '(All maven2 Repositories)'.
+      if (!multiple) setInputValue(showLabelForValue ? (optionLabelMap.get(value) ?? value) : value);
     }, 200);
     if (onBlur) onBlur(e);
-  }, [onBlur]);
+  }, [onBlur, value, multiple, showLabelForValue, optionLabelMap]);
 
   const handleInputFocus = useCallback(() => {
+    // filterQuery already returns '' when inputValue matches the current display
+    // text (see the filterQuery memo), so all options are shown without clearing.
+    // Clearing here would clobber typed text in allowCustom comboboxes (e.g.
+    // privilege domains, external roles).
     setIsOpen(true);
   }, []);
 
   const handleInputClick = useCallback(() => {
-    if (!multiple && inputRef.current && inputValue) {
-      inputRef.current.select();
-    }
     setIsOpen(true);
-  }, [inputValue, multiple]);
+  }, []);
 
   const handleKeyDown = useCallback((e) => {
     if (multiple && e.key === 'Backspace' && !inputValue && selectedValues.length > 0) {
@@ -413,6 +435,7 @@ export function SettingsCombobox({
           onKeyDown={handleKeyDown}
           placeholder={effectivePlaceholder}
           disabled={disabled}
+          aria-required={required}
           aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
           aria-invalid={!!error}
           aria-expanded={isOpen}
@@ -503,7 +526,7 @@ export function SettingsCombobox({
         </div>
       )}
       {error && (
-        <Text as="p" size="1" id={errorId} className="settings-combobox__error-text">
+        <Text as="p" size="1" id={errorId} role="alert" className="settings-combobox__error-text">
           <AlertCircle size={14} />
           {error}
         </Text>
@@ -552,6 +575,8 @@ SettingsCombobox.propTypes = {
   emptyMessage: PropTypes.node,
   /** Show loading spinner in dropdown */
   loading: PropTypes.bool,
+  /** When true, the input displays the option label instead of the raw value */
+  showLabelForValue: PropTypes.bool,
 };
 
 export default SettingsCombobox;

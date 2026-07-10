@@ -207,6 +207,137 @@ describe('useRepositoriesApi', () => {
     });
   });
 
+  describe('buildRepositoryConfig - pypi proxy', () => {
+    // Regression: the previous build skipped emitting the `pypi` block
+    // when `data.pypi` was undefined, so the backend converter never
+    // ran on create and the saved repository had no PyPI attributes.
+    // Now we always emit the block (with the `/simple` default) for pypi-proxy.
+    //
+    // Post-migration STL-381: the legacy `removeQuarantinedVersions` flag is gone
+    // from PypiConfig — PCCS is now expressed as `firewall.mode = "PCCS"` on the
+    // top-level repository config and the migration step strips the field from
+    // existing repos. Tests below only assert on `indexPath`.
+    it('always emits a pypi block for pypi proxy create, even when data.pypi is missing', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'pypi-proxy',
+          type: 'proxy',
+          format: 'pypi',
+          recipe: 'pypi-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://pypi.org', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody.pypi).toEqual({
+        indexPath: '/simple',
+      });
+    });
+
+    it('forwards user-provided pypi values verbatim on create', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'pypi-proxy',
+          type: 'proxy',
+          format: 'pypi',
+          recipe: 'pypi-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://pypi.nvidia.com', contentMaxAge: 1440, metadataMaxAge: 1440 },
+          pypi: { indexPath: '' },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody.pypi).toEqual({
+        indexPath: '',
+      });
+    });
+
+    it('forwards user-provided pypi values verbatim on update', async () => {
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.updateRepository('pypi-proxy', {
+          name: 'pypi-proxy',
+          type: 'proxy',
+          format: 'pypi',
+          recipe: 'pypi-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://pypi.org', contentMaxAge: 1440, metadataMaxAge: 1440 },
+          pypi: { indexPath: '/simple' },
+        });
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody.pypi).toEqual({
+        indexPath: '/simple',
+      });
+    });
+  });
+
+  describe('buildRepositoryConfig - npm proxy', () => {
+    // Post-migration STL-381: the npm block is no longer emitted at all for
+    // npm-proxy. Its only field was the legacy `removeQuarantinedVersions` flag,
+    // which is now redundant with `firewall.mode = "PCCS"` (set via the Firewall
+    // tab) and is stripped from existing repos by the migration step. The
+    // `NpmConfig` type was removed accordingly — see types.ts.
+    it('does not emit an npm block for npm proxy create', async () => {
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.createRepository({
+          name: 'npm-proxy',
+          type: 'proxy',
+          format: 'npm',
+          recipe: 'npm-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://registry.npmjs.org', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        });
+      });
+
+      const postedBody = mockRestClient.post.mock.calls[0][1];
+      expect(postedBody).not.toHaveProperty('npm');
+    });
+
+    it('does not emit an npm block for npm proxy update', async () => {
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.updateRepository('npm-proxy', {
+          name: 'npm-proxy',
+          type: 'proxy',
+          format: 'npm',
+          recipe: 'npm-proxy',
+          online: true,
+          storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+          proxy: { remoteUrl: 'https://registry.npmjs.org', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        });
+      });
+
+      const putBody = mockRestClient.put.mock.calls[0][1];
+      expect(putBody).not.toHaveProperty('npm');
+    });
+  });
+
   describe('updateRepository', () => {
     it('updates repository successfully', async () => {
       mockRestClient.put.mockResolvedValueOnce({});

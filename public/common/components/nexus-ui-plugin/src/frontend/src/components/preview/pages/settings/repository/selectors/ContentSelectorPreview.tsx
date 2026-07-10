@@ -130,6 +130,7 @@ export function ContentSelectorPreview({ type, expression }: ContentSelectorPrev
           variant="secondary"
           onClick={handlePreview}
           disabled={!isPreviewAvailable || isLoadingPreview}
+          data-analytics-id="nxrm-content-selector-preview"
         >
           {isLoadingPreview ? 'Loading...' : 'Preview'}
         </SettingsButton>

@@ -64,6 +64,7 @@ export default function LogsList({onEdit}) {
           <NxFilterInput
               className="nxrm-logs-filter"
               id="filter"
+              inputAttributes={{'data-analytics-id': 'nxrm-logs-filter'}}
               onChange={(value) => send({type: 'FILTER', filter: value})}
               value={filter}
               placeholder={UIStrings.LOGS.LIST.FILTER_PLACEHOLDER}/>
@@ -84,8 +85,9 @@ export default function LogsList({onEdit}) {
             </NxTableRow>
           </NxTableHead>
           <NxTableBody isLoading={isLoading} error={error}>
+            {/* Encoding mirrors encodeLogFilename in nexus-ui-plugin/types.ts — keep both in sync */}
             {data.map(({fileName, size, lastModified}) => (
-                <NxTableRow key={fileName} onClick={() => onEdit(encodeURIComponent(fileName))} isClickable>
+                <NxTableRow key={fileName} onClick={() => onEdit(fileName.split('/').map(encodeURIComponent).join('/'))} isClickable>
                   <NxTableCell>{fileName}</NxTableCell>
                   <NxTableCell>{HumanReadableUtils.bytesToString(size)}</NxTableCell>
                   <NxTableCell>

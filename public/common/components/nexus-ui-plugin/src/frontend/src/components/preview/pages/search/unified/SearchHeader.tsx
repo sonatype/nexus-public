@@ -21,13 +21,26 @@ import './SearchHeader.scss';
 
 /**
  * SearchHeader - Format dropdown and search input bar
- * 
+ *
  * Layout: [Format Dropdown] [Search Input with icon]
- * 
+ *
  * Features:
  * - Format dropdown on LEFT of search input
  * - Dynamic placeholder text based on selected format
- * - Search triggers on Enter key or Search button click
+ * - Live filtering: `onSearch` is invoked on every keystroke with the current
+ *   input value. Consumers should treat it as a controlled filter callback,
+ *   not a submit action.
+ *
+ * Controlled-input contract:
+ * - `query` is read on mount and on subsequent external changes (e.g. clearing
+ *   the filter from outside) to seed/reset the input. It is NOT meant to echo
+ *   the live value back from the parent on every keystroke.
+ * - Consumers should keep their own filter state and pass `setFilterState` (or
+ *   equivalent) directly as `onSearch`. Do not derive `query` from state that
+ *   `onSearch` itself updates on every keystroke; that pattern works today
+ *   because React bails on equal state, but it muddies the contract and risks
+ *   render loops if a future consumer transforms the value before passing it
+ *   back through `query`.
  */
 export default function SearchHeader({
   format,
@@ -50,22 +63,12 @@ export default function SearchHeader({
     onFormatChange(value as SearchFormat);
   }, [onFormatChange]);
 
-  // Handle input change
+  // Live filter: update local state and notify the parent on every keystroke.
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  }, []);
-
-  // Handle search submission
-  const handleSubmit = useCallback(() => {
-    onSearch(inputValue);
-  }, [inputValue, onSearch]);
-
-  // Handle Enter key press
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    }
-  }, [handleSubmit]);
+    const next = e.target.value;
+    setInputValue(next);
+    onSearch(next);
+  }, [onSearch]);
 
   // Sync inputValue with query prop when it changes externally
   React.useEffect(() => {
@@ -101,7 +104,6 @@ export default function SearchHeader({
           <TextField.Root
             value={inputValue}
             onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
             placeholder={placeholderText}
             className="search-header__input"
             size="3"

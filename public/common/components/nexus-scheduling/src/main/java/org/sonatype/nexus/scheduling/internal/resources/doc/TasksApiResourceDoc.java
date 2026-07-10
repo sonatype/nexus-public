@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.scheduling.internal.resources.doc;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import org.sonatype.nexus.scheduling.api.TaskXO;
 import org.sonatype.nexus.rest.Page;
@@ -26,31 +26,31 @@ import org.sonatype.nexus.rest.Page;
  *
  * @since 3.6
  */
-@Api(value = "Tasks")
+@Tag(name = "Tasks")
 public interface TasksApiResourceDoc
 {
-  @ApiOperation("List tasks")
-  Page<TaskXO> getTasks(@ApiParam(value = "Type of the tasks to get") final String type);
+  @Operation(summary = "List tasks")
+  Page<TaskXO> getTasks(@Parameter(description = "Type of the tasks to get") final String type);
 
-  @ApiOperation("Get a single task by id")
+  @Operation(summary = "Get a single task by id")
   @ApiResponses(value = {
-      @ApiResponse(code = 404, message = "Task not found")
+      @ApiResponse(responseCode = "404", description = "Task not found")
   })
-  TaskXO getTaskById(@ApiParam(value = "Id of the task to get") final String id);
+  TaskXO getTaskById(@Parameter(description = "Id of the task to get") final String id);
 
-  @ApiOperation("Run task")
+  @Operation(summary = "Run task")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "Task was run"),
-      @ApiResponse(code = 404, message = "Task not found"),
-      @ApiResponse(code = 405, message = "Task is disabled")
+      @ApiResponse(responseCode = "204", description = "Task was run"),
+      @ApiResponse(responseCode = "404", description = "Task not found"),
+      @ApiResponse(responseCode = "405", description = "Task is disabled")
   })
-  void run(@ApiParam(value = "Id of the task to run") final String id);
+  void run(@Parameter(description = "Id of the task to run") final String id);
 
-  @ApiOperation("Stop task")
+  @Operation(summary = "Stop task")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "Task was stopped"),
-      @ApiResponse(code = 409, message = "Unable to stop task"),
-      @ApiResponse(code = 404, message = "Task not found")
+      @ApiResponse(responseCode = "204", description = "Task was stopped"),
+      @ApiResponse(responseCode = "409", description = "Unable to stop task"),
+      @ApiResponse(responseCode = "404", description = "Task not found")
   })
-  void stop(@ApiParam(value = "Id of the task to stop") final String id);
+  void stop(@Parameter(description = "Id of the task to stop") final String id);
 }

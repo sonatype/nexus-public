@@ -260,22 +260,19 @@ export interface TaskSchedulerProps {
   onChange: (data: ScheduleData) => void;
   errors?: Pick<TaskFormErrors, 'schedule' | 'startDate' | 'startTime' | 'recurringDays' | 'cronExpression'>;
   disabled?: boolean;
+  allowedSchedules?: ScheduleType[];
 }
 
 /**
- * Props for TaskTypeSelector component (card grid version)
+ * Props for TaskTypeSelector component (flat table version)
  */
 export interface TaskTypeSelectorProps {
   taskTypes: TaskType[];
   onSelect: (type: TaskType) => void;
   loading?: boolean;
   error?: string | null;
-  /** Currently selected category */
-  selectedCategory?: string | null;
-  /** Callback when category is selected */
-  onCategorySelect?: (category: string | null) => void;
-  /** Callback when selection changes - receives whether a valid type is selected */
-  onSelectionChange?: (canAdvance: boolean, type: TaskType | null) => void;
+  /** Currently selected type */
+  selectedType?: TaskType | null;
 }
 
 /**
@@ -450,14 +447,11 @@ export const extractTime = (date: Date | null): string => {
 };
 
 /**
- * Validate cron expression (basic validation)
+ * Validate cron expression - re-exported from cronValidation module
+ * for backward compatibility.
  */
-export const isValidCronExpression = (cron: string): boolean => {
-  if (!cron || !cron.trim()) return false;
-  const parts = cron.trim().split(/\s+/);
-  // Quartz cron has 6-7 parts: second minute hour day-of-month month day-of-week [year]
-  return parts.length >= 5 && parts.length <= 7;
-};
+export { isValidCronExpression, validateCronExpression } from './cronValidation';
+export type { CronValidationResult } from './cronValidation';
 
 /**
  * Validate email address
@@ -467,5 +461,4 @@ export const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
-
 

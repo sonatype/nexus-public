@@ -19,7 +19,6 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,15 +45,12 @@ public class CapabilitySupportTest
   @Mock
   private SecretsService secretsService;
 
-  @Mock
-  private SecretsStore secretsStore;
-
   private TestCapability underTest;
 
   @Before
   public void setup() {
     underTest = new TestCapability();
-    underTest.init(context, secretsService, secretsStore);
+    underTest.init(context, secretsService);
     underTest.setTemplateHelper(templateHelper);
   }
 

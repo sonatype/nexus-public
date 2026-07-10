@@ -27,12 +27,13 @@ import coreLogo from "../../../../art/logos/logo-core-edition-header.svg";
 import coreDarkLogo from "../../../../art/logos/logo-core-edition-header-dark.svg";
 
 import SearchRadix from './SearchRadix';
+import SystemStatusRadix from './SystemStatusRadix';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import HelpMenuRadix from './HelpMenuRadix';
 import LoginAndUserButtonRadix from './LoginAndUserButtonRadix';
 import useSideNavbarCollapsedState from '../../hooks/useSideNavbarCollapsedState';
 import {refreshReactPage} from '../../routerConfig/routerUtils';
-import {getHeritageEquivalent, heritageToPreviewPath} from './previewHeritageNavigation';
+import {getHeritageEquivalent} from './previewHeritageNavigation';
 
 import './GlobalHeaderRadix.scss';
 
@@ -195,14 +196,16 @@ export default function GlobalHeaderRadix() {
   }
 
   // Redirect out of Preview UI only when access transitions from
-  // granted → revoked. Never on initial render (accessEverGranted is false).
+  // granted → revoked while the user is still authenticated.
+  // On logout, useRedirectOnLogout handles the redirect to login — we must not
+  // interfere by stripping preview/ (which creates invalid classic routes like #settings).
   useEffect(() => {
-    if (isPreviewUI && !canAccessPreviewUi && accessEverGranted.current) {
+    if (isPreviewUI && !canAccessPreviewUi && accessEverGranted.current && isLoggedIn) {
       setTheme('light');
       const defaultPath = currentPath.replace(/^preview\//, '') || 'browse/welcome';
       window.location.hash = defaultPath;
     }
-  }, [isPreviewUI, canAccessPreviewUi, currentPath, setTheme]);
+  }, [isPreviewUI, canAccessPreviewUi, currentPath, setTheme, isLoggedIn]);
   
   const switchToClassicUI = useCallback(() => {
     const heritagePath = getHeritageEquivalent(currentPath);
@@ -227,11 +230,14 @@ export default function GlobalHeaderRadix() {
     window.location.hash = heritagePath;
   }, [currentPath, classicUiFeedback, isDisableSwitchFeedback, setTheme, edition, version]);
 
+  // Always land on the Preview dashboard rather than attempting to map the
+  // current Classic route to its Preview equivalent. heritageToPreviewPath has
+  // a generic fallback that prefixes "preview/" to unmapped paths, which can
+  // produce routes that don't exist in Preview UI and result in 404s.
   const switchToNexusOneUI = useCallback(() => {
-    const newPath = heritageToPreviewPath(currentPath);
-    window.location.hash = `#${newPath}`;
+    window.location.hash = '#preview/browse/welcome';
     sessionStorage.removeItem('user_requested_legacy');
-  }, [currentPath]);
+  }, []);
 
   const handleUiSwitchPopoverOpenChange = useCallback((open) => {
     setUiSwitchPopoverOpen(open);
@@ -316,7 +322,7 @@ export default function GlobalHeaderRadix() {
               </IconButton>
             </Tooltip>
             <Box asChild>
-              <a href={contextPath || "/"} title="Home">
+              <a href={`${contextPath}#${isPreviewUI ? 'preview/browse/welcome' : 'browse/welcome'}`} title="Home">
                 <img
                   src={getLogo()}
                   alt={`Sonatype Nexus Repository ${getEditionText()}`}
@@ -455,12 +461,15 @@ export default function GlobalHeaderRadix() {
 
             {isPreviewUI && <ThemeSwitcher />}
 
+            <SystemStatusRadix />
+
             <Tooltip content="Refresh">
               <IconButton
                 variant="outline"
                 size="2"
                 color="gray"
                 aria-label="Refresh"
+                data-analytics-id="nxrm-header-refresh"
                 onClick={onRefreshClick}
               >
                 <RefreshCw size={16} />

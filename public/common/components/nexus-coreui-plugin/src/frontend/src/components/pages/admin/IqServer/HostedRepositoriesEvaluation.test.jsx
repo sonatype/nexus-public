@@ -31,9 +31,9 @@ jest.mock('@xstate/react', () => ({
 }));
 
 jest.mock('./HostedRepositoriesEvaluationSettingsTab', () => {
-  return function MockSettingsTab({onNext, onCancel}) {
+  return function MockSettingsTab({onNext, onCancel, globalConfigAvailable}) {
     return (
-      <div data-testid="settings-tab">
+      <div data-testid="settings-tab" data-global-config-available={globalConfigAvailable}>
         <button onClick={() => onNext({
           activityTimeFrame: '30',
           artifactLatestVersions: '5',
@@ -49,10 +49,10 @@ jest.mock('./HostedRepositoriesEvaluationSettingsTab', () => {
 });
 
 jest.mock('./HostedRepositoriesEvaluationRepositoriesTab', () => {
-  return function MockRepositoriesTab({onBack, globalConfigAvailable}) {
+  return function MockRepositoriesTab({globalConfigAvailable, onBack}) {
     return (
       <div data-testid="repositories-tab" data-has-selections={globalConfigAvailable}>
-        <button onClick={onBack}>Back</button>
+        {onBack && <button onClick={onBack} data-testid="back-button">Back</button>}
       </div>
     );
   };
@@ -225,7 +225,33 @@ describe('HostedRepositoriesEvaluation', () => {
     expect(screen.queryByTestId('settings-tab')).not.toBeInTheDocument();
   });
 
-  it('switches back to Monitoring Settings tab when Back is clicked in Repositories for returning users', async () => {
+  it('navigates back to Settings tab when Back is clicked in Repositories tab for first-time users', async () => {
+    render(<HostedRepositoriesEvaluation />);
+
+    // Click Next to go to Repositories tab
+    await waitFor(() => {
+      expect(screen.getByText('Next')).toBeInTheDocument();
+    });
+    userEvent.click(screen.getByText('Next'));
+
+    // Verify we're on Repositories tab
+    await waitFor(() => {
+      expect(screen.getByTestId('repositories-tab')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('settings-tab')).not.toBeInTheDocument();
+
+    // Click Back button
+    const backButton = screen.getByTestId('back-button');
+    userEvent.click(backButton);
+
+    // Verify we're back on Settings tab
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-tab')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('repositories-tab')).not.toBeInTheDocument();
+  });
+
+  it('switches between tabs using tab navigation for returning users', async () => {
     const returningUserState = {
       context: {
         hasSelections: false,
@@ -239,18 +265,16 @@ describe('HostedRepositoriesEvaluation', () => {
 
     render(<HostedRepositoriesEvaluation />);
 
-    // First navigate to repositories tab
+    // Navigate to repositories tab
     const tabs = screen.getAllByRole('tab');
-    // Click the second tab (index 1) which is Monitored Repositories
     userEvent.click(tabs[1]);
 
     await waitFor(() => {
-      expect(screen.getByText('Back')).toBeInTheDocument();
+      expect(screen.getByTestId('repositories-tab')).toBeInTheDocument();
     });
 
-    // Then click back button
-    const backButton = screen.getByText('Back');
-    userEvent.click(backButton);
+    // Navigate back to settings tab via tab navigation
+    userEvent.click(tabs[0]);
 
     await waitFor(() => {
       expect(screen.getByTestId('settings-tab')).toBeInTheDocument();
@@ -283,7 +307,7 @@ describe('HostedRepositoriesEvaluation', () => {
     expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
   });
 
-  it('maintains form state when switching between tabs', async () => {
+  it('maintains form state when advancing to repositories step for first-time users', async () => {
     render(<HostedRepositoriesEvaluation />);
 
     // Wait for Next button and click it
@@ -294,18 +318,11 @@ describe('HostedRepositoriesEvaluation', () => {
     const nextButton = screen.getByText('Next');
     userEvent.click(nextButton);
 
-    // Wait for Back button and click it
+    // Repositories step should now be shown
     await waitFor(() => {
-      expect(screen.getByText('Back')).toBeInTheDocument();
+      expect(screen.getByTestId('repositories-tab')).toBeInTheDocument();
     });
-
-    const backButton = screen.getByText('Back');
-    userEvent.click(backButton);
-
-    // Settings should still be present (component maintains state)
-    await waitFor(() => {
-      expect(screen.getByTestId('settings-tab')).toBeInTheDocument();
-    });
+    expect(screen.queryByTestId('settings-tab')).not.toBeInTheDocument();
   });
 
   it('shows ProgressSteps with SETTINGS step for first-time users', () => {
@@ -370,6 +387,24 @@ describe('HostedRepositoriesEvaluation', () => {
       const repoTab = screen.getByTestId('repositories-tab');
       expect(repoTab).toHaveAttribute('data-has-selections', 'true');
     });
+  });
+
+  it('passes globalConfigAvailable=true to SettingsTab for returning users', () => {
+    const returningUserState = {
+      context: {
+        hasSelections: false,
+        globalConfigAvailable: true,
+        numberOfMonitoredRepositories: 0,
+        existingSettings: null
+      },
+      matches: jest.fn(() => false)
+    };
+    useMachine.mockReturnValue([returningUserState, mockSend]);
+
+    render(<HostedRepositoriesEvaluation />);
+
+    const settingsTab = screen.getByTestId('settings-tab');
+    expect(settingsTab).toHaveAttribute('data-global-config-available', 'true');
   });
 
   it('populates settings from existingSettings for returning users', () => {

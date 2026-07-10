@@ -27,9 +27,11 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.internal.rest.PermissionMappingService.ApiEndpointMapping;
 import org.sonatype.nexus.swagger.internal.SwaggerModel;
 
-import io.swagger.models.HttpMethod;
-import io.swagger.models.Operation;
-import io.swagger.models.Swagger;
+// NEXUS-46395: migrated from Swagger 1.x (io.swagger.models) to OpenAPI 3.x (io.swagger.v3.oas.models).
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
@@ -105,7 +107,7 @@ public class EndpointPermissionRegistry
 
       SwaggerModel swaggerModel = swaggerModelProvider.getIfAvailable();
       if (swaggerModel != null) {
-        unmappedSwaggerOperations = countAndLogUnmapped(swaggerModel.getSwagger(), byKey);
+        unmappedSwaggerOperations = countAndLogUnmapped(swaggerModel.getOpenApi(), byKey);
       }
       else {
         unmappedSwaggerOperations = 0;
@@ -155,29 +157,44 @@ public class EndpointPermissionRegistry
     }
   }
 
-  private int countAndLogUnmapped(final Swagger swagger, final Map<String, ApiEndpointPermission> byKey) {
-    if (swagger == null || swagger.getPaths() == null) {
+  private int countAndLogUnmapped(final OpenAPI openApi, final Map<String, ApiEndpointPermission> byKey) {
+    if (openApi == null || openApi.getPaths() == null) {
       return 0;
     }
-    String base = swagger.getBasePath();
-    if (StringUtils.isBlank(base)) {
-      base = EndpointPermissionScanner.SERVICE_REST_PREFIX;
+    // NEXUS-46395: OpenAPI 3.x removed Swagger#basePath. The equivalent now lives in the
+    // first server entry's URL path (Server#getUrl). For Nexus we always serve under the
+    // service REST prefix, so use it as a stable fallback.
+    String base = EndpointPermissionScanner.SERVICE_REST_PREFIX;
+    if (openApi.getServers() != null && !openApi.getServers().isEmpty()) {
+      String serverUrl = openApi.getServers().get(0).getUrl();
+      if (StringUtils.isNotBlank(serverUrl)) {
+        // Server.url may be a full URL; extract path component if present.
+        try {
+          String path = java.net.URI.create(serverUrl).getPath();
+          if (StringUtils.isNotBlank(path)) {
+            base = path;
+          }
+        }
+        catch (IllegalArgumentException ignored) {
+          // not parseable as URI — keep default base
+        }
+      }
     }
     base =
         EndpointPermissionScanner.normalizeFullPath(base.endsWith("/") ? base.substring(0, base.length() - 1) : base);
 
     int unmapped = 0;
-    for (Map.Entry<String, io.swagger.models.Path> pathEntry : swagger.getPaths().entrySet()) {
+    for (Map.Entry<String, PathItem> pathEntry : openApi.getPaths().entrySet()) {
       String rel = pathEntry.getKey();
       if (!rel.startsWith("/")) {
         rel = "/" + rel;
       }
       String fullPath = EndpointPermissionScanner.normalizeFullPath(base + rel);
-      io.swagger.models.Path pathModel = pathEntry.getValue();
+      PathItem pathModel = pathEntry.getValue();
       if (pathModel == null) {
         continue;
       }
-      for (Map.Entry<HttpMethod, Operation> opEntry : pathModel.getOperationMap().entrySet()) {
+      for (Map.Entry<HttpMethod, Operation> opEntry : pathModel.readOperationsMap().entrySet()) {
         HttpMethod method = opEntry.getKey();
         if (method == null) {
           continue;

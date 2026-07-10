@@ -12,44 +12,39 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.ssrf;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.MediaType;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.ssrf.model.SsrfProtectionConfigurationXO;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Example;
-import io.swagger.annotations.ExampleProperty;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Swagger documentation for the SSRF Protection API.
  */
-@Api(value = "Security Management: SSRF Protection")
+@Tag(name = "Security Management: SSRF Protection")
 public interface SsrfProtectionApiResourceDoc
 {
   String EXAMPLE_BODY =
       "{\"enabled\": true, \"allowedIPs\": [\"10.0.0.50\", \"192.168.1.100\"], \"allowedDomains\": [\"internal.corp.com\", \"registry.local\"]}";
 
-  @ApiOperation("Get SSRF protection settings")
+  @Operation(summary = "Get SSRF protection settings")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "SSRF protection settings returned", examples = @Example(value = {
-          @ExampleProperty(mediaType = MediaType.APPLICATION_JSON, value = EXAMPLE_BODY)
-      })),
-      @ApiResponse(code = 401, message = "Authentication required"),
-      @ApiResponse(code = 403, message = "Insufficient permissions")
+      @ApiResponse(responseCode = "200", description = "SSRF protection settings returned"),
+      @ApiResponse(responseCode = "401", description = "Authentication required"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions")
   })
   SsrfProtectionConfigurationXO getConfiguration();
 
-  @ApiOperation("Update SSRF protection settings")
+  @Operation(summary = "Update SSRF protection settings")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "SSRF protection settings updated"),
-      @ApiResponse(code = 400, message = "Invalid configuration"),
-      @ApiResponse(code = 401, message = "Authentication required"),
-      @ApiResponse(code = 403, message = "Insufficient permissions")
+      @ApiResponse(responseCode = "200", description = "SSRF protection settings updated"),
+      @ApiResponse(responseCode = "400", description = "Invalid configuration"),
+      @ApiResponse(responseCode = "401", description = "Authentication required"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions")
   })
   SsrfProtectionConfigurationXO updateConfiguration(@NotNull @Valid SsrfProtectionConfigurationXO configuration);
 }

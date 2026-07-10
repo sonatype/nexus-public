@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.coreui.internal.ui;
 
-import javax.validation.ValidationException;
-import javax.ws.rs.core.Response;
+import jakarta.validation.ValidationException;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.coreui.internal.ui.UISwitchFeedbackResource.FeedbackRequest;

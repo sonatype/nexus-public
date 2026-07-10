@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.List;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * Privilege Type exchange object.

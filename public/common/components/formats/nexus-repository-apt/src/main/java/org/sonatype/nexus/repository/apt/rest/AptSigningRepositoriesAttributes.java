@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * @since 3.20
@@ -24,11 +24,11 @@ import io.swagger.annotations.ApiModelProperty;
 public class AptSigningRepositoriesAttributes
 {
   @NotEmpty
-  @ApiModelProperty(value = "PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)",
+  @Schema(description = "PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)",
       example = "")
   private final String keypair;
 
-  @ApiModelProperty(value = "Passphrase to access PGP signing key", example = "")
+  @Schema(description = "Passphrase to access PGP signing key", example = "")
   private final String passphrase;
 
   @JsonCreator

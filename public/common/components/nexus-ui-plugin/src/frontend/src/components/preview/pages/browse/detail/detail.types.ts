@@ -139,6 +139,14 @@ export interface AssetXO {
   readonly createdBy: string | null;
   /** IP address of uploader */
   readonly createdByIp: string | null;
+  /**
+   * Top-level docker registry URL (e.g. "localhost:8081/my-repo"). Computed at read
+   * time by the backend; only populated for docker assets. Used for pull-snippet
+   * rendering — intentionally not part of `attributes.docker` (NEXUS-51972).
+   */
+  readonly registryUrl?: string;
+  /** Absolute download URL from the server (includes context path) */
+  readonly downloadUrl?: string;
   /** Format-specific attributes */
   readonly attributes?: AssetAttributes;
 }

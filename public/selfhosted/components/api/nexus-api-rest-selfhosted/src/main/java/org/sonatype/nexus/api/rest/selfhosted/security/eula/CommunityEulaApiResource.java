@@ -14,11 +14,11 @@ package org.sonatype.nexus.api.rest.selfhosted.security.eula;
 
 import java.util.Map;
 import java.util.Optional;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.eula.model.EulaStatus;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;

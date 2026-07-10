@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.sonatype.nexus.audit.AuditRecorder;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.bootstrap.entrypoint.jetty.JettyServer;
 import org.sonatype.nexus.bootstrap.jetty.ManagedJetty;
 import org.sonatype.nexus.bootstrap.security.WebSecurityConfiguration;
-import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.db.DatabaseCheck;
 import org.sonatype.nexus.common.event.EventManager;
@@ -48,7 +48,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -59,6 +58,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -78,7 +78,7 @@ public abstract class AbstractSecurityTest
   @Autowired
   protected ApplicationContext applicationContext;
 
-  @MockBean
+  @MockitoBean
   protected PasswordService passwordService;
 
   @BeforeEach

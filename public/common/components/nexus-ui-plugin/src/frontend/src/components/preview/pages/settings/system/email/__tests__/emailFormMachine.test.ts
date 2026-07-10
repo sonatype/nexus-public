@@ -32,6 +32,7 @@ const MOCK_EMAIL_CONFIG = {
   enabled: true,
   host: 'smtp.example.com',
   port: 587,
+  useAuthentication: true,
   username: 'user',
   password: 'pass',
   fromAddress: 'noreply@example.com',
@@ -174,16 +175,15 @@ describe('emailFormMachine', () => {
       service.stop();
     });
 
-    it('passes validation with valid data', async () => {
+    it('passes validation with valid data and returns to editing', async () => {
       restClient.put.mockResolvedValue(undefined);
 
       const service = await startAndLoad();
 
-      // Data is already valid from mock, just submit
       service.send({ type: 'SUBMIT' } as any);
 
-      await waitFor(service, (state) => state.matches('saved'));
-      expect(service.getSnapshot().matches('saved')).toBe(true);
+      await waitFor(service, (state) => state.matches('editing') && state.context.isPristine);
+      expect(service.getSnapshot().matches('editing')).toBe(true);
 
       service.stop();
     });
@@ -239,15 +239,18 @@ describe('emailFormMachine', () => {
   });
 
   describe('save flow', () => {
-    it('transitions through validating -> saving -> saved', async () => {
+    it('transitions through validating -> saving -> saved -> editing and is pristine', async () => {
       restClient.put.mockResolvedValue(undefined);
 
       const service = await startAndLoad();
 
       service.send({ type: 'SUBMIT' } as any);
 
-      await waitFor(service, (state) => state.matches('saved'));
-      expect(service.getSnapshot().matches('saved')).toBe(true);
+      // Machine passes through saved and auto-transitions back to editing
+      await waitFor(service, (state) => state.matches('editing') && state.context.isPristine);
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.isPristine).toBe(true);
 
       service.stop();
     });

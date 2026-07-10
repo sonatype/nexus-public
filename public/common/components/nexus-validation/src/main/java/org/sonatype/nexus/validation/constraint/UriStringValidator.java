@@ -15,7 +15,7 @@ package org.sonatype.nexus.validation.constraint;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 

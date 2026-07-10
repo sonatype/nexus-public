@@ -271,7 +271,7 @@ export default function SearchRadix({ isPreviewUI = false }) {
         onFocus={handleFocus}
         size="2"
         className="search-radix-input"
-        data-analytics-id="nxrm-global-header-search-input"
+        data-analytics-id="nxrm-header-search"
       >
         <TextField.Slot>
           <SearchIcon size={16} />

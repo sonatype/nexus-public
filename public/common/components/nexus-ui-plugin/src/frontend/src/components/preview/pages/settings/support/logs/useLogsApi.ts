@@ -55,8 +55,11 @@ export function useLogsApi() {
       if (bytesCount !== undefined) {
         params.bytesCount = bytesCount;
       }
-      
-      const data = await restClient.get<string>(LOGS_API.VIEW(filename), { params });
+
+      const data = await restClient.get<string>(LOGS_API.VIEW(filename), {
+        params,
+        headers: { Accept: 'text/plain' },
+      });
       return data || '';
     } catch (err: any) {
       const apiError = parseApiError(err);
@@ -105,5 +108,3 @@ export function useLogsApi() {
 }
 
 export default useLogsApi;
-
-

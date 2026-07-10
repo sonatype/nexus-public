@@ -16,7 +16,6 @@ import { Box, Flex, Text, ScrollArea, Heading, Button, TextField, Card } from '@
 import {
   HardDrive,
   Plus,
-  ArrowLeft,
   Search,
   AlertCircle,
   Trash2,
@@ -62,6 +61,8 @@ import GoogleBlobStoreSettings from './GoogleBlobStoreSettings';
 import GroupBlobStoreSettings from './GroupBlobStoreSettings';
 import ConvertToGroupModal from './ConvertToGroupModal';
 import { BlobStoreWizardCreate } from './BlobStoreWizardCreate';
+import { DangerousEditConfirmDialog } from './DangerousEditConfirmDialog';
+import { hasDangerousFieldChanges, getDangerousFieldsChanged } from './dangerousFields';
 import type { BlobStore, BlobStoreFormData, SoftQuota } from './types';
 import './BlobStoresPage.scss';
 
@@ -263,6 +264,7 @@ export default function BlobStoresPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [showDangerousEditDialog, setShowDangerousEditDialog] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Track original data for dirty state detection
@@ -308,20 +310,32 @@ export default function BlobStoresPage() {
   // Initialize form data when blob store loads (edit mode)
   useEffect(() => {
     if (blobStore && routeState.viewMode === 'detail') {
-      setFormData(blobStore);
+      // The REST API GET endpoints (file, s3, azure, google) do NOT return `name` or `type` —
+      // both are implied by the URL path segments. We must synthesize them from the route state
+      // so that:
+      //   1. validate() passes (it checks formData.name — would silently block save otherwise)
+      //   2. The dirty comparison is accurate (formData and baseData must have the same shape)
       const typeValue =
         blobStore.type ||
-        (blobStore as Record<string, unknown>).typeId ||
+        (blobStore as Record<string, unknown>).typeId as string ||
         routeState.blobStoreType ||
         '';
+      const normalized: BlobStoreFormData = {
+        ...blobStore,
+        name: blobStore.name || routeState.blobStoreName || '',
+        type: typeValue,
+      };
+      setFormData(normalized);
+      // baseData is set from the same normalized object so JSON.stringify produces
+      // identical output and isDirty starts as false on initial load.
+      setBaseData(JSON.stringify(normalized));
       setSelectedType(typeValue);
-      setBaseData(JSON.stringify(blobStore));
     } else if (routeState.viewMode === 'create') {
       setFormData({ name: '' });
       setSelectedType('');
       setBaseData('');
     }
-  }, [blobStore, routeState.viewMode, routeState.blobStoreType]);
+  }, [blobStore, routeState.viewMode, routeState.blobStoreType, routeState.blobStoreName]);
 
   // Calculate dirty state
   const isDirty = useMemo(() => {
@@ -580,18 +594,39 @@ export default function BlobStoresPage() {
       }
     }
 
+    if (formData.softQuota?.enabled) {
+      if (!formData.softQuota.type) {
+        errors['softQuota.type'] = 'Constraint type is required when soft quota is enabled';
+      }
+      if (!formData.softQuota.limit || formData.softQuota.limit <= 0) {
+        errors['softQuota.limit'] = 'Constraint limit must be greater than 0';
+      }
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   }, [formData, selectedType, routeState.viewMode]);
 
-  // Save
-  const handleSave = useCallback(async () => {
-    if (!validate()) return;
+  // Dangerous edit detection - parse pristine data from baseData
+  const pristineData = useMemo(() => {
+    if (!baseData) return undefined;
+    try {
+      return JSON.parse(baseData) as BlobStoreFormData;
+    } catch {
+      return undefined;
+    }
+  }, [baseData]);
 
+  const dangerousFieldsChanged = useMemo(() => {
+    if (routeState.viewMode !== 'detail' || !pristineData) return [];
+    return getDangerousFieldsChanged(pristineData, formData, selectedType);
+  }, [routeState.viewMode, pristineData, formData, selectedType]);
+
+  // The actual save logic, called directly or after dangerous edit confirmation
+  const performSave = useCallback(async () => {
     setSaving(true);
     setError(null);
 
-    const isCreate = routeState.viewMode === 'create';
     const blobStoreName = formData.name || routeState.blobStoreName || '';
 
     try {
@@ -602,24 +637,39 @@ export default function BlobStoresPage() {
         return;
       }
 
-      await save({
-        ...formData,
-        type: typeToSave,
-      });
+      const dataToSave = { ...formData, type: typeToSave };
+      await save(dataToSave);
 
-      setBaseData(JSON.stringify({ ...formData, type: typeToSave }));
+      setBaseData(JSON.stringify(dataToSave));
       clearDirtyState(`blob-store-form-${routeState.blobStoreName || 'new'}`);
 
       setRefreshKey((k) => k + 1);
       navigateTo(BASE_PATH);
-      toast.success(STRINGS.SAVE_SUCCESS(blobStoreName, isCreate));
+      toast.success(STRINGS.SAVE_SUCCESS(blobStoreName, routeState.viewMode === 'create'));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save blob store");
       throw err;
     } finally {
       setSaving(false);
     }
-  }, [formData, selectedType, save, validate, routeState.blobStoreName, routeState.viewMode, routeState.blobStoreType, toast]);
+  }, [formData, selectedType, save, routeState.blobStoreName, routeState.viewMode, routeState.blobStoreType, toast]);
+
+  // Save with dangerous field gate
+  const handleSave = useCallback(() => {
+    if (!validate()) return;
+
+    const isEdit = routeState.viewMode === 'detail';
+    if (isEdit && pristineData && hasDangerousFieldChanges(pristineData, formData, selectedType)) {
+      setShowDangerousEditDialog(true);
+    } else {
+      performSave();
+    }
+  }, [validate, routeState.viewMode, pristineData, formData, selectedType, performSave]);
+
+  const handleConfirmDangerousEdit = useCallback(() => {
+    setShowDangerousEditDialog(false);
+    performSave();
+  }, [performSave]);
 
   // Delete
   const handleDelete = useCallback(async () => {
@@ -786,6 +836,10 @@ export default function BlobStoresPage() {
         icon={HardDrive}
         title={STRINGS.TITLE}
         description={STRINGS.DESCRIPTION}
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'Blob Stores' }
+        ]}
         actions={
           <Button
             size="2"
@@ -861,11 +915,20 @@ export default function BlobStoresPage() {
       ? STRINGS.EDIT_TITLE(routeState.blobStoreName!)
       : STRINGS.CREATE_TITLE;
 
+    const formBreadcrumbs = [
+      { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+      { label: 'Blob Stores', onClick: handleBack },
+      { label: isEdit ? (routeState.blobStoreName || 'Loading...') : 'Create' },
+    ];
+
     return (
       <Box className="blob-stores-page__form-container">
-        <SettingsForm
+        <PageHeader
           title={title}
           description={isEdit && currentType ? STRINGS.EDIT_DESCRIPTION(currentType.name) : undefined}
+          breadcrumbs={formBreadcrumbs}
+        />
+        <SettingsForm
           onSave={hasUpdatePermissions ? handleSave : undefined}
           onCancel={handleBack}
           saving={saving}
@@ -877,14 +940,6 @@ export default function BlobStoresPage() {
           data-mode={isEdit ? 'edit' : 'create'}
           headerActions={
             <>
-              <SettingsButton
-                variant="ghost"
-                onClick={handleBack}
-                icon={ArrowLeft}
-                testId="back-button"
-              >
-                Back
-              </SettingsButton>
               {canConvertToGroup && hasUpdatePermissions && (
                 <SettingsButton
                   variant="secondary"
@@ -1059,6 +1114,7 @@ export default function BlobStoresPage() {
                       ...quotaTypes.map((q) => ({ value: q.id, label: q.name })),
                     ]}
                     required
+                    error={validationErrors['softQuota.type']}
                     disabled={!hasUpdatePermissions}
                   />
 
@@ -1070,6 +1126,7 @@ export default function BlobStoresPage() {
                     placeholder={STRINGS.SOFT_QUOTA.LIMIT.placeholder}
                     type="number"
                     required
+                    error={validationErrors['softQuota.limit']}
                     disabled={!hasUpdatePermissions}
                   />
                 </>
@@ -1115,6 +1172,15 @@ export default function BlobStoresPage() {
             promoting={promoting}
           />
         )}
+
+        {/* Dangerous Edit Confirmation Dialog */}
+        <DangerousEditConfirmDialog
+          open={showDangerousEditDialog}
+          onClose={() => setShowDangerousEditDialog(false)}
+          onConfirm={handleConfirmDangerousEdit}
+          blobStoreName={routeState.blobStoreName || ''}
+          changedFields={dangerousFieldsChanged}
+        />
       </Box>
     );
   };

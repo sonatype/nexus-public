@@ -40,7 +40,9 @@ import {
   TaskFormData,
   ScheduleData,
   TaskFormProps,
+  ScheduleType,
   NOTIFICATION_CONDITIONS,
+  DEFAULT_SCHEDULE_DATA,
 } from './types';
 
 import './TaskForm.scss';
@@ -72,6 +74,17 @@ const CATEGORY_FORMAT_MAP: Record<string, string> = {
   CocoaPods: 'cocoapods',
   Raw: 'raw',
 };
+
+const WIZARD_STEPS_CREATE = [
+  { id: 'type', label: 'Select Type' },
+  { id: 'config', label: 'Configure' },
+  { id: 'schedule', label: 'Schedule' },
+];
+
+const WIZARD_STEPS_EDIT = [
+  { id: 'config', label: 'Configure' },
+  { id: 'schedule', label: 'Schedule' },
+];
 
 /**
  * TaskForm - Create/Edit form for tasks using a multi-step Wizard pattern.
@@ -108,7 +121,6 @@ export function TaskForm({
 
   // Wizard state
   const [internalStep, setInternalStep] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTaskTypeObj, setSelectedTaskTypeObj] = useState<TaskType | null>(null);
 
   // Get selected task type from machine or internal state
@@ -116,64 +128,42 @@ export function TaskForm({
     return selectedTaskTypeObj || machineSelectedType || taskTypes.find((t) => t.id === formData.typeId);
   }, [selectedTaskTypeObj, machineSelectedType, taskTypes, formData.typeId]);
 
-  // Sync category if editing
-  useEffect(() => {
-    if (!isCreate && selectedTaskType && !selectedCategory) {
-      setSelectedCategory(getTaskTypeCategory(selectedTaskType.id));
-    }
-  }, [isCreate, selectedTaskType, selectedCategory]);
-
   // Auto-select from URL
   useEffect(() => {
     if (initialTypeId && isCreate && taskTypes.length > 0 && !formData.typeId) {
       const matchingType = taskTypes.find((t) => t.id === initialTypeId);
       if (matchingType) {
         form.send({ type: 'TASK_TYPE_CHANGE', value: initialTypeId } as any);
-        setSelectedCategory(getTaskTypeCategory(initialTypeId));
         setSelectedTaskTypeObj(matchingType);
-        setInternalStep(2); // Jump to config if URL provides type
+        setInternalStep(1); // Jump to config if URL provides type
       }
     }
   }, [initialTypeId, isCreate, taskTypes, formData.typeId, form]);
 
-  const steps = [
-    { id: 'category', label: 'Select Category' },
-    { id: 'type', label: 'Select Type' },
-    { id: 'config', label: 'Configure' },
-    { id: 'schedule', label: 'Schedule' },
-  ];
-
-  // Adjust steps for Edit mode (no type selection)
-  const effectiveSteps = isCreate ? steps : steps.slice(2);
-  const effectiveCurrentStep = isCreate ? internalStep : internalStep;
+  // Steps: Create = [Select Type, Configure, Schedule], Edit = [Configure, Schedule]
+  const effectiveSteps = isCreate ? WIZARD_STEPS_CREATE : WIZARD_STEPS_EDIT;
 
   const handleWizardStepChange = useCallback((step: number) => {
-    if (step === 0) {
-      setSelectedCategory(null);
+    if (isCreate && step === 0) {
       setSelectedTaskTypeObj(null);
       form.send({ type: 'TASK_TYPE_CHANGE', value: '' } as any);
       window.history.replaceState(null, '', '#preview/admin/system/tasks/create');
-    } else if (step === 1) {
-      setSelectedTaskTypeObj(null);
-      form.send({ type: 'TASK_TYPE_CHANGE', value: '' } as any);
-      window.history.replaceState(null, '', '#preview/admin/system/tasks/create');
-    } else if (step === 2 && selectedTaskTypeObj) {
-      window.history.replaceState(null, '', `#preview/admin/system/tasks/create/${encodeURIComponent(selectedTaskTypeObj.id)}`);
-    }
-    setInternalStep(step);
-  }, [form, selectedTaskTypeObj]);
-
-  const handleSelectionChange = useCallback((canAdvance: boolean, selection: any) => {
-    if (internalStep === 0) {
-      // Category selection change
-    } else if (internalStep === 1) {
-      if (selection) {
-        setSelectedTaskTypeObj(selection);
-        form.send({ type: 'TASK_TYPE_CHANGE', value: selection.id } as any);
-        // DO NOT call onTypeChange here - it triggers a re-mount via route change
+    } else if (isCreate && step === 1) {
+      if (selectedTaskTypeObj) {
+        window.history.replaceState(null, '', `#preview/admin/system/tasks/create/${encodeURIComponent(selectedTaskTypeObj.id)}`);
+      } else {
+        setSelectedTaskTypeObj(null);
+        form.send({ type: 'TASK_TYPE_CHANGE', value: '' } as any);
+        window.history.replaceState(null, '', '#preview/admin/system/tasks/create');
       }
     }
-  }, [internalStep, form]);
+    setInternalStep(step);
+  }, [isCreate, form, selectedTaskTypeObj]);
+
+  const handleTypeSelect = useCallback((type: TaskType) => {
+    setSelectedTaskTypeObj(type);
+    form.send({ type: 'TASK_TYPE_CHANGE', value: type.id } as any);
+  }, [form]);
 
   const handlePropertyChange = useCallback((fieldId: string, value: string) => {
     const currentProps = formData.properties || {};
@@ -193,12 +183,34 @@ export function TaskForm({
     timeZoneOffset: formData.timeZoneOffset || '',
   }), [formData]);
 
+  const allowedSchedules: ScheduleType[] | undefined = useMemo(
+    () => (selectedTaskType?.concurrentRun === false ? ['manual', 'once'] : undefined),
+    [selectedTaskType?.concurrentRun],
+  );
+
+  useEffect(() => {
+    if (allowedSchedules && !allowedSchedules.includes(formData.schedule as ScheduleType)) {
+      handleScheduleChange({ ...DEFAULT_SCHEDULE_DATA, schedule: 'manual' });
+    }
+  }, [allowedSchedules, formData.schedule, handleScheduleChange]);
+
+  const configStep = isCreate ? 1 : 0;
+  const scheduleStep = isCreate ? 2 : 1;
+
   const canAdvance = useMemo(() => {
-    if (internalStep === 0) return !!selectedCategory;
-    if (internalStep === 1) return !!selectedTaskType;
-    if (internalStep === 2) return !!formData.name?.trim();
+    if (isCreate && internalStep === 0) return !!selectedTaskType;
+    if (internalStep === configStep) {
+      if (!formData.name?.trim()) return false;
+      // Match the classic UI: disable advance until every required dynamic field
+      // (e.g. repositoryName) has a non-empty value. The required flag comes from
+      // the descriptor via TASK_FIELD_UI / restTemplateToTaskType.
+      const fields = selectedTaskType?.formFields || [];
+      return fields.every((f) =>
+        !f.required || (formData.properties?.[f.id] ?? '').toString().trim() !== ''
+      );
+    }
     return true;
-  }, [internalStep, selectedCategory, selectedTaskType, formData.name]);
+  }, [isCreate, internalStep, selectedTaskType, formData.name, formData.properties, configStep]);
 
   if (form.isLoading) {
     return (
@@ -212,14 +224,15 @@ export function TaskForm({
   return (
     <WizardForm
       steps={effectiveSteps}
-      currentStep={effectiveCurrentStep}
+      currentStep={internalStep}
       onStepChange={handleWizardStepChange}
       onComplete={() => form.send('SUBMIT')}
       onCancel={onCancel}
       completeLabel={isCreate ? 'Create Task' : 'Save Task'}
+      submitAnalyticsId="nxrm-task-save"
       canAdvance={canAdvance}
-      dirty={internalStep >= 2}
-      noDirtyTracking={internalStep < 2}
+      dirty={internalStep >= configStep}
+      noDirtyTracking={internalStep < configStep}
       loading={form.isSaving || loading}
       error={error || form.saveError || undefined}
       testId="task-wizard"
@@ -233,6 +246,7 @@ export function TaskForm({
                 disabled={form.isSaving || loading}
                 icon={Play}
                 testId="task-run-now"
+                data-analytics-id="nxrm-task-run"
               >
                 Run Now
               </SettingsButton>
@@ -242,6 +256,7 @@ export function TaskForm({
               onClick={() => form.send('DELETE')}
               disabled={form.isSaving || loading}
               icon={Trash2}
+              data-analytics-id="nxrm-task-delete"
             >
               Delete
             </SettingsButton>
@@ -250,38 +265,20 @@ export function TaskForm({
       }
       className="task-form"
     >
-      {/* Step 0: Category Selection */}
+      {/* Step 0 (Create only): Select Type - flat table */}
       {isCreate && internalStep === 0 && (
         <Box className="task-form__type-selector">
           <TaskTypeSelector
             taskTypes={taskTypes}
-            onSelect={() => {}}
+            onSelect={handleTypeSelect}
             loading={form.isLoading}
-            mode="category"
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-            onSelectionChange={handleSelectionChange}
+            selectedType={selectedTaskTypeObj}
           />
         </Box>
       )}
 
-      {/* Step 1: Type Selection */}
-      {isCreate && internalStep === 1 && (
-        <Box className="task-form__type-selector">
-          <TaskTypeSelector
-            taskTypes={taskTypes}
-            onSelect={() => {}}
-            loading={form.isLoading}
-            mode="type"
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-            onSelectionChange={handleSelectionChange}
-          />
-        </Box>
-      )}
-
-      {/* Step 2: Configure */}
-      {internalStep === 2 && (
+      {/* Configure step */}
+      {internalStep === configStep && (
         <>
           {selectedTaskType && (
             <Box className="task-form__selected-type">
@@ -300,7 +297,7 @@ export function TaskForm({
                       <Badge size="1" color="purple" variant="soft">PRO</Badge>
                     )}
                   </Flex>
-                  <Text size="2" color="gray" style={{ display: 'block' }}>
+                  <Text size="2" color="gray" className="task-form__description-text">
                     {getTaskTypeCategory(selectedTaskType.id)} • {getTaskTypeDescription(selectedTaskType.id)}
                   </Text>
                 </Box>
@@ -362,8 +359,8 @@ export function TaskForm({
         </>
       )}
 
-      {/* Step 3: Schedule */}
-      {internalStep === 3 && (
+      {/* Schedule step */}
+      {internalStep === scheduleStep && (
         <SettingsFormSection title="Schedule">
           <TaskScheduler
             value={scheduleData}
@@ -376,6 +373,7 @@ export function TaskForm({
               cronExpression: form.touched?.cronExpression ? form.validationErrors?.cronExpression : undefined,
             }}
             disabled={form.isSaving || loading}
+            allowedSchedules={allowedSchedules}
           />
         </SettingsFormSection>
       )}

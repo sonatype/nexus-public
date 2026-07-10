@@ -46,7 +46,6 @@ public class DefaultCleanupPolicyConfiguration
         .put(LAST_DOWNLOADED_KEY, true)
         .put(IS_PRERELEASE_KEY, false)
         .put(REGEX_KEY, false)
-        // disabling retain-n properties by default
         .put(RETAIN_KEY, false)
         .put(RETAIN_SORT_BY_KEY, false)
         .build();

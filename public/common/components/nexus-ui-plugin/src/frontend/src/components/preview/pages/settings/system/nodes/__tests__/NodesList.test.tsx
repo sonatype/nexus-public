@@ -74,21 +74,13 @@ describe('NodesList', () => {
     });
   });
 
-  it('marks local node with indicator', async () => {
-    render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      // The local node should have a "Local" badge or indicator
-      expect(screen.getByText(/local/i)).toBeInTheDocument();
-    });
-  });
-
   it('uses node name as fallback when displayName is empty', async () => {
     render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      // Node 3 has empty displayName, should show node name as fallback
-      // The name appears twice - once in the Node column and once in Display Name column
+      // Node 3 has empty displayName, so node name appears in both columns:
+      // - Node Name column (as fallback)
+      // - Node Identity column (as the identity)
       const node3Elements = screen.getAllByText('node-3');
       expect(node3Elements).toHaveLength(2);
     });
@@ -156,28 +148,69 @@ describe('NodesList', () => {
     });
   });
 
-  it('displays column headers', async () => {
+  it('displays column headers for Node Name and Node Identity only', async () => {
     render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByText('Primary Node')).toBeInTheDocument();
     });
 
-    // The component has columns: Node, Display Name, Status
-    expect(screen.getByRole('columnheader', { name: 'Node' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Display Name' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Node Name' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Node Identity' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Status' })).not.toBeInTheDocument();
   });
 
-  it('shows remote badge for non-local nodes', async () => {
+  it('shows Current Node badge only for the local node', async () => {
     render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      // Should have 2 remote badges (node-2 and node-3)
-      const remoteBadges = screen.getAllByText(/remote/i);
-      expect(remoteBadges).toHaveLength(2);
+      expect(screen.getByText('Primary Node')).toBeInTheDocument();
     });
+
+    // Only node-1 (local) gets the badge
+    const currentNodeBadges = screen.getAllByText('Current Node');
+    expect(currentNodeBadges).toHaveLength(1);
+  });
+
+  it('does not show Current Node badge for remote nodes', async () => {
+    render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Secondary Node')).toBeInTheDocument();
+    });
+
+    // Remote nodes should not have a Current Node badge
+    const currentNodeBadges = screen.queryAllByText('Current Node');
+    expect(currentNodeBadges).toHaveLength(1); // only the local node
+  });
+
+  it('does not show Remote or Local (Current) badges', async () => {
+    render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Primary Node')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Remote')).not.toBeInTheDocument();
+    expect(screen.queryByText('Local (Current)')).not.toBeInTheDocument();
+  });
+
+  it('shows displayName as node name when it differs from name', async () => {
+    const hostnameNodes: NodeInfo[] = [
+      { name: 'uuid-1234', displayName: 'my-macbook.local', local: true },
+      { name: 'uuid-5678', displayName: 'remote-host.local', local: false },
+    ];
+    mockFetchNodes.mockResolvedValue(hostnameNodes);
+
+    render(<NodesList refreshKey={0} />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('my-macbook.local')).toBeInTheDocument();
+      expect(screen.getByText('remote-host.local')).toBeInTheDocument();
+    });
+
+    // Node Identity column still shows UUID
+    expect(screen.getByText('uuid-1234')).toBeInTheDocument();
+    expect(screen.getByText('uuid-5678')).toBeInTheDocument();
   });
 });
-
-

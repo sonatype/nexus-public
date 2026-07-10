@@ -14,12 +14,12 @@ package org.sonatype.nexus.api.rest.selfhosted.security.anonymous.model;
 
 import java.util.Objects;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * @since 3.24
@@ -27,15 +27,15 @@ import io.swagger.annotations.ApiModelProperty;
 @JsonInclude
 public class AnonymousAccessSettingsXO
 {
-  @ApiModelProperty("Whether or not Anonymous Access is enabled")
+  @Schema(description = "Whether or not Anonymous Access is enabled")
   private boolean enabled = false;
 
   @NotBlank
-  @ApiModelProperty("The username of the anonymous account")
+  @Schema(description = "The username of the anonymous account")
   private String userId = AnonymousConfiguration.DEFAULT_USER_ID;
 
   @NotBlank
-  @ApiModelProperty("The name of the authentication realm for the anonymous account")
+  @Schema(description = "The name of the authentication realm for the anonymous account")
   private String realmName = AnonymousConfiguration.DEFAULT_REALM_NAME;
 
   public AnonymousAccessSettingsXO() {

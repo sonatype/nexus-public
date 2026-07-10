@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.groups.Default;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -526,11 +526,44 @@ public class RepositoryUiService
           putPlaceholderForOldBearerTokenKey(authentication);
         });
 
+    // NEXUS-51703 — Mask AWS ECR auth secrets in Docker proxy responses to the
+    // ExtJS Direct API. The REST adapter already does this (see DockerApiRepositoryAdapter),
+    // but the legacy Direct path goes through this filter. Without masking here, the
+    // ExtJS UI receives the raw SecretsService handles for secretAccessKey/sessionToken
+    // and the full plaintext accessKeyId, both of which are inspectable in the browser.
+    Optional.ofNullable(attributes)
+        .map(attr -> attr.get("dockerProxy"))
+        .map(dockerProxy -> dockerProxy.get("ecrAuth"))
+        .map(Map.class::cast)
+        .ifPresent(ecrAuth -> {
+          replaceSecretWithPlaceholder(ecrAuth, "secretAccessKey");
+          replaceSecretWithPlaceholder(ecrAuth, "sessionToken");
+          maskAccessKeyIdInPlace(ecrAuth);
+        });
+
     // Normalize contentDisposition null to INLINE for repositories without content disposition
     normalizeContentDisposition(attributes, "maven");
     normalizeContentDisposition(attributes, "raw");
 
     return attributes;
+  }
+
+  /**
+   * Replaces the {@code accessKeyId} value in an ECR auth attribute map with a last-4 mask
+   * (e.g. {@code "************MPLE"}). Mirrors the masking applied by the public REST adapter
+   * so the ExtJS UI never receives the full plaintext access key. Values shorter than 4 chars
+   * (or null) are removed entirely to avoid leaking length.
+   */
+  @SuppressWarnings("unchecked")
+  private static void maskAccessKeyIdInPlace(final Map<String, Object> ecrAuth) {
+    Object value = ecrAuth.get("accessKeyId");
+    if (!(value instanceof String) || ((String) value).length() < 4) {
+      ecrAuth.remove("accessKeyId");
+      return;
+    }
+    String s = (String) value;
+    int hidden = s.length() - 4;
+    ecrAuth.put("accessKeyId", "*".repeat(hidden) + s.substring(hidden));
   }
 
   private static void normalizeContentDisposition(

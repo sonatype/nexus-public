@@ -20,6 +20,8 @@ import {
 } from '../../../../../shared/form';
 
 import { RepositoryFormData, RepositoryFormErrors } from '../types';
+import UIStrings from '../../../../../../../constants/pages/admin/repository/RepositoriesStrings';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 interface MavenFacetProps {
   formData: RepositoryFormData;
@@ -32,19 +34,19 @@ interface MavenFacetProps {
 }
 
 const VERSION_POLICY_OPTIONS = [
-  { value: 'RELEASE', label: 'Release' },
-  { value: 'SNAPSHOT', label: 'Snapshot' },
-  { value: 'MIXED', label: 'Mixed' },
+  { value: 'RELEASE', label: UIStrings.MAVEN.VERSION_POLICY.RELEASE },
+  { value: 'SNAPSHOT', label: UIStrings.MAVEN.VERSION_POLICY.SNAPSHOT },
+  { value: 'MIXED', label: UIStrings.MAVEN.VERSION_POLICY.MIXED },
 ];
 
 const LAYOUT_POLICY_OPTIONS = [
-  { value: 'STRICT', label: 'Strict' },
-  { value: 'PERMISSIVE', label: 'Permissive' },
+  { value: 'STRICT', label: UIStrings.MAVEN.LAYOUT_POLICY.STRICT },
+  { value: 'PERMISSIVE', label: UIStrings.MAVEN.LAYOUT_POLICY.PERMISSIVE },
 ];
 
 const CONTENT_DISPOSITION_OPTIONS = [
-  { value: 'INLINE', label: 'Inline' },
-  { value: 'ATTACHMENT', label: 'Attachment' },
+  { value: 'INLINE', label: UIStrings.MAVEN.CONTENT_DISPOSITION.INLINE },
+  { value: 'ATTACHMENT', label: UIStrings.MAVEN.CONTENT_DISPOSITION.ATTACHMENT },
 ];
 
 /**
@@ -61,19 +63,21 @@ export function MavenFacet({
   errors,
   isEdit,
 }: MavenFacetProps) {
+  const isCloud = ExtJS.useState?.(() => ExtJS.state()?.getValue?.('isCloud'));
+
   return (
     <SettingsFormSection
-      title="Maven 2"
-      description="Maven-specific repository configuration"
+      title={UIStrings.MAVEN.SECTION.title}
+      description={UIStrings.MAVEN.SECTION.description}
     >
       <div data-analytics-id="nxrm-repository-maven-version-policy">
         <SettingsSelect
           name="maven-versionPolicy"
-          label="Version Policy"
+          label={UIStrings.MAVEN.VERSION_POLICY.label}
           value={formData.maven?.versionPolicy || 'RELEASE'}
           onChange={(value) => onNestedChange('maven', { versionPolicy: value as 'RELEASE' | 'SNAPSHOT' | 'MIXED' })}
           options={VERSION_POLICY_OPTIONS}
-          helpText="Controls what type of artifacts can be deployed to this repository"
+          helpText={UIStrings.MAVEN.VERSION_POLICY.helpText}
           disabled={isEdit}
           required
         />
@@ -82,30 +86,33 @@ export function MavenFacet({
       <div data-analytics-id="nxrm-repository-maven-layout-policy">
         <SettingsSelect
           name="maven-layoutPolicy"
-          label="Layout Policy"
+          label={UIStrings.MAVEN.LAYOUT_POLICY.label}
           value={formData.maven?.layoutPolicy || 'STRICT'}
           onChange={(value) => onNestedChange('maven', { layoutPolicy: value as 'STRICT' | 'PERMISSIVE' })}
           options={LAYOUT_POLICY_OPTIONS}
-          helpText="Validates that all paths are Maven artifact or metadata paths"
+          helpText={UIStrings.MAVEN.LAYOUT_POLICY.helpText}
         />
       </div>
 
-      <div data-analytics-id="nxrm-repository-maven-content-disposition">
-        <SettingsSelect
-          name="maven-contentDisposition"
-          label="Content Disposition"
-          value={formData.maven?.contentDisposition || 'ATTACHMENT'}
-          onChange={(value) => onNestedChange('maven', { contentDisposition: value as 'INLINE' | 'ATTACHMENT' })}
-          options={CONTENT_DISPOSITION_OPTIONS}
-          helpText="Controls whether content is displayed inline or downloaded as an attachment"
-        />
-      </div>
+      {!isCloud && (
+        <>
+          <div data-analytics-id="nxrm-repository-maven-content-disposition">
+            <SettingsSelect
+              name="maven-contentDisposition"
+              label={UIStrings.MAVEN.CONTENT_DISPOSITION.label}
+              value={formData.maven?.contentDisposition || 'ATTACHMENT'}
+              onChange={(value) => onNestedChange('maven', { contentDisposition: value as 'INLINE' | 'ATTACHMENT' })}
+              options={CONTENT_DISPOSITION_OPTIONS}
+              helpText={UIStrings.MAVEN.CONTENT_DISPOSITION.helpText}
+            />
+          </div>
 
-      {(formData.maven?.contentDisposition || 'ATTACHMENT') === 'INLINE' && (
-        <SettingsAlert type="warning" mt="2">
-          Serving content inline allows uploaded HTML to render on a trusted Nexus URL, which
-          can be exploited for phishing attacks against other users.
-        </SettingsAlert>
+          {(formData.maven?.contentDisposition || 'ATTACHMENT') === 'INLINE' && (
+            <SettingsAlert type="warning" mt="2">
+              {UIStrings.MAVEN.CONTENT_DISPOSITION.inlineWarning}
+            </SettingsAlert>
+          )}
+        </>
       )}
     </SettingsFormSection>
   );

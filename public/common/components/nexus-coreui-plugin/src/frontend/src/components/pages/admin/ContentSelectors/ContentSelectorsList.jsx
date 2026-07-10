@@ -71,7 +71,7 @@ export default function ContentSelectorsList() {
     <PageHeader>
       <PageTitle icon={faScroll} {...LABELS.MENU}/>
       <PageActions>
-        <NxButton variant="primary" disabled={!canCreate} onClick={onCreate}>
+        <NxButton variant="primary" disabled={!canCreate} onClick={onCreate} data-analytics-id="nxrm-content-selector-create">
           <span>{LABELS.CREATE_BUTTON}</span>
         </NxButton>
       </PageActions>
@@ -82,6 +82,10 @@ export default function ContentSelectorsList() {
           <div className="nxrm-spacer" />
           <NxFilterInput
               id="filter"
+              inputAttributes={{
+                'aria-label': 'Filter content selectors by name',
+                'data-analytics-id': 'nxrm-content-selector-filter'
+              }}
               onChange={filter}
               value={filterText}
               placeholder={LABELS.FILTER_PLACEHOLDER}/>

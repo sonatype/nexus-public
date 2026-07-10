@@ -36,7 +36,9 @@ jest.mock('@sonatype/react-shared-components', () => ({
       </button>
       {children}
     </div>
-  )
+  ),
+  NxWarningAlert: ({children}) => <div role="alert">{children}</div>,
+  NxErrorAlert: ({children}) => <div role="alert">{children}</div>
 }));
 jest.mock('@fortawesome/free-solid-svg-icons', () => ({
   faFilter: {}
@@ -319,6 +321,78 @@ describe('UsageInsightsChart', () => {
 
     getMaxValueSpy.mockRestore();
     getScaleFactorSpy.mockRestore();
+  });
+
+  describe('Permission Error Handling', () => {
+    it('displays permission error alert when isPermissionError is true', () => {
+      mockState = {
+        context: {
+          ...mockState.context,
+          isPermissionError: true
+        }
+      };
+      useMachine.mockReturnValue([mockState, mockSend]);
+
+      render(<UsageInsightsChart />);
+
+      expect(screen.getByText('Insufficient Permissions: You need administrator privileges to view usage insights.')).toBeInTheDocument();
+    });
+
+    it('does not render chart when permission error occurs', () => {
+      mockState = {
+        context: {
+          ...mockState.context,
+          isPermissionError: true
+        }
+      };
+      useMachine.mockReturnValue([mockState, mockSend]);
+
+      render(<UsageInsightsChart />);
+
+      expect(screen.queryByTestId('responsive-bar')).not.toBeInTheDocument();
+    });
+
+    it('does not render dropdown when permission error occurs', () => {
+      mockState = {
+        context: {
+          ...mockState.context,
+          isPermissionError: true
+        }
+      };
+      useMachine.mockReturnValue([mockState, mockSend]);
+
+      render(<UsageInsightsChart />);
+
+      expect(screen.queryByRole('button', {name: /Jan 1st - Jan 31st/i})).not.toBeInTheDocument();
+    });
+
+    it('displays generic error alert when loadError is set', () => {
+      mockState = {
+        context: {
+          ...mockState.context,
+          loadError: 'Failed to load egress data: Network Error'
+        }
+      };
+      useMachine.mockReturnValue([mockState, mockSend]);
+
+      render(<UsageInsightsChart />);
+
+      expect(screen.getByText('Failed to load egress data: Network Error')).toBeInTheDocument();
+    });
+
+    it('does not render chart when loadError is set', () => {
+      mockState = {
+        context: {
+          ...mockState.context,
+          loadError: 'Failed to load storage data: Server Error'
+        }
+      };
+      useMachine.mockReturnValue([mockState, mockSend]);
+
+      render(<UsageInsightsChart />);
+
+      expect(screen.queryByTestId('responsive-bar')).not.toBeInTheDocument();
+    });
   });
 
   it('renders with correct CSS classes', () => {

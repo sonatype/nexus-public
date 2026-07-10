@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.content.handlers;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
+
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.Asset;
@@ -31,12 +33,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static java.time.Duration.ofDays;
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
+import static java.time.Duration.ofHours;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,10 +69,10 @@ public class LastDownloadedHandlerTest
   private Request request;
 
   @Mock
-  private GlobalRepositorySettings globalSettings;
+  private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
 
   @Mock
-  private LastDownloadedAttributeHandler lastDownloadedAttributeHandler;
+  private GlobalRepositorySettings globalRepositorySettings;
 
   private AttributesMap attributes;
 
@@ -82,15 +82,17 @@ public class LastDownloadedHandlerTest
   public void setup() throws Exception {
     configureHappyPath();
 
-    underTest = new LastDownloadedHandler(globalSettings);
-    underTest.injectExtraDependencies(lastDownloadedAttributeHandler);
+    underTest = new LastDownloadedHandler(lastDownloadedAttributeHandler, globalRepositorySettings);
   }
 
   @Test
   public void shouldMarkAssetAsDownloadedWhenSuccessfulGetRequest() throws Exception {
+    when(asset.tryMarkAsDownloaded()).thenReturn(true);
+
     Response handledResponse = underTest.handle(context);
 
-    verify(asset).markAsDownloaded();
+    verify(asset).tryMarkAsDownloaded();
+    verify(lastDownloadedAttributeHandler).writeLastDownloadedAttribute(asset);
 
     assertThat(handledResponse, is(equalTo(response)));
   }
@@ -98,10 +100,12 @@ public class LastDownloadedHandlerTest
   @Test
   public void shouldMarkAssetAsDownloadedWhenSuccessfulHeadRequest() throws Exception {
     when(request.getAction()).thenReturn(HEAD);
+    when(asset.tryMarkAsDownloaded()).thenReturn(true);
 
     Response handledResponse = underTest.handle(context);
 
-    verify(asset).markAsDownloaded();
+    verify(asset).tryMarkAsDownloaded();
+    verify(lastDownloadedAttributeHandler).writeLastDownloadedAttribute(asset);
 
     assertThat(handledResponse, is(equalTo(response)));
   }
@@ -109,10 +113,12 @@ public class LastDownloadedHandlerTest
   @Test
   public void shouldMarkAssetAsDownloadedWhenNotModified() throws Exception {
     when(response.getStatus()).thenReturn(new Status(false, 304));
+    when(asset.tryMarkAsDownloaded()).thenReturn(true);
 
     Response handledResponse = underTest.handle(context);
 
-    verify(asset).markAsDownloaded();
+    verify(asset).tryMarkAsDownloaded();
+    verify(lastDownloadedAttributeHandler).writeLastDownloadedAttribute(asset);
 
     assertThat(handledResponse, is(equalTo(response)));
   }
@@ -125,23 +131,27 @@ public class LastDownloadedHandlerTest
   }
 
   @Test
-  public void shouldUpdateIfNotRecentlyChanged() throws Exception {
-    when(asset.lastDownloaded()).thenReturn(of(UTC.now().minusDays(2)));
-    when(globalSettings.getLastDownloadedInterval()).thenReturn(ofDays(1));
+  public void doesNotWriteAttributeWhenThrottled() throws Exception {
+    when(asset.tryMarkAsDownloaded()).thenReturn(false);
 
     Response handledResponse = underTest.handle(context);
 
-    verify(asset).markAsDownloaded();
+    verify(asset).tryMarkAsDownloaded();
+    verify(lastDownloadedAttributeHandler, never()).writeLastDownloadedAttribute(asset);
 
     assertThat(handledResponse, is(equalTo(response)));
   }
 
   @Test
-  public void shouldNotUpdateIfRecentlyChanged() throws Exception {
-    when(asset.lastDownloaded()).thenReturn(of(UTC.now()));
-    when(globalSettings.getLastDownloadedInterval()).thenReturn(ofDays(1));
+  public void skipsDbCallWhenLastDownloadedIsRecent() throws Exception {
+    when(asset.lastDownloaded()).thenReturn(Optional.of(OffsetDateTime.now()));
 
-    testNoExceptionThrownAndVerifySaveNotCalled();
+    Response handledResponse = underTest.handle(context);
+
+    verify(asset, never()).tryMarkAsDownloaded();
+    verify(lastDownloadedAttributeHandler, never()).writeLastDownloadedAttribute(asset);
+
+    assertThat(handledResponse, is(equalTo(response)));
   }
 
   @Test
@@ -181,14 +191,12 @@ public class LastDownloadedHandlerTest
   private void testNoExceptionThrownAndVerifySaveNotCalled() throws Exception {
     Response handledResponse = underTest.handle(context);
 
-    verify(asset, never()).markAsDownloaded();
+    verify(asset, never()).tryMarkAsDownloaded();
 
     assertThat(handledResponse, is(equalTo(response)));
   }
 
   private void configureHappyPath() throws Exception {
-    when(asset.lastDownloaded()).thenReturn(empty());
-
     attributes = new AttributesMap();
     attributes.set(Asset.class, asset);
 
@@ -199,5 +207,7 @@ public class LastDownloadedHandlerTest
     when(response.getPayload()).thenReturn(payload);
     when(response.getStatus()).thenReturn(new Status(true, 200));
     when(payload.getAttributes()).thenReturn(attributes);
+    when(asset.lastDownloaded()).thenReturn(Optional.empty());
+    when(globalRepositorySettings.getLastDownloadedInterval()).thenReturn(ofHours(12));
   }
 }

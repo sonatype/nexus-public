@@ -14,8 +14,8 @@ package org.sonatype.nexus.coreui.internal.wonderland;
 
 import java.util.Base64;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.wonderland.AuthTicketService;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;

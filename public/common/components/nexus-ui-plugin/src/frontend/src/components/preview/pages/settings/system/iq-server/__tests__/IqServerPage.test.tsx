@@ -110,8 +110,6 @@ describe('IqServerPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument();
     });
-
-    expect(screen.getByText('Manage Sonatype Repository Firewall and Lifecycle configuration')).toBeInTheDocument();
   });
 
   it('displays current settings', async () => {
@@ -371,7 +369,7 @@ describe('IqServerPage', () => {
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText('IQ Server')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument();
     });
 
     // Save button should not be present
@@ -493,6 +491,42 @@ describe('IqServerPage', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByTestId('iq-application-list-modal')).not.toBeInTheDocument());
+  });
+
+  describe('Breadcrumb navigation', () => {
+    it('renders breadcrumbs with Settings link', async () => {
+      render(<IqServerPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+    });
+
+    it('renders IQ Server as current page in breadcrumbs', async () => {
+      const { container } = render(<IqServerPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument();
+      });
+
+      // IQ Server should be the current page (span with aria-current)
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('IQ Server');
+    });
+
+    it('navigates to Settings when Settings breadcrumb is clicked', async () => {
+      render(<IqServerPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      const originalHash = window.location.hash;
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+      window.location.hash = originalHash;
+    });
   });
 });
 

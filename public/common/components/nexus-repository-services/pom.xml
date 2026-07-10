@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-repository-services</artifactId>
@@ -35,6 +35,14 @@
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-repository-config</artifactId>
+    </dependency>
+
+    <!-- NEXUS-46395: nexus-cache is used directly by NegativeCacheFacetImpl. Was previously
+         coming in transitively (likely through nexus-extdirect via the chain that broke when
+         we excluded the directjngine modules); declare explicitly to keep the dep stable. -->
+    <dependency>
+      <groupId>org.sonatype.nexus.common.components</groupId>
+      <artifactId>nexus-cache</artifactId>
     </dependency>
 
     <dependency>
@@ -137,9 +145,10 @@
       <artifactId>nexus-swagger</artifactId>
     </dependency>
 
+    <!-- NEXUS-46395: io.swagger:swagger-annotations:1.x replaced by io.swagger.core.v3:swagger-annotations-jakarta:2.x -->
     <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-annotations</artifactId>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations-jakarta</artifactId>
     </dependency>
 
     <dependency>
@@ -148,8 +157,8 @@
     </dependency>
 
     <dependency>
-      <groupId>commons-fileupload</groupId>
-      <artifactId>commons-fileupload</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
     </dependency>
 
     <dependency>
@@ -187,18 +196,6 @@
     </dependency>
 
     <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib-nodep</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.objenesis</groupId>
-      <artifactId>objenesis</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
       <scope>test</scope>
@@ -212,7 +209,7 @@
 
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
+      <artifactId>resteasy-core</artifactId>
       <scope>test</scope>
     </dependency>
 

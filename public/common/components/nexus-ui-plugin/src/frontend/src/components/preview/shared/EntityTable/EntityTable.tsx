@@ -201,9 +201,6 @@ export function EntityTable<T>({
     );
   }
 
-  // Calculate total column count for colspan
-  const totalColumns = columns.length + (showRowArrow && clickable ? 1 : 0);
-
   return (
     <Table.Root className={`entity-table ${className}`} aria-label={ariaLabel}>
       <Table.Header>
@@ -282,5 +279,3 @@ export function EntityTable<T>({
 }
 
 export default EntityTable;
-
-

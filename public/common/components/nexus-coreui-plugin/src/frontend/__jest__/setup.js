@@ -82,6 +82,7 @@ global.NX = {
   Permissions: {
     check: jest.fn()
   },
+  getApplication: jest.fn(() => ({})),
   app: {
     Application: {
       bundleActive: jest.fn()
@@ -142,7 +143,9 @@ jest.spyOn(Element.prototype, 'clientHeight', 'get').mockImplementation(function
   return getHeight(this);
 });
 
-jest.spyOn(ExtJS, 'waitForExtJs');
+// Prevent App.jsx module-level bootstrapAndRender() from creating a rogue React root in tests.
+// Tests render <App /> directly; the module-level waitForExtJs boot path is not needed.
+jest.spyOn(ExtJS, 'waitForExtJs').mockImplementation(() => {});
 
 jest.mock('swagger-ui-react', () => {
   return jest.fn().mockReturnValue(null);

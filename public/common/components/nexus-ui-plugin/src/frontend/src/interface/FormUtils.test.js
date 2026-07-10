@@ -270,6 +270,102 @@ describe('FormUtils', () => {
     });
   });
 
+  // The Nexus REST validation layer prefixes each error's `id` with the leaf
+  // bean's simple name (`HelperBean.`) followed by the bean's property path
+  // (often `attributes.<field>` for repository config). Neither segment belongs
+  // in the user-visible field key, and forms bind to the un-prefixed name.
+  // (NEXUS-51599)
+  describe('setSaveError prefix stripping', () => {
+    function runSaveFailure(responseData) {
+      const machineMock = FormUtils.buildFormMachine({id: 'mock', initial: 'loaded'})
+          .withConfig({
+            actions: {validate: () => ({})},
+            services: {
+              saveData: () => Promise.reject({response: {data: responseData}})
+            },
+            guards: {
+              // buildFormMachine's default canSave guard requires !isPristine, so
+              // a freshly-loaded form without any UPDATE events stays in `loaded`
+              // when SAVE is sent. Override to true so the test can drive the
+              // SAVE → saving → onError transition directly without simulating
+              // a field edit first.
+              canSave: () => true
+            }
+          });
+
+      return new Promise((resolve) => {
+        const service = interpret(machineMock).onTransition((state) => {
+          if (state.matches('loaded') && (state.context.saveErrors || state.context.saveError)) {
+            service.stop();
+            resolve(state.context);
+          }
+        });
+        service.start();
+        service.send({type: 'SAVE'});
+      });
+    }
+
+    it('strips HelperBean. and a leading attributes. segment from the id', async () => {
+      const ctx = await runSaveFailure([
+        {id: 'HelperBean.attributes.docker.httpPort', message: "Port must be unique (conflicts with repository 'docker-hosted-1')"}
+      ]);
+      expect(ctx.saveErrors).toEqual({
+        'docker.httpPort': "Port must be unique (conflicts with repository 'docker-hosted-1')"
+      });
+    });
+
+    it('strips HelperBean. when no attributes. segment is present', async () => {
+      // Guards against regressing the ContentSelectors HelperBean.expression case.
+      const ctx = await runSaveFailure([
+        {id: 'HelperBean.expression', message: 'Invalid expression'}
+      ]);
+      expect(ctx.saveErrors).toEqual({expression: 'Invalid expression'});
+    });
+
+    it('only strips prefixes that are anchored to the start of the id', async () => {
+      // Pins the anchored-strip contract: the previous unanchored String.replace
+      // would have mangled these mid-path occurrences. With startsWith+slice,
+      // a property literally named `attributes.foo` nested under HelperBean is
+      // left intact, and a doubled `HelperBean.` prefix only loses the outer one.
+      const ctx = await runSaveFailure([
+        {id: 'HelperBean.foo.attributes.bar', message: 'mid-path attributes'},
+        {id: 'HelperBean.HelperBean.expression', message: 'doubled helperbean'}
+      ]);
+      expect(ctx.saveErrors).toEqual({
+        'foo.attributes.bar': 'mid-path attributes',
+        'HelperBean.expression': 'doubled helperbean'
+      });
+    });
+  });
+
+  describe('fieldProps with flat-keyed saveErrors', () => {
+    // setSaveError stores save errors keyed by the dotted form-field name
+    // ('docker.httpPort'). fieldProps must therefore tolerate flat keys, not
+    // just nested objects. (NEXUS-51599)
+    it('returns the inline message for a flat-dotted save-error key', () => {
+      const context = makeContext({
+        data: {docker: {httpPort: 8082}},
+        saveErrorData: {docker: {httpPort: 8082}},
+        saveErrors: {'docker.httpPort': "Port must be unique (conflicts with repository 'docker-hosted-1')"}
+      });
+
+      expect(FormUtils.fieldProps('docker.httpPort', context).validationErrors)
+          .toBe("Port must be unique (conflicts with repository 'docker-hosted-1')");
+      expect(FormUtils.fieldProps(['docker', 'httpPort'], context).validationErrors)
+          .toBe("Port must be unique (conflicts with repository 'docker-hosted-1')");
+    });
+
+    it('still supports nested saveErrors objects for legacy callers', () => {
+      const context = makeContext({
+        data: {docker: {httpPort: 8082}},
+        saveErrorData: {docker: {httpPort: 8082}},
+        saveErrors: {docker: {httpPort: 'Nested error'}}
+      });
+
+      expect(FormUtils.fieldProps('docker.httpPort', context).validationErrors).toBe('Nested error');
+    });
+  });
+
   describe('updateFormDataDefaultAction', () => {
     it('updates form data text field', () => {
       const form = {

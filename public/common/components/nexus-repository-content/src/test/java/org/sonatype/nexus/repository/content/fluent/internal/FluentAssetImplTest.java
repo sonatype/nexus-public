@@ -41,6 +41,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetDependencies;
 import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.content.store.AssetData;
@@ -64,6 +65,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -546,10 +548,13 @@ class FluentAssetImplTest
   }
 
   @Test
-  void testMarkAsDownloadedDelegatesToStore() {
-    underTest.markAsDownloaded();
+  void testMarkAsDownloadedDelegatesToStoreAndReturnsThis() {
+    when(assetStore.markAsDownloaded(any())).thenReturn(true);
 
-    verify(assetStore).markAsDownloaded(asset);
+    FluentAsset result = underTest.markAsDownloaded();
+
+    assertSame(underTest, result);
+    verify(assetStore).markAsDownloaded(any());
   }
 
   @Test
@@ -794,6 +799,46 @@ class FluentAssetImplTest
       CacheInfo resultCacheInfo = result.getAttributes().get(CacheInfo.class);
       assertNotNull(resultCacheInfo);
       assertEquals("cache-token", resultCacheInfo.getCacheToken());
+    }
+  }
+
+  @Test
+  void testDownloadDoesNotSetCacheInfoWhenCacheAttributeEmpty() throws IOException {
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    // Create empty cache child - simulates migrated data with cache: {}
+    attributes.child("cache");
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockMetrics.getCreationTime()).thenReturn(DateTime.now());
+    when(mockMetrics.getSha1Hash()).thenReturn("sha1");
+
+    try (Content result = underTest.download()) {
+      CacheInfo resultCacheInfo = result.getAttributes().get(CacheInfo.class);
+      // CacheInfo should be null when cache map has no LAST_VERIFIED
+      assertNull(resultCacheInfo);
+    }
+  }
+
+  @Test
+  void testDownloadDoesNotSetCacheInfoWhenCacheMissingLastVerified() throws IOException {
+    Blob mockBlob = mock(Blob.class);
+    BlobMetrics mockMetrics = mock(BlobMetrics.class);
+    NestedAttributesMap attributes = new NestedAttributesMap();
+    // Create cache child with only cache_token, missing LAST_VERIFIED
+    attributes.child("cache").set("cache_token", "orphaned-token");
+    when(asset.attributes()).thenReturn(attributes);
+    when(blobStore.get(any(BlobRef.class))).thenReturn(mockBlob);
+    when(mockBlob.getMetrics()).thenReturn(mockMetrics);
+    when(mockMetrics.getCreationTime()).thenReturn(DateTime.now());
+    when(mockMetrics.getSha1Hash()).thenReturn("sha1");
+
+    try (Content result = underTest.download()) {
+      CacheInfo resultCacheInfo = result.getAttributes().get(CacheInfo.class);
+      // CacheInfo should be null when cache map has no LAST_VERIFIED
+      assertNull(resultCacheInfo);
     }
   }
 
@@ -1087,10 +1132,21 @@ class FluentAssetImplTest
   }
 
   @Test
-  void testMarkAsDownloadedReturnsSelfForFluency() {
-    FluentAssetImpl result = (FluentAssetImpl) underTest.markAsDownloaded();
+  void testTryMarkAsDownloadedReturnsTrueWhenStoreUpdates() {
+    when(assetStore.markAsDownloaded(any())).thenReturn(true);
 
-    assertSame(underTest, result);
+    boolean result = underTest.tryMarkAsDownloaded();
+
+    assertTrue(result);
+  }
+
+  @Test
+  void testTryMarkAsDownloadedReturnsFalseWhenThrottled() {
+    when(assetStore.markAsDownloaded(any())).thenReturn(false);
+
+    boolean result = underTest.tryMarkAsDownloaded();
+
+    assertFalse(result);
   }
 
   @Test

@@ -14,7 +14,6 @@
 import React from 'react';
 import { IconButton } from '@radix-ui/themes';
 import { Tooltip } from '@sonatype/nexus-ui-plugin';
-import { IconButton, Tooltip } from '@radix-ui/themes';
 import { Sun, MoonStar } from 'lucide-react';
 import { useTheme, THEMES } from '../../contexts/ThemeContext';
 
@@ -45,6 +44,7 @@ export function ThemeSwitcher() {
         size="2"
         color="gray"
         aria-label={getTooltip()}
+        data-analytics-id="nxrm-header-toggle-theme"
         onClick={toggleTheme}
       >
         {getIcon()}

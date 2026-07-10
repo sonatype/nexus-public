@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventManager;
@@ -46,7 +46,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload2.core.FileUploadException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -236,6 +236,22 @@ public class UploadManagerImplTest
   public void testHandle_offlineRepository() throws IOException {
     when(configuration.isOnline()).thenReturn(false);
     expectExceptionOnUpload(repository, "Repository offline");
+  }
+
+  @Test
+  public void testHandle_fileUploadExceptionPropagatesUnwrapped() throws IOException, FileUploadException {
+    FileUploadException thrown = new FileUploadException(
+        "Invalid filename in multipart/form-data upload (field 'asset1'): evil\\0.zip at index 4: ...");
+    when(blobStoreAwareMultipartHelper.parse(isNotNull(), isNotNull())).thenThrow(thrown);
+
+    try {
+      underTest.handle(repository, request);
+      fail("Expected FileUploadException to propagate from handle()");
+    }
+    catch (FileUploadException caught) {
+      assertThat(caught, is(thrown));
+      assertThat(caught.getMessage(), equalTo(thrown.getMessage()));
+    }
   }
 
   private void expectExceptionOnUpload(final Repository repository, final String message) throws IOException {

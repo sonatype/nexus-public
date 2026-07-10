@@ -26,6 +26,7 @@ import ExtJS from "./ExtJS";
  *   licenseValid: { key: string, defaultValue: boolean } []
  *   statesEnabled: { key: string, defaultValue: boolean } []
  *   permissions : string []
+ *   requiresPermission: string
  *   requiresAnyPermission: string []
  *   permissionPrefix: string
  *   permissionPrefixes: string []
@@ -45,6 +46,7 @@ export function isVisible(visibilityRequirements) {
     licenseValid,
     statesEnabled,
     permissions,
+    requiresPermission,
     requiresAnyPermission,
     permissionPrefix,
     permissionPrefixes,
@@ -62,8 +64,8 @@ export function isVisible(visibilityRequirements) {
   if (!depsValid) {
     // If no visibility requirements exist, allow the route (for login, etc.)
     const hasAnyRequirements = bundle || licenseValid || statesEnabled || permissions ||
-                                requiresAnyPermission || permissionPrefix || permissionPrefixes ||
-                                capability || editions || requiresUser ||
+                                requiresPermission || requiresAnyPermission || permissionPrefix ||
+                                permissionPrefixes || capability || editions || requiresUser ||
                                 browseableFormat || notClustered || anonymousAccessOrHasUser;
     if (!hasAnyRequirements) {
       return true;
@@ -102,6 +104,11 @@ export function isVisible(visibilityRequirements) {
   // check that all required permissions are present
   if (permissions && !areAllRequiredPermissionsPresent(permissions)) {
     return false
+  }
+
+  // check a single required permission (convenience shorthand for a single permission string)
+  if (requiresPermission && !NX.Permissions.check(requiresPermission)) {
+    return false;
   }
 
   // check that at least one of the listed permissions is present
@@ -278,7 +285,16 @@ function hasValidDependencies() {
   const Permissions = NX.Permissions;
   const Security = NX.Security;
 
-  return !!(Application && State && Permissions && Security);
+  // NX.getApplication is attached by ExtJS only after Ext.app.Application
+  // is instantiated (initNamespace). Without it, NX.State.getValue() will
+  // throw "NX.getApplication is not a function" because internally it calls
+  // NX.getApplication().getStateController(). Guard here so React routes that
+  // run before ExtJS finishes booting fall through to the cookie/no-deps path.
+  const appReady =
+      typeof window.NX?.getApplication === 'function' &&
+      !!window.NX.getApplication();
+
+  return !!(Application && State && Permissions && Security && appReady);
 }
 
 export function useIsVisible(visibilityRequirements) {

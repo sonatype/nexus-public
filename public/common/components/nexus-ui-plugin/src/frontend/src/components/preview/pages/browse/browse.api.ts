@@ -15,13 +15,17 @@
  * Browse Module - API Layer
  *
  * MIGRATION STATUS:
- * - REST: ALL methods now use REST API
- *   - fetchRepositories, fetchComponent, fetchAsset, deleteComponent, deleteAsset
- *   - fetchBrowseNodes (NEW: GET /v1/repositories/{name}/browse)
- *   - deleteFolder (NEW: DELETE /v1/repositories/{name}/browse)
+ * - REST: most methods use REST API
+ *   - fetchRepositories, fetchComponent, deleteComponent, deleteAsset
+ *   - fetchBrowseNodes (GET /v1/repositories/{name}/browse)
+ *   - deleteFolder (DELETE /v1/repositories/{name}/browse)
+ * - ExtDirect: fetchAsset uses coreui_Component.readAsset to receive the full asset
+ *   attributes bag (firewall, content, format facets) — REST v1 strips everything
+ *   except the format facet, so firewall data never reaches the Preview UI via REST.
  */
 
 import { restClient, parseApiError, ENDPOINTS, urlBuilder, encodeRepositoryItemId } from '../../../../interface/api';
+import ExtAPIUtils from '../../../../interface/ExtAPIUtils';
 import { isMockMode } from '../../config/featureFlags';
 import { getMockAsset, getMockComponent } from './mockData';
 import type {
@@ -31,6 +35,18 @@ import type {
   AssetXO,
   TreeLoadParams,
 } from './browse.types';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+/**
+ * Toast API injected by the Preview UI's ToastProvider.
+ */
+interface NexusToast {
+  success(message: string): void;
+  error(message: string): void;
+}
 
 // =============================================================================
 // REPOSITORY API (REST)
@@ -133,29 +149,6 @@ interface RestComponent {
   group?: string;
   name: string;
   version?: string;
-  assets?: RestAsset[];
-}
-
-/**
- * REST API asset shape
- */
-interface RestAsset {
-  id: string;
-  repository: string;
-  format: string;
-  path: string;
-  downloadUrl?: string;
-  checksum?: {
-    sha1?: string;
-    sha256?: string;
-    sha512?: string;
-    md5?: string;
-  };
-  contentType?: string;
-  lastModified?: string;
-  blobCreated?: string;
-  lastDownloaded?: string;
-  fileSize?: number;
 }
 
 /**
@@ -169,27 +162,79 @@ function restToComponentXO(rest: RestComponent): ComponentXO {
     group: rest.group || '',
     name: rest.name,
     version: rest.version || '',
-    assets: rest.assets?.map(restToAssetXO) || [],
   };
 }
 
 /**
- * Convert REST asset to AssetXO format
+ * Shape of AssetXO returned by ExtDirect coreui_Component.readAsset.
+ * `name` holds the asset path; `attributes` is the full backing bag including
+ * the `checksum` map and every facet (firewall, content, format-specific).
  */
-function restToAssetXO(rest: RestAsset): AssetXO {
+interface ExtDirectAssetXO {
+  id: string;
+  name: string;
+  format: string;
+  repositoryName: string;
+  contentType?: string;
+  size?: number;
+  blobCreated?: string | number | null;
+  blobUpdated?: string | number | null;
+  lastDownloaded?: string | number | null;
+  blobRef?: string | null;
+  componentId?: string | null;
+  createdBy?: string | null;
+  createdByIp?: string | null;
+  attributes?: Record<string, unknown>;
+  registryUrl?: string | null;
+}
+
+/**
+ * Convert ExtDirect AssetXO to the UI's AssetXO shape.
+ * Pulls `checksum` out of the attributes bag to a top-level field so existing
+ * components (which render checksum as a separate section) keep working.
+ */
+function extDirectToAssetXO(ext: ExtDirectAssetXO, repositoryName: string): AssetXO {
+  const attributes = ext.attributes ?? {};
+  const checksum =
+    typeof attributes.checksum === 'object' && attributes.checksum !== null
+      ? (attributes.checksum as Record<string, string>)
+      : undefined;
+
+  // Construct download URL with proper encoding for special characters
+  // Note: repositoryName should be URL-safe (no encoding needed for typical names)
+  // but path segments may contain spaces, unicode, or special chars
+  const path = ext.name;
+  const pathSegments = path.replace(/^\//, '').split('/').map(encodeURIComponent);
+  const downloadUrl = `/repository/${encodeURIComponent(repositoryName)}/${pathSegments.join('/')}`;
+
+  // Convert timestamp to ISO string.
+  // ExtDirect returns timestamps as either:
+  // - ISO string (e.g., "2026-06-11T10:30:00.000Z") - returned as-is
+  // - Unix timestamp in milliseconds (e.g., 1749649800000) - converted to ISO
+  // Note: If timestamps appear as dates in 1970, the backend is sending seconds
+  // instead of milliseconds - this would require multiplying by 1000.
+  const toIso = (v: string | number | null | undefined): string | undefined =>
+    v == null ? undefined : typeof v === 'number' ? new Date(v).toISOString() : v;
+
   return {
-    id: rest.id,
-    repositoryName: rest.repository,
-    format: rest.format,
-    name: rest.path,
-    path: rest.path,
-    downloadUrl: rest.downloadUrl,
-    checksum: rest.checksum,
-    contentType: rest.contentType,
-    lastModified: rest.lastModified,
-    blobCreated: rest.blobCreated,
-    lastDownloaded: rest.lastDownloaded,
-    fileSize: rest.fileSize,
+    id: ext.id,
+    repositoryName: ext.repositoryName ?? repositoryName,
+    format: ext.format,
+    name: path,
+    path,
+    downloadUrl,
+    checksum,
+    contentType: ext.contentType,
+    blobCreated: toIso(ext.blobCreated),
+    blobUpdated: toIso(ext.blobUpdated),
+    lastDownloaded: toIso(ext.lastDownloaded),
+    size: ext.size,
+    blobRef: ext.blobRef ?? undefined,
+    componentId: ext.componentId ?? undefined,
+    createdBy: ext.createdBy ?? undefined,
+    createdByIp: ext.createdByIp ?? undefined,
+    attributes,
+    registryUrl: ext.registryUrl ?? undefined,
   };
 }
 
@@ -219,11 +264,17 @@ export async function fetchComponent(componentId: string, repositoryName: string
 }
 
 /**
- * Fetch asset details using REST API.
+ * Fetch asset details via ExtDirect coreui_Component.readAsset.
  *
- * @param assetId - Raw asset ID from browse tree
- * @param repositoryName - Repository name (required to encode ID for REST API)
- * @returns Asset data
+ * Uses ExtDirect (matching Classic UI) instead of REST v1 because the REST endpoint's
+ * AssetXOBuilder.getExpandedAttributes only emits the format facet — firewall, content,
+ * and other facet bags are stripped before the response is returned. ExtDirect returns
+ * the full asset.attributes().backing() map, which the Attributes tab needs to render
+ * Firewall and other dynamic facets at parity with Classic UI (NEXUS-52920).
+ *
+ * @param assetId - Raw asset ID from browse tree node
+ * @param repositoryName - Repository name
+ * @returns Asset data with full attributes bag
  */
 export async function fetchAsset(assetId: string, repositoryName: string): Promise<AssetXO> {
   try {
@@ -231,11 +282,15 @@ export async function fetchAsset(assetId: string, repositoryName: string): Promi
       const mock = getMockAsset(assetId, repositoryName);
       if (mock) return mock;
     }
-    // REST API expects base64(repositoryName:rawId) format
-    const encodedId = encodeRepositoryItemId(repositoryName, assetId);
-    const url = urlBuilder.assets.get(encodedId);
-    const rest = await restClient.get<RestAsset>(url);
-    return restToAssetXO(rest);
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'readAsset', {
+      data: [assetId, repositoryName],
+    });
+    // checkForErrorAndExtract throws on { success: false } / exception, otherwise returns result.data
+    const data = ExtAPIUtils.checkForErrorAndExtract(response) as ExtDirectAssetXO | undefined;
+    if (!data) {
+      throw new Error('Asset not found');
+    }
+    return extDirectToAssetXO(data, repositoryName);
   } catch (err: unknown) {
     console.error('Failed to fetch asset:', err);
     const apiError = parseApiError(err);
@@ -378,7 +433,7 @@ export function canDelete(): boolean {
 export function showSuccessMessage(message: string): void {
   // Use Radix toast if in Preview UI mode and provider is available
   const isPreviewUI = typeof window !== 'undefined' && window.location.hash.includes('#preview/');
-  const nexusToast = typeof window !== 'undefined' ? (window as any).__nexusToast : null;
+  const nexusToast = typeof window !== 'undefined' ? (window as { __nexusToast?: NexusToast }).__nexusToast : null;
 
   if (isPreviewUI && nexusToast) {
     nexusToast.success(message);
@@ -394,7 +449,7 @@ export function showSuccessMessage(message: string): void {
 export function showErrorMessage(message: string): void {
   // Use Radix toast if in Preview UI mode and provider is available
   const isPreviewUI = typeof window !== 'undefined' && window.location.hash.includes('#preview/');
-  const nexusToast = typeof window !== 'undefined' ? (window as any).__nexusToast : null;
+  const nexusToast = typeof window !== 'undefined' ? (window as { __nexusToast?: NexusToast }).__nexusToast : null;
 
   if (isPreviewUI && nexusToast) {
     nexusToast.error(message);

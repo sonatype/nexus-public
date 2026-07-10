@@ -18,24 +18,30 @@ import { createFormMachine, type FormContext, type ValidationErrors } from '../.
 import { HttpConfiguration, DEFAULT_HTTP_CONFIGURATION } from './types';
 
 /**
- * Validate HTTP configuration form data.
- * Proxy host/port are required when the respective proxy is enabled.
- * Timeout and retries must be non-negative integers when provided.
+ * Validates a proxy hostname or IP address.
+ * Accepts: single-label hostnames (localhost), FQDNs (proxy.example.com),
+ *          IPv4 (192.168.1.1), IPv6 in brackets ([::1]).
+ * Rejects: URLs with scheme (http://...), whitespace, paths.
+ * Mirrors legacy ValidationUtils.validateHost.
+ * Note: IPv4 validation checks digit count only (1-3 digits per octet),
+ * not value range — invalid IPs like 999.0.0.1 pass regex but are rejected by the server.
  */
+const HOST_REGEX = /^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*|\[[0-9A-Fa-f:.]+\]|(?:\d{1,3}\.){3}\d{1,3})$/;
+
 function validateHttpConfig(data: HttpConfiguration): ValidationErrors {
   const errors: ValidationErrors = {};
 
-  // Timeout validation
-  if (data.timeout != null && data.timeout !== 0) {
-    if (!Number.isInteger(Number(data.timeout)) || data.timeout < 0) {
-      errors.timeout = 'Timeout must be a non-negative integer (seconds)';
+  // Timeout: optional; if provided, integer in [1, 3600]
+  if (data.timeout != null) {
+    if (!Number.isInteger(Number(data.timeout)) || data.timeout < 1 || data.timeout > 3600) {
+      errors.timeout = 'Timeout must be between 1 and 3600 seconds';
     }
   }
 
-  // Retries validation
-  if (data.retries != null && data.retries !== 0) {
-    if (!Number.isInteger(Number(data.retries)) || data.retries < 0) {
-      errors.retries = 'Retries must be a non-negative integer';
+  // Retries: optional; if provided, integer in [0, 10]
+  if (data.retries != null) {
+    if (!Number.isInteger(Number(data.retries)) || data.retries < 0 || data.retries > 10) {
+      errors.retries = 'Retries must be between 0 and 10';
     }
   }
 
@@ -43,13 +49,15 @@ function validateHttpConfig(data: HttpConfiguration): ValidationErrors {
   if (data.httpEnabled) {
     if (!data.httpHost?.trim()) {
       errors.httpHost = 'HTTP proxy host is required';
+    } else if (!HOST_REGEX.test(data.httpHost.trim())) {
+      errors.httpHost = 'Provide a hostname or IP address (no scheme, no path)';
     }
-    if (data.httpPort == null || data.httpPort === 0) {
+    if (data.httpPort == null) {
       errors.httpPort = 'HTTP proxy port is required';
     } else if (!Number.isInteger(Number(data.httpPort)) || data.httpPort < 1 || data.httpPort > 65535) {
       errors.httpPort = 'Port must be between 1 and 65535';
     }
-    if (data.httpAuthEnabled && !data.httpAuthUsername?.trim()) {
+    if (data.httpAuthType === 'username' && !data.httpAuthUsername?.trim()) {
       errors.httpAuthUsername = 'Username is required when authentication is enabled';
     }
   }
@@ -58,13 +66,15 @@ function validateHttpConfig(data: HttpConfiguration): ValidationErrors {
   if (data.httpsEnabled) {
     if (!data.httpsHost?.trim()) {
       errors.httpsHost = 'HTTPS proxy host is required';
+    } else if (!HOST_REGEX.test(data.httpsHost.trim())) {
+      errors.httpsHost = 'Provide a hostname or IP address (no scheme, no path)';
     }
-    if (data.httpsPort == null || data.httpsPort === 0) {
+    if (data.httpsPort == null) {
       errors.httpsPort = 'HTTPS proxy port is required';
     } else if (!Number.isInteger(Number(data.httpsPort)) || data.httpsPort < 1 || data.httpsPort > 65535) {
       errors.httpsPort = 'Port must be between 1 and 65535';
     }
-    if (data.httpsAuthEnabled && !data.httpsAuthUsername?.trim()) {
+    if (data.httpsAuthType === 'username' && !data.httpsAuthUsername?.trim()) {
       errors.httpsAuthUsername = 'Username is required when authentication is enabled';
     }
   }
@@ -73,30 +83,39 @@ function validateHttpConfig(data: HttpConfiguration): ValidationErrors {
 }
 
 /**
- * REST API HTTP settings shape
+ * REST API HTTP settings shape — mirrors HttpSettingsXo / ProxySettingsXo / AuthSettingsXo
  */
-interface RestHttpSettings {
-  userAgentSuffix?: string | null;
-  timeout?: number | null;
-  retries?: number | null;
-  httpEnabled?: boolean;
-  httpHost?: string | null;
-  httpPort?: number | null;
-  httpAuthEnabled?: boolean;
-  httpAuthUsername?: string | null;
-  httpAuthPassword?: string | null;
-  httpAuthNtlmHost?: string | null;
-  httpAuthNtlmDomain?: string | null;
-  httpsEnabled?: boolean;
-  httpsHost?: string | null;
-  httpsPort?: number | null;
-  httpsAuthEnabled?: boolean;
-  httpsAuthUsername?: string | null;
-  httpsAuthPassword?: string | null;
-  httpsAuthNtlmHost?: string | null;
-  httpsAuthNtlmDomain?: string | null;
-  nonProxyHosts?: string[];
+interface RestAuthSettings {
+  enabled: boolean;
+  username: string;
+  password: string;
+  ntlmHost: string;
+  ntlmDomain: string;
 }
+
+interface RestProxySettings {
+  enabled: boolean;
+  host: string;
+  port: string;
+  authInfo: RestAuthSettings;
+}
+
+interface RestHttpSettings {
+  userAgent: string;
+  timeout: number | null;
+  retries: number | null;
+  httpProxy: RestProxySettings;
+  httpsProxy: RestProxySettings;
+  nonProxyHosts: string[];
+}
+
+const DEFAULT_AUTH: RestAuthSettings = {
+  enabled: false,
+  username: '',
+  password: '',
+  ntlmHost: '',
+  ntlmDomain: '',
+};
 
 /**
  * Transform REST response to UI model
@@ -104,73 +123,72 @@ interface RestHttpSettings {
 function restToHttpConfig(data: RestHttpSettings): HttpConfiguration {
   return {
     ...DEFAULT_HTTP_CONFIGURATION,
-    ...data,
-    userAgentSuffix: data.userAgentSuffix ?? '',
+    userAgentSuffix: data.userAgent ?? '',
     timeout: data.timeout ?? null,
     retries: data.retries ?? null,
-    httpEnabled: data.httpEnabled ?? false,
-    httpHost: data.httpHost ?? '',
-    httpPort: data.httpPort ?? null,
-    httpAuthEnabled: data.httpAuthEnabled ?? false,
-    httpAuthUsername: data.httpAuthUsername ?? '',
-    httpAuthPassword: data.httpAuthPassword ?? '',
-    httpAuthNtlmHost: data.httpAuthNtlmHost ?? '',
-    httpAuthNtlmDomain: data.httpAuthNtlmDomain ?? '',
-    httpsEnabled: data.httpsEnabled ?? false,
-    httpsHost: data.httpsHost ?? '',
-    httpsPort: data.httpsPort ?? null,
-    httpsAuthEnabled: data.httpsAuthEnabled ?? false,
-    httpsAuthUsername: data.httpsAuthUsername ?? '',
-    httpsAuthPassword: data.httpsAuthPassword ?? '',
-    httpsAuthNtlmHost: data.httpsAuthNtlmHost ?? '',
-    httpsAuthNtlmDomain: data.httpsAuthNtlmDomain ?? '',
+    httpEnabled: data.httpProxy?.enabled ?? false,
+    httpHost: data.httpProxy?.host ?? '',
+    httpPort: data.httpProxy?.port ? parseInt(data.httpProxy.port, 10) || null : null,
+    httpAuthType: (data.httpProxy?.authInfo?.enabled ?? false) ? 'username' : '',
+    httpAuthUsername: data.httpProxy?.authInfo?.username ?? '',
+    httpAuthPassword: data.httpProxy?.authInfo?.password ?? '',
+    httpAuthNtlmHost: data.httpProxy?.authInfo?.ntlmHost ?? '',
+    httpAuthNtlmDomain: data.httpProxy?.authInfo?.ntlmDomain ?? '',
+    httpsEnabled: data.httpsProxy?.enabled ?? false,
+    httpsHost: data.httpsProxy?.host ?? '',
+    httpsPort: data.httpsProxy?.port ? parseInt(data.httpsProxy.port, 10) || null : null,
+    httpsAuthType: (data.httpsProxy?.authInfo?.enabled ?? false) ? 'username' : '',
+    httpsAuthUsername: data.httpsProxy?.authInfo?.username ?? '',
+    httpsAuthPassword: data.httpsProxy?.authInfo?.password ?? '',
+    httpsAuthNtlmHost: data.httpsProxy?.authInfo?.ntlmHost ?? '',
+    httpsAuthNtlmDomain: data.httpsProxy?.authInfo?.ntlmDomain ?? '',
     nonProxyHosts: data.nonProxyHosts ?? [],
   };
 }
 
 /**
- * Transform UI model to REST format for saving.
- * Only includes proxy fields when the respective proxy is enabled.
+ * Transform UI model to REST format — always sends the nested httpProxy/httpsProxy objects
+ * required by HttpSettingsXo's @NotNull constraints.
  */
 function httpConfigToRest(config: HttpConfiguration): RestHttpSettings {
-  const saveData: RestHttpSettings = {
-    userAgentSuffix: config.userAgentSuffix || null,
-    timeout: config.timeout || null,
-    retries: config.retries || null,
-    httpEnabled: config.httpEnabled,
-    httpsEnabled: config.httpsEnabled,
-    nonProxyHosts: config.nonProxyHosts || [],
+  const httpAuth: RestAuthSettings = config.httpEnabled && config.httpAuthType === 'username'
+    ? {
+        enabled: true,
+        username: config.httpAuthUsername || '',
+        password: config.httpAuthPassword || '',
+        ntlmHost: config.httpAuthNtlmHost || '',
+        ntlmDomain: config.httpAuthNtlmDomain || '',
+      }
+    : DEFAULT_AUTH;
+
+  const httpsAuth: RestAuthSettings = config.httpsEnabled && config.httpsAuthType === 'username'
+    ? {
+        enabled: true,
+        username: config.httpsAuthUsername || '',
+        password: config.httpsAuthPassword || '',
+        ntlmHost: config.httpsAuthNtlmHost || '',
+        ntlmDomain: config.httpsAuthNtlmDomain || '',
+      }
+    : DEFAULT_AUTH;
+
+  return {
+    userAgent: config.userAgentSuffix || '',
+    timeout: config.timeout ?? null,
+    retries: config.retries ?? null,
+    httpProxy: {
+      enabled: config.httpEnabled,
+      host: config.httpEnabled ? (config.httpHost || '') : '',
+      port: config.httpEnabled && config.httpPort != null ? String(config.httpPort) : '',
+      authInfo: httpAuth,
+    },
+    httpsProxy: {
+      enabled: config.httpsEnabled,
+      host: config.httpsEnabled ? (config.httpsHost || '') : '',
+      port: config.httpsEnabled && config.httpsPort != null ? String(config.httpsPort) : '',
+      authInfo: httpsAuth,
+    },
+    nonProxyHosts: !config.httpEnabled && !config.httpsEnabled ? [] : (config.nonProxyHosts || []),
   };
-
-  if (config.httpEnabled) {
-    saveData.httpHost = config.httpHost || null;
-    saveData.httpPort = config.httpPort || null;
-    saveData.httpAuthEnabled = config.httpAuthEnabled || false;
-    if (config.httpAuthEnabled) {
-      saveData.httpAuthUsername = config.httpAuthUsername || null;
-      saveData.httpAuthPassword = config.httpAuthPassword || null;
-      saveData.httpAuthNtlmHost = config.httpAuthNtlmHost || null;
-      saveData.httpAuthNtlmDomain = config.httpAuthNtlmDomain || null;
-    }
-  }
-
-  if (config.httpsEnabled) {
-    saveData.httpsHost = config.httpsHost || null;
-    saveData.httpsPort = config.httpsPort || null;
-    saveData.httpsAuthEnabled = config.httpsAuthEnabled || false;
-    if (config.httpsAuthEnabled) {
-      saveData.httpsAuthUsername = config.httpsAuthUsername || null;
-      saveData.httpsAuthPassword = config.httpsAuthPassword || null;
-      saveData.httpsAuthNtlmHost = config.httpsAuthNtlmHost || null;
-      saveData.httpsAuthNtlmDomain = config.httpsAuthNtlmDomain || null;
-    }
-  }
-
-  if (!config.httpEnabled && !config.httpsEnabled) {
-    saveData.nonProxyHosts = [];
-  }
-
-  return saveData;
 }
 
 /**
@@ -182,6 +200,7 @@ function httpConfigToRest(config: HttpConfiguration): RestHttpSettings {
 export function createHttpFormMachine() {
   return createFormMachine<HttpConfiguration>({
     id: 'http-form',
+    stayEditableAfterSave: true,
     context: {
       data: { ...DEFAULT_HTTP_CONFIGURATION },
     },

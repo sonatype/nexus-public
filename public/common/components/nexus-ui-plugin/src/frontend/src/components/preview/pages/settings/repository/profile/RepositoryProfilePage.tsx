@@ -19,15 +19,21 @@ import {
   FolderTree,
   Package,
   Circle,
+  RotateCcw,
+  Database,
+  Power,
+  Trash2,
 } from 'lucide-react';
 
 import {
   PageHeader,
   ErrorState,
+  DeleteConfirmationModal,
 } from '../../../../shared';
+import { useRepositoriesApi } from '../repositories/useRepositoriesApi';
+import { ensureTrailingSlash } from '../../../../../../utils/url';
 import { FORMAT_LABELS, TYPE_LABELS } from '../repositories/types';
 import { Breadcrumbs } from '../../../search/details/Breadcrumbs';
-import { useRepositoryProfile } from './hooks/useRepositoryProfile';
 import { RepositoryStructureTree } from '../repositories/RepositoryStructureTree';
 import { RepositoryGroupUsageTab } from '../repositories/RepositoryGroupUsageTab';
 import { RepositoryTab } from './tabs/RepositoryTab';
@@ -39,8 +45,10 @@ import { InstanceConfigTab } from './tabs/InstanceConfigTab';
 import { HealthCheckCard } from './HealthCheckCard';
 import { FirewallCard } from './FirewallCard';
 import { useFirewallTier } from '../../../../shared/security/firewallTier';
-import { restClient, ENDPOINTS } from '../../../../../../interface/api';
 import { useToast } from '../../../../shared/Toast';
+import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
+import { useRepositoryProfileMachine } from './useRepositoryProfileMachine';
+import { TABS, type TabId } from './types';
 
 // =============================================================================
 // Types
@@ -52,26 +60,17 @@ interface RepositoryProfilePageProps {
   context?: 'browse' | 'settings';
 }
 
-// Simplified tab structure
-type TabId = 'repository' | 'structure' | 'membership' | 'usage' | 'audit' | 'security' | 'system' | 'instance-config';
-
-const TABS: Array<{ id: TabId; label: string }> = [
-  { id: 'repository', label: 'Repository' },
-  { id: 'structure', label: 'Structure' },
-  { id: 'membership', label: 'Group Membership' },
-  { id: 'usage', label: 'Usage' },
-  { id: 'audit', label: 'Audit' },
-  { id: 'security', label: 'Access & Security' },
-  { id: 'system', label: 'System' },
-  { id: 'instance-config', label: 'Instance Config' },
-];
-
 // =============================================================================
 // Component
 // =============================================================================
 
 /**
  * RepositoryProfilePage - Read-only operational dashboard for a repository
+ *
+ * This component follows the three-layer architecture:
+ * - Layer 1: repositoryProfileMachine.ts - XState machine for business logic
+ * - Layer 2: useRepositoryProfileMachine.ts - Hook for React integration
+ * - Layer 3: This component - Pure presentation only
  */
 export function RepositoryProfilePage({ repositoryName, context = 'settings' }: RepositoryProfilePageProps): JSX.Element {
   const router = useRouter();
@@ -81,13 +80,15 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
   const firewallTier = useFirewallTier();
   const toast = useToast();
 
-  // Sync tab state with URL on initial load if tab param is missing
-  useEffect(() => {
-    if (!params?.tab) {
-      handleSelectTab('repository');
-    }
-  }, [params?.tab, handleSelectTab]);
+  // Delete-modal state. We use the list page's DeleteConfirmationModal directly
+  // (rather than threading through the state machine) so the profile page owns
+  // its own ephemeral UI without coupling to repositoryProfileMachine — which
+  // is currently scoped to per-repo actions (cache, index, online, health check).
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const { deleteRepository } = useRepositoriesApi();
 
+  // Get all state and handlers from the machine hook
   const {
     repository,
     blobStore,
@@ -109,59 +110,30 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
     securityLoading,
     systemLoading,
     error,
+    actionError,
     refresh,
-  } = useRepositoryProfile(repositoryName);
-
-  // Handlers for Health Check Card
-  const handleToggleRepoHealthCheck = useCallback(async (enabled: boolean) => {
-    try {
-      if (enabled) {
-        await restClient.post(`/service/rest/v1/repositories/${encodeURIComponent(repositoryName)}/health-check`);
-      } else {
-        await restClient.delete(`/service/rest/v1/repositories/${encodeURIComponent(repositoryName)}/health-check`);
-      }
-      toast.success(`Health Check ${enabled ? 'enabled' : 'disabled'} for ${repositoryName}`);
-      refresh();
-    } catch (err) {
-      toast.error(`Failed to update Health Check: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    }
-  }, [repositoryName, refresh, toast]);
-
-  const handleToggleInstanceHealthCheck = useCallback(async (enabled: boolean, useTrustStore: boolean) => {
-    try {
-      // Find the healthcheck capability if it exists
-      const healthCheckCapability = capabilities.find(c => c.type === 'healthcheck');
-      
-      if (healthCheckCapability) {
-        await restClient.put(`${ENDPOINTS.CAPABILITIES}/${healthCheckCapability.id}`, {
-          enabled,
-          properties: {
-            ...healthCheckCapability.properties,
-            useTrustStore: String(useTrustStore),
-          }
-        });
-      } else if (enabled) {
-        await restClient.post(ENDPOINTS.CAPABILITIES, {
-          type: 'healthcheck',
-          enabled: true,
-          properties: {
-            configuredForAll: 'true',
-            useTrustStore: String(useTrustStore),
-          }
-        });
-      }
-      toast.success(`Instance Health Check ${enabled ? 'enabled' : 'disabled'}`);
-      refresh();
-    } catch (err) {
-      toast.error('Failed to update Instance Health Check');
-    }
-  }, [capabilities, refresh, toast]);
+    retry,
+    handleInvalidateCache,
+    handleRebuildIndex,
+    handleToggleOnline,
+    handleToggleHealthCheck,
+    handleToggleInstanceHealthCheck,
+    confirmAction,
+    cancelAction,
+    isConfirming,
+    isExecuting,
+    pendingAction,
+    dialogTitle,
+    dialogMessage,
+    dialogConfirmLabel,
+    dialogVariant,
+  } = useRepositoryProfileMachine(repositoryName);
 
   // Context-aware back navigation
   const isBrowseContext = context === 'browse';
   const backLabel = isBrowseContext ? 'Back to Browse' : 'Back to Repositories';
 
-  // Navigation handlers
+  // Navigation handlers — defined before any useEffect that references them to avoid TDZ errors
   const handleBack = useCallback(() => {
     if (isBrowseContext) {
       router.stateService.go('preview.browse.browse');
@@ -169,6 +141,38 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
       router.stateService.go('preview.admin.repository.repositories.list');
     }
   }, [isBrowseContext, router]);
+
+  const handleSelectTab = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+    const stateName = context === 'browse' ? 'preview.browse.repository-profile' : 'preview.admin.repository.repositories.profile';
+    const tabParams = { repositoryName, tab };
+    router.stateService.go(stateName, tabParams, { notify: false, location: 'replace' });
+  }, [router, repositoryName, context]);
+
+  const handleViewInBrowse = useCallback(() => {
+    router.stateService.go('preview.browse.browse.repo', { repoName: repositoryName });
+  }, [router, repositoryName]);
+
+  const handleOpenDeleteModal = useCallback(() => {
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    setIsDeleting(true);
+    try {
+      await deleteRepository(repositoryName);
+      toast.success(`Repository "${repositoryName}" deleted successfully`);
+      setIsDeleteModalOpen(false);
+      // After a successful delete the repo no longer exists, so navigate back
+      // to the list (settings context) or browse view (browse context).
+      handleBack();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error('Failed to delete repository', message);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deleteRepository, repositoryName, toast, handleBack]);
 
   // Breadcrumb items based on context
   const breadcrumbItems = useMemo(() => {
@@ -186,16 +190,19 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
     }
   }, [isBrowseContext, repositoryName, handleBack, router]);
 
-  const handleViewInBrowse = useCallback(() => {
-    router.stateService.go('preview.browse.browse.repo', { repoName: repositoryName });
-  }, [router, repositoryName]);
+  // Sync tab state with URL on initial load if tab param is missing
+  useEffect(() => {
+    if (!params?.tab) {
+      handleSelectTab('repository');
+    }
+  }, [params?.tab, handleSelectTab]);
 
-  const handleSelectTab = useCallback((tab: TabId) => {
-    setActiveTab(tab);
-    const stateName = context === 'browse' ? 'preview.browse.repository-profile' : 'preview.admin.repository.repositories.profile';
-    const tabParams = { repositoryName, tab };
-    router.stateService.go(stateName, tabParams, { notify: false, location: 'replace' });
-  }, [router, repositoryName, context]);
+  // Surface action errors (invalidate cache / rebuild index / toggle online failures) via toast
+  useEffect(() => {
+    if (actionError) {
+      toast.error('Action failed', actionError);
+    }
+  }, [actionError, toast]);
 
   // Loading state
   if (loading) {
@@ -222,6 +229,9 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
           </Callout.Icon>
           <Callout.Text>{error || `Repository "${repositoryName}" not found`}</Callout.Text>
         </Callout.Root>
+        <Box mt="4">
+          <Button onClick={retry}>Retry</Button>
+        </Box>
       </Box>
     );
   }
@@ -288,14 +298,59 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
                       padding: '2px 6px',
                       background: 'var(--gray-a3)',
                       borderRadius: '4px'
-                    }}>{repository.url}</code>
+                    }}>{ensureTrailingSlash(repository.url)}</code>
                   </Text>
                 </Flex>
               </Flex>
-              <Flex gap="2" align="center">
+              <Flex gap="2" align="center" wrap="wrap">
                 <Button variant="soft" size="2" onClick={handleViewInBrowse}>
                   <FolderTree size={16} />
                   Browse Repository
+                </Button>
+                {isProxy && (
+                  <Button
+                    variant="soft"
+                    size="2"
+                    onClick={handleInvalidateCache}
+                    disabled={isExecuting || isDeleting}
+                    title="Invalidate Cache"
+                  >
+                    <RotateCcw size={16} />
+                    Invalidate Cache
+                  </Button>
+                )}
+                <Button
+                  variant="soft"
+                  size="2"
+                  onClick={handleRebuildIndex}
+                  disabled={isExecuting || isDeleting}
+                  title="Rebuild Index"
+                >
+                  <Database size={16} />
+                  Rebuild Index
+                </Button>
+                <Button
+                  variant="soft"
+                  size="2"
+                  onClick={handleToggleOnline}
+                  disabled={isExecuting || isDeleting}
+                  color={isOnline ? 'green' : 'red'}
+                  title={isOnline ? 'Take Offline' : 'Bring Online'}
+                >
+                  <Power size={16} />
+                  {isOnline ? 'Online' : 'Offline'}
+                </Button>
+                <Button
+                  variant="soft"
+                  size="2"
+                  color="red"
+                  onClick={handleOpenDeleteModal}
+                  disabled={isExecuting || isDeleting}
+                  title="Delete Repository"
+                  data-testid="repository-profile-delete-button"
+                >
+                  <Trash2 size={16} />
+                  Delete
                 </Button>
                 <Button variant="ghost" size="2" onClick={refresh} title="Refresh">
                   <RefreshCw size={16} />
@@ -312,7 +367,7 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
                   repositoryName={repository.name}
                   healthCheck={healthCheck}
                   capabilities={capabilities}
-                  onToggleRepo={handleToggleRepoHealthCheck}
+                  onToggleRepo={handleToggleHealthCheck}
                   onToggleInstance={handleToggleInstanceHealthCheck}
                   isSupported={isProxy}
                 />
@@ -407,6 +462,27 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
           </Tabs.Root>
         </Box>
       </Box>
+
+      {/* Confirmation Dialog - rendered based on machine state */}
+      <ConfirmDialog
+        open={isConfirming}
+        onOpenChange={(open) => { if (!open) cancelAction(); }}
+        title={dialogTitle}
+        message={dialogMessage}
+        confirmLabel={dialogConfirmLabel}
+        variant={dialogVariant}
+        onConfirm={confirmAction}
+      />
+
+      {/* Delete confirmation modal — owned by the profile page (not the machine) */}
+      <DeleteConfirmationModal
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        entityName={repository.name}
+        entityType="repository"
+        loading={isDeleting}
+      />
     </ScrollArea>
   );
 }

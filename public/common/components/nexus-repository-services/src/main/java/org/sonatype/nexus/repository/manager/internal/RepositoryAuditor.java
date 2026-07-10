@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -38,12 +37,15 @@ import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Repository auditor.
@@ -55,9 +57,13 @@ public class RepositoryAuditor
     extends AuditorSupport
     implements EventAware
 {
+  private static final TypeReference<Map<String, Object>> TYPE_REF = new TypeReference<Map<String, Object>>()
+  {
+  };
+
   public static final String DOMAIN = "repository";
 
-  private ObjectMapper mapper = new ObjectMapper();
+  private final JsonMapper mapper;
 
   private final Map<String, ApiRepositoryAdapter> convertersByFormat;
 
@@ -66,10 +72,12 @@ public class RepositoryAuditor
   @Autowired
   public RepositoryAuditor(
       final List<ApiRepositoryAdapter> convertersByFormatList,
-      @Qualifier("default") final ApiRepositoryAdapter defaultAdapter)
+      @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,
+      final JsonMapper mapper)
   {
     this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(convertersByFormatList);
     this.defaultAdapter = defaultAdapter;
+    this.mapper = checkNotNull(mapper);
 
     registerType(RepositoryCacheInvalidationEvent.class, "cacheInvalidated");
     registerType(RepositoryCreatedEvent.class, CREATED_TYPE);
@@ -136,9 +144,7 @@ public class RepositoryAuditor
 
       String json = writer.writeValueAsString(apiObject);
 
-      return mapper.readerFor(new TypeReference<Map<String, Object>>()
-      {
-      }).readValue(json);
+      return mapper.readerFor(TYPE_REF).readValue(json);
     }
     catch (Exception e) {
       log.error("Failed to convert repo object falling back to simple", e);

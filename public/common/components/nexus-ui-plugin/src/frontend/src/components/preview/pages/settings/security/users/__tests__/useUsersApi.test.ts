@@ -20,6 +20,15 @@ const mockPut = jest.fn();
 const mockDelete = jest.fn();
 
 // Mock the REST API from @/utils/api
+const mockGetValue = jest.fn();
+jest.mock('../../../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    state: jest.fn(() => ({
+      getValue: (...args: unknown[]) => mockGetValue(...args),
+    })),
+  },
+}));
+
 jest.mock('../../../../../../../interface/api', () => ({
   ...jest.requireActual('../../../../../../../interface/api'),
   restClient: {
@@ -301,6 +310,71 @@ describe('useUsersApi', () => {
           source: 'LDAP',
           roles: ['nx-admin', 'nx-developer'],
         })
+      );
+    });
+
+    it('uses dedicated roles endpoint for cloud external users', async () => {
+      mockGetValue.mockImplementation((key: string, defaultVal: unknown) => {
+        if (key === 'isCloud') return true;
+        return defaultVal;
+      });
+
+      mockPut.mockResolvedValue(undefined);
+
+      const userData = {
+        userId: 'oauth-user@example.com',
+        firstName: 'OAuth',
+        lastName: 'User',
+        emailAddress: 'oauth-user@example.com',
+        status: true,
+        roles: ['nx-admin', 'nx-developer'],
+      };
+
+      const { result } = renderHook(() => useUsersApi());
+
+      await act(async () => {
+        await result.current.updateUser('oauth-user@example.com', userData, 'OAuth2');
+      });
+
+      expect(mockPut).toHaveBeenCalledWith(
+        '/service/rest/v1/security/users/oauth-user%40example.com/roles',
+        { roles: ['nx-admin', 'nx-developer'] }
+      );
+    });
+
+    it('falls back to self-hosted endpoint for non-cloud external users', async () => {
+      mockGetValue.mockImplementation((_key: string, defaultVal: unknown) => defaultVal);
+
+      const restResponse = {
+        userId: 'ldap-user',
+        firstName: 'LDAP',
+        lastName: 'User',
+        emailAddress: 'ldap@example.com',
+        status: 'active',
+        roles: ['nx-admin'],
+        source: 'LDAP',
+      };
+
+      mockPut.mockResolvedValue(restResponse);
+
+      const userData = {
+        userId: 'ldap-user',
+        firstName: 'LDAP',
+        lastName: 'User',
+        emailAddress: 'ldap@example.com',
+        status: true,
+        roles: ['nx-admin'],
+      };
+
+      const { result } = renderHook(() => useUsersApi());
+
+      await act(async () => {
+        await result.current.updateUser('ldap-user', userData, 'LDAP');
+      });
+
+      expect(mockPut).toHaveBeenCalledWith(
+        expect.stringContaining('ldap-user?source=LDAP'),
+        expect.objectContaining({ userId: 'ldap-user', source: 'LDAP' })
       );
     });
   });

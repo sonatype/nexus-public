@@ -29,6 +29,8 @@ import {
 } from '@radix-ui/themes';
 import {
   AlertCircle,
+  Check,
+  ChevronDown,
   Copy,
   Download,
   ExternalLink,
@@ -42,9 +44,13 @@ import { DeleteDialog } from '../actions/DeleteDialog';
 import { deleteComponent, deleteAsset, deleteFolder, fetchBrowseNodes } from '../browse.api';
 import type { DeleteItemInfo } from '../actions/actions.types';
 import type { BrowseNode } from '../tree/browse-tree.types';
-import { formatFileSize, formatDate, getAssetDownloadUrl } from './detail.utils';
+import { formatFileSize, formatDate, getAssetDownloadUrl, sanitizeRegistryUrl } from './detail.utils';
 import { DeepResearchLink, useToast } from '../../../shared';
 import { isIqServerEnabled } from '../repository-list/useRepositoryList';
+import {
+  formatAttributeValue,
+  shouldDisplayAttributeFacet,
+} from '../browse.constants';
 
 import './DetailPanel.scss';
 
@@ -159,14 +165,83 @@ function PathRowWithCopy({ label, value }: { label: string; value: string | null
             {pathValue || '-'}
           </Code>
           {pathValue && (
-            <Tooltip content={copied ? 'Copied!' : 'Copy'}>
-              <Button variant="soft" color="blue" size="2" onClick={handleCopy} aria-label="Copy path">
-                <Copy size={14} />
+            <Tooltip content={copied ? 'Copied!' : 'Copy path'}>
+              <Button variant="soft" color="blue" size="2" onClick={handleCopy}>
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? 'Copied!' : 'Path'}
               </Button>
             </Tooltip>
           )}
         </Flex>
       </Box>
+    </Box>
+  );
+}
+
+/**
+ * Collapsible facet section for attribute groups (Firewall, Npm, Docker, etc.).
+ * Adds visual hierarchy with collapsible sections, dividers, and bold headers.
+ * Default is closed; call sites explicitly pass defaultOpen for important facets.
+ */
+function FacetSection({
+  title,
+  children,
+  defaultOpen = false,
+  testId,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  testId?: string;
+}): JSX.Element {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const handleToggle = () => setIsOpen(!isOpen);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggle();
+    }
+  };
+
+  return (
+    <Box mt="4" data-testid={testId}>
+      {/* Section header with bold title and expand/collapse toggle */}
+      <Flex
+        align="center"
+        justify="between"
+        py="2"
+        px="2"
+        style={{
+          cursor: 'pointer',
+          backgroundColor: 'var(--gray-a2)',
+          borderRadius: 'var(--radius-2)',
+          marginBottom: isOpen ? 'var(--space-2)' : 0,
+        }}
+        onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
+      >
+        <Text size="2" weight="bold" style={{ textTransform: 'capitalize' }}>
+          {title}
+        </Text>
+        <ChevronDown
+          size={16}
+          style={{
+            transition: 'transform 0.2s ease',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            color: 'var(--gray-9)',
+          }}
+        />
+      </Flex>
+      {/* Collapsible content */}
+      {isOpen && (
+        <Box pt="1" px="2">
+          {children}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -216,13 +291,24 @@ export interface AssetData {
   id: string;
   name: string;
   format: string;
-  contentType: string;
-  size: number;
+  contentType?: string;
+  size?: number;
   repositoryName: string;
   blobCreated: string | null;
   blobUpdated: string | null;
   lastDownloaded: string | null;
   path?: string;
+  downloadUrl?: string;
+  blobRef?: string;
+  createdBy?: string;
+  createdByIp?: string; // mapped from API but intentionally not rendered — privacy concern
+  checksum?: Record<string, string>;
+  /**
+   * Format-specific attributes bag from the backend (e.g. `docker.registryUrl`).
+   * Intentionally loose (`Record<string, unknown>`) since shape varies per format.
+   */
+  attributes?: Record<string, unknown>;
+  registryUrl?: string;
 }
 
 /**
@@ -377,7 +463,7 @@ export function DetailPanel({
    */
   const handleDownload = useCallback(() => {
     if (assetData) {
-      const downloadUrl = getAssetDownloadUrl(repositoryName, assetData.name);
+      const downloadUrl = assetData.downloadUrl ?? getAssetDownloadUrl(repositoryName, assetData.name);
       window.open(downloadUrl, '_blank');
     }
   }, [assetData, repositoryName]);
@@ -628,25 +714,12 @@ function ComponentDetails({
 
       <Separator size="4" />
 
-      {/* Details */}
       <Box p="3">
         <DetailRow label={STRINGS.component.repository} value={repositoryName} />
-        <DetailRow
-          label={STRINGS.component.format}
-          value={componentData?.format}
-        />
-        <DetailRow
-          label={STRINGS.component.group}
-          value={componentData?.group}
-        />
-        <DetailRow
-          label={STRINGS.component.name}
-          value={componentData?.name || node.text}
-        />
-        <DetailRow
-          label={STRINGS.component.version}
-          value={componentData?.version}
-        />
+        <DetailRow label={STRINGS.component.format} value={componentData?.format} />
+        <DetailRow label={STRINGS.component.group} value={componentData?.group} />
+        <DetailRow label={STRINGS.component.name} value={componentData?.name || node.text} />
+        <DetailRow label={STRINGS.component.version} value={componentData?.version} />
       </Box>
 
       {/* Actions */}
@@ -709,12 +782,14 @@ function getUsageSnippets(
   format: string | undefined,
   group: string | null | undefined,
   name: string | undefined,
-  version: string | null | undefined
+  version: string | null | undefined,
+  registryUrl?: string | null
 ): { title: string; code: string }[] {
   if (!format || !name) return [];
   const snippets: { title: string; code: string }[] = [];
   const g = group || '';
   const v = version || 'LATEST';
+  const dockerPullTarget = sanitizeRegistryUrl(registryUrl) ? `${sanitizeRegistryUrl(registryUrl)}/${name}` : name;
 
   switch (format.toLowerCase()) {
     case 'maven2':
@@ -738,7 +813,7 @@ function getUsageSnippets(
       snippets.push({ title: 'NuGet', code: `Install-Package ${name} -Version ${v}` });
       break;
     case 'docker':
-      snippets.push({ title: 'Docker', code: `docker pull ${name}:${v}` });
+      snippets.push({ title: 'Docker', code: `docker pull ${dockerPullTarget}:${v}` });
       break;
   }
   return snippets;
@@ -794,11 +869,35 @@ function AssetDetails({
   onTabChange,
 }: AssetDetailsProps): JSX.Element {
   const iqEnabled = isIqServerEnabled();
+  const isProEdition = ExtJS.isProEdition?.() ?? false;
+  // Top-level registryUrl computed by the backend at read time so the docker pull
+  // snippet becomes `docker pull host:port/image:tag` when present (NEXUS-51972).
+  const dockerRegistryUrl = assetData?.registryUrl;
+
+  const DOCKER_ATTR_LABELS: Record<string, string> = {
+    os: 'OS',
+    arch: 'Architecture',
+    architecture: 'Architecture',
+    created: 'Created',
+    author: 'Author',
+    workingDir: 'Working Directory',
+    totalSize: 'Total Size',
+    exposedPorts: 'Exposed Ports',
+    entrypoint: 'Entrypoint',
+    cmd: 'Cmd',
+    env: 'Environment',
+    labels: 'Labels',
+    history: 'History',
+    content_digest: 'Digest',
+    image_name: 'Image Name',
+    image_tag: 'Image Tag',
+  };
   const usageSnippets = getUsageSnippets(
     assetData?.format,
     componentData?.group,
     componentData?.name || node.text,
-    componentData?.version
+    componentData?.version,
+    dockerRegistryUrl
   );
 
   return (
@@ -814,7 +913,7 @@ function AssetDetails({
           <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
           <Tabs.Trigger value="usage">Usage</Tabs.Trigger>
           <Tabs.Trigger value="attributes">Attributes</Tabs.Trigger>
-          <Tabs.Trigger value="tags">Component Tags</Tabs.Trigger>
+          {isProEdition && <Tabs.Trigger value="tags">Component Tags</Tabs.Trigger>}
           <Tabs.Trigger value="lifecycle">Sonatype Lifecycle</Tabs.Trigger>
         </Tabs.List>
 
@@ -836,6 +935,8 @@ function AssetDetails({
             <DetailRow label={STRINGS.asset.blobCreated} value={formatDate(assetData?.blobCreated)} />
             <DetailRow label={STRINGS.asset.blobUpdated} value={formatDate(assetData?.blobUpdated)} />
             <DetailRow label={STRINGS.asset.lastDownloaded} value={formatDate(assetData?.lastDownloaded)} />
+            {assetData?.blobRef && <DetailRow label="Blob Reference" value={assetData.blobRef} />}
+            {assetData?.createdBy && <DetailRow label="Uploaded By" value={assetData.createdBy} />}
           </Box>
         </Tabs.Content>
 
@@ -885,16 +986,74 @@ function AssetDetails({
                 <DetailRow label="Version" value={componentData.version} />
               </>
             )}
+
+
+            {/* Checksums — rendered dynamically from REST Map<String,String> */}
+            {assetData?.checksum && Object.keys(assetData.checksum).length > 0 && (
+              <FacetSection title="Checksums" testId="attr-section-checksum" defaultOpen={true}>
+                {Object.entries(assetData.checksum).map(([algo, value]) => (
+                  <DetailRow key={algo} label={algo.toUpperCase()} value={value} />
+                ))}
+              </FacetSection>
+            )}
+
+            {/*
+              Dynamic attribute facets surfaced from `attributes.*`.
+              Matches Classic UI's AssetAttributes.js behavior - iterates ALL facets
+              (firewall, format-specific, etc.) and renders each as a labeled section.
+              Uses shouldDisplayAttributeFacet to hide internal facets (NEXUS-52920).
+            */}
+            {assetData?.attributes &&
+              Object.entries(assetData.attributes)
+                .filter(([key, value]) => shouldDisplayAttributeFacet(key, value))
+                .map(([sectionKey, sectionValue]) => {
+                  const entries = Object.entries(sectionValue as Record<string, unknown>)
+                    .filter(([, val]) => val !== null && val !== undefined && val !== '');
+                  if (entries.length === 0) return null;
+                  return (
+                    <FacetSection
+                      key={sectionKey}
+                      title={sectionKey}
+                      testId={`attr-section-${sectionKey}`}
+                      defaultOpen={sectionKey === 'firewall' || sectionKey === 'npm' || sectionKey === 'docker'}
+                    >
+                      {entries.map(([k, v]) => (
+                        <Flex
+                          key={k}
+                          className="detail-panel__row"
+                          justify="between"
+                          py="2"
+                          data-testid={`attr-${sectionKey}-${k}`}
+                        >
+                          <Text size="2" color="gray" className="detail-panel__label">
+                            {sectionKey === 'docker' ? (DOCKER_ATTR_LABELS[k] ?? k) : k}
+                          </Text>
+                          <Text
+                            size="2"
+                            className="detail-panel__value"
+                            style={{ whiteSpace: 'pre-wrap', textAlign: 'right' }}
+                          >
+                            {formatAttributeValue(v, k, formatFileSize)}
+                          </Text>
+                        </Flex>
+                      ))}
+                    </FacetSection>
+                  );
+                })}
           </Box>
         </Tabs.Content>
 
-        {/* Component Tags Tab */}
-        <Tabs.Content value="tags">
-          <Flex direction="column" align="center" justify="center" p="6" gap="2">
-            <Tag size={32} color="var(--gray-9)" />
-            <Text color="gray" size="2">No tags associated with this component.</Text>
-          </Flex>
-        </Tabs.Content>
+        {/* Component Tags Tab — Pro feature: hidden in CE mode */}
+        {isProEdition && (
+          <Tabs.Content value="tags">
+            <Box p="3">
+              <Flex direction="column" align="center" justify="center" p="4" gap="2">
+                <Tag size={24} color="var(--gray-9)" />
+                <Text color="gray" size="2">No tags associated with this component.</Text>
+              </Flex>
+            </Box>
+          </Tabs.Content>
+        )}
 
         {/* Sonatype Lifecycle Tab */}
         <Tabs.Content value="lifecycle">

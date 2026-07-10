@@ -12,17 +12,14 @@
  */
 
 
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
 
 import React from 'react';
 import { Box, Flex, Text, Heading, Callout, Link } from '@radix-ui/themes';
-import { LifeBuoy, ExternalLink, FileArchive, Info } from 'lucide-react';
+import { ExternalLink, FileArchive, Info } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsFormSection, SettingsButton, SettingsAlert } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 
 import './SupportRequestPage.scss';
 
@@ -71,15 +68,14 @@ export function SupportRequestPage({ className }: SupportRequestPageProps) {
         data-edition="oss"
       >
         {/* Header */}
-        <Flex align="center" gap="3" className="support-request-page__header">
-          <LifeBuoy size={24} className="support-request-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">Support Request</Heading>
-            <Text size="2" className="support-request-page__description">
-              Submit a support request to Sonatype
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Support Request"
+          description="Submit a support request to Sonatype"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+            { label: 'Support Request' },
+          ]}
+        />
 
         <SettingsAlert type="warning" data-testid="support-request-pro-only-warning">
           Support Request is only available in Nexus Repository Pro Edition.
@@ -97,15 +93,14 @@ export function SupportRequestPage({ className }: SupportRequestPageProps) {
         data-permission="denied"
       >
         {/* Header */}
-        <Flex align="center" gap="3" className="support-request-page__header">
-          <LifeBuoy size={24} className="support-request-page__icon" />
-          <Box>
-            <Heading as="h1" size="6" weight="medium">Support Request</Heading>
-            <Text size="2" className="support-request-page__description">
-              Submit a support request to Sonatype
-            </Text>
-          </Box>
-        </Flex>
+        <PageHeader
+          title="Support Request"
+          description="Submit a support request to Sonatype"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+            { label: 'Support Request' },
+          ]}
+        />
 
         <SettingsAlert type="warning" data-testid="support-request-permission-warning">
           You do not have permission to submit support requests. Contact an administrator.
@@ -121,15 +116,14 @@ export function SupportRequestPage({ className }: SupportRequestPageProps) {
       data-edition="pro"
     >
       {/* Header */}
-      <Flex align="center" gap="3" className="support-request-page__header">
-        <LifeBuoy size={24} className="support-request-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">Support Request</Heading>
-          <Text size="2" className="support-request-page__description">
-            Submit a support request to Sonatype
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title="Support Request"
+        description="Submit a support request to Sonatype"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
+          { label: 'Support Request' },
+        ]}
+      />
 
       {/* Main Content Section */}
       <SettingsFormSection

@@ -105,7 +105,7 @@ export function LicenseDetails({ license }: LicenseDetailsProps) {
             )}
           </Box>
 
-          {license.licensedUsers !== undefined && license.licensedUsers > 0 && (
+          {license.licensedUsers && license.licensedUsers !== '0' && (
             <Box className="license-details__field">
               <Text as="label" size="2" weight="medium" className="license-details__label">
                 Number of Licensed Users

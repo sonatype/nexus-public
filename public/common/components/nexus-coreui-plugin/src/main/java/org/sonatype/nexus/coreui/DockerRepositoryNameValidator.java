@@ -14,8 +14,8 @@ package org.sonatype.nexus.coreui;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Named;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -25,7 +25,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Validator for {@link DockerRepositoryNameConstraint} that ensures Docker repository names are lowercase.
- * Existing repositories with mixed-case names are exempted to allow configuration updates.
+ *
+ * <p>
+ * The {@link DockerRepositoryNameConstraint} is scoped to the {@code Create} validation group, so
+ * this validator only runs on creation (where no repository with the name exists yet) and never on update. The
+ * {@link RepositoryManager}-based existing-repository exemption below is therefore dead-but-harmless: on create
+ * {@code exists(name)} is always {@code false}, so the exemption can never fire. It is intentionally retained (rather
+ * than removed) to keep the diff minimal; backward compatibility for mixed-case updates is now provided by
+ * the validation-group scoping, not by this runtime check.
  */
 @Named
 public class DockerRepositoryNameValidator

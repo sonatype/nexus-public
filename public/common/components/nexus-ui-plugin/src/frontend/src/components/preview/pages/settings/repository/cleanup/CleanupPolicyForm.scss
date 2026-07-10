@@ -47,9 +47,24 @@
     flex: 1;
   }
 
+  // Description textarea width - aligns with form content (800px - 2×var(--space-5) padding = 736px)
+  &__notes-textarea {
+    .settings-textarea__input {
+      width: 100%;
+      max-width: 736px;
+      box-sizing: border-box;
+    }
+  }
+
   &__criteria-input {
     margin-top: var(--space-3);
     max-width: 200px;
+
+    // Wide variant for Asset Name Matcher (regex patterns need more space)
+    // max-width: none removes the 200px constraint; Radix TextField.Root is already width: 100%
+    &--wide {
+      max-width: none;
+    }
   }
 
   &__exclusion {
@@ -82,5 +97,3 @@
     margin-top: var(--space-4);
   }
 }
-
-

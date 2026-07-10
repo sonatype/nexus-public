@@ -66,6 +66,11 @@ export const ENDPOINTS = {
   ASSETS: `${API_V1}/assets`,
   ROUTING_RULES: `${API_V1}/routing-rules`,
   PROPRIETARY_CONTENT: `${API_INTERNAL}/proprietary-content`,
+
+  // IQ Server (Firewall audit/quarantine)
+  IQ_AUDIT: `${API_V1}/iq/audit`,
+  IQ_AUDIT_REPO: (repositoryName: string) =>
+    `${API_V1}/iq/audit/${encodeURIComponent(repositoryName)}`,
   
   // Browse (REST API for tree browsing)
   REPOSITORY_BROWSE: (repositoryName: string) => `${API_V1}/repositories/${encodeURIComponent(repositoryName)}/browse`,
@@ -93,6 +98,12 @@ export const ENDPOINTS = {
   // Upload
   UPLOAD_DEFINITIONS: `${API_INTERNAL_UI}/upload/definitions`,
 
+  // User Account
+  USER_ACCOUNT: `${API_INTERNAL_UI}/user`,
+
+  // Docker
+  DOCKER_SUGGEST_PORT: `${API_INTERNAL_UI}/docker/suggest-port`,
+
   // Internal UI endpoints
   PRIVILEGE_TYPES: `${API_INTERNAL_UI}/privileges/types`,
   ROLE_SOURCES: `${API_INTERNAL_UI}/roles/sources`,
@@ -101,6 +112,12 @@ export const ENDPOINTS = {
   BROWSE: `${API_INTERNAL_UI}/browse`,
   NODES: `${API_INTERNAL_UI}/nodes`,
   HEALTH_CHECK: `${API_INTERNAL_UI}/healthcheck`,
+  HEALTH_CHECK_ANALYZE: (repoName: string) => `${API_V1}/repositories/${encodeURIComponent(repoName)}/health-check`,
+  HEALTH_CHECK_SUMMARY: `${API_INTERNAL_UI}/healthcheck/summary`,
+  FIREWALL_STATUS: `${API_INTERNAL_UI}/firewall/status`,
+  FIREWALL_STATUS_SUMMARY: `${API_INTERNAL_UI}/firewall/status/summary`,
+  FIREWALL_STATUS_REPO: (repoName: string) =>
+    `${API_INTERNAL_UI}/firewall/status/repo/${encodeURIComponent(repoName)}`,
   BLOBSTORES_TYPES: `${API_INTERNAL_UI}/blobstores/types`,
   BLOBSTORES_QUOTA_TYPES: `${API_INTERNAL_UI}/blobstores/quotaTypes`,
   DATASTORE: `${API_INTERNAL_UI}/datastore`,
@@ -137,6 +154,11 @@ function createClient(): AxiosInstance {
       if (config.method === 'get') {
         config.headers['Cache-Control'] = 'no-cache';
         config.headers['Pragma'] = 'no-cache';
+      }
+
+      // Let Axios set Content-Type automatically for FormData (multipart/form-data with boundary)
+      if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
       }
 
       return config;
@@ -350,6 +372,8 @@ export const urlBuilder = {
     update: (id: string) => `${ENDPOINTS.USERS}/${encodeURIComponent(id)}`,
     delete: (id: string) => `${ENDPOINTS.USERS}/${encodeURIComponent(id)}`,
     changePassword: (id: string) => `${ENDPOINTS.USERS}/${encodeURIComponent(id)}/change-password`,
+    invite: () => `${ENDPOINTS.USERS}/invite`,
+    updateRoles: (id: string) => `${ENDPOINTS.USERS}/${encodeURIComponent(id)}/roles`,
   },
 
   /**

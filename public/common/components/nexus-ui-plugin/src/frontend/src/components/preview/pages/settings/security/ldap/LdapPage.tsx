@@ -228,6 +228,10 @@ export function LdapPage({ className }: LdapPageProps) {
         <PageHeader
           title="LDAP"
           description="Manage LDAP server connections for user authentication"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'LDAP' }
+          ]}
           actions={canCreate && (
             <SettingsButton variant="primary" onClick={handleCreate} icon={Plus}>
               Create LDAP Server
@@ -237,11 +241,15 @@ export function LdapPage({ className }: LdapPageProps) {
       );
     }
 
-    const title = viewMode === 'create' 
-      ? 'Create LDAP Server' 
-      : selectedServer 
-        ? `Edit ${selectedServer.name}` 
+    const title = viewMode === 'create'
+      ? 'Create LDAP Server'
+      : selectedServer
+        ? `Edit ${selectedServer.name}`
         : 'Edit LDAP Server';
+
+    const lastBreadcrumb = viewMode === 'create'
+      ? 'Create'
+      : selectedServer?.name || 'Loading...';
 
     return (
       <PageHeader
@@ -251,7 +259,9 @@ export function LdapPage({ className }: LdapPageProps) {
           : 'Modify LDAP server configuration'
         }
         breadcrumbs={[
-          { label: 'LDAP', onClick: handleBack }
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'LDAP', onClick: handleBack },
+          { label: lastBreadcrumb }
         ]}
       />
     );

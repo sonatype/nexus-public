@@ -38,6 +38,7 @@ import {
 } from '../../../shared';
 import { FORMAT_LABELS } from '../../settings/repository/repositories/types';
 import { MobileFilterDrawer } from '../unified/MobileFilterDrawer';
+import { exportToCsv } from '../../../shared';
 
 const TYPE_OPTIONS = [
   { value: 'hosted', label: 'Hosted' },
@@ -355,15 +356,32 @@ export function GARepositoriesTab({
                     Filter
                   </Button>
                 </Box>
-                <Button size="2" variant="outline" color="gray">
-                  <Download size={14} />
-                  <Box
-                    asChild
-                    display={{ initial: 'none', sm: 'inline' }}
-                    style={{ marginLeft: 6 }}
+                <Button asChild size="2" variant="outline" color="gray">
+                  <button
+                    disabled={sortedRepos.length === 0}
+                    aria-label="Export all filtered results as CSV"
+                    onClick={() =>
+                      exportToCsv(
+                        sortedRepos.map((r) => ({
+                          name: r.name,
+                          type: r.type,
+                          format: r.format,
+                          versionsCount: r.versionsCount,
+                        })),
+                        'repositories.csv',
+                        ['name', 'type', 'format', 'versionsCount'],
+                      )
+                    }
                   >
-                    <span>Export CSV</span>
-                  </Box>
+                    <Download size={14} />
+                    <Box
+                      asChild
+                      display={{ initial: 'none', sm: 'inline' }}
+                      style={{ marginLeft: 6 }}
+                    >
+                      <span>Export CSV</span>
+                    </Box>
+                  </button>
                 </Button>
               </Flex>
             </Flex>

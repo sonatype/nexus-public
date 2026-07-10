@@ -14,7 +14,7 @@ package org.sonatype.nexus.siesta.internal;
 
 import java.util.List;
 
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.ext.Provider;
 
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;

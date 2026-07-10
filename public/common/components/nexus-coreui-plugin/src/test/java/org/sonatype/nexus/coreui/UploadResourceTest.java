@@ -14,8 +14,8 @@ package org.sonatype.nexus.coreui;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Validator;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Validator;
 
 import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.coreui.UploadResource.ErrorPacket;

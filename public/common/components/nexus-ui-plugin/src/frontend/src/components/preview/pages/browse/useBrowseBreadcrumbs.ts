@@ -17,9 +17,7 @@ import type { BreadcrumbItem } from '../search/details/Breadcrumbs';
 /**
  * Builds breadcrumb items for the Browse tree view.
  *
- * Returns a single item: Browse (clickable, goes back to repository list).
- * Path navigation is handled via the tree; the header shows selectedRepository
- * and selectedNode as non-clickable context.
+ * Returns: Browse (clickable) > repository name (non-clickable).
  */
 export function useBrowseBreadcrumbs(
   selectedRepository: string | null,
@@ -29,6 +27,9 @@ export function useBrowseBreadcrumbs(
     if (!selectedRepository) {
       return [];
     }
-    return [{ label: 'Browse', onClick: onBackToList }];
+    return [
+      { label: 'Browse', onClick: onBackToList },
+      { label: selectedRepository },
+    ];
   }, [selectedRepository, onBackToList]);
 }

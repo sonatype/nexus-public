@@ -77,11 +77,11 @@ describe('UserTokensPage', () => {
 
   it('renders the page title and description', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText(/Configure user token settings/i)).toBeInTheDocument();
   });
 
@@ -120,71 +120,95 @@ describe('UserTokensPage', () => {
     });
 
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText('Failed to load settings')).toBeInTheDocument();
   });
 
   it('shows save button', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText('Save')).toBeInTheDocument();
   });
 
   it('shows discard button', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText('Discard')).toBeInTheDocument();
   });
 
   it('shows reset all tokens button when enabled', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText(/Reset All User Tokens/i)).toBeInTheDocument();
   });
 
   it('shows help text about user tokens', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText(/User tokens allow/i)).toBeInTheDocument();
   });
 
   it('shows repository authentication section', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText('Repository Authentication')).toBeInTheDocument();
   });
 
   it('shows token expiration section', async () => {
     render(<UserTokensPage />, { wrapper: TestWrapper });
-    
+
     await waitFor(() => {
-      expect(screen.getByText('User Tokens')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'User Tokens' })).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText('Token Expiration')).toBeInTheDocument();
+  });
+
+  describe('breadcrumbs', () => {
+    it('renders Settings breadcrumb that navigates to settings page', async () => {
+      render(<UserTokensPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      // Click Settings breadcrumb navigates to settings page
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders User Tokens as current page breadcrumb', async () => {
+      render(<UserTokensPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        // The current page item is rendered as Text (not a button) with aria-current="page"
+        const breadcrumb = screen.getByText('User Tokens', { selector: '[aria-current="page"]' });
+        expect(breadcrumb).toBeInTheDocument();
+      });
+    });
   });
 });

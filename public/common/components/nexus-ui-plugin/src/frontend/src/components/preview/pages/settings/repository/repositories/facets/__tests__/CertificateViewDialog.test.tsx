@@ -99,12 +99,12 @@ describe('CertificateViewDialog', () => {
       await waitFor(() => expect(screen.getByText('AA:BB:CC:DD:EE:FF')).toBeInTheDocument());
     });
 
-    it('shows "Add to Trust Store" when cert is not already trusted', async () => {
+    it('shows "Add certificate to truststore" when cert is not already trusted', async () => {
       renderDialog();
-      await waitFor(() => expect(screen.getByText('Add to Trust Store')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Add certificate to truststore')).toBeInTheDocument());
     });
 
-    it('shows "Certificate is in the trust store" and Remove button when cert is already trusted', async () => {
+    it('shows Remove button when cert is already trusted', async () => {
       mockedAxios.get.mockImplementation((url: string) => {
         if (url.includes('/ssl/truststore')) {
           return Promise.resolve({ data: [MOCK_CERT] });
@@ -112,9 +112,8 @@ describe('CertificateViewDialog', () => {
         return Promise.resolve({ data: MOCK_CERT });
       });
       renderDialog();
-      await waitFor(() => expect(screen.getByText('Certificate is in the trust store')).toBeInTheDocument());
-      expect(screen.getByText('Remove from Trust Store')).toBeInTheDocument();
-      expect(screen.queryByText('Add to Trust Store')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText('Remove certificate from truststore')).toBeInTheDocument());
+      expect(screen.queryByText('Add certificate to truststore')).not.toBeInTheDocument();
     });
 
     it('resolves cert id from trust store when fingerprints match but id is absent on fetched cert', async () => {
@@ -126,7 +125,7 @@ describe('CertificateViewDialog', () => {
         return Promise.resolve({ data: certWithoutId });
       });
       renderDialog();
-      await waitFor(() => expect(screen.getByText('Remove from Trust Store')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Remove certificate from truststore')).toBeInTheDocument());
     });
   });
 
@@ -170,20 +169,21 @@ describe('CertificateViewDialog', () => {
     it('calls POST to add cert to trust store', async () => {
       mockedAxios.post = jest.fn().mockResolvedValue({});
       renderDialog();
-      await waitFor(() => expect(screen.getByText('Add to Trust Store')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Add to Trust Store'));
+      await waitFor(() => expect(screen.getByText('Add certificate to truststore')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Add certificate to truststore'));
       await waitFor(() => expect(mockedAxios.post).toHaveBeenCalledWith(
         '/service/rest/v1/security/ssl/truststore',
         MOCK_CERT.pem,
         { headers: { 'Content-Type': 'text/plain' } }
       ));
-      expect(screen.getByText('Certificate is in the trust store')).toBeInTheDocument();
+      // After adding, the Remove button should appear instead
+      expect(screen.getByText('Remove certificate from truststore')).toBeInTheDocument();
     });
 
     it('shows action error when adding cert fails', async () => {
       mockedAxios.post = jest.fn().mockRejectedValue({ message: 'Forbidden' });
       renderDialog();
-      await waitFor(() => fireEvent.click(screen.getByText('Add to Trust Store')));
+      await waitFor(() => fireEvent.click(screen.getByText('Add certificate to truststore')));
       await waitFor(() => expect(screen.getByText('Forbidden')).toBeInTheDocument());
     });
 
@@ -194,20 +194,20 @@ describe('CertificateViewDialog', () => {
       });
       mockedAxios.delete = jest.fn().mockResolvedValue({});
       renderDialog();
-      await waitFor(() => expect(screen.getByText('Remove from Trust Store')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Remove from Trust Store'));
+      await waitFor(() => expect(screen.getByText('Remove certificate from truststore')).toBeInTheDocument());
+      fireEvent.click(screen.getByText('Remove certificate from truststore'));
       await waitFor(() => expect(mockedAxios.delete).toHaveBeenCalledWith(
         `/service/rest/v1/security/ssl/truststore/${encodeURIComponent(MOCK_CERT.id)}`
       ));
-      expect(screen.getByText('Add to Trust Store')).toBeInTheDocument();
+      expect(screen.getByText('Add certificate to truststore')).toBeInTheDocument();
     });
 
     it('disables Add button when user lacks create permission', async () => {
       const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
       ExtJS.checkPermission.mockImplementation((perm: string) => perm !== 'nexus:ssl-truststore:create');
       renderDialog();
-      await waitFor(() => expect(screen.getByRole('button', { name: /Add to Trust Store/i })).toBeInTheDocument());
-      expect(screen.getByRole('button', { name: /Add to Trust Store/i })).toBeDisabled();
+      await waitFor(() => expect(screen.getByRole('button', { name: /Add certificate to truststore/i })).toBeInTheDocument());
+      expect(screen.getByRole('button', { name: /Add certificate to truststore/i })).toBeDisabled();
     });
   });
 

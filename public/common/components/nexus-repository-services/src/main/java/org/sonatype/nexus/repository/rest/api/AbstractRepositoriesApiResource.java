@@ -19,20 +19,20 @@ import java.util.StringJoiner;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.groups.Default;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.HighAvailabilitySupportChecker;
@@ -49,8 +49,8 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -59,10 +59,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.sonatype.nexus.rest.ApiDocConstants.BLOBSTORE_CHANGE_NOT_ALLOWED;
 import static org.sonatype.nexus.rest.ApiDocConstants.BLOBSTORE_NOT_FOUND;
 
@@ -204,15 +204,15 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @Path("/{repositoryName}")
   @RequiresAuthentication
   @Validate
-  @ApiOperation("Get repository")
+  @Operation(summary = "Get repository")
   public AbstractApiRepository getRepository(
-      @ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+      @Parameter(hidden = true) @BeanParam final FormatAndType formatAndType,
       @PathParam("repositoryName") final String repositoryName)
   {
     return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
         .filter(r -> r.getType().getValue().equals(formatAndType.type()) &&
             r.getFormat().getValue().equals(formatAndType.format()))
-        .map(r -> convertersByFormat.getOrDefault(r.getFormat().toString(), defaultAdapter).adapt(r))
+        .map(r -> convertersByFormat.getOrDefault(r.getFormat().toString(), defaultAdapter).adaptDecorated(r))
         .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
   }
 

@@ -11,55 +11,38 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, Heading, Tabs } from '@radix-ui/themes';
-import { Wallet, Loader2 } from 'lucide-react';
+import { Box, Flex, Text, Tabs } from '@radix-ui/themes';
+import { Loader2 } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
-import HistoricalUsage from '../../../../../pages/admin/Usage/HistoricalUsage';
-import { historicalUsageColumns } from '../../../../../pages/admin/Usage/HistoricalUsageColumns';
+import { parseApiError } from '../../../../../../interface/api';
 
 import { SettingsAlert } from '../../../../shared/form';
+import { PageHeader } from '../../../../shared';
 import { LicenseDetails } from './LicenseDetails';
 import { LicensedUsage } from './LicensedUsage';
 import { InstallLicense } from './InstallLicense';
+import { LicenseExpiryAlert } from './LicenseExpiryAlert';
+import { HistoricalUsagePreview } from './HistoricalUsagePreview';
 import { useLicensingApi } from './useLicensingApi';
 import { LicenseData } from './types';
 
 import './LicensingPage.scss';
 
-/**
- * LicensingPage - Main Licensing management page for Preview UI
- *
- * Displays license information, allows uploading new licenses, and shows historical usage.
- */
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
+
 export function LicensingPage() {
   const [license, setLicense] = useState<LicenseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('license');
 
-  const { fetchLicense, setError: setApiError } = useLicensingApi();
+  const { fetchLicense } = useLicensingApi();
 
   const canViewHistoricalUsage = ExtJS.checkPermission('nexus:metrics:read');
 
-  // Required columns for Historical Usage
-  const requiredColumns = [
-    historicalUsageColumns.metricDateMonth,
-    historicalUsageColumns.peakComponents,
-    historicalUsageColumns.percentageChangeComponent,
-    historicalUsageColumns.totalRequests,
-    historicalUsageColumns.percentageChangeRequests,
-    historicalUsageColumns.totalEgress,
-    historicalUsageColumns.peakStorage,
-  ];
-
-  // Load license data on mount
   useEffect(() => {
     const loadLicense = async () => {
       setLoading(true);
@@ -67,8 +50,9 @@ export function LicensingPage() {
       try {
         const licenseData = await fetchLicense();
         setLicense(licenseData);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const apiError = parseApiError(err);
+        setError(apiError.message);
       } finally {
         setLoading(false);
       }
@@ -77,17 +61,11 @@ export function LicensingPage() {
     loadLicense();
   }, [fetchLicense]);
 
-  // Handle license installed - refresh data
-  const handleLicenseInstalled = useCallback(async () => {
-    try {
-      const licenseData = await fetchLicense();
-      setLicense(licenseData);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  }, [fetchLicense]);
+  const handleLicenseInstalled = useCallback((licenseData: LicenseData) => {
+    setError(null);
+    setLicense(licenseData);
+  }, []);
 
-  // Loading state
   if (loading) {
     return (
       <Box className="licensing-page">
@@ -100,22 +78,22 @@ export function LicensingPage() {
   }
 
   const showDetails = !error && license?.contactCompany;
-  const showLicensedUsage = !error && license?.maxRepoRequests && license?.maxRepoComponents;
+  const showLicensedUsage =
+    !error &&
+    license?.maxRepoRequests != null &&
+    license?.maxRepoComponents != null;
 
   return (
     <Box className="licensing-page">
-      {/* Header */}
-      <Flex align="center" gap="3" className="licensing-page__header">
-        <Wallet size={24} className="licensing-page__icon" />
-        <Box>
-          <Heading as="h1" size="6" weight="medium">Licensing</Heading>
-          <Text size="2" className="licensing-page__description">
-            A valid license is required for PRO features; manage it here
-          </Text>
-        </Box>
-      </Flex>
+      <PageHeader
+        title="Licensing"
+        description="A valid license is required for PRO features; manage it here"
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'Licensing' },
+        ]}
+      />
 
-      {/* Error Alert */}
       {error && (
         <Box className="licensing-page__alerts">
           <SettingsAlert type="error" onClose={() => setError(null)}>
@@ -124,8 +102,8 @@ export function LicensingPage() {
         </Box>
       )}
 
-      {/* Content */}
       <Box className="licensing-page__content">
+        <LicenseExpiryAlert />
         <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="licensing-page__tabs">
           <Tabs.List className="licensing-page__tab-list">
             <Tabs.Trigger value="license">License</Tabs.Trigger>
@@ -148,9 +126,7 @@ export function LicensingPage() {
 
           {canViewHistoricalUsage && (
             <Tabs.Content value="usage" className="licensing-page__tab-content">
-              <Box className="licensing-page__historical-usage">
-                <HistoricalUsage columns={requiredColumns} />
-              </Box>
+              <HistoricalUsagePreview />
             </Tabs.Content>
           )}
         </Tabs.Root>
@@ -160,5 +136,3 @@ export function LicensingPage() {
 }
 
 export default LicensingPage;
-
-

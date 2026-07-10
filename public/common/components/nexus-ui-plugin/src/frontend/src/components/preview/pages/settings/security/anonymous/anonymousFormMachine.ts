@@ -64,6 +64,7 @@ export function createAnonymousFormMachine() {
       data: { ...DEFAULT_ANONYMOUS_SETTINGS } as AnonymousFormData,
       realmTypes: [] as RealmType[],
     } as AnonymousFormContext,
+    stayEditableAfterSave: true, // Allow continued editing after save
     actions: {
       validate: assign((ctx: AnonymousFormContext) => ({
         validationErrors: validateAnonymous(ctx.data),

@@ -16,15 +16,21 @@ export default {
       text: 'Hosted Repositories Evaluation',
     },
     title: 'Hosted Repositories Evaluation',
-    breadcrumb: 'Hosted Repositories Evaluation',
+    breadcrumb: 'Hosted Repositories Evaluation Group',
     tabs: {
-      settings: 'SETTINGS',
+      settings: 'Global Evaluation Settings',
       repositories: 'REPOSITORIES',
-      monitoringSettings: 'Monitoring Settings',
+      monitoringSettings: 'Global Evaluation Settings',
       monitoredRepositories: 'Monitored Repositories'
     },
     monitoringSettings: {
-      title: 'Monitoring Settings',
+      title: 'Global Monitoring Settings',
+      evaluationDepthMethodLabel: 'Evaluation Depth Method',
+      evaluationDepthMethodHelpText: 'Select how evaluation depth is determined for hosted repositories.',
+      evaluationDepthMethodOptions: [
+        { value: 'activityTimeFrame', label: 'Activity Time Frame' },
+        { value: 'latestDeployedVersions', label: 'Latest Deployed Versions' }
+      ],
       activityTimeFrameLabel: 'Activity Time Frame',
       activityTimeFrameHelpText: 'Set the time frame for evaluating components based on recent repository activity.',
       activityTimeFramePlaceholder: 'Select Activity Time Frame',
@@ -33,17 +39,18 @@ export default {
         { value: '60', label: '60 Days' },
         { value: '90', label: '90 Days' }
       ],
-      artifactLatestVersionsLabel: 'Artifact Latest Versions',
-      artifactLatestVersionsHelpText: 'Set the number versions of the artifact for evaluation',
-      artifactLatestVersionsPlaceholder: 'Select Artifact Latest Versions',
+      artifactLatestVersionsLabel: 'Latest Deployed Versions',
+      artifactLatestVersionsHelpText: 'Set the number of most recently deployed component versions to evaluate.',
+      artifactLatestVersionsPlaceholder: 'Select Latest Deployed Versions',
       artifactLatestVersionsOptions: [
         { value: '1', label: '1' },
         { value: '2', label: '2' },
         { value: '3', label: '3' },
         { value: '5', label: '5' }
       ],
+      artifactLatestVersionsWarning: 'Evaluating the latest deployed versions across all components can take longer for large repositories.',
       policyEvaluationStageLabel: 'Policy Evaluation Stage',
-      policyEvaluationStageHelpText: 'Select the lifecycle stage for continuous policy evaluation.',
+      policyEvaluationStageHelpText: 'Select the policy evaluation stage used for the initial audit and ongoing monitoring.',
       policyEvaluationStagePlaceholder: 'Select Policy Evaluation Stage',
       policyEvaluationStageOptions: [
         { value: 'build', label: 'Build' },
@@ -62,17 +69,23 @@ export default {
       npm: 'Evaluate .tgz package files that follow versioned naming conventions',
       npmLabel: 'npm:',
       python: 'We match .whl and .tar.gz files, which are the primary distribution formats for Python packages.',
-      pythonLabel: 'Python:'
+      pythonLabel: 'PyPI (Python):',
+      docker: 'Evaluations target Docker image layers stored in the hosted repository.',
+      dockerLabel: 'Docker:'
     },
     buttons: {
+      back: 'Back',
       cancel: 'Cancel',
       next: 'Next',
       save: 'Save',
-      update: 'Update'
+      update: 'Update',
+      enableMonitoring: 'Enable Monitoring',
+      disableMonitoring: 'Disable Monitoring',
+      clearSelection: 'Clear Selection'
     },
     repositoriesTable: {
       searchPlaceholder: 'Search repositories...',
-      formatFilterLabel: 'Format',
+      formatFilterLabel: 'All',
       monitoringFilterLabel: 'All Monitoring',
       monitoringFilterOptions: {
         all: 'All Monitoring',
@@ -91,12 +104,6 @@ export default {
         components: 'No. Components'
       }
     },
-    INCOMPLETE_MODAL: {
-      TITLE: 'No Repositories Selected',
-      MESSAGE: 'Please select at least one repository to enable monitoring.',
-      CANCEL: 'Cancel',
-      CONTINUE: 'Back to Settings'
-    },
     UNSAVED_CHANGES_MODAL: {
       TITLE: 'Unsaved Changes',
       MESSAGE: 'You have unsaved changes. Are you sure you want to leave this page?',
@@ -104,10 +111,7 @@ export default {
       CONTINUE: 'Leave Page'
     },
     INCOMPLETE_MODAL: {
-      TITLE: 'No Repositories Selected',
       MESSAGE: 'You have not selected any repositories for monitoring. Please select at least one repository or go back to modify settings.',
-      CANCEL: 'Stay on Page',
-      CONTINUE: 'Go Back to Settings'
     },
     ERROR_MODAL: {
       TITLE: 'Save Failed',

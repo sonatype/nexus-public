@@ -23,6 +23,18 @@ import FileBlobStoreWarning from './File/FileBlobStoreWarning';
 
 import { URLs } from './BlobStoresHelper';
 
+jest.mock('./BlobStoreTypes', () => ({
+  __esModule: true,
+  default: {
+    s3: {
+      Warning: () => 'Some S3 Warning',
+    },
+    file: {
+      Warning: require('./File/FileBlobStoreWarning').default,
+    }
+  }
+}));
+
 import blobstoreTypes from './testData/mockBlobStoreTypes.json';
 import quotaTypes from './testData/mockQuotaTypes.json';
 import { blobStoreFormSelectors } from './testUtils/blobStoreFormSelectors';
@@ -147,14 +159,6 @@ describe('BlobStoresForm', function () {
     useCurrentStateAndParams.mockReturnValue({ state: { name: undefined }, params: {} });
     // Default: with update permission
     givenBlobStoresPermissions({ 'nexus:blobstores:update': true, 'nexus:blobstores:delete': true });
-    window.BlobStoreTypes = {
-    s3: {
-      Warning: () => 'Some S3 Warning',
-    },
-    file: {
-      Warning: FileBlobStoreWarning,
-    }
-  };
     // Mock ExtJS.state for clustering tests
     jest.requireMock('@sonatype/nexus-ui-plugin').ExtJS.state.mockReturnValue({
       getValue: jest.fn().mockReturnValue({
@@ -164,9 +168,6 @@ describe('BlobStoresForm', function () {
     });
   });
 
-  afterEach(() => {
-    delete window.BlobStoreTypes;
-  });
 
   it('renders the type selection for create', async function () {
     renderCreateView();
@@ -766,5 +767,43 @@ describe('BlobStoresForm', function () {
     userEvent.type(selectors.queryPath(), '/nexus-data/information/blobs');
 
     expect(screen.queryByText('High Availability Path Warning')).not.toBeInTheDocument();
+  });
+
+  describe('Analytics IDs', function () {
+    it('has nxrm-blobstore-delete analytics ID on delete button in edit mode', async function () {
+      when(axios.get)
+        .calledWith('service/rest/v1/blobstores/file/test')
+        .mockResolvedValue({
+          data: {
+            path: 'testPath',
+            softQuota: null,
+          },
+        });
+
+      renderEditView('file/test');
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
+      expect(deleteButton).toHaveAttribute('data-analytics-id', 'nxrm-blobstore-delete');
+    });
+
+    it('has nxrm-blobstore-convert-to-group analytics ID on convert button in edit mode', async function () {
+      when(axios.get)
+        .calledWith('service/rest/v1/blobstores/file/test')
+        .mockResolvedValue({
+          data: {
+            path: 'testPath',
+            softQuota: null,
+          },
+        });
+
+      renderEditView('file/test');
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const convertButton = screen.getByRole('button', { name: /convert to group/i });
+      expect(convertButton).toHaveAttribute('data-analytics-id', 'nxrm-blobstore-convert-to-group');
+    });
   });
 });

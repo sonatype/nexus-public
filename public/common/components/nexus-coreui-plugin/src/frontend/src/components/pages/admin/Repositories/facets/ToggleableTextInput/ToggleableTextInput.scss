@@ -13,15 +13,38 @@
 @use '~@sonatype/react-shared-components/scss-shared/nx-text-helpers';
 
 .nxrm-repository-editor {
+  // NEXUS-53064 B3: the toggle checkbox now lives in the sublabel row (next to
+  //   the descriptive text) rather than in the input row. Keep the sublabel
+  //   text and checkbox on the same baseline, with a small gap between them.
+  .nxrm-toggleable-sublabel-row {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: var(--nx-spacing-3x);
+    row-gap: var(--nx-spacing-1x);
+
+    .nx-checkbox {
+      // NxCheckbox sets its own block-level margins; reset them so the
+      // checkbox sits flush with the sublabel text.
+      margin: 0;
+    }
+  }
+
+  .nxrm-toggleable-sublabel-text {
+    // Inherit the NxFieldset sublabel typography.
+    display: inline;
+  }
+
+  // NEXUS-53064 B4: with the checkbox lifted out of this container the input
+  //   should take the full row width. min-width:0 prevents the input shrinking
+  //   into ellipses inside narrow flex parents on smaller viewports.
   .nxrm-toggleable-text-input-container {
     display: flex;
     align-items: center;
 
-    .nx-checkbox {
-      margin: 0 var(--nx-spacing-3x) 0 0;
-    }
-
     .nx-text-input {
+      flex: 1 1 auto;
+      min-width: 0;
       margin: 0;
     }
   }

@@ -12,15 +12,15 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * @since 3.20
@@ -29,12 +29,12 @@ import io.swagger.annotations.ApiModelProperty;
 public class GroupRepositoryApiRequest
     extends AbstractRepositoryApiRequest
 {
-  @ApiModelProperty
+  @Schema
   @NotNull
   @Valid
   protected final StorageAttributes storage;
 
-  @ApiModelProperty
+  @Schema
   @NotNull
   @Valid
   protected final GroupAttributes group;

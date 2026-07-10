@@ -20,6 +20,7 @@ const MOCK_AVAILABLE_REALMS = [
   { id: 'NexusAuthorizingRealm', name: 'Local Authorizing Realm' },
   { id: 'LdapRealm', name: 'LDAP Realm' },
   { id: 'DockerToken', name: 'Docker Bearer Token Realm' },
+  { id: 'OciBearerToken', name: 'OCI Bearer Token Realm' },
   { id: 'NpmToken', name: 'npm Bearer Token Realm' },
   { id: 'NuGetApiKey', name: 'NuGet API-Key Realm' },
 ];
@@ -89,7 +90,7 @@ describe('realmsFormMachine', () => {
       const service = await startAndLoad();
       const ctx = service.getSnapshot().context;
 
-      expect(ctx.availableRealms).toHaveLength(6);
+      expect(ctx.availableRealms).toHaveLength(7);
       expect(ctx.activeRealms).toHaveLength(3);
       expect(ctx.activeRealms[0].id).toBe('NexusAuthenticatingRealm');
       expect(ctx.activeRealms[1].id).toBe('NexusAuthorizingRealm');

@@ -18,18 +18,22 @@ import { Theme } from '@radix-ui/themes';
 import { SupportZipPage } from '../SupportZipPage';
 import * as useSupportZipApiModule from '../useSupportZipApi';
 
-// Mock the API hook
 jest.mock('../useSupportZipApi');
 
-// Mock ExtJS
+// Stub the HA component — it has its own coverage in SupportZipHA.test.tsx
+jest.mock('../SupportZipHA', () => ({
+  SupportZipHA: () => <div data-testid="support-zip-ha-stub" />,
+}));
+
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     state: jest.fn().mockReturnValue({
-      getValue: jest.fn().mockReturnValue(false), // Not clustered by default
+      getValue: jest.fn().mockReturnValue(false),
     }),
+    useState: (fn: () => unknown) => fn(),
     urlOf: jest.fn((url) => `http://localhost:8081/${url}`),
     downloadUrl: jest.fn(),
-    checkPermission: jest.fn().mockReturnValue(true), // Has permission by default
+    checkPermission: jest.fn().mockReturnValue(true),
   },
 }));
 
@@ -37,41 +41,40 @@ const mockedUseSupportZipApi = useSupportZipApiModule.useSupportZipApi as jest.M
   typeof useSupportZipApiModule.useSupportZipApi
 >;
 
-// Wrapper component for Radix Theme
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return <Theme>{children}</Theme>;
 }
 
-describe('SupportZipPage', () => {
-  const mockCreateSupportZip = jest.fn();
-  const mockCreateHaSupportZips = jest.fn();
-  const mockSetError = jest.fn();
-  const mockGetDownloadUrl = jest.fn();
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockCreateSupportZip.mockResolvedValue({
+function buildHookReturn(overrides: Partial<ReturnType<typeof useSupportZipApiModule.useSupportZipApi>> = {}) {
+  return {
+    loading: false,
+    error: null,
+    setError: jest.fn(),
+    createSupportZip: jest.fn().mockResolvedValue({
       file: '/path/to/support.zip',
       name: 'support.zip',
       size: '10 MB',
       truncated: false,
-    });
-    mockGetDownloadUrl.mockReturnValue('service/rest/wonderland/download/support.zip');
+    }),
+    fetchActiveNodes: jest.fn().mockResolvedValue([]),
+    fetchNodeStatus: jest.fn(),
+    generateForNode: jest.fn(),
+    clearNode: jest.fn(),
+    getDownloadUrl: jest.fn().mockReturnValue('service/rest/wonderland/download/support.zip'),
+    ...overrides,
+  } as ReturnType<typeof useSupportZipApiModule.useSupportZipApi>;
+}
 
-    mockedUseSupportZipApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      createSupportZip: mockCreateSupportZip,
-      createHaSupportZips: mockCreateHaSupportZips,
-      getDownloadUrl: mockGetDownloadUrl,
-    });
+describe('SupportZipPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedUseSupportZipApi.mockReturnValue(buildHookReturn());
   });
 
   it('renders the support ZIP page with header', () => {
     render(<SupportZipPage />, { wrapper: TestWrapper });
 
-    expect(screen.getByText('Support ZIP')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Support ZIP' })).toBeInTheDocument();
     expect(
       screen.getByText('Creates a ZIP file containing useful support information about your server')
     ).toBeInTheDocument();
@@ -108,12 +111,20 @@ describe('SupportZipPage', () => {
   });
 
   it('creates support ZIP when button is clicked', async () => {
+    const create = jest.fn().mockResolvedValue({
+      file: '/x',
+      name: 'support.zip',
+      size: '10 MB',
+      truncated: false,
+    });
+    mockedUseSupportZipApi.mockReturnValue(buildHookReturn({ createSupportZip: create }));
+
     render(<SupportZipPage />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByText('Create support ZIP'));
 
     await waitFor(() => {
-      expect(mockCreateSupportZip).toHaveBeenCalled();
+      expect(create).toHaveBeenCalled();
     });
   });
 
@@ -129,15 +140,8 @@ describe('SupportZipPage', () => {
     });
   });
 
-  it('displays loading state while creating', async () => {
-    mockedUseSupportZipApi.mockReturnValue({
-      loading: true,
-      error: null,
-      setError: mockSetError,
-      createSupportZip: mockCreateSupportZip,
-      createHaSupportZips: mockCreateHaSupportZips,
-      getDownloadUrl: mockGetDownloadUrl,
-    });
+  it('displays loading state while creating', () => {
+    mockedUseSupportZipApi.mockReturnValue(buildHookReturn({ loading: true }));
 
     render(<SupportZipPage />, { wrapper: TestWrapper });
 
@@ -145,14 +149,9 @@ describe('SupportZipPage', () => {
   });
 
   it('displays error alert when creation fails', () => {
-    mockedUseSupportZipApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to create support ZIP',
-      setError: mockSetError,
-      createSupportZip: mockCreateSupportZip,
-      createHaSupportZips: mockCreateHaSupportZips,
-      getDownloadUrl: mockGetDownloadUrl,
-    });
+    mockedUseSupportZipApi.mockReturnValue(
+      buildHookReturn({ error: 'Failed to create support ZIP' })
+    );
 
     render(<SupportZipPage />, { wrapper: TestWrapper });
 
@@ -160,12 +159,16 @@ describe('SupportZipPage', () => {
   });
 
   it('shows truncation warning when ZIP is truncated', async () => {
-    mockCreateSupportZip.mockResolvedValue({
-      file: '/path/to/support.zip',
-      name: 'support.zip',
-      size: '50 MB',
-      truncated: true,
-    });
+    mockedUseSupportZipApi.mockReturnValue(
+      buildHookReturn({
+        createSupportZip: jest.fn().mockResolvedValue({
+          file: '/path/to/support.zip',
+          name: 'support.zip',
+          size: '50 MB',
+          truncated: true,
+        }),
+      })
+    );
 
     render(<SupportZipPage />, { wrapper: TestWrapper });
 
@@ -174,31 +177,32 @@ describe('SupportZipPage', () => {
     expect(await screen.findByText(/truncated due to size limits/)).toBeInTheDocument();
   });
 
-  it('does not show HA button in non-clustered mode', () => {
-    render(<SupportZipPage />, { wrapper: TestWrapper });
+  it('renders the form (not the HA branch) in non-clustered mode', () => {
+    const { container } = render(<SupportZipPage />, { wrapper: TestWrapper });
 
-    expect(screen.queryByText('Create support ZIP (all nodes)')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('support-zip-ha-stub')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-clustered="false"]')).toBeInTheDocument();
   });
 
   describe('HA Mode', () => {
     beforeEach(() => {
       const { ExtJS } = require('../../../../../../../interface/ExtJS');
       ExtJS.state.mockReturnValue({
-        getValue: jest.fn().mockReturnValue(true), // Clustered mode
+        getValue: jest.fn().mockReturnValue(true),
       });
       ExtJS.checkPermission.mockReturnValue(true);
     });
 
-    it('shows HA header in clustered mode', () => {
+    it('renders the HA branch in clustered mode', () => {
       render(<SupportZipPage />, { wrapper: TestWrapper });
 
-      expect(screen.getByText('High Availability Mode')).toBeInTheDocument();
+      expect(screen.getByTestId('support-zip-ha-stub')).toBeInTheDocument();
     });
 
-    it('shows HA button in clustered mode', () => {
-      render(<SupportZipPage />, { wrapper: TestWrapper });
+    it('marks the page as clustered', () => {
+      const { container } = render(<SupportZipPage />, { wrapper: TestWrapper });
 
-      expect(screen.getByText('Create support ZIP (all nodes)')).toBeInTheDocument();
+      expect(container.querySelector('[data-clustered="true"]')).toBeInTheDocument();
     });
   });
 
@@ -236,5 +240,33 @@ describe('SupportZipPage', () => {
       expect(screen.getByTestId('support-zip-page')).toBeInTheDocument();
     });
   });
-});
 
+  // Note: scroll behaviour at high zoom levels (NEXUS-52211) cannot be covered by unit tests —
+  // JSDOM does not apply stylesheets, so overflow assertions would never fail regardless of the CSS.
+  // Verify manually at 125%+ browser zoom or via E2E tests.
+
+  describe('Breadcrumb navigation', () => {
+    it('renders breadcrumbs with Settings link', () => {
+      render(<SupportZipPage />, { wrapper: TestWrapper });
+
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    });
+
+    it('renders Support ZIP as current page in breadcrumbs', () => {
+      const { container } = render(<SupportZipPage />, { wrapper: TestWrapper });
+
+      const currentBreadcrumb = container.querySelector('[aria-current="page"]');
+      expect(currentBreadcrumb).toBeInTheDocument();
+      expect(currentBreadcrumb?.textContent).toBe('Support ZIP');
+    });
+
+    it('navigates to Settings when Settings breadcrumb is clicked', () => {
+      render(<SupportZipPage />, { wrapper: TestWrapper });
+
+      const originalHash = window.location.hash;
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+      window.location.hash = originalHash;
+    });
+  });
+});

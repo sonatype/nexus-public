@@ -31,7 +31,7 @@ import type {
   FirewallData,
   MalwareCleanupSummary,
   BlobStoreInfo,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
 
 export interface UsageTabProps {
   repository: RepositoryProfileData;

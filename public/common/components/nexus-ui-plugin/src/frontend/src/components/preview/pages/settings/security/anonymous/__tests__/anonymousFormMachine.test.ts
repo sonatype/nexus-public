@@ -288,5 +288,49 @@ describe('anonymousFormMachine', () => {
 
       service.stop();
     });
+
+    it('remains editable after successful save', async () => {
+      const machine = createAnonymousFormMachine();
+
+      // Start with save service mocked
+      const service = interpret(
+        machine.withConfig({
+          services: {
+            save: async () => {
+              // Mock successful save
+              return Promise.resolve({});
+            },
+          },
+        })
+      ).start();
+
+      // Wait for editing state
+      await waitFor(service, (state) => state.matches('editing'));
+
+      // Dirty the form
+      service.send({ type: 'UPDATE', name: 'userId', value: 'newuser' } as any);
+      expect(service.getSnapshot().context.isPristine).toBe(false);
+
+      // Submit
+      service.send({ type: 'SUBMIT' } as any);
+
+      // Wait for save to complete and transition back to editing
+      await waitFor(service, (state) => state.matches('editing') && state.context.isPristine);
+
+      // Verify machine is back in editing state
+      const stateAfterSave = service.getSnapshot();
+      expect(stateAfterSave.matches('editing')).toBe(true);
+      expect(stateAfterSave.context.isPristine).toBe(true);
+      expect(stateAfterSave.context.data.userId).toBe('newuser');
+
+      // Verify we can make another edit after save
+      service.send({ type: 'UPDATE', name: 'userId', value: 'anotheruser' } as any);
+      const stateAfterSecondEdit = service.getSnapshot();
+      expect(stateAfterSecondEdit.matches('editing')).toBe(true);
+      expect(stateAfterSecondEdit.context.data.userId).toBe('anotheruser');
+      expect(stateAfterSecondEdit.context.isPristine).toBe(false);
+
+      service.stop();
+    });
   });
 });

@@ -102,7 +102,7 @@ public class RepositoryWebhookCapabilityDescriptor
   @Override
   protected RepositoryWebhookCapabilityConfiguration createConfig(final Map<String, String> properties) {
     // This is only used for validation - pass null for secrets as they won't be accessed during validation
-    return new RepositoryWebhookCapabilityConfiguration(properties, null, null);
+    return new RepositoryWebhookCapabilityConfiguration(properties, null);
   }
 
   @Override

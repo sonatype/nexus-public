@@ -108,7 +108,28 @@ export default createMachine(
             }
           }
         },
-        error: {}
+        error: {
+          on: {
+            RETRY: 'retrieve',
+            MANUAL_REFRESH: {
+              target: 'retrieve',
+              actions: ['setPeriod']
+            },
+            UPDATE_PERIOD: {
+              target: 'retrieve',
+              actions: ['setPeriod']
+            },
+            UPDATE_SIZE: {
+              target: 'retrieve',
+              actions: ['setSize']
+            },
+            UPDATE_MARK: {
+              target: 'error',
+              actions: ['setMark']
+            },
+            INSERT_MARK: 'insertingMark'
+          }
+        }
       }
     },
     {
@@ -135,10 +156,13 @@ export default createMachine(
         }
       },
       guards: {
-        isManual: ({period}) => period == 0
+        isManual: ({period}) => period === 0
       },
       services: {
-        retrieve: ({itemId, size}) => Axios.get(`/service/rest/internal/logging/logs/${itemId}`, {params: {bytesCount: size * -1024}}),
+        retrieve: ({itemId, size}) => Axios.get(`/service/rest/internal/logging/logs/${itemId}`, {
+          params: {bytesCount: size * -1024},
+          headers: {'Accept': 'text/plain'}
+        }),
         insertMark: ({mark}) => Axios.post('service/rest/internal/logging/log/mark', mark, {headers: {'Content-Type': 'text/plain'}})
       }
     }

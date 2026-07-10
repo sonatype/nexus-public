@@ -56,6 +56,22 @@ const MOCK_TASK_TYPES = [
     frequency: { schedule: 'manual' },
     properties: { location: '' },
   },
+  {
+    type: 'tags.cleanup',
+    name: 'Admin - Cleanup tags',
+    enabled: true,
+    alertEmail: null,
+    notificationCondition: 'FAILURE',
+    frequency: { schedule: 'manual' },
+    properties: {
+      firstCreatedDays: '0',
+      lastUpdatedDays: '0',
+      nameRegex: '',
+      deleteAssociatedComponents: 'false',
+      restrictComponentDelete: '',
+    },
+    concurrentRun: true,
+  },
 ];
 
 /**
@@ -111,10 +127,11 @@ describe('tasksFormMachine', () => {
       const service = await startAndLoad(machine);
 
       const context = service.getSnapshot().context as any;
-      expect(context.taskTypes).toHaveLength(3);
+      expect(context.taskTypes).toHaveLength(4);
       expect(context.taskTypes[0].id).toBe('repository.cleanup');
       expect(context.taskTypes[1].id).toBe('blobstore.compact');
       expect(context.taskTypes[2].id).toBe('db.backup');
+      expect(context.taskTypes[3].id).toBe('tags.cleanup');
 
       service.stop();
     });
@@ -421,6 +438,193 @@ describe('tasksFormMachine', () => {
 
       service.stop();
     });
+
+    it('reports a regex-compile error on the nameRegex property', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Test' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'tags.cleanup' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'properties',
+        value: { nameRegex: '[unclosed' },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      const errors = state.context.validationErrors as any;
+      expect(errors.properties?.nameRegex).toContain('valid regular expression');
+
+      service.stop();
+    });
+
+    it('accepts a once schedule whose startDate is in the past (matches classic UI behavior)', async () => {
+      // Classic ExtJS UI lets the user create a "once" task with a past startDate.
+      // The Preview UI must not be stricter — the previous client- and server-side
+      // future-only check was removed under NEXUS-53044.
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'SCHEDULE_CHANGE', value: 'once' } as any);
+      service.send({ type: 'UPDATE', name: 'startDate', value: new Date(2000, 0, 1) } as any);
+      service.send({ type: 'UPDATE', name: 'startTime', value: '00:00' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Test' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'repository.cleanup' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.startDate).toBeFalsy();
+
+      service.stop();
+    });
+
+    it('reports a required error for an empty required property (db.backup location)', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Test' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'db.backup' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      const errors = state.context.validationErrors as any;
+      expect(errors.properties?.location).toContain('required');
+
+      service.stop();
+    });
+
+    it('does not report a required error for tags.cleanup properties left blank', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Test' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'tags.cleanup' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      const errors = state.context.validationErrors as any;
+      expect(errors.properties?.firstCreatedDays).toBeUndefined();
+      expect(errors.properties?.lastUpdatedDays).toBeUndefined();
+      expect(errors.properties?.nameRegex).toBeUndefined();
+      expect(errors.properties?.restrictComponentDelete).toBeUndefined();
+
+      service.stop();
+    });
+
+    /**
+     * NEXUS-53044 — regression: clearing a required dynamic field (e.g. the Repository
+     * combobox on most repo tasks) used to leave the EDIT screen's Save button enabled
+     * because validateTask only inspected static fields. The canSave guard reads the
+     * full validationErrors map, so writing a `properties` sub-object disables Save.
+     */
+    it('flags an empty required dynamic field and disables Save', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Compact' } as any);
+      // blobstore.compact declares blobstoreName as required (default for fields with
+      // a TASK_FIELD_UI entry — no `required: false` override).
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.compact' } as any);
+      // Initial blobstoreName from the descriptor is '' — validation should already fail.
+      service.send({ type: 'UPDATE', name: 'name', value: 'Compact' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as Record<string, unknown>;
+      expect(errors.properties).toEqual({ blobstoreName: 'Blob Store is required' });
+
+      service.stop();
+    });
+
+    it('clears the dynamic-field error when a value is filled in', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Compact' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.compact' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'properties',
+        value: { blobstoreName: 'default' },
+      } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as Record<string, unknown>;
+      expect(errors.properties).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('does not block Save for fields the descriptor declares optional', async () => {
+      // ExternalMetadataTask declares external.metadata.repository.format with
+      // required: false; clearing it must not produce a validation error.
+      const machine = createTaskFormMachine(undefined);
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) {
+          return Promise.resolve([
+            {
+              type: 'external.blobstore.metadata',
+              name: 'Retrieve external blobstore metadata',
+              enabled: true,
+              notificationCondition: 'FAILURE',
+              frequency: { schedule: 'manual' },
+              properties: {
+                repositoryName: 'maven-central',
+                'external.metadata.repository.format': '',
+              },
+            },
+          ]);
+        }
+        return Promise.resolve([]);
+      });
+
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Test' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'external.blobstore.metadata' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as Record<
+        string,
+        Record<string, string> | string
+      >;
+      // Only the repositoryName is required; format is optional and must not appear.
+      const propErrors = (errors.properties || {}) as Record<string, string>;
+      expect(propErrors['external.metadata.repository.format']).toBeUndefined();
+
+      service.stop();
+    });
+  });
+
+  describe('once schedule carries inherited startDate verbatim', () => {
+    // Past-date enforcement was removed (matches classic UI). Switching to "once"
+    // simply forwards whatever startDate the previous schedule had.
+    it('keeps a past startDate when switching to once', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      const pastDate = new Date(2000, 0, 1);
+      service.send({ type: 'SCHEDULE_CHANGE', value: 'monthly' } as any);
+      service.send({ type: 'UPDATE', name: 'startDate', value: pastDate } as any);
+      service.send({ type: 'SCHEDULE_CHANGE', value: 'once' } as any);
+
+      expect(service.getSnapshot().context.data.startDate).toEqual(pastDate);
+      service.stop();
+    });
+
+    it('keeps an explicit future startDate when switching to once', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+
+      service.send({ type: 'SCHEDULE_CHANGE', value: 'monthly' } as any);
+      service.send({ type: 'UPDATE', name: 'startDate', value: futureDate } as any);
+      service.send({ type: 'SCHEDULE_CHANGE', value: 'once' } as any);
+
+      expect(service.getSnapshot().context.data.startDate).toEqual(futureDate);
+      service.stop();
+    });
   });
 
   describe('field updates', () => {
@@ -458,6 +662,279 @@ describe('tasksFormMachine', () => {
       service.send({ type: 'RESET' } as any);
       expect(service.getSnapshot().context.isPristine).toBe(true);
       expect(service.getSnapshot().context.data.name).toBe('');
+
+      service.stop();
+    });
+  });
+
+  describe('edit mode (fetch by taskId)', () => {
+    it('loads cron expression and properties from flat API response when fetching by taskId', async () => {
+      // The GET /v1/tasks/{id} response is flat (not nested under frequency)
+      const flatApiResponse = {
+        id: 'cron-task',
+        enabled: true,
+        name: 'my-repair',
+        type: 'create.browse.nodes',
+        currentState: 'WAITING',
+        schedule: 'advanced',
+        cronExpression: '0 0 12 * * ?',
+        timeZoneOffset: '+00:00',
+        startDate: '2026-01-22T12:00:00.000Z',
+        recurringDays: null,
+        properties: { repositoryName: 'maven-public' },
+        alertEmail: 'admin@example.com',
+        notificationCondition: 'FAILURE',
+        message: '',
+        nextRun: null,
+        lastRun: null,
+        lastRunResult: null,
+      };
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(MOCK_TASK_TYPES);
+        return Promise.resolve(flatApiResponse);
+      });
+
+      // No preloadedTask — machine must fetch by taskId
+      const machine = createTaskFormMachine('cron-task');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const ctx = (service.getSnapshot().context as any);
+      expect(ctx.data.schedule).toBe('advanced');
+      expect(ctx.data.cronExpression).toBe('0 0 12 * * ?');
+      expect(ctx.data.timeZoneOffset).toBe('+00:00');
+      expect(ctx.data.properties).toEqual({ repositoryName: 'maven-public' });
+      expect(ctx.data.alertEmail).toBe('admin@example.com');
+      expect(ctx.data.notificationCondition).toBe('FAILURE');
+
+      service.stop();
+    });
+
+    /**
+     * NEXUS-52435 — regression: GET /v1/tasks/{id} returns the type ID (e.g.
+     * "repository.cleanup") under `type`, not the human-readable label. fetchTask
+     * sets typeName to that ID as a placeholder; the load service must enrich it
+     * with selectedTaskType.name once both task and task types resolve so the
+     * header reads "Admin - Cleanup repositories ..." like the classic UI did.
+     */
+    it('enriches typeName with the resolved task type name after load', async () => {
+      const flatApiResponse = {
+        id: 'cleanup-task',
+        enabled: true,
+        name: 'Nightly cleanup',
+        type: 'repository.cleanup',
+        currentState: 'WAITING',
+        schedule: 'manual',
+        properties: { repositoryName: 'maven-releases' },
+        alertEmail: null,
+        notificationCondition: 'FAILURE',
+        message: '',
+        nextRun: null,
+        lastRun: null,
+        lastRunResult: null,
+      };
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(MOCK_TASK_TYPES);
+        return Promise.resolve(flatApiResponse);
+      });
+
+      const machine = createTaskFormMachine('cleanup-task');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const ctx = service.getSnapshot().context as any;
+      expect(ctx.task).toBeTruthy();
+      expect(ctx.task.typeId).toBe('repository.cleanup');
+      // Mocked task type for repository.cleanup carries the human-readable name.
+      expect(ctx.task.typeName).toBe('Admin - Cleanup repositories using cleanup policies');
+
+      service.stop();
+    });
+  });
+
+  describe('checkbox normalization (APT parity)', () => {
+    // APT task type template — template includes both checkbox fields with empty-string defaults
+    const APT_TASK_TYPES = [
+      ...MOCK_TASK_TYPES,
+      {
+        type: 'repository.apt.rebuild.metadata',
+        name: 'Repository - Rebuild APT repository metadata',
+        enabled: true,
+        alertEmail: null,
+        notificationCondition: 'FAILURE',
+        frequency: { schedule: 'manual' },
+        properties: {
+          repositoryName: '',
+          rebuildAptMetadataFullRebuild: '',
+          resetProxyMetadata: '',
+        },
+      },
+    ];
+
+    /** Start machine with APT task types loaded */
+    async function startWithAptTypes(
+      machine: ReturnType<typeof createTaskFormMachine>,
+    ) {
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(APT_TASK_TYPES);
+        return Promise.resolve([]);
+      });
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+      return service;
+    }
+
+    it('TASK_TYPE_CHANGE to APT sets both checkbox fields in properties (create flow)', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startWithAptTypes(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'repository.apt.rebuild.metadata' } as any);
+
+      const properties = (service.getSnapshot().context as any).data.properties;
+      // Template sends '' for both; machine preserves template value (serializer maps '' → 'false')
+      expect('rebuildAptMetadataFullRebuild' in properties).toBe(true);
+      expect('resetProxyMetadata' in properties).toBe(true);
+
+      service.stop();
+    });
+
+    it('load service normalizes absent APT checkbox fields to false (edit flow)', async () => {
+      // Task was saved before these checkbox fields were added — neither is in properties
+      const aptTask = {
+        id: 'apt-task-old',
+        enabled: true,
+        name: 'Rebuild APT Metadata',
+        typeId: 'repository.apt.rebuild.metadata',
+        typeName: 'Repository - Rebuild APT repository metadata',
+        status: 'WAITING' as const,
+        statusDescription: '',
+        nextRun: null,
+        lastRun: null,
+        lastRunResult: null,
+        runnable: true,
+        stoppable: false,
+        properties: { repositoryName: '*' }, // checkboxes absent
+        schedule: 'manual' as const,
+        startDate: null,
+        recurringDays: [],
+        cronExpression: '',
+        timeZoneOffset: '',
+      };
+
+      const machine = createTaskFormMachine('apt-task-old', aptTask);
+      const service = await startWithAptTypes(machine);
+
+      const properties = (service.getSnapshot().context as any).data.properties;
+      expect(properties.rebuildAptMetadataFullRebuild).toBe('false');
+      expect(properties.resetProxyMetadata).toBe('false');
+      // Existing field should be untouched
+      expect(properties.repositoryName).toBe('*');
+
+      service.stop();
+    });
+
+    it('load service preserves existing APT checkbox values — does not overwrite', async () => {
+      const aptTask = {
+        id: 'apt-task-set',
+        enabled: true,
+        name: 'Rebuild APT Metadata',
+        typeId: 'repository.apt.rebuild.metadata',
+        typeName: 'Repository - Rebuild APT repository metadata',
+        status: 'WAITING' as const,
+        statusDescription: '',
+        nextRun: null,
+        lastRun: null,
+        lastRunResult: null,
+        runnable: true,
+        stoppable: false,
+        properties: {
+          repositoryName: 'my-apt-hosted',
+          rebuildAptMetadataFullRebuild: 'true',
+          // resetProxyMetadata absent — should be synthesized as 'false'
+        },
+        schedule: 'manual' as const,
+        startDate: null,
+        recurringDays: [],
+        cronExpression: '',
+        timeZoneOffset: '',
+      };
+
+      const machine = createTaskFormMachine('apt-task-set', aptTask);
+      const service = await startWithAptTypes(machine);
+
+      const properties = (service.getSnapshot().context as any).data.properties;
+      expect(properties.rebuildAptMetadataFullRebuild).toBe('true'); // preserved
+      expect(properties.resetProxyMetadata).toBe('false');           // synthesized
+
+      service.stop();
+    });
+
+    it('load service does not synthesize checkbox fields for non-checkbox task types', async () => {
+      const dbBackupTask = {
+        id: 'db-task-1',
+        enabled: true,
+        name: 'DB Backup',
+        typeId: 'db.backup',
+        typeName: 'Admin - Export databases for backup',
+        status: 'WAITING' as const,
+        statusDescription: '',
+        nextRun: null,
+        lastRun: null,
+        lastRunResult: null,
+        runnable: true,
+        stoppable: false,
+        properties: { location: '/backup' },
+        schedule: 'manual' as const,
+        startDate: null,
+        recurringDays: [],
+        cronExpression: '',
+        timeZoneOffset: '',
+      };
+
+      const machine = createTaskFormMachine('db-task-1', dbBackupTask);
+      const service = await startWithAptTypes(machine);
+
+      const properties = (service.getSnapshot().context as any).data.properties;
+      // Only the declared property; no phantom checkboxes added
+      expect(properties).toEqual({ location: '/backup' });
+
+      service.stop();
+    });
+
+    it('load service does not overwrite false with false (idempotent)', async () => {
+      const aptTask = {
+        id: 'apt-task-explicit-false',
+        enabled: true,
+        name: 'Rebuild APT Metadata',
+        typeId: 'repository.apt.rebuild.metadata',
+        typeName: 'Repository - Rebuild APT repository metadata',
+        status: 'WAITING' as const,
+        statusDescription: '',
+        nextRun: null,
+        lastRun: null,
+        lastRunResult: null,
+        runnable: true,
+        stoppable: false,
+        properties: {
+          repositoryName: '*',
+          rebuildAptMetadataFullRebuild: 'false',
+          resetProxyMetadata: 'false',
+        },
+        schedule: 'manual' as const,
+        startDate: null,
+        recurringDays: [],
+        cronExpression: '',
+        timeZoneOffset: '',
+      };
+
+      const machine = createTaskFormMachine('apt-task-explicit-false', aptTask);
+      const service = await startWithAptTypes(machine);
+
+      const properties = (service.getSnapshot().context as any).data.properties;
+      expect(properties.rebuildAptMetadataFullRebuild).toBe('false');
+      expect(properties.resetProxyMetadata).toBe('false');
 
       service.stop();
     });

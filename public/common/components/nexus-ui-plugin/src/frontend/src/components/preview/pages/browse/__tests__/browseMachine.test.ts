@@ -14,6 +14,7 @@
 import { interpret } from 'xstate';
 import { waitFor } from 'xstate/lib/waitFor';
 import { createBrowseMachine, getActiveViewMeta } from '../browseMachine';
+import ExtJS from '../../../../../interface/ExtJS';
 
 function startMachine(initialRepo?: string, serviceOverrides?: Record<string, any>) {
   const machine = createBrowseMachine(initialRepo);
@@ -299,6 +300,35 @@ describe('browseMachine', () => {
       expect(meta).toBeDefined();
       expect(meta!.view).toBe('tree');
 
+      service.stop();
+    });
+  });
+
+  describe('repositoryUrl context path', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('includes context path in repositoryUrl when NX.util.Url.urlOf is available (initial repo)', () => {
+      jest.spyOn(ExtJS, 'urlOf').mockImplementation((path: string) =>
+        'http://localhost:8081/nexus' + path
+      );
+
+      const service = startMachine('maven-central');
+      expect(service.getSnapshot().context.repositoryUrl)
+        .toBe('http://localhost:8081/nexus/repository/maven-central/');
+      service.stop();
+    });
+
+    it('includes context path in repositoryUrl when NX.util.Url.urlOf is available (SELECT_REPO)', () => {
+      jest.spyOn(ExtJS, 'urlOf').mockImplementation((path: string) =>
+        'http://localhost:8081/nexus' + path
+      );
+
+      const service = startMachine();
+      service.send({ type: 'SELECT_REPO', repoName: 'maven-central' });
+      expect(service.getSnapshot().context.repositoryUrl)
+        .toBe('http://localhost:8081/nexus/repository/maven-central/');
       service.stop();
     });
   });

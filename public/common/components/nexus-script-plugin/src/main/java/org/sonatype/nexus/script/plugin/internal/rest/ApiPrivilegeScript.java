@@ -20,8 +20,8 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWithActions;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * @since 3.19
@@ -32,7 +32,7 @@ public class ApiPrivilegeScript
   public static final String SCRIPT_KEY = "name";
 
   @NotBlank
-  @ApiModelProperty(NexusSecurityApiConstants.PRIVILEGE_SCRIPT_DESCRIPTION)
+  @Schema(description = NexusSecurityApiConstants.PRIVILEGE_SCRIPT_DESCRIPTION)
   private String scriptName;
 
   /**

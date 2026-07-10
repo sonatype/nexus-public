@@ -41,18 +41,10 @@
     margin-bottom: var(--nx-spacing-2x);
   }
 
-  // overrides for community edition error alerts -- uses design tokens for dark mode
+  // overrides for community edition error alerts
   .ce-banner-over-limit-in-grace-period,
   .ce-banner-over-limit-grace-period-ended,
   .ce-banner-over-limit-non-admin {
-    background-color: var(--color-error-background);
-
-    color: var(--color-text-contrast);
-
-    .nx-icon, .nx-h3, a, button.nx-text-link {
-      color: var(--color-text-contrast);
-    }
-
     a, button.nx-text-link {
       font-weight: bold;
       display: inline;
@@ -63,14 +55,6 @@
   .ce-banner-under-limit-grace-period-ended,
   .ce-banner-nearing-limit-non-admin,
   .ce-banner-near-limit-never-in-grace-period {
-    background-color: var(--color-warning-background);
-
-    color: var(--color-text);
-
-    .nx-icon, a, button.nx-text-link {
-      color: var(--color-text);
-    }
-
     a, button.nx-text-link {
       font-weight: bold;
       display: inline;

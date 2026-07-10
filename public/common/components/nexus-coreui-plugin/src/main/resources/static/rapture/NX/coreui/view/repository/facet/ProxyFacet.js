@@ -39,7 +39,6 @@ Ext.define('NX.coreui.view.repository.facet.ProxyFacet', {
   initComponent: function() {
     var me = this;
     const isReplicationEnabled = NX.State.isReplicationEnabled() || false;
-    const isUrlEncodingModeEnabled = NX.State.getValue('urlEncodingModeEnabled', false);
 
     me.items = [
       {
@@ -114,7 +113,6 @@ Ext.define('NX.coreui.view.repository.facet.ProxyFacet', {
           {
             xtype: 'checkbox',
             name: 'attributes.proxy.preserveEncodedCharacters',
-            hidden: !isUrlEncodingModeEnabled,
             fieldLabel: NX.I18n.get('Repository_Facet_ProxyFacet_PreserveEncodedChars_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_ProxyFacet_PreserveEncodedChars_HelpText'),
             value: false

@@ -397,15 +397,44 @@ Ext.define('NX.coreui.controller.Users', {
         list = me.getList(),
         selection = list.getSelection();
 
+    form.getForm().getFields().each(function(field) {
+      field.resetOriginalValue();
+    });
+
+    me.suppressReselect = true;
     me.loadStore(function(records) {
-      var selectedId;
+      me.suppressReselect = false;
+      var selectedId, found = false;
       if (selection && selection.length > 0) {
         selectedId = selection[0].get('userId');
         records.forEach(function(candidate) {
           if (candidate.get('userId') === selectedId) {
             list.setSelection(candidate);
+            found = true;
           }
         });
+        if (!found) {
+          var model = selection[0];
+          var externalSettingsPanel = me.getExternalSettings();
+          if (model.get('external') && externalSettingsPanel) {
+            NX.direct.coreui_User.get(model.get('userId'), model.get('realm'), function(response) {
+              if (Ext.isObject(response) && response.success) {
+                model.set('roles', response.data.roles);
+                model.set('externalRoles', response.data.externalRoles);
+                externalSettingsPanel.loadRecord(model);
+              }
+              else {
+                me.navigateTo(NX.Bookmarks.fromToken('admin/security/users'));
+              }
+            });
+          }
+          else {
+            var settingsPanel = me.getSettings();
+            if (settingsPanel) {
+              settingsPanel.loadRecord(model);
+            }
+          }
+        }
       }
     });
   },
@@ -570,6 +599,9 @@ Ext.define('NX.coreui.controller.Users', {
 
   reselect: function () {
     var userSearchBox = this.getUserSearchBox();
+    if (this.suppressReselect) {
+      return;
+    }
     if (userSearchBox && !userSearchBox.hasFocus) {
       this.callParent();
     }

@@ -15,15 +15,19 @@ package org.sonatype.nexus.swagger.internal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.swagger.models.Model;
-import io.swagger.models.ModelImpl;
-import io.swagger.models.Swagger;
+// NEXUS-46395: migrated from Swagger 1.x model types (io.swagger.models.*) to
+// OpenAPI 3.x (io.swagger.v3.oas.models.*). The top-level "definitions" map became
+// components.schemas, and the Model/ModelImpl hierarchy was unified under Schema<?>.
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
@@ -40,96 +44,96 @@ public class InputStreamSwaggerContributorTest
 
   @Test
   public void testContribute_fixesInputStreamDefinition() {
-    // Given: Swagger with incorrect InputStream definition
-    Swagger swagger = new Swagger();
-    Map<String, Model> definitions = new LinkedHashMap<>();
-    ModelImpl incorrectModel = new ModelImpl();
-    incorrectModel.setType("object");
-    definitions.put("InputStream", incorrectModel);
-    definitions.put("OtherModel", new ModelImpl());
-    swagger.setDefinitions(definitions);
+    // Given: OpenAPI with incorrect InputStream schema (type: object)
+    OpenAPI openApi = new OpenAPI();
+    Map<String, Schema> schemas = new LinkedHashMap<>();
+    schemas.put("InputStream", new ObjectSchema());
+    schemas.put("OtherModel", new ObjectSchema());
+    openApi.setComponents(new Components().schemas(schemas));
 
     // When
-    underTest.contribute(swagger);
+    underTest.contribute(openApi);
 
-    // Then: InputStream definition is fixed to binary type
-    assertThat(swagger.getDefinitions().containsKey("InputStream"), is(true));
-    Model inputStreamModel = swagger.getDefinitions().get("InputStream");
-    assertThat(inputStreamModel, is(instanceOf(ModelImpl.class)));
+    // Then: InputStream definition is replaced with a string/binary schema
+    Map<String, Schema> result = openApi.getComponents().getSchemas();
+    assertThat(result.containsKey("InputStream"), is(true));
 
-    ModelImpl binaryModel = (ModelImpl) inputStreamModel;
-    assertThat(binaryModel.getType(), is("string"));
-    assertThat(binaryModel.getFormat(), is("binary"));
+    Schema<?> inputStreamSchema = result.get("InputStream");
+    assertThat(inputStreamSchema, is(notNullValue()));
+    assertThat(inputStreamSchema.getType(), is("string"));
+    assertThat(inputStreamSchema.getFormat(), is("binary"));
 
     // Other definitions unchanged
-    assertThat(swagger.getDefinitions().containsKey("OtherModel"), is(true));
+    assertThat(result.containsKey("OtherModel"), is(true));
   }
 
   @Test
   public void testContribute_handlesNoInputStreamDefinition() {
-    // Given: Swagger without InputStream definition
-    Swagger swagger = new Swagger();
-    Map<String, Model> definitions = new LinkedHashMap<>();
-    definitions.put("OtherModel", new ModelImpl());
-    swagger.setDefinitions(definitions);
+    // Given: OpenAPI without InputStream definition
+    OpenAPI openApi = new OpenAPI();
+    Map<String, Schema> schemas = new LinkedHashMap<>();
+    schemas.put("OtherModel", new ObjectSchema());
+    openApi.setComponents(new Components().schemas(schemas));
 
     // When
-    underTest.contribute(swagger);
+    underTest.contribute(openApi);
 
     // Then: No InputStream added, other definitions unchanged
-    assertThat(swagger.getDefinitions().containsKey("InputStream"), is(false));
-    assertThat(swagger.getDefinitions().containsKey("OtherModel"), is(true));
+    Map<String, Schema> result = openApi.getComponents().getSchemas();
+    assertThat(result.containsKey("InputStream"), is(false));
+    assertThat(result.containsKey("OtherModel"), is(true));
   }
 
   @Test
   public void testContribute_handlesNullDefinitions() {
-    // Given: Swagger with null definitions
-    Swagger swagger = new Swagger();
-    swagger.setDefinitions(null);
+    // Given: OpenAPI without components / null schemas map
+    OpenAPI openApi = new OpenAPI();
+    // no components set at all
+    underTest.contribute(openApi);
+    assertThat(openApi.getComponents(), is(nullValue()));
 
-    // When/Then: Should not throw exception
-    underTest.contribute(swagger);
-    assertThat(swagger.getDefinitions(), is(nullValue()));
+    // and: components present but schemas null
+    OpenAPI openApi2 = new OpenAPI();
+    openApi2.setComponents(new Components());
+    underTest.contribute(openApi2);
+    assertThat(openApi2.getComponents().getSchemas(), is(nullValue()));
   }
 
   @Test
   public void testContribute_preservesOtherDefinitions() {
-    // Given: Swagger with multiple definitions including InputStream
-    Swagger swagger = new Swagger();
-    Map<String, Model> definitions = new LinkedHashMap<>();
+    // Given: OpenAPI with multiple schemas including InputStream
+    OpenAPI openApi = new OpenAPI();
+    Map<String, Schema> schemas = new LinkedHashMap<>();
 
-    ModelImpl inputStreamModel = new ModelImpl();
-    inputStreamModel.setType("object");
-    definitions.put("InputStream", inputStreamModel);
+    schemas.put("InputStream", new ObjectSchema());
 
-    ModelImpl otherModel1 = new ModelImpl();
-    otherModel1.setType("string");
-    definitions.put("Model1", otherModel1);
+    Schema<?> model1 = new Schema<>().type("string");
+    schemas.put("Model1", model1);
 
-    ModelImpl otherModel2 = new ModelImpl();
-    otherModel2.setType("integer");
-    definitions.put("Model2", otherModel2);
+    Schema<?> model2 = new Schema<>().type("integer");
+    schemas.put("Model2", model2);
 
-    swagger.setDefinitions(definitions);
+    openApi.setComponents(new Components().schemas(schemas));
 
     // When
-    underTest.contribute(swagger);
+    underTest.contribute(openApi);
 
     // Then: Only InputStream is modified, others unchanged
-    assertThat(swagger.getDefinitions().size(), is(3));
-    assertThat(swagger.getDefinitions().containsKey("InputStream"), is(true));
-    assertThat(swagger.getDefinitions().containsKey("Model1"), is(true));
-    assertThat(swagger.getDefinitions().containsKey("Model2"), is(true));
+    Map<String, Schema> result = openApi.getComponents().getSchemas();
+    assertThat(result.size(), is(3));
+    assertThat(result.containsKey("InputStream"), is(true));
+    assertThat(result.containsKey("Model1"), is(true));
+    assertThat(result.containsKey("Model2"), is(true));
 
-    ModelImpl fixed = (ModelImpl) swagger.getDefinitions().get("InputStream");
+    Schema<?> fixed = result.get("InputStream");
     assertThat(fixed.getType(), is("string"));
     assertThat(fixed.getFormat(), is("binary"));
 
-    ModelImpl unchanged1 = (ModelImpl) swagger.getDefinitions().get("Model1");
+    Schema<?> unchanged1 = result.get("Model1");
     assertThat(unchanged1.getType(), is("string"));
     assertThat(unchanged1.getFormat(), is(nullValue()));
 
-    ModelImpl unchanged2 = (ModelImpl) swagger.getDefinitions().get("Model2");
+    Schema<?> unchanged2 = result.get("Model2");
     assertThat(unchanged2.getType(), is("integer"));
   }
 }

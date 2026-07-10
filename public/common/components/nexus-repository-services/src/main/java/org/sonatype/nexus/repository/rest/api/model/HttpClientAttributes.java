@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model for describing HTTP connection properties for proxy repositories.
@@ -25,11 +25,11 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class HttpClientAttributes
 {
-  @ApiModelProperty(value = "Whether to block outbound connections on the repository", example = "false")
+  @Schema(description = "Whether to block outbound connections on the repository", example = "false")
   protected final Boolean blocked;
 
-  @ApiModelProperty(
-      value = "Whether to auto-block outbound connections if remote peer is detected as unreachable/unresponsive",
+  @Schema(
+      description = "Whether to auto-block outbound connections if remote peer is detected as unreachable/unresponsive",
       example = "true")
   protected final Boolean autoBlock;
 

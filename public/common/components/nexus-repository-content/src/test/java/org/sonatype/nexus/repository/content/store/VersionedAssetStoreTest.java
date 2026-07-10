@@ -46,4 +46,22 @@ class VersionedAssetStoreTest
   protected void testDeleteAssetsByPaths() {
     super.testDeleteAssetsByPaths();
   }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedReturnsTrueWhenRowUpdated() {
+    super.testMarkAsDownloadedReturnsTrueWhenRowUpdated();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedReturnsFalseWhenThrottled() {
+    super.testMarkAsDownloadedReturnsFalseWhenThrottled();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testConcurrentMarkAsDownloadedOnlyOneSucceeds() throws Exception {
+    super.testConcurrentMarkAsDownloadedOnlyOneSucceeds();
+  }
 }

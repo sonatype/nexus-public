@@ -12,31 +12,30 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.secrets;
 
-import javax.validation.Valid;
-import javax.ws.rs.core.Response;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.secrets.model.ReEncryptionRequestApiXO;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * REST API to set a new encryption key and re-encrypt secrets
  */
-@Api(value = "Security management: secrets encryption")
+@Tag(name = "Security management: secrets encryption")
 public interface SecretsEncryptionApiResourceDoc
 {
-  @ApiOperation(
-      value = "Re-encrypt secrets using the specified key",
-      notes = "Ensure all nodes have access to the key, and they use the same key")
+  @Operation(summary = "Re-encrypt secrets using the specified key",
+      description = "Ensure all nodes have access to the key, and they use the same key")
   @ApiResponses(value = {
-      @ApiResponse(code = 202, message = "Re-encrypt task successfully submitted"),
-      @ApiResponse(code = 400, message = "Invalid request. See the response for more information. " +
+      @ApiResponse(responseCode = "202", description = "Re-encrypt task successfully submitted"),
+      @ApiResponse(responseCode = "400", description = "Invalid request. See the response for more information. " +
           "Possible causes: The key is not available to all nodes, upgrade needed or empty key id."),
-      @ApiResponse(code = 403, message = "Insufficient permissions to re-encrypt secrets"),
-      @ApiResponse(code = 409, message = "Re-encryption task in progress.")
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to re-encrypt secrets"),
+      @ApiResponse(responseCode = "409", description = "Re-encryption task in progress.")
   })
   Response reEncrypt(@Valid final ReEncryptionRequestApiXO reEncryptionRequestApiXO);
 }

@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.content.rest;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
+import java.util.Set;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -22,6 +24,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +37,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
@@ -290,6 +294,37 @@ public class AssetXOBuilderTest
 
     assertThat(assetXO.getUploader(), is(nullValue()));
     assertThat(assetXO.getUploaderIp(), is(nullValue()));
+  }
+
+  @Test
+  public void fromAsset_registryUrl_populatedFromDescriptor() {
+    AssetXODescriptor descriptor = mock(AssetXODescriptor.class);
+    when(descriptor.computeRegistryUrl(repository)).thenReturn("registry.example.com:5000");
+    when(descriptor.listExposedAttributeKeys()).thenReturn(Set.of());
+
+    Map<String, AssetXODescriptor> descriptors = Map.of("maven2", descriptor);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(anAsset(), repository, descriptors, false);
+
+    assertThat(assetXO.getRegistryUrl(), is("registry.example.com:5000"));
+  }
+
+  @Test
+  public void fromAsset_registryUrl_nullWhenDescriptorsNull() {
+    AssetXO assetXO = AssetXOBuilder.fromAsset(anAsset(), repository, null, false);
+
+    assertThat(assetXO.getRegistryUrl(), is(nullValue()));
+  }
+
+  @Test
+  public void fromAsset_registryUrl_nullWhenDescriptorReturnsNull() {
+    AssetXODescriptor descriptor = mock(AssetXODescriptor.class);
+    when(descriptor.computeRegistryUrl(repository)).thenReturn(null);
+    when(descriptor.listExposedAttributeKeys()).thenReturn(Set.of());
+
+    Map<String, AssetXODescriptor> descriptors = Map.of("maven2", descriptor);
+    AssetXO assetXO = AssetXOBuilder.fromAsset(anAsset(), repository, descriptors, false);
+
+    assertThat(assetXO.getRegistryUrl(), is(nullValue()));
   }
 
   private Asset anAsset() {

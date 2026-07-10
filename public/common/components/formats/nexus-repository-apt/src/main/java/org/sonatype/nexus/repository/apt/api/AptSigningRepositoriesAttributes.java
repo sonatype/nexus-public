@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model for apt repository signing.
@@ -26,12 +26,12 @@ import io.swagger.annotations.ApiModelProperty;
 @JsonInclude(Include.NON_NULL)
 public class AptSigningRepositoriesAttributes
 {
-  @ApiModelProperty(value = "PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)",
+  @Schema(description = "PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor)",
       example = "")
 
   protected final String keypair;
 
-  @ApiModelProperty(value = "Passphrase to access PGP signing key", example = "")
+  @Schema(description = "Passphrase to access PGP signing key", example = "")
   protected final String passphrase;
 
   @JsonCreator

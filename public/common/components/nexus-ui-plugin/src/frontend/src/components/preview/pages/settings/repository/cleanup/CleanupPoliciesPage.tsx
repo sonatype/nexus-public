@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box } from '@radix-ui/themes';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, LoadingState, PageHeader } from '../../../../shared';
@@ -199,6 +199,10 @@ export function CleanupPoliciesPage() {
         <PageHeader
           title="Cleanup Policies"
           description="Manage component removal configuration"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Cleanup Policies' }
+          ]}
           actions={canCreate && (
             <SettingsButton
               variant="primary"
@@ -224,13 +228,18 @@ export function CleanupPoliciesPage() {
       ? `Format: ${policy.format}`
       : undefined;
 
+    const lastBreadcrumb = routeState.viewMode === 'create'
+      ? 'Create'
+      : policy?.name || 'Loading...';
+
     return (
       <PageHeader
         title={title}
         description={description}
         breadcrumbs={[
           { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-          { label: 'Cleanup Policies' }
+          { label: 'Cleanup Policies', onClick: handleBack },
+          { label: lastBreadcrumb }
         ]}
       />
     );

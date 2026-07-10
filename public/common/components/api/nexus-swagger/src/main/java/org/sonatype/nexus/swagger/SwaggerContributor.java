@@ -12,19 +12,22 @@
  */
 package org.sonatype.nexus.swagger;
 
-import io.swagger.models.Swagger;
+import io.swagger.v3.oas.models.OpenAPI;
 
 /**
- * Listener providing a hook for customizing the {@link Swagger} model.
+ * Listener providing a hook for customizing the {@link OpenAPI} model.
  *
- * @since 3.7
+ * <p>
+ * NEXUS-46395: migrated from Swagger 1.x ({@code io.swagger.models.Swagger}) to OpenAPI 3.x
+ * ({@code io.swagger.v3.oas.models.OpenAPI}). Implementing plugins must update their
+ * {@link #contribute(OpenAPI)} signature accordingly.
  */
 public interface SwaggerContributor
 {
   /**
-   * Call after JAX-RS resource has been scanned.
-   * 
-   * @param swagger the swagger definition
+   * Called after JAX-RS resource has been scanned.
+   *
+   * @param openApi the OpenAPI definition
    */
-  void contribute(Swagger swagger);
+  void contribute(OpenAPI openApi);
 }

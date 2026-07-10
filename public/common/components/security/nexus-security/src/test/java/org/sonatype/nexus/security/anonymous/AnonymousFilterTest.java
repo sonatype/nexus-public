@@ -13,7 +13,7 @@
 package org.sonatype.nexus.security.anonymous;
 
 import jakarta.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;

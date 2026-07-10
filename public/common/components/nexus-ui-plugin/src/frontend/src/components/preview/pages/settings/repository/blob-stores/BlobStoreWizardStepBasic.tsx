@@ -18,9 +18,12 @@ import {
   SettingsSelect,
   SettingsCheckbox,
   SettingsTransferList,
+  SettingsAlert,
 } from '../../../../shared/form';
+import { useIsClustered } from '../../../../shared/hooks';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { useS3DropdownValues, useGroupableBlobStores } from './useBlobStores';
+import { shouldShowHaPathWarning, HA_PATH_WARNING } from './haPathWarning';
 import type { BlobStoreFormData, S3BlobStoreConfig } from './types';
 import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';
 import type { BlobStoreTypeId } from './BlobStoreTypeSelector';
@@ -49,6 +52,8 @@ export function BlobStoreWizardStepBasic({
   const { values: s3Dropdown, loading: s3Loading } = useS3DropdownValues();
   const { blobStores, loading: groupLoading } = useGroupableBlobStores();
   const isProEdition = ExtJS.isProEdition();
+  const isClustered = useIsClustered();
+  const workDirectory = ExtJS.state()?.getValue?.('nexus.application.workDirectory') || '';
 
   const config = (data.bucketConfiguration || {}) as S3BlobStoreConfig;
   const bucket = config.bucket || { region: '', name: '', prefix: '' };
@@ -75,17 +80,26 @@ export function BlobStoreWizardStepBasic({
         />
 
         {selectedType === BLOB_STORE_TYPE_IDS.FILE && (
-          <SettingsTextInput
-            name="file-path"
-            label="Path"
-            value={data.path || ''}
-            onChange={(v) => onChange('path', v)}
-            placeholder="/path/to/blob/storage"
-            helpText="Absolute path or relative to &lt;data-directory&gt;/blobs"
-            required
-            error={validationErrors.path}
-            monospace
-          />
+          <>
+            <SettingsTextInput
+              name="file-path"
+              label="Path"
+              value={data.path || ''}
+              onChange={(v) => onChange('path', v)}
+              placeholder="/path/to/blob/storage"
+              helpText="Absolute path or relative to &lt;data-directory&gt;/blobs"
+              required
+              error={validationErrors.path}
+              monospace
+            />
+            {isClustered && shouldShowHaPathWarning(data.path, workDirectory) && (
+              <SettingsAlert type="warning">
+                <strong>{HA_PATH_WARNING.TITLE}</strong>
+                <br />
+                {HA_PATH_WARNING.MESSAGE}
+              </SettingsAlert>
+            )}
+          </>
         )}
 
         {selectedType === BLOB_STORE_TYPE_IDS.S3 && (

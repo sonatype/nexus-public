@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import javax.annotation.Nullable;
-import javax.servlet.ServletException;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import org.apache.shiro.web.servlet.ShiroHttpServletResponse;
+import org.eclipse.jetty.ee10.servlet.ServletApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,20 +64,39 @@ public class DefaultHttpResponseSender
     Status status = response.getStatus();
     String statusMessage = status.getMessage();
     try (Payload payload = response.getPayload()) {
-      if (statusMessage == null) {
-        httpResponse.setStatus(status.getCode());
-      }
-      else {
-        httpResponse.setStatus(status.getCode(), statusMessage);
+      // NEXUS-46395: HttpServletResponse.setStatus(int, String) was removed in Jakarta
+      // Servlet 6 — only setStatus(int) remains. The custom HTTP/1.1 reason phrase that
+      // Firewall depends on is propagated through the Jetty handler chain via our
+      // jetty-modifications/jetty-server patch on org.eclipse.jetty.server.Response,
+      // which adds setReason(String)/getReason() back to the core Response API.
+      //
+      // The previous EE8 path (jetty.ee8.nested.Response#setStatusWithReason) is gone
+      // in EE10. To reach the patched core Response from inside the servlet wrapper we
+      // unwrap through Shiro / HttpServletResponseWrapper layers down to Jetty's
+      // ServletApiResponse, then call getResponse().setReason(...). On the sendError()
+      // path our patched ServletChannelState already calls Response#setReason; this
+      // covers the response-with-payload path (e.g. Firewall quarantine bodies that
+      // return 403/409 with an RFC 9457 / format-specific report payload).
+      httpResponse.setStatus(status.getCode());
+      if (statusMessage != null) {
         ServletResponse resp = httpResponse;
-        if (httpResponse instanceof ShiroHttpServletResponse) {
-          resp = ((ShiroHttpServletResponse) httpResponse).getResponse();
-          while (resp instanceof HttpServletResponseWrapper) {
-            resp = ((HttpServletResponseWrapper) resp).getResponse();
-          }
+        if (resp instanceof ShiroHttpServletResponse) {
+          resp = ((ShiroHttpServletResponse) resp).getResponse();
         }
-        if (resp instanceof org.eclipse.jetty.ee8.nested.Response) {
-          ((org.eclipse.jetty.ee8.nested.Response) resp).setStatusWithReason(status.getCode(), statusMessage);
+        while (resp instanceof HttpServletResponseWrapper) {
+          resp = ((HttpServletResponseWrapper) resp).getResponse();
+        }
+        if (resp instanceof ServletApiResponse) {
+          ((ServletApiResponse) resp).getResponse().setReason(statusMessage);
+        }
+        else {
+          // Make this observable in verbose logs so future Jetty / Shiro / wrapper
+          // changes that break the unwrap path don't silently drop the reason phrase
+          // (the way NEXUS-46395 did before NEXUS-53114).
+          log.debug(
+              "Unable to set HTTP/1.1 reason phrase '{}': unwrapped response type {} is not a ServletApiResponse",
+              statusMessage,
+              resp.getClass().getName());
         }
       }
       if (payload != null) {

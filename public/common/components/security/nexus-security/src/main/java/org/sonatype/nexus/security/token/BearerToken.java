@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.token;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.authc.apikey.ApiKeyExtractor;
 

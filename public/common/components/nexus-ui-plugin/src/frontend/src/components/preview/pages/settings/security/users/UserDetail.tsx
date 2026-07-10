@@ -14,7 +14,7 @@
 import React, { useState } from 'react';
 import { Box, Flex, Text, Heading, Separator } from '@radix-ui/themes';
 import { Loader2, Key, RefreshCw, AlertTriangle } from 'lucide-react';
-import { ExtJS } from '../../../../../../interface/ExtJS';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 import {
   SettingsFormSection,
@@ -77,10 +77,13 @@ export function UserDetail({
   const isCurrentUser = user?.userId === state?.getUser?.()?.id;
   const isAdminUser = user?.userId === 'admin';
   const isExternal = user ? isExternalUser(user.source) : false;
+  const activeCapabilities = state?.getValue?.('capabilityActiveTypes') || [];
+  const isUserTokenCapabilityActive = activeCapabilities.includes('usertoken');
+  const canResetUserToken = ExtJS.checkPermission('nexus:usertoken-user:delete');
 
   const showDeleteButton = canDelete && !isExternal && !isAnonymous && !isCurrentUser && !isAdminUser;
   const showChangePasswordButton = canEdit && !isExternal && !isAnonymous && isAdmin;
-  const showResetTokenButton = isPro && !isExternal;
+  const showResetTokenButton = isPro && !isExternal && isUserTokenCapabilityActive && canResetUserToken;
 
   // Loading state
   if (loading) {

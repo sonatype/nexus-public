@@ -500,4 +500,57 @@ describe('ContentSelectorsForm', function() {
       expect(expression()).toHaveTextContent('format == "raw"');
     });
   });
+
+  describe('Analytics IDs', function() {
+    it('has nxrm-content-selector-delete analytics ID on delete button in edit mode', async function() {
+      const itemId = 'test';
+      axios.get.mockImplementation((url) => {
+        if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
+          return Promise.resolve({
+            data: {
+              'name': itemId,
+              'type': 'csel',
+              'description': 'description',
+              'expression': 'format == "raw"'
+            }
+          });
+        } else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+          return Promise.resolve({data: []});
+        }
+      });
+
+      renderEditView(itemId);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const deleteButtons = screen.getAllByRole('button', {name: /delete/i});
+      const formDeleteButton = deleteButtons.find(btn => btn.closest('form') || btn.closest('.nxrm-content-selectors-form'));
+      expect(formDeleteButton).toHaveAttribute('data-analytics-id', 'nxrm-content-selector-delete');
+    });
+
+    it('has nxrm-content-selector-preview analytics ID on preview button', async function() {
+      const itemId = 'test';
+      axios.get.mockImplementation((url) => {
+        if (url === `service/rest/v1/security/content-selectors/${itemId}`) {
+          return Promise.resolve({
+            data: {
+              'name': itemId,
+              'type': 'csel',
+              'description': 'description',
+              'expression': 'format == "raw"'
+            }
+          });
+        } else if (url === 'service/rest/internal/ui/repositories?withAll=true&withFormats=true') {
+          return Promise.resolve({data: []});
+        }
+      });
+
+      renderEditView(itemId);
+
+      await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+      const previewButton = screen.getByRole('button', {name: UIStrings.CONTENT_SELECTORS.PREVIEW.BUTTON});
+      expect(previewButton).toHaveAttribute('data-analytics-id', 'nxrm-content-selector-preview');
+    });
+  });
 });

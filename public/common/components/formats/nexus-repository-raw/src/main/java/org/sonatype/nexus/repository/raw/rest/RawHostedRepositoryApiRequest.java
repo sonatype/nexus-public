@@ -17,14 +17,17 @@ import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ComponentAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
+import org.sonatype.nexus.swagger.SwaggerEditionVisibility;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 3.24
  */
+@JsonFilter(SwaggerEditionVisibility.NAME)
 @JsonIgnoreProperties({"format", "type"})
 public class RawHostedRepositoryApiRequest
     extends HostedRepositoryApiRequest

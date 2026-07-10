@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.httpbridge.internal;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.Test;
 import org.mockito.Mock;
@@ -53,7 +53,7 @@ public class ExhaustRequestFilterTest
   HttpServletResponse response;
 
   @Mock
-  javax.servlet.FilterChain filterChain;
+  jakarta.servlet.FilterChain filterChain;
 
   @Test
   public void httpOkResponse() throws Exception {

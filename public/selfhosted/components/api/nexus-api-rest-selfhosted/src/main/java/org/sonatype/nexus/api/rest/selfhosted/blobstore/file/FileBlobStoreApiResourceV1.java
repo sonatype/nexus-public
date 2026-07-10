@@ -13,7 +13,7 @@
 package org.sonatype.nexus.api.rest.selfhosted.blobstore.file;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 

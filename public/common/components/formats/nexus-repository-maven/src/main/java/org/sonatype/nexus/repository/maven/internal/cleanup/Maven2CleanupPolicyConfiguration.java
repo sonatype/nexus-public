@@ -45,8 +45,8 @@ public class Maven2CleanupPolicyConfiguration
         .put(LAST_DOWNLOADED_KEY, true)
         .put(IS_PRERELEASE_KEY, true)
         .put(REGEX_KEY, true)
-        .put(RETAIN_KEY, true)
-        .put(RETAIN_SORT_BY_KEY, true)
+        .put(RETAIN_KEY, false)
+        .put(RETAIN_SORT_BY_KEY, false)
         .build();
   }
 }

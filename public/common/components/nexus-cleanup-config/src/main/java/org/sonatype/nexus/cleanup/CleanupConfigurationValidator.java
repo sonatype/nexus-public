@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;

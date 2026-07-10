@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -69,7 +69,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.security.internal.uploadermetadata.UploaderMetadataSecurityContributor.UPLOADER_METADATA_READ_PERMISSION;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.sonatype.nexus.repository.content.facet.ContentFacetFinder.findContentFacets;
 import static org.sonatype.nexus.repository.content.store.AssetDAO.FILTER_PARAMS;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
@@ -132,12 +132,23 @@ public class ContentComponentHelper
 
     Collection<FluentAsset> assets = component.get().assets();
 
-    String repositoryName = repository.getName();
     String format = repository.getFormat().getValue();
 
     boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     return assetPermissionChecker.findPermittedAssets(assets, format, BROWSE)
-        .map(entry -> toAssetXO(repositoryName, entry.getValue(), format, entry.getKey(), uploaderVisible))
+        .map(entry -> {
+          // Use the permitting repository as the repositoryName for the asset URL.
+          // This ensures URLs use the group repo (e.g., maven-public) when user
+          // accessed content through group permissions, not the member repo.
+          String permittingRepository = entry.getValue();
+          // Keep the actual repository name for the HostedType check which needs
+          // to strip CONTENT_LAST_MODIFIED for proxied repos but keep it for hosted repos.
+          // Cast to FluentAsset to access repository() method.
+          FluentAsset fluentAsset = (FluentAsset) entry.getKey();
+          String sourceRepository = fluentAsset.repository().getName();
+          return toAssetXO(permittingRepository, permittingRepository, sourceRepository, format, entry.getKey(),
+              uploaderVisible);
+        })
         .collect(toList());
   }
 
@@ -193,7 +204,7 @@ public class ContentComponentHelper
       if (nextLimit > 0) {
         assetQuery.browse(nextLimit, null)
             .stream()
-            .map(asset -> toAssetXO(r.getName(), r.getName(), format, asset, uploaderVisible))
+            .map(asset -> toAssetXO(r.getName(), r.getName(), r.getName(), format, asset, uploaderVisible))
             .collect(Collectors.toCollection(() -> assets));
       }
     }
@@ -249,8 +260,14 @@ public class ContentComponentHelper
 
     boolean uploaderVisible = SecurityUtils.getSubject().isPermitted(UPLOADER_METADATA_READ_PERMISSION);
     return assetPermissionChecker.isPermitted(asset.get(), format, BROWSE)
-        .map(containingRepositoryName -> toAssetXO(repositoryName, containingRepositoryName, format, asset.get(),
-            uploaderVisible))
+        .map(containingRepositoryName -> {
+          // Use the asset's actual repository for sourceRepository since that's where it lives.
+          // Cast to FluentAsset to access repository() method.
+          FluentAsset fluentAsset = (FluentAsset) asset.get();
+          String sourceRepository = fluentAsset.repository().getName();
+          return toAssetXO(repositoryName, containingRepositoryName, sourceRepository, format, asset.get(),
+              uploaderVisible);
+        })
         .orElseThrow(AuthorizationException::new);
   }
 
@@ -341,7 +358,7 @@ public class ContentComponentHelper
 
       Set<String> exposedKeys = descriptor.listExposedAttributeKeys();
       for (Map.Entry<String, Object> entry : originalFormatAttrs.entrySet()) {
-        if (exposedKeys.contains(entry.getKey())) {
+        if (exposedKeys.contains(entry.getKey()) || "component_kind".equals(entry.getKey())) {
           filteredFormatAttrs.put(entry.getKey(), entry.getValue());
         }
       }
@@ -358,6 +375,7 @@ public class ContentComponentHelper
   protected AssetXO toAssetXO(
       final String repositoryName,
       final String containingRepositoryName,
+      final String sourceRepository,
       final String format,
       final Asset asset,
       final boolean uploaderVisible)
@@ -405,7 +423,10 @@ public class ContentComponentHelper
       }
     });
 
-    if (repositoryManager.get(repositoryName).getType() instanceof HostedType && attributes.containsKey(CONTENT)) {
+    // Use the source repository for the HostedType check, not the permitting repository.
+    // The source repository is where the asset actually lives; HostedType check determines
+    // whether to strip CONTENT_LAST_MODIFIED (keep it for proxy repos, remove for hosted)
+    if (repositoryManager.get(sourceRepository).getType() instanceof HostedType && attributes.containsKey(CONTENT)) {
       Map<String, Object> contentMap = (Map<String, Object>) attributes.get(CONTENT);
       contentMap.remove(CONTENT_LAST_MODIFIED);
     }
@@ -418,8 +439,11 @@ public class ContentComponentHelper
 
       Set<String> exposedKeys = descriptor.listExposedAttributeKeys();
       for (Map.Entry<String, Object> entry : originalFormatAttrs.entrySet()) {
-        if (exposedKeys.contains(entry.getKey())) {
-          filteredFormatAttrs.put(entry.getKey(), entry.getValue());
+        if (exposedKeys.contains(entry.getKey()) || "asset_kind".equals(entry.getKey())) {
+          Object value = exposedKeys.contains(entry.getKey())
+              ? descriptor.transformAttributeValue(entry.getKey(), entry.getValue())
+              : entry.getValue();
+          filteredFormatAttrs.put(entry.getKey(), value);
         }
       }
 
@@ -427,6 +451,16 @@ public class ContentComponentHelper
     }
 
     assetXO.setAttributes(attributes);
+
+    // Compute top-level registryUrl for pull snippets (docker only). Kept off attributes so it
+    // does not appear in the Attributes panel (NEXUS-51972).
+    if (descriptor != null) {
+      Repository repo = repositoryManager.get(repositoryName);
+      String registryUrl = descriptor.computeRegistryUrl(repo);
+      if (registryUrl != null) {
+        assetXO.setRegistryUrl(registryUrl);
+      }
+    }
 
     asset.lastDownloaded().ifPresent(when -> assetXO.setLastDownloaded(Date.from(when.toInstant())));
 

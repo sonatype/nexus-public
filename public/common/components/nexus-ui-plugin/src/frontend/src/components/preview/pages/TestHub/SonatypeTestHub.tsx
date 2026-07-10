@@ -24,8 +24,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Flex, Text, Heading, Card, Badge, Button, Tabs, Switch, Callout } from '@radix-ui/themes';
-import { FlaskConical, ExternalLink, ToggleLeft, TestTube2, Info } from 'lucide-react';
+import { Box, Flex, Text, Heading, Card, Badge, Button, Tabs, Switch, Callout, Select } from '@radix-ui/themes';
+import { FlaskConical, ExternalLink, ToggleLeft, TestTube2, Info, AlertTriangle } from 'lucide-react';
 import { notifySessionExpiredFromRest } from '../../../../interface/api';
 
 import './SonatypeTestHub.scss';
@@ -86,6 +86,264 @@ const TEST_PAGES: TestPage[] = [
     tags: ['health-check', 'browse', 'grid', 'modal'],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// CE Hard Limit Banner Scenarios
+// ---------------------------------------------------------------------------
+
+// CE throttle status values (must match UsageHelper.js)
+const OVER_LIMITS = 'Over limits';
+const NEAR_LIMITS = '75% usage';
+const UNDER_LIMITS = 'Under limits';
+
+// CE threshold constants (must match UsageHelper.js)
+const CE_REQUESTS_HARD_THRESHOLD = 100000;
+const CE_COMPONENTS_HARD_THRESHOLD = 40000;
+
+// Additional test-only thresholds not used in production
+const CE_REQUESTS_SOFT_THRESHOLD = 20000;
+const CE_COMPONENTS_SOFT_THRESHOLD = 100000;
+const CE_UNIQUE_USER_SOFT_THRESHOLD = 100;
+
+// Metric values for each usage level (test scenarios only)
+const CE_COMPONENTS_NEAR = 75000;
+const CE_REQUESTS_NEAR = 150000;
+const CE_COMPONENTS_OVER = 40000;
+const CE_REQUESTS_OVER = 100000;
+
+const GRACE_PERIOD_DAYS_FUTURE = 7;
+const GRACE_PERIOD_DAYS_PAST = -7;
+
+interface CEScenario {
+  id: string;
+  label: string;
+  throttlingStatus: string;
+  gracePeriodDayOffset: number | null; // null = empty string (no grace period)
+  components: number;
+  requests: number;
+}
+
+const CE_SCENARIOS: CEScenario[] = [
+  {
+    id: 'underLimitsNoGrace',
+    label: 'Under Limits — No Grace Period',
+    throttlingStatus: UNDER_LIMITS,
+    gracePeriodDayOffset: null,
+    components: 0,
+    requests: 0,
+  },
+  {
+    id: 'nearLimitsNoGrace',
+    label: 'Near Limits (75%) — No Grace Period',
+    throttlingStatus: NEAR_LIMITS,
+    gracePeriodDayOffset: null,
+    components: CE_COMPONENTS_NEAR,
+    requests: CE_REQUESTS_NEAR,
+  },
+  {
+    id: 'overLimitsNoGrace',
+    label: 'Over Limits — No Grace Period',
+    throttlingStatus: OVER_LIMITS,
+    gracePeriodDayOffset: null,
+    components: CE_COMPONENTS_OVER,
+    requests: CE_REQUESTS_OVER,
+  },
+  {
+    id: 'underLimitsInGrace',
+    label: 'Under Limits — In Grace Period',
+    throttlingStatus: UNDER_LIMITS,
+    gracePeriodDayOffset: GRACE_PERIOD_DAYS_FUTURE,
+    components: 0,
+    requests: 0,
+  },
+  {
+    id: 'nearLimitsInGrace',
+    label: 'Near Limits (75%) — In Grace Period',
+    throttlingStatus: NEAR_LIMITS,
+    gracePeriodDayOffset: GRACE_PERIOD_DAYS_FUTURE,
+    components: CE_COMPONENTS_NEAR,
+    requests: CE_REQUESTS_NEAR,
+  },
+  {
+    id: 'overLimitsInGrace',
+    label: 'Over Limits — In Grace Period',
+    throttlingStatus: OVER_LIMITS,
+    gracePeriodDayOffset: GRACE_PERIOD_DAYS_FUTURE,
+    components: CE_COMPONENTS_OVER,
+    requests: CE_REQUESTS_OVER,
+  },
+  {
+    id: 'underLimitsPostGrace',
+    label: 'Under Limits — Post Grace Period',
+    throttlingStatus: UNDER_LIMITS,
+    gracePeriodDayOffset: GRACE_PERIOD_DAYS_PAST,
+    components: 0,
+    requests: 0,
+  },
+  {
+    id: 'nearLimitsPostGrace',
+    label: 'Near Limits (75%) — Post Grace Period',
+    throttlingStatus: NEAR_LIMITS,
+    gracePeriodDayOffset: GRACE_PERIOD_DAYS_PAST,
+    components: CE_COMPONENTS_NEAR,
+    requests: CE_REQUESTS_NEAR,
+  },
+  {
+    id: 'overLimitsPostGrace',
+    label: 'Over Limits — Post Grace Period',
+    throttlingStatus: OVER_LIMITS,
+    gracePeriodDayOffset: GRACE_PERIOD_DAYS_PAST,
+    components: CE_COMPONENTS_OVER,
+    requests: CE_REQUESTS_OVER,
+  },
+];
+
+function buildMockMetricData(components: number, requests: number) {
+  return [
+    {
+      metricName: 'peak_requests_per_day',
+      metricValue: requests,
+      thresholds: [
+        { thresholdName: 'HARD_THRESHOLD', thresholdValue: CE_REQUESTS_HARD_THRESHOLD },
+        { thresholdName: 'SOFT_THRESHOLD', thresholdValue: CE_REQUESTS_SOFT_THRESHOLD },
+      ],
+      utilization: 'FREE_TIER',
+      aggregates: [{ name: 'content_request_count', value: requests, period: 'peak_recorded_count_30d' }],
+    },
+    {
+      metricName: 'component_total_count',
+      metricValue: components,
+      thresholds: [
+        { thresholdName: 'HARD_THRESHOLD', thresholdValue: CE_COMPONENTS_HARD_THRESHOLD },
+        { thresholdName: 'SOFT_THRESHOLD', thresholdValue: CE_COMPONENTS_SOFT_THRESHOLD },
+      ],
+      utilization: 'FREE_TIER',
+      aggregates: [{ name: 'component_total_count', value: components, period: 'peak_recorded_count_30d' }],
+    },
+    {
+      metricName: 'successful_last_24h',
+      metricValue: 0,
+      thresholds: [{ thresholdName: 'SOFT_THRESHOLD', thresholdValue: CE_UNIQUE_USER_SOFT_THRESHOLD }],
+      utilization: 'FREE_TIER',
+      aggregates: [{ name: 'unique_user_count', value: 0, period: 'peak_recorded_count_30d' }],
+    },
+  ];
+}
+
+function buildGracePeriodDate(dayOffset: number | null): string {
+  if (dayOffset === null) return '';
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+  return date.toISOString();
+}
+
+function getExtJSState() {
+  const app = (window as any).Ext?.getApplication?.();
+  return {
+    stateController: app?.getController?.('State'),
+    stateStore: app?.getStore?.('State'),
+  };
+}
+
+// Module-level variable to hold original state before CE scenario injection.
+// In-memory only — lost on page refresh, which is the desired behavior.
+let originalCEState: Record<string, unknown> | null = null;
+
+function captureOriginalCEState() {
+  const { stateController } = getExtJSState();
+  if (!stateController?.getValue) return;
+
+  originalCEState = {
+    contentUsageEvaluationResult: stateController.getValue('contentUsageEvaluationResult'),
+    'nexus.community.gracePeriodEnds': stateController.getValue('nexus.community.gracePeriodEnds'),
+    'nexus.community.throttlingStatus': stateController.getValue('nexus.community.throttlingStatus'),
+    status: stateController.getValue('status'),
+  };
+}
+
+function applyCEScenario(scenario: CEScenario) {
+  // Store test values in localStorage so components can pick them up
+  // This is similar to how the malware banner test override works
+  localStorage.setItem('SONATYPE_TEST_CE_THROTTLING_STATUS', scenario.throttlingStatus);
+  localStorage.setItem('SONATYPE_TEST_CE_GRACE_PERIOD_ENDS', buildGracePeriodDate(scenario.gracePeriodDayOffset));
+  localStorage.setItem('SONATYPE_TEST_CE_COMPONENTS', String(scenario.components));
+  localStorage.setItem('SONATYPE_TEST_CE_REQUESTS', String(scenario.requests));
+
+  // Also inject into ExtJS state for components that use it directly
+  const { stateController, stateStore } = getExtJSState();
+  if (stateController?.setValue) {
+    // Disconnect state polling so server doesn't overwrite our mock data
+    try {
+      const state = (window as any).NX?.State?.controller?.();
+      if (state?.statusProvider?.isConnected?.()) {
+        state.statusProvider.disconnect();
+      }
+    } catch (e) {
+      console.warn('[TestHub] Could not disconnect state updates:', e);
+    }
+
+    // Inject mock state — merge status to preserve existing fields
+    const currentStatus = stateController.getValue('status') || {};
+    stateController.setValue('contentUsageEvaluationResult',
+      buildMockMetricData(scenario.components, scenario.requests));
+    stateController.setValue('nexus.community.gracePeriodEnds',
+      buildGracePeriodDate(scenario.gracePeriodDayOffset));
+    stateController.setValue('nexus.community.throttlingStatus', scenario.throttlingStatus);
+    stateController.setValue('status', { ...currentStatus, edition: 'COMMUNITY' });
+
+    // Fire datachanged so ExtJS components pick up the new values
+    if (stateStore?.fireEvent) {
+      stateStore.fireEvent('datachanged', stateStore);
+    }
+  }
+
+  // Force React components to re-render by dispatching a storage event
+  window.dispatchEvent(new StorageEvent('storage', { key: 'SONATYPE_TEST_CE_THROTTLING_STATUS' }));
+}
+
+function clearCEScenario() {
+  // Clear localStorage test overrides
+  localStorage.removeItem('SONATYPE_TEST_CE_THROTTLING_STATUS');
+  localStorage.removeItem('SONATYPE_TEST_CE_GRACE_PERIOD_ENDS');
+  localStorage.removeItem('SONATYPE_TEST_CE_COMPONENTS');
+  localStorage.removeItem('SONATYPE_TEST_CE_REQUESTS');
+
+  const { stateController, stateStore } = getExtJSState();
+
+  // Restore original state values
+  try {
+    if (originalCEState && stateController?.setValue) {
+      stateController.setValue('contentUsageEvaluationResult',
+        originalCEState.contentUsageEvaluationResult);
+      stateController.setValue('nexus.community.gracePeriodEnds',
+        originalCEState['nexus.community.gracePeriodEnds']);
+      stateController.setValue('nexus.community.throttlingStatus',
+        originalCEState['nexus.community.throttlingStatus']);
+      stateController.setValue('status', originalCEState.status);
+
+      if (stateStore?.fireEvent) {
+        stateStore.fireEvent('datachanged', stateStore);
+      }
+    }
+  } catch (e) {
+    console.warn('[TestHub] Could not restore original CE state:', e);
+  }
+
+  // Reconnect state polling
+  try {
+    const state = (window as any).NX?.State?.controller?.();
+    if (state?.statusProvider && !state.statusProvider.isConnected?.()) {
+      state.statusProvider.connect();
+    }
+  } catch (e) {
+    console.warn('[TestHub] Could not reconnect state updates:', e);
+  }
+
+  originalCEState = null;
+
+  // Force React components to re-render by dispatching a storage event
+  window.dispatchEvent(new StorageEvent('storage', { key: 'SONATYPE_TEST_CE_THROTTLING_STATUS' }));
+}
 
 function getToggles(): Record<string, boolean> {
   try {
@@ -155,11 +413,39 @@ function navigateTo(route: string) {
 
 function TogglesTab() {
   const [toggles, setToggles] = useState<Record<string, boolean>>(getToggles);
+  const [ceScenarioId, setCeScenarioId] = useState<string>('off');
+
+  // Clear any leftover CE scenario state on mount
+  // CE scenarios should not persist across page refreshes
+  useEffect(() => {
+    clearCEScenario();
+  }, []);
 
   const handleToggle = (id: string, checked: boolean) => {
     setToggle(id, checked);
     setToggles({ ...toggles, [id]: checked });
   };
+
+  const handleCEScenarioChange = (value: string) => {
+    if (value === 'off') {
+      clearCEScenario();
+      setCeScenarioId('off');
+    } else {
+      const scenario = CE_SCENARIOS.find((s) => s.id === value);
+      if (scenario) {
+        // Capture original state only on first activation
+        if (ceScenarioId === 'off') {
+          captureOriginalCEState();
+        }
+        applyCEScenario(scenario);
+        setCeScenarioId(value);
+      }
+    }
+  };
+
+  const activeCELabel = ceScenarioId !== 'off'
+    ? CE_SCENARIOS.find((s) => s.id === ceScenarioId)?.label
+    : null;
 
   return (
     <Box>
@@ -210,16 +496,74 @@ function TogglesTab() {
             </Flex>
           </Card>
         ))}
+
+        {/* CE Hard Limit Banners */}
+        <Card className="sonatype-test-hub__toggle-card">
+          <Flex align="start" justify="between" gap="4" wrap="wrap">
+            <Box style={{ flex: 1, minWidth: 200 }}>
+              <Text size="3" weight="medium">CE Hard Limit Banners</Text>
+              <Text size="2" color="gray" as="p" mt="1">
+                Simulate Community Edition hard limit banner states. Selecting a scenario overrides live
+                server state and pauses state polling.
+              </Text>
+            </Box>
+            <Select.Root value={ceScenarioId} onValueChange={handleCEScenarioChange}>
+              <Select.Trigger
+                data-testid="ce-scenario-select"
+                placeholder="Select scenario…"
+                style={{minWidth: 280}}
+              />
+              <Select.Content>
+                <Select.Item value="off">Off</Select.Item>
+                <Select.Group>
+                  <Select.Label>No Grace Period</Select.Label>
+                  {CE_SCENARIOS.filter((s) => s.gracePeriodDayOffset === null).map((s) => (
+                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
+                  ))}
+                </Select.Group>
+                <Select.Group>
+                  <Select.Label>In Grace Period</Select.Label>
+                  {CE_SCENARIOS.filter((s) => s.gracePeriodDayOffset !== null && s.gracePeriodDayOffset > 0).map((s) => (
+                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
+                  ))}
+                </Select.Group>
+                <Select.Group>
+                  <Select.Label>Post Grace Period</Select.Label>
+                  {CE_SCENARIOS.filter((s) => s.gracePeriodDayOffset !== null && s.gracePeriodDayOffset < 0).map((s) => (
+                    <Select.Item key={s.id} value={s.id}>{s.label}</Select.Item>
+                  ))}
+                </Select.Group>
+              </Select.Content>
+            </Select.Root>
+          </Flex>
+
+          {ceScenarioId !== 'off' && (
+            <Callout.Root color="amber" size="1" mt="3">
+              <Callout.Icon>
+                <AlertTriangle size={16} />
+              </Callout.Icon>
+              <Callout.Text>
+                <strong>State updates paused.</strong> Server state polling is disconnected while a CE scenario
+                is active. Live data will not refresh. Select "Off" to restore normal operation.{' '}
+                <strong>Note:</strong> Logging out or refreshing the page will restart state updates and
+                reset this selector.
+              </Callout.Text>
+            </Callout.Root>
+          )}
+        </Card>
       </Flex>
 
-      {Object.values(toggles).some(Boolean) && (
+      {(Object.values(toggles).some(Boolean) || activeCELabel) && (
         <Callout.Root color="amber" size="1" mt="4">
           <Callout.Icon>
             <ToggleLeft size={16} />
           </Callout.Icon>
           <Callout.Text>
             <strong>Active toggles:</strong>{' '}
-            {TEST_TOGGLES.filter((t) => toggles[t.id]).map((t) => t.label).join(', ')}
+            {[
+              ...TEST_TOGGLES.filter((t) => toggles[t.id]).map((t) => t.label),
+              ...(activeCELabel ? [`CE Banners — ${activeCELabel}`] : []),
+            ].join(', ')}
           </Callout.Text>
         </Callout.Root>
       )}

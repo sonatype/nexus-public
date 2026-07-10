@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.support;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import org.sonatype.nexus.internal.support.SupportZipXO;
 import org.sonatype.nexus.rest.Resource;
@@ -25,12 +25,12 @@ import org.sonatype.nexus.supportzip.SupportZipGenerator;
 import org.sonatype.nexus.common.log.SupportZipGeneratorRequest;
 import org.sonatype.nexus.supportzip.SupportZipGenerator.Result;
 
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,11 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.sonatype.nexus.common.supportzip.SupportZipConstants.REST_SUPPORT_RESOURCE_URI;
-import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
-import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -54,7 +52,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Path(REST_SUPPORT_RESOURCE_URI)
-@Api("Support")
+@Tag(name = "Support")
 public class SupportResource
     implements Resource
 {
@@ -69,10 +67,10 @@ public class SupportResource
 
   @RequiresAuthentication
   @RequiresPermissions("nexus:atlas:create")
-  @ApiOperation("Creates and downloads a support zip")
+  @Operation(summary = "Creates and downloads a support zip")
   @ApiResponses({
-      @ApiResponse(code = OK, message = "successful operation"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to generate support zip")
+      @ApiResponse(responseCode = "200", description = "successful operation"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to generate support zip")
   })
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_OCTET_STREAM)
@@ -87,10 +85,10 @@ public class SupportResource
 
   @RequiresAuthentication
   @RequiresPermissions("nexus:atlas:create")
-  @ApiOperation("Creates a support zip and returns the path")
+  @Operation(summary = "Creates a support zip and returns the path")
   @ApiResponses({
-      @ApiResponse(code = OK, message = "successful operation"),
-      @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to generate support zip")
+      @ApiResponse(responseCode = "200", description = "successful operation"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to generate support zip")
   })
   @Consumes(APPLICATION_JSON)
   @Produces(APPLICATION_JSON)

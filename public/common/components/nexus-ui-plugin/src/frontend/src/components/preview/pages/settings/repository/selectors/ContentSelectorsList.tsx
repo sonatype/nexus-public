@@ -81,6 +81,16 @@ export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsLis
       ),
       sortable: true,
     },
+    {
+      id: 'expression',
+      header: 'Expression',
+      accessor: (item) => (
+        <Text className="content-selectors-list__expression">
+          {item.expression || '—'}
+        </Text>
+      ),
+      sortable: true,
+    },
   ], []);
 
   // Handle sort changes
@@ -103,7 +113,8 @@ export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsLis
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(lowerFilter) ||
-          (s.description && s.description.toLowerCase().includes(lowerFilter))
+          (s.description && s.description.toLowerCase().includes(lowerFilter)) ||
+          (s.expression && s.expression.toLowerCase().includes(lowerFilter))
       );
     }
 
@@ -205,6 +216,7 @@ export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsLis
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="content-selectors-list__search"
+          data-analytics-id="nxrm-content-selector-filter"
         >
           <TextField.Slot>
             <Search size={16} />

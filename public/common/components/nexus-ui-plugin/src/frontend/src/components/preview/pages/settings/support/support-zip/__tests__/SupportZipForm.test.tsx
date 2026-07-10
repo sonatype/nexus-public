@@ -433,5 +433,30 @@ describe('SupportZipForm', () => {
       expect(screen.getByText('Support ZIP creation may take a few minutes to complete.')).toBeInTheDocument();
     });
   });
+
+  describe('hideActions prop', () => {
+    it('hides the submit and all-nodes buttons when hideActions is true', () => {
+      render(
+        <SupportZipForm
+          params={DEFAULT_SUPPORT_ZIP_PARAMS}
+          onParamChange={mockOnParamChange}
+          onSubmit={mockOnSubmit}
+          onSubmitAll={mockOnHaSubmit}
+          isHa={true}
+          disabled={false}
+          hideActions
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      // Form contents still render (used inside the HA modal)
+      expect(screen.getByText('Contents')).toBeInTheDocument();
+      expect(screen.getByText('Options')).toBeInTheDocument();
+
+      // ...but the action buttons are owned by the modal, not the form
+      expect(screen.queryByText('Create support ZIP')).not.toBeInTheDocument();
+      expect(screen.queryByText('Create support ZIP (all nodes)')).not.toBeInTheDocument();
+    });
+  });
 });
 

@@ -25,6 +25,7 @@ export interface CleanupPolicy {
   retain: number | null;
   sortBy: string | null;
   inUseCount: number;
+  repositories?: string[];
 }
 
 /**
@@ -45,6 +46,15 @@ export interface RepositoryOption {
 }
 
 /**
+ * Repository associated with a cleanup policy
+ */
+export interface CleanupPolicyRepository {
+  name: string;
+  format: string;
+  type: string;
+}
+
+/**
  * Cleanup policy form data for create/edit
  */
 export interface CleanupPolicyFormData {
@@ -57,6 +67,7 @@ export interface CleanupPolicyFormData {
   criteriaAssetRegex: string | null;
   retain: number | null;
   sortBy: string | null;
+  repositories?: string[];
 }
 
 /**
@@ -126,9 +137,12 @@ export const SORT_BY_OPTIONS = {
 } as const;
 
 /**
- * Formats that support retain functionality
+ * Formats that support retain N versions.
  */
-export const RETAIN_SUPPORTED_FORMATS = ['maven2', 'docker'];
+export const RETAIN_SUPPORTED_FORMATS = [
+  'maven2', 'docker', 'npm', 'pypi', 'go', 'helm', 'nuget',
+  'yum', 'rubygems', 'terraform', 'swift', 'apt', 'pub'
+];
 
 /**
  * API URLs - all paths must start with leading slash for restClient
@@ -165,12 +179,29 @@ export const isRetainSupportedFormat = (format: string): boolean =>
   RETAIN_SUPPORTED_FORMATS.includes(format);
 
 /**
+ * Formats that expose the optional `repositories` attachment field on the V1
+ * cleanup-policies API and the create/edit form. Kept in sync with the
+ * server-side gate in CleanupPolicyResourceHelper.
+ */
+export const REPOSITORIES_FIELD_SUPPORTED_FORMATS = [
+  'npm', 'pypi', 'go', 'helm', 'nuget',
+  'yum', 'rubygems', 'terraform', 'swift', 'apt', 'pub'
+];
+
+/**
+ * Check if format exposes the `repositories` attachment field. Caller must
+ * additionally check the CLEANUP_RETAIN_ALL_FORMATS feature flag.
+ */
+export const isRepositoriesFieldSupportedFormat = (format: string): boolean =>
+  REPOSITORIES_FIELD_SUPPORTED_FORMATS.includes(format);
+
+/**
  * Get default sort by for a format
  */
 export const getDefaultSortBy = (format: string): string | null => {
-  if (format === 'maven2') return SORT_BY_OPTIONS.VERSION.id;
   if (format === 'docker') return SORT_BY_OPTIONS.DATE.id;
-  return null;
+  if (!RETAIN_SUPPORTED_FORMATS.includes(format)) return null;
+  return SORT_BY_OPTIONS.VERSION.id;
 };
 
 /**

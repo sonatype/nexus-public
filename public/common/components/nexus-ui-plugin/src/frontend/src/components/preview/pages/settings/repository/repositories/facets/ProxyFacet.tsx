@@ -34,17 +34,6 @@ import {
   RepositoryFormErrors,
 } from '../types';
 
-const EDITOR = {
-  ENABLED_CHECKBOX_DESCR: 'Enabled',
-  PREEMPTIVE_PULL_LABEL: 'Pre-emptive Pull',
-  PREEMPTIVE_PULL_SUBLABEL: 'If enabled, the remote storage will be monitored for changes, and new components will be replicated automatically, and cached locally',
-  ASSET_NAME_LABEL: 'Asset Name Matcher',
-  ASSET_NAME_DESCRIPTION: 'Enter a regular expression to match asset names. When left blank, all assets are matched.',
-  BLOCKING_LABEL: 'Blocking',
-  BLOCK_DESCR: 'Block outbound connections to the repository',
-  AUTO_BLOCK_DESCR: 'Auto-block outbound connections to the repository if remote peer is detected as unreachable/unresponsive',
-};
-
 const REPLICATION_FEATURE = 'replicationFeatureEnabled';
 const REPLICATION_FORMATS = 'replicationSupportedFormats';
 
@@ -68,7 +57,7 @@ const REMOTE_URL_EXAMPLES: Record<string, string> = {
   pypi: 'e.g., https://pypi.org/',
   docker: 'e.g., https://registry-1.docker.io',
   raw: 'e.g., https://example.com/files/',
-  yum: 'e.g., http://mirror.centos.org/centos/',
+  yum: 'e.g., https://mirror.stream.centos.org/',
   ansiblegalaxy: 'e.g., https://galaxy.ansible.com',
   default: 'e.g., https://example.com/repository/',
 };
@@ -96,13 +85,29 @@ export function ProxyFacet({
   };
 
   const handleContentMaxAgeChange = (value: string) => {
-    const numValue = parseInt(value, 10);
-    onNestedChange('proxy', { contentMaxAge: isNaN(numValue) ? -1 : numValue });
+    if (value === '' || value === '-') {
+      onNestedChange('proxy', { contentMaxAge: undefined });
+    } else {
+      const numValue = parseInt(value, 10);
+      if (!isNaN(numValue)) {
+        // Clamp values below -1 to -1 (minimum allowed value)
+        onNestedChange('proxy', { contentMaxAge: Math.max(-1, numValue) });
+      }
+    }
   };
 
   const handleMetadataMaxAgeChange = (value: string) => {
-    const numValue = parseInt(value, 10);
-    onNestedChange('proxy', { metadataMaxAge: isNaN(numValue) ? 1440 : numValue });
+    // Mirrors handleContentMaxAgeChange — same semantics for both fields:
+    // - allow empty / lone '-' so the user can clear and retype
+    // - clamp values < -1 to -1 (the lower bound; -1 means "cache forever")
+    if (value === '' || value === '-') {
+      onNestedChange('proxy', { metadataMaxAge: undefined });
+    } else {
+      const numValue = parseInt(value, 10);
+      if (!isNaN(numValue)) {
+        onNestedChange('proxy', { metadataMaxAge: Math.max(-1, numValue) });
+      }
+    }
   };
 
   const handlePreemptivePullChange = (checked: boolean) => {
@@ -152,21 +157,21 @@ export function ProxyFacet({
   const preemptivePullEnabled = formData.replication?.preemptivePullEnabled || false;
 
   return (
-    <SettingsFormSection title="Proxy">
+    <SettingsFormSection title={UIStrings.PROXY.SECTION.title}>
       <SettingsTextInput
         name="proxy-remoteUrl"
-        label="Remote Storage"
+        label={UIStrings.PROXY.REMOTE_STORAGE.label}
         value={formData.proxy?.remoteUrl || ''}
         onChange={handleRemoteUrlChange}
         error={errors?.proxy?.remoteUrl}
         required
-        placeholder="https://"
-        helpText={`Location of the remote repository being proxied. ${urlExample}`}
+        placeholder={UIStrings.PROXY.REMOTE_STORAGE.placeholder}
+        helpText={UIStrings.PROXY.REMOTE_STORAGE.helpText(urlExample)}
       />
 
       {originChangeWarning && (
         <SettingsAlert type="warning">
-            Remote URL has changed. Authentication credentials have been reset and must be re-entered.
+          {UIStrings.PROXY.ORIGIN_CHANGE_WARNING}
         </SettingsAlert>
       )}
 
@@ -174,10 +179,10 @@ export function ProxyFacet({
         <Box>
           <SettingsCheckbox
             name="httpClient-useTrustStore"
-            label="Use the Nexus Repository truststore"
+            label={UIStrings.PROXY.TRUST_STORE.label}
             checked={formData.httpClient?.connection?.useTrustStore ?? false}
             onChange={(v) => handleConnectionFieldChange('useTrustStore', v)}
-            description="Use certificates stored in the Nexus Repository truststore to connect to external systems"
+            description={UIStrings.PROXY.TRUST_STORE.description}
           />
           <Box mt="2" ml="6">
             <SettingsButton
@@ -186,7 +191,7 @@ export function ProxyFacet({
               onClick={() => setShowCertDialog(true)}
               icon={ShieldCheck}
             >
-              View Certificate
+              {UIStrings.PROXY.TRUST_STORE.viewCertificate}
             </SettingsButton>
           </Box>
         </Box>
@@ -203,14 +208,14 @@ export function ProxyFacet({
         <>
           <Box mt="4">
             <Text size="2" weight="medium" as="div" mb="2">
-              {EDITOR.PREEMPTIVE_PULL_LABEL}
+              {UIStrings.PROXY.PREEMPTIVE_PULL.label}
             </Text>
             <Text size="2" color="gray" as="div" mb="3">
-              {EDITOR.PREEMPTIVE_PULL_SUBLABEL}
+              {UIStrings.PROXY.PREEMPTIVE_PULL.description}
             </Text>
             <SettingsCheckbox
               name="replication-preemptivePullEnabled"
-              label={EDITOR.ENABLED_CHECKBOX_DESCR}
+              label={UIStrings.PROXY.PREEMPTIVE_PULL.enabledCheckbox}
               checked={preemptivePullEnabled}
               onChange={handlePreemptivePullChange}
             />
@@ -218,51 +223,61 @@ export function ProxyFacet({
 
           <SettingsTextInput
             name="replication-assetPathRegex"
-            label={EDITOR.ASSET_NAME_LABEL}
+            label={UIStrings.PROXY.ASSET_NAME_MATCHER.label}
             value={formData.replication?.assetPathRegex || ''}
             onChange={handleAssetPathRegexChange}
             disabled={!preemptivePullEnabled}
-            helpText={EDITOR.ASSET_NAME_DESCRIPTION}
+            helpText={UIStrings.PROXY.ASSET_NAME_MATCHER.helpText}
           />
         </>
       )}
 
+      <SettingsCheckbox
+        name="proxy-preserveEncodedCharacters"
+        label={UIStrings.PROXY.PRESERVE_ENCODED_CHARACTERS.label}
+        checked={formData.proxy?.preserveEncodedCharacters ?? false}
+        onChange={(checked) => onNestedChange('proxy', { preserveEncodedCharacters: checked })}
+        description={UIStrings.PROXY.PRESERVE_ENCODED_CHARACTERS.description}
+      />
+
       <Box mt="2" mb="2">
         <Text size="2" weight="medium" as="div" mb="2">
-          {EDITOR.BLOCKING_LABEL}
+          {UIStrings.PROXY.BLOCKING.sectionLabel}
         </Text>
         <SettingsCheckbox
           name="httpClient-blocked"
-          label="Blocked"
+          label={UIStrings.PROXY.BLOCKING.BLOCKED.label}
           checked={httpClient.blocked ?? false}
           onChange={(checked) => onNestedChange('httpClient', { blocked: checked })}
-          description={EDITOR.BLOCK_DESCR}
+          description={UIStrings.PROXY.BLOCKING.BLOCKED.description}
         />
         <SettingsCheckbox
           name="httpClient-autoBlock"
-          label="Auto blocking enabled"
+          label={UIStrings.PROXY.BLOCKING.AUTO_BLOCK.label}
           checked={httpClient.autoBlock ?? true}
           onChange={(checked) => onNestedChange('httpClient', { autoBlock: checked })}
-          description={EDITOR.AUTO_BLOCK_DESCR}
+          description={UIStrings.PROXY.BLOCKING.AUTO_BLOCK.description}
         />
       </Box>
 
       <SettingsTextInput
         name="proxy-contentMaxAge"
-        label="Maximum Component Age"
-        value={String(formData.proxy?.contentMaxAge ?? -1)}
+        label={UIStrings.PROXY.CONTENT_MAX_AGE.label}
+        value={formData.proxy?.contentMaxAge?.toString() ?? ''}
         onChange={handleContentMaxAgeChange}
         type="number"
-        helpText="How long (in minutes) to cache artifacts before rechecking the remote repository. Set to -1 to disable caching."
+        helpText={UIStrings.PROXY.CONTENT_MAX_AGE.helpText}
+        error={errors?.proxy?.contentMaxAge}
       />
 
       <SettingsTextInput
         name="proxy-metadataMaxAge"
-        label="Maximum Metadata Age"
-        value={String(formData.proxy?.metadataMaxAge ?? 1440)}
+        label={UIStrings.PROXY.METADATA_MAX_AGE.label}
+        value={formData.proxy?.metadataMaxAge?.toString() ?? ''}
         onChange={handleMetadataMaxAgeChange}
         type="number"
-        helpText="How long (in minutes) to cache metadata before rechecking the remote repository."
+        helpText={UIStrings.PROXY.METADATA_MAX_AGE.helpText}
+        error={errors?.proxy?.metadataMaxAge}
       />
     </SettingsFormSection>
   );

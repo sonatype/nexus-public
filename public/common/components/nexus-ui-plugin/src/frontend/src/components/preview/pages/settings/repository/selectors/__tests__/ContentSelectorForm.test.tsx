@@ -19,6 +19,7 @@ import { Theme } from '@radix-ui/themes';
 import { ContentSelectorForm } from '../ContentSelectorForm';
 import { ContentSelector } from '../types';
 import { ToastProvider } from '../../../../../shared/Toast';
+import { clearDirtyState } from '../../../../../shared/hooks/useUnsavedChangesWarning';
 
 // Mock child components
 jest.mock('../ContentSelectorPreview', () => ({
@@ -84,32 +85,8 @@ jest.mock('../useContentSelectorsApi', () => ({
   }),
 }));
 
-// Mock nexus-ui-plugin for the form machine
-jest.mock('@sonatype/nexus-ui-plugin', () => {
-  const actual = jest.requireActual('@sonatype/nexus-ui-plugin');
-  return {
-    ...actual,
-    createFormMachine: actual.createFormMachine,
-    useForm: actual.useForm,
-    ENDPOINTS: {
-      CONTENT_SELECTORS: '/service/rest/v1/security/content-selectors',
-    },
-    restClient: {
-      get: jest.fn().mockResolvedValue(null),
-      post: jest.fn().mockResolvedValue({}),
-      put: jest.fn().mockResolvedValue({}),
-      delete: jest.fn().mockResolvedValue(undefined),
-    },
-  };
-});
-
-// Mock the shared module
-jest.mock('../../../../../shared', () => ({
-  useToast: () => ({
-    success: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-  }),
+// Mock clearDirtyState from the hook module (used by ContentSelectorForm)
+jest.mock('../../../../../shared/hooks/useUnsavedChangesWarning', () => ({
   useUnsavedChangesWarning: jest.fn(),
   clearDirtyState: jest.fn(),
 }));
@@ -547,6 +524,115 @@ describe('ContentSelectorForm', () => {
           'edit'
         );
       });
+    });
+  });
+
+  describe('discard confirmation', () => {
+    // Regression tests for NEXUS-52782: formId must match machine id exactly.
+    // The ContentSelectorForm uses: `content-selector-form-${selector?.name ?? 'new'}`
+    // The machine uses: `content-selector-form-${selectorName ?? 'new'}`
+    // clearDirtyState must be called with the exact formId for dirty state cleanup.
+
+    it('clears dirty state with correct formId on discard in create mode', async () => {
+      render(
+        <ContentSelectorForm
+          isCreate={true}
+          onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selector-form')).toBeInTheDocument();
+      });
+
+      // Make form dirty by filling in the name field
+      const nameInput = screen.getByLabelText(/Name/i);
+      await userEvent.type(nameInput, 'test-selector-name');
+
+      // Fill in expression to make form dirty
+      const expressionInput = screen.getByTestId('csel-editor');
+      await userEvent.type(expressionInput, 'format == "maven2"');
+
+      // Wait for form to be dirty
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selector-form')).toHaveAttribute('data-dirty', 'true');
+      });
+
+      // Click Discard button to trigger discard flow
+      const discardButton = screen.getByRole('button', { name: /^Discard$/i });
+      await userEvent.click(discardButton);
+
+      // The SettingsForm shows a confirmation dialog - find and click the Leave/Confirm button
+      // The dialog is rendered by SettingsForm with AlertDialog.Action
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      // Click the "Leave" button in the confirmation dialog
+      // SettingsForm uses this to confirm discard
+      const leaveButton = screen.getByRole('button', { name: /Leave|Discard|Confirm/i });
+      await userEvent.click(leaveButton);
+
+      // Verify clearDirtyState was called with correct formId for create mode
+      await waitFor(() => {
+        expect(clearDirtyState).toHaveBeenCalledWith('content-selector-form-new');
+      });
+
+      // Verify onCancel was called after clearing dirty state
+      expect(mockOnCancel).toHaveBeenCalled();
+    });
+
+    it('clears dirty state with correct formId on discard in edit mode', async () => {
+      render(
+        <ContentSelectorForm
+          selector={mockSelector}
+          isCreate={false}
+          canDelete={false}
+          onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('test-selector')).toBeInTheDocument();
+      });
+
+      // Make form dirty by modifying description
+      const descriptionInput = screen.getByLabelText(/Description/i);
+      await userEvent.clear(descriptionInput);
+      await userEvent.type(descriptionInput, 'Updated description');
+
+      // Modify expression to ensure form is dirty
+      const expressionInput = screen.getByTestId('csel-editor');
+      await userEvent.clear(expressionInput);
+      await userEvent.type(expressionInput, 'format == "npm"');
+
+      // Wait for form to be dirty (note: machine may need a moment to update)
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selector-form')).toHaveAttribute('data-dirty', 'true');
+      });
+
+      // Click Discard button to trigger discard flow
+      const discardButton = screen.getByRole('button', { name: /^Discard$/i });
+      await userEvent.click(discardButton);
+
+      // The SettingsForm shows a confirmation dialog - find and click the Leave/Confirm button
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      // Click the "Leave" button in the confirmation dialog
+      const leaveButton = screen.getByRole('button', { name: /Leave|Discard|Confirm/i });
+      await userEvent.click(leaveButton);
+
+      // Verify clearDirtyState was called with correct formId for edit mode
+      await waitFor(() => {
+        expect(clearDirtyState).toHaveBeenCalledWith('content-selector-form-test-selector');
+      });
+
+      // Verify onCancel was called after clearing dirty state
+      expect(mockOnCancel).toHaveBeenCalled();
     });
   });
 });

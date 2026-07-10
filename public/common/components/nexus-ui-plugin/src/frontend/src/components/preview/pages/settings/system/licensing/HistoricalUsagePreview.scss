@@ -1,0 +1,94 @@
+/**
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.historical-usage-preview {
+  &__description {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  &__learn-more {
+    display: inline-flex;
+    align-items: center;
+    color: var(--accent-9);
+    text-decoration: none;
+    font-size: var(--font-size-2);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // Scroll wrapper enables horizontal scroll on narrow viewports
+  &__table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  // Table.Root with variant="surface" provides the Radix-styled border and header background.
+  // Override the default 100% width so the bordered container wraps the table content.
+  &__table {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  // Prevent header text from wrapping; nth-child fixes column widths since this is a
+  // fixed-structure table (not a generic reusable component with dynamic columns).
+  .rt-TableHeaderCell {
+    white-space: nowrap;
+
+    &:nth-child(1) {
+      min-width: 90px;
+    }
+
+    // Last column gets slightly more right padding for visual breathing room
+    &:last-child {
+      padding-right: var(--space-5);
+    }
+  }
+
+  .rt-TableCell {
+    white-space: nowrap;
+
+    &:last-child {
+      padding-right: var(--space-5);
+    }
+  }
+
+  // Explicit BEM hook used by the TSX markup; intentionally mirrors the last-column spacing rule.
+  &__cell--last {
+    padding-right: var(--space-5);
+  }
+
+  .column-tooltip {
+    color: var(--gray-9);
+    cursor: help;
+    flex-shrink: 0;
+  }
+
+  .change-icon {
+    flex-shrink: 0;
+
+    &--up {
+      color: var(--green-9);
+    }
+
+    &--down {
+      color: var(--red-9);
+    }
+
+    &--na {
+      color: var(--gray-8);
+    }
+  }
+}

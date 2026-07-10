@@ -14,6 +14,10 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.repository.Repository;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,4 +30,13 @@ import org.springframework.stereotype.Component;
 public interface AssetXODescriptor
 {
   Set<String> listExposedAttributeKeys();
+
+  default Object transformAttributeValue(final String key, final Object value) {
+    return value;
+  }
+
+  @Nullable
+  default String computeRegistryUrl(final Repository repository) {
+    return null;
+  }
 }

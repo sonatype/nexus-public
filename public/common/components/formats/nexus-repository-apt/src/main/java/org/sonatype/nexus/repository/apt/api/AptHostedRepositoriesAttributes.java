@@ -14,8 +14,8 @@ package org.sonatype.nexus.repository.apt.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * REST API model of apt-specific hosted configuration.
@@ -24,10 +24,9 @@ import javax.validation.constraints.NotEmpty;
  */
 public class AptHostedRepositoriesAttributes
 {
-  @ApiModelProperty(
-      value = "Distribution name for this repository. " +
-          "Defines the distribution path used in metadata structure (e.g., dists/{distribution}/Release). " +
-          "Clients must configure this exact distribution name in their APT sources.",
+  @Schema(description = "Distribution name for this repository. " +
+      "Defines the distribution path used in metadata structure (e.g., dists/{distribution}/Release). " +
+      "Clients must configure this exact distribution name in their APT sources.",
       example = "bionic",
       required = true)
   @NotEmpty

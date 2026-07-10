@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { UpgradePage } from '../UpgradePage';
@@ -53,7 +53,7 @@ describe('UpgradePage', () => {
   it('renders the page header', () => {
     render(<UpgradePage />, { wrapper: TestWrapper });
 
-    expect(screen.getByText('Upgrade')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Upgrade' })).toBeInTheDocument();
     expect(screen.getByText('Version information and upgrade options')).toBeInTheDocument();
   });
 
@@ -142,6 +142,30 @@ describe('UpgradePage', () => {
 
     const root = container.querySelector('.upgrade-page');
     expect(root).toHaveClass('upgrade-page', 'custom-class');
+  });
+
+  describe('breadcrumbs', () => {
+    it('renders Settings breadcrumb that navigates to settings page', async () => {
+      render(<UpgradePage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+      });
+
+      // Click Settings breadcrumb navigates to settings page
+      screen.getByRole('button', { name: 'Settings' }).click();
+      expect(window.location.hash).toBe('#preview/admin/settings');
+    });
+
+    it('renders Upgrade as current page breadcrumb', async () => {
+      render(<UpgradePage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        // The current page item is rendered as Text (not a button) with aria-current="page"
+        const breadcrumb = screen.getByText('Upgrade', { selector: '[aria-current="page"]' });
+        expect(breadcrumb).toBeInTheDocument();
+      });
+    });
   });
 });
 

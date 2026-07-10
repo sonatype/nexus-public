@@ -11,25 +11,19 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import { useRef, useState, useEffect } from 'react';
+
 import { ExtJS } from '../../../../../interface/ExtJS';
-import { helperFunctions } from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
 import type { InstanceTotals } from './simplified.types';
 
-const { getMetricData } = helperFunctions;
-
 /**
- * Metric names from the contentUsageEvaluationResult API.
- * These are the same metric names used in UsageCenter.jsx
- * 
- * IMPORTANT: Some metrics have different names for PostgreSQL vs H2 databases.
- * The hook must check isPostgresql to use the correct metric name.
+ * Metric names from the contentUsageEvaluationResult ExtJS state.
+ *
+ * Some metrics use different names on PostgreSQL vs H2; the hook reads
+ * datastore.isPostgresql to pick the correct one.
  */
 const METRIC_NAMES = {
-  // Same for both H2 and PostgreSQL
   totalComponents: 'component_total_count',
-  // Same for both H2 and PostgreSQL  
-  peakRequestsPerMonth: 'highestMonthlyRequestMetrics',
-  // Different for H2 vs PostgreSQL!
   peakRequestsPerDay: {
     h2: 'peak_requests_per_day',
     postgresql: 'peak_requests_per_day_30d',
@@ -41,48 +35,132 @@ interface UseInstanceTotalsResult {
   loading: boolean;
 }
 
+interface UsageEntry {
+  metricName: string;
+  metricValue?: number | null;
+  thresholds?: Array<{ thresholdName: string; thresholdValue: number }>;
+}
+
+function findThreshold(
+  usage: UsageEntry[] | null | undefined,
+  metricName: string
+): number {
+  if (!Array.isArray(usage)) {
+    return 0;
+  }
+  const entry = usage.find((m) => m?.metricName === metricName);
+  if (!entry || !Array.isArray(entry.thresholds)) {
+    return 0;
+  }
+  const hard = entry.thresholds.find((t) => t?.thresholdName === 'HARD_THRESHOLD');
+  return hard?.thresholdValue ?? 0;
+}
+
 /**
- * Hook to get instance-wide usage metrics from ExtJS state.
- * 
- * Uses the same data source as UsageCenter.jsx:
- * - ExtJS.state().getValue('contentUsageEvaluationResult', [])
- * 
- * IMPORTANT: This hook must check the database type (PostgreSQL vs H2) to use
- * the correct metric names, matching the behavior in UsageCenter.jsx.
- * 
- * @returns Instance totals data and loading state
+ * Returns the metricValue for the named entry, or undefined if the entry is
+ * missing or its value is null/undefined. This distinguishes "metric is not
+ * yet present in the state snapshot" from "metric is genuinely 0".
+ */
+function findMetric(
+  usage: UsageEntry[] | null | undefined,
+  metricName: string
+): number | undefined {
+  if (!Array.isArray(usage)) {
+    return undefined;
+  }
+  const entry = usage.find((m) => m?.metricName === metricName);
+  if (!entry || entry.metricValue == null) {
+    return undefined;
+  }
+  return entry.metricValue;
+}
+
+function readUsageFromState(): UsageEntry[] | null | undefined {
+  try {
+    return ExtJS.state().getValue('contentUsageEvaluationResult', []) as UsageEntry[] | null | undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readIsPostgresFromState(): boolean {
+  try {
+    return Boolean(ExtJS.state().getValue('datastore.isPostgresql'));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Hook that exposes instance-wide usage metrics from ExtJS state.
+ *
+ * Polls ExtJS.state() directly on a 500 ms interval so it works even when
+ * the ExtJS application is not yet ready at mount time (which would cause
+ * ExtJS.useState datachanged listeners to never fire in Preview UI context).
+ *
+ * Loading is sticky: once all required metrics have been seen at least once,
+ * loading stays false even if the state snapshot transiently empties.
  */
 export function useInstanceTotals(): UseInstanceTotalsResult {
-  // Get usage data from ExtJS state (same as UsageCenter)
-  const usage = ExtJS.state().getValue('contentUsageEvaluationResult', []);
-  
-  // Check database type to use correct metric names (same logic as UsageCenter Card component)
-  const isPostgres = ExtJS.state().getValue('datastore.isPostgresql');
+  const [usage, setUsage] = useState<UsageEntry[] | null | undefined>(() => readUsageFromState());
+  const [isPostgres, setIsPostgres] = useState<boolean>(() => readIsPostgresFromState());
 
-  // If no data available, return null
-  if (!usage || usage.length === 0) {
-    return { data: null, loading: false };
+  useEffect(() => {
+    const poll = () => {
+      const newUsage = readUsageFromState();
+      const newIsPostgres = readIsPostgresFromState();
+      setUsage(newUsage);
+      setIsPostgres(newIsPostgres);
+    };
+
+    const id = setInterval(poll, 500);
+    return () => clearInterval(id);
+  }, []);
+
+  const hasReceivedDataRef = useRef(false);
+
+  // Try the isPostgres-preferred name first, then fall back to the other.
+  // This handles cases where isPostgres state hasn't loaded yet, or the
+  // backend sends only one variant regardless of what isPostgresql reports.
+  const peakRequestsPerDayMetricName = isPostgres
+    ? METRIC_NAMES.peakRequestsPerDay.postgresql
+    : METRIC_NAMES.peakRequestsPerDay.h2;
+  const peakRequestsPerDayFallbackName = isPostgres
+    ? METRIC_NAMES.peakRequestsPerDay.h2
+    : METRIC_NAMES.peakRequestsPerDay.postgresql;
+
+  const totalComponents = findMetric(usage, METRIC_NAMES.totalComponents);
+  const peakRequestsPerDay =
+    findMetric(usage, peakRequestsPerDayMetricName) ??
+    findMetric(usage, peakRequestsPerDayFallbackName);
+
+  // peakRequestsPerMonth ('highestMonthlyRequestMetrics') is NOT present in
+  // contentUsageEvaluationResult — it comes from /service/rest/v1/monthly-metrics.
+  // Do not include it in the allPresent gate; return 0 as a safe default.
+  const allPresent =
+    totalComponents !== undefined &&
+    peakRequestsPerDay !== undefined;
+
+  if (!allPresent && !hasReceivedDataRef.current) {
+    return { data: null, loading: true };
   }
 
-  // Extract metrics using the same getMetricData helper as UsageCenter
-  // Use PostgreSQL-specific metric names when running on PostgreSQL
-  const peakRequestsPerDayMetricName = isPostgres 
-    ? METRIC_NAMES.peakRequestsPerDay.postgresql 
-    : METRIC_NAMES.peakRequestsPerDay.h2;
-    
-  const { metricValue: totalComponents } = getMetricData(usage, METRIC_NAMES.totalComponents);
-  const { metricValue: peakRequestsPerDay } = getMetricData(usage, peakRequestsPerDayMetricName);
-  const { metricValue: peakRequestsPerMonth } = getMetricData(usage, METRIC_NAMES.peakRequestsPerMonth);
+  if (allPresent) {
+    hasReceivedDataRef.current = true;
+  }
 
   return {
     data: {
-      totalComponents,
-      peakRequestsPerDay,
-      peakRequestsPerMonth,
+      totalComponents: totalComponents ?? 0,
+      peakRequestsPerDay: peakRequestsPerDay ?? 0,
+      peakRequestsPerMonth: 0,
+      totalComponentsLimit: findThreshold(usage, METRIC_NAMES.totalComponents),
+      peakRequestsPerDayLimit:
+        findThreshold(usage, peakRequestsPerDayMetricName) ||
+        findThreshold(usage, peakRequestsPerDayFallbackName),
     },
     loading: false,
   };
 }
 
 export default useInstanceTotals;
-

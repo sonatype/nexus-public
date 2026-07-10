@@ -12,11 +12,11 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST API model of a proxy repository's negative cache settings.
@@ -25,12 +25,12 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class NegativeCacheAttributes
 {
-  @ApiModelProperty(value = "Whether to cache responses for content not present in the proxied repository",
+  @Schema(description = "Whether to cache responses for content not present in the proxied repository",
       example = "true")
   @NotNull
   protected final Boolean enabled;
 
-  @ApiModelProperty(value = "How long to cache the fact that a file was not found in the repository (in minutes)",
+  @Schema(description = "How long to cache the fact that a file was not found in the repository (in minutes)",
       example = "1440")
   @NotNull
   protected final Integer timeToLive;

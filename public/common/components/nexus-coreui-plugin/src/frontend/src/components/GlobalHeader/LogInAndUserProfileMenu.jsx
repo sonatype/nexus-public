@@ -50,8 +50,12 @@ export default function LoginAndUserButton() {
   function onSignInClick() {
     // Keep original requested URL and then encode to Base64
     const url = router.urlService.url();
-    const returnTo = btoa(`#${url}`);
-    router.stateService.go(ROUTE_NAMES.LOGIN, { returnTo });
+    if (url) {
+      const returnTo = btoa(`#${url}`);
+      router.stateService.go(ROUTE_NAMES.LOGIN, { returnTo });
+    } else {
+      router.stateService.go(ROUTE_NAMES.LOGIN);
+    }
   }
 }
 

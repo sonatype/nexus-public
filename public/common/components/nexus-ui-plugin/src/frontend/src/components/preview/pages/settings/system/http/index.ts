@@ -12,7 +12,6 @@
  */
 
 export { HttpPage } from './HttpPage';
-export { useHttpApi } from './useHttpApi';
 export * from './types';
 
 

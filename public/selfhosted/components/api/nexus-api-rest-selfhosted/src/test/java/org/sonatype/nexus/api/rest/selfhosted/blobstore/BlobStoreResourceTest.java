@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreConnectionXO;
 import org.sonatype.nexus.api.rest.common.blobstore.model.BlobStoreQuotaResultXO;

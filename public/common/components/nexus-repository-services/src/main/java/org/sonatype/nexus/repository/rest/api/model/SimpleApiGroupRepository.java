@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * API Group Repository for simple formats which do not have custom attributes for groups.
@@ -28,11 +28,11 @@ import io.swagger.annotations.ApiModelProperty;
 public class SimpleApiGroupRepository
     extends AbstractApiRepository
 {
-  @ApiModelProperty
+  @Schema
   @NotNull
   protected final StorageAttributes storage;
 
-  @ApiModelProperty
+  @Schema
   @NotNull
   protected final GroupAttributes group;
 

@@ -26,22 +26,20 @@ public class EncodingHelper
 {
   private final EscapeHelper escapeHelper;
 
-  private final boolean preserveEncodedCharacters;
-
   /**
-   * Create an EncodingHelper with the specified escape helper and encoding mode.
+   * Create an EncodingHelper for preserve-encoded-characters mode.
+   *
+   * The disabled path (preserveEncodedCharacters == false) is represented by a null
+   * EncodingHelper in ProxyFacetSupport — this class is only instantiated when the flag is on.
    *
    * @param escapeHelper the escape helper for standard encoding
-   * @param preserveEncodedCharacters when true, preserves encoded characters like %2B;
-   *          when false, uses standard encoding
    */
-  public EncodingHelper(final EscapeHelper escapeHelper, final boolean preserveEncodedCharacters) {
+  public EncodingHelper(final EscapeHelper escapeHelper) {
     this.escapeHelper = checkNotNull(escapeHelper);
-    this.preserveEncodedCharacters = preserveEncodedCharacters;
   }
 
   /**
-   * Encode URL segments based on configured mode.
+   * Encode URL segments, preserving special characters like %2B, %23, %3F.
    *
    * This is the first stage of encoding, before format-specific rules are applied.
    *
@@ -50,18 +48,7 @@ public class EncodingHelper
    */
   public String encodeUrlSegments(final String url) {
     checkNotNull(url);
-
-    if (preserveEncodedCharacters) {
-      // Explicitly encode special characters like + to %2B
-      // Use for AWS S3, Cloudflare, Azure that expect + encoded as %2B
-      return encodeSpecialChars(url);
-    }
-    else {
-      // Current behavior - use EscapeHelper rules (encodes %, :, space only)
-      // This preserves backward compatibility - does NOT encode + to %2B
-      // Keeps + as literal character, works for crates.io and most remotes
-      return escapeHelper.uriSegments(url);
-    }
+    return encodeSpecialChars(url);
   }
 
   /**
@@ -110,12 +97,4 @@ public class EncodingHelper
     return encoded;
   }
 
-  /**
-   * Check if encoded characters should be preserved.
-   *
-   * @return true if encoded characters like %2B should be preserved, false otherwise
-   */
-  public boolean shouldPreserveEncodedCharacters() {
-    return preserveEncodedCharacters;
-  }
 }

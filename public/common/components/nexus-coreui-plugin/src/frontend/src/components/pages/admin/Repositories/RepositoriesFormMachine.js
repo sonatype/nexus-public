@@ -136,11 +136,25 @@ export default FormUtils.buildFormMachine({
             if (!response.data.attributes) {
               response.data.attributes = {};
             }
+            // Defensive normalisation: the per-repo evaluation-settings resource is expected to
+            // emit lowercase-kebab (e.g. "stage-release"), but matches the same defensive
+            // normalisation used in EvaluationConfiguration.jsx for the global-settings GET.
+            // Without this, any path that returns the DB format (e.g. "STAGE_RELEASE") would
+            // not match any <option value> in the dropdown and the UI would render a stale
+            // value or fall through to the first option.
+            const rawStage = evalResponse.data.policyEvaluationStage;
+            // Match EvaluationConfiguration.jsx's pattern: null/empty falls back to 'build'
+            // so the dropdown always renders a matching <option>. Without this, an INHERIT-mode
+            // repo with no override and no global setting would receive null, leaving the
+            // select with no selection.
+            const normalizedStage = rawStage
+              ? rawStage.toLowerCase().replace(/_/g, '-')
+              : 'build';
             response.data.attributes.evaluation = {
               mode: evalResponse.data.mode,
               activityTimeFrame: evalResponse.data.activityTimeFrame,
               artifactLatestVersions: evalResponse.data.artifactLatestVersions,
-              policyEvaluationStage: evalResponse.data.policyEvaluationStage
+              policyEvaluationStage: normalizedStage
             };
           } catch (error) {
             if (error.response?.status === 404) {

@@ -95,11 +95,17 @@ export const RECIPE_DESCRIPTIONS: Record<string, string> = {
 
   // Terraform
   'terraform-proxy': 'Cache Terraform modules and providers.',
+  'terraformbackend-hosted': 'Store Terraform state files for infrastructure management.',
 
   // Ansible Galaxy
   'ansiblegalaxy-hosted': 'Store your own Ansible collections in a private repository.',
   'ansiblegalaxy-proxy': 'Cache Ansible collections from a remote repository like Galaxy.',
   'ansiblegalaxy-group': 'Combine multiple Ansible Galaxy repositories into a single URL.',
+
+  // Composer
+  'composer-proxy': 'Cache PHP packages from a remote Composer repository like Packagist.',
+  'composer-hosted': 'Store your own PHP Composer packages in a private repository.',
+  'composer-group': 'Combine multiple Composer repositories into a single URL.',
 };
 
 /**
@@ -124,6 +130,7 @@ export const FORMAT_DESCRIPTIONS: Record<string, string> = {
   helm: 'The package manager for Kubernetes applications.',
   go: 'The proxy and registry for Go modules.',
   terraform: 'Registry for Terraform providers and modules.',
+  terraformbackend: 'State backend for Terraform remote state files.',
   cocoapods: 'The dependency manager for Swift and Objective-C Cocoa projects.',
   r: 'The comprehensive R archive network for statistical computing.',
   conan: 'The open-source package manager for C and C++ development.',
@@ -135,6 +142,7 @@ export const FORMAT_DESCRIPTIONS: Record<string, string> = {
   alpine: 'Package manager for Alpine Linux distributions.',
   raw: 'Store any file format without specific metadata requirements.',
   ansiblegalaxy: 'Repository for Ansible collections containing roles, modules, and plugins for automation.',
+  composer: 'The dependency manager for PHP.',
 };
 
 /**

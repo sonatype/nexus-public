@@ -18,8 +18,14 @@ import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 
+// NEXUS-46395: ResteasyDeployment and ResteasyProviderFactory both became abstract in
+// RESTEasy 7. Use the concrete -Impl classes (ResteasyDeploymentImpl /
+// LocalResteasyProviderFactory) or the static factory ResteasyProviderFactory.newInstance()
+// for instantiation. We use the impl classes here — they are the documented entry points
+// for embedded use.
+import org.jboss.resteasy.core.ResteasyDeploymentImpl;
+import org.jboss.resteasy.core.providerfactory.ResteasyProviderFactoryImpl;
 import org.jboss.resteasy.spi.ResteasyDeployment;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,12 +36,14 @@ import static org.sonatype.nexus.common.app.FeatureFlags.SESSION_ENABLED;
 @Configuration
 public class SiestaConfiguration
 {
-  private static final String MOUNT_POINT = "/service/rest/**";
+  public static final String MOUNT_POINT = "/service/rest/**";
 
   @Bean
   public ResteasyDeployment resteasyDeployment() {
-    ResteasyDeployment deployment = new ResteasyDeployment();
-    deployment.setProviderFactory(new ResteasyProviderFactory());
+    // NEXUS-46395: switched from `new ResteasyDeployment()` / `new ResteasyProviderFactory()`
+    // (both abstract in RESTEasy 7) to their concrete impl classes.
+    ResteasyDeployment deployment = new ResteasyDeploymentImpl();
+    deployment.setProviderFactory(new ResteasyProviderFactoryImpl());
     return deployment;
   }
 

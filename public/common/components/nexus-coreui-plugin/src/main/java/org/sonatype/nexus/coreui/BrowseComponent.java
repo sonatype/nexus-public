@@ -76,6 +76,10 @@ public class BrowseComponent
     final String path = treeStoreLoadParameters.getNode();
 
     Repository repository = repositoryManager.get(repositoryName);
+    if (repository == null) {
+      log.debug("Repository '{}' not found, returning empty browse result", repositoryName);
+      return Collections.emptyList();
+    }
 
     List<String> pathSegments;
     if (isRoot(path)) {

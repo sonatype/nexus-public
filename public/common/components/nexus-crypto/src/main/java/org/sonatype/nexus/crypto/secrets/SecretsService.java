@@ -137,4 +137,13 @@ public interface SecretsService
    * @throws CipherException if encryption fails
    */
   String encryptBytesWithPassword(byte[] plaintext, String customPassword) throws CipherException;
+
+  /**
+   * Checks if a secret ID exists in the store.
+   *
+   * @param secretId the secret ID token (e.g., "_123")
+   * @return true if the secret exists, false otherwise. Returns {@code false} if the secret ID has an
+   *         invalid format or if the secret store is temporarily unavailable.
+   */
+  boolean exists(String secretId);
 }

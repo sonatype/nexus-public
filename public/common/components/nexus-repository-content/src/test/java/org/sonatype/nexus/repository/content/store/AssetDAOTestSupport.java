@@ -336,7 +336,7 @@ public abstract class AssetDAOTestSupport
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
       assertFalse(tempResult.lastDownloaded().isPresent());
 
-      dao.markAsDownloaded(asset);
+      dao.markAsDownloaded(asset, 0L);
 
       tempResult = dao.readPath(repositoryId, asset.path()).get();
       assertTrue(tempResult.lastDownloaded().isPresent());
@@ -360,7 +360,7 @@ public abstract class AssetDAOTestSupport
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
       OffsetDateTime oldLastDownloaded = tempResult.lastDownloaded().get();
 
-      dao.markAsDownloaded(asset);
+      dao.markAsDownloaded(asset, 0L);
 
       tempResult = dao.readPath(repositoryId, asset.path()).get();
       assertTrue(tempResult.lastDownloaded().isPresent());
@@ -370,6 +370,71 @@ public abstract class AssetDAOTestSupport
 
       session.getTransaction().commit();
     }
+  }
+
+  protected void testMarkAsDownloadedNeverDownloadedUpdatesRow() {
+    // GIVEN
+    AssetData asset = generateAsset(repositoryId, "/conditional-test-1");
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset, false);
+      session.getTransaction().commit();
+    }
+
+    // WHEN
+    int rows;
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      rows = dao.markAsDownloaded(asset, 3600L); // 1h interval, but last_downloaded is NULL
+      session.getTransaction().commit();
+    }
+
+    // THEN
+    assertThat(rows, is(1));
+  }
+
+  protected void testMarkAsDownloadedRecentlyDownloadedSkipsUpdate() {
+    // GIVEN — asset whose last_downloaded was set seconds ago
+    AssetData asset = generateAsset(repositoryId, "/conditional-test-2");
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset, false);
+      dao.markAsDownloaded(asset, 0L); // unconditional — sets last_downloaded to now
+      session.getTransaction().commit();
+    }
+
+    // WHEN — call again with a 1h interval; should be skipped
+    int rows;
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      rows = dao.markAsDownloaded(asset, 3600L);
+      session.getTransaction().commit();
+    }
+
+    // THEN
+    assertThat(rows, is(0));
+  }
+
+  protected void testMarkAsDownloadedZeroIntervalAlwaysUpdates() {
+    // GIVEN
+    AssetData asset = generateAsset(repositoryId, "/conditional-test-3");
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset, false);
+      dao.markAsDownloaded(asset, 0L);
+      session.getTransaction().commit();
+    }
+
+    // WHEN — 0 interval — should always update, even immediately
+    int rows;
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      rows = dao.markAsDownloaded(asset, 0L);
+      session.getTransaction().commit();
+    }
+
+    // THEN
+    assertThat(rows, is(1));
   }
 
   protected void testAttachingBlobs() throws InterruptedException {

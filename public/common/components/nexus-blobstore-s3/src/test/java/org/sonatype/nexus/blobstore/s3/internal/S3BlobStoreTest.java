@@ -699,6 +699,54 @@ public class S3BlobStoreTest
     verify(blobStoreQuotaUsageChecker).stop();
   }
 
+  @Test
+  public void testCopySkipsS3ContentCopyForSelfCopy() throws Exception {
+    // NEXUS-53503: copying an already-permanent blob computes a destination key identical to the
+    // source key (createCopyBlobId is a no-op once the tmp$ prefix is absent). Issuing an S3
+    // CopyObject with src == dest is rejected by S3 ("copy an object to itself"), so copy() must
+    // skip the physical byte copy. It must still run create() so the blob attributes/properties
+    // and metrics are written (makeBlobPermanent on an already-permanent blob relies on this).
+    blobStore.init(config);
+    blobStore.start();
+
+    S3BlobStore spy = spy(blobStore);
+    BlobId permanentBlobId = new BlobId("12345678-1234-1234-1234-123456789abc", OffsetDateTime.now(ZoneOffset.UTC));
+
+    S3Blob sourceBlob = mock(S3Blob.class);
+    when(sourceBlob.getId()).thenReturn(permanentBlobId);
+    when(sourceBlob.getMetrics()).thenReturn(new BlobMetrics(new org.joda.time.DateTime(), "sha1", 11L));
+    doReturn(sourceBlob).when(spy).get(permanentBlobId);
+
+    Blob result = spy.copy(permanentBlobId, new HashMap<>(Map.of(CREATED_BY_HEADER, "test")));
+
+    // No physical S3 copy is issued (that is the illegal self-copy)...
+    verify(copier, never()).copy(any(), anyString(), anyString(), anyString());
+    // ...but create() still ran, so blob properties were written and a blob is returned.
+    assertThat(result, notNullValue());
+    verify(s3, atLeastOnce()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+  }
+
+  @Test
+  public void testCopyPerformsS3CopyForTemporaryBlob() throws Exception {
+    // A temporary blob has a distinct destination key (the tmp$ prefix is stripped), so a real S3
+    // copy must still be performed.
+    blobStore.init(config);
+    blobStore.start();
+
+    S3BlobStore spy = spy(blobStore);
+    BlobId tempBlobId = new BlobId("tmp$12345678-1234-1234-1234-123456789abc", OffsetDateTime.now(ZoneOffset.UTC));
+
+    S3Blob sourceBlob = mock(S3Blob.class);
+    when(sourceBlob.getId()).thenReturn(tempBlobId);
+    when(sourceBlob.getMetrics()).thenReturn(new BlobMetrics(new org.joda.time.DateTime(), "sha1", 11L));
+    doReturn(sourceBlob).when(spy).get(tempBlobId);
+
+    spy.copy(tempBlobId, new HashMap<>(Map.of(CREATED_BY_HEADER, "test")));
+
+    // Source and destination keys differ, so the copier is invoked.
+    verify(copier).copy(any(), anyString(), anyString(), anyString());
+  }
+
   private S3BlobStore createBlobStore() {
     S3BlobStore blobstore = new S3BlobStore(amazonS3Factory, new DefaultBlobIdLocationResolver(), uploader, copier,
         false, storeMetrics, deletedBlobIndex, dryRunPrefix, bucketManager, blobStoreQuotaUsageChecker, true, null);

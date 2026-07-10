@@ -63,11 +63,7 @@
     }
   }
 
-  .api-endpoint-detail__sticky-bar {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--color-background);
+  .api-endpoint-detail__detail-bar {
     padding-bottom: var(--space-3);
     margin-bottom: var(--space-2);
     border-bottom: 1px solid var(--gray-5);
@@ -118,8 +114,22 @@
       color: var(--amber-11);
     }
 
-    .swagger-ui .info .title {
-      display: block;
+    &__swagger .swagger-ui {
+      .info {
+        display: none;
+      }
+
+      .scheme-container {
+        display: none;
+      }
+
+      .opblock-tag-section h3.opblock-tag {
+        display: none;
+      }
+
+      .wrapper {
+        padding: 0;
+      }
     }
   }
 

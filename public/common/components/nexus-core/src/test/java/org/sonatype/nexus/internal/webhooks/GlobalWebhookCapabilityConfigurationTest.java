@@ -16,9 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.nexus.crypto.secrets.Secret;
-import org.sonatype.nexus.crypto.secrets.SecretData;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,13 +39,7 @@ public class GlobalWebhookCapabilityConfigurationTest
   private SecretsService secretsService;
 
   @Mock
-  private SecretsStore secretsStore;
-
-  @Mock
   private Secret secret;
-
-  @Mock
-  private SecretData secretData;
 
   private Map<String, String> properties;
 
@@ -68,7 +60,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secret.decrypt()).thenReturn("decrypted-value".toCharArray());
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify that getSecret() returns the decrypted value, proving encryption is stored internally
     assertThat(config.getSecret(), is("decrypted-value"));
@@ -85,7 +77,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secret.decrypt()).thenReturn(decryptedSecret.toCharArray());
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify secret is decrypted on-demand
     assertThat(config.getSecret(), is(decryptedSecret));
@@ -96,7 +88,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     // Don't add secret to properties
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify null secret is handled correctly
     assertThat(config.getSecret(), is(nullValue()));
@@ -107,7 +99,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     properties.put("secret", "");
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify empty secret is handled correctly (empty string becomes null via Strings.emptyToNull)
     assertThat(config.getSecret(), is(nullValue()));
@@ -120,7 +112,7 @@ public class GlobalWebhookCapabilityConfigurationTest
 
     // Pass null for SecretsService (like in descriptor validation)
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, null, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, null);
 
     // Should return encrypted value when SecretsService is null
     assertThat(config.getSecret(), is(encryptedSecret));
@@ -137,7 +129,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secret.decrypt()).thenReturn(decryptedSecret.toCharArray());
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify multiple calls to getSecret() work correctly
     assertThat(config.getSecret(), is(decryptedSecret));
@@ -154,7 +146,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secret.decrypt()).thenReturn("decrypted-value".toCharArray());
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify that underscore prefix is stripped and secret is decrypted correctly
     assertThat(config.getSecret(), is("decrypted-value"));
@@ -171,7 +163,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secret.decrypt()).thenReturn(decryptedSecret.toCharArray());
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify that underscore prefix is stripped for multi-digit secret IDs
     assertThat(config.getSecret(), is(decryptedSecret));
@@ -185,7 +177,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secretsService.from(secretId)).thenThrow(new RuntimeException("Secret not found"));
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify that null is returned when secret is not found
     assertThat(config.getSecret(), is(nullValue()));
@@ -201,7 +193,7 @@ public class GlobalWebhookCapabilityConfigurationTest
     when(secret.decrypt()).thenReturn("decrypted-value".toCharArray());
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify backwards compatibility - IDs without underscore still work
     assertThat(config.getSecret(), is("decrypted-value"));
@@ -212,10 +204,11 @@ public class GlobalWebhookCapabilityConfigurationTest
     String secretId = "_abc";
     properties.put("secret", secretId);
 
-    when(secretsService.from(secretId)).thenThrow(new NumberFormatException("Invalid format"));
+    // parseToken() in SecretImpl throws IllegalArgumentException for invalid format
+    when(secretsService.from(secretId)).thenThrow(new IllegalArgumentException("Unexpected token"));
 
     GlobalWebhookCapability.Configuration config =
-        new GlobalWebhookCapability.Configuration(properties, secretsService, secretsStore);
+        new GlobalWebhookCapability.Configuration(properties, secretsService);
 
     // Verify that invalid secret ID (non-numeric after underscore) returns as-is for backwards compatibility
     assertThat(config.getSecret(), is(secretId));

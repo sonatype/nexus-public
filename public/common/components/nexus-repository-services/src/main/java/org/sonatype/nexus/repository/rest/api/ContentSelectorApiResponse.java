@@ -14,35 +14,31 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Objects;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.DESCRIPTION_DESCRIPTION;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_DESCRIPTION;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_EXAMPLE;
-import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_NOTES;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.NAME_DESCRIPTION;
-import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.TYPE_ALLOWED_VALUES;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.TYPE_DESCRIPTION;
-import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.TYPE_NOTES;
 
 /**
  * ContentSelector transfer object for REST APIs.
  */
-@ApiModel
+@Schema
 public class ContentSelectorApiResponse
     implements ValidatableContentSelectorRequest
 {
-  @ApiModelProperty(value = NAME_DESCRIPTION)
+  @Schema(description = NAME_DESCRIPTION)
   private String name;
 
-  @ApiModelProperty(value = TYPE_DESCRIPTION, allowableValues = TYPE_ALLOWED_VALUES, notes = TYPE_NOTES)
+  @Schema(description = TYPE_DESCRIPTION)
   private String type;
 
-  @ApiModelProperty(value = DESCRIPTION_DESCRIPTION)
+  @Schema(description = DESCRIPTION_DESCRIPTION)
   private String description;
 
-  @ApiModelProperty(value = EXPRESSION_DESCRIPTION, example = EXPRESSION_EXAMPLE, notes = EXPRESSION_NOTES)
+  @Schema(description = EXPRESSION_DESCRIPTION, example = EXPRESSION_EXAMPLE)
   private String expression;
 
   public String getName() {

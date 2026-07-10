@@ -37,6 +37,8 @@ public class CsvCleanupPreviewContentWriter
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
+  private static final String FORMULA_PREFIX_CHARS = "=+-@\t\r";
+
   public void write(
       final Repository repository,
       final Stream<ComponentXO> components,
@@ -44,7 +46,7 @@ public class CsvCleanupPreviewContentWriter
   {
     log.debug("Creating CSV content for the repository {}.", repository.getName());
 
-    CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+    CSVFormat csvFormat = CSVFormat.EXCEL.builder()
         .setHeader("Namespace", "Name", "Version", "Path", "Blob Store Name", "Asset Size", "Downloaded Date ISO-8601",
             "Published Date ISO-8601")
         .build();
@@ -59,8 +61,14 @@ public class CsvCleanupPreviewContentWriter
           .forEach(componentXO -> {
             try {
               for (AssetXO asset : componentXO.getAssets()) {
-                printer.printRecord(componentXO.getGroup(), componentXO.getName(), componentXO.getVersion(),
-                    asset.getPath(), asset.getBlobStoreName(), asset.getFileSize(), getDate(asset.getLastDownloaded()),
+                printer.printRecord(
+                    escapeFormulaInjection(componentXO.getGroup()),
+                    escapeFormulaInjection(componentXO.getName()),
+                    escapeFormulaInjection(componentXO.getVersion()),
+                    escapeFormulaInjection(asset.getPath()),
+                    escapeFormulaInjection(asset.getBlobStoreName()),
+                    asset.getFileSize(),
+                    getDate(asset.getLastDownloaded()),
                     getDate(asset.getBlobCreated()));
                 totalCount.incrementAndGet();
               }
@@ -85,6 +93,23 @@ public class CsvCleanupPreviewContentWriter
     }
 
     log.debug("Finished CSV content for the repository {}. Total lines {}.", repository.getName(), totalCount.get());
+  }
+
+  /**
+   * Escapes values that could trigger formula injection in spreadsheet applications.
+   * If a value starts with a formula-triggering character (=, +, -, @, tab), prepends a single quote.
+   *
+   * @see <a href="https://owasp.org/www-community/attacks/CSV_Injection">OWASP CSV Injection</a>
+   */
+  static String escapeFormulaInjection(String value) {
+    if (value == null || value.isEmpty()) {
+      return value;
+    }
+    char firstChar = value.charAt(0);
+    if (FORMULA_PREFIX_CHARS.indexOf(firstChar) >= 0) {
+      return "'" + value;
+    }
+    return value;
   }
 
   private static String getDate(Date date) {

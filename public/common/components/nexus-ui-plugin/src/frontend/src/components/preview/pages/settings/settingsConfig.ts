@@ -16,7 +16,20 @@
  *
  * Defines all settings cards and their organization into sections.
  * This file is the single source of truth for the Settings Hub.
+ *
+ * Section order intentionally mirrors the classic ExtJS admin navigation:
+ * Repository → Security → Support → System
  */
+
+export interface VisibilityRequirements {
+  permissions?: string[];
+  requiresPermission?: string;
+  requiresAnyPermission?: string[];
+  permissionPrefix?: string;
+  permissionPrefixes?: string[];
+  editions?: string[];
+  requiresUser?: boolean;
+}
 
 export interface SettingCard {
   /** Unique identifier */
@@ -45,6 +58,12 @@ export interface SettingCard {
    * Cards without a featureKey are always treated as available.
    */
   featureKey?: string;
+  /**
+   * Permission requirements for this card, matching the corresponding route's
+   * visibilityRequirements. Cards without this field are always visible.
+   * Uses the same structure as route data.visibilityRequirements so isVisible() can evaluate it.
+   */
+  visibilityRequirements?: VisibilityRequirements;
 }
 
 export interface SettingsSection {
@@ -63,109 +82,6 @@ export interface SettingsSection {
  */
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   {
-    id: 'security',
-    label: 'Security',
-    cards: [
-      {
-        id: 'users',
-        path: 'security/users',
-        label: 'Users',
-        description: 'Manage user accounts and access',
-        featureKey: 'security.users',
-      },
-      {
-        id: 'roles',
-        path: 'security/roles',
-        label: 'Roles',
-        description: 'Define user permissions and access control',
-        featureKey: 'security.roles',
-      },
-      {
-        id: 'privileges',
-        path: 'security/privileges',
-        label: 'Privileges',
-        description: 'Configure granular permission settings',
-        featureKey: 'security.privileges',
-      },
-      {
-        id: 'realms',
-        path: 'security/realms',
-        label: 'Realms',
-        description: 'Configure authentication sources and order',
-        cloudExcluded: true,
-        featureKey: 'security.realms',
-      },
-      {
-        id: 'ldap',
-        path: 'security/ldap',
-        label: 'LDAP',
-        description: 'Configure LDAP integration',
-        searchTerms: ['active directory', 'ad', 'directory service'],
-        cloudExcluded: true,
-        featureKey: 'security.ldap',
-      },
-      {
-        id: 'saml',
-        path: 'security/saml',
-        label: 'SAML',
-        description: 'Configure SAML single sign-on',
-        searchTerms: ['sso', 'single sign-on'],
-        cloudExcluded: true,
-        featureKey: 'security.saml',
-      },
-      {
-        id: 'oauth2',
-        path: 'security/oauth2',
-        label: 'OAuth2',
-        description: 'Configure OAuth 2.0 authentication',
-        cloudExcluded: true,
-        featureKey: 'security.oauth2',
-      },
-      {
-        id: 'crowd',
-        path: 'security/crowd',
-        label: 'Crowd',
-        description: 'Configure Atlassian Crowd integration',
-        cloudExcluded: true,
-        featureKey: 'security.crowd',
-      },
-      {
-        id: 'anonymous',
-        path: 'security/anonymous',
-        label: 'Anonymous',
-        description: 'Configure anonymous access settings',
-        cloudExcluded: true,
-        featureKey: 'security.anonymous',
-      },
-      {
-        id: 'ssl-certificates',
-        path: 'security/sslcertificates',
-        label: 'SSL Certificates',
-        description: 'Manage trusted SSL certificates',
-        searchTerms: ['tls', 'https', 'certificate'],
-        cloudExcluded: true,
-        featureKey: 'security.sslcertificates',
-      },
-      {
-        id: 'user-tokens',
-        path: 'security/user-tokens',
-        label: 'User Tokens',
-        description: 'Manage API access tokens',
-        searchTerms: ['api', 'token', 'authentication'],
-        featureKey: 'security.usertokens',
-      },
-      {
-        id: 'ip-allowlist',
-        path: 'security/ip-allowlist',
-        label: 'IP Allow List',
-        description: 'Manage IP address allow list for access control',
-        searchTerms: ['ip', 'allowlist', 'cidr', 'firewall', 'access control'],
-        proOnly: true,
-        adminOnly: true,
-      },
-    ],
-  },
-  {
     id: 'repository',
     label: 'Repository',
     cards: [
@@ -176,6 +92,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Manage Maven, npm, Docker, and other repositories',
         searchTerms: ['maven', 'npm', 'docker', 'pypi', 'nuget'],
         featureKey: 'repository.repositories',
+        visibilityRequirements: { requiresPermission: 'nexus:repository-admin:*:*:read' },
       },
       {
         id: 'blob-stores',
@@ -185,6 +102,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['storage', 's3', 'azure', 'google cloud'],
         cloudExcluded: true,
         featureKey: 'repository.blobstores',
+        visibilityRequirements: { requiresPermission: 'nexus:blobstores:read' },
       },
       {
         id: 'cleanup-policies',
@@ -193,6 +111,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure automated component cleanup',
         searchTerms: ['retention', 'delete', 'purge'],
         featureKey: 'repository.cleanuppolicies',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'routing-rules',
@@ -201,6 +120,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Control component access by path patterns',
         searchTerms: ['block', 'allow', 'filter'],
         featureKey: 'repository.routingrules',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'content-selectors',
@@ -209,6 +129,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Define content filtering expressions',
         searchTerms: ['csel', 'filter', 'query'],
         featureKey: 'repository.selectors',
+        visibilityRequirements: { requiresPermission: 'nexus:selectors:read' },
       },
       {
         id: 'data-store',
@@ -218,6 +139,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['database', 'postgresql', 'h2', 'jdbc'],
         cloudExcluded: true,
         featureKey: 'repository.datastore',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'proprietary',
@@ -225,6 +147,183 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         label: 'Proprietary',
         description: 'Manage proprietary component settings',
         featureKey: 'repository.proprietary',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+    ],
+  },
+  {
+    id: 'security',
+    label: 'Security',
+    cards: [
+      {
+        id: 'users',
+        path: 'security/users',
+        label: 'Users',
+        description: 'Manage user accounts and access',
+        featureKey: 'security.users',
+        visibilityRequirements: { requiresPermission: 'nexus:users:read' },
+      },
+      {
+        id: 'roles',
+        path: 'security/roles',
+        label: 'Roles',
+        description: 'Define user permissions and access control',
+        featureKey: 'security.roles',
+        visibilityRequirements: { requiresPermission: 'nexus:roles:read' },
+      },
+      {
+        id: 'privileges',
+        path: 'security/privileges',
+        label: 'Privileges',
+        description: 'Configure granular permission settings',
+        featureKey: 'security.privileges',
+        visibilityRequirements: { requiresPermission: 'nexus:privileges:read' },
+      },
+      {
+        id: 'realms',
+        path: 'security/realms',
+        label: 'Realms',
+        description: 'Configure authentication sources and order',
+        cloudExcluded: true,
+        featureKey: 'security.realms',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+      {
+        id: 'ldap',
+        path: 'security/ldap',
+        label: 'LDAP',
+        description: 'Configure LDAP integration',
+        searchTerms: ['active directory', 'ad', 'directory service'],
+        cloudExcluded: true,
+        featureKey: 'security.ldap',
+        visibilityRequirements: { requiresPermission: 'nexus:ldap:read' },
+      },
+      {
+        id: 'saml',
+        path: 'security/saml',
+        label: 'SAML',
+        description: 'Configure SAML single sign-on',
+        searchTerms: ['sso', 'single sign-on'],
+        cloudExcluded: true,
+        featureKey: 'security.saml',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+      {
+        id: 'oauth2',
+        path: 'security/oauth2',
+        label: 'OAuth2',
+        description: 'Configure OAuth 2.0 authentication',
+        cloudExcluded: true,
+        featureKey: 'security.oauth2',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+      {
+        id: 'crowd',
+        path: 'security/crowd',
+        label: 'Crowd',
+        description: 'Configure Atlassian Crowd integration',
+        cloudExcluded: true,
+        featureKey: 'security.crowd',
+        visibilityRequirements: { requiresPermission: 'nexus:crowd:read' },
+      },
+      {
+        id: 'anonymous',
+        path: 'security/anonymous',
+        label: 'Anonymous',
+        description: 'Configure anonymous access settings',
+        cloudExcluded: true,
+        featureKey: 'security.anonymous',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+      {
+        id: 'ssl-certificates',
+        path: 'security/sslcertificates',
+        label: 'SSL Certificates',
+        description: 'Manage trusted SSL certificates',
+        searchTerms: ['tls', 'https', 'certificate'],
+        cloudExcluded: true,
+        featureKey: 'security.sslcertificates',
+        visibilityRequirements: { requiresPermission: 'nexus:ssl-truststore:read' },
+      },
+      {
+        id: 'user-tokens',
+        path: 'security/user-tokens',
+        label: 'User Tokens',
+        description: 'Manage API access tokens',
+        searchTerms: ['api', 'token', 'authentication'],
+        featureKey: 'security.usertokens',
+        visibilityRequirements: { requiresPermission: 'nexus:usertoken-settings:read' },
+      },
+      {
+        id: 'ip-allowlist',
+        path: 'security/ip-allowlist',
+        label: 'IP Allow List',
+        description: 'Manage IP address allow list for access control',
+        searchTerms: ['ip', 'allowlist', 'cidr', 'firewall', 'access control'],
+        proOnly: true,
+        adminOnly: true,
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+    ],
+  },
+  {
+    id: 'support',
+    label: 'Support',
+    cloudExcluded: true,
+    cards: [
+      {
+        id: 'system-info',
+        path: 'support/systeminformation',
+        label: 'System Info',
+        description: 'View system information and diagnostics',
+        searchTerms: ['information', 'version', 'diagnostics'],
+        featureKey: 'support.systeminfo',
+        visibilityRequirements: { requiresPermission: 'nexus:atlas:read' },
+      },
+      {
+        id: 'logs',
+        path: 'support/logs',
+        label: 'Logs',
+        description: 'View application logs',
+        searchTerms: ['log', 'error', 'debug'],
+        featureKey: 'support.logs',
+        visibilityRequirements: { requiresPermission: 'nexus:logging:read' },
+      },
+      {
+        id: 'logging-config',
+        path: 'support/logging',
+        label: 'Logging Config',
+        description: 'Configure log levels and output',
+        searchTerms: ['logger', 'log level', 'debug'],
+        featureKey: 'support.logging',
+        visibilityRequirements: { requiresPermission: 'nexus:logging:read' },
+      },
+      {
+        id: 'metric-health',
+        path: 'support/metrichealth',
+        label: 'Metric Health',
+        description: 'View system metrics and health checks',
+        searchTerms: ['status', 'health', 'metrics', 'monitoring'],
+        featureKey: 'support.metrics',
+        visibilityRequirements: { requiresPermission: 'nexus:metrics:read' },
+      },
+      {
+        id: 'support-zip',
+        path: 'support/supportzip',
+        label: 'Support Zip',
+        description: 'Generate support diagnostics bundle',
+        searchTerms: ['diagnostic', 'troubleshoot', 'bundle'],
+        featureKey: 'support.supportzip',
+        visibilityRequirements: { requiresPermission: 'nexus:supportzip:read' },
+      },
+      {
+        id: 'support-request',
+        path: 'support/supportrequest',
+        label: 'Support Request',
+        description: 'Submit a support request',
+        searchTerms: ['help', 'ticket', 'contact'],
+        featureKey: 'support.supportrequest',
+        visibilityRequirements: { requiresPermission: 'nexus:atlas:read' },
       },
     ],
   },
@@ -239,6 +338,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Schedule and monitor system tasks',
         searchTerms: ['cron', 'schedule', 'job'],
         featureKey: 'system.tasks',
+        visibilityRequirements: { requiresPermission: 'nexus:tasks:read' },
       },
       {
         id: 'email',
@@ -247,6 +347,8 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure email server and notifications',
         searchTerms: ['smtp', 'mail', 'notification'],
         featureKey: 'system.emailserver',
+        cloudExcluded: true,
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'http',
@@ -255,6 +357,8 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure HTTP and HTTPS settings',
         searchTerms: ['proxy', 'timeout', 'connection'],
         featureKey: 'system.http',
+        cloudExcluded: true,
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'api',
@@ -271,6 +375,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         label: 'Capabilities',
         description: 'Configure system capabilities and integrations',
         featureKey: 'system.capabilities',
+        visibilityRequirements: { requiresPermission: 'nexus:capabilities:read' },
       },
       {
         id: 'licensing',
@@ -280,6 +385,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['license', 'subscription'],
         cloudExcluded: true,
         featureKey: 'system.licensing',
+        visibilityRequirements: { requiresPermission: 'nexus:licensing:read' },
       },
       {
         id: 'nodes',
@@ -289,6 +395,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['cluster', 'ha', 'high availability'],
         cloudExcluded: true,
         featureKey: 'system.nodes',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'iq-server',
@@ -297,6 +404,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure Sonatype IQ Server integration',
         searchTerms: ['lifecycle', 'policy'],
         featureKey: 'iqserver',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'preview-ui',
@@ -305,6 +413,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure Nexus One UI settings and features',
         searchTerms: ['interface', 'ui', 'theme'],
         // No featureKey — always available
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'upgrade',
@@ -314,61 +423,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['update', 'version'],
         cloudExcluded: true,
         featureKey: 'system.upgrade',
-      },
-    ],
-  },
-  {
-    id: 'support',
-    label: 'Support',
-    cloudExcluded: true,
-    cards: [
-      {
-        id: 'system-info',
-        path: 'support/systeminformation',
-        label: 'System Info',
-        description: 'View system information and diagnostics',
-        searchTerms: ['information', 'version', 'diagnostics'],
-        featureKey: 'support.systeminfo',
-      },
-      {
-        id: 'logs',
-        path: 'support/logs',
-        label: 'Logs',
-        description: 'View application logs',
-        searchTerms: ['log', 'error', 'debug'],
-        featureKey: 'support.logs',
-      },
-      {
-        id: 'logging-config',
-        path: 'support/logging',
-        label: 'Logging Config',
-        description: 'Configure log levels and output',
-        searchTerms: ['logger', 'log level', 'debug'],
-        featureKey: 'support.logging',
-      },
-      {
-        id: 'metric-health',
-        path: 'support/metrichealth',
-        label: 'Metric Health',
-        description: 'View system metrics and health checks',
-        searchTerms: ['status', 'health', 'metrics', 'monitoring'],
-        featureKey: 'support.metrics',
-      },
-      {
-        id: 'support-zip',
-        path: 'support/supportzip',
-        label: 'Support Zip',
-        description: 'Generate support diagnostics bundle',
-        searchTerms: ['diagnostic', 'troubleshoot', 'bundle'],
-        featureKey: 'support.supportzip',
-      },
-      {
-        id: 'support-request',
-        path: 'support/supportrequest',
-        label: 'Support Request',
-        description: 'Submit a support request',
-        searchTerms: ['help', 'ticket', 'contact'],
-        featureKey: 'support.supportrequest',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
     ],
   },

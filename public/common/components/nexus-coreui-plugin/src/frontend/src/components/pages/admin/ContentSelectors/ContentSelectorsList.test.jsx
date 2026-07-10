@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {waitForElementToBeRemoved} from '@testing-library/react';
+import {waitForElementToBeRemoved, screen} from '@testing-library/react';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
@@ -97,7 +97,48 @@ describe('ContentSelectorsList', function() {
     const {container, loadingMask} = renderView();
 
     await waitForElementToBeRemoved(loadingMask);
-    
+
     expect(container.querySelector('button', {text: 'Create Selector'})).toBeDisabled();
+  });
+
+  describe('Analytics IDs', function() {
+    it('has nxrm-content-selector-create analytics ID on create button', async function() {
+      when(ExtJS.checkPermission)
+        .calledWith('nexus:selectors:create')
+        .mockReturnValue(true);
+
+      axios.get.mockReturnValue(Promise.resolve({data: []}));
+
+      const {loadingMask} = renderView();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      const createButton = screen.getByRole('button', {name: /create selector/i});
+      expect(createButton).toHaveAttribute('data-analytics-id', 'nxrm-content-selector-create');
+    });
+
+    it('has nxrm-content-selector-filter analytics ID on filter input', async function() {
+      axios.get.mockReturnValue(Promise.resolve({data: []}));
+
+      const {loadingMask} = renderView();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      const filterInput = screen.getByPlaceholderText(UIStrings.CONTENT_SELECTORS.FILTER_PLACEHOLDER);
+      expect(filterInput).toHaveAttribute('data-analytics-id', 'nxrm-content-selector-filter');
+    });
+  });
+
+  describe('Accessibility', function() {
+    it('has aria-label on filter input', async function() {
+      axios.get.mockReturnValue(Promise.resolve({data: []}));
+
+      const {loadingMask} = renderView();
+
+      await waitForElementToBeRemoved(loadingMask);
+
+      const filterInput = screen.getByPlaceholderText(UIStrings.CONTENT_SELECTORS.FILTER_PLACEHOLDER);
+      expect(filterInput).toHaveAttribute('aria-label', 'Filter content selectors by name');
+    });
   });
 });

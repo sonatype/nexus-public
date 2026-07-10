@@ -27,7 +27,6 @@ import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
-import org.sonatype.nexus.crypto.secrets.SecretsStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,19 +58,15 @@ public abstract class CapabilitySupport<ConfigT>
 
   private SecretsService secretsService;
 
-  private SecretsStore secretsStore;
-
   private ConfigT config;
 
   @Override
   public void init(
       final CapabilityContext context,
-      final SecretsService secretsService,
-      final SecretsStore secretsStore)
+      final SecretsService secretsService)
   {
     this.context = checkNotNull(context);
     this.secretsService = secretsService;
-    this.secretsStore = secretsStore;
   }
 
   protected CapabilityContext context() {
@@ -81,11 +76,6 @@ public abstract class CapabilitySupport<ConfigT>
   protected SecretsService secretsService() {
     checkState(secretsService != null, "SecretsService not available");
     return secretsService;
-  }
-
-  protected SecretsStore secretsStore() {
-    checkState(secretsStore != null, "SecretsStore not available");
-    return secretsStore;
   }
 
   @Override

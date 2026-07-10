@@ -141,7 +141,7 @@ export default {
       }
     },
     GLOBAL_EVALUATION_SETTINGS: {
-      title: 'Global Evaluation Settings',
+      title: 'Evaluation Settings',
       description: 'No global evaluation settings configured for the hosted repositories.'
     }
   }

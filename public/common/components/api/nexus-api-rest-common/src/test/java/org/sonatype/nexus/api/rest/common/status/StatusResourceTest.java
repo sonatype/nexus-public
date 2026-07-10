@@ -15,7 +15,7 @@ package org.sonatype.nexus.api.rest.common.status;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import static org.junit.Assert.assertEquals;
 

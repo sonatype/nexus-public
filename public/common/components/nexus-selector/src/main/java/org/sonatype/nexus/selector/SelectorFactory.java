@@ -13,7 +13,7 @@
 package org.sonatype.nexus.selector;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 

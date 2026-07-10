@@ -589,12 +589,16 @@ export default class ExtJS {
    * @returns {unknown}
    */
   static usePermission(getValue, dependencies) {
-    const [value, setValue] = useState(getValue());
+    const [value, setValue] = useState(getValue);
+    // Ref avoids closing over a stale `value` without adding it to the dep array
+    // (which would re-subscribe on every state tick).
+    const valueRef = useRef(value);
+    valueRef.current = value;
 
     useEffect(() => {
       function handleChange() {
         const newValue = getValue();
-        if (value !== newValue) {
+        if (valueRef.current !== newValue) {
           setValue(newValue);
         }
       }
@@ -620,7 +624,7 @@ export default class ExtJS {
         permissionsController.un?.('changed', handleChange);
         stateController.un?.('userchanged', handleChange);
       };
-    }, [value, ...(dependencies ?? [])]);
+    }, [...(dependencies ?? [])]); // `value` removed — stale-value check uses valueRef instead
 
     return value;
   }
@@ -632,37 +636,37 @@ export default class ExtJS {
           typeof window.NX.getApplication === 'function' &&
           window.NX.getApplication() &&
           window.NX?.Security?.hasUser) {
-        const result = window.NX.Security.hasUser();
-        console.debug('[ExtJS.hasUser] Via NX.Security.hasUser():', result);
-        return result;
+        return window.NX.Security.hasUser();
       }
     } catch {
       // ExtJS not ready yet
     }
-    // Fallback 1: Check if user exists in NX.State (after State controller initializes)
-    if (window.NX?.State?.getUser) {
-      const user = window.NX.State.getUser();
-      if (user) {
-        console.debug('[ExtJS.hasUser] Via NX.State.getUser():', true);
-        return true;
+    // Fallback 1: Check if user exists in NX.State (after State controller initializes).
+    // NX.State.getUser() internally calls NX.getApplication().getStateController(), which
+    // throws "NX.getApplication is not a function" if the ExtJS application failed to launch
+    // (e.g. an aggregated class failed to load). Guard the same way the primary path does
+    // and treat any throw as "fall through to the next fallback".
+    try {
+      if (typeof window.NX?.getApplication === 'function' &&
+          window.NX.getApplication() &&
+          window.NX?.State?.getUser) {
+        const user = window.NX.State.getUser();
+        if (user) {
+          return true;
+        }
       }
+    } catch {
+      // ExtJS State controller not available yet; fall through to remaining fallbacks
     }
     // Fallback 2: Check initial app state from server (before State controller initializes)
     // This works when app.js has loaded but ExtJS app hasn't fully initialized
     if (window.NX?.app?.state?.user?.value) {
-      console.debug('[ExtJS.hasUser] Via NX.app.state.user.value:', true);
       return true;
     }
     // Fallback 3: Check session cookie exists (critical for debug mode)
     // In debug mode, React loads before app.js, so NX.app.state isn't set yet.
     // The NXSESSIONID cookie is the most reliable indicator of an authenticated session.
-    const hasCookie = document.cookie.includes('NXSESSIONID');
-    if (hasCookie) {
-      console.debug('[ExtJS.hasUser] Via NXSESSIONID cookie:', true);
-      return true;
-    }
-    console.debug('[ExtJS.hasUser] No user found. Cookie:', document.cookie.substring(0, 100));
-    return false;
+    return document.cookie.includes('NXSESSIONID');
   }
 
   static signOut() {
@@ -691,13 +695,18 @@ export default class ExtJS {
   }
 
   /**
-   * This function will wait for the ExtJS application to be fully loaded before executing the callback
+   * This function will wait for the ExtJS application to be fully loaded before executing the callback.
+   * NOTE: This no longer waits for permissions to be loaded (NEXUS-52583). The UI renders immediately
+   * and permissions are loaded asynchronously in the background. Use waitForPermissions() if you need
+   * to wait for permissions specifically.
    * @param callback
    */
   static waitForExtJs(callback) {
     const interval = setInterval(() => {
       try {
-        if (Ext.getApplication() && NX.Permissions.permissions !== undefined) {
+        // Only wait for ExtJS application to be initialized, NOT permissions
+        // This allows the UI to render immediately and load permissions in background (NEXUS-52583)
+        if (Ext.getApplication()) {
           clearInterval(interval);
           callback();
         }
@@ -710,6 +719,7 @@ export default class ExtJS {
   /**
    * Wait for ExtJS to be fully initialized.
    * Returns a Promise that resolves when ExtJS is ready.
+   * NOTE: This no longer waits for permissions (NEXUS-52583).
    * @returns {Promise<void>}
    */
   static waitForExtJsReady() {
@@ -717,9 +727,8 @@ export default class ExtJS {
       // Check if already loaded
       try {
         if (window.Ext?.getApplication &&
-            typeof window.NX?.getApplication === 'function' &&
-            window.NX.getApplication() &&
-            window.NX.Permissions?.permissions !== undefined) {
+            typeof window.Ext.getApplication === 'function' &&
+            window.Ext.getApplication()) {
           resolve();
           return;
         }
@@ -727,13 +736,12 @@ export default class ExtJS {
         // Not ready yet, continue polling
       }
 
-      // Poll for ExtJS to be ready
+      // Poll for ExtJS to be ready (permissions NOT required)
       const checkInterval = setInterval(() => {
         try {
           if (window.Ext?.getApplication &&
-              typeof window.NX?.getApplication === 'function' &&
-              window.NX.getApplication() &&
-              window.NX.Permissions?.permissions !== undefined) {
+              typeof window.Ext.getApplication === 'function' &&
+              window.Ext.getApplication()) {
             clearInterval(checkInterval);
             resolve();
           }
@@ -747,6 +755,42 @@ export default class ExtJS {
         clearInterval(checkInterval);
         reject(new Error('ExtJS failed to initialize within 30 seconds'));
       }, 30000);
+    });
+  }
+
+  /**
+   * Check if permissions have been loaded.
+   * @returns {boolean} true if permissions are available
+   */
+  static arePermissionsReady() {
+    return window.NX?.Permissions?.permissions !== undefined;
+  }
+
+  /**
+   * Wait for permissions to be loaded.
+   * Useful for components that require permissions before rendering.
+   * @param {number} timeout - Timeout in milliseconds (default 30000)
+   * @returns {Promise<void>}
+   */
+  static waitForPermissions(timeout = 30000) {
+    return new Promise((resolve, reject) => {
+      if (this.arePermissionsReady()) {
+        resolve();
+        return;
+      }
+
+      const checkInterval = setInterval(() => {
+        if (this.arePermissionsReady()) {
+          clearInterval(checkInterval);
+          clearTimeout(timeoutId);
+          resolve();
+        }
+      }, 100);
+
+      const timeoutId = setTimeout(() => {
+        clearInterval(checkInterval);
+        reject(new Error('Permissions load timed out'));
+      }, timeout);
     });
   }
 
@@ -770,20 +814,24 @@ export default class ExtJS {
    */
   static waitForNextPermissionChange() {
     return new Promise((resolve, reject) => {
+      const app = window.Ext?.getApplication?.();
+      if (!app) {
+        reject(new Error('ExtJS application not initialized'));
+        return;
+      }
+
+      const permissionsController = app.getController('Permissions');
+
       const handleChange = () => {
-        console.debug('received permission changes');
         clearTimeout(timeout);
         resolve();
       };
 
-      console.debug('setting up event handler to wait for permission changes');
-      const permissionsController = Ext.getApplication().getController('Permissions');
       permissionsController.on("changed", handleChange);
 
       const timeoutMs = ExtJS.calculateTimeout();
 
       const timeout = setTimeout(() => {
-        console.debug('removing event handler, permission changes have timed out');
         permissionsController.un('changed', handleChange);
         reject(new Error('timed out waiting for permissions to update'));
       }, timeoutMs);

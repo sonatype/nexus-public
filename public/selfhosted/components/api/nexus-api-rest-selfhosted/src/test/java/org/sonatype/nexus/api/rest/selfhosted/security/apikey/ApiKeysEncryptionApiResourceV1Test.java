@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.security.apikey;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.api.rest.selfhosted.security.apikey.model.ApiKeysReEncryptionRequestApiXO;
 import org.sonatype.nexus.crypto.apikey.ApiKeysReEncryptService;

@@ -49,7 +49,7 @@ public class KeywordSqlSearchQueryContributionTest
   @Before
   public void setup() {
     underTest = new KeywordSqlSearchQueryContribution();
-    underTest.init(new SearchMappingService(Arrays.asList(new DefaultSearchMappings())));
+    underTest.init(new SearchMappingService(Arrays.asList(new DefaultSearchMappings())), false);
   }
 
   @Test

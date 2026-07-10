@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.api.rest.common.blobstore.s3.model;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory.DEFAULT;
@@ -33,16 +33,16 @@ public class S3BlobStoreApiBucket
 {
   @Valid
   @NotNull
-  @ApiModelProperty(value = "The AWS region to create a new S3 bucket in or an existing S3 bucket's region",
-      example = DEFAULT, required = true)
+  @Schema(description = "The AWS region to create a new S3 bucket in or an existing S3 bucket's region",
+      example = DEFAULT, requiredMode = Schema.RequiredMode.REQUIRED)
   private final String region;
 
   @Valid
   @NotNull
-  @ApiModelProperty(value = "The name of the S3 bucket", required = true)
+  @Schema(description = "The name of the S3 bucket", requiredMode = Schema.RequiredMode.REQUIRED)
   private final String name;
 
-  @ApiModelProperty("The S3 blob store (i.e S3 object) key prefix")
+  @Schema(description = "The S3 blob store (i.e S3 object) key prefix")
   private final String prefix;
 
   @JsonCreator

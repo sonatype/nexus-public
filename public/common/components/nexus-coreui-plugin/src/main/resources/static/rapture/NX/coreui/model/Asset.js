@@ -39,6 +39,7 @@ Ext.define('NX.coreui.model.Asset', {
     {name: 'componentId', type: 'string', sortType: 'asUCText'},
     {name: 'createdBy', type: 'string'},
     {name: 'createdByIp', type: 'string', sortType: 'asUCText'},
+    {name: 'registryUrl', type: 'string'},
     {name: 'attributes', type: 'auto' /*object*/}
   ]
 });

@@ -24,16 +24,25 @@ import {
 import UIStrings from '../../../../constants/UIStrings';
 import './HostedRepositoriesEvaluationSettingsTab.scss';
 
+// Normalize API value (e.g. 'RELEASE', 'STAGE_RELEASE') to dropdown option value (e.g. 'release', 'stage-release')
+const normalizeStageForDisplay = v => v ? v.toLowerCase().replace(/_/g, '-') : '';
+
 /**
  * Monitoring Settings Form
  *
  * Form with Activity Time Frame, Artifact Latest Versions, Policy Evaluation Stage,
  * and New Hosted Repositories checkbox
  */
-export default function HostedRepositoriesEvaluationSettingsTab({initialData, onNext, onCancel, onFormChange}) {
-  const [activityTimeFrame, setActivityTimeFrame] = useState(initialData?.activityTimeFrame || '');
+export default function HostedRepositoriesEvaluationSettingsTab({initialData, onNext, onCancel, onFormChange, globalConfigAvailable = false}) {
+  const isLatestDeployedVersions = initialData?.versionDepth != null && initialData.versionDepth > 0;
+  const [evaluationDepthMethod, setEvaluationDepthMethod] = useState(
+    isLatestDeployedVersions ? 'latestDeployedVersions' : 'activityTimeFrame'
+  );
+  const [activityTimeFrame, setActivityTimeFrame] = useState(initialData?.activityTimeFrame || '30');
   const [artifactLatestVersions, setArtifactLatestVersions] = useState(initialData?.artifactLatestVersions || '');
-  const [policyEvaluationStage, setPolicyEvaluationStage] = useState(initialData?.policyEvaluationStage || '');
+  const [policyEvaluationStage, setPolicyEvaluationStage] = useState(
+    normalizeStageForDisplay(initialData?.policyEvaluationStage) || 'release'
+  );
   const [applyToNewRepos, setApplyToNewRepos] = useState(initialData?.applyToNewRepos || false);
 
   useEffect(() => {
@@ -43,8 +52,11 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
     if (initialData?.artifactLatestVersions) {
       setArtifactLatestVersions(initialData.artifactLatestVersions);
     }
+    if (initialData?.versionDepth != null) {
+      setEvaluationDepthMethod(initialData.versionDepth > 0 ? 'latestDeployedVersions' : 'activityTimeFrame');
+    }
     if (initialData?.policyEvaluationStage) {
-      setPolicyEvaluationStage(initialData.policyEvaluationStage);
+      setPolicyEvaluationStage(normalizeStageForDisplay(initialData.policyEvaluationStage));
     }
     if (initialData?.applyToNewRepos !== undefined) {
       setApplyToNewRepos(initialData.applyToNewRepos);
@@ -59,16 +71,28 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
   };
 
   const handleNext = () => {
+    const isVersionDepth = evaluationDepthMethod === 'latestDeployedVersions';
+    // Normalize policyEvaluationStage to uppercase+underscore before sending to backend
+    // (e.g. 'stage-release' → 'STAGE_RELEASE') to match backend @Pattern and DB CHECK constraint
+    const normalizedStage = policyEvaluationStage
+      ? policyEvaluationStage.toUpperCase().replace(/-/g, '_')
+      : policyEvaluationStage;
     const formData = {
       activityTimeFrame,
       artifactLatestVersions,
-      policyEvaluationStage,
+      // versionDepth and artifactLatestVersions are intentionally the same value when in
+      // latestDeployedVersions mode: versionDepth drives OR-logic expansion, artifactLatestVersions
+      // is the final per-component cap — both set to the user's chosen depth.
+      versionDepth: isVersionDepth ? artifactLatestVersions : '0',
+      policyEvaluationStage: normalizedStage,
       applyToNewRepos
     };
     onNext(formData);
   };
 
-  const isValid = activityTimeFrame !== '' && artifactLatestVersions !== '' && policyEvaluationStage !== '';
+  const isVersionDepthMethod = evaluationDepthMethod === 'latestDeployedVersions';
+  const isValid = policyEvaluationStage !== '' &&
+      (!isVersionDepthMethod ? activityTimeFrame !== '' : artifactLatestVersions !== '');
 
   const STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.monitoringSettings;
   const PACKAGE_STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.packageFilePatterns;
@@ -78,29 +102,47 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
     <div className="nxrm-monitoring-settings-form">
       <NxH3>{STRINGS.title}</NxH3>
 
-      <NxFormGroup label={STRINGS.activityTimeFrameLabel} sublabel={STRINGS.activityTimeFrameHelpText} isRequired>
+      <NxFormGroup label={STRINGS.evaluationDepthMethodLabel} sublabel={STRINGS.evaluationDepthMethodHelpText} isRequired>
         <NxFormSelect
-          value={activityTimeFrame}
-          onChange={(value) => handleFieldChange(setActivityTimeFrame, value)}
+          value={evaluationDepthMethod}
+          onChange={(value) => handleFieldChange(setEvaluationDepthMethod, value)}
         >
-          <option value="">{STRINGS.activityTimeFramePlaceholder}</option>
-          {STRINGS.activityTimeFrameOptions.map(option => (
+          {STRINGS.evaluationDepthMethodOptions.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </NxFormSelect>
       </NxFormGroup>
 
-      <NxFormGroup label={STRINGS.artifactLatestVersionsLabel} sublabel={STRINGS.artifactLatestVersionsHelpText} isRequired>
-        <NxFormSelect
-          value={artifactLatestVersions}
-          onChange={(value) => handleFieldChange(setArtifactLatestVersions, value)}
-        >
-          <option value="">{STRINGS.artifactLatestVersionsPlaceholder}</option>
-          {STRINGS.artifactLatestVersionsOptions.map(option => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </NxFormSelect>
-      </NxFormGroup>
+      {!isVersionDepthMethod && (
+        <NxFormGroup label={STRINGS.activityTimeFrameLabel} sublabel={STRINGS.activityTimeFrameHelpText} isRequired>
+          <NxFormSelect
+            value={activityTimeFrame}
+            onChange={(value) => handleFieldChange(setActivityTimeFrame, value)}
+          >
+            <option value="">{STRINGS.activityTimeFramePlaceholder}</option>
+            {STRINGS.activityTimeFrameOptions.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </NxFormSelect>
+        </NxFormGroup>
+      )}
+
+      {isVersionDepthMethod && (
+        <>
+          <NxFormGroup label={STRINGS.artifactLatestVersionsLabel} sublabel={STRINGS.artifactLatestVersionsHelpText} isRequired>
+            <NxFormSelect
+              value={artifactLatestVersions}
+              onChange={(value) => handleFieldChange(setArtifactLatestVersions, value)}
+            >
+              <option value="">{STRINGS.artifactLatestVersionsPlaceholder}</option>
+              {STRINGS.artifactLatestVersionsOptions.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </NxFormSelect>
+          </NxFormGroup>
+          <NxP className="nxrm-version-depth-hint">{STRINGS.artifactLatestVersionsWarning}</NxP>
+        </>
+      )}
 
       <NxFormGroup label={STRINGS.policyEvaluationStageLabel} sublabel={STRINGS.policyEvaluationStageHelpText} isRequired>
         <NxFormSelect
@@ -141,6 +183,9 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
         <NxP>
           <strong>{PACKAGE_STRINGS.pythonLabel}</strong> {PACKAGE_STRINGS.python}
         </NxP>
+        <NxP>
+          <strong>{PACKAGE_STRINGS.dockerLabel}</strong> {PACKAGE_STRINGS.docker}
+        </NxP>
       </div>
 
       <div className="nx-btn-bar">
@@ -155,7 +200,7 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
           onClick={handleNext}
           disabled={!isValid}
         >
-          {BUTTON_STRINGS.next}
+          {globalConfigAvailable ? BUTTON_STRINGS.update : BUTTON_STRINGS.next}
         </NxButton>
       </div>
     </div>

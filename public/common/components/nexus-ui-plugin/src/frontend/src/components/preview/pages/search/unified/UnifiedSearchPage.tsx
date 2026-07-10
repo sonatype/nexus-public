@@ -252,6 +252,7 @@ export default function UnifiedSearchPage(): JSX.Element {
               onNameFilterChange={handleNameFilterChange}
               sortBy={state.sortField}
               onSortChange={handleSortChange}
+              selectedFormat={selectedFormat}
               onOpenMobileFilters={() => setShowMobileFilters(true)}
             />
           </Box>

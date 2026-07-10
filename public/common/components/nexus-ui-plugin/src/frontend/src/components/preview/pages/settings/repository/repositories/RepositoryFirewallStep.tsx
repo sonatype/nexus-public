@@ -13,23 +13,34 @@
 
 /**
  * Repository Creation wizard – Step 4 (proxy repos only).
- * Enables Firewall (None / Audit / Quarantine) if licensed, or shows cross-sell with option to skip.
- * Same 3-button treatment as Malware Defense with outline on selected.
+ *
+ * Enables Firewall (None / Audit / Quarantine / PCCS) if licensed, or shows cross-sell with
+ * option to skip. PCCS is conditionally offered for npm/pypi proxies, gated by the
+ * format-capabilities API ({@code GET /v1/repositories/firewall/format-capabilities}). Same
+ * button treatment as Malware Defense with outline on selected.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Flex, Text, Card, Button, Link } from '@radix-ui/themes';
 import { Shield, ExternalLink } from 'lucide-react';
-import { useFirewallEnable } from '../../../../shared/security/useFirewallEnable';
+import {
+  fetchPccsSupportedFormats,
+  useFirewallEnable,
+} from '../../../../shared/security/useFirewallEnable';
 import { ProtectionLevelSelector, type ProtectionLevel } from './ProtectionLevelSelector';
 import { ConfirmDialog } from '../../../../shared/form/ConfirmDialog';
 
-export type ProtectionLevel = 'none' | 'audit' | 'quarantine';
+export type ProtectionLevel = 'none' | 'audit' | 'quarantine' | 'pccs';
 
 export interface RepositoryFirewallStepProps {
   /** Required for immediate mode; omit for deferred mode */
   repositoryName?: string;
   /** When false, show cross-sell (Learn more / Contact sales) instead of Enable buttons */
   hasFirewallLicense?: boolean;
+  /**
+   * Repository format. Determines whether PCCS is offered (npm/pypi). Optional for callers
+   * that pre-date PCCS support; when omitted, PCCS is hidden.
+   */
+  format?: string;
   /** In immediate mode: called after API succeeds. In deferred: not used (parent advances via Next). */
   onComplete?: () => void;
   /** Deferred mode: store choice, no API calls. Parent advances via wizard Next. */
@@ -43,6 +54,7 @@ export interface RepositoryFirewallStepProps {
 export function RepositoryFirewallStep({
   repositoryName = '',
   hasFirewallLicense = true,
+  format,
   onComplete,
   mode = 'immediate',
   value = 'none',
@@ -50,8 +62,25 @@ export function RepositoryFirewallStep({
 }: RepositoryFirewallStepProps): JSX.Element {
   const [auditModalOpen, setAuditModalOpen] = useState(false);
   const [noneModalOpen, setNoneModalOpen] = useState(false);
-  const { enableAudit, enableQuarantine, loading } = useFirewallEnable(repositoryName);
+  const [pccsSupported, setPccsSupported] = useState(false);
+  const { enableAudit, enableQuarantine, enablePccs, loading } = useFirewallEnable(repositoryName);
   const isDeferred = mode === 'deferred';
+
+  useEffect(() => {
+    if (!format) {
+      setPccsSupported(false);
+      return;
+    }
+    let cancelled = false;
+    fetchPccsSupportedFormats().then((formats) => {
+      if (!cancelled) {
+        setPccsSupported(formats.includes(format));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [format]);
 
   const handleLevelChange = async (level: ProtectionLevel) => {
     if (level === 'none') {
@@ -60,6 +89,20 @@ export function RepositoryFirewallStep({
     }
     if (level === 'audit') {
       setAuditModalOpen(true);
+      return;
+    }
+    if (level === 'pccs') {
+      // No confirm dialog: PCCS is the strongest mode, advancing to it is intentional.
+      if (isDeferred) {
+        onChoice?.('pccs');
+        return;
+      }
+      try {
+        await enablePccs(onComplete!);
+      }
+      catch {
+        // Error shown inline
+      }
       return;
     }
     if (isDeferred) {
@@ -129,7 +172,9 @@ export function RepositoryFirewallStep({
                     ? 'Current choice: Skip (no Firewall)'
                     : value === 'audit'
                       ? 'Firewall will be enabled in Audit mode'
-                      : 'Firewall will be enabled in Quarantine mode'}
+                      : value === 'pccs'
+                        ? 'Firewall will be enabled in PCCS mode'
+                        : 'Firewall will be enabled in Quarantine mode'}
                 </Text>
               )}
               <Flex gap="3" wrap="wrap">
@@ -166,6 +211,19 @@ export function RepositoryFirewallStep({
                 >
                   Quarantine
                 </Button>
+                {pccsSupported && (
+                  <Button
+                    type="button"
+                    variant={isDeferred && value === 'pccs' ? 'solid' : 'soft'}
+                    color="orange"
+                    size="3"
+                    onClick={() => handleLevelChange('pccs')}
+                    disabled={!isDeferred && loading}
+                    aria-pressed={isDeferred && value === 'pccs'}
+                  >
+                    PCCS
+                  </Button>
+                )}
               </Flex>
             </Box>
           ) : (
@@ -176,7 +234,7 @@ export function RepositoryFirewallStep({
               <Flex gap="2" wrap="wrap">
                 <Button variant="ghost" size="2" asChild>
                   <a
-                    href="https://help.sonatype.com/iqserver/product-information/repository-firewall"
+                    href="https://links.sonatype.com/nexus-repository-firewall"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -185,7 +243,7 @@ export function RepositoryFirewallStep({
                   </a>
                 </Button>
                 <Button variant="ghost" size="2" asChild>
-                  <a href="https://links.sonatype.com/contact" target="_blank" rel="noopener noreferrer">
+                  <a href="https://links.sonatype.com/contact-sales" target="_blank" rel="noopener noreferrer">
                     Contact sales
                   </a>
                 </Button>

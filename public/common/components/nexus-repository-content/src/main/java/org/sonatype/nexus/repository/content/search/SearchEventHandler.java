@@ -117,11 +117,11 @@ public abstract class SearchEventHandler
 
   protected ThreadPoolExecutor threadPoolExecutor;
 
-  private Object flushMutex = new Object();
+  private final Object flushMutex = new Object();
 
   private PeriodicJob flushTask;
 
-  private boolean processEvents = true;
+  private volatile boolean processEvents = true;
 
   public SearchEventHandler(
       final RepositoryManager repositoryManager,
@@ -186,6 +186,14 @@ public abstract class SearchEventHandler
    */
   public void setProcessEvents(final boolean processEvents) {
     this.processEvents = processEvents;
+  }
+
+  /**
+   * Whether component/asset event processing is currently enabled. Subclasses use
+   * this to short-circuit any synchronous indexing they perform.
+   */
+  protected boolean isProcessEvents() {
+    return processEvents;
   }
 
   /**
@@ -393,6 +401,64 @@ public abstract class SearchEventHandler
     if (pendingCount.get() > 0) {
       flushPageOfComponents(null);
     }
+  }
+
+  /**
+   * Synchronously flush all pending index/purge requests for the given repository.
+   * Provides a consistency point for callers that need an authoritative search-index
+   * view immediately after content has been written (e.g. proxy fetch or upload),
+   * removing the eventual-consistency window produced by the periodic background flush.
+   *
+   * Pending requests for other repositories are left untouched.
+   *
+   * @param repositoryName the repository whose pending requests should be flushed
+   */
+  public void flushPendingForRepository(@Nullable final String repositoryName) {
+    if (!processEvents || repositoryName == null || pendingRequests.isEmpty()) {
+      return;
+    }
+    String indexTag = INDEX.name() + ':' + repositoryName;
+    String purgeTag = PURGE.name() + ':' + repositoryName;
+
+    Multimap<String, EntityId> requestsByRepository = ArrayListMultimap.create();
+
+    synchronized (flushMutex) {
+      Iterator<Entry<String, String>> itr = pendingRequests.entrySet().iterator();
+      while (itr.hasNext()) {
+        Entry<String, String> entry = itr.next();
+        String repoTag = entry.getValue();
+        if (repoTag.equals(indexTag) || repoTag.equals(purgeTag)) {
+          requestsByRepository.put(repoTag, componentId(entry.getKey()));
+          itr.remove();
+          pendingCount.decrementAndGet();
+        }
+      }
+    }
+
+    if (requestsByRepository.isEmpty()) {
+      return;
+    }
+
+    Repository repository = repositoryManager.get(repositoryName);
+    if (repository == null) {
+      return;
+    }
+    repository.optionalFacet(SearchFacet.class)
+        .ifPresent(searchFacet -> requestsByRepository.asMap().forEach((repoTag, componentIds) -> {
+          try {
+            if (repoTag.startsWith(INDEX.name())) {
+              searchFacet.index(componentIds);
+            }
+            else {
+              searchFacet.purge(componentIds);
+            }
+          }
+          catch (IllegalStateException e) {
+            // SearchFacet.index/purge are @Guarded(by = STARTED). Repository stopped between
+            // repositoryManager.get() and index/purge — same silent-drop semantics as requestIndex().
+            log.debug("Skipping flush for stopped/deleted repository {}: {}", repositoryName, e.getMessage());
+          }
+        }));
   }
 
   /**

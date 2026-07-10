@@ -186,4 +186,22 @@ class VersionedAssetDAOTest
   {
     return dao.browseAssets(repositoryId, limit, continuationToken, kind, null, null);
   }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedNeverDownloadedUpdatesRow() {
+    super.testMarkAsDownloadedNeverDownloadedUpdatesRow();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedRecentlyDownloadedSkipsUpdate() {
+    super.testMarkAsDownloadedRecentlyDownloadedSkipsUpdate();
+  }
+
+  @Override
+  @DatabaseTest
+  protected void testMarkAsDownloadedZeroIntervalAlwaysUpdates() {
+    super.testMarkAsDownloadedZeroIntervalAlwaysUpdates();
+  }
 }

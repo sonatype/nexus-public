@@ -21,6 +21,8 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader;
 import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader.LoadingFunction;
@@ -36,6 +38,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Abstract {@link TypeHandler} that supports serializing Java objects to the database.
  *
  * The resulting bytes are automatically encrypted at-rest with the database cipher.
+ *
+ * Subclasses must implement {@link #getAllowedClasses()} to provide the allow-list
+ * of classes that may be deserialized.
  *
  * @since 3.21
  */
@@ -62,6 +67,14 @@ public abstract class AbstractSerializableTypeHandler<T>
   protected AbstractSerializableTypeHandler(final LoadingFunction classLoading) {
     this.classLoading = checkNotNull(classLoading); // custom class loading
   }
+
+  /**
+   * Returns the set of allowed class names for deserialization.
+   * Subclasses must implement to provide their specific allow-list.
+   *
+   * @return set of fully qualified class names that are allowed to be deserialized
+   */
+  protected abstract Set<Class<?>> getAllowedClasses();
 
   @Override
   public final void setNonNullParameter(
@@ -112,8 +125,9 @@ public abstract class AbstractSerializableTypeHandler<T>
     }
 
     byte[] decrypted = cipher().decrypt(bytes);
+    Predicate<Class<?>> allowlist = getAllowedClasses()::contains;
     try (ByteArrayInputStream buf = new ByteArrayInputStream(decrypted);
-        ObjectInputStream in = new ObjectInputStreamWithClassLoader(buf, classLoading)) {
+        ObjectInputStream in = new ObjectInputStreamWithClassLoader(buf, classLoading, allowlist)) {
       return (T) in.readObject();
     }
     catch (IOException | ClassNotFoundException e) {

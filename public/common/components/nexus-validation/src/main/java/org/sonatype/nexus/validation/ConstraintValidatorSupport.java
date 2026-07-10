@@ -14,7 +14,7 @@ package org.sonatype.nexus.validation;
 
 import java.lang.annotation.Annotation;
 
-import javax.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidator;
 
 import org.sonatype.nexus.common.template.EscapeHelper;
 import org.slf4j.Logger;

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.security.internal.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.Path;
+import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.security.SecuritySystem;
 

@@ -29,6 +29,18 @@ public class FeatureFlags
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
+  /* Terraform Backend format is temporarily hidden behind the feature flag. Default value: false */
+  public static final String TERRAFORM_STATE_BACKEND_FORMAT_ENABLED = "nexus.format.terraform-backend.enabled";
+
+  /*
+   * Kill switch for the OCI (Open Container Initiative) repository format. When false, the OCI
+   * hosted/proxy/group recipes are not registered, so OCI repositories cannot be created or served.
+   * Intended as a field-rollback escape hatch. Available values: true, false. Default value: true.
+   */
+  public static final String OCI_FORMAT_ENABLED = "nexus.format.oci.enabled";
+
+  public static final String OCI_FORMAT_ENABLED_NAMED_VALUE = "${nexus.format.oci.enabled:true}";
+
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
 
@@ -120,6 +132,10 @@ public class FeatureFlags
   public static final String CLEANUP_DOCKER_RETAIN = "nexus.cleanup.dockerRetain";
 
   public static final String CLEANUP_USE_SQL = "nexus.cleanup.useSQL";
+
+  public static final String CLEANUP_RETAIN_ALL_FORMATS = "nexus.cleanup.retainAllFormats.enabled";
+
+  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:false}";
 
   public static final String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
 
@@ -370,6 +386,14 @@ public class FeatureFlags
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
       "${nexus.hosted.repository.evaluation.enabled:false}";
 
+  // Hosted Repository Synchronous Policy Enforcement feature (CLM-38411). Default: false.
+  // Requires HOSTED_REPOSITORY_EVALUATION_ENABLED to also be true.
+  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED =
+      "nexus.hosted.repository.enforcement.enabled";
+
+  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED_NAMED_VALUE =
+      "${nexus.hosted.repository.enforcement.enabled:false}";
+
   public static final String HOSTED_REPOSITORY_WORK_DIRECTORY_VALUE =
       "${nexus.lifecycle.hosted-repository.workdirectory:}";
 
@@ -404,10 +428,34 @@ public class FeatureFlags
   public static final String TELEMETRY_MANDATORY_ENABLED_NAMED_VALUE =
       "${nexus.telemetry.mandatory.enabled:false}";
 
+  /**
+   * When enabled, activates mandatory telemetry logic for alerting only, without blocking operations (e.g., read-only
+   * mode).
+   */
+  public static final String TELEMETRY_MANDATORY_WARNING_ENABLED = "nexus.telemetry.mandatory.warning.enabled";
+
   /*
    * Authentication rate limiting (brute force protection, CWE-307). Available values: true, false. Default value: true
    */
   public static final String AUTH_RATE_LIMIT_ENABLED = "nexus.auth.ratelimit.enabled";
 
   public static final String AUTH_RATE_LIMIT_ENABLED_NAMED_VALUE = "${nexus.auth.ratelimit.enabled:true}";
+
+  /* NuGet Symbol Server support. Available values: true, false. Default value: false */
+  public static final String NUGET_SYMBOL_SERVER_ENABLED = "nexus.nuget.symbol.server.enabled";
+
+  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:false}";
+
+  /* Firewall capability shim for backwards API compatibility. Available values: true, false. Default value: true */
+  public static final String FIREWALL_CAPABILITY_SHIM_ENABLED = "nexus.firewall.capability.shim.enabled";
+
+  /*
+   * Kill switch for the new repository-config-driven firewall lifecycle (FirewallRepositoryService
+   * — audit task scheduling, online/offline + IQ-capability transition handling, RepositoryUpdated/
+   * Created/Deleted event handling). Setting this to false disables the new lifecycle entirely;
+   * existing repository firewall.mode configuration remains in storage but is dormant. Intended
+   * as a field-rollback escape hatch for the migration window. Available values: true, false.
+   * Default value: true.
+   */
+  public static final String FIREWALL_REPOSITORY_SERVICE_ENABLED = "nexus.firewall.repository.service.enabled";
 }

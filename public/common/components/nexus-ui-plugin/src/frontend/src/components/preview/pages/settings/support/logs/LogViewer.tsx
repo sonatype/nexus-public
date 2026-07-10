@@ -48,8 +48,8 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
 
   const { fetchLogContent, insertMark, getDownloadUrl, loading, error, setError } = useLogsApi();
 
-  const decodedFilename = decodeURIComponent(filename);
-  const isNexusLog = decodedFilename === 'nexus.log';
+  // filename comes from the route param (raw: true) and is already unencoded
+  const isNexusLog = filename === 'nexus.log';
   const canUpdate = ExtJS.checkPermission('nexus:logging:update');
 
   // Fetch log content
@@ -147,7 +147,7 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
       {/* Header with title and download button */}
       <Flex justify="between" align="center" className="log-viewer__header">
         <Text weight="medium" size="3" className="log-viewer__title">
-          Viewing {decodedFilename}
+          Viewing {filename}
         </Text>
         <SettingsButton variant="primary" onClick={handleDownload} icon={Download}>
           Download
@@ -247,7 +247,7 @@ export function LogViewer({ filename, onBack }: LogViewerProps) {
             className="log-viewer__textarea"
             value={logContent}
             readOnly
-            aria-label={`Log content for ${decodedFilename}`}
+            aria-label={`Log content for ${filename}`}
           />
         )}
       </Box>

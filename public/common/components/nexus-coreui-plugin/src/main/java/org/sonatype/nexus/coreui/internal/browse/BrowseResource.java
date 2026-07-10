@@ -19,14 +19,14 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.encoding.EncodingUtil;
 import org.sonatype.nexus.common.text.Strings2;
@@ -41,11 +41,14 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecurityHelper;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -54,10 +57,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SETTINGS_ENABLED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
@@ -69,7 +72,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
  * - GET /v1/repositories/{repositoryName}/browse - List browse nodes at a path
  * - DELETE /v1/repositories/{repositoryName}/browse - Delete a folder
  */
-@Api(value = "Repository Browse")
+@Tag(name = "Repository Browse")
 @Component
 @ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path(BrowseResource.RESOURCE_URI)
@@ -113,18 +116,19 @@ public class BrowseResource
   }
 
   @GET
-  @ApiOperation(value = "List browse nodes for a repository path")
+  @Operation(summary = "List browse nodes for a repository path")
   @ApiResponses(value = {
-      @ApiResponse(code = 200, message = "Browse nodes returned", response = BrowseNodeXO.class,
-          responseContainer = "List"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to browse repository"),
-      @ApiResponse(code = 404, message = "Repository not found")
+      @ApiResponse(responseCode = "200", description = "Browse nodes returned",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = BrowseNodeXO.class)))),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to browse repository"),
+      @ApiResponse(responseCode = "404", description = "Repository not found")
   })
   @RequiresAuthentication
   public List<BrowseNodeXO> getBrowseNodes(
-      @ApiParam(value = "Repository name", required = true) @PathParam("repositoryName") final String repositoryName,
-      @ApiParam(
-          value = "Path within the repository (URL-encoded, use '/' as separator). Use '/' for root.") @QueryParam("path") final String path)
+      @Parameter(description = "Repository name",
+          required = true) @PathParam("repositoryName") final String repositoryName,
+      @Parameter(
+          description = "Path within the repository (URL-encoded, use '/' as separator). Use '/' for root.") @QueryParam("path") final String path)
   {
     log.debug("Get browse nodes for repository {} at path {}", repositoryName, path);
 
@@ -154,18 +158,20 @@ public class BrowseResource
   }
 
   @DELETE
-  @ApiOperation(value = "Delete a folder and all its contents")
+  @Operation(summary = "Delete a folder and all its contents")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "Folder deletion initiated"),
-      @ApiResponse(code = 400, message = "Path parameter is required"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to delete folder"),
-      @ApiResponse(code = 404, message = "Repository not found")
+      @ApiResponse(responseCode = "204", description = "Folder deletion initiated"),
+      @ApiResponse(responseCode = "400", description = "Path parameter is required"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to delete folder"),
+      @ApiResponse(responseCode = "404", description = "Repository not found")
   })
   @RequiresAuthentication
   @RequiresPermissions("nexus:component:delete")
   public Response deleteFolder(
-      @ApiParam(value = "Repository name", required = true) @PathParam("repositoryName") final String repositoryName,
-      @ApiParam(value = "Folder path to delete (URL-encoded)", required = true) @QueryParam("path") final String path)
+      @Parameter(description = "Repository name",
+          required = true) @PathParam("repositoryName") final String repositoryName,
+      @Parameter(description = "Folder path to delete (URL-encoded)",
+          required = true) @QueryParam("path") final String path)
   {
     log.debug("Delete folder in repository {} at path {}", repositoryName, path);
 

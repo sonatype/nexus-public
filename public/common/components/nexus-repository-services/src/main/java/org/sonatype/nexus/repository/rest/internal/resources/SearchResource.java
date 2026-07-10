@@ -24,16 +24,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.event.EventManager;
@@ -59,6 +60,7 @@ import org.sonatype.nexus.repository.search.event.SearchEventSource;
 import org.sonatype.nexus.repository.search.query.SearchFilter;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.SecurityUtils;
@@ -71,7 +73,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.search.SearchUtils.CONTINUATION_TOKEN;
 import static org.sonatype.nexus.repository.search.SearchUtils.SORT_DIRECTION;
 import static org.sonatype.nexus.repository.search.SearchUtils.SORT_FIELD;
@@ -156,6 +158,7 @@ public class SearchResource
     List<ComponentXO> componentXOs = response.getSearchResults()
         .stream()
         .map(componentHit -> this.toComponent(componentHit, repositoryNames, assetParams, uploaderVisible))
+        .filter(Objects::nonNull)
         // Filter out components with no assets when asset parameters are specified
         .filter(component -> assetParams.isEmpty() ||
             (component.getAssets() != null && !component.getAssets().isEmpty()))
@@ -220,8 +223,17 @@ public class SearchResource
     List<AssetXO> assets = response.getSearchResults()
         .stream()
         .flatMap(component -> searchResultFilterUtils.filterComponentAssets(component, assetParams))
-        .map(asset -> AssetXO.from(asset, searchUtils.getRepository(repositoryNames.apply(asset.getRepository())),
-            assetDescriptors, uploaderVisible))
+        .flatMap(asset -> {
+          try {
+            Repository repo = searchUtils.getRepository(repositoryNames.apply(asset.getRepository()));
+            return Stream.of(AssetXO.from(asset, repo, assetDescriptors, uploaderVisible));
+          }
+          catch (NotFoundException e) {
+            log.debug("Skipping asset '{}' — repository '{}' no longer exists",
+                asset.getPath(), asset.getRepository());
+            return Stream.empty();
+          }
+        })
         .collect(toList());
 
     return new Page<>(assets, response.getContinuationToken());
@@ -253,7 +265,7 @@ public class SearchResource
         .sortDirection(Optional.ofNullable(direction)
             .filter(dir -> !dir.isBlank())
             .map(String::toUpperCase)
-            .map(SortDirection::valueOf)
+            .map(this::parseSortDirection)
             .orElse(null))
         .includeAssets()
         .build();
@@ -261,6 +273,20 @@ public class SearchResource
     return searchService.search(request);
   }
 
+  private SortDirection parseSortDirection(final String direction) {
+    try {
+      return SortDirection.valueOf(direction);
+    }
+    catch (IllegalArgumentException e) {
+      throw new WebApplicationMessageException(Response.Status.BAD_REQUEST,
+          format("\"%s\" is not a valid sort direction. Supported values are: ASC, DESC", direction),
+          APPLICATION_JSON);
+    }
+  }
+
+  // Returns null if the repository no longer exists (deleted after search index was built); callers must
+  // filter(Objects::nonNull).
+  @Nullable
   private ComponentXO toComponent(
       final ComponentSearchResult componentHit,
       final Function<String, String> repositoryAccessMap,
@@ -268,7 +294,15 @@ public class SearchResource
       final boolean uploaderVisible)
   {
     ComponentXO componentXO = componentXOFactory.createComponentXO();
-    Repository repository = searchUtils.getRepository(repositoryAccessMap.apply(componentHit.getRepositoryName()));
+    Repository repository;
+    try {
+      repository = searchUtils.getRepository(repositoryAccessMap.apply(componentHit.getRepositoryName()));
+    }
+    catch (NotFoundException e) {
+      log.debug("Skipping component '{}' — repository '{}' no longer exists",
+          componentHit.getName(), componentHit.getRepositoryName());
+      return null;
+    }
 
     componentXO.setGroup(componentHit.getGroup());
     componentXO.setName(componentHit.getName());

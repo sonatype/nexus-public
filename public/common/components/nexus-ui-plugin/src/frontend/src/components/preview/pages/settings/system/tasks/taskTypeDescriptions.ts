@@ -78,6 +78,10 @@ export const TASK_TYPE_DESCRIPTIONS: Record<string, string> = {
 
   // RubyGems tasks
   'repository.rubygems.repair': 'Repairs RubyGems repository specifications and metadata.',
+  'repository.ruby.rebuild.versions': 'Rebuilds the versions file for RubyGems hosted repositories to fix package listing inconsistencies.',
+
+  // Alpine tasks
+  'repository.alpine.rebuild.metadata': 'Rebuilds Alpine repository metadata (APKINDEX) for APK package management.',
 
   // Go tasks
   'repository.go.repair': 'Repairs Go module proxy metadata and module files.',
@@ -159,6 +163,8 @@ export const TASK_TYPE_CATEGORIES: Record<string, string> = {
   'repository.pypi.repair': 'PyPI',
   'repository.conda.repair': 'Conda',
   'repository.rubygems.repair': 'RubyGems',
+  'repository.ruby.rebuild.versions': 'RubyGems',
+  'repository.alpine.rebuild.metadata': 'Alpine',
   'repository.go.repair': 'Go',
   'repository.p2.rebuild.metadata': 'P2',
   'repository.conan.repair': 'Conan',
@@ -230,7 +236,9 @@ export function getTaskTypeCategory(typeId: string): string {
   if (typeId.startsWith('repository.r.')) return 'R';
   if (typeId.startsWith('repository.pypi')) return 'PyPI';
   if (typeId.startsWith('repository.conda')) return 'Conda';
+  if (typeId.startsWith('repository.ruby')) return 'RubyGems';
   if (typeId.startsWith('repository.rubygems')) return 'RubyGems';
+  if (typeId.startsWith('repository.alpine')) return 'Alpine';
   if (typeId.startsWith('repository.go')) return 'Go';
   if (typeId.startsWith('repository.p2')) return 'P2';
   if (typeId.startsWith('repository.conan')) return 'Conan';

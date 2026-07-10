@@ -14,70 +14,89 @@ package org.sonatype.nexus.security.role.rest;
 
 import java.util.List;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import javax.validation.constraints.NotEmpty;
-
-import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * Swagger documentation for {@link RoleApiResource}
  *
  * @since 3.19
  */
-@Api(value = "Security management: roles")
+@Tag(name = "Security management: roles")
 public interface RoleApiResourceDoc
 {
-  @ApiOperation("List roles")
+  @Operation(summary = "List roles")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = "The specified source does not exist"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to read roles")})
+      @ApiResponse(responseCode = "400", description = "The specified source does not exist"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to read roles")})
   List<RoleXOResponse> getRoles(
-      @ApiParam(
-          value = "The id of the user source to filter the roles by, if supplied. Otherwise roles from all user sources will be returned.") final String source);
+      @Parameter(
+          description = "The id of the user source to filter the roles by, if supplied. Otherwise roles from all user sources will be returned.") final String source);
 
-  @ApiOperation("Create role")
+  @Operation(summary = "Create role")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to create role")})
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to create role")})
   RoleXOResponse create(
-      @ApiParam(value = "A role configuration", required = true) @NotNull @Valid final RoleXORequest roleXO
+      @Parameter(description = "A role configuration", required = true) @NotNull @Valid final RoleXORequest roleXO
 
   ) throws NoSuchAuthorizationManagerException;
 
-  @ApiOperation("Get role")
+  @Operation(summary = "Get role")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = "The specified source does not exist"),
-      @ApiResponse(code = 403, message = "Insufficient permissions to read roles"),
-      @ApiResponse(code = 404, message = "Role not found")})
+      @ApiResponse(responseCode = "400", description = "The specified source does not exist"),
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to read roles"),
+      @ApiResponse(responseCode = "404", description = "Role not found")})
   RoleXOResponse getRole(
-      @ApiParam(
-          value = "The id of the user source to filter the roles by. Available sources can be fetched using the 'User Sources' endpoint.",
-          defaultValue = DEFAULT_SOURCE) final String source,
-      @ApiParam(value = "The id of the role to get", required = true) @NotEmpty final String id);
+      @Parameter(
+          description = "The id of the user source to filter the roles by. Available sources can be fetched using the 'User Sources' endpoint." /*
+                                                                                                                                                 * NEXUS
+                                                                                                                                                 * -
+                                                                                                                                                 * 46395
+                                                                                                                                                 * TODO:
+                                                                                                                                                 * defaultValue
+                                                                                                                                                 * moved
+                                                                                                                                                 * to @Schema
+                                                                                                                                                 * in
+                                                                                                                                                 * OpenAPI
+                                                                                                                                                 * 3
+                                                                                                                                                 * .
+                                                                                                                                                 * x: @Parameter
+                                                                                                                                                 * (
+                                                                                                                                                 * schema
+                                                                                                                                                 * = @Schema
+                                                                                                                                                 * (
+                                                                                                                                                 * defaultValue
+                                                                                                                                                 * =
+                                                                                                                                                 * DEFAULT_SOURCE
+                                                                                                                                                 * )
+                                                                                                                                                 * )
+                                                                                                                                                 */) final String source,
+      @Parameter(description = "The id of the role to get", required = true) @NotEmpty final String id);
 
-  @ApiOperation("Update role")
+  @Operation(summary = "Update role")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to update role"),
-      @ApiResponse(code = 404, message = "Role not found")})
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to update role"),
+      @ApiResponse(responseCode = "404", description = "Role not found")})
   void update(
-      @ApiParam(value = "The id of the role to update", required = true) @NotEmpty final String id,
-      @ApiParam(value = "A role configuration",
+      @Parameter(description = "The id of the role to update", required = true) @NotEmpty final String id,
+      @Parameter(description = "A role configuration",
           required = true) @NotNull @Valid final RoleXORequest roleXO) throws NoSuchAuthorizationManagerException;
 
-  @ApiOperation("Delete role")
+  @Operation(summary = "Delete role")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = "Insufficient permissions to delete role"),
-      @ApiResponse(code = 404, message = "Role not found"),
-      @ApiResponse(code = 204, message = "Success")})
+      @ApiResponse(responseCode = "403", description = "Insufficient permissions to delete role"),
+      @ApiResponse(responseCode = "404", description = "Role not found"),
+      @ApiResponse(responseCode = "204", description = "Success")})
   void delete(
-      @ApiParam(value = "The id of the role to delete",
+      @Parameter(description = "The id of the role to delete",
           required = true) @NotEmpty final String id) throws NoSuchAuthorizationManagerException;
 }

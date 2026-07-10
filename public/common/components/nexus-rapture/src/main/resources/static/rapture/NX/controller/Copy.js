@@ -45,6 +45,9 @@ Ext.define('NX.controller.Copy', {
       component: {
         'nx-copywindow button[action=close]': {
           click: me.copyToClipboard
+        },
+        'button.nx-copy-widget': {
+          click: me.onCopyWidgetClick
         }
       }
     });
@@ -52,5 +55,14 @@ Ext.define('NX.controller.Copy', {
 
   copyToClipboard: function() {
     this.getCopyModal().close();
+  },
+
+  onCopyWidgetClick: function(button) {
+    var copyText = button.getAttribute('data-copy-text'),
+        repoFormat = button.getAttribute('data-repo-format');
+    Ext.widget('nx-copywindow', {
+      copyText: copyText,
+      repoFormat: repoFormat
+    });
   }
 });

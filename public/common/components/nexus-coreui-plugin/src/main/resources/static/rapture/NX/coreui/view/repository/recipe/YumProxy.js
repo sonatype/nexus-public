@@ -26,6 +26,7 @@ Ext.define('NX.coreui.view.repository.recipe.YumProxy', {
   alias: 'widget.nx-coreui-repository-yum-proxy',
   requires: [
     'NX.coreui.view.repository.facet.YumSigningFacet',
+    'NX.coreui.view.repository.facet.FirewallFacet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
@@ -42,6 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.YumProxy', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-yum-signing-facet'},
+      {xtype: 'nx-coreui-repository-firewall-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

@@ -119,3 +119,10 @@
   background-color: rgba(0, 0, 0, 0.5) !important;
   z-index: 14998 !important;
 }
+
+// Radix popper portal wrapper - must exceed the dialog overlay (14998) so that
+// Select/Tooltip/DropdownMenu dropdowns opened inside a dialog are not blocked
+// by the overlay's pointer-events.
+[data-radix-popper-content-wrapper] {
+  z-index: 15000 !important;
+}

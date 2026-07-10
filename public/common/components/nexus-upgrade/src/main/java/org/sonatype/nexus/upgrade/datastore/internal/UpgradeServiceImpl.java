@@ -13,6 +13,7 @@
 package org.sonatype.nexus.upgrade.datastore.internal;
 
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -38,7 +39,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
  */
 @Component
 @ConditionalOnProperty(name = CLUSTERED_ZERO_DOWNTIME_ENABLED, havingValue = "false", matchIfMissing = true)
-@Order(Ordered.HIGHEST_PRECEDENCE)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @ManagedLifecycle(phase = UPGRADE)
 public class UpgradeServiceImpl
     extends StateGuardLifecycleSupport

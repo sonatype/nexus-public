@@ -13,10 +13,10 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.Map;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.repository.config.UniqueRepositoryName;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
@@ -27,7 +27,7 @@ import org.sonatype.nexus.validation.group.Create;
  *
  * @since 3.0
  */
-@DockerRepositoryNameConstraint
+@DockerRepositoryNameConstraint(groups = Create.class)
 public class RepositoryXO
 {
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)

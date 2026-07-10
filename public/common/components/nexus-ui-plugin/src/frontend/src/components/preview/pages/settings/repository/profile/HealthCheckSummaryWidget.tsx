@@ -14,7 +14,7 @@
 import React from 'react';
 import { Box, Card, Flex, Text } from '@radix-ui/themes';
 import { ShieldCheck, Shield } from 'lucide-react';
-import type { HealthCheckData, FirewallData } from './hooks/useRepositoryProfile';
+import type { HealthCheckData, FirewallData } from './types';
 
 export interface HealthCheckSummaryWidgetProps {
   repositoryName: string;

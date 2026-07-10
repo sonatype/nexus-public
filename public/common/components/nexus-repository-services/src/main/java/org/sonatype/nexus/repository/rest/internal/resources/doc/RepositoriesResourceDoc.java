@@ -17,11 +17,11 @@ import java.util.List;
 import org.sonatype.nexus.repository.rest.api.RepositoryXO;
 import org.sonatype.nexus.repository.rest.internal.resources.RepositoriesResource;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
@@ -33,17 +33,17 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
  *
  * @since 3.9
  */
-@Api(value = API_REPOSITORY_MANAGEMENT)
+@Tag(name = API_REPOSITORY_MANAGEMENT)
 public interface RepositoriesResourceDoc
 {
-  @ApiOperation("List repositories")
+  @Operation(summary = "List repositories")
   List<RepositoryXO> getRepositories();
 
-  @ApiOperation("Get repository details")
+  @Operation(summary = "Get repository details")
   @ApiResponses(value = {
-      @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
-      @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)
+      @ApiResponse(responseCode = "401", description = AUTHENTICATION_REQUIRED),
+      @ApiResponse(responseCode = "403", description = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = REPOSITORY_NOT_FOUND)
   })
-  RepositoryXO getRepository(@ApiParam(value = "Name of the repository to get") final String repositoryName);
+  RepositoryXO getRepository(@Parameter(description = "Name of the repository to get") final String repositoryName);
 }

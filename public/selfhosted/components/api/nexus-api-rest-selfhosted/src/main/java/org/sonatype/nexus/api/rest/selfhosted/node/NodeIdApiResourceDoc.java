@@ -14,24 +14,27 @@ package org.sonatype.nexus.api.rest.selfhosted.node;
 
 import org.sonatype.nexus.api.rest.selfhosted.node.NodeIdApiResource.NodeInformation;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * REST API to reset the stored Node ID. This is intended for use when cloning a system.
  *
  * @since 3.37
  */
-@Api(value = "System: Nodes")
+@Tag(name = "System: Nodes")
 public interface NodeIdApiResourceDoc
 {
-  @ApiOperation("Get information about this node")
-  @ApiResponses(value = {@ApiResponse(code = 403, message = "Insufficient permissions to update settings")})
+  @Operation(summary = "Get information about this node")
+  @ApiResponses(
+      value = {@ApiResponse(responseCode = "403", description = "Insufficient permissions to update settings")})
   NodeInformation getNodeId();
 
-  @ApiOperation("Reset the ID for this node. Takes effect after restart and should only be used when cloning an instance")
-  @ApiResponses(value = {@ApiResponse(code = 403, message = "Insufficient permissions to update settings")})
+  @Operation(
+      summary = "Reset the ID for this node. Takes effect after restart and should only be used when cloning an instance")
+  @ApiResponses(
+      value = {@ApiResponse(responseCode = "403", description = "Insufficient permissions to update settings")})
   void clear();
 }

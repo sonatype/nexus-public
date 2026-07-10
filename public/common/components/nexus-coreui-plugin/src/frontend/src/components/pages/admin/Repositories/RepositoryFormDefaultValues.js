@@ -28,7 +28,8 @@ export const genericDefaultValues = {
     proxy: {
       remoteUrl: '',
       contentMaxAge: -1,
-      metadataMaxAge: 1440
+      metadataMaxAge: 1440,
+      preserveEncodedCharacters: false
     },
     negativeCache: {
       enabled: true,

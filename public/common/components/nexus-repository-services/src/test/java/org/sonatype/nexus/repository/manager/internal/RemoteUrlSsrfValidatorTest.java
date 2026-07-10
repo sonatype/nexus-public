@@ -15,8 +15,8 @@ package org.sonatype.nexus.repository.manager.internal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
-import javax.validation.ConstraintViolation;
-import javax.validation.ValidationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;

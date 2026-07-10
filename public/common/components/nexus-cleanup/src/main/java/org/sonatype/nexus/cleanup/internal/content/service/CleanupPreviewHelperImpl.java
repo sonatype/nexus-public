@@ -15,7 +15,9 @@ package org.sonatype.nexus.cleanup.internal.content.service;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,8 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.cleanup.content.search.CleanupBrowseServiceFactory;
 import org.sonatype.nexus.cleanup.content.search.CleanupComponentBrowse;
@@ -51,13 +53,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.time.DateHelper.optionalOffsetToDate;
 
 /**
  * {@link CleanupPreviewHelper} implementation.
- *
- * @since 3.29
  */
 @org.springframework.stereotype.Component
 public class CleanupPreviewHelperImpl
@@ -71,15 +70,19 @@ public class CleanupPreviewHelperImpl
 
   private final CleanupBrowseServiceFactory browseServiceFactory;
 
+  private final boolean retainAllFormatsEnabled;
+
   @Autowired
   public CleanupPreviewHelperImpl(
       final CleanupPolicyStorage cleanupPolicyStorage,
       @Value("${nexus.cleanup.preview.timeout:60s}") final Duration previewTimeout,
-      final CleanupBrowseServiceFactory browseServiceFactory)
+      final CleanupBrowseServiceFactory browseServiceFactory,
+      @Value("${nexus.cleanup.retainAllFormats.enabled:false}") final boolean retainAllFormatsEnabled)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.previewTimeout = checkNotNull(previewTimeout);
     this.browseServiceFactory = checkNotNull(browseServiceFactory);
+    this.retainAllFormatsEnabled = retainAllFormatsEnabled;
   }
 
   @Override
@@ -105,7 +108,8 @@ public class CleanupPreviewHelperImpl
     Stream<FluentComponent> componentSteam =
         browseService.browseIncludingAssets(cleanupPolicy, repository);
 
-    return componentSteam.map(component -> convert(component, repository));
+    Stream<ComponentXO> xoStream = componentSteam.map(component -> convert(component, repository));
+    return retainAllFormatsEnabled ? dedupeByGroupNameVersion(xoStream) : xoStream;
   }
 
   private PagedResponse<ComponentXO> searchForComponents(
@@ -115,12 +119,28 @@ public class CleanupPreviewHelperImpl
   {
     PagedResponse<Component> components = browse(cleanupPolicy, repository, queryOptions);
 
-    List<ComponentXO> componentXOS = components.getData()
-        .stream()
-        .map(item -> convert(item, repository))
-        .collect(toList());
+    Stream<ComponentXO> xoStream = components.getData().stream().map(item -> convert(item, repository));
+    List<ComponentXO> componentXOS =
+        (retainAllFormatsEnabled ? dedupeByGroupNameVersion(xoStream) : xoStream)
+            .collect(Collectors.toUnmodifiableList());
 
     return new PagedResponse<>(components.getTotal(), componentXOS);
+  }
+
+  /**
+   * Filters a stream of {@link ComponentXO} keeping the first occurrence of each {@code (group, name, version)} tuple
+   * and preserving original ordering. Used to collapse duplicate component rows produced by JOIN-multiplication in the
+   * preview SQL without buffering the full result set in memory.
+   */
+  private static Stream<ComponentXO> dedupeByGroupNameVersion(final Stream<ComponentXO> stream) {
+    Set<String> seen = ConcurrentHashMap.newKeySet();
+    return stream.filter(xo -> seen.add(dedupeKey(xo)));
+  }
+
+  private static String dedupeKey(final ComponentXO xo) {
+    return (xo.getGroup() == null ? "" : xo.getGroup()) + '\u0000' +
+        (xo.getName() == null ? "" : xo.getName()) + '\u0000' +
+        (xo.getVersion() == null ? "" : xo.getVersion());
   }
 
   private PagedResponse<Component> browse(

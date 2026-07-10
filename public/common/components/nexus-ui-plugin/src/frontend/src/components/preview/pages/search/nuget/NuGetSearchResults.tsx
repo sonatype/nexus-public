@@ -21,7 +21,7 @@ import {
   Spinner,
   Callout,
 } from '@radix-ui/themes';
-import { Package, Download, AlertCircle } from 'lucide-react';
+import { Package, Download, AlertCircle, ChevronRight } from 'lucide-react';
 
 import type { NuGetResult } from './nuget.types';
 
@@ -92,7 +92,9 @@ export function NuGetSearchResults({
             <Table.ColumnHeaderCell>Latest Version</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Downloads</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>Versions</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell>Last Updated</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>License</Table.ColumnHeaderCell>
+            <Table.ColumnHeaderCell aria-hidden="true" />
           </Table.Row>
         </Table.Header>
 
@@ -159,11 +161,22 @@ export function NuGetSearchResults({
                 </Badge>
               </Table.Cell>
 
+              {/* Last Updated */}
+              <Table.Cell>
+                <Text size="2" color="gray">
+                  {result.lastUpdated ? new Date(result.lastUpdated).toLocaleDateString() : '-'}
+                </Text>
+              </Table.Cell>
+
               {/* License */}
               <Table.Cell>
                 <Text size="2" color="gray">
                   {result.license || '-'}
                 </Text>
+              </Table.Cell>
+
+              <Table.Cell>
+                <ChevronRight size={16} color="var(--gray-8)" aria-hidden="true" />
               </Table.Cell>
             </Table.Row>
           ))}

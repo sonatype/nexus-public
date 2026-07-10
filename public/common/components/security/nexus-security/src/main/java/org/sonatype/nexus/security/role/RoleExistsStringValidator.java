@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.security.role;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;

@@ -147,4 +147,18 @@ describe('ConfirmDialog', () => {
       expect(screen.getByText('Confirm')).toBeInTheDocument();
     });
   });
+
+  describe('analyticsId prop', () => {
+    it('applies data-analytics-id to confirm button', () => {
+      renderWithTheme(<ConfirmDialog {...defaultProps} confirmLabel="Delete" analyticsId="nxrm-entity-delete" />);
+      const confirmBtn = screen.getByText('Delete').closest('button');
+      expect(confirmBtn).toHaveAttribute('data-analytics-id', 'nxrm-entity-delete');
+    });
+
+    it('renders without analyticsId without error', () => {
+      renderWithTheme(<ConfirmDialog {...defaultProps} confirmLabel="Confirm" />);
+      const confirmBtn = screen.getByText('Confirm').closest('button');
+      expect(confirmBtn).not.toHaveAttribute('data-analytics-id');
+    });
+  });
 });

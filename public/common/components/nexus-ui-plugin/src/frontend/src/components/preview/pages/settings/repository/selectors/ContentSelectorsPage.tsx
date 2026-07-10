@@ -183,6 +183,18 @@ export function ContentSelectorsPage() {
     };
   };
 
+  const getBreadcrumbs = () => {
+    const settingsItem = { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') };
+    if (routeState.viewMode === 'list') {
+      return [settingsItem, { label: 'Content Selectors' }];
+    }
+    const listItem = { label: 'Content Selectors', onClick: handleBack };
+    if (routeState.viewMode === 'create') {
+      return [settingsItem, listItem, { label: 'Create' }];
+    }
+    return [settingsItem, listItem, { label: selector?.name || 'Loading...' }];
+  };
+
   const pageConfig = getPageConfig();
 
   // Show loading state when in detail mode but selector not yet loaded
@@ -193,12 +205,8 @@ export function ContentSelectorsPage() {
         <PageHeader
           icon={Layers}
           title="Loading..."
-        
-          breadcrumbs={[
-            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-            { label: 'Content Selectors' }
-          ]}
-/>
+          breadcrumbs={getBreadcrumbs()}
+        />
         <LoadingState message="Loading content selector details..." />
       </Box>
     );
@@ -214,6 +222,7 @@ export function ContentSelectorsPage() {
         icon={Layers}
         title={pageConfig.title}
         description={pageConfig.description}
+        breadcrumbs={getBreadcrumbs()}
         actions={
           routeState.viewMode === 'list' && canCreate ? (
             <SettingsButton
@@ -221,6 +230,7 @@ export function ContentSelectorsPage() {
               onClick={handleCreate}
               icon={Plus}
               testId="create-selector-button"
+              data-analytics-id="nxrm-content-selector-create"
             >
               Create Selector
             </SettingsButton>

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Box } from '@radix-ui/themes';
 import { WizardForm } from '../../../../shared/form';
 import { BlobStoreTypeSelector, type BlobStoreTypeId } from './BlobStoreTypeSelector';
@@ -19,7 +19,7 @@ import { BlobStoreWizardStepBasic } from './BlobStoreWizardStepBasic';
 import { BlobStoreWizardStepCredentials } from './BlobStoreWizardStepCredentials';
 import { BlobStoreWizardStepAdvanced } from './BlobStoreWizardStepAdvanced';
 import { useBlobStore, useBlobStoreTypes } from './useBlobStores';
-import { clearDirtyState, useToast } from '../../../../shared';
+import { clearDirtyState, useToast, PageHeader } from '../../../../shared';
 import type { BlobStoreFormData } from './types';
 import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';
 
@@ -84,25 +84,42 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
     softQuota: { enabled: false },
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const pathTouched = useRef(false);
+  const touchedFields = useRef<Set<string>>(new Set());
 
   const toast = useToast();
   const { save } = useBlobStore(undefined, selectedType || undefined);
   const { types, quotaTypes, loading: typesLoading } = useBlobStoreTypes();
 
   const updateField = useCallback((field: string, value: unknown) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    touchedFields.current.add(field);
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === 'name' && !pathTouched.current) {
+        const fileType = types.find((t) => t.id.toLowerCase() === BLOB_STORE_TYPE_IDS.FILE);
+        const pathField = fileType?.fields?.find((f) => f.id === 'path');
+        const template = pathField?.attributes?.tokenReplacement;
+        if (template && selectedType?.toLowerCase() === BLOB_STORE_TYPE_IDS.FILE) {
+          next.path = template.replace(/\$\{name\}/g, value as string);
+        }
+      }
+      return next;
+    });
     setValidationErrors((prev) => {
       const next = { ...prev };
       delete next[field];
-      // Clear nested errors when parent field is updated (e.g. softQuota.type when softQuota changes)
       Object.keys(next).forEach((k) => {
         if (k.startsWith(`${field}.`)) delete next[k];
       });
       return next;
     });
-  }, []);
+  }, [types, selectedType]);
 
   const updateNested = useCallback((path: string, value: unknown) => {
+    touchedFields.current.add(path);
+    if (path === 'path') {
+      pathTouched.current = true;
+    }
     setFormData((prev) => {
       const parts = path.split('.');
       const result = { ...prev };
@@ -124,6 +141,8 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
 
   const handleTypeSelect = useCallback((type: BlobStoreTypeId) => {
     setSelectedType(type);
+    pathTouched.current = false;
+    touchedFields.current = new Set();
     const defaults = buildDefaultsForType(type);
     setFormData((prev) => ({ ...prev, ...defaults, type }));
     setValidationErrors({});
@@ -160,16 +179,38 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
       }
       if (tl === BLOB_STORE_TYPE_IDS.S3) {
         const b = (d.bucketConfiguration as Record<string, unknown>)?.bucket as Record<string, string>;
-        if (!b?.name?.trim()) err['bucketConfiguration.bucket.name'] = 'Bucket name is required';
+        const bucketName = b?.name?.trim() ?? '';
+        if (!bucketName) {
+          err['bucketConfiguration.bucket.name'] = 'Bucket name is required';
+        } else if (bucketName.length < 3 || bucketName.length > 63) {
+          err['bucketConfiguration.bucket.name'] = 'Bucket name must be between 3 and 63 characters';
+        }
       }
       if (tl === BLOB_STORE_TYPE_IDS.AZURE) {
         const c = d.bucketConfiguration as Record<string, string>;
-        if (!c?.accountName?.trim()) err['bucketConfiguration.accountName'] = 'Account name is required';
-        if (!c?.containerName?.trim()) err['bucketConfiguration.containerName'] = 'Container name is required';
+        // Azure storage account names: 3-24 characters (per Azure naming rules).
+        const accountName = c?.accountName?.trim() ?? '';
+        if (!accountName) {
+          err['bucketConfiguration.accountName'] = 'Account name is required';
+        } else if (accountName.length < 3 || accountName.length > 24) {
+          err['bucketConfiguration.accountName'] = 'Account name must be between 3 and 24 characters';
+        }
+        // Azure container names: 3-63 characters (per Azure naming rules).
+        const containerName = c?.containerName?.trim() ?? '';
+        if (!containerName) {
+          err['bucketConfiguration.containerName'] = 'Container name is required';
+        } else if (containerName.length < 3 || containerName.length > 63) {
+          err['bucketConfiguration.containerName'] = 'Container name must be between 3 and 63 characters';
+        }
       }
       if (tl === BLOB_STORE_TYPE_IDS.GOOGLE) {
         const b = (d.bucketConfiguration as Record<string, unknown>)?.bucket as Record<string, string>;
-        if (!b?.name?.trim()) err['bucketConfiguration.bucket.name'] = 'Bucket name is required';
+        const bucketName = b?.name?.trim() ?? '';
+        if (!bucketName) {
+          err['bucketConfiguration.bucket.name'] = 'Bucket name is required';
+        } else if (bucketName.length < 3 || bucketName.length > 63) {
+          err['bucketConfiguration.bucket.name'] = 'Bucket name must be between 3 and 63 characters';
+        }
       }
       if (tl === BLOB_STORE_TYPE_IDS.GROUP) {
         if (!d.members?.length) err.members = 'At least one member is required';
@@ -204,6 +245,29 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
     setValidationErrors((prev) => ({ ...prev, ...err }));
     return Object.keys(err).length === 0;
   }, [formData, validateStep3Pure]);
+
+  // Surface Basic step validation errors inline as the user types touched fields
+  useEffect(() => {
+    if (step === 1) {
+      const allErrors = validateStep1Pure(formData, selectedType);
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        // Only show errors for fields the user has interacted with
+        for (const [key, msg] of Object.entries(allErrors)) {
+          if (touchedFields.current.has(key)) {
+            next[key] = msg;
+          }
+        }
+        // Clear errors for fields that are now valid
+        for (const key of Object.keys(next)) {
+          if (!(key in allErrors)) {
+            delete next[key];
+          }
+        }
+        return next;
+      });
+    }
+  }, [step, formData, selectedType, validateStep1Pure]);
 
   // Surface Advanced step validation errors so user sees what to fix when button is disabled
   useEffect(() => {
@@ -263,6 +327,13 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
   if (typesLoading) {
     return (
       <Box p="8">
+        <PageHeader
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Blob Stores', onClick: onBack },
+            { label: 'Create' },
+          ]}
+        />
         <p>Loading blob store types...</p>
       </Box>
     );
@@ -307,6 +378,13 @@ export function BlobStoreWizardCreate({ onBack }: BlobStoreWizardCreateProps) {
 
   return (
     <Box className="blob-store-wizard-create" data-testid="blob-store-wizard-create">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: 'Blob Stores', onClick: onBack },
+          { label: 'Create' },
+        ]}
+      />
       <WizardForm
         steps={WIZARD_STEPS}
         currentStep={step}

@@ -23,6 +23,10 @@ import PreviewUiStrings from '../../../../constants/pages/admin/system/PreviewUi
 
 import './PreviewUiSettingsPage.scss';
 
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
+
 const UI_STRINGS = PreviewUiStrings.PREVIEW_UI_SETTINGS;
 
 export default function PreviewUiSettingsPage() {
@@ -64,7 +68,14 @@ export default function PreviewUiSettingsPage() {
     return (
       <Box className="preview-ui-settings-page preview-ui-settings-page--loading" data-testid="preview-ui-settings-form">
         <Box className="preview-ui-settings-page__header">
-          <PageHeader title={UI_STRINGS.title} description={UI_STRINGS.description} />
+          <PageHeader
+        title={UI_STRINGS.title}
+        description={UI_STRINGS.description}
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: UI_STRINGS.title },
+        ]}
+      />
         </Box>
         <Box className="preview-ui-settings-page__loading">
           <Text color="gray">{UI_STRINGS.ACTIONS.loading}</Text>
@@ -83,7 +94,14 @@ export default function PreviewUiSettingsPage() {
       aria-busy={form.isSaving}
     >
       <Box className="preview-ui-settings-page__header">
-        <PageHeader title={UI_STRINGS.title} description={UI_STRINGS.description} />
+        <PageHeader
+        title={UI_STRINGS.title}
+        description={UI_STRINGS.description}
+        breadcrumbs={[
+          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+          { label: UI_STRINGS.title },
+        ]}
+      />
       </Box>
 
       {canUpdate && (
@@ -151,8 +169,8 @@ export default function PreviewUiSettingsPage() {
               <Heading size="3" mb="3">{UI_STRINGS.ACCESS_CONTROL.title}</Heading>
               <Flex direction="column" gap="3">
                 {!isCloud && (
-                  <Flex justify="between" align="center" gap="4">
-                    <Box style={{ flex: 1 }}>
+                  <Flex justify="between" align="start" gap="4">
+                    <Box style={{ flex: 1, minWidth: 0 }}>
                       <Text weight="bold">{UI_STRINGS.ANONYMOUS.label}</Text>
                       <Text as="p" size="2" color="gray">
                         {UI_STRINGS.ANONYMOUS.description}
@@ -166,8 +184,8 @@ export default function PreviewUiSettingsPage() {
                     />
                   </Flex>
                 )}
-                <Flex justify="between" align="center" gap="4">
-                  <Box style={{ flex: 1 }}>
+                <Flex justify="between" align="start" gap="4">
+                  <Box style={{ flex: 1, minWidth: 0 }}>
                     <Text weight="bold">{UI_STRINGS.LOGGEDIN.label}</Text>
                     <Text as="p" size="2" color="gray">
                       {UI_STRINGS.LOGGEDIN.description}
@@ -186,8 +204,8 @@ export default function PreviewUiSettingsPage() {
             <Card>
               <Heading size="3" mb="3">{UI_STRINGS.ROLLOUT.title}</Heading>
               <Flex direction="column" gap="3">
-                <Flex justify="between" align="center" gap="4">
-                  <Box style={{ flex: 1 }}>
+                <Flex justify="between" align="start" gap="4">
+                  <Box style={{ flex: 1, minWidth: 0 }}>
                     <Text weight="bold">{UI_STRINGS.ROLLOUT.DEFAULT_TO_PREVIEW.label}</Text>
                     <Text as="p" size="2" color="gray">
                       {UI_STRINGS.ROLLOUT.DEFAULT_TO_PREVIEW.helpText}
@@ -200,8 +218,8 @@ export default function PreviewUiSettingsPage() {
                     disabled={!canUpdate}
                   />
                 </Flex>
-                <Flex justify="between" align="center" gap="4">
-                  <Box style={{ flex: 1 }}>
+                <Flex justify="between" align="start" gap="4">
+                  <Box style={{ flex: 1, minWidth: 0 }}>
                     <Text weight="bold">{UI_STRINGS.ROLLOUT.DISABLE_SWITCH_FEEDBACK.label}</Text>
                     <Text as="p" size="2" color="gray">
                       {UI_STRINGS.ROLLOUT.DISABLE_SWITCH_FEEDBACK.helpText}

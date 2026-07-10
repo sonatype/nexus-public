@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { isFeatureEnabled } from '../config/featureFlags';
+import { ExtJS } from '../../../interface/ExtJS';
 import SettingsNotAvailablePage from '../pages/settings/SettingsNotAvailablePage';
 
 /**
@@ -84,3 +85,28 @@ export function withFeatureGate<P extends object>(
 }
 
 export default FeatureGate;
+
+/**
+ * withCloudExcluded - HOC that short-circuits to SettingsNotAvailablePage
+ * when running on a Cloud deployment. Use for settings pages that exist
+ * only in self-hosted (e.g., HTTP proxy, SSL certs).
+ */
+export function withCloudExcluded<P extends object>(
+  WrappedComponent: React.ComponentType<P>,
+  featureName: string,
+): React.ComponentType<P> {
+  const displayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+
+  function CloudExcludedComponent(props: P) {
+    const isCloud = ExtJS.useState(() => ExtJS.state?.()?.getValue?.('isCloud', false) ?? false);
+
+    if (isCloud) {
+      return <SettingsNotAvailablePage featureName={featureName} />;
+    }
+
+    return <WrappedComponent {...props} />;
+  }
+
+  CloudExcludedComponent.displayName = `CloudExcluded(${displayName})`;
+  return CloudExcludedComponent;
+}

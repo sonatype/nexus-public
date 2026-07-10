@@ -39,17 +39,23 @@ jest.mock('../../../../../../../interface/api', () => ({
   })),
 }));
 
-// Mock ExtJS at the path the source uses
+// Mock ExtJS at the path the source uses. Backed by a mutable map so individual
+// tests can toggle feature-flag state (e.g. the retainAllFormats flag that gates
+// the embedded `repositories` payload field).
+const mockExtState: Record<string, unknown> = {};
+
+const MOCK_EXT_STATE_DEFAULTS: Record<string, unknown> = {
+  'datastore.isPostgresql': true,
+  'nexus.cleanup.preview.enabled': true,
+  'nexus.cleanup.maven2Retain': true,
+  'nexus.cleanup.dockerRetain': true,
+  'nexus.cleanup.retainAllFormats.enabled': false,
+};
+
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     state: () => ({
-      getValue: (key: string) => {
-        if (key === 'datastore.isPostgresql') return true;
-        if (key === 'nexus.cleanup.preview.enabled') return true;
-        if (key === 'nexus.cleanup.maven2Retain') return true;
-        if (key === 'nexus.cleanup.dockerRetain') return true;
-        return false;
-      },
+      getValue: (key: string) => mockExtState[key] ?? false,
     }),
     urlOf: (path: string) => path,
   },
@@ -58,6 +64,21 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
 describe('useCleanupPoliciesApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    Object.keys(mockExtState).forEach((k) => delete mockExtState[k]);
+    Object.assign(mockExtState, MOCK_EXT_STATE_DEFAULTS);
+  });
+
+  const formData = (overrides: Record<string, unknown> = {}) => ({
+    name: 'p',
+    format: 'npm',
+    notes: '',
+    criteriaLastBlobUpdated: null,
+    criteriaLastDownloaded: null,
+    criteriaReleaseType: null,
+    criteriaAssetRegex: null,
+    retain: null,
+    sortBy: null,
+    ...overrides,
   });
 
   describe('fetchCleanupPolicies', () => {
@@ -326,6 +347,195 @@ describe('useCleanupPoliciesApi', () => {
       const { result } = renderHook(() => useCleanupPoliciesApi());
 
       expect(result.current.isRetainEnabled('docker')).toBe(true);
+    });
+  });
+
+  describe('buildPolicyPayload (repositories gating)', () => {
+    it('includes repositories when flag on, format supported, and list non-empty', async () => {
+      mockExtState['nexus.cleanup.retainAllFormats.enabled'] = true;
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await act(async () => {
+        await result.current.createCleanupPolicy(
+          formData({ format: 'npm', criteriaLastDownloaded: 30, repositories: ['r1', 'r2'] })
+        );
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        CLEANUP_POLICY_API.BASE_URL,
+        expect.objectContaining({ repositories: ['r1', 'r2'] })
+      );
+    });
+
+    it('omits repositories when the feature flag is off', async () => {
+      mockExtState['nexus.cleanup.retainAllFormats.enabled'] = false;
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await act(async () => {
+        await result.current.createCleanupPolicy(
+          formData({ format: 'npm', criteriaLastDownloaded: 30, repositories: ['r1'] })
+        );
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        CLEANUP_POLICY_API.BASE_URL,
+        expect.not.objectContaining({ repositories: expect.anything() })
+      );
+    });
+
+    it('omits repositories for an unsupported format even when flag on', async () => {
+      mockExtState['nexus.cleanup.retainAllFormats.enabled'] = true;
+      mockRestClient.post.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await act(async () => {
+        await result.current.createCleanupPolicy(
+          formData({ format: 'maven2', criteriaLastDownloaded: 30, repositories: ['r1'] })
+        );
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        CLEANUP_POLICY_API.BASE_URL,
+        expect.not.objectContaining({ repositories: expect.anything() })
+      );
+    });
+
+    it('omits repositories when the list is empty', async () => {
+      mockExtState['nexus.cleanup.retainAllFormats.enabled'] = true;
+      mockRestClient.put.mockResolvedValueOnce({});
+
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await act(async () => {
+        await result.current.updateCleanupPolicy(
+          'p',
+          formData({ format: 'npm', criteriaLastDownloaded: 30, repositories: [] })
+        );
+      });
+
+      expect(mockRestClient.put).toHaveBeenCalledWith(
+        `${CLEANUP_POLICY_API.BASE_URL}/p`,
+        expect.not.objectContaining({ repositories: expect.anything() })
+      );
+    });
+  });
+
+  describe('error paths', () => {
+    it('fetchCleanupPolicy throws on error', async () => {
+      mockRestClient.get.mockRejectedValueOnce(new Error('boom'));
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await expect(result.current.fetchCleanupPolicy('x')).rejects.toThrow('boom');
+    });
+
+    it('fetchFormatCriteria throws on error', async () => {
+      mockRestClient.get.mockRejectedValueOnce(new Error('boom'));
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await expect(result.current.fetchFormatCriteria()).rejects.toThrow('boom');
+    });
+
+    it('fetchRepositories throws on error', async () => {
+      mockRestClient.get.mockRejectedValueOnce(new Error('boom'));
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await expect(result.current.fetchRepositories('npm')).rejects.toThrow('boom');
+    });
+
+    it('updateCleanupPolicy sets error on failure', async () => {
+      mockRestClient.put.mockRejectedValueOnce({ response: { data: { message: 'nope' } } });
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await act(async () => {
+        try {
+          await result.current.updateCleanupPolicy('p', formData());
+        } catch {
+          // expected
+        }
+      });
+      expect(result.current.error).toBe('nope');
+    });
+
+    it('previewCleanupPolicy throws on error', async () => {
+      mockRestClient.post.mockRejectedValueOnce(new Error('preview boom'));
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await expect(
+        result.current.previewCleanupPolicy('repo1', formData({ criteriaLastBlobUpdated: 30 }))
+      ).rejects.toThrow('preview boom');
+    });
+  });
+
+  describe('optional-field assembly', () => {
+    it('previewCleanupPolicy forwards every optional criterion', async () => {
+      mockRestClient.post.mockResolvedValueOnce({ results: [], total: 0 });
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      await act(async () => {
+        await result.current.previewCleanupPolicy(
+          'repo1',
+          formData({
+            criteriaLastBlobUpdated: 10,
+            criteriaLastDownloaded: 20,
+            criteriaReleaseType: 'RELEASES',
+            criteriaAssetRegex: '.*',
+            retain: 5,
+            sortBy: 'version',
+          }),
+          'policy-name'
+        );
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        CLEANUP_POLICY_API.PREVIEW_URL,
+        expect.objectContaining({
+          repository: 'repo1',
+          name: 'policy-name',
+          criteriaLastBlobUpdated: 10,
+          criteriaLastDownloaded: 20,
+          criteriaReleaseType: 'RELEASES',
+          criteriaAssetRegex: '.*',
+          criteriaRetain: 5,
+          criteriaSortBy: 'version',
+        })
+      );
+    });
+
+    it('getDryRunCsvUrl appends every optional criterion', () => {
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      const url = result.current.getDryRunCsvUrl(
+        'repo1',
+        formData({
+          criteriaLastBlobUpdated: 10,
+          criteriaLastDownloaded: 20,
+          criteriaReleaseType: 'RELEASES',
+          criteriaAssetRegex: '.*',
+          retain: 5,
+          sortBy: 'version',
+        }),
+        'policy-name'
+      );
+
+      expect(url).toContain('name=policy-name');
+      expect(url).toContain('criteriaReleaseType=RELEASES');
+      expect(url).toContain('criteriaRetain=5');
+      expect(url).toContain('criteriaSortBy=version');
+    });
+  });
+
+  describe('feature-flag helpers', () => {
+    it('isRetainAllFormatsEnabled reflects state', () => {
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      expect(result.current.isRetainAllFormatsEnabled()).toBe(false);
+
+      mockExtState['nexus.cleanup.retainAllFormats.enabled'] = true;
+      expect(result.current.isRetainAllFormatsEnabled()).toBe(true);
+    });
+
+    it('isPreviewEnabled is false when not PostgreSQL', () => {
+      mockExtState['datastore.isPostgresql'] = false;
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      expect(result.current.isPreviewEnabled()).toBe(false);
+    });
+
+    it('isRetainEnabled is false for an unmapped format', () => {
+      const { result } = renderHook(() => useCleanupPoliciesApi());
+      expect(result.current.isRetainEnabled('pypi')).toBe(false);
     });
   });
 });

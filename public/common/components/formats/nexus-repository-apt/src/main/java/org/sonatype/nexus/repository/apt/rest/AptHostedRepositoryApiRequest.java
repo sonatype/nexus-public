@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.apt.api.AptHostedRepositoriesAttributes;
 import org.sonatype.nexus.repository.apt.AptFormat;

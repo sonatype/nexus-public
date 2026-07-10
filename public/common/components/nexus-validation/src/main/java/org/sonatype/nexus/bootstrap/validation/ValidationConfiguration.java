@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.bootstrap.validation;
 
-import javax.validation.ConstraintValidatorFactory;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
-import javax.validation.constraints.NotNull;
-import javax.validation.executable.ExecutableValidator;
+import jakarta.validation.ConstraintValidatorFactory;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.executable.ExecutableValidator;
 
 import org.sonatype.nexus.validation.internal.AlwaysTraversableResolver;
 import org.sonatype.nexus.validation.internal.AopAwareParanamerParameterNameProvider;

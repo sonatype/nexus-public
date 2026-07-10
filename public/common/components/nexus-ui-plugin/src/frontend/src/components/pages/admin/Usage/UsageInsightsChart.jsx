@@ -16,7 +16,9 @@ import {ResponsiveBar} from "@nivo/bar";
 import {
   NxH4,
   NxNavigationDropdown,
-  NxStatefulNavigationDropdown
+  NxStatefulNavigationDropdown,
+  NxWarningAlert,
+  NxErrorAlert
 } from '@sonatype/react-shared-components';
 import {faFilter} from '@fortawesome/free-solid-svg-icons';
 
@@ -43,7 +45,7 @@ export function UsageInsightsChart() {
   const [state, send] = useMachine(UsageInsightsChartMachine, {
     devTools: true
   });
-  const {combinedData, monthOptions, selectedMonth, isOpen} = state.context;
+  const {combinedData, monthOptions, selectedMonth, isOpen, isPermissionError, loadError} = state.context;
 
   const sorted = React.useMemo(
       () => combinedData?.sort((a, b) => new Date(a.metricDate) - new Date(b.metricDate)) || [],
@@ -75,12 +77,28 @@ export function UsageInsightsChart() {
 
   const tooltip = (p) => <UsageInsightsChartTooltip data={p.data} />;
 
+  if (isPermissionError) {
+    return (
+      <div className="usage-insights-chart">
+        <NxWarningAlert>{UIStrings.HISTORICAL_USAGE.CHART.PERMISSION_ERROR}</NxWarningAlert>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="usage-insights-chart">
+        <NxErrorAlert>{loadError}</NxErrorAlert>
+      </div>
+    );
+  }
+
   return (
       <div className="usage-insights-chart">
         <div className="usage-insights-chart-header">
           <div className="usage-insights-chart-title">
-            <div>Usage Insights</div>
-            <div>Month</div>
+            <div>{UIStrings.HISTORICAL_USAGE.CHART.TITLE}</div>
+            <div>{UIStrings.HISTORICAL_USAGE.CHART.SUB_TITLE}</div>
           </div>
           <NxStatefulNavigationDropdown
               isOpen={isOpen}

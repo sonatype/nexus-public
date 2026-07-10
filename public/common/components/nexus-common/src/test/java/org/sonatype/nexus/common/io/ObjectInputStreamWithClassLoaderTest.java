@@ -22,6 +22,7 @@ import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.sonatype.nexus.common.io.ObjectInputStreamWithClassLoader.LoadingFunction;
 
@@ -40,7 +41,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ObjectInputStreamWithClassLoaderTest
-
 {
   private static final String OBJECT_TO_SERIALIZE = "test";
 
@@ -55,7 +55,7 @@ public class ObjectInputStreamWithClassLoaderTest
   @Test(expected = NullPointerException.class)
   public void failFastWhenClassLoaderNull() throws Exception {
     try (ObjectInputStreamWithClassLoader in = new ObjectInputStreamWithClassLoader(
-        serialize(OBJECT_TO_SERIALIZE), (ClassLoader) null)) {
+        serialize(OBJECT_TO_SERIALIZE), (ClassLoader) null, Set.of()::contains)) {
       // exception expected
     }
   }
@@ -65,7 +65,7 @@ public class ObjectInputStreamWithClassLoaderTest
     String name = "testClassName";
     when(classDescription.getName()).thenReturn(name);
     try (ObjectInputStreamWithClassLoader underTest = new ObjectInputStreamWithClassLoader(
-        serialize(OBJECT_TO_SERIALIZE), classLoader)) {
+        serialize(OBJECT_TO_SERIALIZE), classLoader, Set.of()::contains)) {
       underTest.resolveClass(classDescription);
     }
     catch (Exception e) {
@@ -78,8 +78,9 @@ public class ObjectInputStreamWithClassLoaderTest
   public void deserializeUsingCustomClassLoader() throws Exception {
     String contents = "contents";
     TestFixture deserialized;
+    Set<Class<?>> allowedClasses = Set.of(TestFixture.class, String.class);
     try (ObjectInputStream objects = new ObjectInputStreamWithClassLoader(
-        serialize(new TestFixture(contents)), classLoader)) {
+        serialize(new TestFixture(contents)), classLoader, allowedClasses::contains)) {
       deserialized = (TestFixture) objects.readObject();
     }
     assertThat(deserialized.contents, is(equalTo(contents)));
@@ -88,7 +89,7 @@ public class ObjectInputStreamWithClassLoaderTest
   @Test(expected = NullPointerException.class)
   public void failFastWhenLoadingFunctionNull() throws Exception {
     try (ObjectInputStreamWithClassLoader in = new ObjectInputStreamWithClassLoader(
-        serialize(OBJECT_TO_SERIALIZE), (LoadingFunction) null)) {
+        serialize(OBJECT_TO_SERIALIZE), (LoadingFunction) null, Set.of()::contains)) {
       // exception expected
     }
   }
@@ -99,7 +100,7 @@ public class ObjectInputStreamWithClassLoaderTest
     when(classDescription.getName()).thenReturn(name);
     doReturn(getClass()).when(loadingFunction).loadClass(anyString());
     try (ObjectInputStreamWithClassLoader underTest = new ObjectInputStreamWithClassLoader(
-        serialize(OBJECT_TO_SERIALIZE), loadingFunction)) {
+        serialize(OBJECT_TO_SERIALIZE), loadingFunction, Set.of()::contains)) {
       underTest.resolveClass(classDescription);
     }
     catch (Exception e) {
@@ -113,14 +114,38 @@ public class ObjectInputStreamWithClassLoaderTest
     String contents = "contents";
     TestFixture deserialized;
     doReturn(TestFixture.class).when(loadingFunction).loadClass(anyString());
+
+    Set<Class<?>> allowed = Set.of(TestFixture.class, String.class);
+
     try (ObjectInputStream objects = new ObjectInputStreamWithClassLoader(
-        serialize(new TestFixture(contents)), loadingFunction)) {
+        serialize(new TestFixture(contents)), loadingFunction, allowed::contains)) {
       deserialized = (TestFixture) objects.readObject();
     }
     assertThat(deserialized.contents, is(equalTo(contents)));
   }
 
-  private InputStream serialize(final Object o) throws IOException {
+  @Test
+  public void deserializeWithAllowlistAllowsPermittedClass() throws Exception {
+    Set<Class<?>> allowlist = Set.of(String.class);
+    try (ObjectInputStreamWithClassLoader in = new ObjectInputStreamWithClassLoader(
+        serialize("allowed"), classLoader, className -> allowlist.contains(className))) {
+      String result = (String) in.readObject();
+      assertThat(result, is(equalTo("allowed")));
+    }
+  }
+
+  @Test
+  public void deserializeWithAllowlistAllowsPrimitiveArray() throws Exception {
+    Set<Class<?>> allowlist = Set.of(String.class);
+    InputStream data = serialize(new byte[]{1, 2, 3});
+    try (ObjectInputStreamWithClassLoader in = new ObjectInputStreamWithClassLoader(
+        data, classLoader, allowlist::contains)) {
+      byte[] result = (byte[]) in.readObject();
+      assertThat(result[0], is((byte) 1));
+    }
+  }
+
+  private static InputStream serialize(final Object o) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
       out.writeObject(o);

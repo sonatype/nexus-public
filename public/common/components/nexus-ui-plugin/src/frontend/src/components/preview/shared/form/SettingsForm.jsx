@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { AlertDialog, Box, Button, Flex, Heading, Text } from '@radix-ui/themes';
 import { AlertCircle } from 'lucide-react';
@@ -53,6 +53,9 @@ export function SettingsForm({
   onSave,
   onSubmit,
   onCancel,
+  // Called when user confirms discard (after dialog, before navigation)
+  // If provided, replaces default behavior - caller must clear dirty state and navigate
+  onDiscardConfirm,
   // Support both saving and loading
   saving = false,
   loading = false,
@@ -67,6 +70,10 @@ export function SettingsForm({
   cancelDisabled = false,
   noDirtyTracking = false,
   confirmDiscard = true,
+  // Explicit opt-in to skip internal dirty tracking.
+  // Use this when parent manages dirty state via form machine (e.g., useForm)
+  // that also calls useUnsavedChangesWarning. Prevents duplicate window.dirty entries.
+  externalDirtyTracking = false,
   showActions = true,
   // Whether to show the header section
   showHeader = true,
@@ -108,6 +115,14 @@ export function SettingsForm({
 
   const isSubmitDisabled = isLoading || isPristine || submitDisabled;
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const discardedRef = useRef(false);
+
+  // Reset discardedRef when form becomes pristine (e.g., component reused with fresh data)
+  useEffect(() => {
+    if (isPristine) {
+      discardedRef.current = false;
+    }
+  }, [isPristine]);
 
   const handleCancelClick = () => {
     if (!onCancel) return;
@@ -120,9 +135,19 @@ export function SettingsForm({
 
   const handleDiscardConfirm = () => {
     setDiscardDialogOpen(false);
+    // Mark as discarded so useUnsavedChangesWarning won't re-register this form
+    // during the React re-render triggered by the dialog closing
+    discardedRef.current = true;
     // Clear this specific form from dirty tracking
     clearDirtyState(formIdRef.current);
-    if (onCancel) onCancel();
+
+    // If caller provides onDiscardConfirm, they clear their own dirty state (e.g., form machine)
+    // and navigate. This form's dirty state was already cleared above.
+    if (onDiscardConfirm) {
+      onDiscardConfirm();
+    } else if (onCancel) {
+      onCancel();
+    }
   };
 
   const formIdRef = useRef(`settings-form-${Math.random().toString(36).slice(2, 8)}`);
@@ -130,7 +155,13 @@ export function SettingsForm({
   // Automatically track unsaved changes and warn on navigation
   // Hook clears automatically when form becomes pristine (isDirty = false)
   // Skip tracking if noDirtyTracking is enabled (e.g., one-shot upload forms)
-  useUnsavedChangesWarning(!isPristine && !noDirtyTracking, formIdRef.current);
+  // Skip tracking if externalDirtyTracking is true (parent manages dirty state)
+  // After user confirms discard, suppress tracking to prevent the router's onBefore
+  // hook from showing a second "unsaved changes" modal during navigation
+  useUnsavedChangesWarning(
+    !isPristine && !noDirtyTracking && !externalDirtyTracking && !discardedRef.current,
+    formIdRef.current
+  );
 
   // Filter restProps to only include data-* attributes for safety
   const dataProps = Object.keys(restProps).reduce((acc, key) => {
@@ -379,6 +410,10 @@ SettingsForm.propTypes = {
   submitAnalyticsId: PropTypes.string,
   /** Analytics ID for the cancel button */
   cancelAnalyticsId: PropTypes.string,
+  /** Called when user confirms discard in the dialog (after form clears its own dirty state) */
+  onDiscardConfirm: PropTypes.func,
+  /** Explicit opt-in to skip internal dirty tracking when parent manages state via form machine */
+  externalDirtyTracking: PropTypes.bool,
 };
 
 export default SettingsForm;

@@ -15,7 +15,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Badge, Flex, Text, ScrollArea } from '@radix-ui/themes';
 import {
   Search, ChevronRight, Loader2, AlertCircle, Puzzle,
-  FileSearch, Globe, Users, Cloud, UserCheck, Shield, HeartPulse, Clock,
+  FileSearch, Globe, Users, Cloud, UserCheck, HeartPulse, Clock,
   Link, Server, Megaphone, Scissors, KeyRound, Calendar, HardDrive,
   Palette, Settings, ArrowUpCircle, Webhook, GitBranch,
 } from 'lucide-react';
@@ -31,7 +31,8 @@ const TYPE_ICONS: Record<string, React.ComponentType<{size?: number; className?:
   crowd: Users,
   customs3regions: Cloud,
   defaultrole: UserCheck,
-  'firewall.audit': Shield,
+  // 'firewall.audit' deliberately omitted post-migration — the type is no longer advertised
+  // by /v1/capabilities/types and the new UI never renders it. See useCapabilitiesApi.ts.
   healthcheck: HeartPulse,
   'license-expiration': Clock,
   LegacyUrlCapability: Link,

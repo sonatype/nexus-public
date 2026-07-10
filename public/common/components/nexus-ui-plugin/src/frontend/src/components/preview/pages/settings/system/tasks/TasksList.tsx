@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, TextField, Badge } from '@radix-ui/themes';
+import { Box, Flex, Text, TextField, Badge, Skeleton } from '@radix-ui/themes';
 import { Clock, ListTodo, RefreshCw, CheckCircle, XCircle, AlertCircle, Play, Square } from 'lucide-react';
 import { ActionIcons } from '../../../../shared/icons/action-icons';
 import { ExtJS } from '../../../../../../interface/ExtJS';
@@ -329,7 +329,12 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
       accessor: (task) => (
         <Flex align="center" gap="2">
           {getStatusIcon(task.status)}
-          <Badge size="1" color={getStatusBadgeColor(task.status)} className={task.status === 'RUNNING' ? 'tasks-list__status-badge--running' : ''}>
+          <Badge
+            size="1"
+            color={getStatusBadgeColor(task.status)}
+            variant={task.status === 'BLOCKED' || task.status === 'WAITING' ? 'solid' : 'soft'}
+            className={task.status === 'RUNNING' ? 'tasks-list__status-badge--running' : ''}
+          >
             {STATUS_LABELS[task.status] || task.status}
           </Badge>
         </Flex>
@@ -486,32 +491,46 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
           </TextField.Root>
         </Box>
 
-        <EntityTable<Task>
-          data={filteredTasks}
-          columns={columns}
-          getRowKey={(task) => task.id}
-          onRowClick={handleRowClick}
-          loading={loading}
-          loadingMessage="Loading tasks..."
-          error={apiError || undefined}
-          onRetry={async () => {
-            setLoading(true);
-            try {
-              const data = await fetchTasks();
-              setTasks(data);
-            } finally {
-              setLoading(false);
-            }
-          }}
-          emptyState={emptyState}
-          sortBy={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          showRowArrow={true}
-          clickable={true}
-          ariaLabel="Tasks list"
-          className="tasks-list__table"
-        />
+        {loading && tasks.length === 0 ? (
+          <Box className="tasks-list__skeleton">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Flex key={i} gap="3" align="center" px="3" py="2" data-testid="tasks-list-skeleton-row">
+                <Skeleton width="20%" height="18px" />
+                <Skeleton width="15%" height="18px" />
+                <Skeleton width="12%" height="18px" />
+                <Skeleton width="18%" height="18px" />
+                <Skeleton width="15%" height="18px" />
+                <Skeleton width="20%" height="18px" />
+              </Flex>
+            ))}
+          </Box>
+        ) : (
+          <EntityTable<Task>
+            data={filteredTasks}
+            columns={columns}
+            getRowKey={(task) => task.id}
+            onRowClick={handleRowClick}
+            loading={loading && tasks.length > 0}
+            error={apiError || undefined}
+            onRetry={async () => {
+              setLoading(true);
+              try {
+                const data = await fetchTasks();
+                setTasks(data);
+              } finally {
+                setLoading(false);
+              }
+            }}
+            emptyState={emptyState}
+            sortBy={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            showRowArrow={true}
+            clickable={true}
+            ariaLabel="Tasks list"
+            className="tasks-list__table"
+          />
+        )}
 
         {!loading && !apiError && filteredTasks.length > 0 && (
           <Box className="tasks-list__summary">

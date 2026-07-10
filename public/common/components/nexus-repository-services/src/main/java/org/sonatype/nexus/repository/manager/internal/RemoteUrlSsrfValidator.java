@@ -16,8 +16,8 @@ import java.net.URI;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import javax.validation.ConstraintViolation;
-import javax.validation.ValidationException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.ConfigurationValidator;

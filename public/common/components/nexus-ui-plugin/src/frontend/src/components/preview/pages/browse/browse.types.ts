@@ -69,13 +69,14 @@ export interface RepositoryStatus {
 /**
  * Repository reference for the browse list.
  * Returned by coreui_Repository.readReferences API.
+ * Note: status and url are optional in the REST v1 response used by this UI.
  */
 export interface RepositoryReference {
   name: string;
   type: RepositoryType;
   format: string;
-  status: RepositoryStatus;
-  url: string;
+  status?: RepositoryStatus;
+  url?: string;
 }
 
 // =============================================================================
@@ -107,15 +108,24 @@ export interface AssetXO {
   name: string;
   format: string;
   repositoryName: string;
-  downloadUrl: string;
+  downloadUrl?: string; // always set in practice but optional in REST model
   path: string;
-  contentType: string;
-  size: number;
-  lastModified: string;
+  contentType?: string; // REST v1 returns asset.getContentType() which can be null
+  size?: number;
+  lastModified?: string; // REST v1 parses from asset attributes; null when attribute is absent (e.g. raw/docker formats)
   blobCreated?: string;
+  blobUpdated?: string;
   lastDownloaded?: string;
-  checksums?: Record<string, string>;
+  checksum?: Record<string, string>; // REST v1 Map<String,String> e.g. {"sha1":"...","sha256":"..."}
   componentId?: string;
+  blobRef?: string;
+  createdBy?: string;
+  createdByIp?: string; // mapped from API but intentionally not rendered — privacy concern
+  // Format-specific attributes are serialized by @JsonAnyGetter in AssetXO
+  // These arrive as top-level keys named by format (e.g., "terraformbackend": {"serial": 123})
+  [key: string]: unknown; // Allow dynamic format-specific attributes
+  attributes?: Record<string, unknown>;
+  registryUrl?: string;
 }
 
 // =============================================================================

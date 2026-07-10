@@ -14,9 +14,9 @@
 /**
  * SettingsCard — Small variant card for Settings Hub
  *
- * Displays a horizontal layout with:
- * - Name (bold text)
- * - Description (gray text with ellipsis truncation)
+ * Displays a layout with:
+ * - Name (bold text) with optional Coming Soon badge
+ * - Description (gray text, wraps naturally)
  * - View button
  *
  * The entire card is clickable and navigates to the settings page.
@@ -39,27 +39,20 @@ export default function SettingsCard({ card }: SettingsCardProps) {
     <Card asChild style={{ cursor: 'pointer' }}>
       <a href={href}>
         <Box p="3">
-          <Flex align="center" justify="between" gap="4">
-            <Flex align="center" gap="2" style={{ flex: 1, minWidth: 0 }}>
-              <Text size="2" weight="medium">{card.label}</Text>
-              {isComingSoon && (
-                <Badge color="blue" size="1" variant="soft">
-                  Coming Soon
-                </Badge>
-              )}
-              {!isComingSoon && <Text size="2" color="gray">·</Text>}
-              <Text
-                size="2"
-                color="gray"
-                style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}
-              >
+          <Flex align="start" justify="between" gap="4">
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              <Flex align="center" gap="2">
+                <Text size="2" weight="medium">{card.label}</Text>
+                {isComingSoon && (
+                  <Badge color="blue" size="1" variant="soft">
+                    Coming Soon
+                  </Badge>
+                )}
+              </Flex>
+              <Text as="p" size="2" color="gray" style={{ margin: 0 }}>
                 {card.description}
               </Text>
-            </Flex>
+            </Box>
             <Button variant="surface" size="1">View</Button>
           </Flex>
         </Box>

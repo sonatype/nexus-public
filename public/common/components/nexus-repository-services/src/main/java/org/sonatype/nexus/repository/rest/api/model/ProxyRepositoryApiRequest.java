@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -48,9 +48,17 @@ public class ProxyRepositoryApiRequest
   @Valid
   private final HttpClientAttributes httpClient;
 
-  private final String routingRule;
+  private final String routingRuleName;
 
   private final ReplicationAttributes replication;
+
+  /*
+   * Firewall attributes are an optional cross-format property; populated by Jackson via the
+   * {@code @JsonProperty} setter rather than the constructor so per-format subclasses don't
+   * need to thread it through their own constructors.
+   */
+  @Valid
+  private FirewallAttributes firewall;
 
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count
   @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -63,7 +71,7 @@ public class ProxyRepositoryApiRequest
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
-      @JsonProperty("routingRule") @JsonAlias("routingRuleName") final String routingRule,
+      @JsonProperty("routingRuleName") @JsonAlias("routingRule") final String routingRuleName,
       @JsonProperty("replication") @JsonInclude(value = Include.NON_EMPTY,
           content = Include.NON_NULL) final ReplicationAttributes replication)
   {
@@ -73,7 +81,7 @@ public class ProxyRepositoryApiRequest
     this.proxy = proxy;
     this.negativeCache = negativeCache;
     this.httpClient = httpClient;
-    this.routingRule = routingRule;
+    this.routingRuleName = routingRuleName;
     this.replication = replication;
   }
 
@@ -97,12 +105,21 @@ public class ProxyRepositoryApiRequest
     return httpClient;
   }
 
-  public String getRoutingRule() {
-    return routingRule;
+  public String getRoutingRuleName() {
+    return routingRuleName;
   }
 
   public ReplicationAttributes getReplication() {
     return replication;
+  }
+
+  public FirewallAttributes getFirewall() {
+    return firewall;
+  }
+
+  @JsonProperty("firewall")
+  public void setFirewall(final FirewallAttributes firewall) {
+    this.firewall = firewall;
   }
 
 }

@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { Box, Text } from '@radix-ui/themes';
-import type { HealthCheckData, RepositoryMetrics } from './hooks/useRepositoryProfile';
+import type { HealthCheckData, RepositoryMetrics } from './types';
 
 // =============================================================================
 // Types

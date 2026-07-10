@@ -70,6 +70,14 @@ public class AssetXO
 
   private Date lastVerified;
 
+  /**
+   * Top-level docker registry URL (e.g. {@code localhost:8081/my-repo}) computed at read
+   * time from the repository's connector configuration. Only populated for docker assets;
+   * intentionally kept off {@code attributes.docker} so it does not appear in the
+   * Attributes panel — used solely for pull-snippet rendering.
+   */
+  private String registryUrl;
+
   @JsonIgnore
   private Map<String, Object> attributes;
 
@@ -213,6 +221,14 @@ public class AssetXO
     this.lastVerified = lastVerified;
   }
 
+  public String getRegistryUrl() {
+    return registryUrl;
+  }
+
+  public void setRegistryUrl(final String registryUrl) {
+    this.registryUrl = registryUrl;
+  }
+
   public void setAttributes(final Map<String, Object> attributes) {
     this.attributes = attributes;
   }
@@ -251,6 +267,8 @@ public class AssetXO
   {
     Configuration repoConfiguration = repository.getConfiguration();
     String blobStoreName = String.valueOf(repoConfiguration.attributes("storage").get("blobStoreName"));
+    AssetXODescriptor descriptor =
+        Optional.ofNullable(assetDescriptors).map(ad -> ad.get(asset.getFormat())).orElse(null);
     return builder()
         .path(asset.getPath())
         .downloadUrl(repository.getUrl() + '/' + StringUtils.removeStart(asset.getPath(), "/"))
@@ -270,6 +288,7 @@ public class AssetXO
         .lastVerified(CacheAttributeUtils.extractLastVerified(asset.getAttributes()))
         .uploader(uploaderVisible ? asset.getUploader() : null)
         .uploaderIp(uploaderVisible ? asset.getUploaderIp() : null)
+        .registryUrl(descriptor != null ? descriptor.computeRegistryUrl(repository) : null)
         .build();
   }
 
@@ -343,6 +362,7 @@ public class AssetXO
         ", blobRef='" + blobRef + '\'' +
         ", lastVerified=" + lastVerified +
         ", attributes=" + attributes +
+        ", registryUrl='" + registryUrl + '\'' +
         '}';
   }
 
@@ -382,6 +402,8 @@ public class AssetXO
     private String blobRef;
 
     private Date lastVerified;
+
+    private String registryUrl;
 
     private Map<String, Object> attributes;
 
@@ -470,6 +492,11 @@ public class AssetXO
       return this;
     }
 
+    public AssetXOBuilder registryUrl(String registryUrl) {
+      this.registryUrl = registryUrl;
+      return this;
+    }
+
     public AssetXOBuilder attributes(Map<String, Object> attributes) {
       this.attributes = attributes;
       return this;
@@ -494,6 +521,7 @@ public class AssetXO
       assetXO.setBlobStoreName(this.blobStoreName);
       assetXO.setBlobRef(this.blobRef);
       assetXO.setLastVerified(this.lastVerified);
+      assetXO.setRegistryUrl(this.registryUrl);
       assetXO.setAttributes(this.attributes);
       return assetXO;
     }

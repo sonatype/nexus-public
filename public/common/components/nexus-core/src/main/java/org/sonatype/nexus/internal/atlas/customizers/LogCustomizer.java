@@ -22,7 +22,7 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
-import javax.ws.rs.NotFoundException;
+import jakarta.ws.rs.NotFoundException;
 
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.log.LogManager;

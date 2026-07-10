@@ -14,18 +14,18 @@ package org.sonatype.nexus.security.internal.rest;
 
 import java.util.Collection;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
  * Swagger documentation for {@link UserApiResource}
  *
  * @since 3.17
  */
-@Api(value = "Security management: users")
+@Tag(name = "Security management: users")
 public interface UserApiResourceDoc
 {
   String USER_ID_DESCRIPTION = "The userid the request should apply to.";
@@ -34,18 +34,19 @@ public interface UserApiResourceDoc
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
-  @ApiOperation("Retrieve a list of users. For SAML user sources a limit of 1000 users will be applied.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
+  @Operation(summary = "Retrieve a list of users. For SAML user sources a limit of 1000 users will be applied.")
+  @ApiResponses(value = {@ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   Collection<ApiUser> getUsers(
-      @ApiParam("An optional term to search userids for.") String userId,
-      @ApiParam("An optional user source to restrict the search to.") String source);
+      @Parameter(description = "An optional term to search userids for.") String userId,
+      @Parameter(description = "An optional user source to restrict the search to.") String source);
 
-  @ApiOperation("Delete a user.")
-  @ApiResponses(value = {@ApiResponse(code = 400, message = NexusSecurityApiConstants.NON_LOCAL_USER_CANNOT_BE_DELETED),
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})
+  @Operation(summary = "Delete a user.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.NON_LOCAL_USER_CANNOT_BE_DELETED),
+      @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})
   void deleteUser(
-      @ApiParam(value = USER_ID_DESCRIPTION) String userId,
-      @ApiParam(value = REALM_DESCRIPTION) String realm);
+      @Parameter(description = USER_ID_DESCRIPTION) String userId,
+      @Parameter(description = REALM_DESCRIPTION) String realm);
 }

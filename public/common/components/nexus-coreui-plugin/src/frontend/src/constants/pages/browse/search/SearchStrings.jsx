@@ -130,6 +130,10 @@ export default {
           IMAGE_TAG: 'Image Tag',
           LAYER_ID: 'Layer Id',
           CONTENT_DIGEST: 'Content Digest',
+          OS: 'OS',
+          ARCHITECTURE: 'Architecture',
+          LABELS: 'Labels',
+          AUTHOR: 'Author',
         }
       }
     },
@@ -293,6 +297,19 @@ export default {
           PROVIDER: 'Provider/Type',
           NAMESPACE: 'Namespace',
           NAME: 'Name',
+        }
+      }
+    },
+    TERRAFORM_STATE_BACKEND: {
+      MENU: {
+        text: 'Terraform State Backend',
+        description: 'Search for Terraform state files',
+        icon: faSearch
+      },
+      CRITERIA: {
+        GROUP: 'Terraform State Backend Repositories',
+        FIELD_LABEL: {
+          PATH: 'Path',
         }
       }
     },

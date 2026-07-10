@@ -12,23 +12,26 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.status;
 
-import javax.ws.rs.GET;
+import jakarta.ws.rs.GET;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.util.SortedMap;
 
-@Api("Status")
+@Tag(name = "Status")
 public interface StatusCheckResourceDoc
 {
   @GET
-  @ApiOperation("Health check endpoint that returns the results of the system status checks")
+  @Operation(summary = "Health check endpoint that returns the results of the system status checks")
+  // Response schema (Map<String, Result>) is inferred from the return type — the original
+  // Swagger 1.x 'response = Result.class, responseContainer = "Map"' has no clean OAS 3
+  // annotation form, so we let swagger-jaxrs2 derive 'additionalProperties: $ref: Result'
+  // from the SortedMap<String, Result> signature below.
   @ApiResponses({
-      @ApiResponse(code = 200, message = "The system status check results", response = Result.class,
-          responseContainer = "Map")
+      @ApiResponse(responseCode = "200", description = "The system status check results")
   })
   SortedMap<String, Result> getSystemStatusChecks();
 }

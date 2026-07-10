@@ -53,6 +53,15 @@ jest.mock('../../../../../interface/api', () => ({
   encodeRepositoryItemId: jest.fn((repositoryName: string, rawId: string) => rawId),
 }));
 
+// fetchAsset uses ExtDirect (coreui_Component.readAsset) — mock the helper here.
+jest.mock('../../../../../interface/ExtAPIUtils', () => ({
+  __esModule: true,
+  default: {
+    extAPIRequest: jest.fn(),
+    checkForErrorAndExtract: jest.fn(),
+  },
+}));
+
 import {
   fetchRepositories,
   fetchBrowseNodes,
@@ -66,10 +75,15 @@ import {
   showErrorMessage,
 } from '../browse.api';
 import { restClient } from '../../../../../interface/api';
+import ExtAPIUtils from '../../../../../interface/ExtAPIUtils';
 import type { ComponentXO } from '../browse.types';
 
 // Get mock references
 const mockRestClient = restClient as jest.Mocked<typeof restClient>;
+const mockExtAPI = ExtAPIUtils as unknown as {
+  extAPIRequest: jest.Mock;
+  checkForErrorAndExtract: jest.Mock;
+};
 
 describe('browse.api', () => {
   beforeEach(() => {
@@ -186,7 +200,6 @@ describe('browse.api', () => {
         group: 'org.apache',
         name: 'commons-lang3',
         version: '3.12.0',
-        assets: [],
       });
     });
 
@@ -202,24 +215,26 @@ describe('browse.api', () => {
   });
 
   describe('fetchAsset', () => {
-    it('returns asset data on success', async () => {
-      const mockRestAsset = {
+    it('calls ExtDirect coreui_Component.readAsset with raw assetId and repository', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue({
         id: 'asset-456',
-        repository: 'maven-central',
+        name: '/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
         format: 'maven2',
-        path: '/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
-        downloadUrl: '/repository/maven-central/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
+        repositoryName: 'maven-central',
         contentType: 'application/java-archive',
-        fileSize: 587402,
-        lastModified: '2023-01-15T10:30:00Z',
-      };
-
-      mockRestClient.get.mockResolvedValue(mockRestAsset);
+        size: 587402,
+        attributes: {
+          maven2: { groupId: 'org.apache.commons', artifactId: 'commons-lang3', version: '3.12.0' },
+          checksum: { sha1: 'aaa', sha256: 'bbb' },
+        },
+      });
 
       const result = await fetchAsset('asset-456', 'maven-central');
 
-      expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/v1/assets/asset-456');
-      expect(result).toEqual({
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith('coreui_Component', 'readAsset', {
+        data: ['asset-456', 'maven-central'],
+      });
+      expect(result).toMatchObject({
         id: 'asset-456',
         repositoryName: 'maven-central',
         format: 'maven2',
@@ -227,14 +242,125 @@ describe('browse.api', () => {
         path: '/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
         downloadUrl: '/repository/maven-central/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar',
         contentType: 'application/java-archive',
-        fileSize: 587402,
-        lastModified: '2023-01-15T10:30:00Z',
+        size: 587402,
+        // checksum lifted from attributes.checksum to top level for the Checksums section
+        checksum: { sha1: 'aaa', sha256: 'bbb' },
       });
     });
 
-    it('throws error on failure', async () => {
+    it('encodes special characters in download URL path segments', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue({
+        id: 'asset-special',
+        name: '/path with spaces/file+name.tgz',
+        format: 'npm',
+        repositoryName: 'my repo',
+        attributes: {},
+      });
+
+      const result = await fetchAsset('asset-special', 'my repo');
+
+      // Repository name and path segments should be URL-encoded
+      expect(result.downloadUrl).toBe('/repository/my%20repo/path%20with%20spaces/file%2Bname.tgz');
+    });
+
+    it('preserves the full attributes bag including firewall facet (NEXUS-52920)', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue({
+        id: 'asset-fw',
+        name: '/debug/-/debug-4.3.7.tgz',
+        format: 'npm',
+        repositoryName: 'example2',
+        attributes: {
+          npm: { name: 'debug', version: '4.3.7' },
+          firewall: {
+            firewall_audited: 'true',
+            quarantine_status: 'released',
+            policy_violations_count: '0',
+          },
+          content: { last_modified: 1234567890 },
+        },
+      });
+
+      const result = await fetchAsset('asset-fw', 'example2');
+
+      expect(result.attributes).toEqual({
+        npm: { name: 'debug', version: '4.3.7' },
+        firewall: {
+          firewall_audited: 'true',
+          quarantine_status: 'released',
+          policy_violations_count: '0',
+        },
+        content: { last_modified: 1234567890 },
+      });
+    });
+
+    it('maps date fields and exposes blobUpdated/createdBy/registryUrl', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue({
+        id: 'asset-789',
+        name: '/com/example/lib/1.0/lib-1.0.jar',
+        format: 'maven2',
+        repositoryName: 'maven-hosted',
+        size: 12345,
+        contentType: 'application/java-archive',
+        blobCreated: '2024-01-01T00:00:00Z',
+        blobUpdated: '2024-01-02T00:00:00Z',
+        lastDownloaded: '2024-01-03T00:00:00Z',
+        blobRef: 'default@abc123',
+        componentId: 'comp-1',
+        createdBy: 'admin',
+        createdByIp: '127.0.0.1',
+        registryUrl: 'docker.example.com:443',
+        attributes: { maven2: {} },
+      });
+
+      const result = await fetchAsset('asset-789', 'maven-hosted');
+
+      expect(result).toMatchObject({
+        blobCreated: '2024-01-01T00:00:00Z',
+        blobUpdated: '2024-01-02T00:00:00Z',
+        lastDownloaded: '2024-01-03T00:00:00Z',
+        blobRef: 'default@abc123',
+        componentId: 'comp-1',
+        createdBy: 'admin',
+        createdByIp: '127.0.0.1',
+        registryUrl: 'docker.example.com:443',
+      });
+    });
+
+    it('converts numeric timestamps (milliseconds) to ISO strings', async () => {
+      // Unix timestamp in milliseconds (June 11, 2026)
+      const timestampMs = 1749649800000;
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue({
+        id: 'asset-ts',
+        name: '/test/file.jar',
+        format: 'maven2',
+        repositoryName: 'maven-central',
+        blobCreated: timestampMs,
+        blobUpdated: timestampMs,
+        lastDownloaded: timestampMs,
+        attributes: {},
+      });
+
+      const result = await fetchAsset('asset-ts', 'maven-central');
+
+      // Verify numeric timestamps are converted to ISO strings
+      expect(result.blobCreated).toBe(new Date(timestampMs).toISOString());
+      expect(result.blobUpdated).toBe(new Date(timestampMs).toISOString());
+      expect(result.lastDownloaded).toBe(new Date(timestampMs).toISOString());
+    });
+
+    it('throws when ExtDirect returns no data', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockRestClient.get.mockRejectedValue({ message: 'Asset not found' });
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      await expect(fetchAsset('missing', 'maven-central')).rejects.toThrow('Asset not found');
+      consoleSpy.mockRestore();
+    });
+
+    it('throws when ExtDirect helper throws (e.g. exception or success=false)', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('Asset not found');
+      });
 
       await expect(fetchAsset('invalid-id', 'maven-central')).rejects.toThrow('Asset not found');
       consoleSpy.mockRestore();

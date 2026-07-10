@@ -13,26 +13,24 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Objects;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_DESCRIPTION;
 import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_EXAMPLE;
-import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc.EXPRESSION_NOTES;
 
 /**
  * ContentSelector transfer object for REST APIs.
  */
-@ApiModel
+@Schema
 public class ContentSelectorApiUpdateRequest
     implements ValidatableContentSelectorRequest
 {
-  @ApiModelProperty(value = "An optional description of this content selector", allowEmptyValue = true)
+  @Schema(description = "An optional description of this content selector")
   private String description;
 
-  @ApiModelProperty(value = EXPRESSION_DESCRIPTION, example = EXPRESSION_EXAMPLE, notes = EXPRESSION_NOTES)
+  @Schema(description = EXPRESSION_DESCRIPTION, example = EXPRESSION_EXAMPLE)
   @NotBlank
   private String expression;
 

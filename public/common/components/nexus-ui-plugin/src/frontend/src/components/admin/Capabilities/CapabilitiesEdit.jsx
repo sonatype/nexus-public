@@ -121,6 +121,12 @@ export default function CapabilitiesEdit() {
   const canEdit = ExtJS.checkPermission('nexus:capabilities:edit');
   const canDelete = ExtJS.checkPermission('nexus:capabilities:delete');
 
+  const baseFormProps = FormUtils.formProps(current, send);
+  const formProps = {
+    ...baseFormProps,
+    validationErrors: showDeleteConfirmationModal ? null : baseFormProps.validationErrors,
+  };
+
   return (
     <Page className='nxrm-capabilities-edit-page'>
       <PageHeader>
@@ -140,7 +146,7 @@ export default function CapabilitiesEdit() {
           <SummaryTile canEdit={canEdit} capability={capability} capabilityType={capabilityType} />
           <Section data-testid='capabilities-form-section'>
             <NxStatefulForm
-              {...FormUtils.formProps(current, send)}
+              {...formProps}
               onCancel={handleCancel}
               data-analytics-id='nxrm-edit-capabilities-form'
               className='nxrm-capabilities-form'

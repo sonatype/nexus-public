@@ -38,7 +38,8 @@ import type {
   BlobStoreInfo,
   CleanupPolicyInfo,
   RoutingRuleInfo,
-} from '../hooks/useRepositoryProfile';
+} from '../types';
+import { ensureTrailingSlash } from '../../../../../../../utils/url';
 
 // =============================================================================
 // Types
@@ -214,7 +215,7 @@ export function RepositoryTab({
           <ConfigRow label="Type" value={<TypeBadge type={repository.type as any} />} />
           <ConfigRow label="Recipe" value={repository.recipe} />
           <ConfigRow label="Online" value={repository.online} />
-          <ConfigRow label="URL" value={repository.url} isCode fullWidth />
+          <ConfigRow label="URL" value={ensureTrailingSlash(repository.url)} isCode fullWidth />
           
           {repository.routingRuleId && (
             <ConfigRow label="Routing Rule" value={repository.routingRuleId} />

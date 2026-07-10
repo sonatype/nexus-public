@@ -119,6 +119,9 @@ export default function MonitoringSettingsForm({initialData, onNext, onCancel}) 
         <NxP>
           <strong>{PACKAGE_STRINGS.pythonLabel}</strong> {PACKAGE_STRINGS.python}
         </NxP>
+        <NxP>
+          <strong>{PACKAGE_STRINGS.dockerLabel}</strong> {PACKAGE_STRINGS.docker}
+        </NxP>
       </div>
 
       <div className="nx-btn-bar">

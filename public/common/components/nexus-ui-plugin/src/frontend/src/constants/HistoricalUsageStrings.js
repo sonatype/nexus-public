@@ -30,6 +30,8 @@ export default {
     DESCRIPTION: <>Monitor your storage usage trends over time. <NxTextLink external
                                                                                href="http://links.sonatype.com/products/nxrm3/license/historical-usage">Learn
       how usage is calculated</NxTextLink></>,
+    PERMISSION_ERROR: 'Insufficient Permissions: You need administrator privileges to view usage data.',
+    LOAD_ERROR: 'Unable to load historical usage data. Please try again later.',
     MONTH: 'Month',
     PEAK_COMPONENTS: 'Peak Components',
     COMPONENTS_CHANGE: 'Components % Change',
@@ -53,9 +55,10 @@ export default {
       FILTER_OPTION_HEADER: 'Month',
       AXIS_DAYS: 'Days',
       AXIS_EGRESS_STORAGE: "Egress and Storage",
-      TITLE: "Usage insights",
+      TITLE: "Usage Insights",
       SUB_TITLE: "Month",
-      DATA_NOT_AVAILABLE: 'Data not available'
+      DATA_NOT_AVAILABLE: 'Data not available',
+      PERMISSION_ERROR: 'Insufficient Permissions: You need administrator privileges to view usage insights.'
     }
   }
 };

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.93.2-01</version>
+    <version>3.94.0-12</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-commons</artifactId>
@@ -60,10 +60,33 @@
         <version>1.10.0</version>
       </dependency>
 
+      <!-- NEXUS-46395: commons-fileupload 1.x is built on javax.servlet. Migrated to
+           commons-fileupload2-jakarta-servlet6 (Jakarta Servlet 6.0 API, matching
+           Jetty 12 EE10). Package rename: org.apache.commons.fileupload →
+           org.apache.commons.fileupload2.core / .jakarta.servlet6. Consumers must
+           update their imports. The companion -jakarta-servlet5 artifact (Jakarta
+           Servlet 5.0) is NOT compatible with Servlet 6.0 — mixing them with directjngine
+           2.3.0 (which depends on servlet6) produces a runtime
+           NoClassDefFoundError on JakartaServletFileUpload at startup. -->
       <dependency>
-        <groupId>commons-fileupload</groupId>
-        <artifactId>commons-fileupload</artifactId>
-        <version>1.6.0</version>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
+        <!-- NEXUS-46395: pinned to 2.0.0-M4 to match directjngine 2.3.0's compile
+             target. M5 of commons-fileupload2 renamed several methods on
+             AbstractFileUpload (setSizeMax -> setMaxSize, setFileSizeMax ->
+             setMaxFileSize); directjngine 2.3.0 calls the M4 names from its
+             UploadFormPostRequestProcessor.createFileUploader. With M5 on the
+             classpath, ext.direct file-upload servlets fail at init with
+             NoSuchMethodError on setSizeMax(long). Until a newer directjngine
+             is published that targets M5+, stay on M4 across all three
+             commons-fileupload2 artifacts (servlet6, core, and the implicit
+             servlet5 if anyone reintroduces it). -->
+        <version>2.0.0-M4</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-fileupload2-core</artifactId>
+        <version>2.0.0-M4</version>
       </dependency>
 
       <dependency>
@@ -98,9 +121,18 @@
       </dependency>
 
       <dependency>
+        <!-- NEXUS-46395: commons-email 1.6 returned javax.mail.Session; commons-email2-jakarta
+             is the Jakarta Mail variant (returns jakarta.mail.Session). Package rename:
+             org.apache.commons.mail → org.apache.commons.mail2.jakarta (Email, HtmlEmail, etc.)
+             and org.apache.commons.mail2.core (EmailException, EmailConstants, EmailUtils). -->
         <groupId>org.apache.commons</groupId>
-        <artifactId>commons-email</artifactId>
-        <version>1.6.0</version>
+        <artifactId>commons-email2-jakarta</artifactId>
+        <version>2.0.0-M1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-email2-core</artifactId>
+        <version>2.0.0-M1</version>
       </dependency>
 
       <dependency>

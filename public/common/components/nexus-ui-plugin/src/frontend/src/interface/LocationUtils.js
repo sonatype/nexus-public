@@ -20,7 +20,8 @@ export function isPageHashIncluding(paths) {
 }
 
 export function scrollToUsageCenter() {
-  const targetPath = '#browse/welcome';
+  const isPreviewUI = window.location.hash.startsWith('#preview');
+  const targetPath = isPreviewUI ? '#preview/browse/welcome' : '#browse/welcome';
   const targetElementId = 'nxrm-usage-center';
 
   function scrollToElement() {

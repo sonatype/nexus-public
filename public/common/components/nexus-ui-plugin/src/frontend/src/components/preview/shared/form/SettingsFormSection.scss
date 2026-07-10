@@ -26,11 +26,21 @@
     margin-bottom: var(--space-4);
 
     &--collapsible {
+      display: inline-block;
       cursor: pointer;
       user-select: none;
+      background-color: var(--color-surface-hover, #ececec);
+      border-radius: var(--radius-md, 6px);
+      padding: var(--space-2) var(--space-3);
+      margin-top: var(--space-3);
 
-      &:hover .settings-section__title {
-        color: var(--color-primary);
+      &:hover {
+        background-color: var(--color-surface-active, #e0e0e0);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
       }
     }
   }
@@ -43,10 +53,15 @@
     gap: var(--space-2);
   }
 
+  &__header--collapsible &__title {
+    margin: 0;
+  }
+
   &__chevron {
     font-size: var(--font-size-sm);
     transition: transform var(--transition-fast);
     color: var(--color-text-tertiary);
+    display: inline-block;
 
     &--collapsed {
       transform: rotate(-90deg);
@@ -62,6 +77,14 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  &--collapsed &__header {
+    margin-bottom: 0;
+  }
+
+  &--collapsed &__separator {
+    display: none;
   }
 
   &__separator {

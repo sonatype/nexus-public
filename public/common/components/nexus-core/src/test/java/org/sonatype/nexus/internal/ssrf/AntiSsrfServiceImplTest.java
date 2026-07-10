@@ -19,9 +19,13 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.nexus.common.event.EventHelper;
+import org.sonatype.nexus.httpclient.HttpClientManager;
+import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
+import org.sonatype.nexus.httpclient.config.ProxyServerConfiguration;
 import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.KeyValueEvent;
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.validation.ssrf.SsrfProtectionConfiguration;
@@ -44,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,12 +58,16 @@ class AntiSsrfServiceImplTest
   @Mock
   private GlobalKeyValueStore kvStore;
 
+  @Mock
+  private HttpClientManager httpClientManager;
+
   private AntiSsrfServiceImpl underTest;
 
   @BeforeEach
   void setup() throws Exception {
     lenient().when(kvStore.get(eq(AntiSsrfServiceImpl.CONFIG_KEY), eq(SsrfProtectionConfigData.class)))
         .thenReturn(Optional.empty());
+    lenient().when(httpClientManager.getConfiguration()).thenReturn(null);
 
     underTest = createService(false, new String[]{}, new String[]{});
     underTest.start();
@@ -146,6 +155,56 @@ class AntiSsrfServiceImplTest
   }
 
   @Test
+  void testValidateHost_alwaysBlocksCloudMetadataIPv6() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(false, Set.of(), Set.of()));
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("fd00:ec2::254"));
+    assertThat(ex.getMessage(), containsString("restricted"));
+  }
+
+  @Test
+  void testValidateHost_blocksZeroAddressWhenEnabled() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("0.0.0.0"));
+    assertThat(ex.getMessage(), containsString("wildcard"));
+  }
+
+  @Test
+  void testValidateHost_allowsZeroAddressWhenDisabled() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(false, Set.of(), Set.of()));
+
+    assertDoesNotThrow(() -> underTest.validateHost("0.0.0.0"));
+  }
+
+  @Test
+  void testValidateHost_blocksIPv6ULAWhenEnabled() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("fd12:3456:789a::1"));
+    assertThat(ex.getMessage(), containsString("private network"));
+  }
+
+  @Test
+  void testValidateHost_allowsIPv6ULAWhenDisabled() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(false, Set.of(), Set.of()));
+
+    assertDoesNotThrow(() -> underTest.validateHost("fd12:3456:789a::1"));
+  }
+
+  @Test
+  void testValidateHost_blocksIPv6ULA_fc00Prefix() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("fc00::1"));
+    assertThat(ex.getMessage(), containsString("private network"));
+  }
+
+  @Test
   void testValidateHost_allowsIpInAllowList() {
     underTest.updateConfiguration(
         new SsrfProtectionConfiguration(true, Set.of("127.0.0.1"), Set.of()));
@@ -225,6 +284,16 @@ class AntiSsrfServiceImplTest
     ValidationErrorsException ex = assertThrows(ValidationErrorsException.class,
         () -> underTest.updateConfiguration(newConfig));
     assertThat(ex.getMessage(), containsString("::ffff:169.254.169.254"));
+  }
+
+  @Test
+  void testUpdateConfiguration_rejectsIpv6CloudMetadataInAllowedIPs() {
+    SsrfProtectionConfiguration newConfig =
+        new SsrfProtectionConfiguration(true, Set.of("10.0.0.1", "fd00:ec2::254"), Set.of());
+
+    ValidationErrorsException ex = assertThrows(ValidationErrorsException.class,
+        () -> underTest.updateConfiguration(newConfig));
+    assertThat(ex.getMessage(), containsString("fd00:ec2::254"));
   }
 
   @Test
@@ -327,6 +396,143 @@ class AntiSsrfServiceImplTest
     assertDoesNotThrow(() -> underTest.validateHostWithoutCache("8.8.8.8"));
   }
 
+  @Test
+  void testValidateHost_dnsFails_noProxy_throws() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    when(httpClientManager.getConfiguration()).thenReturn(null);
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("does-not-resolve.invalid"));
+    assertThat(ex.getMessage(), containsString("Failed to resolve host"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_httpProxyEnabled_passes() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = httpClientConfigWithProxy(true, false, null);
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    assertDoesNotThrow(() -> underTest.validateHost("does-not-resolve.invalid"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_httpsProxyEnabled_passes() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = httpClientConfigWithProxy(false, true, null);
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    assertDoesNotThrow(() -> underTest.validateHost("does-not-resolve.invalid"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_bothProxiesEnabled_passes() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = httpClientConfigWithProxy(true, true, null);
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    assertDoesNotThrow(() -> underTest.validateHost("does-not-resolve.invalid"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_proxyEnabled_proxyConfigNull_throws() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = mock(HttpClientConfiguration.class);
+    when(cfg.getProxy()).thenReturn(null);
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("does-not-resolve.invalid"));
+    assertThat(ex.getMessage(), containsString("Failed to resolve host"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_proxyEnabled_neitherProxyEnabled_throws() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = httpClientConfigWithProxy(false, false, null);
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("does-not-resolve.invalid"));
+    assertThat(ex.getMessage(), containsString("Failed to resolve host"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_proxyEnabled_hostInNonProxyHosts_throws() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = httpClientConfigWithProxy(true, false, new String[]{"*.invalid"});
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("does-not-resolve.invalid"));
+    assertThat(ex.getMessage(), containsString("Failed to resolve host"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_proxyEnabled_hostNotInNonProxyHosts_passes() {
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    HttpClientConfiguration cfg = httpClientConfigWithProxy(true, false, new String[]{"*.internal", "localhost"});
+    when(httpClientManager.getConfiguration()).thenReturn(cfg);
+
+    assertDoesNotThrow(() -> underTest.validateHost("does-not-resolve.invalid"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_ssrfDisabled_passes_evenWithoutProxy() {
+    // existing fast-path: when SSRF is disabled, DNS failures are allowed (no proxy lookup needed)
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(false, Set.of(), Set.of()));
+
+    assertDoesNotThrow(() -> underTest.validateHost("does-not-resolve.invalid"));
+  }
+
+  @Test
+  void testValidateHost_dnsFails_hostInAllowedDomains_passes_evenWithoutProxy() {
+    // existing fast-path: when host is in allowedDomains, DNS failures are allowed (no proxy lookup needed)
+    underTest.updateConfiguration(
+        new SsrfProtectionConfiguration(true, Set.of(), Set.of("does-not-resolve.invalid")));
+
+    assertDoesNotThrow(() -> underTest.validateHost("does-not-resolve.invalid"));
+  }
+
+  @Test
+  void testValidateHost_dnsResolves_proxyConfigured_stillValidatesIp() {
+    // when DNS works, proxy presence does NOT bypass IP-based checks
+    underTest.updateConfiguration(new SsrfProtectionConfiguration(true, Set.of(), Set.of()));
+    // Note: no httpClientManager stubbing needed — when DNS resolves we never reach isProxyConfiguredFor
+
+    // 127.0.0.1 resolves locally and is loopback → must still be blocked
+    ValidationException ex = assertThrows(ValidationException.class,
+        () -> underTest.validateHost("127.0.0.1"));
+    assertThat(ex.getMessage(), containsString("loopback"));
+  }
+
+  private HttpClientConfiguration httpClientConfigWithProxy(
+      final boolean http,
+      final boolean https,
+      final String[] nonProxyHosts)
+  {
+    HttpClientConfiguration cfg = mock(HttpClientConfiguration.class);
+    ProxyConfiguration proxy = new ProxyConfiguration();
+
+    if (http) {
+      ProxyServerConfiguration s = new ProxyServerConfiguration();
+      s.setEnabled(true);
+      s.setHost("proxy.example.com");
+      s.setPort(8080);
+      proxy.setHttp(s);
+    }
+    if (https) {
+      ProxyServerConfiguration s = new ProxyServerConfiguration();
+      s.setEnabled(true);
+      s.setHost("proxy.example.com");
+      s.setPort(8443);
+      proxy.setHttps(s);
+    }
+    proxy.setNonProxyHosts(nonProxyHosts);
+
+    when(cfg.getProxy()).thenReturn(proxy);
+    return cfg;
+  }
+
   private AntiSsrfServiceImpl createService(
       final boolean allowPrivateNetworks,
       final String[] allowedIPs,
@@ -334,6 +540,7 @@ class AntiSsrfServiceImplTest
   {
     return new AntiSsrfServiceImpl(
         kvStore,
+        httpClientManager,
         allowPrivateNetworks,
         allowedIPs,
         allowedDomains,

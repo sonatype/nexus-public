@@ -16,8 +16,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
@@ -289,10 +289,14 @@ public class RepositoryManagerRESTAdapterImplTest
     when(repositoryPermissionChecker.userCanBrowseRepositories(configuration, configuration2, configuration3))
         .thenReturn(asList(configuration, configuration2));
 
+    when(configuration.isOnline()).thenReturn(true);
+    when(configuration2.isOnline()).thenReturn(false);
+
     RepositoryXO xo = new RepositoryXO();
     xo.setName(REPOSITORY_NAME);
     xo.setFormat(REPOSITORY_FORMAT);
     xo.setUrl("http://nexus-url/repository/repoName");
+    xo.setOnline(true);
     xo.setSize(0L);
     xo.setAttributes(Collections.emptyMap());
 
@@ -300,6 +304,7 @@ public class RepositoryManagerRESTAdapterImplTest
     xo2.setName(REPOSITORY_NAME_2);
     xo2.setFormat(REPOSITORY_FORMAT_2);
     xo2.setUrl("http://nexus-url/repository/repoNameTwo");
+    xo2.setOnline(false);
     xo2.setSize(0L);
     xo2.setAttributes(Collections.emptyMap());
 

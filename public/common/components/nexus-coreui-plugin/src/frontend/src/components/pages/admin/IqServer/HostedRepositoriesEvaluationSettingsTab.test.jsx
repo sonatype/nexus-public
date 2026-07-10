@@ -48,15 +48,41 @@ describe('HostedRepositoriesEvaluationSettingsTab', () => {
     mockOnFormChange.mockClear();
   });
 
-  it('renders all form fields', () => {
+  it('renders Evaluation Depth Method dropdown and Policy Evaluation Stage by default', () => {
     renderComponent();
 
     expect(screen.getByText(STRINGS.monitoringSettings.title)).toBeInTheDocument();
-    expect(screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel)).toBeInTheDocument();
-    expect(screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel)).toBeInTheDocument();
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel)).toBeInTheDocument();
     expect(screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel)).toBeInTheDocument();
     expect(screen.getByText(STRINGS.monitoringSettings.newHostedReposText)).toBeInTheDocument();
-    expect(screen.getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('shows Activity Time Frame sub-dropdown by default', () => {
+    renderComponent();
+
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel)).toBeInTheDocument();
+    expect(screen.queryByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel)).not.toBeInTheDocument();
+  });
+
+  it('shows Latest Deployed Versions sub-dropdown and warning when Latest Deployed Versions method is selected', () => {
+    renderComponent();
+
+    const methodSelect = screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel);
+    userEvent.selectOptions(methodSelect, 'latestDeployedVersions');
+
+    expect(screen.queryByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel)).toBeInTheDocument();
+    expect(screen.getByText(STRINGS.monitoringSettings.artifactLatestVersionsWarning)).toBeInTheDocument();
+  });
+
+  it('hides warning when Activity Time Frame method is selected', () => {
+    renderComponent();
+
+    const methodSelect = screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel);
+    userEvent.selectOptions(methodSelect, 'latestDeployedVersions');
+    userEvent.selectOptions(methodSelect, 'activityTimeFrame');
+
+    expect(screen.queryByText(STRINGS.monitoringSettings.artifactLatestVersionsWarning)).not.toBeInTheDocument();
   });
 
   it('renders Package File Patterns section', () => {
@@ -73,46 +99,106 @@ describe('HostedRepositoriesEvaluationSettingsTab', () => {
     expect(screen.getByText(STRINGS.buttons.next)).toBeInTheDocument();
   });
 
-  it('Next button is disabled when form is empty', () => {
+  it('renders Update button instead of Next when globalConfigAvailable is true', () => {
+    render(
+      <HostedRepositoriesEvaluationSettingsTab
+        initialData={defaultInitialData}
+        onNext={mockOnNext}
+        onCancel={mockOnCancel}
+        onFormChange={mockOnFormChange}
+        globalConfigAvailable={true}
+      />
+    );
+
+    expect(screen.getByText(STRINGS.buttons.update)).toBeInTheDocument();
+    expect(screen.queryByText(STRINGS.buttons.next)).not.toBeInTheDocument();
+  });
+
+  it('Next button is enabled by default since Activity Time Frame and Policy Evaluation Stage have defaults', () => {
     renderComponent();
 
     const nextButton = screen.getByText(STRINGS.buttons.next);
-    expect(nextButton).toBeDisabled();
+    expect(nextButton).not.toBeDisabled();
   });
 
-  it('Next button is enabled when all required fields are filled', () => {
+  it('Next button is enabled when Activity Time Frame method has timeframe and stage filled', () => {
     renderComponent();
 
-    const activitySelect = screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel);
-    const versionsSelect = screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel);
     const stageSelect = screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel);
     const nextButton = screen.getByText(STRINGS.buttons.next);
 
-    userEvent.selectOptions(activitySelect, '30');
+    userEvent.selectOptions(stageSelect, 'build');
+
+    expect(nextButton).not.toBeDisabled();
+  });
+
+  it('Next button is disabled when Latest Deployed Versions method has no version count selected', () => {
+    renderComponent();
+
+    const methodSelect = screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel);
+    const stageSelect = screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel);
+    const nextButton = screen.getByText(STRINGS.buttons.next);
+
+    userEvent.selectOptions(methodSelect, 'latestDeployedVersions');
+    userEvent.selectOptions(stageSelect, 'build');
+
+    expect(nextButton).toBeDisabled();
+  });
+
+  it('Next button is enabled when Latest Deployed Versions method has version count and stage filled', () => {
+    renderComponent();
+
+    const methodSelect = screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel);
+    const stageSelect = screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel);
+    const nextButton = screen.getByText(STRINGS.buttons.next);
+
+    userEvent.selectOptions(methodSelect, 'latestDeployedVersions');
+    const versionsSelect = screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel);
     userEvent.selectOptions(versionsSelect, '5');
     userEvent.selectOptions(stageSelect, 'build');
 
     expect(nextButton).not.toBeDisabled();
   });
 
-  it('calls onFormChange when a field value changes', () => {
+  it('calls onFormChange when Evaluation Depth Method changes', () => {
     renderComponent();
 
-    const activitySelect = screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel);
-    userEvent.selectOptions(activitySelect, '30');
+    const methodSelect = screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel);
+    userEvent.selectOptions(methodSelect, 'latestDeployedVersions');
 
     expect(mockOnFormChange).toHaveBeenCalled();
   });
 
-  it('calls onNext with form data when Next button is clicked', () => {
+  it('calls onNext with Activity Time Frame data when that method is selected', () => {
     renderComponent();
 
+    const stageSelect = screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel);
     const activitySelect = screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel);
+    const nextButton = screen.getByText(STRINGS.buttons.next);
+
+    userEvent.selectOptions(activitySelect, '60');
+    userEvent.selectOptions(stageSelect, 'build');
+    userEvent.click(nextButton);
+
+    expect(mockOnNext).toHaveBeenCalledWith({
+      activityTimeFrame: '60',
+      artifactLatestVersions: '',
+      versionDepth: '0',
+      policyEvaluationStage: 'BUILD',
+      applyToNewRepos: false
+    });
+  });
+
+  it('calls onNext with Latest Deployed Versions data when that method is selected', () => {
+    renderComponent();
+
+    const methodSelect = screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel);
+    userEvent.selectOptions(methodSelect, 'latestDeployedVersions');
+
     const versionsSelect = screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel);
     const stageSelect = screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel);
     const nextButton = screen.getByText(STRINGS.buttons.next);
 
-    userEvent.selectOptions(activitySelect, '30');
     userEvent.selectOptions(versionsSelect, '5');
     userEvent.selectOptions(stageSelect, 'build');
     userEvent.click(nextButton);
@@ -120,14 +206,14 @@ describe('HostedRepositoriesEvaluationSettingsTab', () => {
     expect(mockOnNext).toHaveBeenCalledWith({
       activityTimeFrame: '30',
       artifactLatestVersions: '5',
-      policyEvaluationStage: 'build',
+      versionDepth: '5',
+      policyEvaluationStage: 'BUILD',
       applyToNewRepos: false
     });
   });
 
   it('calls onCancel when Cancel button is clicked', () => {
     renderComponent();
-    
 
     const cancelButton = screen.getByText(STRINGS.buttons.cancel);
     userEvent.click(cancelButton);
@@ -135,55 +221,56 @@ describe('HostedRepositoriesEvaluationSettingsTab', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
-  it('renders with pre-filled values from initialData', () => {
+  it('renders with pre-filled Activity Time Frame values from initialData', () => {
     const initialData = {
       activityTimeFrame: '60',
       artifactLatestVersions: '5',
-      policyEvaluationStage: 'release',
+      versionDepth: 0,
+      policyEvaluationStage: 'RELEASE',
       applyToNewRepos: true
     };
 
     renderComponent(initialData);
 
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel)).toHaveValue('activityTimeFrame');
     expect(screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel)).toHaveValue('60');
-    expect(screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel)).toHaveValue('5');
     expect(screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel)).toHaveValue('release');
-    expect(screen.getByRole('checkbox')).toBeChecked();
+  });
+
+  it('renders with pre-filled Latest Deployed Versions values from initialData', () => {
+    const initialData = {
+      activityTimeFrame: '30',
+      artifactLatestVersions: '5',
+      versionDepth: 5,
+      policyEvaluationStage: 'STAGE_RELEASE',
+      applyToNewRepos: false
+    };
+
+    renderComponent(initialData);
+
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.evaluationDepthMethodLabel)).toHaveValue('latestDeployedVersions');
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel)).toHaveValue('5');
+  });
+
+  it('normalizes uppercase API policyEvaluationStage to lowercase-hyphen for dropdown display', () => {
+    renderComponent({...defaultInitialData, policyEvaluationStage: 'STAGE_RELEASE'});
+
+    expect(screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel)).toHaveValue('stage-release');
   });
 
   it('includes applyToNewRepos checkbox state in form data', () => {
     renderComponent();
-    
 
-    const activitySelect = screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel);
-    const versionsSelect = screen.getByLabelText(STRINGS.monitoringSettings.artifactLatestVersionsLabel);
     const stageSelect = screen.getByLabelText(STRINGS.monitoringSettings.policyEvaluationStageLabel);
-    const checkbox = screen.getByRole('checkbox');
+    const applyToNewReposCheckbox = screen.getByRole('checkbox');
     const nextButton = screen.getByText(STRINGS.buttons.next);
 
-    userEvent.selectOptions(activitySelect, '30');
-    userEvent.selectOptions(versionsSelect, '5');
     userEvent.selectOptions(stageSelect, 'build');
-    userEvent.click(checkbox);
+    userEvent.click(applyToNewReposCheckbox);
     userEvent.click(nextButton);
 
-    expect(mockOnNext).toHaveBeenCalledWith({
-      activityTimeFrame: '30',
-      artifactLatestVersions: '5',
-      policyEvaluationStage: 'build',
+    expect(mockOnNext).toHaveBeenCalledWith(expect.objectContaining({
       applyToNewRepos: true
-    });
-  });
-
-  it('Next button remains disabled if only some fields are filled', () => {
-    renderComponent();
-    
-
-    const activitySelect = screen.getByLabelText(STRINGS.monitoringSettings.activityTimeFrameLabel);
-    const nextButton = screen.getByText(STRINGS.buttons.next);
-
-    userEvent.selectOptions(activitySelect, '30');
-
-    expect(nextButton).toBeDisabled();
+    }));
   });
 });

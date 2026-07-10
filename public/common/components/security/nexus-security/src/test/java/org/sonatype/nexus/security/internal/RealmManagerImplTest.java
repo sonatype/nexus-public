@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -30,7 +31,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -126,5 +130,32 @@ class RealmManagerImplTest
     manager.on(passwordChangedEvent);
 
     verifyNoInteractions(authenticatingRealm);
+  }
+
+  /**
+   * Disabling a realm that is not in the active list must NOT persist or reinstall realms.
+   * Otherwise migration steps that disable obsolete realms (such as CargoRealmMigrationStep)
+   * cause RealmManager to cache its default configuration during the migration phase, which is
+   * then never refreshed when later automated configuration writes the real realm list to the
+   * store. See NEXUS-47898.
+   */
+  @Test
+  void testDisableRealm_realmNotPresent_isNoOp() {
+    manager.disableRealm("NotPresentRealm");
+
+    verify(configStore, never()).save(any());
+    verify(securityManager, never()).setRealms(anyList());
+  }
+
+  @Test
+  void testDisableRealm_realmPresent_persistsAndReinstalls() {
+    RealmConfiguration storedConfig = new TestRealmConfiguration();
+    storedConfig.setRealmNames(new ArrayList<>(List.of("A")));
+    when(configStore.load()).thenReturn(storedConfig);
+
+    manager.disableRealm("A");
+
+    verify(configStore).save(any(RealmConfiguration.class));
+    verify(securityManager).setRealms(anyList());
   }
 }

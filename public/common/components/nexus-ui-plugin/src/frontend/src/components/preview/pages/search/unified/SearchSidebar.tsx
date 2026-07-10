@@ -6,7 +6,7 @@
  * M2Eclipse is a trademark of the Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Flex, Text, TextField, Button } from '@radix-ui/themes';
 import { RefreshCw } from 'lucide-react';
 
@@ -42,7 +42,7 @@ export interface SearchSidebarProps {
 
 const DEBOUNCE_MS = 300;
 
-export function SearchSidebar({
+export const SearchSidebar = React.memo(function SearchSidebar({
   selectedFormat,
   onFormatChange,
   onSearch,
@@ -55,6 +55,22 @@ export function SearchSidebar({
   inDrawer = false,
 }: SearchSidebarProps): JSX.Element {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track the focused input element so focus can be restored after disabled toggles
+  const focusedInputRef = useRef<HTMLElement | null>(null);
+  const prevDisabledRef = useRef(disabled);
+
+  // Local text values — decoupled from parent state so typing never depends on a
+  // round-trip through the search machine. Cleared only when onReset fires.
+  const [localValues, setLocalValues] = useState<Record<string, string>>({});
+
+  // Restore focus after disabled transitions false→true→false (search in-flight)
+  useEffect(() => {
+    const wasDisabled = prevDisabledRef.current;
+    prevDisabledRef.current = disabled;
+    if (wasDisabled && !disabled && focusedInputRef.current) {
+      focusedInputRef.current.focus();
+    }
+  }, [disabled]);
 
   const handleFormatChange = useCallback(
     (format: SearchFormat | '') => {
@@ -73,36 +89,44 @@ export function SearchSidebar({
   );
 
   const handleReset = useCallback(() => {
+    setLocalValues({});
     onFormatChange('');
     onFilterChange('repository', '');
     onReset();
     if (onSearch) setTimeout(onSearch, 0);
   }, [onFormatChange, onFilterChange, onReset, onSearch]);
 
-  const handleFilterChangeWithSearch = useCallback(
-    (filterId: string, value: string, immediate = false) => {
+  const handleTextFilterChange = useCallback(
+    (filterId: string, value: string) => {
+      setLocalValues((prev) => ({ ...prev, [filterId]: value }));
       onFilterChange(filterId, value);
       if (onSearch) {
-        if (immediate) {
-          setTimeout(onSearch, 200);
-        } else {
-          if (debounceRef.current) clearTimeout(debounceRef.current);
-          debounceRef.current = setTimeout(() => {
-            debounceRef.current = null;
-            onSearch();
-          }, DEBOUNCE_MS);
-        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          debounceRef.current = null;
+          onSearch();
+        }, DEBOUNCE_MS);
       }
+    },
+    [onFilterChange, onSearch],
+  );
+
+  const handleSelectFilterChange = useCallback(
+    (filterId: string, value: string) => {
+      onFilterChange(filterId, value);
+      if (onSearch) setTimeout(onSearch, 200);
     },
     [onFilterChange, onSearch],
   );
 
   const repositoryValue = filters['repository'] || '';
 
-  // Format-specific filters (exclude repository - it's rendered separately)
+  // Format-specific filters (exclude repository and nameOrVersion — both rendered elsewhere)
   const formatSpecificFilters = useMemo(() => {
     if (!selectedFormat || selectedFormat === 'all') return [];
-    return getFiltersForFormat(selectedFormat).filter((f) => f.id !== 'repository');
+    return getFiltersForFormat(selectedFormat).filter(
+      (f) => f.id !== 'repository' && f.id !== 'nameOrVersion',
+    );
   }, [selectedFormat]);
 
   return (
@@ -174,14 +198,10 @@ export function SearchSidebar({
                       <TextField.Root
                         id={`filter-${filter.id}`}
                         placeholder={filter.placeholder}
-                        value={filters[filter.id] || ''}
-                        onChange={(e) =>
-                          handleFilterChangeWithSearch(
-                            filter.id,
-                            e.target.value,
-                            false,
-                          )
-                        }
+                        value={localValues[filter.id] ?? filters[filter.id] ?? ''}
+                        onChange={(e) => handleTextFilterChange(filter.id, e.target.value)}
+                        onFocus={(e) => { focusedInputRef.current = e.currentTarget; }}
+                        onBlur={() => { if (!disabled) focusedInputRef.current = null; }}
                         disabled={disabled}
                         size="2"
                         mt="1"
@@ -195,13 +215,7 @@ export function SearchSidebar({
                       <select
                         id={`filter-${filter.id}`}
                         value={filters[filter.id] || ''}
-                        onChange={(e) =>
-                          handleFilterChangeWithSearch(
-                            filter.id,
-                            e.target.value,
-                            true,
-                          )
-                        }
+                        onChange={(e) => handleSelectFilterChange(filter.id, e.target.value)}
                         disabled={disabled}
                         style={{
                           width: '100%',
@@ -230,6 +244,6 @@ export function SearchSidebar({
       </Box>
     </aside>
   );
-}
+});
 
 export default SearchSidebar;

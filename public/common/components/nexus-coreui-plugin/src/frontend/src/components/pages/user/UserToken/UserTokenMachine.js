@@ -143,8 +143,7 @@ export default createMachine({
     }),
     setError: assign({
       error: (_, event) => {
-        const res = event?.data?.response?.data;
-        if (res && res.includes(MESSAGES.EXPIRED)) {
+        if (event?.data?.response?.status === 410) {
           return USER_TOKEN_STATUS.EXPIRED_WARNING;
         }
       }

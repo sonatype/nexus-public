@@ -11,12 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useMemo } from 'react';
 import { Box, Flex, Text, Heading } from '@radix-ui/themes';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -37,6 +31,10 @@ import { useAnonymousForm } from './useAnonymousForm';
 import { AnonymousPageProps } from './types';
 
 import './AnonymousPage.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 /**
  * AnonymousPage - Anonymous Access settings configuration page for Preview UI
@@ -123,10 +121,13 @@ export function AnonymousPage({ className }: AnonymousPageProps) {
       py={{ initial: '4', md: '5', lg: '6' }}
     >
       <Box mb="4">
-        {/* Header */}
         <PageHeader
           title="Anonymous Access"
           description="Configure anonymous user access settings"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Anonymous Access' }
+          ]}
         />
       </Box>
 
@@ -146,6 +147,7 @@ export function AnonymousPage({ className }: AnonymousPageProps) {
         loading={anonForm.isSaving}
         pristine={anonForm.isPristine}
         testId="anonymous-form"
+        submitAnalyticsId="nxrm-anonymous-save"
         data-loading={anonForm.isSaving ? 'true' : 'false'}
         data-dirty={!anonForm.isPristine ? 'true' : 'false'}
         data-submitting={anonForm.isSaving ? 'true' : 'false'}
@@ -161,6 +163,7 @@ export function AnonymousPage({ className }: AnonymousPageProps) {
             {...anonForm.checkbox('enabled')}
             label="Allow anonymous users to access the server"
             description="Enable anonymous access to repository content"
+            analyticsId="nxrm-anonymous-toggle"
           />
 
           <SettingsTextInput

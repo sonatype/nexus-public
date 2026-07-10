@@ -16,9 +16,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
@@ -41,9 +41,12 @@ import org.mockito.Mock;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.sonatype.nexus.rest.WebApplicationMessageException;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -128,6 +131,14 @@ class SearchResourceTest
   @Test
   void doSearch_withDirectionAllWhitespace() {
     assertDoesNotThrow(() -> underTest.doSearch(null, null, "   \t", null, defaultUriInfo));
+  }
+
+  @Test
+  void doSearch_withInvalidDirection_throwsBadRequest() {
+    WebApplicationMessageException e =
+        assertThrows(WebApplicationMessageException.class,
+            () -> underTest.doSearch(null, null, "INVALID", null, defaultUriInfo));
+    assertThat(e.getResponse().getStatus(), is(400));
   }
 
   @Test

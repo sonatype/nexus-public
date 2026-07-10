@@ -105,6 +105,8 @@ function validateEmail(email: string): string | undefined {
  * Validate password and confirmation fields.
  * Used for both create (required) and edit (required only when non-empty) modes.
  */
+const MIN_PASSWORD_LENGTH = 8;
+
 function validatePassword(
   password: string | undefined,
   passwordConfirm: string | undefined,
@@ -115,10 +117,12 @@ function validatePassword(
   if (required || password || passwordConfirm) {
     if (!password) {
       errors.password = 'Password is required';
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
     }
     if (!passwordConfirm) {
       errors.passwordConfirm = 'Please confirm your password';
-    } else if (password !== passwordConfirm) {
+    } else if (password && password !== passwordConfirm) {
       errors.passwordConfirm = 'Passwords do not match';
     }
   }

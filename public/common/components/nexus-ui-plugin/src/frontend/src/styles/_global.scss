@@ -14,3 +14,13 @@
 .nxrm-spacer {
   flex: 1;
 }
+
+// Tooltips inside Radix Dialogs were rendering below the dialog. Radix popper is supposed to
+// copy z-index from getComputedStyle(content) to the wrapper, but the dialog's own stacking
+// context wins in practice. Set z-index on both the content and the popper wrapper directly
+// so the tooltip floats above any dialog/overlay. 14999 matches other popper rules in the
+// codebase (above ExtJS animations at 10000, below masks at 20000+).
+.rt-TooltipContent,
+[data-radix-popper-content-wrapper]:has(.rt-TooltipContent) {
+  z-index: 14999 !important;
+}

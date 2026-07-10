@@ -12,13 +12,13 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
-import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotEmpty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * REST API model of properties common to all repository types & formats.
@@ -27,24 +27,23 @@ import javax.validation.constraints.NotEmpty;
  */
 public abstract class AbstractApiRepository
 {
-  @ApiModelProperty(value = "A unique identifier for this repository", example = "internal")
+  @Schema(description = "A unique identifier for this repository", example = "internal")
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotEmpty
   protected String name;
 
-  @ApiModelProperty(value = "Component format held in this repository", example = "npm")
+  @Schema(description = "Component format held in this repository", example = "npm")
   @NotEmpty
   protected String format;
 
-  @ApiModelProperty(value = "Controls if deployments of and updates to artifacts are allowed",
-      allowableValues = "hosted,proxy,group", example = "hosted")
+  @Schema(description = "Controls if deployments of and updates to artifacts are allowed", example = "hosted")
   @NotEmpty
   protected String type;
 
-  @ApiModelProperty(value = "URL to the repository")
+  @Schema(description = "URL to the repository")
   protected String url;
 
-  @ApiModelProperty(value = "Whether this repository accepts incoming requests", example = "true")
+  @Schema(description = "Whether this repository accepts incoming requests", example = "true")
   @NotNull
   protected Boolean online;
 

@@ -19,6 +19,7 @@ import { Theme } from '@radix-ui/themes';
 
 import { AssetDetailPanel } from '../AssetDetailPanel';
 import type { AssetXO, ComponentXO } from '../detail.types';
+import ExtJS from '../../../../../../interface/ExtJS';
 
 // Test wrapper with Radix Theme
 const renderWithTheme = (ui: React.ReactElement) => {
@@ -34,6 +35,7 @@ const mockAsset: AssetXO = {
   size: 1572864, // 1.5 MB
   repositoryName: 'maven-releases',
   containingRepositoryName: 'maven-releases',
+  downloadUrl: 'https://server.example.com/custom-context/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar',
   blobCreated: '2024-01-15T10:30:00Z',
   blobUpdated: '2024-01-15T10:30:00Z',
   lastDownloaded: '2024-01-20T14:25:00Z',
@@ -259,8 +261,23 @@ describe('AssetDetailPanel', () => {
       expect(downloadButtons.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('opens download URL when clicked and no onDownload provided', async () => {
-      renderWithTheme(<AssetDetailPanel asset={mockAsset} />);
+    it.each([
+      ['root context path (/)',    'https://nexus.example.com/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar'],
+      ['custom context path (/nexus)', 'https://nexus.example.com/nexus/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar'],
+      ['custom context path (/nxrm)',  'https://nexus.example.com/nxrm/repository/maven-releases/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar'],
+    ])('uses server-provided downloadUrl unchanged for %s', async (_label, serverDownloadUrl) => {
+      const asset = { ...mockAsset, downloadUrl: serverDownloadUrl };
+      renderWithTheme(<AssetDetailPanel asset={asset} />);
+
+      const downloadButtons = screen.getAllByRole('button', { name: /download/i });
+      await userEvent.click(downloadButtons[0]);
+
+      expect(mockWindowOpen).toHaveBeenCalledWith(serverDownloadUrl, '_blank');
+    });
+
+    it('falls back to client-generated URL when server downloadUrl is absent', async () => {
+      const { downloadUrl: _omitted, ...assetWithoutDownloadUrl } = mockAsset;
+      renderWithTheme(<AssetDetailPanel asset={assetWithoutDownloadUrl as typeof mockAsset} />);
 
       const downloadButtons = screen.getAllByRole('button', { name: /download/i });
       await userEvent.click(downloadButtons[0]);
@@ -346,6 +363,28 @@ describe('AssetDetailPanel', () => {
       await userEvent.click(cancelButton);
 
       expect(onDelete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Component Tags tab visibility', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('hides Component Tags tab in CE mode', () => {
+      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(false);
+
+      renderWithTheme(<AssetDetailPanel asset={mockAsset} />);
+
+      expect(screen.queryByRole('tab', { name: /component tags/i })).not.toBeInTheDocument();
+    });
+
+    it('shows Component Tags tab in Pro Edition', () => {
+      jest.spyOn(ExtJS, 'isProEdition').mockReturnValue(true);
+
+      renderWithTheme(<AssetDetailPanel asset={mockAsset} />);
+
+      expect(screen.getByRole('tab', { name: /component tags/i })).toBeInTheDocument();
     });
   });
 

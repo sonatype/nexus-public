@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.httpclient;
 
 import javax.annotation.Nullable;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;

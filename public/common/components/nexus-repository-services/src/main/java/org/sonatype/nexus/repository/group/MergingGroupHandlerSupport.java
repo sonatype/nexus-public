@@ -127,6 +127,7 @@ public abstract class MergingGroupHandlerSupport
     }
 
     return merge(context, successfulResponses)
+        .map(content -> maybeRewrite(context, content))
         .map(HttpResponses::ok)
         .orElseGet(HttpResponses::notFound);
   }
@@ -298,6 +299,13 @@ public abstract class MergingGroupHandlerSupport
       done[0] = matcher.test(line);
       return false;
     };
+  }
+
+  /**
+   * Called before an HTTP response is generated to allow on-the-fly modification (e.g. URL rewriting).
+   */
+  protected Content maybeRewrite(final Context context, final Content mergedContent) {
+    return mergedContent;
   }
 
   /**

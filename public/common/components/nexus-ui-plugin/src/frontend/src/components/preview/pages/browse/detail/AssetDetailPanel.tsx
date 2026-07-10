@@ -40,6 +40,7 @@ import {
   isAssetCached,
   getAssetDownloadUrl,
   getFilenameFromPath,
+  sanitizeRegistryUrl,
 } from './detail.utils';
 
 import './DetailPanel.scss';
@@ -102,11 +103,22 @@ interface AttributeSectionProps {
   defaultOpen?: boolean;
 }
 
+function formatAttributeValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '';
+    if (typeof value[0] === 'object') {
+      return value.map((item) => JSON.stringify(item)).join('\n');
+    }
+    return value.join(', ');
+  }
+  return String(value);
+}
+
 function AttributeSection({ title, attributes, defaultOpen = false }: AttributeSectionProps): JSX.Element | null {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const displayableAttributes = Object.entries(attributes).filter(
-    ([, value]) => value !== null && value !== undefined && typeof value !== 'object'
+    ([, value]) => value !== null && value !== undefined
   );
 
   if (displayableAttributes.length === 0) {
@@ -130,7 +142,9 @@ function AttributeSection({ title, attributes, defaultOpen = false }: AttributeS
           {displayableAttributes.map(([key, value]) => (
             <Flex key={key} className="attributes-section__item">
               <Text className="attributes-section__key">{key}</Text>
-              <Text className="attributes-section__value">{String(value)}</Text>
+              <Text className="attributes-section__value" style={{ whiteSpace: 'pre-wrap' }}>
+                {formatAttributeValue(value)}
+              </Text>
             </Flex>
           ))}
         </Box>
@@ -218,11 +232,13 @@ function getUsageSnippets(
   format: string,
   group: string | null | undefined,
   name: string,
-  version: string | null | undefined
+  version: string | null | undefined,
+  registryUrl?: string | null
 ): { title: string; code: string }[] {
   const snippets: { title: string; code: string }[] = [];
   const g = group || '';
   const v = version || 'LATEST';
+  const dockerPullTarget = sanitizeRegistryUrl(registryUrl) ? `${sanitizeRegistryUrl(registryUrl)}/${name}` : name;
 
   switch (format?.toLowerCase()) {
     case 'maven2':
@@ -272,7 +288,7 @@ function getUsageSnippets(
     case 'docker':
       snippets.push({
         title: 'Docker Pull',
-        code: `docker pull ${name}:${v}`,
+        code: `docker pull ${dockerPullTarget}:${v}`,
       });
       break;
     case 'go':
@@ -311,6 +327,7 @@ export function AssetDetailPanel({
 }: AssetDetailPanelProps): JSX.Element {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const iqEnabled = isIqServerEnabled();
+  const isProEdition = ExtJS.isProEdition?.() ?? false;
 
   const {
     name,
@@ -331,7 +348,7 @@ export function AssetDetailPanel({
 
   const displayName = getFilenameFromPath(name);
   const isCached = isAssetCached(contentType, size);
-  const downloadUrl = getAssetDownloadUrl(repositoryName, name);
+  const downloadUrl = asset.downloadUrl ?? getAssetDownloadUrl(repositoryName, name);
 
   const handleDeleteClick = useCallback(() => {
     setShowDeleteDialog(true);
@@ -359,9 +376,12 @@ export function AssetDetailPanel({
       )
     : [];
 
-  // Get usage snippets
+  // Get usage snippets — pass docker registryUrl when present so docker pull commands
+  // include the registry host (e.g. `docker pull host:port/image:tag`). Top-level field
+  // computed by the backend at read time (NEXUS-51972).
+  const dockerRegistryUrl = asset?.registryUrl;
   const usageSnippets = component
-    ? getUsageSnippets(format, component.group, component.name, component.version)
+    ? getUsageSnippets(format, component.group, component.name, component.version, dockerRegistryUrl)
     : [];
 
   return (
@@ -407,7 +427,7 @@ export function AssetDetailPanel({
           <Tabs.Trigger value="summary">{STRINGS.tabs.summary}</Tabs.Trigger>
           <Tabs.Trigger value="usage">{STRINGS.tabs.usage}</Tabs.Trigger>
           <Tabs.Trigger value="attributes">{STRINGS.tabs.attributes}</Tabs.Trigger>
-          <Tabs.Trigger value="tags">{STRINGS.tabs.tags}</Tabs.Trigger>
+          {isProEdition && <Tabs.Trigger value="tags">{STRINGS.tabs.tags}</Tabs.Trigger>}
           <Tabs.Trigger value="lifecycle">{STRINGS.tabs.lifecycle}</Tabs.Trigger>
         </Tabs.List>
 
@@ -557,20 +577,22 @@ export function AssetDetailPanel({
           </ScrollArea>
         </Tabs.Content>
 
-        {/* Component Tags Tab */}
-        <Tabs.Content value="tags">
-          <ScrollArea className="detail-panel__tab-content">
-            <Box py="4">
-              <Flex direction="column" align="center" justify="center" py="6" gap="3">
-                <Tag size={32} color="var(--gray-9)" />
-                <Text color="gray">{STRINGS.noTagsAvailable}</Text>
-                <Text color="gray" size="1">
-                  Tags can be managed via the REST API or during upload.
-                </Text>
-              </Flex>
-            </Box>
-          </ScrollArea>
-        </Tabs.Content>
+        {/* Component Tags Tab — Pro feature: hidden in CE mode */}
+        {isProEdition && (
+          <Tabs.Content value="tags">
+            <ScrollArea className="detail-panel__tab-content">
+              <Box py="4">
+                <Flex direction="column" align="center" justify="center" py="6" gap="3">
+                  <Tag size={32} color="var(--gray-9)" />
+                  <Text color="gray">{STRINGS.noTagsAvailable}</Text>
+                  <Text color="gray" size="1">
+                    Tags can be managed via the REST API or during upload.
+                  </Text>
+                </Flex>
+              </Box>
+            </ScrollArea>
+          </Tabs.Content>
+        )}
 
         {/* Sonatype Lifecycle Tab */}
         <Tabs.Content value="lifecycle">

@@ -95,6 +95,54 @@ describe('SettingsCombobox', () => {
       expect(onChange).toHaveBeenCalledWith('roles');
     });
 
+    /**
+     * NEXUS-52435 — regression: when the option's label and value differ
+     * (e.g. value="*" and label="(All Repositories)") the input must show
+     * the label, not the raw value, both after selecting the option and
+     * when the value is provided externally via props.
+     */
+    it('renders the label, not the value, after selecting an option whose label differs from its value', () => {
+      const onChange = jest.fn();
+      const optionsWithSpecialEntry = [
+        { value: '*', label: '(All Repositories)' },
+        { value: 'maven-central', label: 'maven-central' },
+      ];
+      render(
+        <SettingsCombobox
+          name="repo"
+          label="Repository"
+          options={optionsWithSpecialEntry}
+          onChange={onChange}
+          showLabelForValue
+        />
+      );
+
+      fireEvent.focus(screen.getByTestId('combobox-repo'));
+      fireEvent.click(screen.getByText('(All Repositories)'));
+
+      expect(onChange).toHaveBeenCalledWith('*');
+      // The visible input must show the label, not the raw "*" token.
+      expect((screen.getByTestId('combobox-repo') as HTMLInputElement).value).toBe('(All Repositories)');
+    });
+
+    it('renders the label when an external value matches an option whose label differs', () => {
+      const optionsWithSpecialEntry = [
+        { value: '*', label: '(All Repositories)' },
+        { value: 'maven-central', label: 'maven-central' },
+      ];
+      render(
+        <SettingsCombobox
+          name="repo"
+          label="Repository"
+          options={optionsWithSpecialEntry}
+          value="*"
+          showLabelForValue
+        />
+      );
+
+      expect((screen.getByTestId('combobox-repo') as HTMLInputElement).value).toBe('(All Repositories)');
+    });
+
     it('shows error state', () => {
       render(
         <SettingsCombobox name="domain" label="Domain" options={singleOptions} error="Required" />
@@ -109,6 +157,88 @@ describe('SettingsCombobox', () => {
       );
 
       expect(screen.getByText('Pick a domain')).toBeInTheDocument();
+    });
+
+    it('blur restores display label not raw value when showLabelForValue is true', async () => {
+      // Regression for line 226 fix: blur was restoring setInputValue(value) which showed
+      // the raw synthetic value '*-maven2' instead of '(All maven2 Repositories)'.
+      const formatOptions = [
+        { value: '*-maven2', label: '(All maven2 Repositories)' },
+        { value: '*-npm',    label: '(All npm Repositories)' },
+      ];
+      render(
+        <SettingsCombobox name="restrict" options={formatOptions} value="*-maven2" showLabelForValue />
+      );
+
+      const input = screen.getByTestId('combobox-restrict') as HTMLInputElement;
+      expect(input.value).toBe('(All maven2 Repositories)');
+
+      // User focuses and clears the field without selecting anything
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: '' } });
+      expect(input.value).toBe('');
+
+      // Blur fires the 200 ms restore timeout
+      fireEvent.blur(input);
+      await waitFor(() => {
+        // Must restore the display label, not the raw '*-maven2' value
+        expect(input.value).toBe('(All maven2 Repositories)');
+      });
+    });
+
+    it('focus does not clear existing value — filterQuery shows all options without clearing', () => {
+      // Regression for line 238/248 fix: clearing on focus broke allowCustom comboboxes
+      // (privilege domains, external roles, etc.) by wiping the user's typed value.
+      // filterQuery already returns '' when inputValue matches currentDisplay,
+      // so clearing is unnecessary and harmful.
+      render(
+        <SettingsCombobox
+          name="domain"
+          label="Domain"
+          options={singleOptions}
+          value="users"
+          allowCustom
+          onChange={jest.fn()}
+        />
+      );
+
+      const input = screen.getByTestId('combobox-domain') as HTMLInputElement;
+      expect(input.value).toBe('users');
+
+      fireEvent.focus(input);
+
+      // Input must NOT be cleared — the existing value is preserved
+      expect(input.value).toBe('users');
+      // And all options are still shown (filterQuery = '' because inputValue === currentDisplay)
+      const listbox = screen.getByRole('listbox');
+      expect(within(listbox).getAllByRole('option')).toHaveLength(3);
+    });
+
+    it('shows full option list on reopen when showLabelForValue is true', async () => {
+      const formatOptions = [
+        { value: '*', label: '(All Repositories)' },
+        { value: '*-maven2', label: '(All maven2 Repositories)' },
+        { value: '*-npm', label: '(All npm Repositories)' },
+      ];
+      render(
+        <SettingsCombobox
+          name="restrict"
+          options={formatOptions}
+          value="*-maven2"
+          showLabelForValue
+        />
+      );
+
+      const input = screen.getByTestId('combobox-restrict') as HTMLInputElement;
+      expect(input.value).toBe('(All maven2 Repositories)');
+
+      fireEvent.focus(input);
+
+      // All three options should still be visible — the label in the input must not be
+      // used as a filter query against option values like "*-npm".
+      const listbox = screen.getByRole('listbox');
+      const options = within(listbox).getAllByRole('option');
+      expect(options).toHaveLength(3);
     });
   });
 

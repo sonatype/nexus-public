@@ -311,6 +311,28 @@ describe('blobStoreFormMachine', () => {
       service.stop();
     });
 
+    it('validates s3 bucket name must be between 3 and 63 characters', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 's3' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { bucket: { region: 'us-east-1', name: 'ab' } },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors['bucketConfiguration.bucket.name']).toBe(
+        'Bucket name must be between 3 and 63 characters'
+      );
+
+      service.stop();
+    });
+
     it('validates azure type requires account name and container name', async () => {
       const machine = createBlobStoreFormMachine(undefined);
       const service = await startAndLoad(machine);
@@ -327,6 +349,112 @@ describe('blobStoreFormMachine', () => {
       service.stop();
     });
 
+    it('validates azure account name must be between 3 and 24 characters', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'azure' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { accountName: 'ab', containerName: 'valid-container' },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors['bucketConfiguration.accountName']).toBe(
+        'Account name must be between 3 and 24 characters'
+      );
+
+      service.stop();
+    });
+
+    it('validates azure account name rejects values over 24 characters', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'azure' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { accountName: 'a'.repeat(25), containerName: 'valid-container' },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors['bucketConfiguration.accountName']).toBe(
+        'Account name must be between 3 and 24 characters'
+      );
+
+      service.stop();
+    });
+
+    it('validates azure container name must be between 3 and 63 characters', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'azure' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { accountName: 'validaccount', containerName: 'ab' },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors['bucketConfiguration.containerName']).toBe(
+        'Container name must be between 3 and 63 characters'
+      );
+
+      service.stop();
+    });
+
+    it('validates azure container name rejects values over 63 characters', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'azure' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { accountName: 'validaccount', containerName: 'c'.repeat(64) },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors['bucketConfiguration.containerName']).toBe(
+        'Container name must be between 3 and 63 characters'
+      );
+
+      service.stop();
+    });
+
+    it('accepts azure account and container names within length bounds', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'azure' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { accountName: 'validaccount', containerName: 'valid-container' },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors['bucketConfiguration.accountName']).toBeUndefined();
+      expect(state.context.validationErrors['bucketConfiguration.containerName']).toBeUndefined();
+
+      service.stop();
+    });
+
     it('validates google type requires bucket name', async () => {
       const machine = createBlobStoreFormMachine(undefined);
       const service = await startAndLoad(machine);
@@ -338,6 +466,28 @@ describe('blobStoreFormMachine', () => {
       const state = service.getSnapshot();
       expect(state.matches('editing')).toBe(true);
       expect(state.context.validationErrors['bucketConfiguration.bucket.name']).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('validates google bucket name must be between 3 and 63 characters', async () => {
+      const machine = createBlobStoreFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TYPE_CHANGE', value: 'google' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'test-store' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'bucketConfiguration',
+        value: { bucket: { name: 'ab' } },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.matches('editing')).toBe(true);
+      expect(state.context.validationErrors['bucketConfiguration.bucket.name']).toBe(
+        'Bucket name must be between 3 and 63 characters'
+      );
 
       service.stop();
     });
@@ -589,6 +739,66 @@ describe('blobStoreFormMachine', () => {
       expect(state.context.data.path).toBe('/data/blobs/default');
       expect(state.context.data.softQuota.enabled).toBe(true);
       expect(state.context.data.softQuota.type).toBe('spaceUsedQuota');
+      // API returns limit in bytes (1 GiB = 1073741824); form should display in MB (1024 MB)
+      expect(state.context.data.softQuota.limit).toBe(1024);
+
+      service.stop();
+    });
+
+    it('converts softQuota.limit from bytes to MB when loading edit data', async () => {
+      // 100 MB = 104857600 bytes; form should show 100, not 104857600
+      const preloadedBlobStore = {
+        name: 'my-store',
+        type: 'file',
+        path: '/data/blobs/my-store',
+        softQuota: { type: 'spaceRemainingQuota', limit: 104857600 },
+      };
+
+      const machine = createBlobStoreFormMachine('my-store', 'file', preloadedBlobStore);
+      const service = await startAndLoad(machine);
+
+      const state = service.getSnapshot();
+      expect(state.context.data.softQuota.enabled).toBe(true);
+      expect(state.context.data.softQuota.limit).toBe(100);
+
+      service.stop();
+    });
+
+    it('sets softQuota.enabled to false when API response has no softQuota', async () => {
+      const preloadedBlobStore = {
+        name: 'no-quota-store',
+        type: 'file',
+        path: '/data/blobs/no-quota-store',
+        // No softQuota field - quota was never configured
+      };
+
+      const machine = createBlobStoreFormMachine('no-quota-store', 'file', preloadedBlobStore);
+      const service = await startAndLoad(machine);
+
+      const state = service.getSnapshot();
+      expect(state.context.data.softQuota.enabled).toBe(false);
+
+      service.stop();
+    });
+
+    it('loads blob store when blobStoreType is passed with mixed-case (e.g. "File")', async () => {
+      // BlobStoresList passes store.typeId which may be "File" (capital F);
+      // findBlobStore must lowercase it before building the REST URL.
+      const preloadedBlobStore = {
+        name: 'default',
+        type: 'file',
+        path: '/data/blobs/default',
+        softQuota: { type: 'spaceUsedQuota', limit: 104857600 },
+      };
+
+      // Pass mixed-case type "File" as it comes from the list API
+      const machine = createBlobStoreFormMachine('default', 'File', preloadedBlobStore);
+      const service = await startAndLoad(machine);
+
+      const state = service.getSnapshot();
+      expect(state.matches({ editing: 'file' })).toBe(true);
+      expect(state.context.data.softQuota.enabled).toBe(true);
+      expect(state.context.data.softQuota.limit).toBe(100);
 
       service.stop();
     });

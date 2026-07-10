@@ -13,15 +13,38 @@
 
 /**
  * EntityTable Styles
- * 
- * Generic sortable table component.
+ *
+ * Generic sortable table component with sticky headers.
+ *
+ * Sticky header pattern:
+ * - border-collapse: separate prevents sticky-header painting artifacts
+ * - position: sticky on thead keeps the entire header section pinned during scroll
+ * - position: sticky on thead th ensures each header cell remains fully opaque
+ * - background-color on both thead and th prevents content from bleeding through
+ * - Parent must NOT have overflow: hidden (breaks sticky positioning)
+ * - Scroll container is provided by parent page (e.g., .capabilities-page__content)
+ * - z-index: 1 ensures header stacks above tbody cells
+ * - Dark theme uses var(--gray-2) for header background (see dark mode section below)
  */
 
 .entity-table {
   width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--color-panel-solid);
+  }
+
+  thead th {
+    background-color: var(--color-panel-solid);
+    box-shadow: 0 1px 0 0 var(--gray-6);
+  }
 
   &__header {
-    background-color: var(--color-surface-secondary);
     user-select: none;
 
     &--sortable {
@@ -95,8 +118,12 @@
 // Dark mode adjustments
 [data-theme="dark"] {
   .entity-table {
-    &__header {
-      background-color: var(--color-surface-secondary);
+    thead {
+      background-color: var(--gray-2);
+    }
+
+    thead th {
+      background-color: var(--gray-2);
     }
 
     &__row--clickable:hover {
@@ -104,4 +131,3 @@
     }
   }
 }
-

@@ -26,6 +26,7 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Proxy', {
   alias: 'widget.nx-coreui-repository-maven2-proxy',
   requires: [
     'NX.coreui.view.repository.facet.Maven2Facet',
+    'NX.coreui.view.repository.facet.FirewallFacet',
     'NX.coreui.view.repository.facet.ProxyFacet',
     'NX.coreui.view.repository.facet.StorageFacet',
     'NX.coreui.view.repository.facet.RoutingRuleFacet',
@@ -42,6 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.Maven2Proxy', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-maven2-facet'},
+      {xtype: 'nx-coreui-repository-firewall-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

@@ -36,6 +36,7 @@ import {
   type SortDirection,
 } from '../../../shared';
 import { MobileFilterDrawer } from '../unified/MobileFilterDrawer';
+import { exportToCsv } from '../../../shared';
 
 const STATUS_OPTIONS = [
   { value: 'recommended', label: 'Recommended' },
@@ -284,15 +285,33 @@ export function GAVersionsTab({
                     Filter
                   </Button>
                 </Box>
-                <Button size="2" variant="outline" color="gray">
-                  <Download size={14} />
-                  <Box
-                    asChild
-                    display={{ initial: 'none', sm: 'inline' }}
-                    style={{ marginLeft: 6 }}
+                <Button asChild size="2" variant="outline" color="gray">
+                  <button
+                    disabled={sortedVersions.length === 0}
+                    aria-label="Export all filtered results as CSV"
+                    onClick={() =>
+                      exportToCsv(
+                        sortedVersions.map((v) => ({
+                          version: v.version,
+                          status: v.status,
+                          statusReason: v.statusReason,
+                          repositories: v.repositories.join(';'),
+                          lastUpdated: v.lastUpdated,
+                        })),
+                        'versions.csv',
+                        ['version', 'status', 'statusReason', 'repositories', 'lastUpdated'],
+                      )
+                    }
                   >
-                    <span>Export CSV</span>
-                  </Box>
+                    <Download size={14} />
+                    <Box
+                      asChild
+                      display={{ initial: 'none', sm: 'inline' }}
+                      style={{ marginLeft: 6 }}
+                    >
+                      <span>Export CSV</span>
+                    </Box>
+                  </button>
                 </Button>
               </Flex>
             </Flex>

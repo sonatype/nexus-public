@@ -10,13 +10,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Flex, Text, Heading } from '@radix-ui/themes';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -41,6 +34,10 @@ import {
 } from './types';
 
 import './UserTokensPage.scss';
+
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
 
 /**
  * UserTokensPage - User Token settings configuration page for Preview UI
@@ -252,6 +249,10 @@ export function UserTokensPage() {
         <PageHeader
           title="User Tokens"
           description="Configure user token settings for repository authentication"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'User Tokens' }
+          ]}
         />
       </Box>
 

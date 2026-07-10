@@ -66,6 +66,7 @@ export function LicenseAgreementModal({
 
             {/* Content */}
             <Box className="license-agreement-modal__body">
+              {/* licenseUrl is always a local relative path (e.g. /PRO-LICENSE.html) from ExtJS.proLicenseUrl() */}
               <iframe
                 className="license-agreement-modal__iframe"
                 title="Nexus Repository Manager License Agreement"

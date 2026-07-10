@@ -43,7 +43,7 @@ export interface SearchResultsProps {
   loading: boolean;
   /** Error message if any */
   error?: string;
-  /** Callback to load more results */
+  /** Callback to load more results. Must be a stable reference (wrapped in useCallback) to avoid infinite re-fetch loops. */
   onLoadMore: () => void;
   /** Whether more results can be loaded */
   hasMore: boolean;
@@ -63,6 +63,8 @@ export interface SearchResultsProps {
   nameFilter?: string;
   /** Callback when name filter changes */
   onNameFilterChange?: (value: string) => void;
+  /** Currently selected format — hides the name filter when a specific format is active */
+  selectedFormat?: string;
   /** Callback to open mobile filter drawer (mobile only) */
   onOpenMobileFilters?: () => void;
 }
@@ -81,25 +83,39 @@ export function SearchResults({
   query,
   nameFilter = '',
   onNameFilterChange,
+  selectedFormat = '',
   onOpenMobileFilters,
 }: SearchResultsProps): JSX.Element {
+  const showNameFilter = !selectedFormat || selectedFormat === 'all';
   const [localFilterValue, setLocalFilterValue] = useState(nameFilter);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(PAGE_SIZE_OPTIONS[0]);
   const prevResultsLengthRef = useRef(results.length);
+  const pendingPageAdvanceRef = useRef(false);
 
   useEffect(() => {
     setLocalFilterValue(nameFilter);
   }, [nameFilter]);
 
-  // Reset to page 1 when results shrink (new search)
+  // Reset to page 1 when results shrink (new search); advance page when load-more completes
   useEffect(() => {
     if (results.length < prevResultsLengthRef.current || results.length === 0) {
       setCurrentPage(1);
+      pendingPageAdvanceRef.current = false;
+    } else if (results.length > prevResultsLengthRef.current && pendingPageAdvanceRef.current) {
+      pendingPageAdvanceRef.current = false;
+      setCurrentPage((prev) => prev + 1);
     }
     prevResultsLengthRef.current = results.length;
   }, [results.length]);
+
+  // Auto-fetch more results when loaded count doesn't fill the current page size
+  useEffect(() => {
+    if (hasMore && !loading && !error && results.length > 0 && results.length < itemsPerPage) {
+      onLoadMore();
+    }
+  }, [hasMore, loading, error, results.length, itemsPerPage, onLoadMore]);
 
   const totalItems = results.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -114,6 +130,11 @@ export function SearchResults({
     },
     []
   );
+
+  const handleLoadMore = useCallback(() => {
+    pendingPageAdvanceRef.current = true;
+    onLoadMore();
+  }, [onLoadMore]);
 
   const handleFilterChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,7 +168,7 @@ export function SearchResults({
     : totalCount.toLocaleString();
 
   /* Desktop search - fixed 300px (matches ux-lab ComponentsHeader) */
-  const desktopSearchInput = (
+  const desktopSearchInput = showNameFilter ? (
     <TextField.Root
       placeholder="Filter by component name or version"
       value={localFilterValue}
@@ -160,7 +181,7 @@ export function SearchResults({
         <Search size={14} />
       </TextField.Slot>
     </TextField.Root>
-  );
+  ) : null;
 
   /* Sort dropdown - fixed 180px (matches ux-lab), or full width when in flexible container */
   const renderSortDropdown = (triggerStyle?: React.CSSProperties) => (
@@ -202,20 +223,22 @@ export function SearchResults({
       </Flex>
       <Flex direction="column" gap="3" role="toolbar" aria-label="Actions bar">
         {/* Search - full width on mobile */}
-        <Box style={{ width: '100%' }}>
-          <TextField.Root
-            placeholder="Filter by component name or version"
-            value={localFilterValue}
-            onChange={handleFilterChange}
-            onKeyDown={handleFilterKeyDown}
-            size="2"
-            style={{ width: '100%' }}
-          >
-            <TextField.Slot>
-              <Search size={14} />
-            </TextField.Slot>
-          </TextField.Root>
-        </Box>
+        {showNameFilter && (
+          <Box style={{ width: '100%' }}>
+            <TextField.Root
+              placeholder="Filter by component name or version"
+              value={localFilterValue}
+              onChange={handleFilterChange}
+              onKeyDown={handleFilterKeyDown}
+              size="2"
+              style={{ width: '100%' }}
+            >
+              <TextField.Slot>
+                <Search size={14} />
+              </TextField.Slot>
+            </TextField.Root>
+          </Box>
+        )}
         {/* Filter + Sort - row that wraps on very narrow screens */}
         <Flex align="center" gap="3" wrap="wrap">
           {onOpenMobileFilters && (
@@ -240,7 +263,7 @@ export function SearchResults({
   );
 
   /* Tablet: title + count, then search + sort (sidebar visible, no filter button) */
-  const tabletSearchInput = (
+  const tabletSearchInput = showNameFilter ? (
     <Box style={{ flex: 1, minWidth: 0 }}>
       <TextField.Root
         placeholder="Filter by component name or version"
@@ -255,7 +278,7 @@ export function SearchResults({
         </TextField.Slot>
       </TextField.Root>
     </Box>
-  );
+  ) : null;
 
   const tabletHeader = (
     <Box className="header" display={{ initial: 'none', sm: 'block', lg: 'none' }} mb="4" role="banner" aria-label="Header">
@@ -386,7 +409,7 @@ export function SearchResults({
           totalItemsSuffix={hasMore ? '+' : undefined}
           hasMore={hasMore}
           loadingMore={loading}
-          onLoadMore={onLoadMore}
+          onLoadMore={handleLoadMore}
           mt="0"
         />
         </Box>

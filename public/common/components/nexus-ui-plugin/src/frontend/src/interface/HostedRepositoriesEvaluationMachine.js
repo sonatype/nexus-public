@@ -265,8 +265,9 @@ export default FormUtils.buildFormMachine({
       const settings = data.settings || {};
       const policyStage = (settings.policyEvaluationStage || '').toUpperCase().replace(/-/g, '_');
       const atomicPayload = {
-        activityTimeFrame: settings.activityTimeFrame,
-        artifactLatestVersions: settings.artifactLatestVersions,
+        activityTimeFrame: parseInt(settings.activityTimeFrame, 10) || 1,
+        artifactLatestVersions: parseInt(settings.artifactLatestVersions, 10) || 1,
+        versionDepth: parseInt(settings.versionDepth, 10) || 0,
         policyEvaluationStage: policyStage,
         autoEnrollNewRepos: settings.applyToNewRepos || false,
         repositoryIds: data.selectedRepositories || []

@@ -35,6 +35,10 @@
     min-height: 0;
   }
 
+  &__banner {
+    margin-bottom: var(--space-4);
+  }
+
   &__section-description {
     color: var(--gray-11);
     margin-bottom: var(--space-4);
@@ -45,5 +49,3 @@
     margin-bottom: var(--space-6);
   }
 }
-
-

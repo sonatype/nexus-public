@@ -58,6 +58,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
+import static org.sonatype.nexus.repository.cache.CacheInfo.LAST_VERIFIED;
 import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
 import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
@@ -254,9 +255,10 @@ public class FluentAssetImpl
     // attach asset so downstream format handlers can retrieve it if necessary
     contentAttributes.set(Asset.class, this);
 
-    if (attributes().contains(CACHE)) {
+    AttributesMap cacheAttrs = attributes(CACHE);
+    if (cacheAttrs != null && cacheAttrs.contains(LAST_VERIFIED)) {
       // internal cache details used to decide when content is stale/invalidated
-      contentAttributes.set(CacheInfo.class, CacheInfo.fromMap(attributes(CACHE)));
+      contentAttributes.set(CacheInfo.class, CacheInfo.fromMap(cacheAttrs));
     }
 
     if (isProxyOrGroupRepository() && attributes().contains(CONTENT)) {
@@ -353,8 +355,13 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset markAsDownloaded() {
-    facet.stores().assetStore.markAsDownloaded(asset);
+    tryMarkAsDownloaded();
     return this;
+  }
+
+  @Override
+  public boolean tryMarkAsDownloaded() {
+    return facet.stores().assetStore.markAsDownloaded(asset);
   }
 
   @Override

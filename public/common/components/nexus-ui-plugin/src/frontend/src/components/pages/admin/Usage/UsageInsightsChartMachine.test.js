@@ -28,7 +28,8 @@ jest.mock('./UsageInsightsUtils', () => ({
   KEY_STORAGE: 'storage',
   KEY_EGRESS: 'egress',
   getMonthOptions: jest.fn(),
-  getDateRange: jest.fn()
+  getDateRange: jest.fn(),
+  isPermissionError: jest.fn()
 }));
 
 describe('UsageInsightsChartMachine', () => {
@@ -59,6 +60,11 @@ describe('UsageInsightsChartMachine', () => {
       dateFrom: '2024-01-01',
       dateTo: '2024-01-31'
     });
+
+    // Default mock for isPermissionError - returns false unless error status is 403
+    UsageInsightsUtils.isPermissionError.mockImplementation((error) => {
+      return error?.response?.status === 403;
+    });
   });
 
   describe('initial state', () => {
@@ -77,6 +83,7 @@ describe('UsageInsightsChartMachine', () => {
         storageData: null,
         combinedData: null,
         loadError: null,
+        isPermissionError: false,
         monthOptions: [],
         selectedMonth: null,
         dateFrom: '',

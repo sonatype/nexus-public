@@ -13,9 +13,10 @@
 package org.sonatype.nexus.rapture.internal.security;
 
 import java.lang.reflect.Field;
+import java.util.Base64;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authc.AuthRateLimiterService;
@@ -70,8 +71,58 @@ public class SessionAuthenticationFilterTest
     field.set(filter, value);
   }
 
+  private static String base64(final String value) {
+    return Base64.getEncoder().encodeToString(value.getBytes());
+  }
+
+  // ---- pre-auth check in onAccessDenied ----
+
   @Test
-  public void testOnLoginFailure_rateLimited_sends429() throws Exception {
+  public void testOnAccessDenied_preAuthBlocked_sends429WithoutExecutingLogin() throws Exception {
+    when(ssoDetector.isSsoEnabled()).thenReturn(false);
+    when(request.getMethod()).thenReturn("POST");
+    when(request.getParameter("username")).thenReturn(base64("jsmith"));
+    when(request.getRemoteAddr()).thenReturn("1.2.3.4");
+
+    when(rateLimiterService.check("jsmith")).thenReturn(new RateLimitResult(30L, 6));
+
+    boolean result = filter.onAccessDenied(request, response);
+
+    verify(rateLimiterService).check("jsmith");
+    verify(response).setHeader("Retry-After", "30");
+    verify(response).sendError(429, "Too many authentication attempts");
+    assertThat(result, is(false));
+  }
+
+  @Test
+  public void testOnAccessDenied_preAuthBlocked_doesNotCallCheck_whenNotLoginRequest() throws Exception {
+    // GET requests are not login requests; no rate-limit check should occur
+    when(request.getMethod()).thenReturn("GET");
+
+    filter.onAccessDenied(request, response);
+
+    verify(rateLimiterService, never()).check(any());
+  }
+
+  @Test
+  public void testOnAccessDenied_ssoEnabled_skipsPreAuthCheck() throws Exception {
+    when(ssoDetector.isSsoEnabled()).thenReturn(true);
+
+    // Call onLoginFailure rather than onAccessDenied to verify SSO bypass without needing Shiro wiring
+    AuthenticationToken token = mock(AuthenticationToken.class);
+    when(token.getPrincipal()).thenReturn("jsmith");
+
+    filter.onLoginFailure(token, mock(AuthenticationException.class), request, response);
+
+    // With SSO enabled, the rate limiter is never consulted
+    verify(rateLimiterService, never()).check(any());
+    verify(rateLimiterService, never()).checkAndRecord(any());
+  }
+
+  // ---- onLoginFailure records counter, no longer sends 429 directly ----
+
+  @Test
+  public void testOnLoginFailure_recordsFailureAndPostsEvent() throws Exception {
     when(ssoDetector.isSsoEnabled()).thenReturn(false);
     when(request.getRemoteAddr()).thenReturn("1.2.3.4");
 
@@ -83,8 +134,9 @@ public class SessionAuthenticationFilterTest
     boolean result = filter.onLoginFailure(token, mock(AuthenticationException.class), request, response);
 
     verify(rateLimiterService).checkAndRecord("jsmith");
-    verify(response).setHeader("Retry-After", "30");
-    verify(response).sendError(429, "Too many authentication attempts");
+    verify(eventManager).post(any());
+    // 429 is NOT sent here — it's handled by the pre-auth check on next attempt
+    verify(response, never()).sendError(429, "Too many authentication attempts");
     assertThat(result, is(false));
   }
 
@@ -108,7 +160,6 @@ public class SessionAuthenticationFilterTest
 
     boolean result = filter.onLoginSuccess(token, subject, request, response);
 
-    // Key must match the one used in checkAndRecord (token principal), not re-read from request
     verify(rateLimiterService).recordSuccess("jsmith");
     assertThat(result, is(true));
   }

@@ -106,7 +106,9 @@ export default function IqServerConnected() {
               ) : (
                 <NxErrorStatusIndicator>{UIStrings.IQ_SERVER.CONNECTED.CONNECTION_ERROR}</NxErrorStatusIndicator>
               )}
-              <span className="nxrm-iq-subtitle">{UIStrings.IQ_SERVER.CONNECTED.SUBTITLE}</span>
+              {iqServerUrl && (
+                <span className="nxrm-iq-subtitle">{iqServerUrl}</span>
+              )}
             </div>
           )}
         </div>
@@ -139,9 +141,6 @@ export default function IqServerConnected() {
               <div className="nxrm-iq-tile-header">
                 <img src={lifecycleLogo} alt="Sonatype Lifecycle" className="nxrm-iq-tile-logo-image" />
               </div>
-              {iqServerUrl && (
-                <div className="nxrm-iq-tile-url" aria-label={`IQ Server URL: ${iqServerUrl}`}>{iqServerUrl}</div>
-              )}
               <div className={`nxrm-iq-tile-status ${hasLifecycle ? 'enabled' : 'disabled'}`}>
                 <span className="status-indicator" aria-hidden="true"></span>
                 {hasLifecycle ? UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.ENABLED : UIStrings.IQ_SERVER.CONNECTED.LIFECYCLE.NOT_AVAILABLE}

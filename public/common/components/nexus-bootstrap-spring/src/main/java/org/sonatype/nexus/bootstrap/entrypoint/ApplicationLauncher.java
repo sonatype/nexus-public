@@ -19,19 +19,22 @@ import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.COMMUNITY;
 import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.FALSE;
+import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.TRUE;
+import static org.sonatype.nexus.common.app.FeatureFlags.TELEMETRY_MANDATORY_WARNING_ENABLED;
 
 @Component
 public class ApplicationLauncher
@@ -72,6 +75,10 @@ public class ApplicationLauncher
 
     mayForceAnalytics(nexusEdition);
 
+    // Allow the edition value below to resolve as a String when requested that way.
+    ConfigurableConversionService conversionService = context.getEnvironment().getConversionService();
+    conversionService.addConverter(NexusEdition.class, String.class, NexusEdition::getShortName);
+
     context
         .getEnvironment()
         .getPropertySources()
@@ -86,6 +93,12 @@ public class ApplicationLauncher
       if (FALSE.equals(nexusProperties.getProperty("nexus.analytics.enabled"))) {
         LOG.warn(
             "Attempt to disable analytics in Community Edition detected. Analytics will remain enabled as this is required for CE.");
+        if (TRUE.equals(nexusProperties.getProperty(TELEMETRY_MANDATORY_WARNING_ENABLED))) {
+          LOG.warn("{} property is deprecated and has no effect. " +
+              "Telemetry is required per license agreement. " +
+              "For opt-out provisioning, please contact Sonatype Sales.",
+              "nexus.analytics.enabled");
+        }
       }
       nexusProperties.enforceCommunityEditionAnalytics();
     }

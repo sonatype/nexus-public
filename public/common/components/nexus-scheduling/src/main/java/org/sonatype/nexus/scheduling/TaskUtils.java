@@ -24,14 +24,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
-import javax.validation.ValidationException;
-import javax.ws.rs.core.Response;
+import jakarta.validation.ValidationException;
+import jakarta.ws.rs.core.Response;
 
 /**
  * @since 3.29

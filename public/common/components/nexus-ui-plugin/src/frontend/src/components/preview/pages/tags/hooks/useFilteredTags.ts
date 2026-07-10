@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { restClient } from '../../../../../interface/api';
 
 export interface TagWithCount {
@@ -56,6 +56,7 @@ export function useFilteredTags() {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(20);
   const [totalItems, setTotalItems] = useState<number>(0);
+  const [totalUnfilteredItems, setTotalUnfilteredItems] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -79,6 +80,16 @@ export function useFilteredTags() {
       const data = await restClient.get<TagPage>(`${TAGS_FILTERED_URL}?${params.toString()}`);
       setTags(data.items);
       setTotalItems(data.totalCount);
+      const noActiveFilters =
+        filters.nameFilter.trim() === '' &&
+        filters.componentCountRanges.length === 0 &&
+        filters.activityDays.length === 0;
+      // totalUnfilteredItems is only captured on unfiltered fetches. If the user arrives with
+      // active filters it stays null and the header shows '-' — intentional, since we don't
+      // know the true total until an unfiltered fetch completes.
+      if (noActiveFilters) {
+        setTotalUnfilteredItems(data.totalCount);
+      }
     } catch (err) {
       console.error('Failed to fetch tags:', err);
       setError('Failed to load tags. Please try again.');
@@ -132,6 +143,7 @@ export function useFilteredTags() {
     currentPage,
     pageSize,
     totalItems,
+    totalUnfilteredItems,
     setFilters: handleSetFilters,
     toggleSort: handleToggleSort,
     setPage: handleSetPage,
