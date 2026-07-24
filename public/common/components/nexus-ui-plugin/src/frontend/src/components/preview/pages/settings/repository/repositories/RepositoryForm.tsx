@@ -311,7 +311,7 @@ export function RepositoryForm({
             onChange={handleChange}
             onNestedChange={handleNestedChange}
             errors={errors}
-            showPreemptiveAuth={recipe.format === 'maven2'}
+            showPreemptiveAuth={recipe.format === 'maven2' || recipe.format === 'pypi' || recipe.format === 'terraform'}
             originalRemoteUrl={pristineData?.proxy?.remoteUrl}
             isEdit={!isCreate}
             hadAuthOnLoad={!!pristineData?.httpClient?.authentication?.type}
@@ -510,4 +510,3 @@ export function RepositoryForm({
     </Box>
   );
 }
-

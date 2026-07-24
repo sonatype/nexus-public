@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-public</artifactId>
-    <version>3.94.0-12</version>
+    <version>3.94.1-06</version>
   </parent>
 
   <artifactId>nexus-common-parent</artifactId>

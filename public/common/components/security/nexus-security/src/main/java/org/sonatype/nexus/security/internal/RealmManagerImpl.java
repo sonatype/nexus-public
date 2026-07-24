@@ -19,13 +19,17 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.common.app.ManagedLifecycleManager;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
+import org.sonatype.nexus.security.authz.PermissionCachingAuthorizingRealm;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
@@ -128,6 +132,11 @@ public class RealmManagerImpl
         if (realm instanceof AuthorizingRealm authorizingRealm) {
           authorizingRealm.setAuthorizationCache(null);
         }
+        if (realm instanceof PermissionCachingAuthorizingRealm pcaRealm) {
+          // Symmetric with the Shiro authz cache reset above: clear this realm's permission cache too, so a lifecycle
+          // restart that reuses realm beans never carries stale permissions (NEXUS-53719).
+          pcaRealm.invalidatePrincipalPermissions();
+        }
       }
     }
   }
@@ -180,6 +189,16 @@ public class RealmManagerImpl
   private void setConfiguration(final RealmConfiguration configuration) {
     checkNotNull(configuration);
 
+    // Defence-in-depth guard: refuse to persist realm-configuration changes while the JVM is
+    // shutting down. Capability passivation runs during the CAPABILITIES lifecycle phase, and a
+    // capability that calls enableRealm/disableRealm/setConfiguredRealmIds on the way down would
+    // otherwise corrupt the persisted realm list and broadcast a RealmConfigurationEvent to the
+    // rest of the HA cluster (NEXUS-53486).
+    if (ManagedLifecycleManager.isShuttingDown()) {
+      log.info("Skipping realm configuration save during shutdown");
+      return;
+    }
+
     maybeAddAuthorizingRealm(configuration.getRealmNames());
 
     store.save(configuration);
@@ -187,9 +206,16 @@ public class RealmManagerImpl
   }
 
   private synchronized void reloadConfiguration() {
+    List<String> before = configuration == null ? List.of() : configuration.getRealmNames();
     configuration = store.load();
     log.info("Changing configuration: {}", configuration);
     installRealms();
+    // Only drop the authz surfaces when the installed-realm set actually changed (enable/disable/reorder), so entries
+    // keyed by a re-enabled realm are not served stale - avoids a full re-expansion storm on unrelated config saves
+    // (NEXUS-53719).
+    if (!before.equals(configuration.getRealmNames())) {
+      clearAuthorizationCaches();
+    }
   }
 
   //
@@ -337,12 +363,59 @@ public class RealmManagerImpl
   public void onEvent(final UserPrincipalsExpired event) {
     // TODO: we could do this better, not flushing whole cache for single user being deleted
     clearAuthcRealmCaches();
+    // Single owner: clear BOTH the Shiro authz cache and the shared permission cache so a disabled/deleted user's
+    // permissions cannot be served stale from PrincipalPermissionsCache after this event (NEXUS-53719).
+    clearAuthorizationCaches();
   }
 
+  // These events invalidate the authorization caches centrally, for every AuthorizingRealm at once: each realm's Shiro
+  // AuthorizationInfo (role) cache and, for PermissionCachingAuthorizingRealms, its own permission cache. Realms only
+  // handle events RealmManager does not (e.g. LdapRealm's LdapCacheInvalidatedEvent). (NEXUS-53719)
+
+  @AllowConcurrentEvents
   @Subscribe
   public void onEvent(final AuthorizationConfigurationChanged event) {
     // TODO: we could do this better, not flushing whole cache for single user roles being updated
+    clearAuthorizationCaches();
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void onEvent(final SecurityContributionChangedEvent event) {
+    clearAuthorizationCaches();
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void onEvent(final AuthorizationChangedDistributedEvent event) {
+    if (EventHelper.isReplicating()) {
+      clearAuthorizationCaches();
+    }
+  }
+
+  /**
+   * Single owner of authorization-cache invalidation: clears BOTH every realm's Shiro {@code AuthorizationInfo}
+   * (role) cache and every {@link PermissionCachingAuthorizingRealm}'s own permission cache, so the two can never
+   * drift out of sync (NEXUS-53719).
+   */
+  private void clearAuthorizationCaches() {
     clearAuthzRealmCaches();
+    clearPrincipalPermissionCaches();
+  }
+
+  /**
+   * Clears every {@link PermissionCachingAuthorizingRealm}'s own permission cache. Each realm owns its cache, so
+   * central invalidation iterates the installed realms here (the same set {@link #clearAuthzRealmCaches()} walks).
+   */
+  private void clearPrincipalPermissionCaches() {
+    Collection<Realm> realms = realmSecurityManager.getRealms();
+    if (realms != null) {
+      for (Realm realm : realms) {
+        if (realm instanceof PermissionCachingAuthorizingRealm pcaRealm) {
+          pcaRealm.invalidatePrincipalPermissions();
+        }
+      }
+    }
   }
 
   /**
@@ -381,15 +454,15 @@ public class RealmManagerImpl
   }
 
   /**
-   * Looks up registered {@link AuthenticatingRealm}s, and clears their authc caches if they have it set.
+   * Looks up registered {@link AuthorizingRealm}s, and clears their authz caches if they have it set.
    */
-  private void clearAuthcRealmCaches() {
+  private void clearAuthzRealmCaches() {
     // NOTE: we don't need to iterate all the Sec Managers, they use the same Realms, so one is fine.
     Collection<Realm> realms = realmSecurityManager.getRealms();
     if (realms != null) {
       for (Realm realm : realms) {
-        if (realm instanceof AuthenticatingRealm) {
-          Cache<Object, AuthenticationInfo> cache = ((AuthenticatingRealm) realm).getAuthenticationCache();
+        if (realm instanceof AuthorizingRealm) {
+          Cache<Object, AuthorizationInfo> cache = ((AuthorizingRealm) realm).getAuthorizationCache();
           if (cache != null) {
             log.debug("Clearing cache: {}", cache);
             cache.clear();
@@ -400,15 +473,15 @@ public class RealmManagerImpl
   }
 
   /**
-   * Looks up registered {@link AuthorizingRealm}s, and clears their authz caches if they have it set.
+   * Looks up registered {@link AuthenticatingRealm}s, and clears their authc caches if they have it set.
    */
-  private void clearAuthzRealmCaches() {
+  private void clearAuthcRealmCaches() {
     // NOTE: we don't need to iterate all the Sec Managers, they use the same Realms, so one is fine.
     Collection<Realm> realms = realmSecurityManager.getRealms();
     if (realms != null) {
       for (Realm realm : realms) {
-        if (realm instanceof AuthorizingRealm) {
-          Cache<Object, AuthorizationInfo> cache = ((AuthorizingRealm) realm).getAuthorizationCache();
+        if (realm instanceof AuthenticatingRealm) {
+          Cache<Object, AuthenticationInfo> cache = ((AuthenticatingRealm) realm).getAuthenticationCache();
           if (cache != null) {
             log.debug("Clearing cache: {}", cache);
             cache.clear();
