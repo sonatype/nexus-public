@@ -47,4 +47,6 @@ public final class AptProperties
   public static final String GZ = ".gz";
 
   public static final String BZ2 = ".bz2";
+
+  public static final String XZ = ".xz";
 }

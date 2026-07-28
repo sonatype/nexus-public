@@ -29,6 +29,7 @@ import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.google.common.base.Charsets;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
+import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.bouncycastle.util.io.TeeOutputStream;
 
@@ -50,10 +51,14 @@ public class CompressingTempFileStore
       }
       FileHolder holder = new FileHolder();
       holdersByKey.put(key, holder);
-      return new OutputStreamWriter(new TeeOutputStream(
-          new TeeOutputStream(new GZIPOutputStream(Files.newOutputStream(holder.gzTempFile)),
-              new BZip2CompressorOutputStream(Files.newOutputStream(holder.bzTempFile))),
-          Files.newOutputStream(holder.plainTempFile)), Charsets.UTF_8);
+      return new OutputStreamWriter(
+          new TeeOutputStream(
+            new TeeOutputStream(
+              new TeeOutputStream(
+                  new GZIPOutputStream(Files.newOutputStream(holder.gzTempFile)),
+                  new BZip2CompressorOutputStream(Files.newOutputStream(holder.bzTempFile))),
+              new XZCompressorOutputStream(Files.newOutputStream(holder.xzTempFile))),
+            Files.newOutputStream(holder.plainTempFile)), Charsets.UTF_8);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -145,6 +150,14 @@ public class CompressingTempFileStore
       return () -> Files.newInputStream(holder.bzTempFile);
     }
 
+    public long xzSize() {
+      return holder.xzStream.getByteCount();
+    }
+
+    public InputStreamSupplier xzSupplier() {
+      return () -> Files.newInputStream(holder.xzTempFile);
+    }
+
     public long gzSize() {
       return holder.gzStream.getByteCount();
     }
@@ -176,6 +189,10 @@ public class CompressingTempFileStore
 
     final Path bzTempFile;
 
+    final CountingOutputStream xzStream;
+
+    final Path xzTempFile;
+
     public FileHolder() throws IOException {
       super();
       this.plainTempFile = Files.createTempFile("", "");
@@ -184,6 +201,8 @@ public class CompressingTempFileStore
       this.gzStream = new CountingOutputStream(Files.newOutputStream(gzTempFile));
       this.bzTempFile = Files.createTempFile("", "");
       this.bzStream = new CountingOutputStream(Files.newOutputStream(bzTempFile));
+      this.xzTempFile = Files.createTempFile("", "");
+      this.xzStream = new CountingOutputStream(Files.newOutputStream(xzTempFile));
     }
   }
 }

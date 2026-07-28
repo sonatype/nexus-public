@@ -84,6 +84,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.normalizeAssetPath;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.BZ2;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.XZ;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.GZ;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITECTURE;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
@@ -481,6 +482,8 @@ public class AptHostedMetadataFacet
         metadata.gzSize(), AptMimeTypes.GZIP, md5Builder, sha256Builder);
     putPackageIndexWithSignatures(aptFacet, distribution, component, architecture, BZ2, metadata.bzSupplier(),
         metadata.bzSize(), AptMimeTypes.BZIP, md5Builder, sha256Builder);
+    putPackageIndexWithSignatures(aptFacet, distribution, component, architecture, XZ, metadata.xzSupplier(),
+        metadata.xzSize(), AptMimeTypes.XZ, md5Builder, sha256Builder);
   }
 
   private void putPackageIndexWithSignatures(
