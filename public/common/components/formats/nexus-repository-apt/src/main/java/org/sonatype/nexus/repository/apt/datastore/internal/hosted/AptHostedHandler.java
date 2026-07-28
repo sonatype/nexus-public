@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.apt.datastore.AptContentFacet;
 import org.sonatype.nexus.repository.apt.datastore.internal.hosted.metadata.AptMetadataRebuildSchedulerFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
-import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.snapshot.AptSnapshotHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -42,6 +41,9 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT;
 
 /**
  * Apt handlers
@@ -92,16 +94,19 @@ public class AptHostedHandler
     }
     else if (StringUtils.isBlank(path)) {
       final Payload payload = context.getRequest().getPayload();
+      final String distribution = context.getRequest().getParameters().get(P_DISTRIBUTION);
+      final String component = context.getRequest().getParameters().get(P_COMPONENT);
       try (TempBlob tempBlob = contentFacet.getTempBlob(payload)) {
-        ControlFile controlFile = AptPackageParser
-            .parsePackageInfo(tempBlob)
-            .getControlFile();
-        String assetPath = AptFacetHelper.buildAssetPath(controlFile);
+        PackageInfo packageInfo = AptPackageParser
+            .parsePackageInfo(tempBlob);
+        packageInfo.setDistribution(distribution);
+        packageInfo.setComponent(component);
+        String assetPath = AptFacetHelper.buildAssetPath(packageInfo);
         long payloadSize = payload.getSize();
         String contentType = payload.getContentType();
 
         hostedFacet.put(assetPath, new StreamPayload(tempBlob, payloadSize, contentType),
-            new PackageInfo(controlFile));
+            packageInfo);
       }
       return HttpResponses.created();
     }

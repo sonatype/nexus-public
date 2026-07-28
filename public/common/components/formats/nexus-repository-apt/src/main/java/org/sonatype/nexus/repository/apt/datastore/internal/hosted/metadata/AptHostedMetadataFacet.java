@@ -21,13 +21,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
@@ -49,6 +54,8 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore.DistComponentArchKey;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore.FileMetadata;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -81,6 +88,8 @@ import static org.sonatype.nexus.repository.apt.internal.AptProperties.GZ;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITECTURE;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE_GPG;
@@ -164,34 +173,53 @@ public class AptHostedMetadataFacet
     AptContentFacet aptFacet = content();
     AptSigningFacet signingFacet = signing();
 
-    StringBuilder sha256Builder = new StringBuilder();
-    StringBuilder md5Builder = new StringBuilder();
     String releaseFile = null;
-    Set<String> currentArchitectures = null;
-    try (CompressingTempFileStore store = buildPackageIndexes()) {
-      for (Map.Entry<String, CompressingTempFileStore.FileMetadata> entry : store.getFiles().entrySet()) {
-        storePackageIndexFiles(aptFacet, entry.getKey(), entry.getValue(), md5Builder, sha256Builder);
-      }
-      if (!store.getFiles().isEmpty()) {
-        currentArchitectures = store.getFiles().keySet();
-        releaseFile = buildReleaseFile(
-            aptFacet.getDistribution(),
-            currentArchitectures,
-            md5Builder.toString(),
-            sha256Builder.toString());
-      }
-      else {
-        // No packages in repository - remove all metadata
-        log.info("No packages found in repository: {} - removing all metadata", getRepository().getName());
-        removeAllMetadata();
+    FluentAsset releaseFileAsset = null;
+    try (CompressingTempFileStore store = buildPackageIndexes(aptFacet)) {
+
+      // Loop on each discovered distributions, components & architectures.
+      Map<String, Map<String, Map<String, FileMetadata>>> pkgIndexes = store.getFiles();
+      for (Entry<String, Map<String, Map<String, FileMetadata>>> distEntry : pkgIndexes.entrySet()) {
+        final String distribution = distEntry.getKey();
+        Set<String> currentArchitectures = new HashSet<>();
+
+        // Create package index per architecture.
+        StringBuilder sha256Builder = new StringBuilder();
+        StringBuilder md5Builder = new StringBuilder();
+        for (Entry<String, Map<String, FileMetadata>> componentEntry : distEntry.getValue().entrySet()) {
+
+          String component = componentEntry.getKey();
+          for (Entry<String, FileMetadata> archEntry : componentEntry.getValue().entrySet()) {
+            storePackageIndexFiles(aptFacet, distribution, component, archEntry.getKey(), archEntry.getValue(), md5Builder, sha256Builder);
+          }
+
+          // Collect valid architectures
+          currentArchitectures.addAll(componentEntry.getValue().keySet());
+          
+          // Clean up stale architecture metadata after successful rebuild
+          removeStaleArchitectureMetadata(distribution, component, componentEntry.getValue().keySet());
+          
+        }
+        
+        Set<String> currentComponents = distEntry.getValue().keySet();
+        if (!currentArchitectures.isEmpty()) {
+          releaseFile = buildReleaseFile(
+              distribution,
+              currentComponents,
+              currentArchitectures,
+              md5Builder.toString(),
+              sha256Builder.toString());
+          releaseFileAsset = generateReleaseFiles(distribution, releaseFile, aptFacet, signingFacet);
+        } 
+
+        // If the store is empty, then delete all metadata
+        removeStaleComponentMetadata(distribution, currentComponents);
+
       }
 
-    }
-    FluentAsset releaseFileAsset = generateReleaseFiles(releaseFile, aptFacet, signingFacet);
+      // If the store is empty, then delete all metadata
+      removeStaleDistributionMetadata(pkgIndexes.keySet());
 
-    // Clean up stale architecture metadata after successful rebuild
-    if (currentArchitectures != null && !currentArchitectures.isEmpty()) {
-      removeStaleArchitectureMetadata(currentArchitectures);
     }
 
     OffsetDateTime finishTime = clock.clusterTime();
@@ -201,6 +229,7 @@ public class AptHostedMetadataFacet
   }
 
   private FluentAsset generateReleaseFiles(
+      final String dist,
       final String releaseFile,
       final AptContentFacet aptFacet,
       final AptSigningFacet signingFacet) throws IOException
@@ -208,23 +237,23 @@ public class AptHostedMetadataFacet
     FluentAsset releaseFileAsset = null;
     if (releaseFile != null) {
       releaseFileAsset = aptFacet.put(
-          releaseIndexName(RELEASE),
+          releaseIndexName(dist, RELEASE),
           new BytesPayload(releaseFile.getBytes(StandardCharsets.UTF_8), AptMimeTypes.TEXT));
 
       aptFacet.put(
-          releaseIndexName(INRELEASE),
+          releaseIndexName(dist, INRELEASE),
           new BytesPayload(signingFacet.signInline(releaseFile), AptMimeTypes.TEXT));
 
       aptFacet.put(
-          releaseIndexName(RELEASE_GPG),
+          releaseIndexName(dist, RELEASE_GPG),
           new BytesPayload(signingFacet.signExternal(releaseFile), AptMimeTypes.SIGNATURE));
     }
     return releaseFileAsset;
   }
 
-  private CompressingTempFileStore buildPackageIndexes() throws IOException {
+  private CompressingTempFileStore buildPackageIndexes(AptContentFacet aptFacet) throws IOException {
     CompressingTempFileStore result = new CompressingTempFileStore();
-    Map<String, Writer> writersByArch = new HashMap<>();
+    Map<DistComponentArchKey, Writer> writersMap = new HashMap<>();
     boolean ok = false;
     try {
       final List<Map<String, Object>> allPackagesMetadata = data()
@@ -234,44 +263,48 @@ public class AptHostedMetadataFacet
 
       // Single-pass deduplication and grouping by architecture
       // Deduplicate by (architecture, package name) to handle KV store duplicate entries
-      Map<String, Map<String, Map<String, Object>>> packagesByArchAndName = new HashMap<>();
+      Map<DistComponentArchKey, Set<String>> packageNameSeen = new HashMap<>();
       for (Map<String, Object> pkg : allPackagesMetadata) {
+        Object distributionObj = pkg.get(P_DISTRIBUTION);
+        Object componentObj = pkg.get(P_COMPONENT);
         Object architectureObj = pkg.get(P_ARCHITECTURE);
         Object packageNameObj = pkg.get(P_PACKAGE_NAME);
         if (architectureObj == null || packageNameObj == null) {
           log.warn("Skipping package with missing architecture or name: {}", pkg);
           continue;
         }
-        String architecture = architectureObj.toString();
-        String packageName = packageNameObj.toString();
-        packagesByArchAndName
-            .computeIfAbsent(architecture, k -> new HashMap<>())
-            .put(packageName, pkg);
-      }
 
-      int totalUniquePackages = packagesByArchAndName.values()
-          .stream()
-          .mapToInt(Map::size)
-          .sum();
-      log.debug("Building package indexes: {} architectures, {} unique packages from {} KV entries",
-          packagesByArchAndName.size(), totalUniquePackages, allPackagesMetadata.size());
+        // Handle package in multiple distro
+        String distributions = distributionObj !=null ? distributionObj.toString() : aptFacet.getDistribution();
+        for(String distribution : distributions.split(",")) {
+          distribution = distribution.trim();
 
-      // Write package indexes for each architecture
-      for (Map.Entry<String, Map<String, Map<String, Object>>> archEntry : packagesByArchAndName.entrySet()) {
-        String architecture = archEntry.getKey();
-        Map<String, Map<String, Object>> packagesForArch = archEntry.getValue();
-        Writer outWriter = writersByArch.computeIfAbsent(architecture, result::openOutput);
+          // When component is not defined, default to "main" for backward compatibility
+          String component = componentObj !=null ? componentObj.toString() : "main";
+          String architecture = architectureObj.toString();
+          String packageName = packageNameObj.toString();
 
-        for (Map<String, Object> pkg : packagesForArch.values()) {
+          // Check if duplicate
+          DistComponentArchKey key = new DistComponentArchKey(distribution, component, architecture);
+          if(packageNameSeen.computeIfAbsent(key, k -> new HashSet<>()).contains(packageName)){
+            log.warn("Skipping duplicate package name: {}", pkg);
+            continue;
+          }
+          packageNameSeen.get(key).add(packageName);
+
+          // Write package details to Package Indexes
+          Writer outWriter = writersMap.computeIfAbsent(key, result::openOutput);
           final String indexSection = (String) pkg.get(P_INDEX_SECTION);
           outWriter.write(indexSection);
           outWriter.write("\n\n");
         }
+
       }
+
       ok = true;
     }
     finally {
-      for (Writer writer : writersByArch.values()) {
+      for (Writer writer : writersMap.values()) {
         IOUtils.closeQuietly(writer, null);
       }
 
@@ -283,77 +316,79 @@ public class AptHostedMetadataFacet
   }
 
   /**
-   * Removes all metadata files (Packages indexes and Release files).
-   * This is called before rebuilding to ensure stale architectures are cleaned up.
-   */
-  private void removeAllMetadata() {
-    log.debug("Removing all metadata files for repository: {}", getRepository().getName());
-    AptContentFacet aptFacet = content();
-
-    // Remove all Package index files (binary-*/Packages*)
-    try {
-      aptFacet.deleteAssetsByPrefix(normalizeAssetPath(mainBinaryPrefix()));
-    }
-    catch (Exception e) {
-      log.warn("Failed to delete package index files", e);
-    }
-
-    // Remove Release files
-    String dist = aptFacet.getDistribution();
-    deleteReleaseFile(aptFacet, dist, RELEASE);
-    deleteReleaseFile(aptFacet, dist, INRELEASE);
-    deleteReleaseFile(aptFacet, dist, RELEASE_GPG);
-  }
-
-  private void deleteReleaseFile(final AptContentFacet aptFacet, final String dist, final String fileName) {
-    try {
-      aptFacet.assets()
-          .path(normalizeAssetPath("dists/" + dist + "/" + fileName))
-          .find()
-          .ifPresent(FluentAsset::delete);
-    }
-    catch (Exception e) {
-      log.warn("Failed to delete release file: {}", fileName, e);
-    }
-  }
-
-  /**
-   * Extracts the architecture from a Package index asset path.
-   * Path format: /dists/{distribution}/main/binary-{arch}/Packages{extension}
-   *
-   * @param path the asset path
-   * @param distribution the distribution name
-   * @return the architecture or null if path doesn't match expected format
-   */
-  private String extractArchitectureFromPath(final String path, final String distribution) {
-    String pattern = "/dists/" + distribution + "/main/binary-";
-    if (path.startsWith(pattern)) {
-      String remainder = path.substring(pattern.length());
-      int slashIndex = remainder.indexOf('/');
-      if (slashIndex > 0) {
-        return remainder.substring(0, slashIndex);
-      }
-    }
-    return null;
-  }
-
-  /**
    * Removes Package index metadata files for architectures that no longer exist in the repository.
-   * This method queries existing Package index assets using the DAO and deletes those for architectures
-   * not present in the current set of architectures.
-   *
-   * @param currentArchitectures the set of architectures currently in the repository (from KV store)
    */
-  private void removeStaleArchitectureMetadata(final Collection<String> currentArchitectures) {
+  private void removeStaleArchitectureMetadata(final String distribution, final String component, final Collection<String> currentArchitectures) {
     log.debug("Checking for stale architecture metadata in repository: {}", getRepository().getName());
 
-    AptContentFacet aptFacet = content();
-    String dist = aptFacet.getDistribution();
-    String pathPattern = "/dists/" + dist + "/main/binary-%";
+    String pathPattern = "/dists/" + distribution + "/" + component + "/binary-%";
+    Pattern extractPattern = Pattern.compile("^/dists/" + distribution + "/" + component + "/binary-([^/]+)/");
+    removeStaleMetadata(
+        pathPattern,
+        extractPattern,
+        currentArchitectures,
+        staleArch -> "dists/" + distribution + "/" + component + "/binary-" + staleArch + "/",
+        "architecture"
+    );
+  }
 
-    // Browse all Package index assets using DAO and extract unique architectures
-    // Note: We use a high limit (1000) because realistically there are only ~3-15 architectures
-    // with 3 files each (Packages, Packages.gz, Packages.bz2), so ~9-45 files total
+  /**
+   * Removes component metadata for components that no longer exist in the given distribution.
+   */
+  private void removeStaleComponentMetadata(final String distribution, final Collection<String> currentComponents) {
+    log.debug("Checking for stale component metadata in repository: {}", getRepository().getName());
+
+    String pathPattern = "/dists/" + distribution + "/%";
+    Pattern extractPattern = Pattern.compile("^/dists/" + distribution + "/([^/]+)/");
+    removeStaleMetadata(
+        pathPattern,
+        extractPattern,
+        currentComponents,
+        staleComponent -> "dists/" + distribution + "/" + staleComponent + "/",
+        "component"
+    );
+  }
+
+  /**
+   * Removes distribution metadata for distributions that no longer exist in the repository.
+   */
+  private void removeStaleDistributionMetadata(final Collection<String> currentDistributions) {
+    log.debug("Checking for stale distribution metadata in repository: {}", getRepository().getName());
+
+    String pathPattern = "/dists/%";
+    Pattern extractPattern = Pattern.compile("^/dists/([^/]+)/");
+
+    removeStaleMetadata(
+        pathPattern,
+        extractPattern,
+        currentDistributions,
+        staleDist -> "dists/" + staleDist + "/",
+        "distribution"
+    );
+  }
+
+  /**
+   * Generic stale-metadata removal: browses assets matching the given path pattern, extracts an
+   * identifier from each asset path using the first capturing group of {@code extractPattern}, and
+   * deletes assets under the prefix corresponding to any identifier not present in
+   * {@code currentValues}.
+   *
+   * @param pathPattern     the asset path pattern to browse (SQL-like, e.g. "/dists/bullseye/%")
+   * @param extractPattern  regex whose first capturing group extracts the relevant identifier
+   *                        (architecture, component, or distribution) from an asset path
+   * @param currentValues   the set of values currently expected (from KV store)
+   * @param prefixResolver  function mapping a stale identifier to the asset path prefix to delete
+   * @param label           human-readable label for logging
+   */
+  private void removeStaleMetadata(
+      final String pathPattern,
+      final Pattern extractPattern,
+      final Collection<String> currentValues,
+      final Function<String, String> prefixResolver,
+      final String label) {
+
+    AptContentFacet aptFacet = content();
+
     AptAssetStore aptAssetStore = (AptAssetStore) ((AptContentFacetImpl) aptFacet).stores().assetStore;
     Continuation<Asset> assets = aptAssetStore.browsePackageIndexAssets(
         aptFacet.contentRepositoryId(),
@@ -361,23 +396,31 @@ public class AptHostedMetadataFacet
         null,
         pathPattern);
 
-    Set<String> storedArchitectures = assets.stream()
-        .map(asset -> extractArchitectureFromPath(asset.path(), dist))
+    Set<String> storedValues = assets.stream()
+        .map(asset -> extractGroup(extractPattern, asset.path()))
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
-    // Delete Package index files for architectures not in current set
-    for (String storedArch : storedArchitectures) {
-      if (!currentArchitectures.contains(storedArch)) {
-        log.info("Removing stale Package index metadata for architecture '{}' in repository: {}",
-            storedArch, getRepository().getName());
-        aptFacet.deleteAssetsByPrefix(normalizeAssetPath("dists/" + dist + "/main/binary-" + storedArch + "/"));
+    for (String storedValue : storedValues) {
+      if (!currentValues.contains(storedValue)) {
+        log.info("Removing stale {} metadata for '{}' in repository: {}",
+            label, storedValue, getRepository().getName());
+        aptFacet.deleteAssetsByPrefix(normalizeAssetPath(prefixResolver.apply(storedValue)));
       }
     }
   }
 
+  /**
+   * Applies the given regex to the path and returns the first capturing group, or null if no match.
+   */
+  private static String extractGroup(final Pattern pattern, final String path) {
+    Matcher matcher = pattern.matcher(path);
+    return matcher.find() ? matcher.group(1) : null;
+  }
+
   private String buildReleaseFile(
       final String distribution,
+      final Iterable<String> components,
       final Collection<String> architectures,
       final String md5,
       final String sha256)
@@ -385,30 +428,24 @@ public class AptHostedMetadataFacet
     String date = DateFormatUtils.format(new Date(), PATTERN_RFC1123, TimeZone.getTimeZone("GMT"));
     Paragraph p = new Paragraph(Arrays.asList(
         new ControlFile.ControlField("Suite", distribution),
-        new ControlFile.ControlField("Codename", distribution), new ControlFile.ControlField("Components", "main"),
+        new ControlFile.ControlField("Codename", distribution),
+        new ControlFile.ControlField("Components", String.join(" ", components)),
         new ControlFile.ControlField("Date", date),
         new ControlFile.ControlField("Architectures", String.join(StringUtils.SPACE, architectures)),
         new ControlFile.ControlField("SHA256", sha256), new ControlFile.ControlField("MD5Sum", md5)));
     return p.toString();
   }
 
-  private String mainBinaryPrefix() {
-    String dist = content().getDistribution();
-    return "dists/" + dist + "/main/binary-";
-  }
-
-  private String releaseIndexName(final String name) {
-    String dist = content().getDistribution();
+  private String releaseIndexName(final String dist, final String name) {
     return "dists/" + dist + "/" + name;
   }
 
-  private String packageIndexName(final String arch, final String ext) {
-    String dist = content().getDistribution();
-    return "dists/" + dist + "/main/binary-" + arch + "/Packages" + ext;
+  private String packageIndexName(final String dist, final String component, final String arch, final String ext) {
+    return "dists/" + dist + "/" + component + "/binary-" + arch + "/Packages" + ext;
   }
 
-  private String packageRelativeIndexName(final String arch, final String ext) {
-    return "main/binary-" + arch + "/Packages" + ext;
+  private String packageRelativeIndexName(final String component, final String arch, final String ext) {
+    return component + "/binary-" + arch + "/Packages" + ext;
   }
 
   private void addSignatureItem(
@@ -431,21 +468,25 @@ public class AptHostedMetadataFacet
 
   private void storePackageIndexFiles(
       final AptContentFacet aptFacet,
-      final String arch,
+      final String distribution,
+      final String component,
+      final String architecture,
       final CompressingTempFileStore.FileMetadata metadata,
       final StringBuilder md5Builder,
       final StringBuilder sha256Builder) throws IOException
   {
-    putPackageIndexWithSignatures(aptFacet, arch, StringUtils.EMPTY, metadata.plainSupplier(),
+    putPackageIndexWithSignatures(aptFacet, distribution, component, architecture, StringUtils.EMPTY, metadata.plainSupplier(),
         metadata.plainSize(), AptMimeTypes.TEXT, md5Builder, sha256Builder);
-    putPackageIndexWithSignatures(aptFacet, arch, GZ, metadata.gzSupplier(),
+    putPackageIndexWithSignatures(aptFacet, distribution, component, architecture, GZ, metadata.gzSupplier(),
         metadata.gzSize(), AptMimeTypes.GZIP, md5Builder, sha256Builder);
-    putPackageIndexWithSignatures(aptFacet, arch, BZ2, metadata.bzSupplier(),
+    putPackageIndexWithSignatures(aptFacet, distribution, component, architecture, BZ2, metadata.bzSupplier(),
         metadata.bzSize(), AptMimeTypes.BZIP, md5Builder, sha256Builder);
   }
 
   private void putPackageIndexWithSignatures(
       final AptContentFacet aptFacet,
+      final String distro,
+      final String component,
       final String arch,
       final String extension,
       final org.sonatype.nexus.common.io.InputStreamSupplier streamSupplier,
@@ -455,10 +496,10 @@ public class AptHostedMetadataFacet
       final StringBuilder sha256Builder) throws IOException
   {
     FluentAsset asset = aptFacet.put(
-        packageIndexName(arch, extension),
+        packageIndexName(distro, component, arch, extension),
         new StreamPayload(streamSupplier, size, mimeType));
-    addSignatureItem(md5Builder, MD5, asset, packageRelativeIndexName(arch, extension));
-    addSignatureItem(sha256Builder, SHA256, asset, packageRelativeIndexName(arch, extension));
+    addSignatureItem(md5Builder, MD5, asset, packageRelativeIndexName(component, arch, extension));
+    addSignatureItem(sha256Builder, SHA256, asset, packageRelativeIndexName(component, arch, extension));
   }
 
   private AptContentFacet content() {

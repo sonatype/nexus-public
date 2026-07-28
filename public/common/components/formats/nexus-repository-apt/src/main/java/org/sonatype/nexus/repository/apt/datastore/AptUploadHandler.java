@@ -46,8 +46,10 @@ import org.sonatype.nexus.repository.view.payloads.TempBlobPayload;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION;
+
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * Support for uploading an Apt components via UI
@@ -73,15 +75,18 @@ public class AptUploadHandler
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
     AptContentFacet aptContentFacet = repository.facet(AptContentFacet.class);
     AptHostedFacet hostedFacet = repository.facet(AptHostedFacet.class);
+    String component = upload.getAssetUploads().get(0).getField(P_COMPONENT);
+    String distribution = upload.getAssetUploads().get(0).getField(P_DISTRIBUTION);
     PartPayload payload = upload.getAssetUploads().get(0).getPayload();
     try (TempBlob tempBlob = aptContentFacet.getTempBlob(payload)) {
-      ControlFile controlFile = AptPackageParser
-          .parsePackageInfo(tempBlob)
-          .getControlFile();
-      String assetPath = AptFacetHelper.buildAssetPath(controlFile);
+      PackageInfo packageInfo = AptPackageParser
+          .parsePackageInfo(tempBlob);
+      packageInfo.setComponent(component);
+      packageInfo.setDistribution(distribution);
+      String assetPath = AptFacetHelper.buildAssetPath(packageInfo);
       doValidation(repository, prependIfMissing(assetPath, "/"));
       Content content = hostedFacet
-          .put(assetPath, payload, new PackageInfo(controlFile))
+          .put(assetPath, payload, packageInfo)
           .markAsCached(payload)
           .download();
       return new UploadResponse(Collections.singletonList(content), Collections.singletonList(assetPath));
@@ -102,13 +107,12 @@ public class AptUploadHandler
 
     Payload payload = new PathPayload(file.toPath(), Files.probeContentType(file.toPath()));
     try (TempBlob tempBlob = aptContentFacet.getTempBlob(payload)) {
-      ControlFile controlFile = AptPackageParser
-          .parsePackageInfo(tempBlob)
-          .getControlFile();
-      String assetPath = AptFacetHelper.buildAssetPath(controlFile);
+      PackageInfo packageInfo = AptPackageParser
+          .parsePackageInfo(tempBlob);
+      String assetPath = AptFacetHelper.buildAssetPath(packageInfo);
       doValidation(repository, prependIfMissing(assetPath, "/"));
       return hostedFacet
-          .put(assetPath, payload, new PackageInfo(controlFile))
+          .put(assetPath, payload, packageInfo)
           .markAsCached(payload)
           .download();
     }
@@ -121,14 +125,13 @@ public class AptUploadHandler
     AptHostedFacet hostedFacet = repository.facet(AptHostedFacet.class);
 
     try (TempBlob tempBlob = aptContentFacet.getTempBlob(configuration.getInputStream(), null)) {
-      ControlFile controlFile = AptPackageParser
-          .parsePackageInfo(tempBlob)
-          .getControlFile();
-      String assetPath = AptFacetHelper.buildAssetPath(controlFile);
+      PackageInfo packageInfo = AptPackageParser
+          .parsePackageInfo(tempBlob);
+      String assetPath = AptFacetHelper.buildAssetPath(packageInfo);
       doValidation(repository, prependIfMissing(assetPath, "/"));
       Payload payload = new TempBlobPayload(tempBlob, null);
       return hostedFacet
-          .put(assetPath, payload, new PackageInfo(controlFile))
+          .put(assetPath, payload, packageInfo)
           .markAsCached(payload)
           .download();
     }

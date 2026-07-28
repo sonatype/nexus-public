@@ -176,7 +176,7 @@ export default {
         CAPTION: 'APT Settings',
         DISTRIBUTION: {
           LABEL: 'Distribution',
-          SUBLABEL: 'Distribution to fetch (e.g., bionic)'
+          SUBLABEL: 'Distribution Codename (e.g., trixie)'
         },
         FLAT: {
           LABEL: 'Flat',

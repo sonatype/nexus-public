@@ -24,7 +24,7 @@ import javax.validation.constraints.NotEmpty;
  */
 public class AptProxyRepositoriesAttributes
 {
-  @ApiModelProperty(value = "Distribution to fetch", example = "bionic")
+  @ApiModelProperty(value = "Distribution to fetch", example = "trixie")
   @NotEmpty
   private final String distribution;
 

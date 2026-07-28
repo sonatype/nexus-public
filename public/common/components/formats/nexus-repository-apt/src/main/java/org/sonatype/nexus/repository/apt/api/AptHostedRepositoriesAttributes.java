@@ -24,8 +24,7 @@ import javax.validation.constraints.NotEmpty;
  */
 public class AptHostedRepositoriesAttributes
 {
-  @ApiModelProperty(value = "Distribution to fetch", example = "bionic")
-  @NotEmpty
+  @ApiModelProperty(value = "Default Distribution Codename", example = "trixie")
   protected final String distribution;
 
   @JsonCreator

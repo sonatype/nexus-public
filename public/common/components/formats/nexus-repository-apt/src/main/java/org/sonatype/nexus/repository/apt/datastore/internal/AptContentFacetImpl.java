@@ -66,6 +66,8 @@ import static org.sonatype.nexus.repository.apt.debian.Utils.isDebPackageContent
 import static org.sonatype.nexus.repository.apt.internal.AptFacetHelper.normalizeAssetPath;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.DEB;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_ARCHITECTURE;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_VERSION;
@@ -194,6 +196,12 @@ public class AptContentFacetImpl
     formatAttributes.put(P_ARCHITECTURE, info.getArchitecture());
     formatAttributes.put(P_PACKAGE_NAME, info.getPackageName());
     formatAttributes.put(P_PACKAGE_VERSION, info.getVersion());
+    if(info.getDistribution()!=null) {
+      formatAttributes.put(P_DISTRIBUTION, info.getDistribution());
+    }
+    if(info.getComponent()!=null) {
+      formatAttributes.put(P_COMPONENT, info.getComponent());
+    }
     formatAttributes.put(P_INDEX_SECTION, buildIndexSection(controlFile, asset));
 
     FormatAttributesUtils.setFormatAttributes(asset, formatAttributes);

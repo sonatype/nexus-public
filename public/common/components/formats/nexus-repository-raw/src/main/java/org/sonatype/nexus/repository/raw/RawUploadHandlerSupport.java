@@ -151,8 +151,7 @@ public abstract class RawUploadHandlerSupport
   public UploadDefinition getDefinition() {
     if (definition == null) {
       definition = getDefinition(RawFormat.NAME, true,
-          singletonList(
-              new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING, FIELD_GROUP_NAME)),
+          singletonList(new UploadFieldDefinition(DIRECTORY, DIRECTORY_HELP_TEXT, false, Type.STRING, FIELD_GROUP_NAME)),
           singletonList(new UploadFieldDefinition(FILENAME, false, Type.STRING)),
           new UploadRegexMap("(.*)", FILENAME));
     }

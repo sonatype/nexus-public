@@ -444,7 +444,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_YumHostedFacet_DeployPolicy_PermissiveItem: 'Permissive',
     Repository_Facet_AptFacet_Title: 'APT Settings',
     Repository_Facet_AptFacet_Distribution_FieldLabel: 'Distribution',
-    Repository_Facet_AptFacet_Distribution_HelpText: 'Distribution to fetch e.g. bionic',
+    Repository_Facet_AptFacet_Distribution_HelpText: 'Distribution codename. e.g. trixie',
     Repository_Facet_AptFacet_Flat_FieldLabel: 'Flat',
     Repository_Facet_AptFacet_Flat_HelpText: 'Is this repository flat?',
     Repository_Facet_AptSigningFacet_Keypair_FieldLabel: 'Signing Key',

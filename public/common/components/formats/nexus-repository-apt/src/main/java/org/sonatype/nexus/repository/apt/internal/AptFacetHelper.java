@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
+import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
@@ -50,14 +51,6 @@ public class AptFacetHelper
   private static final String PACKAGE_PATH = "dists/%s/%s/binary-%s/%s";
 
   private static final String ASSET_PATH = "pool/%s/%s/%s";
-
-  private static final String MISSED_VALUE_MESSAGE = "Control file doesn't contain '%s' field.";
-
-  private static final String PACKAGE = "Package";
-
-  private static final String VERSION = "Version";
-
-  private static final String ARCHITECTURE = "Architecture";
 
   /**
    * Returns list of the release indexes specifiers
@@ -173,17 +166,11 @@ public class AptFacetHelper
    * @param controlFile - is a representation of Debian control file content.
    * @return - e.g. 'pool/n/nano/nano_2.9.3-2_amd64.deb'
    */
-  public static String buildAssetPath(final ControlFile controlFile) {
-    String name = getValueFromControlFile(controlFile, PACKAGE);
-    String version = getValueFromControlFile(controlFile, VERSION);
-    String architecture = getValueFromControlFile(controlFile, ARCHITECTURE);
+  public static String buildAssetPath(final PackageInfo packageInfo) {
+    String name = packageInfo.getPackageName();
+    String version = packageInfo.getVersion();;
+    String architecture = packageInfo.getArchitecture();
     return buildAssetPath(name, version, architecture);
-  }
-
-  private static String getValueFromControlFile(final ControlFile controlFile, final String fieldName) {
-    return controlFile.getField(fieldName)
-        .map(f -> f.value)
-        .orElseThrow(() -> new IllegalStateException(String.format(MISSED_VALUE_MESSAGE, fieldName)));
   }
 
   /**
