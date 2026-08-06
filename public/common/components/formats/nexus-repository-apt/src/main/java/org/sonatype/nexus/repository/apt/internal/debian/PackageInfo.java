@@ -25,6 +25,10 @@ public class PackageInfo
 
   private final ControlFile controlFile;
 
+  private String distribution = null;
+
+  private String component = null;
+
   public PackageInfo(final ControlFile controlFile) {
     this.controlFile = controlFile;
   }
@@ -45,7 +49,24 @@ public class PackageInfo
     return getField(ARCHITECTURE_FIELD);
   }
 
+  public String getDistribution() {
+    return this.distribution;
+  }
+
+  public String getComponent() {
+    return this.component;
+  }
+
   private String getField(final String fieldName) {
     return controlFile.getField(fieldName).map(f -> f.value).get();
   }
+
+  public void setDistribution(String value) {
+    this.distribution = value;
+  }
+
+  public void setComponent(String value) {
+    this.component = value;
+  }
+
 }
