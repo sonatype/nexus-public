@@ -37,10 +37,10 @@ export function parseApiModuleHashParams(hash: string): ApiModuleHashParams {
   const permission = sp.get('permission');
   const endpoint = sp.get('endpoint');
   return {
-    user: user && user.trim() ? user.trim() : null,
-    role: role && role.trim() ? role.trim() : null,
-    permission: permission && permission.trim() ? permission.trim() : null,
-    endpoint: endpoint && endpoint.trim() ? endpoint.trim() : null,
+    user: user?.trim() ? user.trim() : null,
+    role: role?.trim() ? role.trim() : null,
+    permission: permission?.trim() ? permission.trim() : null,
+    endpoint: endpoint?.trim() ? endpoint.trim() : null,
   };
 }
 
@@ -63,7 +63,7 @@ export function parseEndpointDeepLinkParam(raw: string): { method: string; fullP
   }
   const method = s.slice(0, colon).trim().toUpperCase();
   let path = s.slice(colon + 1).trim();
-  if (!method || !path) {
+  if (!(method && path)) {
     return null;
   }
   if (!path.startsWith('/')) {

@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletResponse;
@@ -116,7 +117,23 @@ public class DefaultHttpResponseSender
         }
       }
       else if (!status.isSuccessful()) {
-        httpResponse.sendError(status.getCode(), statusMessage);
+        // NEXUS-53528: HTTP/2 proxies (GCLB, Cloudflare, AWS ALB) strip the HTTP/1.1 reason phrase.
+        // Write error message to body so it survives any protocol translation.
+        // A HEAD response must not transfer a body (RFC 9110 §9.3.2), so skip the body write for
+        // HEAD - mirroring the guard on the payload branch above - and emit status only.
+        boolean isHead = request != null && HttpMethods.HEAD.equals(request.getAction());
+        if (statusMessage != null && !statusMessage.isEmpty() && !isHead) {
+          byte[] bytes = statusMessage.getBytes(StandardCharsets.UTF_8);
+          httpResponse.setContentType("text/plain;charset=utf-8");
+          httpResponse.setContentLengthLong(bytes.length);
+          try (OutputStream output = httpResponse.getOutputStream()) {
+            output.write(bytes);
+            output.flush();
+          }
+        }
+        else {
+          httpResponse.sendError(status.getCode());
+        }
       }
     }
   }

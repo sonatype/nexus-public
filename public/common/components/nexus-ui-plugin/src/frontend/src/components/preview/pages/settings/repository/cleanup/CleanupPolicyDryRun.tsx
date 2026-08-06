@@ -11,13 +11,18 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, } from 'react';
 import { Box, Flex, Text, Tooltip, Table, Callout } from '@radix-ui/themes';
 import { Download, AlertTriangle, Loader2 } from 'lucide-react';
 
 import { SettingsSelect, SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { useCleanupPoliciesApi } from './useCleanupPoliciesApi';
-import { CleanupPolicyFormData, RepositoryOption, PreviewComponent } from './types';
+import {
+  CleanupPolicyFormData,
+  RepositoryOption,
+  PreviewComponent,
+  isRepositoriesFieldSupportedFormat,
+} from './types';
 
 import './CleanupPolicyDryRun.scss';
 
@@ -43,15 +48,27 @@ export function CleanupPolicyDryRun({ policyData, policyName, selectedRepositori
   const { fetchRepositories, getDryRunCsvUrl, previewCleanupPolicy } = useCleanupPoliciesApi();
 
   // Serialize selected repos for stable dependency comparison
-  const selectedReposKey = selectedRepositories.join(',');
+  const _selectedReposKey = selectedRepositories.join(',');
 
-  // Load repositories — use selected repos from form if available, otherwise fetch all for format
+  // Load repositories — restrict the dropdown to the Applied Repositories selected
+  // in the dual-list selector above. For formats that don't support attaching the
+  // policy to specific repositories, fall back to fetching all repos for the format.
   useEffect(() => {
+    if (!policyData.format) return;
+
     if (selectedRepositories.length > 0) {
       setRepositories(selectedRepositories.map((name) => ({ id: name, name })));
       setSelectedRepository('');
+      setRepoError(null);
       setIsLoadingRepos(false);
-    } else if (policyData.format) {
+    } else if (isRepositoriesFieldSupportedFormat(policyData.format)) {
+      // Format supports per-repository application but none are applied yet —
+      // show an empty dropdown instead of listing every repo.
+      setRepositories([]);
+      setSelectedRepository('');
+      setRepoError(null);
+      setIsLoadingRepos(false);
+    } else {
       setIsLoadingRepos(true);
       setRepoError(null);
       setSelectedRepository('');
@@ -61,14 +78,14 @@ export function CleanupPolicyDryRun({ policyData, policyName, selectedRepositori
         .catch((err) => setRepoError(err.message))
         .finally(() => setIsLoadingRepos(false));
     }
-  }, [policyData.format, selectedReposKey, fetchRepositories]);
+  }, [policyData.format, fetchRepositories, _selectedReposKey]);
 
   // Check if at least one criteria is selected
   const hasCriteria = useMemo(() => {
     return (
-      !!policyData.criteriaLastBlobUpdated ||
-      !!policyData.criteriaLastDownloaded ||
-      !!policyData.criteriaAssetRegex
+      Boolean(policyData.criteriaLastBlobUpdated) ||
+      Boolean(policyData.criteriaLastDownloaded) ||
+      Boolean(policyData.criteriaAssetRegex)
     );
   }, [
     policyData.criteriaLastBlobUpdated,
@@ -78,7 +95,7 @@ export function CleanupPolicyDryRun({ policyData, policyName, selectedRepositori
 
   // Check if download is available
   const isDownloadAvailable = useMemo(() => {
-    return !!selectedRepository && hasCriteria;
+    return Boolean(selectedRepository) && hasCriteria;
   }, [selectedRepository, hasCriteria]);
 
   // Generate download URL
@@ -88,7 +105,7 @@ export function CleanupPolicyDryRun({ policyData, policyName, selectedRepositori
   }, [isDownloadAvailable, selectedRepository, policyData, policyName, getDryRunCsvUrl]);
 
   const tooltipMessage = useMemo(() => {
-    if (!selectedRepository && !hasCriteria) {
+    if (!(selectedRepository || hasCriteria)) {
       return 'Please select a repository and at least one cleanup criterion';
     }
     if (!selectedRepository) {
@@ -132,7 +149,7 @@ export function CleanupPolicyDryRun({ policyData, policyName, selectedRepositori
     policyData.retain,
     policyData.sortBy,
     policyName,
-    previewCleanupPolicy
+    previewCleanupPolicy,
   ]);
 
   return (

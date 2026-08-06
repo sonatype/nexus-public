@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { Popover, Flex, Text, Box, Button, Separator, Heading } from '@radix-ui/themes';
-import { Shield, ShieldCheck, Scale, ExternalLink, ChevronRight } from 'lucide-react';
+import { Shield, ShieldCheck, ExternalLink, ChevronRight } from 'lucide-react';
 import { SecurityStatusData } from './security.types';
 
 import './SecurityPopover.scss';

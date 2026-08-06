@@ -11,6 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+// Mock the formatIcons module which imports @icons-pack/react-simple-icons — a package
+// that cannot be resolved in this test environment (missing package.json in node_modules).
+// Mocking the intermediate module avoids the unresolvable transitive import.
+jest.mock('../../../../../shared/Badges/formatIcons', () => ({}));
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
@@ -61,20 +66,25 @@ jest.mock('../LdapList', () => ({
         ))}
         <button onClick={onCreate}>Create LDAP Server</button>
         <button onClick={onClearCache}>Clear Cache</button>
+        <button onClick={() => onReorder(['LDAP Server 2', 'LDAP Server 1']).catch(() => {})} data-testid="reorder-servers">
+          Reorder
+        </button>
       </div>
     );
   },
 }));
 
 jest.mock('../LdapForm', () => ({
-  LdapForm: function MockLdapForm({ server, isCreate, onSave, onCancel }: any) {
+  LdapForm: function MockLdapForm({ server, isCreate, onSave, onCancel, onDelete }: any) {
     return (
       <div data-testid="ldap-form">
         <span>{isCreate ? 'Create LDAP Server' : 'Edit LDAP Server'}</span>
+        <span data-testid="ldap-form-server-name">{server?.name ?? 'NONE'}</span>
         <button data-testid="button-submit" onClick={() => onSave({ name: 'Test Server', host: 'ldap.example.com', port: 389, searchBase: 'dc=example,dc=com', authScheme: 'simple', protocol: 'ldap', userObjectClass: 'inetOrgPerson', userIdAttribute: 'uid', userRealNameAttribute: 'cn', userEmailAddressAttribute: 'mail', ldapGroupsAsRoles: false })}>
           Save
         </button>
         <button data-testid="form-cancel" onClick={onCancel}>Cancel</button>
+        {onDelete && <button data-testid="form-delete" onClick={onDelete}>Delete</button>}
       </div>
     );
   },
@@ -184,10 +194,16 @@ describe('LdapPage', () => {
     });
   });
 
-  it('renders loading state initially', () => {
+  it('renders loading state initially', async () => {
     render(<LdapPage />, { wrapper: TestWrapper });
 
     expect(screen.getByText('Loading LDAP servers...')).toBeInTheDocument();
+
+    // Drain the mount-time loadServers() fetch so its resolution doesn't
+    // trigger an "update not wrapped in act" warning during a later test.
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
   });
 
   it('renders the page header', async () => {
@@ -235,6 +251,27 @@ describe('LdapPage', () => {
     });
   });
 
+  it('redirects to the list with an error toast when a user without nexus:ldap:create lands directly on the create URL (NEXUS-53627 review fix)', async () => {
+    // The Create button itself is already hidden via canCreate, but a direct
+    // URL visit (or browser back/forward) bypasses that and goes straight
+    // through syncViewWithHash — which must apply the same guard.
+    global.NX.Permissions.check.mockImplementation(
+      (permission: string) => permission !== 'nexus:ldap:create'
+    );
+    (window as any).location.hash = '#preview/admin/security/ldap/create';
+
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('You do not have permission to create LDAP servers')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('ldap-form')).not.toBeInTheDocument();
+  });
+
   it('navigates to edit form when server is selected', async () => {
     render(<LdapPage />, { wrapper: TestWrapper });
 
@@ -246,9 +283,166 @@ describe('LdapPage', () => {
 
     simulateHashChange('#preview/admin/security/ldap/LDAP%20Server%201');
 
+    // Assert synchronously, immediately after the click + hashchange (both of
+    // which are wrapped in synchronous `act()` calls above) and BEFORE any
+    // `await`/`waitFor`. This is deliberate: LdapPage's edit-mode effect
+    // re-fetches the server list asynchronously and calls setSelectedServer
+    // once that promise resolves, which would otherwise mask the bug by the
+    // time a `waitFor` polling loop lets that microtask flush.
+    //
+    // NEXUS-53672 regression guard: the selected server must be passed to
+    // LdapForm synchronously on mount (i.e. still true at this synchronous
+    // checkpoint), not left null until the async refetch resolves — XState's
+    // useMachine ignores machine updates after first mount, so a
+    // null-then-populated server never reaches the real form.
+    expect(screen.getByTestId('ldap-form')).toBeInTheDocument();
+    expect(screen.getByTestId('ldap-form-server-name')).toHaveTextContent('LDAP Server 1');
+
+    // Let the edit-mode re-fetch effect's promise settle and its resulting
+    // setSelectedServer/setServers state updates flush, so the test doesn't
+    // leave a dangling update outside of act(). mockFetchServers having been
+    // called is already true synchronously above (it fires on mount too), so
+    // polling on that alone would resolve before the re-fetch's *resolution*
+    // is flushed — assert on the post-flush call count instead, which can
+    // only be reached once that promise has actually resolved.
     await waitFor(() => {
-      expect(screen.getByTestId('ldap-form')).toBeInTheDocument();
+      expect(mockFetchServers).toHaveBeenCalledTimes(2);
     });
+    expect(screen.getByTestId('ldap-form-server-name')).toHaveTextContent('LDAP Server 1');
+  });
+
+  it('passes onDelete to LdapForm when the user has nexus:ldap:delete permission', async () => {
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('LDAP Server 1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('LDAP Server 1'));
+    simulateHashChange('#preview/admin/security/ldap/LDAP%20Server%201');
+
+    expect(screen.getByTestId('form-delete')).toBeInTheDocument();
+  });
+
+  it('does not pass onDelete to LdapForm when the user lacks nexus:ldap:delete permission (NEXUS-53627)', async () => {
+    global.NX.Permissions.check.mockImplementation(
+      (permission: string) => permission !== 'nexus:ldap:delete'
+    );
+
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('LDAP Server 1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('LDAP Server 1'));
+    simulateHashChange('#preview/admin/security/ldap/LDAP%20Server%201');
+
+    expect(screen.getByTestId('ldap-form')).toBeInTheDocument();
+    expect(screen.queryByTestId('form-delete')).not.toBeInTheDocument();
+  });
+
+  it('does not render LdapForm until the server is loaded when landing directly on an edit URL', async () => {
+    // Simulate a full page load / refresh where the browser is already on the
+    // edit URL, as opposed to navigating there via a click in the list (which
+    // is handled by handleEdit setting selectedServer synchronously before
+    // the hash changes). In this path, `viewMode` flips to 'edit' via the
+    // mount-time syncViewWithHash effect while `selectedServer` is still
+    // null; it's only populated later by an async re-fetch effect.
+    (window as any).location.hash = '#preview/admin/security/ldap/LDAP%20Server%201';
+
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    // NEXUS-53672 regression guard: LdapForm must not mount with a null
+    // server. XState's useMachine only binds to the machine on the first
+    // render and ignores later machine changes, so a null-then-populated
+    // server never reaches the real form — it must not render at all until
+    // selectedServer is resolved (show a loading state instead).
+    //
+    // Assert the loading state is actually shown, not just that the form is
+    // absent — a future refactor that rendered nothing at all instead of the
+    // spinner would still pass a form-absence-only check.
+    expect(screen.queryByTestId('ldap-form')).not.toBeInTheDocument();
+    expect(screen.getByText('Loading LDAP server...')).toBeInTheDocument();
+
+    // Once the async re-fetch resolves, the form must mount already
+    // populated with the real server.
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-form-server-name')).toHaveTextContent('LDAP Server 1');
+    });
+  });
+
+  it('navigates back to list with a toast when the edit-mode re-fetch fails on a direct edit URL load', async () => {
+    // Simulate landing directly on an edit URL (e.g. page refresh), same setup
+    // as the "does not render LdapForm..." test above, but this time every
+    // fetchServers() call rejects instead of succeeding. Using
+    // mockRejectedValue (not "Once") deliberately: the initial mount fires
+    // both the list-loading fetch (loadServers effect) and the edit-mode
+    // re-fetch, in that order, so an "Once" rejection would only fail the
+    // former and let the latter succeed with real data, masking the bug this
+    // test targets.
+    mockFetchServers.mockRejectedValue(new Error('network error'));
+    (window as any).location.hash = '#preview/admin/security/ldap/LDAP%20Server%201';
+
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    // Loading state is shown synchronously while the re-fetch is in flight.
+    expect(screen.getByText('Loading LDAP server...')).toBeInTheDocument();
+
+    // NEXUS-53672 catch-path regression guard: without the .catch() handler,
+    // a rejected re-fetch here would leave selectedServer unresolved forever
+    // and the loading state would spin indefinitely. Instead it must surface
+    // an error toast and return to the list view.
+    //
+    // The redirect drives `viewMode` directly (via redirectToListWithError)
+    // rather than only assigning window.location.hash and waiting for a
+    // 'hashchange' event to flip it — so the list view is expected to
+    // reappear without this test needing to simulate that event itself.
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load LDAP server "LDAP Server 1"')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show a spurious error toast when navigating back to the list while the edit-mode re-fetch is still in flight', async () => {
+    // Hold the edit-mode re-fetch open with a promise we control, so we can
+    // navigate away (back to the list) before it settles. Reject it (rather
+    // than resolving with a server list) so that, absent the effect's
+    // cancellation guard, it would definitely take the redirectToListWithError
+    // path (toast.error + redirect) rather than possibly matching a real
+    // server and succeeding silently.
+    let rejectFetch!: (error: Error) => void;
+    const pendingFetch = new Promise<typeof mockServers>((_resolve, reject) => {
+      rejectFetch = reject;
+    });
+    mockFetchServers.mockResolvedValueOnce(mockServers); // initial list-load fetch
+    mockFetchServers.mockImplementationOnce(() => pendingFetch); // edit-mode re-fetch
+    (window as any).location.hash = '#preview/admin/security/ldap/LDAP%20Server%201';
+
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    expect(screen.getByText('Loading LDAP server...')).toBeInTheDocument();
+
+    // Navigate back to the list while the edit-mode re-fetch is still pending.
+    simulateHashChange('#preview/admin/security/ldap');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+
+    // Now let the stale re-fetch reject. Without the effect's cancellation
+    // guard, this would call redirectToListWithError, firing a spurious error
+    // toast and a redundant redirect to a list the user is already on.
+    await act(async () => {
+      rejectFetch(new Error('network error'));
+      await pendingFetch.catch(() => {});
+    });
+
+    expect(screen.queryByText(/Failed to load LDAP server/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
   });
 
   it('returns to list view when Cancel is clicked', async () => {
@@ -496,6 +690,58 @@ describe('LdapPage', () => {
       expect(mockFetchServers).toHaveBeenCalledTimes(2);
     });
   });
+
+  it('refreshes the list after a successful reorder', async () => {
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+
+    // Initial load should have called fetchServers once
+    expect(mockFetchServers).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId('reorder-servers'));
+
+    await waitFor(() => {
+      expect(mockChangeOrder).toHaveBeenCalledWith(['LDAP Server 2', 'LDAP Server 1']);
+    });
+
+    // Success toast should be shown
+    await waitFor(() => {
+      expect(screen.getByText('Server order updated')).toBeInTheDocument();
+    });
+
+    // List should be refreshed so the stale `order` values get updated
+    await waitFor(() => {
+      expect(mockFetchServers).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('does not refresh the list or show a success toast when reorder fails', async () => {
+    mockChangeOrder.mockRejectedValueOnce(new Error('Reorder failed'));
+
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+
+    // Initial load should have called fetchServers once
+    expect(mockFetchServers).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByTestId('reorder-servers'));
+
+    await waitFor(() => {
+      expect(mockChangeOrder).toHaveBeenCalledWith(['LDAP Server 2', 'LDAP Server 1']);
+    });
+
+    // No success toast on failure
+    expect(screen.queryByText('Server order updated')).not.toBeInTheDocument();
+
+    // List should not be re-fetched since the reorder didn't succeed
+    expect(mockFetchServers).toHaveBeenCalledTimes(1);
+  });
 });
-
-

@@ -42,6 +42,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -81,7 +82,7 @@ public class JwtSecurityFilterTest
   private JwtSecurityFilter underTest;
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     underTest = new JwtSecurityFilter(
         webSecurityManager,
         filterChainResolver,
@@ -460,6 +461,66 @@ public class JwtSecurityFilterTest
     assertThat(subject, notNullValue());
     assertThat(subject.isAuthenticated(), is(true));
     verify(jwtSessionRevocationService, never()).isUserInvalidatedAfter(anyString(), any());
+  }
+
+  /**
+   * Deleted users are rejected via the same mechanism as password change: DefaultSecuritySystem
+   * calls SessionInvalidator.invalidateSessionsForUser on deletion, which records a cutoff that
+   * JwtSecurityFilter reads through isUserInvalidatedAfter. No per-request user lookup is used.
+   */
+  @Test
+  public void testCreateSubject_deletedUserInvalidation_returns401AndClearsCookie() throws Exception {
+    String username = "deleted-user";
+    String userSessionId = "some-session-id";
+    Date issuedAt = new Date(System.currentTimeMillis() - 5000);
+    String jwtToken = createJwtWithIat(username, "default", userSessionId, issuedAt);
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+    when(jwtSessionRevocationService.isRevoked(userSessionId)).thenReturn(false);
+    when(jwtSessionRevocationService.isUserInvalidatedAfter(eq(username), any())).thenReturn(true);
+    when(auditRecorder.isEnabled()).thenReturn(false);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    assertThat(subject, is(fallbackSubject));
+    ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+    verify(response).addCookie(cookieCaptor.capture());
+    Cookie expiredCookie = cookieCaptor.getValue();
+    assertThat(expiredCookie.getValue(), is(""));
+    assertThat(expiredCookie.getMaxAge(), is(0));
+  }
+
+  /**
+   * Deactivated users are rejected via the same mechanism as deletion: DefaultSecuritySystem
+   * calls SessionInvalidator.invalidateSessionsForUser on the active→disabled transition, which
+   * records a cutoff that JwtSecurityFilter reads through isUserInvalidatedAfter.
+   */
+  @Test
+  public void testCreateSubject_deactivatedUserInvalidation_returns401AndClearsCookie() throws Exception {
+    String username = "disabled-user";
+    String userSessionId = "some-session-id";
+    Date issuedAt = new Date(System.currentTimeMillis() - 5000);
+    String jwtToken = createJwtWithIat(username, "default", userSessionId, issuedAt);
+    Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, jwtToken);
+    when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+
+    DecodedJWT decodedJWT = JWT.decode(jwtToken);
+    when(jwtHelper.verifyJwt(jwtToken)).thenReturn(decodedJWT);
+    when(jwtSessionRevocationService.isRevoked(userSessionId)).thenReturn(false);
+    when(jwtSessionRevocationService.isUserInvalidatedAfter(eq(username), any())).thenReturn(true);
+    when(auditRecorder.isEnabled()).thenReturn(false);
+
+    WebSubject subject = underTest.createSubject(request, response);
+
+    assertThat(subject, is(fallbackSubject));
+    ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+    verify(response).addCookie(cookieCaptor.capture());
+    Cookie expiredCookie = cookieCaptor.getValue();
+    assertThat(expiredCookie.getValue(), is(""));
+    assertThat(expiredCookie.getMaxAge(), is(0));
   }
 
   /**

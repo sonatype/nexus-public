@@ -115,6 +115,10 @@ module.exports = {
   // A map from regular expressions to module names that allow to stub out resources with a single module
   moduleNameMapper: {
     '^@sonatype/nexus-ui-plugin$': '<rootDir>/../../../nexus-ui-plugin/src/frontend/src/index.js',
+    // Resolve the unsaved-changes dialog singleton to the same source file the
+    // package barrel (and createRouter) use, so a deep import of it in tests
+    // shares one module instance rather than a second copy via node_modules.
+    '^@sonatype/nexus-ui-plugin/src/frontend/src/router/unsavedChangesDialog$': '<rootDir>/../../../nexus-ui-plugin/src/frontend/src/router/unsavedChangesDialog.js',
     // Redirect nexus-ui-plugin's broken Tasks exports (files missing, live in nexus-coreui-plugin) - see TEST-BASELINE.md
     '^(\\./)?components/admin/Tasks/TasksList$': '<rootDir>/src/components/pages/admin/Tasks/TasksList.jsx',
     '^(\\./)?components/admin/Tasks/TasksListMachine$': '<rootDir>/src/components/pages/admin/Tasks/TasksListMachine.js',

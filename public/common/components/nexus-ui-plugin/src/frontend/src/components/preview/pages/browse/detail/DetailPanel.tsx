@@ -20,7 +20,6 @@ import {
   Code,
   Flex,
   Heading,
-  ScrollArea,
   Separator,
   Spinner,
   Tabs,
@@ -727,7 +726,7 @@ function ComponentDetails({
         <>
           <Separator size="4" />
           <Flex p="3" gap="2" justify="end">
-            {componentData && componentData.version && (
+            {componentData?.version && (
               <Button
                 variant="soft"
                 size="2"

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Badge,
   Box,
@@ -35,54 +35,8 @@ import {
   Key,
   KeyRound,
 } from 'lucide-react';
-import Axios from 'axios';
-import { APIConstants } from '../../../../constants/APIConstants';
-import { ExtJS } from '../../../../interface/ExtJS';
-import { useToast } from '../../shared';
 import { ConfirmDialog } from '../../shared/form';
-
-// ---------------------------------------------------------------------------
-// API helpers
-// ---------------------------------------------------------------------------
-
-const USER_TOKEN_BASE = '/service/rest/internal/current-user/user-token';
-const ATTRIBUTES_URL = `/${APIConstants.REST.USER_TOKEN_TIMESTAMP}`;
-const USER_TOKENS_SETTINGS = '/service/rest/v1/security/user-tokens';
-
-interface UserTokenAttributes {
-  expirationTimeTimestamp?: string; // epoch ms as string
-}
-
-type AttributesResult =
-  | { kind: 'present'; attributes: UserTokenAttributes }
-  | { kind: 'absent' }
-  | { kind: 'expired' };
-
-async function fetchAttributes(): Promise<AttributesResult> {
-  try {
-    const res = await Axios.get<UserTokenAttributes>(ATTRIBUTES_URL);
-    return { kind: 'present', attributes: res.data ?? {} };
-  } catch (err: unknown) {
-    if (Axios.isAxiosError(err)) {
-      if (err.response?.status === 404) return { kind: 'absent' };
-      if (err.response?.status === 410) return { kind: 'expired' };
-    }
-    throw err;
-  }
-}
-
-async function fetchTokensEnabled(): Promise<boolean> {
-  const res = await Axios.get(USER_TOKENS_SETTINGS);
-  return res.data?.enabled ?? true;
-}
-
-function tokenUrl(authToken: string): string {
-  return `${USER_TOKEN_BASE}?authToken=${btoa(authToken)}`;
-}
-
-// ---------------------------------------------------------------------------
-// CopyField — shared copy button helper
-// ---------------------------------------------------------------------------
+import { useUserToken } from './useUserToken';
 
 function CopyField({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -120,10 +74,6 @@ function CopyField({ label, value }: { label: string; value: string }) {
     </Box>
   );
 }
-
-// ---------------------------------------------------------------------------
-// TokenRevealDialog
-// ---------------------------------------------------------------------------
 
 const REVEAL_TIMEOUT_SECONDS = 60;
 
@@ -212,105 +162,20 @@ function TokenRevealDialog({ nameCode, passCode, onClose }: TokenRevealDialogPro
   );
 }
 
-// ---------------------------------------------------------------------------
-// UserTokenPage
-// ---------------------------------------------------------------------------
-
-type PageState = 'loading' | 'disabled' | 'no-token' | 'has-token' | 'expired-token' | 'error';
-
-interface RevealedToken {
-  nameCode: string;
-  passCode: string;
-}
-
 export function UserTokenPage() {
-  const toast = useToast();
-  const toastRef = useRef(toast);
-  toastRef.current = toast;
+  const {
+    pageState,
+    expirationTimeTimestamp,
+    revealedToken,
+    actionLoading,
+    handleAccess,
+    handleGenerate,
+    handleReset,
+    handleCloseReveal,
+    handleRetry,
+  } = useUserToken();
 
-  const [pageState, setPageState] = useState<PageState>('loading');
-  const [expirationTimeTimestamp, setExpirationTimeTimestamp] = useState<string | undefined>(undefined);
-  const [revealedToken, setRevealedToken] = useState<RevealedToken | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-
-  // load has no deps so its identity is stable — prevents the toast→load→
-  // toast→load re-render loop that caused infinite error spam (mrqu).
-  const load = useCallback(async () => {
-    setPageState('loading');
-    try {
-      const [enabled, result] = await Promise.all([fetchTokensEnabled(), fetchAttributes()]);
-      if (!enabled) {
-        setPageState('disabled');
-        return;
-      }
-      if (result.kind === 'present') {
-        setExpirationTimeTimestamp(result.attributes.expirationTimeTimestamp);
-        setPageState('has-token');
-      } else if (result.kind === 'expired') {
-        setExpirationTimeTimestamp(undefined);
-        setPageState('expired-token');
-      } else {
-        setExpirationTimeTimestamp(undefined);
-        setPageState('no-token');
-      }
-    } catch {
-      toastRef.current.error('Failed to load user token status.');
-      setPageState('error');
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const handleAccess = useCallback(async () => {
-    setActionLoading(true);
-    try {
-      const authToken = await ExtJS.requestAuthenticationToken(
-        'Please authenticate to access your user token.'
-      );
-      const res = await Axios.get(tokenUrl(authToken));
-      setRevealedToken(res.data);
-    } catch {
-      toastRef.current.error('Failed to retrieve user token. Please check your credentials.');
-    } finally {
-      setActionLoading(false);
-    }
-  }, []);
-
-  const handleGenerate = useCallback(async () => {
-    setActionLoading(true);
-    try {
-      const authToken = await ExtJS.requestAuthenticationToken(
-        'Please authenticate to generate a new user token.'
-      );
-      const res = await Axios.post(tokenUrl(authToken));
-      setRevealedToken(res.data);
-      await load();
-    } catch {
-      toastRef.current.error('Failed to generate user token. Please check your credentials.');
-    } finally {
-      setActionLoading(false);
-    }
-  }, [load]);
-
-  const handleResetConfirm = useCallback(async () => {
-    setShowResetConfirm(false);
-    setActionLoading(true);
-    try {
-      const authToken = await ExtJS.requestAuthenticationToken(
-        'Please authenticate to reset your user token.'
-      );
-      await Axios.delete(tokenUrl(authToken));
-      toastRef.current.success('User token reset successfully.');
-      await load();
-    } catch {
-      toastRef.current.error('Failed to reset user token. Please check your credentials.');
-    } finally {
-      setActionLoading(false);
-    }
-  }, [load]);
 
   const formatEpochMs = (epochMs: string) => {
     try {
@@ -325,7 +190,7 @@ export function UserTokenPage() {
   };
 
   const expiryBadge = (epochMs: string) => {
-    if (!epochMs || isNaN(Number(epochMs))) return null;
+    if (!epochMs || Number.isNaN(Number(epochMs))) return null;
     const diff = Number(epochMs) - Date.now();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     if (diff < 0) return <Badge color="red" variant="soft">Expired</Badge>;
@@ -333,7 +198,11 @@ export function UserTokenPage() {
     return null;
   };
 
-  // State 0: Loading
+  const handleResetConfirm = () => {
+    setShowResetConfirm(false);
+    handleReset();
+  };
+
   if (pageState === 'loading') {
     return (
       <Flex direction="column" align="center" justify="center" gap="3" style={{ minHeight: 200 }} data-testid="user-token-page-loading">
@@ -345,7 +214,6 @@ export function UserTokenPage() {
 
   return (
     <Box style={{ maxWidth: 640, margin: '0 auto', padding: 'var(--space-5)' }} data-testid="user-token-page">
-      {/* Page header */}
       <Flex align="center" gap="3" mb="4">
         <Key size={24} color="var(--accent-9)" />
         <Box>
@@ -354,7 +222,6 @@ export function UserTokenPage() {
         </Box>
       </Flex>
 
-      {/* State 1: Disabled */}
       {pageState === 'disabled' && (
         <Callout.Root color="blue" data-testid="tokens-disabled-callout">
           <Callout.Text>
@@ -363,21 +230,19 @@ export function UserTokenPage() {
         </Callout.Root>
       )}
 
-      {/* State: API error (non-404 failure — 401, 403, 500, network) */}
       {pageState === 'error' && (
         <Callout.Root color="red" data-testid="error-state">
           <Callout.Text>
             Failed to load your user token status. This may be a temporary issue.
           </Callout.Text>
           <Box mt="3">
-            <Button variant="soft" color="red" onClick={load} data-testid="retry-btn">
+            <Button variant="soft" color="red" onClick={handleRetry} data-testid="retry-btn">
               Retry
             </Button>
           </Box>
         </Callout.Root>
       )}
 
-      {/* States 2, 3, 4: Token Status card */}
       {(pageState === 'no-token' || pageState === 'has-token' || pageState === 'expired-token') && (
         <>
           <Card mb="4" data-testid="token-status-card">
@@ -487,16 +352,14 @@ export function UserTokenPage() {
         </>
       )}
 
-      {/* State 5: Token Revealed modal */}
       {revealedToken && (
         <TokenRevealDialog
           nameCode={revealedToken.nameCode}
           passCode={revealedToken.passCode}
-          onClose={() => setRevealedToken(null)}
+          onClose={handleCloseReveal}
         />
       )}
 
-      {/* State 6: Reset Confirmation */}
       <ConfirmDialog
         open={showResetConfirm}
         onOpenChange={setShowResetConfirm}

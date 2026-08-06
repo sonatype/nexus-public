@@ -111,7 +111,7 @@ describe('useMetricHealthApi', () => {
       await act(async () => {
         try {
           await result.current.fetchMetricHealth();
-        } catch (err) {
+        } catch (_err) {
           // Expected to throw
         }
       });
@@ -129,7 +129,7 @@ describe('useMetricHealthApi', () => {
       await act(async () => {
         try {
           await result.current.fetchMetricHealth();
-        } catch (err) {
+        } catch (_err) {
           // Expected to throw
         }
       });
@@ -231,7 +231,7 @@ describe('useMetricHealthApi', () => {
       await act(async () => {
         try {
           await result.current.fetchNodeMetricHealth('invalid-node');
-        } catch (err) {
+        } catch (_err) {
           // Expected to throw
         }
       });

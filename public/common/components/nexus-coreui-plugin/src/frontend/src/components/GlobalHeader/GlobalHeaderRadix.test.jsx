@@ -13,6 +13,7 @@
 
 import React from 'react';
 import {render, screen, act} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import {TooltipProvider} from '@radix-ui/react-tooltip';
 import {Theme} from '@radix-ui/themes';
@@ -25,6 +26,8 @@ let mockStateValues = {
   loggedInEnabled: true,
 };
 
+let mockIsExtJsRendered = false;
+
 jest.mock('@sonatype/nexus-ui-plugin', () => ({
   ...jest.requireActual('@sonatype/nexus-ui-plugin'),
   ExtJS: {
@@ -34,10 +37,13 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
       getValue: (key, defaultVal) => mockStateValues[key] ?? defaultVal,
     }),
     checkPermission: () => true,
-    isExtJsRendered: () => false,
+    isExtJsRendered: () => mockIsExtJsRendered,
     showSuccessMessage: jest.fn(),
+    refresh: jest.fn(),
   },
   handleExtJsUnsavedChanges: (_ctrl, fn) => fn(),
+  hasUnsavedChanges: jest.fn(() => false),
+  useSideNavbarOpenState: () => [true],
 }));
 
 jest.mock('@uirouter/react', () => ({
@@ -58,9 +64,10 @@ jest.mock('../ThemeSwitcher/ThemeSwitcher', () => () => null);
 jest.mock('./HelpMenuRadix', () => () => <div data-testid="help-menu" />);
 jest.mock('./LoginAndUserButtonRadix', () => () => <div data-testid="login-btn" />);
 jest.mock('../../routerConfig/routerUtils', () => ({refreshReactPage: jest.fn()}));
-jest.mock('../../hooks/useSideNavbarCollapsedState', () => () => [true]);
 
 import GlobalHeaderRadix from './GlobalHeaderRadix';
+import {refreshReactPage} from '../../routerConfig/routerUtils';
+import {hasUnsavedChanges} from '@sonatype/nexus-ui-plugin';
 
 function renderHeader(props) {
   return render(
@@ -81,7 +88,10 @@ describe('GlobalHeaderRadix', () => {
       anonymousEnabled: true,
       loggedInEnabled: true,
     };
+    mockIsExtJsRendered = false;
     window.location.hash = '';
+    jest.clearAllMocks();
+    hasUnsavedChanges.mockReturnValue(false);
   });
 
   it('renders the header', () => {
@@ -162,6 +172,44 @@ describe('GlobalHeaderRadix', () => {
       rerender(<Theme><TooltipProvider><GlobalHeaderRadix /></TooltipProvider></Theme>);
 
       expect(window.location.hash).toBe('#preview/browse/welcome');
+    });
+  });
+
+  describe('onRefreshClick — Preview UI (NEXUS-53775)', () => {
+    beforeEach(() => {
+      jest.spyOn(window, 'confirm');
+    });
+
+    it('refreshes without confirm when no unsaved changes', async () => {
+      hasUnsavedChanges.mockReturnValue(false);
+      renderHeader();
+
+      await userEvent.click(screen.getByRole('button', {name: 'Refresh'}));
+
+      expect(window.confirm).not.toHaveBeenCalled();
+      expect(refreshReactPage).toHaveBeenCalled();
+    });
+
+    it('prompts and refreshes when user confirms with unsaved changes', async () => {
+      hasUnsavedChanges.mockReturnValue(true);
+      window.confirm.mockReturnValue(true);
+      renderHeader();
+
+      await userEvent.click(screen.getByRole('button', {name: 'Refresh'}));
+
+      expect(window.confirm).toHaveBeenCalled();
+      expect(refreshReactPage).toHaveBeenCalled();
+    });
+
+    it('does not refresh when user cancels with unsaved changes', async () => {
+      hasUnsavedChanges.mockReturnValue(true);
+      window.confirm.mockReturnValue(false);
+      renderHeader();
+
+      await userEvent.click(screen.getByRole('button', {name: 'Refresh'}));
+
+      expect(window.confirm).toHaveBeenCalled();
+      expect(refreshReactPage).not.toHaveBeenCalled();
     });
   });
 });

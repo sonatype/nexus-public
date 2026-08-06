@@ -16,14 +16,53 @@ import MalwareBanner from '../../../shared/security/MalwareBanner';
 import { useUnifiedSearch } from './useUnifiedSearch';
 import { useRepositories } from './useRepositories';
 import { useSearchNavigation, COMPONENT_DETAIL_RETURN_SEARCH_KEY } from './useSearchNavigation';
-import { useSearchUrlState } from './useSearchUrlState';
+import {
+  useSearchUrlState,
+  DEFAULT_SORT_FIELD,
+  DEFAULT_SORT_DIRECTION,
+} from './useSearchUrlState';
 import { getApiFormat } from './searchFilters';
 import { isMockMode } from '../../../config/featureFlags';
 import { getMockSearchTotalCount } from '../../browse/mockData';
 import { useInstanceTotals } from '../../Welcome/dashboard/useInstanceTotals';
-import type { SearchResult, SearchFormat } from './unified.types';
+import type { SearchResult, SearchFormat, SortField, SortDirection } from './unified.types';
 
 import './UnifiedSearchPage.scss';
+
+/**
+ * Delay before committing a search-state change to the browser URL. Chosen to
+ * match the sidebar/results filter search debounce so a burst of keystrokes
+ * produces a single history entry once the user pauses.
+ */
+const URL_WRITE_DEBOUNCE_MS = 350;
+
+/**
+ * Produce a canonical string for a search state, used as the echo-guard key
+ * that keeps URL <-> machine in sync without feedback loops. Default sort is
+ * normalized to undefined so a URL without sort params compares equal to the
+ * machine's default sort.
+ */
+export function serializeSearchState(s: {
+  format: SearchFormat;
+  query: string;
+  filters: Record<string, string>;
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+}): string {
+  // Field and direction are normalized independently so a non-default direction
+  // on the default field (e.g. lastUpdated / asc) is not silently collapsed to
+  // the default — matching buildQueryString so the guard stays in sync with the URL.
+  const sortField = s.sortField && s.sortField !== DEFAULT_SORT_FIELD ? s.sortField : undefined;
+  const sortDirection =
+    s.sortDirection && s.sortDirection !== DEFAULT_SORT_DIRECTION ? s.sortDirection : undefined;
+  return JSON.stringify({
+    format: s.format,
+    query: s.query,
+    filters: s.filters,
+    sortField,
+    sortDirection,
+  });
+}
 
 /**
  * UnifiedSearchPage - Single search page for ALL formats
@@ -42,6 +81,7 @@ export default function UnifiedSearchPage(): JSX.Element {
     setFormat,
     setQuery,
     setFilter,
+    setFilters,
     setSort,
     search,
     loadMore,
@@ -62,7 +102,7 @@ export default function UnifiedSearchPage(): JSX.Element {
   const isUnfiltered =
     !state.query &&
     state.format === 'all' &&
-    !state.filters['nameOrVersion'];
+    !state.filters.nameOrVersion;
 
   // When unfiltered: show instance total (from contentUsageEvaluationResult or mock).
   // When filtered: show search result count.
@@ -79,26 +119,63 @@ export default function UnifiedSearchPage(): JSX.Element {
   const { repositories } = useRepositories(apiFormat || undefined);
 
   const { navigateToDetail } = useSearchNavigation();
-  const { state: urlState } = useSearchUrlState();
+  const { readFromUrl, syncToUrl } = useSearchUrlState();
 
-  const lastUrlQuery = React.useRef<string | null>(null);
+  // Serialized snapshot of the last state we read from OR wrote to the URL.
+  // Used to break the echo loop: a URL-driven rehydration must not immediately
+  // trigger a write of the same state back to the URL, and vice versa.
+  const lastSerialized = React.useRef<string | null>(null);
 
-  const syncFromUrl = useCallback(() => {
-    const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    const urlQuery = hashParams.get('q') || '';
+  // Debounce timer for URL writes. Rapid state changes (e.g. typing in a filter
+  // field, where state.filters updates on every keystroke) must not create a
+  // browser-history entry per character — that pollutes history and breaks
+  // Back/Forward. We coalesce them into a single pushState after the user pauses.
+  const urlWriteTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    if (urlQuery === lastUrlQuery.current) {
-      return;
-    }
-    lastUrlQuery.current = urlQuery;
+  /**
+   * Rehydrate the search machine from a URL state, then run a single search.
+   * Uses bulk setFilters so all filters are applied in one machine transition
+   * (avoids N sequential sends and the previous fragile setTimeout chain).
+   *
+   * The format is always applied (including 'all') so a Back/Forward to a URL
+   * without a format param resets the machine rather than retaining a stale
+   * format. Sort is applied when either field or direction is present, falling
+   * back to defaults for whichever value the URL omits.
+   */
+  const rehydrateFromUrl = useCallback(
+    (url: ReturnType<typeof readFromUrl>) => {
+      // Cancel any pending URL write so a queued keystroke-write can't fire
+      // after (and overwrite) a Back/Forward navigation or deep-link load.
+      if (urlWriteTimerRef.current) {
+        clearTimeout(urlWriteTimerRef.current);
+        urlWriteTimerRef.current = null;
+      }
+      lastSerialized.current = serializeSearchState(url);
 
-    if (urlQuery !== state.query) {
-      setQuery(urlQuery);
-    }
+      // Always apply the format so a Back/Forward to a URL without a format
+      // param resets the machine to 'all' rather than retaining a stale format.
+      setFormat(url.format);
+      setSelectedFormat(url.format === 'all' ? '' : url.format);
+      setQuery(url.query);
+      setFilters(url.filters);
+      // Apply sort if either field or direction is present in the URL. Missing
+      // values fall back to the defaults so a URL carrying only `direction=asc`
+      // (default field) still rehydrates correctly.
+      if (url.sortField || url.sortDirection) {
+        setSort(url.sortField ?? DEFAULT_SORT_FIELD, url.sortDirection ?? DEFAULT_SORT_DIRECTION);
+      }
+      // Defer the search to the next tick so the machine has processed the bulk
+      // state above. This relies on XState's default SYNCHRONOUS send: the
+      // setFormat/setQuery/setFilters/setSort events are all applied to context
+      // before this timeout fires. If the machine is ever switched to async
+      // dispatch, this ordering guarantee breaks and search() would run against
+      // stale context — consolidate into a single machine action if that happens.
+      setTimeout(() => search(), 0);
+    },
+    [setFormat, setQuery, setFilters, setSort, search],
+  );
 
-    setTimeout(() => search(), 50);
-  }, [state.query, setQuery, search]);
-
+  // Mount: restore state from sessionStorage (breadcrumb return) or the URL.
   useEffect(() => {
     // Restore search state when returning from component detail (breadcrumb click)
     const stored = sessionStorage.getItem(COMPONENT_DETAIL_RETURN_SEARCH_KEY);
@@ -106,40 +183,83 @@ export default function UnifiedSearchPage(): JSX.Element {
       try {
         const { query, format, filters } = JSON.parse(stored);
         sessionStorage.removeItem(COMPONENT_DETAIL_RETURN_SEARCH_KEY);
-        if (format && format !== 'all') {
-          setFormat(format);
-          setSelectedFormat(format);
-        }
-        if (query) setQuery(query);
-        Object.entries(filters || {}).forEach(([id, value]) => {
-          if (value) setFilter(id, value);
-        });
-        setTimeout(() => search(), 50);
+        rehydrateFromUrl({ format: format || 'all', query: query || '', filters: filters || {} });
         return;
       } catch {
         sessionStorage.removeItem(COMPONENT_DETAIL_RETURN_SEARCH_KEY);
       }
     }
 
-    if (urlState.format !== 'all') {
-      setFormat(urlState.format);
-      setSelectedFormat(urlState.format);
-    }
-    Object.entries(urlState.filters).forEach(([id, value]) => {
-      setFilter(id, value);
-    });
-    syncFromUrl();
+    rehydrateFromUrl(readFromUrl());
+    // Mount-only: intentionally run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Serialize machine state -> URL whenever search state changes.
+  //
+  // The write is debounced so a burst of rapid changes (typing in a filter
+  // field updates state.filters on every keystroke) collapses into a single
+  // history entry instead of one entry per character. Any pending write is
+  // cancelled and rescheduled on each change; when it finally fires it does a
+  // single pushState for the settled value, so Back/Forward steps between
+  // meaningful states rather than individual keystrokes.
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash.includes('preview/browse/search')) {
-        syncFromUrl();
+    const serialized = serializeSearchState(state);
+    // Skip if this exact state came from (or was already written to) the URL.
+    if (serialized === lastSerialized.current) {
+      return;
+    }
+
+    const snapshot = {
+      format: state.format,
+      query: state.query,
+      filters: state.filters,
+      sortField: state.sortField,
+      sortDirection: state.sortDirection,
+    };
+
+    if (urlWriteTimerRef.current) {
+      clearTimeout(urlWriteTimerRef.current);
+    }
+    urlWriteTimerRef.current = setTimeout(() => {
+      urlWriteTimerRef.current = null;
+      // Re-check the guard in case a URL-driven rehydration landed on this same
+      // state while the write was pending.
+      if (serialized === lastSerialized.current) {
+        return;
+      }
+      lastSerialized.current = serialized;
+      syncToUrl(snapshot);
+    }, URL_WRITE_DEBOUNCE_MS);
+
+    return () => {
+      if (urlWriteTimerRef.current) {
+        clearTimeout(urlWriteTimerRef.current);
+        urlWriteTimerRef.current = null;
       }
     };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [syncFromUrl]);
+  }, [state.format, state.query, state.filters, state.sortField, state.sortDirection, syncToUrl]);
+
+  // Back/forward (popstate) and header-driven hash changes: re-read the URL and
+  // rehydrate the machine.
+  useEffect(() => {
+    const handleUrlChange = () => {
+      if (window.location.hash.includes('preview/browse/search')) {
+        const url = readFromUrl();
+        // Ignore changes that merely reflect state we already hold.
+        if (serializeSearchState(url) === lastSerialized.current) {
+          return;
+        }
+        rehydrateFromUrl(url);
+      }
+    };
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, [readFromUrl, rehydrateFromUrl]);
 
   const handleFilterChange = useCallback(
     (filterId: string, value: string) => {
@@ -153,8 +273,13 @@ export default function UnifiedSearchPage(): JSX.Element {
   }, [search]);
 
   const handleReset = useCallback(() => {
+    // reset() clears all machine state (format -> 'all', query -> '', filters ->
+    // {}, sort -> defaults); we only clear the local selectedFormat mirror here.
+    // The subsequent deferred search re-runs against the cleared state.
     setSelectedFormat('');
     reset();
+    // Defer to the next tick so the machine applies reset() before search()
+    // reads context. Relies on XState's synchronous send (see rehydrateFromUrl).
     setTimeout(() => search(), 0);
   }, [reset, search]);
 
@@ -185,12 +310,22 @@ export default function UnifiedSearchPage(): JSX.Element {
 
   const handleSortChange = useCallback(
     (value: string) => {
-      const field = value as 'name' | 'version' | 'lastUpdated' | 'repository';
-      const direction = field === 'lastUpdated' || field === 'version' ? 'desc' : 'asc';
+      const field = value as SortField;
+      // Re-selecting the same field keeps the current direction (so a shared URL
+      // like ?sort=name&direction=desc isn't reset by a no-op click). A genuinely
+      // new field applies that field's sensible default direction.
+      const direction: SortDirection =
+        field === state.sortField
+          ? (state.sortDirection as SortDirection)
+          : field === 'lastUpdated' || field === 'version'
+            ? 'desc'
+            : 'asc';
       setSort(field, direction);
+      // Defer to the next tick so the machine applies SET_SORT before search()
+      // reads context. Relies on XState's synchronous send (see rehydrateFromUrl).
       setTimeout(() => search(), 0);
     },
-    [setSort, search]
+    [setSort, search, state.sortField, state.sortDirection]
   );
 
   return (
@@ -248,7 +383,7 @@ export default function UnifiedSearchPage(): JSX.Element {
               onSelect={handleSelect}
               onRetry={handleRetry}
               query={state.query}
-              nameFilter={state.filters['nameOrVersion'] || ''}
+              nameFilter={state.filters.nameOrVersion || ''}
               onNameFilterChange={handleNameFilterChange}
               sortBy={state.sortField}
               onSortChange={handleSortChange}

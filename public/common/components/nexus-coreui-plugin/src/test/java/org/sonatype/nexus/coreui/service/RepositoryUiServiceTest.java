@@ -32,16 +32,19 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.config.SimpleConfiguration;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsDTO;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
+import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
-import org.sonatype.nexus.common.stateguard.InvalidStateException;
-import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -50,15 +53,18 @@ import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import org.apache.shiro.authz.AuthorizationException;
+
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
@@ -70,6 +76,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -184,7 +191,7 @@ class RepositoryUiServiceTest
   @Test
   void checkUserPermissionsOnFilter() {
     underTest.filter(createParameters());
-    verify(repositoryPermissionChecker).userCanBrowseRepositories(configuration);
+    verify(repositoryPermissionChecker).userCanBrowseRepositories(any(Configuration[].class));
   }
 
   @Test
@@ -699,13 +706,304 @@ class RepositoryUiServiceTest
     xo.setAttributes(new HashMap<>());
 
     // Execute: Should throw BadRequestException for null recipe
-    try {
-      underTest.update(xo);
-      throw new AssertionError("Expected BadRequestException for null recipe");
-    }
-    catch (org.sonatype.nexus.repository.BadRequestException e) {
-      assertThat(e.getMessage(), is("Recipe not found for repository: failed-repo"));
-    }
+    BadRequestException ex = assertThrows(BadRequestException.class, () -> underTest.update(xo));
+    assertThat(ex.getMessage(), is("Recipe not found for repository: failed-repo"));
+  }
+
+  /**
+   * Test: filter() excludes configurations with missing recipes
+   */
+  @Test
+  void testFilterConfigurationsWithMissingRecipes() {
+    Configuration validConfig = validConfig();
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(validConfig);
+    allConfigs.add(invalidConfig());
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(validConfig));
+
+    Iterable<Configuration> result = underTest.filter(null);
+
+    List<Configuration> resultList = new ArrayList<>();
+    result.forEach(resultList::add);
+    assertThat(resultList.size(), is(1));
+    assertThat(resultList.get(0).getRepositoryName(), is("valid-repo"));
+  }
+
+  private Configuration invalidConfig() {
+    return mock(Configuration.class);
+  }
+
+  private Configuration validConfig() {
+    Configuration validConfig = mock(Configuration.class);
+    when(validConfig.getRepositoryName()).thenReturn("valid-repo");
+    when(validConfig.getRecipeName()).thenReturn("testRecipe"); // exists in recipes map
+
+    return validConfig;
+  }
+
+  private StoreLoadParameters params() {
+    StoreLoadParameters params = new StoreLoadParameters();
+    List<StoreLoadParameters.Filter> filters = new ArrayList<>();
+    StoreLoadParameters.Filter formatFilter = new StoreLoadParameters.Filter();
+    formatFilter.setProperty("format");
+    formatFilter.setValue("maven2");
+    filters.add(formatFilter);
+    params.setFilter(filters);
+    return params;
+  }
+
+  private Map<String, Map<String, Object>> attributes() {
+    Map<String, Object> storageAttr = new HashMap<>();
+    storageAttr.put("blobStoreName", "default");
+
+    return Map.of("storage", storageAttr);
+  }
+
+  /**
+   * Test: filter() with format parameter excludes configurations with missing recipes
+   */
+  @Test
+  void testFilterWithFormatFilterConfigurationsWithMissingRecipes() {
+    Configuration validConfig = validConfig();
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(validConfig);
+    allConfigs.add(invalidConfig());
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(validConfig));
+
+    Iterable<Configuration> result = underTest.filter(params());
+
+    List<Configuration> resultList = new ArrayList<>();
+    result.forEach(resultList::add);
+    assertThat(resultList.size(), is(1));
+    assertThat(resultList.get(0).getRepositoryName(), is("valid-repo"));
+  }
+
+  /**
+   * Test: readReferences() excludes configurations with missing recipes
+   */
+  @Test
+  void testReadReferencesConfigurationsWithMissingRecipes() {
+    Configuration validConfig = validConfig();
+    when(validConfig.getAttributes()).thenReturn(attributes());
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(validConfig);
+    allConfigs.add(invalidConfig());
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(validConfig));
+
+    StoreLoadParameters params = new StoreLoadParameters();
+    params.setFilter(Collections.emptyList());
+
+    // Execute: Should NOT throw NPE
+    List<RepositoryReferenceXO> result = underTest.readReferences(params);
+
+    // Verify: Only valid repository is returned
+    assertThat(result.size(), is(1));
+    assertThat(result.get(0).getName(), is("valid-repo"));
+  }
+
+  /**
+   * Test: readReferences() with format filter excludes configurations with missing recipes (NEXUS-53342)
+   */
+  @Test
+  void testReadReferences_withFormatFilter_excludesConfigurationsWithMissingRecipes() {
+    // Setup: Similar to above but with format filter
+    Configuration validConfig = validConfig();
+
+    when(validConfig.getAttributes()).thenReturn(attributes());
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(validConfig);
+    allConfigs.add(invalidConfig());
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(validConfig));
+
+    // Execute: Should NOT throw NPE
+    List<RepositoryReferenceXO> result = underTest.readReferences(params());
+
+    // Verify: Only valid repository is returned
+    assertThat(result.size(), is(1));
+    assertThat(result.get(0).getName(), is("valid-repo"));
+  }
+
+  /**
+   * Test: getFormat() and getType() handle missing recipes gracefully via readReferences
+   * Tests private methods indirectly through public API
+   */
+  @Test
+  void testGetFormatAndGetTypeMissingRecipesGracefully() {
+    Configuration validConfig = validConfig();
+    when(validConfig.getAttributes()).thenReturn(attributes());
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(validConfig);
+    allConfigs.add(invalidConfig());
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(validConfig)); // Only valid config passes permission check
+
+    StoreLoadParameters params = new StoreLoadParameters();
+    params.setFilter(Collections.emptyList());
+
+    // Execute: Should NOT throw NPE, invalid config should be filtered out
+    List<RepositoryReferenceXO> result = underTest.readReferences(params);
+
+    // Verify: Only valid repository is returned with correct format and type
+    assertThat(result.size(), is(1));
+    RepositoryReferenceXO ref = result.get(0);
+    assertThat(ref.getName(), is("valid-repo"));
+    assertThat(ref.getFormat(), is("maven2")); // getFormat returned correctly
+    assertThat(ref.getType(), is("hosted")); // getType returned correctly
+  }
+
+  /**
+   * Test: buildStatus() handles configuration with missing recipe gracefully via readReferences
+   * Tests private method indirectly through public API
+   */
+  @Test
+  void testBuildStatusMissingRecipeGracefully() {
+    Configuration config = validConfig();
+
+    when(config.getAttributes()).thenReturn(attributes());
+
+    when(configurationStore.list()).thenReturn(Collections.singletonList(config));
+    when(failedRepositoryTracker.getFailure("broken-repo")).thenReturn(Optional.empty());
+    // Should return empty list since the config with missing recipe is filtered out before this call
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.emptyList());
+
+    StoreLoadParameters params = new StoreLoadParameters();
+    params.setFilter(Collections.emptyList());
+
+    // Execute: Should NOT throw NPE, config should be filtered out by filter()
+    // This tests both filter() and buildStatus() handling of missing recipes
+    List<RepositoryReferenceXO> result = underTest.readReferences(params);
+
+    // Verify: Empty result because missing recipe config is filtered out
+    assertThat(result.size(), is(0));
+  }
+
+  /**
+   * Test: buildStatus() returns proper status for failed repository
+   * Tests via readStatus public API
+   */
+  @Test
+  void testBuildStatus_returnsFailedStatusForFailedRepository() {
+    when(configuration.getRepositoryName()).thenReturn("failed-repo");
+    when(configuration.getRecipeName()).thenReturn("testRecipe");
+    when(configuration.isOnline()).thenReturn(false);
+
+    FailedRepositoryTracker.RepositoryFailure failure =
+        mock(org.sonatype.nexus.repository.manager.internal.FailedRepositoryTracker.RepositoryFailure.class);
+    when(failure.getReason()).thenReturn("Recipe not found");
+    when(failedRepositoryTracker.getFailure("failed-repo")).thenReturn(Optional.of(failure));
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermissionFor(any(Iterable.class), anyString()))
+        .thenReturn(Collections.singletonList(configuration));
+
+    // Execute via readStatus public API
+    Map<String, String> params = new HashMap<>();
+    List<RepositoryStatusXO> result = underTest.readStatus(params);
+
+    // Verify: Status shows failed state
+    assertThat(result.size(), is(1));
+    RepositoryStatusXO status = result.get(0);
+    assertThat(status.getRepositoryName(), is("failed-repo"));
+    assertThat(status.isOnline(), is(false));
+    assertThat(status.getDescription(), is("Failed to Initialize"));
+    assertThat(status.getReason(), is("Recipe not found"));
+  }
+
+  /**
+   * Test: filter() with multiple format filters
+   */
+  @Test
+  void testFilterMultipleFormatsConfigurationsWithMissingRecipes() {
+    Configuration mavenConfig = mock(Configuration.class);
+    when(mavenConfig.getRepositoryName()).thenReturn("maven-repo");
+    when(mavenConfig.getRecipeName()).thenReturn("testRecipe");
+
+    Configuration nugetConfig = mock(Configuration.class);
+    when(nugetConfig.getRepositoryName()).thenReturn("nuget-repo");
+    when(nugetConfig.getRecipeName()).thenReturn("nuget-recipe");
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(mavenConfig);
+    allConfigs.add(invalidConfig());
+    allConfigs.add(nugetConfig);
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(mavenConfig));
+
+    Iterable<Configuration> result = underTest.filter(params());
+
+    List<Configuration> resultList = new ArrayList<>();
+    result.forEach(resultList::add);
+    assertThat(resultList.size(), is(1)); // Only maven, nuget recipe doesn't exist
+    assertThat(resultList.get(0).getRepositoryName(), is("maven-repo"));
+  }
+
+  /**
+   * Test: filter() with type filter excludes configurations with missing recipes
+   */
+  @Test
+  void testFilterTypeFilterConfigurationsWithMissingRecipes() {
+    Configuration validConfig = validConfig();
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(validConfig);
+    allConfigs.add(invalidConfig());
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(any(Configuration[].class)))
+        .thenReturn(Collections.singletonList(validConfig));
+
+    Iterable<Configuration> result = underTest.filter(params());
+
+    List<Configuration> resultList = new ArrayList<>();
+    result.forEach(resultList::add);
+    assertThat(resultList.size(), is(1));
+    assertThat(resultList.get(0).getRepositoryName(), is("valid-repo"));
+  }
+
+  /**
+   * Test: All configurations have missing recipes (edge case)
+   */
+  @Test
+  void testFilterAllConfigurationsHaveMissingRecipesEmptyList() {
+
+    Configuration invalid2 = mock(Configuration.class);
+    when(invalid2.getRepositoryName()).thenReturn("invalid-2");
+    when(invalid2.getRecipeName()).thenReturn("missing-recipe-2");
+
+    List<Configuration> allConfigs = new ArrayList<>();
+    allConfigs.add(invalidConfig());
+    allConfigs.add(invalid2);
+
+    when(configurationStore.list()).thenReturn(allConfigs);
+
+    StoreLoadParameters params = new StoreLoadParameters();
+    params.setFilter(Collections.emptyList());
+
+    Iterable<Configuration> result = underTest.filter(params);
+
+    List<Configuration> resultList = new ArrayList<>();
+    result.forEach(resultList::add);
+    assertThat(resultList.size(), is(0));
   }
 
   @Test
@@ -1110,5 +1408,52 @@ class RepositoryUiServiceTest
     Map<String, Map<String, Object>> newAttrs = Map.of("storage", Map.of("blobStoreName", "default"));
 
     assertThat(RepositoryUiService.isRemoteUrlChanged(oldAttrs, newAttrs), is(false));
+  }
+
+  // NEXUS-52779: ExtDirect create must derive format from the recipe registry, not the caller-supplied DTO field
+
+  @Test
+  void create_permissionCheckedAgainstRecipeFormat_notClientSuppliedFormat() throws Exception {
+    // Given: a user who supplies format=raw (their permitted format) but recipe=testRecipe (which is maven2)
+    when(repositoryXO.getName()).thenReturn("my-repo");
+    when(repositoryXO.getFormat()).thenReturn("raw"); // attacker-controlled DTO field
+    when(repositoryXO.getRecipe()).thenReturn("testRecipe"); // testRecipe resolves to maven2 via mockRecipes()
+    when(repositoryXO.getOnline()).thenReturn(true);
+    when(repositoryXO.getAttributes()).thenReturn(new HashMap<>());
+    when(repositoryManager.newConfiguration()).thenReturn(configuration);
+    when(repositoryManager.create(configuration)).thenReturn(repository);
+
+    underTest.create(repositoryXO);
+
+    // The permission check must use the format from the recipe registry ("maven2"), not the DTO field ("raw")
+    ArgumentCaptor<org.apache.shiro.authz.Permission[]> permCaptor =
+        ArgumentCaptor.forClass(org.apache.shiro.authz.Permission[].class);
+    verify(securityHelper).ensurePermitted(permCaptor.capture());
+    org.apache.shiro.authz.Permission[] captured = permCaptor.getValue();
+    assertThat(captured.length, is(1));
+    assertThat(captured[0] instanceof RepositoryAdminPermission, is(true));
+    assertThat(((RepositoryAdminPermission) captured[0]).getFormat(), is("maven2"));
+  }
+
+  @Test
+  void create_deniedWhenUserLacksPermissionForRecipeFormat() throws Exception {
+    // Given: securityHelper rejects a permission check for the recipe's actual format
+    when(repositoryXO.getName()).thenReturn("my-repo");
+    when(repositoryXO.getFormat()).thenReturn("raw");
+    when(repositoryXO.getRecipe()).thenReturn("testRecipe"); // resolves to maven2
+    doThrow(new AuthorizationException("Unauthorized"))
+        .when(securityHelper)
+        .ensurePermitted(any(org.apache.shiro.authz.Permission[].class));
+
+    assertThrows(AuthorizationException.class, () -> underTest.create(repositoryXO));
+  }
+
+  @Test
+  void create_throwsBadRequestForUnknownRecipe() throws Exception {
+    // Given: the recipe name in the DTO does not exist in the registry
+    when(repositoryXO.getRecipe()).thenReturn("nonexistent-recipe");
+
+    BadRequestException ex = assertThrows(BadRequestException.class, () -> underTest.create(repositoryXO));
+    assertThat(ex.getMessage(), is("Recipe not found: nonexistent-recipe"));
   }
 }

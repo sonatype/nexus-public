@@ -610,7 +610,7 @@ export const createNexusUiPluginMock = (overrides = {}) => ({
     HTTP: '/service/rest/v1/http-settings',
     ANONYMOUS: '/service/rest/v1/security/anonymous',
     SSL: '/service/rest/v1/ssl',
-    CLEANUP_POLICIES: '/service/rest/v1/cleanup-policies',
+    CLEANUP_POLICIES: '/service/rest/internal/cleanup-policies',
   },
   API_INTERNAL_UI: overrides.API_INTERNAL_UI || '/service/rest/internal/ui',
   restClient: overrides.restClient || {

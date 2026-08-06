@@ -21,7 +21,6 @@ import {
   Users,
   Trash2,
   Copy,
-  Lock,
 } from 'lucide-react';
 import type { RepositoryProfileData } from '../types';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';

@@ -87,6 +87,16 @@
       border-color: var(--blue-6);
     }
 
+    &[aria-disabled='true'] {
+      cursor: not-allowed;
+      opacity: 0.6;
+
+      &:hover {
+        background: var(--blue-3);
+        border-color: var(--blue-5);
+      }
+    }
+
     [data-theme='dark'] & {
       background: var(--blue-4);
       border-color: var(--blue-6);

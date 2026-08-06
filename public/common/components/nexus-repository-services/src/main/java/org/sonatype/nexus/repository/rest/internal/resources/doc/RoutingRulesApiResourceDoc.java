@@ -21,6 +21,9 @@ import org.sonatype.nexus.repository.rest.api.RoutingRuleXO;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -44,12 +47,16 @@ public interface RoutingRulesApiResourceDoc
 
   @Operation(summary = "List routing rules")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Routing rules returned",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = RoutingRuleXO.class)))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to read routing rules")
   })
   List<RoutingRuleXO> getRoutingRules();
 
   @Operation(summary = "Get a single routing rule")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Routing rule returned",
+          content = @Content(schema = @Schema(implementation = RoutingRuleXO.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to read routing rules"),
       @ApiResponse(responseCode = "404", description = "Routing rule not found")
   })

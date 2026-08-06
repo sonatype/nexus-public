@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.api.rest.selfhosted.email;
 
+import jakarta.validation.ValidationException;
 import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.api.rest.selfhosted.email.model.ApiEmailConfiguration;
@@ -22,6 +23,7 @@ import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import org.apache.commons.mail2.core.EmailException;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,8 +36,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,13 +54,16 @@ class EmailConfigurationApiResourceTest
   private EmailManager emailManager;
 
   @Mock
+  private AntiSsrfService antiSsrfService;
+
+  @Mock
   private EmailConfiguration emailConfiguration;
 
   private EmailConfigurationApiResource underTest;
 
   @BeforeEach
   void setup() {
-    underTest = new EmailConfigurationApiResource(emailManager);
+    underTest = new EmailConfigurationApiResource(emailManager, antiSsrfService);
   }
 
   @Test
@@ -91,12 +99,14 @@ class EmailConfigurationApiResourceTest
     String newPassword = "testPassword";
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
+    request.setHost("smtp.example.com");
     request.setPassword(newPassword);
 
     when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     underTest.setEmailConfiguration(request);
 
+    verify(antiSsrfService).validateHostWithoutCache("smtp.example.com");
     verify(emailManager).setConfiguration(newConfiguration, newPassword);
     verify(newConfiguration).setEnabled(true);
   }
@@ -114,6 +124,19 @@ class EmailConfigurationApiResourceTest
 
     verify(newConfiguration).setEnabled(true);
     verify(emailManager).setConfiguration(newConfiguration, Strings2.EMPTY);
+  }
+
+  @Test
+  void setEmailConfiguration_blocksPrivateSmtpHost() {
+    ApiEmailConfiguration request = new ApiEmailConfiguration();
+    request.setHost("192.168.1.1");
+    doThrow(new ValidationException("SSRF protection: private network address"))
+        .when(antiSsrfService)
+        .validateHostWithoutCache("192.168.1.1");
+
+    assertThrows(ValidationException.class, () -> underTest.setEmailConfiguration(request));
+
+    verify(emailManager, never()).setConfiguration(any(), any());
   }
 
   @Test
@@ -187,5 +210,25 @@ class EmailConfigurationApiResourceTest
     ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
     assertThat(validation.isSuccess(), is(false));
     assertThat(validation.getReason(), is("Invalid email address"));
+  }
+
+  @Test
+  void testEmailConfiguration_EmailExceptionWithNullMessage() throws EmailException {
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
+    String destinationAddress = "test@example.com";
+
+    IllegalStateException causeWithNoMessage = new IllegalStateException();
+    EmailException emailException = new EmailException("wrapper", causeWithNoMessage);
+    doThrow(emailException).when(emailManager).sendVerification(emailConfiguration, destinationAddress);
+
+    Response response = underTest.testEmailConfiguration(destinationAddress);
+
+    assertThat(response, is(notNullValue()));
+    assertThat(response.getStatus(), is(400));
+    assertThat(response.hasEntity(), is(true));
+
+    ApiEmailValidation validation = (ApiEmailValidation) response.getEntity();
+    assertThat(validation.isSuccess(), is(false));
+    assertThat(validation.getReason(), is("IllegalStateException"));
   }
 }

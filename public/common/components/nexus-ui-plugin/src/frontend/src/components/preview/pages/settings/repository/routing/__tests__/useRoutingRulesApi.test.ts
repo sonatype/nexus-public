@@ -235,7 +235,7 @@ describe('useRoutingRulesApi', () => {
             mode: 'BLOCK',
             matchers: ['.*'],
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });
@@ -296,7 +296,7 @@ describe('useRoutingRulesApi', () => {
       await act(async () => {
         try {
           await result.current.deleteRoutingRule('block-sources');
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });

@@ -130,7 +130,7 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
       }, 50);
       return () => clearTimeout(timer);
     }
-  }, [initialPath, state.nodes.length, state.loading, actions]);
+  }, [initialPath, state.nodes.length, state.loading, actions, state.selectedNodeId]);
 
   /**
    * Scroll to selected node after DOM updates (GitHub pattern).
@@ -230,13 +230,14 @@ export const BrowseTree = forwardRef<BrowseTreeRef, BrowseTreeProps>(function Br
           actions.focusParent();
           break;
         case 'Enter':
-        case ' ':
+        case ' ': {
           event.preventDefault();
           const node = findNodeInState(state.nodes, nodeId);
           if (node) {
             handleSelect(node.node);
           }
           break;
+        }
         default:
           break;
       }

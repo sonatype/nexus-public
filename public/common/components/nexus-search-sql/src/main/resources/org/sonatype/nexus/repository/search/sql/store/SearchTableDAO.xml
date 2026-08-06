@@ -226,7 +226,7 @@
             COALESCE(<include refid="toTsVector"><property name="tokens" value="aliasComponentNames"/></include>, ''::tsvector),
             <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
             <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
-            <include refid="toQuotedTsVector"><property name="tokens" value="paths"/></include>,
+            <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
             <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
             <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
             <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
@@ -263,7 +263,7 @@
           uploaders = <include refid="toTsVector"><property name="tokens" value="uploaders"/></include>,
           uploader_ips = <include refid="toTsVector"><property name="tokens" value="uploaderIps"/></include>,
           paths = <include refid="join"><property name="thePaths" value="paths"/></include>,
-          tsvector_paths = <include refid="toQuotedTsVector"><property name="tokens" value="paths"/></include>,
+          tsvector_paths = <include refid="toTsVector"><property name="tokens" value="paths"/></include>,
           keywords = <include refid="toTsVector"><property name="tokens" value="keywords"/></include>,
           md5 = <include refid="toTsVector"><property name="tokens" value="md5"/></include>,
           sha1 = <include refid="toTsVector"><property name="tokens" value="sha1"/></include>,
@@ -409,6 +409,76 @@
         WHERE <include refid="repositoryMatch"/>
         <if test="limit gt 0"> LIMIT ${limit}</if>
     )
+  </delete>
+
+  <delete id="deleteOrphanedComponents" databaseId="PostgreSQL">
+    WITH toBeDeleted AS (
+        SELECT cs.component_id
+        FROM search_components cs
+        WHERE <include refid="repositoryMatch"/>
+          AND NOT EXISTS (
+              SELECT 1 FROM ${format}_component comp
+              WHERE comp.component_id = cs.component_id
+                AND comp.repository_id = cs.repository_id
+          )
+    <if test="limit gt 0"> LIMIT ${limit}</if>)
+    DELETE FROM search_components cs
+    WHERE <include refid="repositoryMatch"/>
+      AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
+  </delete>
+
+  <delete id="deleteOrphanedComponents" databaseId="H2">
+    DELETE FROM search_components
+    WHERE <include refid="repositoryMatch"/>
+      AND component_id IN (
+          SELECT cs.component_id
+          FROM search_components cs
+          WHERE <include refid="repositoryMatch"/>
+            AND NOT EXISTS (
+                SELECT 1 FROM ${format}_component comp
+                WHERE comp.component_id = cs.component_id
+                  AND comp.repository_id = cs.repository_id
+            )
+          <if test="limit gt 0"> LIMIT ${limit}</if>
+      )
+  </delete>
+
+  <delete id="deleteOrphanedAssets" databaseId="PostgreSQL">
+    WITH toBeDeleted AS (
+        SELECT sa.component_id
+        FROM search_assets sa
+        WHERE sa.repository_id = #{repositoryId}
+          AND sa.format = #{format}
+          AND NOT EXISTS (
+              SELECT 1 FROM search_components sc
+              WHERE sc.component_id = sa.component_id
+                AND sc.repository_id = sa.repository_id
+                AND sc.format = sa.format
+          )
+    <if test="limit gt 0"> LIMIT ${limit}</if>)
+    DELETE FROM search_assets cs
+    WHERE cs.repository_id = #{repositoryId}
+      AND cs.format = #{format}
+      AND cs.component_id IN (SELECT td.component_id FROM toBeDeleted td)
+  </delete>
+
+  <delete id="deleteOrphanedAssets" databaseId="H2">
+    DELETE FROM search_assets
+    WHERE repository_id = #{repositoryId}
+      AND format = #{format}
+      AND component_id IN (
+          SELECT sa.component_id
+          FROM search_assets sa
+          WHERE sa.repository_id = #{repositoryId}
+            AND sa.format = #{format}
+            AND NOT EXISTS (
+                SELECT 1 FROM search_components sc
+                WHERE sc.component_id = sa.component_id
+                  AND sc.repository_id = sa.repository_id
+                  AND sc.format = sa.format
+            )
+          <if test="limit gt 0"> LIMIT ${limit}</if>
+      )
   </delete>
 
   <resultMap id="searchDataMap" type="org.sonatype.nexus.repository.search.sql.store.SearchResultData">
@@ -776,26 +846,6 @@
       <when test="${tokens}.isEmpty()">null</when>
       <otherwise>
         (SELECT string_agg(LOWER(token)::tsvector::text, ' ')::tsvector FROM (VALUES <foreach collection="${tokens}" separator="," item="token">(#{token})</foreach>) AS t(token))
-      </otherwise>
-    </choose>
-  </sql>
-
-  <sql id="toQuotedTsVector" databaseId="PostgreSQL">
-    <!--
-      Uses VALUES clause with direct ::tsvector casting to avoid both stack depth and tokenization issues.
-      The old || concatenation created deeply nested expression trees that exceeded PostgreSQL's stack limit.
-      The VALUES clause provides a flat structure (no nesting), while ::tsvector casting preserves exact lexemes
-      without tokenization (unlike to_tsvector which would break paths into separate tokens).
-
-      This approach:
-      - Avoids stack depth issues: VALUES clause creates flat structure vs nested || expressions
-      - Preserves exact lexemes: ::tsvector casting treats each token as single lexeme
-      - Maintains compatibility: Output is identical to old || approach (exact same lexemes, no positions)
-    -->
-    <choose>
-      <when test="${tokens}.isEmpty()">null</when>
-      <otherwise>
-        (SELECT string_agg(token::tsvector::text, ' ')::tsvector FROM (VALUES <foreach collection="${tokens}" separator="," item="token">(#{token, typeHandler=QuotingTypeHandler})</foreach>) AS t(token))
       </otherwise>
     </choose>
   </sql>

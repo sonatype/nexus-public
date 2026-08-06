@@ -16,34 +16,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { CrowdPage } from '../CrowdPage';
-import * as useCrowdApiModule from '../useCrowdApi';
+import * as crowdApi from '../crowdApi';
 import { ToastProvider } from '../../../../../shared/Toast';
 
-// Mock the API hook
-jest.mock('../useCrowdApi');
+// Mock the pure API module the settings machine invokes.
+jest.mock('../crowdApi');
 
-const mockedUseCrowdApi = useCrowdApiModule.useCrowdApi as jest.MockedFunction<
-  typeof useCrowdApiModule.useCrowdApi
->;
+const mockedFetch = crowdApi.fetchCrowdConfig as jest.MockedFunction<typeof crowdApi.fetchCrowdConfig>;
+const mockedSave = crowdApi.saveCrowdConfig as jest.MockedFunction<typeof crowdApi.saveCrowdConfig>;
+const mockedVerify = crowdApi.verifyCrowdConnection as jest.MockedFunction<typeof crowdApi.verifyCrowdConnection>;
+const mockedClear = crowdApi.clearCrowdCache as jest.MockedFunction<typeof crowdApi.clearCrowdCache>;
 
-// Extend global mock with controllable checkPermission
 jest.mock('@sonatype/nexus-ui-plugin', () => {
   const { createNexusUiPluginMock } = jest.requireActual('../../../../../../../../__jest__/mocks/nexusUiPluginMock');
-  const baseMock = createNexusUiPluginMock();
-  return {
-    ...baseMock,
-    ExtJS: {
-      ...baseMock.ExtJS,
-      checkPermission: jest.fn().mockReturnValue(true),
-    },
-  };
+  return createNexusUiPluginMock();
 });
-
-// Get reference to the actual mock after jest.mock is hoisted
-const getMockCheckPermission = () => {
-  const { ExtJS } = require('@sonatype/nexus-ui-plugin');
-  return ExtJS.checkPermission;
-};
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -58,36 +45,33 @@ const mockSettings = {
   realmActive: false,
   applicationName: '',
   applicationPassword: '',
-  serverUrl: '',
+  url: '',
+  timeout: 30,
+  useTrustStoreForUrl: false,
+};
+
+const validSettings = {
+  enabled: true,
+  realmActive: false,
+  applicationName: 'nexus',
+  applicationPassword: 'secret',
+  url: 'http://crowd.example.com',
   timeout: 30,
   useTrustStoreForUrl: false,
 };
 
 describe('CrowdPage', () => {
-  const mockFetchConfig = jest.fn();
-  const mockSaveConfig = jest.fn();
-  const mockVerifyConnection = jest.fn();
-  const mockClearCache = jest.fn();
-  const mockSetError = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
-    // Restore checkPermission to return true after clearAllMocks
-    getMockCheckPermission().mockReturnValue(true);
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue(mockSettings),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true }),
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
+    (global as any).NX.Permissions.check.mockReturnValue(true);
+    mockedFetch.mockResolvedValue({ ...mockSettings });
+    mockedSave.mockResolvedValue(undefined);
+    mockedVerify.mockResolvedValue(undefined);
+    mockedClear.mockResolvedValue(undefined);
   });
 
   it('renders the page with correct data-testid', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByTestId('crowd-page')).toBeInTheDocument();
     });
@@ -95,11 +79,9 @@ describe('CrowdPage', () => {
 
   it('renders the form with correct data-testid and state attributes', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       const form = screen.getByTestId('crowd-form');
       expect(form).toBeInTheDocument();
-      // SettingsForm provides: data-loading, data-dirty, data-pristine, data-submit-disabled
       expect(form).toHaveAttribute('data-loading');
       expect(form).toHaveAttribute('data-dirty');
       expect(form).toHaveAttribute('data-pristine');
@@ -109,7 +91,6 @@ describe('CrowdPage', () => {
 
   it('renders the page header', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByText('Atlassian Crowd')).toBeInTheDocument();
     });
@@ -117,7 +98,6 @@ describe('CrowdPage', () => {
 
   it('renders the page description', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByText(/Manage Atlassian Crowd configuration/i)).toBeInTheDocument();
     });
@@ -125,140 +105,52 @@ describe('CrowdPage', () => {
 
   it('loads settings on mount', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
-      expect(mockFetchConfig).toHaveBeenCalled();
+      expect(mockedFetch).toHaveBeenCalled();
     });
   });
 
-  it('displays enabled toggle', async () => {
+  it.each([
+    ['checkbox-enabled'],
+    ['checkbox-realmActive'],
+    ['input-applicationName'],
+    ['password-applicationPassword'],
+    ['input-url'],
+    ['input-timeout'],
+  ])('displays the %s field', async (testId) => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
-      expect(screen.getByTestId('checkbox-enabled')).toBeInTheDocument();
+      expect(screen.getByTestId(testId)).toBeInTheDocument();
     });
   });
 
-  it('displays realm active toggle', async () => {
+  it('displays use trust store toggle when URL is https', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, url: 'https://crowd.example.com' });
     render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('checkbox-realmActive')).toBeInTheDocument();
-    });
-  });
-
-  it('displays application name field', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
-    });
-  });
-
-  it('displays application password field', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('password-applicationPassword')).toBeInTheDocument();
-    });
-  });
-
-  it('displays server URL field', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('input-url')).toBeInTheDocument();
-    });
-  });
-
-  it('displays timeout field', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
-    });
-  });
-
-  it('displays use trust store toggle', async () => {
-    // Trust store toggle only shows when URL starts with https
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        ...mockSettings,
-        url: 'https://crowd.example.com',
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true }),
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
-
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByTestId('checkbox-useTrustStoreForUrl')).toBeInTheDocument();
     });
   });
 
-  it('displays save button', async () => {
+  it('displays save, discard, verify and clear-cache buttons', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
-
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    });
-  });
-
-  it('displays discard button', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
       expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
-    });
-  });
-
-  it('displays verify connection button', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
       expect(screen.getByRole('button', { name: /verify.*connection/i })).toBeInTheDocument();
-    });
-  });
-
-  it('displays clear cache button', async () => {
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
       expect(screen.getByRole('button', { name: /clear.*cache/i })).toBeInTheDocument();
     });
   });
 
   it('saves settings when Save button is clicked', async () => {
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        ...mockSettings,
-        enabled: true,
-        applicationName: 'nexus',
-        applicationPassword: 'secret',
-        url: 'https://crowd.example.com',
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection,
-      clearCache: mockClearCache,
-    });
-
+    mockedFetch.mockResolvedValue({ ...validSettings });
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    // Make a change to enable the Save button (form needs to be dirty)
-    const appNameInput = screen.getByTestId('input-applicationName');
-    fireEvent.change(appNameInput, { target: { value: 'nexus-modified' } });
+    fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus-modified' } });
 
     const saveButton = screen.getByRole('button', { name: /save/i });
     await waitFor(() => {
@@ -267,71 +159,34 @@ describe('CrowdPage', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(mockSaveConfig).toHaveBeenCalled();
+      expect(mockedSave).toHaveBeenCalled();
     });
   });
 
   it('verifies connection when Verify Connection button is clicked', async () => {
-    // Provide complete valid settings to avoid validation errors disabling the button
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        enabled: true,
-        realmActive: false,
-        applicationName: 'nexus',
-        applicationPassword: 'secret',
-        url: 'https://crowd.example.com',
-        timeout: 30,
-        useTrustStoreForUrl: false,
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true }),
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
-
+    mockedFetch.mockResolvedValue({ ...validSettings });
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    const verifyButton = screen.getByRole('button', { name: /verify.*connection/i });
-    fireEvent.click(verifyButton);
+    fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
 
     await waitFor(() => {
-      expect(mockVerifyConnection).toHaveBeenCalled();
+      expect(mockedVerify).toHaveBeenCalled();
     });
   });
 
   it('shows success message after successful connection verification', async () => {
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        enabled: true,
-        realmActive: false,
-        applicationName: 'nexus',
-        applicationPassword: 'secret',
-        url: 'https://crowd.example.com',
-        timeout: 30,
-        useTrustStoreForUrl: false,
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true }),
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
-
+    mockedFetch.mockResolvedValue({ ...validSettings });
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    const verifyButton = screen.getByRole('button', { name: /verify.*connection/i });
-    fireEvent.click(verifyButton);
+    fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/Connection to Crowd server verified/i)).toBeInTheDocument();
@@ -339,37 +194,19 @@ describe('CrowdPage', () => {
   });
 
   it('handles failed connection verification', async () => {
-    const mockVerifyRejected = jest.fn().mockRejectedValue(new Error('Connection refused'));
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        enabled: true,
-        realmActive: false,
-        applicationName: 'nexus',
-        applicationPassword: 'secret',
-        url: 'https://crowd.example.com',
-        timeout: 30,
-        useTrustStoreForUrl: false,
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyRejected,
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
-
+    mockedFetch.mockResolvedValue({ ...validSettings });
+    mockedVerify.mockRejectedValue(new Error('Connection refused'));
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    const verifyButton = screen.getByRole('button', { name: /verify.*connection/i });
-    fireEvent.click(verifyButton);
+    fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
 
-    // Verify that the connection verification was attempted
     await waitFor(() => {
-      expect(mockVerifyRejected).toHaveBeenCalled();
+      expect(mockedVerify).toHaveBeenCalled();
+      expect(screen.getByText('Connection refused')).toBeInTheDocument();
     });
   });
 
@@ -380,11 +217,10 @@ describe('CrowdPage', () => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    const clearCacheButton = screen.getByRole('button', { name: /clear.*cache/i });
-    fireEvent.click(clearCacheButton);
+    fireEvent.click(screen.getByRole('button', { name: /clear.*cache/i }));
 
     await waitFor(() => {
-      expect(mockClearCache).toHaveBeenCalled();
+      expect(mockedClear).toHaveBeenCalled();
     });
   });
 
@@ -395,118 +231,232 @@ describe('CrowdPage', () => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    const clearCacheButton = screen.getByRole('button', { name: /clear.*cache/i });
-    fireEvent.click(clearCacheButton);
+    fireEvent.click(screen.getByRole('button', { name: /clear.*cache/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/cache.*cleared/i)).toBeInTheDocument();
     });
   });
 
-  it('resets form when Discard button is clicked', async () => {
+  it('resets form to the loaded configuration when Discard is confirmed', async () => {
+    // Load a non-empty configuration so the assertion proves Discard restores
+    // the loaded value (not merely that it clears the field).
+    mockedFetch.mockResolvedValue({ ...validSettings, applicationName: 'nexus' });
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      expect(screen.getByTestId('input-applicationName')).toHaveValue('nexus');
     });
 
-    // Modify a field
     const appNameInput = screen.getByTestId('input-applicationName');
     fireEvent.change(appNameInput, { target: { value: 'modified-app' } });
-
     expect(appNameInput).toHaveValue('modified-app');
 
-    // Click discard
-    const discardButton = screen.getByTestId('form-cancel');
-    fireEvent.click(discardButton);
+    fireEvent.click(screen.getByTestId('form-cancel'));
 
-    // Confirmation dialog should appear because confirmDiscard is true by default in SettingsForm
     await waitFor(() => {
       expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
     });
 
-    const leaveButton = screen.getByRole('button', { name: /leave/i });
-    fireEvent.click(leaveButton);
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
 
     await waitFor(() => {
-      expect(appNameInput).toHaveValue('');
+      // Restored to the loaded pristine value, not blanked.
+      expect(appNameInput).toHaveValue('nexus');
     });
   });
 
   it('handles loading state', () => {
-    // Component shows loading state during initial data fetch
-    // The loading message appears while fetchConfig is pending
+    mockedFetch.mockReturnValue(new Promise(() => {}));
     render(<CrowdPage />, { wrapper: TestWrapper });
-
-    // Initially shows loading state before data loads
     expect(screen.getByText(/Loading Crowd configuration/i)).toBeInTheDocument();
+    const container = screen.getByTestId('crowd-page');
+    expect(container).toHaveAttribute('data-loading', 'true');
+    expect(container).toHaveAttribute('aria-busy', 'true');
+    expect(container).toHaveAttribute('aria-live', 'polite');
   });
 
-  it('handles error state', async () => {
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to load Crowd settings',
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig,
-      saveConfig: mockSaveConfig,
-      verifyConnection: mockVerifyConnection,
-      clearCache: mockClearCache,
-    });
-
-    render(<CrowdPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load Crowd settings')).toBeInTheDocument();
-    });
-  });
-
-  it('enables save button when changes are made', async () => {
+  it('shows an error banner when an operation fails', async () => {
+    mockedClear.mockRejectedValue(new Error('Failed to clear Crowd cache'));
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    // Initially the save button is disabled (form is pristine)
+    fireEvent.click(screen.getByRole('button', { name: /clear.*cache/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to clear Crowd cache')).toBeInTheDocument();
+    });
+  });
+
+  it('enables save button when form is dirty AND valid', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings, enabled: false });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
     const saveButton = screen.getByRole('button', { name: /save/i });
     expect(saveButton).toBeDisabled();
 
-    // Enable Crowd - this makes the form dirty
-    const enabledToggle = screen.getByTestId('checkbox-enabled');
-    fireEvent.click(enabledToggle);
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
 
-    // Save button should now be enabled (form is dirty)
     await waitFor(() => {
       expect(saveButton).not.toBeDisabled();
     });
   });
 
-  it('shows read-only view when user lacks update permission', async () => {
-    // Mock no update permission
-    getMockCheckPermission().mockReturnValue(false);
+  it('disables Save and Verify buttons immediately when URL is blank on load', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /verify.*connection/i })).toBeDisabled();
+  });
+
+  it('does not show field errors on fresh load before user interaction', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    // Save/Verify are still disabled (raw validity), but no inline errors yet.
+    expect(screen.queryByText('Crowd server URL is required')).not.toBeInTheDocument();
+    expect(screen.queryByText('Application name is required')).not.toBeInTheDocument();
+    expect(screen.queryByText('Application password is required')).not.toBeInTheDocument();
+  });
+
+  it('shows a field error after the field is blurred', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    fireEvent.blur(screen.getByTestId('input-url'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Crowd server URL is required')).toBeInTheDocument();
+    });
+    // Other fields not yet touched — still silent.
+    expect(screen.queryByText('Application name is required')).not.toBeInTheDocument();
+  });
+
+  it('reveals all field errors after a save attempt on a dirty but invalid form', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    // Make the form dirty without fixing the invalid fields (toggle a checkbox).
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
+
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Crowd server URL is required')).toBeInTheDocument();
+      expect(screen.getByText('Application name is required')).toBeInTheDocument();
+      expect(screen.getByText('Application password is required')).toBeInTheDocument();
+    });
+    // The invalid form is never saved.
+    expect(mockedSave).not.toHaveBeenCalled();
+  });
+
+  it('shows URL required error and disables Verify when URL is cleared', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByTestId('input-url'), { target: { value: '' } });
+
+    await waitFor(() => {
+      // URL field was changed (touched), so its error is visible.
+      expect(screen.getByText('Crowd server URL is required')).toBeInTheDocument();
+      // Verify is disabled because the form is invalid.
+      expect(screen.getByRole('button', { name: /verify.*connection/i })).toBeDisabled();
+      // Save is enabled (form is dirty) — the user can click it to reveal all errors.
+      expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled();
+    });
+  });
+
+  it('discard resets touched state so field errors are hidden again', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    // Touch the URL field so its error becomes visible.
+    fireEvent.blur(screen.getByTestId('input-url'));
+    await waitFor(() => {
+      expect(screen.getByText('Crowd server URL is required')).toBeInTheDocument();
+    });
+
+    // Make a dirty change so the discard button is active.
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
+    fireEvent.click(screen.getByTestId('form-cancel'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /leave/i }));
+
+    await waitFor(() => {
+      // Touched state was reset — error hidden again even though URL is still blank.
+      expect(screen.queryByText('Crowd server URL is required')).not.toBeInTheDocument();
+    });
+    // Save still disabled because the form is still invalid (and now pristine).
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+  });
+
+  it('shows read-only view when user lacks all permissions', async () => {
     (global as any).NX.Permissions.check.mockReturnValue(false);
 
     render(<CrowdPage />, { wrapper: TestWrapper });
 
-    // Wait for loading to complete
     await waitFor(() => {
       expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
 
-    // Form fields should be disabled
-    const appNameInput = screen.getByTestId('input-applicationName');
-    expect(appNameInput).toBeDisabled();
-
-    // Action buttons should not be present
+    expect(screen.getByTestId('input-applicationName')).toBeDisabled();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /discard/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /verify.*connection/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clear.*cache/i })).not.toBeInTheDocument();
   });
 
+  it('shows verify connection but not clear cache when user has read but not update permission', async () => {
+    (global as any).NX.Permissions.check.mockImplementation((permission: string) => {
+      return permission === 'nexus:crowd:read';
+    });
+    mockedFetch.mockResolvedValue({ ...validSettings });
+
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /discard/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /verify.*connection/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clear.*cache/i })).not.toBeInTheDocument();
+  });
+
   it('shows permission warning when user lacks update permission', async () => {
-    // Mock no update permission
-    getMockCheckPermission().mockReturnValue(false);
     (global as any).NX.Permissions.check.mockReturnValue(false);
 
     render(<CrowdPage />, { wrapper: TestWrapper });
@@ -516,6 +466,24 @@ describe('CrowdPage', () => {
     });
   });
 
+  it('renders analytics IDs on all actionable elements', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, url: 'https://crowd.example.com' });
+
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-save"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-discard"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-verify-connection"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-clear-cache"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-toggle-enabled"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-toggle-realm-active"]')).toBeInTheDocument();
+    expect(document.querySelector('[data-analytics-id="nxrm-crowd-toggle-truststore"]')).toBeInTheDocument();
+  });
+
   it('renders help section with documentation link', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
 
@@ -523,7 +491,6 @@ describe('CrowdPage', () => {
       expect(screen.getByText('About Atlassian Crowd')).toBeInTheDocument();
     });
 
-    // Check for documentation link
     const docLink = screen.getByRole('link', { name: /view crowd documentation/i });
     expect(docLink).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/docs/crowd');
   });
@@ -532,8 +499,7 @@ describe('CrowdPage', () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      const form = screen.getByTestId('crowd-form');
-      expect(form).toHaveAttribute('data-mode', 'edit');
+      expect(screen.getByTestId('crowd-form')).toHaveAttribute('data-mode', 'edit');
     });
   });
 
@@ -545,90 +511,225 @@ describe('CrowdPage', () => {
     });
 
     const form = screen.getByTestId('crowd-form');
-    
-    // Initially form should not be dirty
     expect(form).toHaveAttribute('data-dirty', 'false');
 
-    // Make a change
-    const enabledToggle = screen.getByTestId('checkbox-enabled');
-    fireEvent.click(enabledToggle);
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
 
-    // Form should now be dirty
     await waitFor(() => {
       expect(form).toHaveAttribute('data-dirty', 'true');
     });
   });
 
   it('validates URL format', async () => {
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        ...mockSettings,
-        applicationName: 'nexus',
-        applicationPassword: 'secret',
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true }),
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
-
+    mockedFetch.mockResolvedValue({ ...validSettings, url: '' });
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-url')).toBeInTheDocument();
     });
 
-    // Enter invalid URL
-    const urlInput = screen.getByTestId('input-url');
-    fireEvent.change(urlInput, { target: { value: 'not-a-valid-url' } });
+    fireEvent.change(screen.getByTestId('input-url'), { target: { value: 'not-a-valid-url' } });
 
-    // Try to save
-    const saveButton = screen.getByRole('button', { name: /save/i });
-    fireEvent.click(saveButton);
-
-    // Should show validation error
     await waitFor(() => {
       expect(screen.getByText('URL is not valid')).toBeInTheDocument();
     });
   });
 
   it('validates timeout range (1-3600)', async () => {
-    mockedUseCrowdApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchConfig: mockFetchConfig.mockResolvedValue({
-        ...mockSettings,
-        applicationName: 'nexus',
-        applicationPassword: 'secret',
-        url: 'http://crowd.example.com',
-      }),
-      saveConfig: mockSaveConfig.mockResolvedValue({}),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true }),
-      clearCache: mockClearCache.mockResolvedValue({}),
-    });
-
+    mockedFetch.mockResolvedValue({ ...validSettings });
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
     });
 
-    // Enter invalid timeout (too high)
-    const timeoutInput = screen.getByTestId('input-timeout');
-    fireEvent.change(timeoutInput, { target: { value: '5000' } });
+    fireEvent.change(screen.getByTestId('input-timeout'), { target: { value: '5000' } });
 
-    // Try to save
-    const saveButton = screen.getByRole('button', { name: /save/i });
-    fireEvent.click(saveButton);
-
-    // Should show validation error
     await waitFor(() => {
       expect(screen.getByText('Timeout must be between 1 and 3600 seconds')).toBeInTheDocument();
     });
   });
+
+  it('disables Save on pristine load with invalid config, enables it once the form is dirty', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, applicationName: '', applicationPassword: '' });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
+    // Pristine: Save is disabled.
+    const saveButton = screen.getByRole('button', { name: /save/i });
+    expect(saveButton).toBeDisabled();
+
+    // After a change the form is dirty — Save enables so the user can click to reveal all errors.
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
+    await waitFor(() => expect(saveButton).not.toBeDisabled());
+  });
+
+  it('timeout input renders empty when the API returns null', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, timeout: null as unknown as undefined });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
+    });
+
+    // Blank, not the string "null".
+    expect(screen.getByTestId('input-timeout')).toHaveDisplayValue('');
+  });
+
+  it('timeout input shows non-numeric text and a validation error (not NaN)', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
+    });
+
+    const timeoutInput = screen.getByTestId('input-timeout');
+    fireEvent.change(timeoutInput, { target: { value: 'abc' } });
+
+    // Input shows what the user typed (not "NaN").
+    expect(timeoutInput).toHaveDisplayValue('abc');
+    await waitFor(() => {
+      expect(screen.getByText('Timeout must be a number')).toBeInTheDocument();
+    });
+  });
+
+  it('timeout input can be cleared after non-numeric entry', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
+    });
+
+    const timeoutInput = screen.getByTestId('input-timeout');
+    fireEvent.change(timeoutInput, { target: { value: 'abc' } });
+    fireEvent.change(timeoutInput, { target: { value: '' } });
+
+    // Clearable — not stuck at "abc" or "NaN".
+    expect(timeoutInput).toHaveDisplayValue('');
+  });
+
+  it('form is dirty when non-numeric text replaces a previously loaded timeout value', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings, timeout: 30 });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByTestId('input-timeout'), { target: { value: 'abc' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('crowd-form')).toHaveAttribute('data-dirty', 'true');
+    });
+  });
+
+  it('disables Verify Connection button immediately on load when required fields are empty', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, applicationName: '', applicationPassword: '' });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('button', { name: /verify.*connection/i })).toBeDisabled();
+  });
+
+  it('disables Verify Connection button reactively when a required field is cleared', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /verify.*connection/i })).not.toBeDisabled();
+    });
+
+    fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: '' } });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /verify.*connection/i })).toBeDisabled();
+    });
+  });
+
+  it('shows a distinct "not a number" message for non-numeric timeout input', async () => {
+    mockedFetch.mockResolvedValue({ ...validSettings });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-timeout')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByTestId('input-timeout'), { target: { value: 'abc' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('Timeout must be a number')).toBeInTheDocument();
+      expect(screen.queryByText('Timeout must be between 1 and 3600 seconds')).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders realmActive checkbox description with a link to the Realms page', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkbox-realmActive')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('link', { name: /realms/i })).toHaveAttribute(
+      'href',
+      '#preview/admin/security/realms'
+    );
+  });
+
+  it('renders truststore checkbox description with a link to the SSL Certificates page', async () => {
+    mockedFetch.mockResolvedValue({ ...mockSettings, url: 'https://crowd.example.com' });
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('checkbox-useTrustStoreForUrl')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('link', { name: /configure.*truststore/i })).toHaveAttribute(
+      'href',
+      '#preview/admin/security/sslcertificates'
+    );
+  });
+
+  it('shows an aggregate validation error banner when the form is dirty with validation errors', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/validation error/i)).toBeInTheDocument();
+    });
+  });
+
+  it('hides the aggregate validation error banner once all errors are resolved', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/validation error/i)).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByTestId('input-url'), { target: { value: 'http://crowd.example.com' } });
+    fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus' } });
+    fireEvent.change(screen.getByTestId('password-applicationPassword'), { target: { value: 'secret' } });
+
+    await waitFor(() => {
+      expect(screen.queryByText(/validation error/i)).not.toBeInTheDocument();
+    });
+  });
 });
-
-

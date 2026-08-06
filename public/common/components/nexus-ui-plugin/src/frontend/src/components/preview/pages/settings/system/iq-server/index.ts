@@ -12,7 +12,4 @@
  */
 
 export { IqServerPage } from './IqServerPage';
-export { useIqServerApi } from './useIqServerApi';
 export * from './types';
-
-

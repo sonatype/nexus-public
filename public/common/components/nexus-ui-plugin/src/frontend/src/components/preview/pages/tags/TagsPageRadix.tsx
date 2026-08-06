@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertDialog,
   Box,
@@ -58,6 +58,9 @@ const TAGS_SORT_OPTIONS: Array<{ value: TagSortField; label: string }> = [
   { value: 'lastUpdated', label: 'Last Updated' },
 ];
 
+/** Delay before a typed name filter is committed to the server-side fetch. */
+const NAME_FILTER_DEBOUNCE_MS = 300;
+
 /**
  * Tags list page aligned with Browse layout: same structure, spacing, and components.
  */
@@ -78,6 +81,7 @@ export function TagsPageRadix(): JSX.Element {
     setPage,
     setPageSize,
     retry,
+    refresh,
   } = useFilteredTags();
 
   const toast = useToast();
@@ -86,6 +90,32 @@ export function TagsPageRadix(): JSX.Element {
   const [tagNameError, setTagNameError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Local mirror of the name filter so the input stays responsive while the
+  // committed value (which triggers a server-side fetch) is debounced.
+  const [nameInput, setNameInput] = useState(filters.nameFilter);
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+  // Latest filters, read inside the debounce timeout to avoid a stale merge.
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
+  // Keep the input in sync when the committed filter changes from elsewhere
+  // (e.g. "clear all"), but never fight an in-flight debounce.
+  useEffect(() => {
+    if (!nameDebounceRef.current) {
+      setNameInput(filters.nameFilter);
+    }
+  }, [filters.nameFilter]);
+
+  // Clear any pending debounce on unmount.
+  useEffect(
+    () => () => {
+      if (nameDebounceRef.current) {
+        clearTimeout(nameDebounceRef.current);
+      }
+    },
+    []
+  );
 
   const handleTagNameChange = useCallback((value: string) => {
     setNewTagName(value);
@@ -112,19 +142,26 @@ export function TagsPageRadix(): JSX.Element {
       setCreateDialogOpen(false);
       setNewTagName('');
       setTagNameError('');
-      retry();
+      refresh();
     } catch (err) {
       toast.error(parseApiError(err).message);
     } finally {
       setIsCreating(false);
     }
-  }, [newTagName, toast, retry]);
+  }, [newTagName, toast, refresh]);
 
   const handleNameFilterChange = useCallback(
     (value: string) => {
-      setFilters({ ...filters, nameFilter: value });
+      setNameInput(value);
+      if (nameDebounceRef.current) {
+        clearTimeout(nameDebounceRef.current);
+      }
+      nameDebounceRef.current = setTimeout(() => {
+        nameDebounceRef.current = undefined;
+        setFilters({ ...filtersRef.current, nameFilter: value });
+      }, NAME_FILTER_DEBOUNCE_MS);
     },
-    [filters, setFilters]
+    [setFilters]
   );
 
   const toggleComponentCountRange = useCallback(
@@ -148,6 +185,11 @@ export function TagsPageRadix(): JSX.Element {
   );
 
   const clearAllFilters = useCallback(() => {
+    if (nameDebounceRef.current) {
+      clearTimeout(nameDebounceRef.current);
+      nameDebounceRef.current = undefined;
+    }
+    setNameInput('');
     setFilters({ nameFilter: '', componentCountRanges: [], activityDays: [] });
   }, [setFilters]);
 
@@ -221,7 +263,7 @@ export function TagsPageRadix(): JSX.Element {
             <Box mb="4">
               <PageHeader
                 title={STRINGS.pageTitle}
-                description={loading ? '-' : headerCount.toLocaleString()}
+                count={loading ? '-' : headerCount.toLocaleString()}
                 actions={
                   <Button
                     variant="solid"
@@ -246,7 +288,7 @@ export function TagsPageRadix(): JSX.Element {
                 <Box style={{ flex: 1, minWidth: 200 }}>
                   <TextField.Root
                     placeholder={STRINGS.filterPlaceholder}
-                    value={filters.nameFilter}
+                    value={nameInput}
                     onChange={(e) => handleNameFilterChange(e.target.value)}
                     size="2"
                     style={{ width: '100%' }}
@@ -254,7 +296,7 @@ export function TagsPageRadix(): JSX.Element {
                     <TextField.Slot>
                       <Search size={14} />
                     </TextField.Slot>
-                    {filters.nameFilter && (
+                    {nameInput && (
                       <TextField.Slot side="right">
                         <IconButton
                           variant="ghost"

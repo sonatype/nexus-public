@@ -209,6 +209,8 @@ export interface PypiConfig {
 export interface NugetProxyConfig {
   queryCacheItemMaxAge?: number;
   nugetVersion: 'V2' | 'V3';
+  symbolServerUrl?: string;
+  allowAnonymousSymbolAccess?: boolean;
 }
 
 /**
@@ -643,7 +645,6 @@ export const FORMAT_LABELS: Record<string, string> = {
   gitlfs: 'Git LFS',
   p2: 'p2',
   terraform: 'Terraform',
-  terraformbackend: 'Terraform Backend',
   composer: 'Composer',
   cargo: 'Cargo (Rust)',
   huggingface: 'Hugging Face',
@@ -872,9 +873,9 @@ export function validateEcrAccessKeyId(value: string | undefined): string | unde
  */
 export function hasFormErrors(errors: RepositoryFormErrors): boolean {
   return Object.values(errors).some((value) => {
-    if (typeof value === 'string') return !!value;
+    if (typeof value === 'string') return Boolean(value);
     if (typeof value === 'object' && value !== null) {
-      return Object.values(value).some((v) => !!v);
+      return Object.values(value).some((v) => Boolean(v));
     }
     return false;
   });

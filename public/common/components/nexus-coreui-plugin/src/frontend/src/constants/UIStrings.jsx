@@ -43,6 +43,7 @@ import SamlStrings from './pages/admin/security/SamlStrings';
 import DataStoreStrings from './pages/admin/repository/DataStoreStrings';
 import ReplicationStrings from './pages/admin/repository/ReplicationStrings';
 import UserTokenConfigurationStrings from './pages/admin/security/UserTokenStrings';
+import ServiceAccountTokensStrings from './pages/admin/security/ServiceAccountTokensStrings';
 import UserTokenStrings from './pages/user/UserTokenStrings';
 import WelcomeStrings from './pages/user/WelcomeStrings';
 import TagsStrings from './pages/browse/tags/TagsStrings';
@@ -99,9 +100,11 @@ export default {
   ...RealmsStrings,
   ...RolesStrings,
   ...SamlStrings,
+  ...ServiceAccountTokensStrings,
   ...SslCertificatesStrings,
   ...UsersStrings,
   ...UserTokenConfigurationStrings,
+  ...ServiceAccountTokensStrings,
 
   // admin/support
   ...LoggingStrings,

@@ -17,7 +17,6 @@ import { ArrowDown, ArrowUp, ChevronRight } from 'lucide-react';
 
 import { LoadingState } from '../LoadingState';
 import { ErrorState } from '../ErrorState';
-import { EmptyState } from '../EmptyState';
 
 import './EntityTable.scss';
 
@@ -72,6 +71,10 @@ export interface EntityTableProps<T> {
   className?: string;
   /** Whether rows are clickable */
   clickable?: boolean;
+  /** Make rows focusable as tab stops without making them clickable. Useful for SR users to read row content. */
+  focusableRows?: boolean;
+  /** Function returning an aria-label for a row when focusableRows is true. Falls back to the row key. */
+  getRowAriaLabel?: (item: T) => string;
   /** Aria label for the table */
   ariaLabel?: string;
   /** Function to get data-testid for each row */
@@ -127,6 +130,8 @@ export function EntityTable<T>({
   showRowArrow = true,
   className = '',
   clickable = true,
+  focusableRows = false,
+  getRowAriaLabel,
   ariaLabel = 'Data table',
   getRowTestId,
 }: EntityTableProps<T>): JSX.Element {
@@ -244,16 +249,22 @@ export function EntityTable<T>({
         {data.map((item) => {
           const key = getRowKey(item);
           const isRowClickable = clickable && onRowClick;
+          const isRowFocusable = !isRowClickable && focusableRows;
+          const rowAriaLabel = isRowClickable
+            ? `View ${key}`
+            : isRowFocusable && getRowAriaLabel
+              ? getRowAriaLabel(item)
+              : undefined;
 
           return (
             <Table.Row
               key={key}
-              className={`entity-table__row ${isRowClickable ? 'entity-table__row--clickable' : ''}`}
+              className={`entity-table__row ${isRowClickable || isRowFocusable ? 'entity-table__row--clickable' : ''}`}
               onClick={isRowClickable ? handleRowClick(item) : undefined}
               onKeyDown={isRowClickable ? handleRowKeyDown(item) : undefined}
-              tabIndex={isRowClickable ? 0 : undefined}
+              tabIndex={isRowClickable || isRowFocusable ? 0 : undefined}
               role={isRowClickable ? 'button' : undefined}
-              aria-label={isRowClickable ? `View ${key}` : undefined}
+              aria-label={rowAriaLabel}
               data-testid={getRowTestId ? getRowTestId(item) : undefined}
             >
               {columns.map((column) => (

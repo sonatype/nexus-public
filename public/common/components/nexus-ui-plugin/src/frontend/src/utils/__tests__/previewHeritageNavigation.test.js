@@ -86,6 +86,11 @@ describe('getHeritageEquivalent', () => {
   it('strips leading slash', () => {
     expect(getHeritageEquivalent('/preview/admin/system/tasks')).toBe('admin/system/tasks');
   });
+
+  it('maps recovery mode to the classic recovery route', () => {
+    expect(getHeritageEquivalent('preview/admin/support/recoverymode'))
+      .toBe('admin/support/recovery');
+  });
 });
 
 describe('heritageToPreviewPath', () => {
@@ -191,6 +196,11 @@ describe('heritageToPreviewPath', () => {
   it('maps admin/support/status sub-path', () => {
     expect(heritageToPreviewPath('admin/support/status/metrics'))
       .toBe('preview/admin/support/metrichealth/metrics');
+  });
+
+  it('maps the classic recovery route to the preview recovery mode page', () => {
+    expect(heritageToPreviewPath('admin/support/recovery'))
+      .toBe('preview/admin/support/recoverymode');
   });
 
   it('maps an unrecognised path via else branch', () => {

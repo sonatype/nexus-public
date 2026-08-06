@@ -49,19 +49,26 @@ export function SettingsSelect({
   required = false,
   disabled = false,
   className = '',
+  container = undefined,
 }) {
   const selectId = `settings-select-${name}`;
   const helpId = `settings-help-${name}`;
   const errorId = `settings-error-${name}`;
 
-  // Convert empty string or undefined value to our special NONE_VALUE for Radix compatibility
-  const normalizedValue = value === '' || value === undefined ? NONE_VALUE : value;
-
-  // Convert options with empty string values to use NONE_VALUE
+  // Convert options with empty string values to use NONE_VALUE (Radix Select
+  // doesn't accept empty-string item values).
   const normalizedOptions = options.map((option) => ({
     ...option,
     value: option.value === '' ? NONE_VALUE : option.value,
   }));
+
+  // For the Root's value: if the consumer included an empty-valued option
+  // (which we mapped to NONE_VALUE), use NONE_VALUE so that option stays
+  // selectable. Otherwise pass `undefined` so Radix shows the placeholder
+  // when nothing is selected.
+  const hasNoneOption = normalizedOptions.some((o) => o.value === NONE_VALUE);
+  const isEmpty = value === '' || value === undefined;
+  const normalizedValue = isEmpty ? (hasNoneOption ? NONE_VALUE : undefined) : value;
 
   const handleChange = (newValue) => {
     if (onChange) {
@@ -96,9 +103,15 @@ export function SettingsSelect({
             placeholder={placeholder}
             aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
             aria-invalid={!!error}
+            aria-required={required}
             data-testid={`select-${name}`}
           />
-          <Select.Content className="settings-select__content" position="popper" sideOffset={4}>
+          <Select.Content
+            className="settings-select__content"
+            position="popper"
+            sideOffset={4}
+            container={container}
+          >
             {normalizedOptions.map((option) => (
               <Select.Item
                 key={option.value}
@@ -151,6 +164,9 @@ SettingsSelect.propTypes = {
   disabled: PropTypes.bool,
   /** Additional CSS class */
   className: PropTypes.string,
+  /** Optional DOM element to portal the dropdown into (e.g. a Radix Dialog
+   *  content element) so the listbox stays inside the dialog's focus trap. */
+  container: typeof HTMLElement !== 'undefined' ? PropTypes.instanceOf(HTMLElement) : PropTypes.any,
 };
 
 export default SettingsSelect;

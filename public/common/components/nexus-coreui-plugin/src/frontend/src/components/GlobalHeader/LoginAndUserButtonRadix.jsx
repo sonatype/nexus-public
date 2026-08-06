@@ -23,6 +23,8 @@ import UIStrings from '../../constants/UIStrings';
 import {useTheme} from '../../contexts/ThemeContext';
 import {restClient} from '../../utils/api';
 
+import './LoginAndUserButtonRadix.scss';
+
 /**
  * Single component with all hooks at top - no conditional component switching.
  * Fixes "Rendered fewer hooks" when hasUser changes during logout.
@@ -140,7 +142,7 @@ export default function LoginAndUserButtonRadix() {
 
       <DropdownMenu.Content align="end" container={portalContainer} color="gray" variant="soft">
         <DropdownMenu.Label>
-          <Text size="2" as="span" weight="bold" style={{color: 'var(--gray-12)'}}>
+          <Text size="2" as="span" weight="bold" className="nxrm-login-and-user-button__user-id">
             {userId}
           </Text>
         </DropdownMenu.Label>

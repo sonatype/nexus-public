@@ -77,7 +77,7 @@ export function GAVersionsTab({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterStatuses]);
+  }, []);
 
   const filteredVersions = useMemo(() => {
     return versions.filter((v) => {
@@ -287,6 +287,7 @@ export function GAVersionsTab({
                 </Box>
                 <Button asChild size="2" variant="outline" color="gray">
                   <button
+                    type="button"
                     disabled={sortedVersions.length === 0}
                     aria-label="Export all filtered results as CSV"
                     onClick={() =>

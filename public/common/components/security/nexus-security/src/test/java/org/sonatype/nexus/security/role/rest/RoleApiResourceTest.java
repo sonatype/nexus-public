@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-
 import jakarta.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
@@ -49,9 +49,9 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
-@ExtendWith(MockitoExtension.class)
-@ExtendWith(AuthenticationExtension.class)
+@ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
 @WithUser
 class RoleApiResourceTest
 {
@@ -61,6 +61,9 @@ class RoleApiResourceTest
   @Mock
   private AuthorizationManager authorizationManager;
 
+  @Mock
+  private RoleAssignabilityChecker roleAssignabilityChecker;
+
   private RoleApiResource underTest;
 
   @BeforeEach
@@ -68,7 +71,7 @@ class RoleApiResourceTest
     lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
     lenient().when(securitySystem.listSources()).thenReturn(Arrays.asList("default", "LDAP"));
 
-    underTest = new RoleApiResource(securitySystem);
+    underTest = new RoleApiResource(securitySystem, roleAssignabilityChecker);
   }
 
   @Test
@@ -317,6 +320,105 @@ class RoleApiResourceTest
       assertThat(e.getResponse().getEntity().toString(),
           is(ErrorMessageUtil.getFormattedMessage(
               "\"The Role id 'id' does not match the id used in the path 'bad'.\"")));
+    }
+  }
+
+  @Test
+  void getAssignableRoles_doesNotReturnAdminRoleForSAAdmin() throws Exception {
+    Role nxAdminRole = createRole("default", "nx-admin", "Admin", "Admin Role",
+        Collections.emptySet(), Collections.singleton("nx-admin-priv"));
+    Role nxSaAdminRole = createRole("default", "nx-sa-admin", "SA Admin", "SA Admin Role",
+        Collections.emptySet(), Collections.singleton("nx-sa-admin-priv"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE))
+        .thenReturn(new LinkedHashSet<>(Arrays.asList(nxAdminRole, nxSaAdminRole)));
+    when(roleAssignabilityChecker.isRoleAssignable("nx-admin")).thenReturn(false);
+    when(roleAssignabilityChecker.isRoleAssignable("nx-sa-admin")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+    assertThat(assignable.get(0).getId(), is("nx-sa-admin"));
+  }
+
+  @Test
+  void getAssignableRoles_emptySource_returnsAllAssignable() throws Exception {
+    Role role = createRole("default", "role1", "Role 1", "Role 1 Description",
+        Collections.emptySet(), Collections.singleton("priv1"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("role1")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+  }
+
+  @Test
+  void getAssignableRoles_specificSource_returnsAllAssignable() throws Exception {
+    Role role = createRole("default", "role1", "Role 1", "Role 1 Description",
+        Collections.emptySet(), Collections.singleton("priv1"));
+
+    when(securitySystem.listRoles("default")).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("role1")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles("default");
+
+    assertThat(assignable.size(), is(1));
+  }
+
+  @Test
+  void getAssignableRoles_includesRoleWithNoPermissions() throws Exception {
+    Role role = createRole("default", "empty-role", "Empty Role", "Empty Role Description",
+        Collections.emptySet(), Collections.emptySet());
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("empty-role")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+    assertThat(assignable.get(0).getId(), is("empty-role"));
+  }
+
+  @Test
+  void getAssignableRoles_withMultiplePermissions_allMustBeCovered() throws Exception {
+    Role role = createRole("default", "single-perm-role", "Single Perm Role", "Single Perm Role Description",
+        Collections.emptySet(), Collections.singleton("single-perm"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("single-perm-role")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+  }
+
+  @Test
+  void getAssignableRoles_notAssignableRole_isExcluded() throws Exception {
+    Role role = createRole("default", "restricted-role", "Restricted", "Restricted Role",
+        Collections.emptySet(), Collections.singleton("restricted-priv"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("restricted-role")).thenReturn(false);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(0));
+  }
+
+  @Test
+  void getAssignableRoles_sourceNotFound_throwsException() throws Exception {
+    lenient().when(securitySystem.listRoles("nonexistent"))
+        .thenThrow(new NoSuchAuthorizationManagerException("nonexistent"));
+
+    try {
+      underTest.getAssignableRoles("nonexistent");
+      fail("Should have thrown exception for non-existent source");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString().contains("Source 'nonexistent' not found"), is(true));
     }
   }
 

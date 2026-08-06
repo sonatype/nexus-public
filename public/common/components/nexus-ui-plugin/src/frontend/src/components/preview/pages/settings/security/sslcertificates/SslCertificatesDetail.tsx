@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Text, Heading, Grid } from '@radix-ui/themes';
+import { Box, Flex, Text, } from '@radix-ui/themes';
 import { Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 
 import {
@@ -22,7 +22,6 @@ import {
   SettingsAlert,
 } from '../../../../shared/form';
 import {
-  SslCertificate,
   SslCertificatesDetailProps,
   formatDate,
   isCertificateExpired,

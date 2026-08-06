@@ -249,16 +249,8 @@ public class RealmManagerImpl
     for (String configuredRealmId : configuredRealmIds) {
       Realm realm = availableRealms.get(configuredRealmId);
 
-      // FIXME: Resolve what purpose this is for, looks like legacy?
       if (realm == null) {
-        log.debug("Failed to look up realm '{}' as a component, trying reflection", configuredRealmId);
-        // If that fails, will simply use reflection to load
-        try {
-          realm = (Realm) getClass().getClassLoader().loadClass(configuredRealmId).newInstance();
-        }
-        catch (Exception e) {
-          log.error("Unable to lookup security realms", e);
-        }
+        log.warn("Realm '{}' is not available; skipping", configuredRealmId);
       }
 
       if (realm != null) {

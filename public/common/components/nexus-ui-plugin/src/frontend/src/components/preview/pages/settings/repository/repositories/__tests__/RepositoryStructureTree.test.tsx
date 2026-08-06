@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TooltipProvider } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 import { RepositoryStructureTree } from '../RepositoryStructureTree';
 import { useRepositoryTree } from '../useRepositoryTree';

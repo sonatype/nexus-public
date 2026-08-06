@@ -23,11 +23,8 @@ import {
 import { PrivilegeForm } from './PrivilegeForm';
 import { usePrivilegesApi } from './usePrivilegesApi';
 import {
-  Privilege,
-  PrivilegeFormData,
   PrivilegeDetailProps,
   isReadOnlyPrivilege,
-  getPrivilegeTypeLabel,
 } from './types';
 
 import './PrivilegeDetail.scss';

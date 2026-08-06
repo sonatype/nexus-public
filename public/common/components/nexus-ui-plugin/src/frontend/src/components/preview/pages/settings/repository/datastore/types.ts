@@ -32,22 +32,6 @@ export interface DataStoreConfig {
 }
 
 /**
- * Form data for updating DataStore configuration
- */
-export interface DataStoreFormData {
-  maximumConnectionPool: number | string;
-  advanced: string;
-}
-
-/**
- * Form validation errors
- */
-export interface DataStoreFormErrors {
-  maximumConnectionPool?: string;
-  advanced?: string;
-}
-
-/**
  * Props for DataStorePage component
  */
 export interface DataStorePageProps {
@@ -70,7 +54,7 @@ export function validateConnectionPool(value: number | string): string | undefin
   // For string inputs, use parseFloat to properly detect decimals
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
   
-  if (isNaN(numValue)) {
+  if (Number.isNaN(numValue)) {
     return 'Must be a valid number';
   }
   
@@ -87,27 +71,6 @@ export function validateConnectionPool(value: number | string): string | undefin
   }
   
   return undefined;
-}
-
-/**
- * Validate DataStore form
- */
-export function validateDataStoreForm(data: DataStoreFormData): DataStoreFormErrors {
-  const errors: DataStoreFormErrors = {};
-  
-  const poolError = validateConnectionPool(data.maximumConnectionPool);
-  if (poolError) {
-    errors.maximumConnectionPool = poolError;
-  }
-  
-  return errors;
-}
-
-/**
- * Check if form has validation errors
- */
-export function hasFormErrors(errors: DataStoreFormErrors): boolean {
-  return Object.keys(errors).length > 0;
 }
 
 /**
@@ -164,23 +127,21 @@ export function validateJdbcParameters(parameters: JdbcParameter[]): {
 
 /**
  * Parse advanced string into JdbcParameter array
- * Format: key1=value1;key2=value2 or key1=value1&key2=value2
+ * Format: key1=value1\nkey2=value2 (newline-separated, matches MyBatisDataStore's \r?\n split)
  */
 export function parseAdvancedString(advanced: string): JdbcParameter[] {
-  if (!advanced || !advanced.trim()) {
+  if (!(advanced?.trim())) {
     return [];
   }
 
   const parameters: JdbcParameter[] = [];
-  // Support both semicolon and ampersand separators
-  const separator = advanced.includes(';') ? ';' : '&';
-  const pairs = advanced.split(separator).filter(p => p.trim());
+  const pairs = advanced.split(/\r?\n/).filter(p => p.trim());
 
   for (const pair of pairs) {
     const [name, ...valueParts] = pair.split('=');
     const value = valueParts.join('='); // Handle values with = in them
     
-    if (name && name.trim()) {
+    if (name?.trim()) {
       parameters.push({
         id: `param-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: name.trim(),
@@ -206,7 +167,7 @@ export function serializeParameters(parameters: JdbcParameter[]): string {
 
   return customParams
     .map(p => `${p.name}=${p.value}`)
-    .join(';');
+    .join('\n');
 }
 
 /**

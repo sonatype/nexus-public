@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Box, Flex, Text, Card, Code, Table, Badge } from '@radix-ui/themes';
+import { Box, Flex, Text, Code, Table, Badge } from '@radix-ui/themes';
 import { Trash2, ChevronDown, ChevronRight, Plus, Loader2, Link } from 'lucide-react';
 
 import {
@@ -33,7 +33,6 @@ import { CSEL_CONFIG } from './cselConfig';
 import { ValidationResult } from './cselValidator';
 import {
   ContentSelector,
-  ContentSelectorFormData,
   CONTENT_SELECTOR_TYPE,
 } from './types';
 
@@ -79,7 +78,7 @@ export function ContentSelectorForm({
 
   // State for attached privileges (only for edit mode)
   const [attachedPrivileges, setAttachedPrivileges] = useState<PrivilegeReference[]>([]);
-  const [loadingPrivileges, setLoadingPrivileges] = useState(false);
+  const [_loadingPrivileges, setLoadingPrivileges] = useState(false);
 
   // Form ID must match contentSelectorFormMachine's id exactly:
   // - Edit mode: `content-selector-form-${selectorName}`
@@ -108,7 +107,7 @@ export function ContentSelectorForm({
   }, [isCreate, selector?.name, fetchPrivilegesForSelector]);
 
   // Use XState form hook
-  const { form, selector: formSelector } = useContentSelectorForm({
+  const { form } = useContentSelectorForm({
     selectorName: isCreate ? undefined : selector?.name,
     selector: selector || undefined,
     onCancel,

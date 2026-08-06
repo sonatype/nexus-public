@@ -79,7 +79,7 @@ export function GAFilesTab({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterExtensions]);
+  }, []);
 
   const extensionOptions = useMemo(() => {
     const exts = new Set(assets.map((a) => a.extension));
@@ -324,6 +324,7 @@ export function GAFilesTab({
                 </Box>
                 <Button asChild size="2" variant="outline" color="gray">
                   <button
+                    type="button"
                     disabled={sortedAssets.length === 0}
                     aria-label="Export all filtered results as CSV"
                     onClick={() =>

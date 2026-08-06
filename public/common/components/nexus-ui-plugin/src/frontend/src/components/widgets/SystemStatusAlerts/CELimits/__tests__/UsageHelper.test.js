@@ -16,7 +16,7 @@
  */
 import {helperFunctions} from '../UsageHelper';
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
+jest.mock('../../../../../interface/ExtJS', () => ({
   ExtJS: {
     state: jest.fn(() => ({getValue: jest.fn()})),
     useState: jest.fn(),
@@ -24,11 +24,12 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
-const {ExtJS} = jest.requireMock('@sonatype/nexus-ui-plugin');
+const {ExtJS} = jest.requireMock('../../../../../interface/ExtJS');
 
 const {
   getMetricData,
   useThrottlingStatus,
+  buildLearnMoreUrl,
   OVER_LIMITS,
   NEAR_LIMITS,
   UNDER_LIMITS,
@@ -137,6 +138,35 @@ describe('useThrottlingStatus', () => {
   it('returns BELOW_LIMITS_GRACE_PERIOD_ENDED when under limits after grace as admin', () => {
     setup({throttlingStatus: UNDER_LIMITS, graceDaysFromNow: -5, isAdmin: true});
     expect(useThrottlingStatus()).toBe('BELOW_LIMITS_GRACE_PERIOD_ENDED');
+  });
+});
+
+describe('buildLearnMoreUrl', () => {
+  beforeEach(() => {
+    ExtJS.state.mockReturnValue({
+      getValue: jest.fn((key) => {
+        if (key === 'nexus.node.id') return 'node-1';
+        if (key === 'nexus.malware.count') return {totalCount: 3};
+        return undefined;
+      }),
+    });
+  });
+
+  it('returns the limits-enforced learn-more URL when the grace period has ended', () => {
+    const url = buildLearnMoreUrl('OVER_LIMITS_GRACE_PERIOD_ENDED');
+    expect(url).toMatch(/^http:\/\/links\.sonatype\.com\/products\/nxrm3\/ce\/learn-more-limits-enforced\?/);
+    expect(url).toContain('nodeId=node-1');
+    expect(url).toContain('malwareCount=3');
+  });
+
+  it('returns the default learn-more URL for any other throttling status', () => {
+    const url = buildLearnMoreUrl('NEAR_LIMITS_NEVER_IN_GRACE');
+    expect(url).toMatch(/^http:\/\/links\.sonatype\.com\/products\/nxrm3\/ce\/learn-more\?/);
+  });
+
+  it('returns the default learn-more URL when throttlingStatus is undefined', () => {
+    const url = buildLearnMoreUrl(undefined);
+    expect(url).toMatch(/^http:\/\/links\.sonatype\.com\/products\/nxrm3\/ce\/learn-more\?/);
   });
 });
 

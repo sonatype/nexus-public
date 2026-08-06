@@ -17,6 +17,9 @@ import java.util.Collection;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -35,7 +38,10 @@ public interface UserApiResourceDoc
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
   @Operation(summary = "Retrieve a list of users. For SAML user sources a limit of 1000 users will be applied.")
-  @ApiResponses(value = {@ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Users returned",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = ApiUser.class)))),
+      @ApiResponse(responseCode = "400", description = PASSWORD_REQUIRED),
       @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   Collection<ApiUser> getUsers(
       @Parameter(description = "An optional term to search userids for.") String userId,

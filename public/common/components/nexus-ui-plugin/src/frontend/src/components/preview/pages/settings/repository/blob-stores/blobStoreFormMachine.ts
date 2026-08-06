@@ -18,7 +18,6 @@ import { createFormMachine, type FormContext, type ValidationErrors } from '../.
 import type {
   BlobStoreTypeDescriptor as BlobStoreTypeInfo,
   QuotaType,
-  SoftQuota,
 } from './types';
 
 /**
@@ -552,6 +551,7 @@ export function createBlobStoreFormMachine(
               'bucketConfiguration.containerName',
               'bucketConfiguration.authentication.authenticationMethod',
               'bucketConfiguration.authentication.accountKey',
+              'bucketConfiguration.preSignedUrlEnabled',
             ],
             requiredFields: [
               'bucketConfiguration.accountName',
@@ -562,6 +562,7 @@ export function createBlobStoreFormMachine(
               'bucketConfiguration.containerName': { label: 'Container Name', type: 'text', helpText: 'The name of the container for storage' },
               'bucketConfiguration.authentication.authenticationMethod': { label: 'Authentication Method', type: 'select' },
               'bucketConfiguration.authentication.accountKey': { label: 'Account Key', type: 'password' },
+              'bucketConfiguration.preSignedUrlEnabled': { label: 'Direct Download (SAS URLs)', type: 'checkbox' },
             },
           },
         },

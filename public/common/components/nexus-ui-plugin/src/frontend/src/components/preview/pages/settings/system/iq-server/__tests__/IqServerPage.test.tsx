@@ -13,13 +13,17 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
 import { IqServerPage } from '../IqServerPage';
-import * as useIqServerApiModule from '../useIqServerApi';
+import * as useIqServerFormModule from '../useIqServerForm';
 
-// Mock the API hook
-jest.mock('../useIqServerApi');
+// Handle both old and new userEvent API
+const getUser = () => (typeof (userEvent as any).setup === 'function' ? (userEvent as any).setup() : userEvent);
+
+// Mock the form hook
+jest.mock('../useIqServerForm');
 
 jest.mock('@uirouter/react', () => ({
   useRouter: () => ({
@@ -27,7 +31,7 @@ jest.mock('@uirouter/react', () => ({
   }),
 }));
 
-const mockedUseIqServerApi = useIqServerApiModule.useIqServerApi as jest.MockedFunction<typeof useIqServerApiModule.useIqServerApi>;
+const mockedUseIqServerForm = useIqServerFormModule.useIqServerForm as jest.MockedFunction<typeof useIqServerFormModule.useIqServerForm>;
 
 // Mock ExtJS via local path (the component imports from interface/ExtJS directly)
 jest.mock('../../../../../../../interface/ExtJS', () => ({
@@ -44,24 +48,97 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   return <Theme>{children}</Theme>;
 }
 
-describe('IqServerPage', () => {
-  const mockSettings = {
+// Factory function for creating mock form hook return values
+function makeForm(overrides: Record<string, any> = {}) {
+  const data = {
     enabled: true,
     url: 'https://iq.example.com',
-    authenticationType: 'USER' as const,
+    authenticationType: 'USER',
     username: 'admin',
     password: '#~NXRM~PLACEHOLDER~PASSWORD~#',
     useTrustStoreForUrl: false,
     timeoutSeconds: null,
-    properties: '',
+    properties: [],
     showLink: true,
+    ...(overrides.data || {}),
   };
 
-  const mockFetchSettings = jest.fn();
-  const mockSaveSettings = jest.fn();
-  const mockVerifyConnection = jest.fn();
-  const mockSetError = jest.fn();
+  const validationErrors = overrides.validationErrors || {};
+  const touched = overrides.touched || {};
 
+  // Start with overrides to allow caller-provided functions, then fall back to defaults
+  const handleFieldChange = overrides.handleFieldChange ?? jest.fn();
+  const handleUrlChange = overrides.handleUrlChange ?? jest.fn();
+
+  // Build result object with defaults, then apply overrides (excluding already-processed keys)
+  const result: Record<string, any> = {
+    data,
+    field: (name: string) => ({
+      name,
+      value: String((data as any)[name] ?? ''),
+      error: touched[name] ? (validationErrors as any)[name] ?? undefined : undefined,
+      onChange: (value: string) => handleFieldChange(name, value),
+      onBlur: jest.fn(),
+    }),
+    checkbox: (name: string) => ({
+      name,
+      checked: Boolean((data as any)[name]),
+      error: touched[name] ? (validationErrors as any)[name] ?? undefined : undefined,
+      onChange: (checked: boolean) => handleFieldChange(name, checked),
+    }),
+    select: (name: string) => ({
+      name,
+      value: String((data as any)[name] ?? ''),
+      error: touched[name] ? (validationErrors as any)[name] ?? undefined : undefined,
+      onChange: (value: string) => handleFieldChange(name, value),
+      onBlur: jest.fn(),
+    }),
+    validationErrors,
+    touched,
+    hasValidationErrors: false,
+    isLoading: false,
+    isSaving: false,
+    isPristine: true,
+    saveError: null,
+    handleFieldChange,
+    handleUrlChange,
+    verify: jest.fn(),
+    connectionStatus: 'idle',
+    connectionMessage: undefined,
+    verificationResult: null,
+    capabilities: { hasFirewall: false, hasLifecycle: false, connected: false, url: null },
+    isCloud: false,
+    canUpdate: true,
+    canOpenDashboard: true,
+    dashboardUrl: data.url,
+    submit: jest.fn(),
+    reset: jest.fn(),
+    clearSaveError: jest.fn(),
+    setProperties: jest.fn(),
+    propertyValidations: [],
+    hasPropertyErrors: false,
+    showAllValidation: false,
+    showClearAllConfirm: false,
+    requestClearAllProperties: jest.fn(),
+    confirmClearAllProperties: jest.fn(),
+    cancelClearAllProperties: jest.fn(),
+    propertiesDroppedLineCount: 0,
+    showPropertiesDroppedWarning: false,
+    dismissPropertiesDroppedWarning: jest.fn(),
+  };
+
+  // Apply remaining overrides (skip keys we've already processed)
+  const processedKeys = ['data', 'validationErrors', 'touched', 'handleFieldChange', 'handleUrlChange'];
+  for (const key of Object.keys(overrides)) {
+    if (!processedKeys.includes(key)) {
+      result[key] = overrides[key];
+    }
+  }
+
+  return result;
+}
+
+describe('IqServerPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset ExtJS.checkPermission to return true for editable form
@@ -72,32 +149,11 @@ describe('IqServerPage', () => {
       return undefined;
     });
 
-    mockedUseIqServerApi.mockReturnValue({
-      loading: false,
-      verifying: false,
-      error: null,
-      setError: mockSetError,
-      fetchSettings: mockFetchSettings.mockResolvedValue(mockSettings),
-      fetchCapabilities: jest.fn().mockResolvedValue({ hasLifecycle: false, hasFirewall: false }),
-      fetchCapabilitiesWithConfig: jest.fn().mockResolvedValue({ hasLifecycle: false, hasFirewall: false }),
-      saveSettings: mockSaveSettings.mockResolvedValue(mockSettings),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true, reason: '5' }),
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm());
   });
 
   it('renders loading state initially', () => {
-    // Use a never-resolving promise so the component stays in loading state
-    mockedUseIqServerApi.mockReturnValue({
-      loading: false,
-      verifying: false,
-      error: null,
-      setError: mockSetError,
-      fetchSettings: jest.fn().mockReturnValue(new Promise(() => {})),
-      fetchCapabilities: jest.fn().mockReturnValue(new Promise(() => {})),
-      fetchCapabilitiesWithConfig: jest.fn().mockResolvedValue({ hasLifecycle: false, hasFirewall: false }),
-      saveSettings: mockSaveSettings.mockResolvedValue(mockSettings),
-      verifyConnection: mockVerifyConnection.mockResolvedValue({ success: true, reason: '5' }),
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({ isLoading: true }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
@@ -132,6 +188,8 @@ describe('IqServerPage', () => {
       return undefined;
     });
 
+    mockedUseIqServerForm.mockReturnValue(makeForm({ isCloud: true }));
+
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
@@ -156,6 +214,18 @@ describe('IqServerPage', () => {
     expect(link.closest('a')).toHaveAttribute('href', 'https://iq.example.com');
   });
 
+  it('dismissing the save-error alert calls clearSaveError', async () => {
+    const clearSaveError = jest.fn();
+    mockedUseIqServerForm.mockReturnValue(makeForm({ saveError: 'Save failed', clearSaveError }));
+
+    render(<IqServerPage />, { wrapper: TestWrapper });
+
+    const dismissButton = await waitFor(() => screen.getByRole('button', { name: 'Dismiss' }));
+    fireEvent.click(dismissButton);
+
+    expect(clearSaveError).toHaveBeenCalledTimes(1);
+  });
+
   it('shows authentication fields for USER type', async () => {
     render(<IqServerPage />, { wrapper: TestWrapper });
 
@@ -167,12 +237,19 @@ describe('IqServerPage', () => {
   });
 
   it('hides authentication fields for PKI type', async () => {
-    mockFetchSettings.mockResolvedValue({
-      ...mockSettings,
-      authenticationType: 'PKI',
-      username: '',
-      password: '',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      data: {
+        enabled: true,
+        url: 'https://iq.example.com',
+        authenticationType: 'PKI',
+        username: '',
+        password: '',
+        useTrustStoreForUrl: false,
+        timeoutSeconds: null,
+        properties: [],
+        showLink: true,
+      },
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
@@ -185,17 +262,18 @@ describe('IqServerPage', () => {
   });
 
   it('saves changes when Save button is clicked', async () => {
+    const mockSubmit = jest.fn();
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      isPristine: false,
+      submit: mockSubmit,
+    }));
+
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/Username/)).toBeInTheDocument();
     });
 
-    // Make a change
-    const usernameInput = screen.getByLabelText(/Username/);
-    fireEvent.change(usernameInput, { target: { value: 'newadmin' } });
-
-    // Click save
     const saveButton = screen.getByRole('button', { name: 'Save' });
     await waitFor(() => {
       expect(saveButton).not.toBeDisabled();
@@ -204,22 +282,23 @@ describe('IqServerPage', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(mockSaveSettings).toHaveBeenCalled();
+      expect(mockSubmit).toHaveBeenCalled();
     });
   });
 
   it('discards changes when Discard button is clicked', async () => {
+    const mockReset = jest.fn();
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      isPristine: false,
+      reset: mockReset,
+    }));
+
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/Username/)).toBeInTheDocument();
     });
 
-    // Make a change
-    const usernameInput = screen.getByLabelText(/Username/);
-    fireEvent.change(usernameInput, { target: { value: 'newadmin' } });
-
-    // Click discard
     const discardButton = screen.getByRole('button', { name: 'Discard' });
     fireEvent.click(discardButton);
 
@@ -227,13 +306,20 @@ describe('IqServerPage', () => {
     const leaveButton = await screen.findByRole('button', { name: /leave/i });
     fireEvent.click(leaveButton);
 
-    // Should be back to original value
     await waitFor(() => {
-      expect(usernameInput).toHaveValue('admin');
+      expect(mockReset).toHaveBeenCalled();
     });
   });
 
   it('verifies connection successfully', async () => {
+    const mockVerify = jest.fn();
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      verify: mockVerify,
+      connectionStatus: 'connected',
+      connectionMessage: 'Connected to IQ Server (v1.142.0)',
+      verificationResult: { success: true, reason: '5' },
+    }));
+
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
@@ -244,26 +330,26 @@ describe('IqServerPage', () => {
     fireEvent.click(verifyButton);
 
     await waitFor(() => {
+      expect(mockVerify).toHaveBeenCalled();
+    });
+
+    // Connected state shows the success message
+    await waitFor(() => {
       expect(screen.getByText(/Connection successful/)).toBeInTheDocument();
     });
   });
 
   it('opens full-screen application list when View application list is clicked', async () => {
-    mockVerifyConnection.mockResolvedValue({
-      success: true,
-      reason: 'MyApp, BackendService, FrontendApp',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      verificationResult: { success: true, reason: 'MyApp, BackendService, FrontendApp' },
+      connectionStatus: 'connected',
+      connectionMessage: 'Connected to IQ Server',
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Test Connection' })).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/Connection successful/)).toBeInTheDocument();
     });
 
     const viewListButton = screen.getByRole('button', { name: /View application list/i });
@@ -294,21 +380,16 @@ describe('IqServerPage', () => {
   });
 
   it('modal search filters application list', async () => {
-    mockVerifyConnection.mockResolvedValue({
-      success: true,
-      reason: 'MyApp, BackendService, FrontendApp',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      verificationResult: { success: true, reason: 'MyApp, BackendService, FrontendApp' },
+      connectionStatus: 'connected',
+      connectionMessage: 'Connected to IQ Server',
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Test Connection' })).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/Connection successful/)).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /View application list/i }));
@@ -328,16 +409,13 @@ describe('IqServerPage', () => {
   });
 
   it('shows connection failure message', async () => {
-    mockVerifyConnection.mockResolvedValue({ success: false, reason: 'Authentication failed' });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      connectionStatus: 'failed',
+      connectionMessage: 'Connection failed: Authentication failed',
+      verificationResult: { success: false, reason: 'Authentication failed' },
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Test Connection' })).toBeInTheDocument();
-    });
-
-    const verifyButton = screen.getByRole('button', { name: 'Test Connection' });
-    fireEvent.click(verifyButton);
 
     await waitFor(() => {
       expect(screen.getByText(/Connection failed: Authentication failed/)).toBeInTheDocument();
@@ -345,26 +423,27 @@ describe('IqServerPage', () => {
   });
 
   it('shows validation error for invalid URL', async () => {
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      validationErrors: { url: 'Please enter a valid URL' },
+      touched: { url: true },
+      hasValidationErrors: true,
+    }));
+
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
       expect(screen.getByLabelText(/IQ Server URL/)).toBeInTheDocument();
     });
 
-    // Enter invalid URL
-    const urlInput = screen.getByLabelText(/IQ Server URL/);
-    fireEvent.change(urlInput, { target: { value: 'not-a-url' } });
-    fireEvent.blur(urlInput);
-
     // Should show error
-    await waitFor(() => {
-      expect(screen.getByText('Please enter a valid URL')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Please enter a valid URL')).toBeInTheDocument();
   });
 
   it('shows read-only view when user lacks update permission', async () => {
     const { ExtJS } = require('../../../../../../../interface/ExtJS');
     ExtJS.checkPermission.mockReturnValue(false);
+
+    mockedUseIqServerForm.mockReturnValue(makeForm({ canUpdate: false }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
@@ -385,13 +464,23 @@ describe('IqServerPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/Use Nexus Repository Trust Store/)).toBeInTheDocument();
     });
+    expect(screen.getByRole('button', { name: /View Certificate/ })).toBeInTheDocument();
   });
 
   it('hides trust store option for HTTP URLs', async () => {
-    mockFetchSettings.mockResolvedValue({
-      ...mockSettings,
-      url: 'http://iq.example.com',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      data: {
+        enabled: true,
+        url: 'http://iq.example.com',
+        authenticationType: 'USER',
+        username: 'admin',
+        password: '#~NXRM~PLACEHOLDER~PASSWORD~#',
+        useTrustStoreForUrl: false,
+        timeoutSeconds: null,
+        properties: [],
+        showLink: true,
+      },
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
@@ -400,6 +489,7 @@ describe('IqServerPage', () => {
     });
 
     expect(screen.queryByLabelText(/Use Nexus Repository Trust Store/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /View Certificate/ })).not.toBeInTheDocument();
   });
 
   it('displays help section', async () => {
@@ -411,11 +501,16 @@ describe('IqServerPage', () => {
 
     expect(screen.getByText('documentation')).toHaveAttribute(
       'href',
-      'http://links.sonatype.com/products/nxrm3/docs/iq'
+      'http://links.sonatype.com/products/nxrm3/browse/lc-learn'
     );
   });
 
   it('toggles enabled checkbox', async () => {
+    const mockHandleFieldChange = jest.fn();
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      handleFieldChange: mockHandleFieldChange,
+    }));
+
     render(<IqServerPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
@@ -426,17 +521,23 @@ describe('IqServerPage', () => {
     expect(checkbox).toBeChecked();
 
     fireEvent.click(checkbox);
-    expect(checkbox).not.toBeChecked();
+    expect(mockHandleFieldChange).toHaveBeenCalled();
   });
 
   it('changes authentication type and hides username/password fields', async () => {
-    // Start with PKI type
-    mockFetchSettings.mockResolvedValue({
-      ...mockSettings,
-      authenticationType: 'PKI',
-      username: '',
-      password: '',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      data: {
+        enabled: true,
+        url: 'https://iq.example.com',
+        authenticationType: 'PKI',
+        username: '',
+        password: '',
+        useTrustStoreForUrl: false,
+        timeoutSeconds: null,
+        properties: [],
+        showLink: true,
+      },
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
@@ -450,20 +551,18 @@ describe('IqServerPage', () => {
   });
 
   it('dispatches nx-sidebar-toggle event when app list opens and closes (bchz)', async () => {
-    mockVerifyConnection.mockResolvedValue({
-      success: true,
-      reason: 'MyApp, BackendService',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      verificationResult: { success: true, reason: 'MyApp, BackendService' },
+      connectionStatus: 'connected',
+      connectionMessage: 'Connected to IQ Server',
+    }));
 
     const events: any[] = [];
     window.addEventListener('nx-sidebar-toggle', (e) => events.push((e as CustomEvent).detail));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => screen.getByRole('button', { name: 'Test Connection' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
-    await waitFor(() => screen.getByText(/Connection successful/));
-
+    await waitFor(() => screen.getByRole('button', { name: /View application list/i }));
     fireEvent.click(screen.getByRole('button', { name: /View application list/i }));
     await waitFor(() => expect(screen.getByTestId('iq-application-list-modal')).toBeInTheDocument());
 
@@ -475,17 +574,15 @@ describe('IqServerPage', () => {
   });
 
   it('closes app list on Escape key (bchz)', async () => {
-    mockVerifyConnection.mockResolvedValue({
-      success: true,
-      reason: 'MyApp, BackendService',
-    });
+    mockedUseIqServerForm.mockReturnValue(makeForm({
+      verificationResult: { success: true, reason: 'MyApp, BackendService' },
+      connectionStatus: 'connected',
+      connectionMessage: 'Connected to IQ Server',
+    }));
 
     render(<IqServerPage />, { wrapper: TestWrapper });
 
-    await waitFor(() => screen.getByRole('button', { name: 'Test Connection' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
-    await waitFor(() => screen.getByText(/Connection successful/));
-
+    await waitFor(() => screen.getByRole('button', { name: /View application list/i }));
     fireEvent.click(screen.getByRole('button', { name: /View application list/i }));
     await waitFor(() => expect(screen.getByTestId('iq-application-list-modal')).toBeInTheDocument());
 
@@ -528,6 +625,101 @@ describe('IqServerPage', () => {
       window.location.hash = originalHash;
     });
   });
+
+  describe('Properties editor', () => {
+    it('renders property rows from data.properties', async () => {
+      const user = getUser();
+      mockedUseIqServerForm.mockReturnValue(makeForm({
+        data: { properties: [{ id: '1', name: 'proxy.host', value: 'proxy.example.com' }] },
+      }));
+
+      render(<IqServerPage />, { wrapper: TestWrapper });
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument());
+      await user.click(screen.getByRole('button', { name: /Advanced Settings/i }));
+
+      expect(screen.getByDisplayValue('proxy.host')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('proxy.example.com')).toBeInTheDocument();
+    });
+
+    it('calls setProperties when Add Parameter is clicked', async () => {
+      const user = getUser();
+      const setProperties = jest.fn();
+      mockedUseIqServerForm.mockReturnValue(makeForm({
+        data: { properties: [{ id: '1', name: 'proxy.host', value: 'x' }] },
+        setProperties,
+      }));
+
+      render(<IqServerPage />, { wrapper: TestWrapper });
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument());
+      await user.click(screen.getByRole('button', { name: /Advanced Settings/i }));
+      await user.click(screen.getByRole('button', { name: /add parameter/i }));
+
+      expect(setProperties).toHaveBeenCalled();
+    });
+
+    it('shows the dropped-lines warning and dismisses it', async () => {
+      const dismissPropertiesDroppedWarning = jest.fn();
+      mockedUseIqServerForm.mockReturnValue(makeForm({
+        showPropertiesDroppedWarning: true,
+        propertiesDroppedLineCount: 2,
+        dismissPropertiesDroppedWarning,
+      }));
+
+      render(<IqServerPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByText(/2 lines in the existing Properties configuration/i)).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+      expect(dismissPropertiesDroppedWarning).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not show the dropped-lines warning when there is nothing dropped', async () => {
+      render(<IqServerPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument());
+
+      expect(screen.queryByText(/weren.t recognized/i)).not.toBeInTheDocument();
+    });
+
+    it('shows the clear-all confirm banner and wires cancel/confirm', async () => {
+      const user = getUser();
+      const cancelClearAllProperties = jest.fn();
+      const confirmClearAllProperties = jest.fn();
+      mockedUseIqServerForm.mockReturnValue(makeForm({
+        data: { properties: [{ id: '1', name: 'proxy.host', value: 'x' }] },
+        showClearAllConfirm: true,
+        cancelClearAllProperties,
+        confirmClearAllProperties,
+      }));
+
+      render(<IqServerPage />, { wrapper: TestWrapper });
+      await waitFor(() => expect(screen.getByRole('heading', { name: 'IQ Server' })).toBeInTheDocument());
+      await user.click(screen.getByRole('button', { name: /Advanced Settings/i }));
+
+      expect(screen.getByText(/clear all properties/i)).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(cancelClearAllProperties).toHaveBeenCalled();
+
+      // Click the "Clear All" button in the confirmation banner (danger variant)
+      // We select by the danger variant which is unique to the confirm banner button
+      const clearAllButtons = screen.getAllByRole('button', { name: 'Clear All' });
+      // Find the button with the danger variant (confirmation banner)
+      const confirmButton = clearAllButtons.find(btn => btn.className.includes('settings-button--danger'));
+      await user.click(confirmButton!);
+      expect(confirmClearAllProperties).toHaveBeenCalled();
+    });
+
+    it('disables the Save button when hasPropertyErrors is true', async () => {
+      mockedUseIqServerForm.mockReturnValue(makeForm({ hasPropertyErrors: true }));
+
+      render(<IqServerPage />, { wrapper: TestWrapper });
+
+      const saveButton = await waitFor(() => screen.getByRole('button', { name: 'Save' }));
+      expect(saveButton).toBeDisabled();
+    });
+  });
+
 });
-
-

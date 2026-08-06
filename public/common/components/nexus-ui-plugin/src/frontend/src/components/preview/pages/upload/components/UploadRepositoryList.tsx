@@ -12,9 +12,8 @@
  */
 
 import React, { useCallback } from 'react';
-import { Box, Flex, Table, Text, Tooltip, Spinner } from '@radix-ui/themes';
+import { Box, Flex, Table, Text, Spinner } from '@radix-ui/themes';
 import { ChevronUp, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 import { CopyUrlButton } from '../../browse/actions/CopyUrlButton';
 import { FormatBadge } from '../../../shared';

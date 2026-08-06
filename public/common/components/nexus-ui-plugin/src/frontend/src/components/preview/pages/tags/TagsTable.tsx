@@ -25,7 +25,7 @@ import {
   Table,
   Text,
 } from '@radix-ui/themes';
-import { ChevronRight, X, MoreHorizontal } from 'lucide-react';
+import { X, MoreHorizontal } from 'lucide-react';
 
 import { SortableTableHeader, type SortDirection } from '../../shared';
 import type { TagWithCount, TagSortField } from './hooks/useFilteredTags';

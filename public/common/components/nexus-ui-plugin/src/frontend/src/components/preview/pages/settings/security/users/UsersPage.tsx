@@ -11,13 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading } from '@radix-ui/themes';
+import React, { useState, useEffect, useCallback, useMemo, } from 'react';
+import { Box, } from '@radix-ui/themes';
 import { Users, Plus, UserPlus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, PageHeader } from '../../../../shared';
-import { SettingsButton, SettingsAlert, ConfirmDialog, WizardForm } from '../../../../shared/form';
+import { SettingsButton, SettingsAlert, WizardForm } from '../../../../shared/form';
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { UsersList } from './UsersList';
 import { UserDetail } from './UserDetail';
@@ -203,7 +203,7 @@ export function UsersPage() {
     } finally {
       setIsDeleting(false);
     }
-  }, [user, listDeleteUserId, deleteUser, handleBack, toast, setError]);
+  }, [user, listDeleteUserId, deleteUser, handleBack, toast, setError, listDeleteUserName]);
 
   const handleListDelete = useCallback((userId: string, userName?: string) => {
     setListDeleteUserId(userId);
@@ -259,11 +259,12 @@ export function UsersPage() {
   }, [routeState.viewMode, user, canCreate, isCloud, handleCreate, handleInvite, wizardStep]);
 
   return (
-    <Box 
+    <Box
       className="users-page"
       data-testid="users-page"
       data-view={routeState.viewMode}
       data-loading={loading ? 'true' : 'false'}
+      aria-busy={loading}
     >
       {routeState.viewMode !== 'profile' && (
         <PageHeader

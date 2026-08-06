@@ -26,6 +26,7 @@ import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.formfields.Encrypted;
 import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.security.UserIdHelper;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -54,7 +55,10 @@ public class CapabilityAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final CapabilityEvent event) {
-    if (isRecording()) {
+    // Skip system-initiated events (startup/shutdown → *UNKNOWN; privileged
+    // background execution → *SYSTEM). Only user-initiated changes belong in
+    // the audit log per NEXUS-53769.
+    if (isRecording() && !UserIdHelper.isUnknown() && !UserIdHelper.isSystem()) {
       CapabilityReference reference = event.getReference();
       CapabilityContext context = reference.context();
       CapabilityDescriptor descriptor = context.descriptor();

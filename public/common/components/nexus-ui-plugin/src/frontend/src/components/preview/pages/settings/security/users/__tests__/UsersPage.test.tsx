@@ -86,7 +86,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 // Wrapper component for Radix Theme and Toast context
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -234,7 +233,7 @@ describe('UsersPage', () => {
       });
     });
 
-    it('requires typing exact user ID to confirm deletion', async () => {
+    it('requires typing "Delete" to confirm deletion', async () => {
       render(<UsersPage />, { wrapper: TestWrapper });
 
       // Wait for user to load
@@ -264,7 +263,8 @@ describe('UsersPage', () => {
       expect(confirmDeleteButton).toBeDisabled();
 
       // Type correct user ID
-      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
       expect(confirmDeleteButton).not.toBeDisabled();
     });
 
@@ -288,7 +288,8 @@ describe('UsersPage', () => {
 
       // Type user ID
       const confirmInput = await screen.findByRole('textbox');
-      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
 
       // Click delete
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
@@ -362,7 +363,8 @@ describe('UsersPage', () => {
 
       // Type user ID and confirm
       const confirmInput = await screen.findByRole('textbox');
-      fireEvent.change(confirmInput, { target: { value: 'testuser' } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
 
       await act(async () => {

@@ -228,20 +228,17 @@ describe('SonatypeLifecycle', () => {
     render(<SonatypeLifecycle/>);
 
     await waitFor(() => {
-      // versionDepth not set — shows activity time frame only
-      expect(screen.getByText(/Last 60 Days/)).toBeInTheDocument();
-      expect(screen.queryByText(/Latest Deployed Versions/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Last 60 Days \| 10 Latest Deployed Versions/)).toBeInTheDocument();
       expect(screen.getByText(/Build/)).toBeInTheDocument();
       expect(screen.getByText(/Global Evaluation: 5\/10/)).toBeInTheDocument();
       expect(screen.getByText(/Custom Evaluation: N\/A/)).toBeInTheDocument();
     });
   });
 
-  it('displays Latest Deployed Versions instead of activity time frame when versionDepth > 0', async () => {
+  it('displays both Activity Time Frame and Latest Deployed Versions when artifactLatestVersions is set', async () => {
     const mockSettings = {
       activityTimeFrame: 60,
       artifactLatestVersions: 10,
-      versionDepth: 3,
       policyEvaluationStage: 'BUILD',
       autoEnrollNewRepos: true,
       monitoredRepoCount: 5,
@@ -261,8 +258,8 @@ describe('SonatypeLifecycle', () => {
     render(<SonatypeLifecycle/>);
 
     await waitFor(() => {
-      expect(screen.getByText(/10 Latest Deployed Versions/)).toBeInTheDocument();
-      expect(screen.queryByText(/Last 60 Days/)).not.toBeInTheDocument();
+      // Both depth values are saved together since CLM-41306 — the summary surfaces both.
+      expect(screen.getByText(/Last 60 Days \| 10 Latest Deployed Versions/)).toBeInTheDocument();
     });
   });
 
@@ -321,6 +318,71 @@ describe('SonatypeLifecycle', () => {
     await waitFor(() => {
       expect(screen.getByText(/Global Evaluation: 0\/12/)).toBeInTheDocument();
       expect(screen.getByText(/Custom Evaluation: 1/)).toBeInTheDocument();
+    });
+  });
+
+  it('omits the depth section entirely when neither activityTimeFrame nor artifactLatestVersions is set', async () => {
+    // Corrupt/legacy data path: both depth values absent. The summary should
+    // skip the depth section completely instead of emitting a stray leading " | ".
+    const mockSettings = {
+      policyEvaluationStage: 'RELEASE',
+      autoEnrollNewRepos: false,
+      monitoredRepoCount: 3,
+      totalRepoCount: 9
+    };
+
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: mockSettings
+        }
+      },
+      jest.fn()
+    ]);
+
+    render(<SonatypeLifecycle/>);
+
+    await waitFor(() => {
+      const summary = screen.getByText(/Global Evaluation: 3\/9/);
+      // No leading " | " before the stage label
+      expect(summary.textContent).toMatch(/^Release \| Global Evaluation: 3\/9/);
+      expect(summary.textContent).not.toMatch(/^\s*\|/);
+    });
+  });
+
+  it('omits the Latest Deployed Versions bullet when artifactLatestVersions is 0', async () => {
+    // 0 is the semantic equivalent of "no version-count filter configured" —
+    // the tile summarises what filters are ACTIVE on scope, so an unset filter
+    // must not appear as a bullet. This test locks in that intent so a future
+    // change to `> 0` (e.g., swapping to `!= null`) is caught immediately.
+    const mockSettings = {
+      activityTimeFrame: 60,
+      artifactLatestVersions: 0,
+      policyEvaluationStage: 'RELEASE',
+      autoEnrollNewRepos: false,
+      monitoredRepoCount: 3,
+      totalRepoCount: 9
+    };
+
+    useMachine.mockReturnValue([
+      {
+        matches: jest.fn((state) => state === 'loaded'),
+        context: {
+          data: mockSettings
+        }
+      },
+      jest.fn()
+    ]);
+
+    render(<SonatypeLifecycle/>);
+
+    await waitFor(() => {
+      // ATF bullet renders normally
+      expect(screen.getByText(/Last 60 Days/)).toBeInTheDocument();
+      // LDV bullet must be absent — no trailing "| 0 Latest Deployed Versions"
+      expect(screen.queryByText(/Latest Deployed Versions/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\| 0 /)).not.toBeInTheDocument();
     });
   });
 

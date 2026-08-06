@@ -50,10 +50,15 @@ export function CleanupFacet({
 }: CleanupFacetProps) {
   const selectedPolicyNames = formData.cleanup?.policyNames || [];
 
-  // Filter to only show policies matching this repository's format
+  // Filter to policies matching this repository's format, plus the
+  // "all formats" sentinel '*' which the REST API uses to represent
+  // policies stored with format = 'ALL_FORMATS' (see
+  // CleanupPolicyXO.fromCleanupPolicy on the backend).
   const repoFormat = formData.format || '';
   const availablePolicies = useMemo(() => {
-    return cleanupPolicies.filter((policy) => policy.format === repoFormat);
+    return cleanupPolicies.filter(
+      (policy) => policy.format === repoFormat || policy.format === '*'
+    );
   }, [cleanupPolicies, repoFormat]);
 
   // Convert selected policy names to full policy objects

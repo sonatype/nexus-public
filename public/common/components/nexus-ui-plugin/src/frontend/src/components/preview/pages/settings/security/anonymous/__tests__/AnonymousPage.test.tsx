@@ -67,7 +67,7 @@ function createAnonymousFormMock(formData: Record<string, any>, realmTypes: Arra
 }
 
 // Create controllable mock for checkPermission
-const mockCheckPermission = jest.fn().mockReturnValue(true);
+const _mockCheckPermission = jest.fn().mockReturnValue(true);
 
 // Extend global mock with controllable checkPermission
 jest.mock('@sonatype/nexus-ui-plugin', () => {

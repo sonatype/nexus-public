@@ -28,9 +28,6 @@ import {
 import { useRolesApi } from './useRolesApi';
 import { useRolesForm } from './useRolesForm';
 import {
-  Role,
-  RoleReference,
-  PrivilegeReference,
   RoleFormData,
   RoleFormProps,
   RolesFormContext,
@@ -143,7 +140,7 @@ export function RoleForm({
   const allRoles = context.allRoles || [];
   const allSources = context.allSources || [];
 
-  const sourceOptions = useMemo(() => {
+  const _sourceOptions = useMemo(() => {
     const options = allSources.map(s => ({ value: s.id, label: s.name }));
     if (!options.some(o => o.value === NEXUS_SOURCE)) {
       options.unshift({ value: NEXUS_SOURCE, label: NEXUS_SOURCE });

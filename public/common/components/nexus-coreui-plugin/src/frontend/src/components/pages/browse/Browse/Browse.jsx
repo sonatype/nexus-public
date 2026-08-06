@@ -14,7 +14,7 @@ import React from 'react';
 import {assign} from 'xstate';
 import {useInterpret} from '@xstate/react';
 import {pickBy} from 'ramda';
-import {APIConstants, ListMachineUtils, ExtAPIUtils} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ListMachineUtils, ExtAPIUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
@@ -62,11 +62,11 @@ export default function Browse() {
       })
     },
     services: {
-      fetchData: () => ExtAPIUtils.extAPIRequest(
-        ACTION,
-        METHODS.READ_REFERENCES,
-        {}
-        ).then(v => v.data.result),
+      fetchData: async () => {
+        await ExtJS.waitForPermissions();
+        const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ_REFERENCES, {});
+        return response.data.result;
+      },
       },
     devTools: true
   });

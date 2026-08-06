@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -49,6 +50,8 @@ public class CooperatingFuture<T>
 
   private final AtomicInteger threadCount = new AtomicInteger(1);
 
+  private final AtomicBoolean limitExceededLogged = new AtomicBoolean(false);
+
   private final String requestKey;
 
   private final Config config;
@@ -69,7 +72,13 @@ public class CooperatingFuture<T>
    * Cooperates on the given I/O request by waiting for the lead thread to complete.
    */
   public T cooperate(final IOCall<T> request) throws IOException {
-    increaseCooperation();
+    try {
+      increaseCooperation();
+    }
+    catch (CooperationException e) {
+      logLimitExceededWarning();
+      throw e;
+    }
     try {
       if (isNestedCall()) {
         // I/O dependency; use shorter timeout and be prepared to failover and repeat the request
@@ -192,6 +201,21 @@ public class CooperatingFuture<T>
       }
       return count + 1;
     });
+  }
+
+  /**
+   * Logs a one-time warning when the thread cooperation limit is exceeded.
+   */
+  private void logLimitExceededWarning() {
+    if (limitExceededLogged.compareAndSet(false, true)) {
+      int limit = config.threadsPerKey();
+      log.warn(
+          "Thread cooperation limit ({}) exceeded for {}. "
+              + "This occurs when many concurrent requests need the same resource that is not cached. "
+              + "Consider increasing 'nexus.proxy.cooperation.threadsPerKey' property in nexus.properties, "
+              + "or staggering concurrent requests to avoid burst patterns.",
+          limit, this);
+    }
   }
 
   /**

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Text, Heading } from '@radix-ui/themes';
+import { Box, Flex, Text, } from '@radix-ui/themes';
 import { Archive, Server } from 'lucide-react';
 
 import {

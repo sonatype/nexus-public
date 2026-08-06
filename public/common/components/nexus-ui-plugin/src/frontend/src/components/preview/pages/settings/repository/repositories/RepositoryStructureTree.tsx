@@ -338,7 +338,6 @@ export function RepositoryStructureTree({ repositoryName }: RepositoryStructureT
     expandAll,
     collapseAll,
     revealIssues,
-    setExpandedIds,
     refresh,
   } = useRepositoryTree(repositoryName);
   const [focusedId, setFocusedId] = React.useState<string | undefined>(undefined);
@@ -351,7 +350,7 @@ export function RepositoryStructureTree({ repositoryName }: RepositoryStructureT
     () => getAllMemberRepos(tree),
     [tree]
   );
-  const { reposWithMatches, loading: componentSearchLoading, error: componentSearchError } =
+  const { reposWithMatches, loading: componentSearchLoading } =
     useStructureComponentSearch(repositoryName, filterText, memberRepos, tree);
 
   const highlightedNodeIds = React.useMemo(() => {
@@ -518,8 +517,7 @@ export function RepositoryStructureTree({ repositoryName }: RepositoryStructureT
           </Text>
         </Box>
       ) : (
-        <>
-      {tree.map((node) => (
+        tree.map((node) => (
         <TreeNode
           key={node.id}
           node={node}
@@ -532,8 +530,7 @@ export function RepositoryStructureTree({ repositoryName }: RepositoryStructureT
           highlightedNodeIds={highlightedNodeIds}
           showIssuesOnly={showIssuesOnly}
         />
-      ))}
-        </>
+      ))
       )}
     </Box>
   );

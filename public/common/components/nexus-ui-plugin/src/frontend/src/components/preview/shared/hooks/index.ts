@@ -26,3 +26,9 @@ export {
 export { useIsCloud } from './useIsCloud';
 export { useIsClustered } from './useIsClustered';
 export { useHasFirewallLicense } from './useHasFirewallLicense';
+export {
+  useUnreadStatusFailure,
+  resetUnreadStatusFailure,
+  STATUS_BELL_ACK_STORAGE_KEY,
+} from './useUnreadStatusFailure';
+export type { UseUnreadStatusFailureReturn } from './useUnreadStatusFailure';

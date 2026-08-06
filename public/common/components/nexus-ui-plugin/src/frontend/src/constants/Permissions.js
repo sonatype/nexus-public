@@ -60,6 +60,7 @@ const Permissions = {
   LDAP: generatePermissions('ldap'),
   USER_TOKENS_SETTINGS: generatePermissions('usertoken-settings', [READ, UPDATE]),
   USER_TOKENS_USERS: generatePermissions('usertoken-users', [DELETE]),
+  SERVICE_ACCOUNTS: generatePermissions('service-accounts', [READ, CREATE, DELETE]),
   TAGS: generatePermissions('tags', [READ]),
   COMPONENT: generatePermissions('component', [CREATE]),
   SEARCH: generatePermissions('search', [READ]),

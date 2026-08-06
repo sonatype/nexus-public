@@ -54,11 +54,11 @@ export function LogsPage() {
 
   const handleSelectLog = useCallback((filename: string) => {
     router.stateService.go(ROUTE_DETAIL, {filename});
-  }, []);
+  }, [router.stateService.go]);
 
   const handleBack = useCallback(() => {
     router.stateService.go(ROUTE_LIST);
-  }, []);
+  }, [router.stateService.go]);
 
   // Navigation helper for Settings breadcrumb
   const navigateToSettings = () => {

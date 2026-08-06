@@ -113,8 +113,8 @@ export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsLis
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(lowerFilter) ||
-          (s.description && s.description.toLowerCase().includes(lowerFilter)) ||
-          (s.expression && s.expression.toLowerCase().includes(lowerFilter))
+          (s.description?.toLowerCase().includes(lowerFilter)) ||
+          (s.expression?.toLowerCase().includes(lowerFilter))
       );
     }
 

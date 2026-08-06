@@ -56,6 +56,10 @@ export interface WizardFormProps {
   hideStepTitle?: boolean;
   /** Analytics ID for the submit button */
   submitAnalyticsId?: string;
+  /** Analytics ID for the cancel button */
+  cancelAnalyticsId?: string;
+  /** Analytics ID for the back (previous step) button */
+  backAnalyticsId?: string;
 }
 
 function StepIndicator({
@@ -158,6 +162,8 @@ export function WizardForm({
   hideSubmitButton = false,
   hideStepTitle = false,
   submitAnalyticsId,
+  cancelAnalyticsId,
+  backAnalyticsId,
 }: WizardFormProps) {
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === steps.length - 1;
@@ -212,6 +218,7 @@ export function WizardForm({
       error={error}
       testId={testId || 'wizard-form'}
       submitAnalyticsId={submitAnalyticsId}
+      cancelAnalyticsId={cancelAnalyticsId}
       className={`wizard-form ${className}`.trim()}
       cancelOnLeft={true}
       actionButtons={
@@ -223,6 +230,7 @@ export function WizardForm({
             onClick={handleBack}
             disabled={loading}
             data-testid="wizard-back"
+            data-analytics-id={backAnalyticsId}
           >
             <ArrowLeft size={14} />
             Back

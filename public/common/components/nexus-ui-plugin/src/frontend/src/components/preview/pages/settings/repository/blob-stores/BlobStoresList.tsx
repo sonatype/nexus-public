@@ -101,7 +101,7 @@ export default function BlobStoresList() {
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  const isCalculating = ExtJS.state().getValue('nexus.datastore.blobstore.metrics.calculating') || false;
+  const isCalculating = ExtJS.state().getValue('nexus.datastore.blobstore.metrics.calculating');
   const hasUser = ExtJS.useUser() ?? false;
   const canCreate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.BLOB_STORES.CREATE), [hasUser]);
 

@@ -110,6 +110,7 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/admin/support/logging', heritage: 'admin/support/logging' },
   { preview: 'preview/admin/support/systeminformation', heritage: 'admin/support/systeminformation' },
   { preview: 'preview/admin/support/metrichealth', heritage: 'admin/support/status' },
+  { preview: 'preview/admin/support/recoverymode', heritage: 'admin/support/recovery' },
   { preview: 'preview/admin/support/supportrequest', heritage: 'admin/support/supportrequest' },
   { preview: 'preview/admin/support/supportzip', heritage: 'admin/support/supportzip' },
   { preview: 'preview/admin/system/tasks', heritage: 'admin/system/tasks' },
@@ -200,6 +201,8 @@ export function heritageToPreviewPath(currentPath) {
     newPath = cleanPath.replace('admin/security/usertoken', 'preview/admin/security/user-tokens');
   } else if (cleanPath === 'admin/support/status' || cleanPath.startsWith('admin/support/status/')) {
     newPath = cleanPath.replace('admin/support/status', 'preview/admin/support/metrichealth');
+  } else if (cleanPath === 'admin/support/recovery' || cleanPath.startsWith('admin/support/recovery/')) {
+    newPath = cleanPath.replace('admin/support/recovery', 'preview/admin/support/recoverymode');
   } else {
     newPath = 'preview/' + cleanPath;
   }

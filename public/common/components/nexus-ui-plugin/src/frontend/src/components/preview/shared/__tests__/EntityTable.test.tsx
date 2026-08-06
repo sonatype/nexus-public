@@ -182,7 +182,7 @@ describe('EntityTable', () => {
   });
 
   it('shows sort indicator for sorted column', () => {
-    const { container } = renderWithTheme(
+    renderWithTheme(
       <EntityTable
         data={testData}
         columns={columns}

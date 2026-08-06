@@ -65,7 +65,7 @@ export function useUsersForm({
   // userId/userSource in its load service.
   const machine = useMemo(
     () => createUsersFormMachine(userId, userSource, user),
-    [userId, userSource]
+    [userId, userSource, user]
   );
 
   // Use the form machine with action/service overrides

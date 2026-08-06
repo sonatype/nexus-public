@@ -98,6 +98,8 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUES
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTTLED_ANALYTICS_MARKED;
+import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
+
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -1080,5 +1082,42 @@ public class ProxyFacetSupportTest
     // normalizeUri must be disabled and the client's timeout preserved
     assertThat(request.getConfig().isNormalizeUri(), is(false));
     assertThat(request.getConfig().getSocketTimeout(), is(clientSocketTimeout));
+  }
+
+  // NEXUS-53338: replication requests must bypass the staleness short-circuit so
+  // modified assets are re-fetched regardless of the proxy content max-age setting.
+  @Test
+  public void testGet_replicationRequest_bypassesStalenessCheckAndFetchesFromRemote() throws IOException {
+    // Content is in cache and NOT stale (max-age not yet exceeded)
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    // Flag this context as a replication pull request
+    when(cachedContextAttributesMap.get(eq(IS_REPLICATION_REQUEST), eq(Boolean.class), eq(false)))
+        .thenReturn(Boolean.TRUE);
+
+    // When the staleness check is properly bypassed, fetch + store are invoked
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, content);
+    doReturn(storedContent).when(underTest).store(cachedContext, reFetchedContent);
+
+    Content result = underTest.get(cachedContext);
+
+    // Replication must not return the stale cached copy; it must re-fetch from the source
+    verify(underTest).fetch(cachedContext, content);
+    assertThat(result, is(storedContent));
+  }
+
+  @Test
+  public void testGet_nonReplicationRequest_returnsCachedContentWhenNotStale() throws IOException {
+    // Confirm that regular (non-replication) requests continue to honour the cache
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    // IS_REPLICATION_REQUEST is not set → isReplicationRequest() returns false by default
+
+    Content result = underTest.get(cachedContext);
+
+    verify(underTest, never()).fetch(any(), any(), any());
+    assertThat(result, is(content));
   }
 }

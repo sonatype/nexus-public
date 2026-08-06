@@ -29,9 +29,6 @@ public class FeatureFlags
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
-  /* Terraform Backend format is temporarily hidden behind the feature flag. Default value: false */
-  public static final String TERRAFORM_STATE_BACKEND_FORMAT_ENABLED = "nexus.format.terraform-backend.enabled";
-
   /*
    * Kill switch for the OCI (Open Container Initiative) repository format. When false, the OCI
    * hosted/proxy/group recipes are not registered, so OCI repositories cannot be created or served.
@@ -40,6 +37,15 @@ public class FeatureFlags
   public static final String OCI_FORMAT_ENABLED = "nexus.format.oci.enabled";
 
   public static final String OCI_FORMAT_ENABLED_NAMED_VALUE = "${nexus.format.oci.enabled:true}";
+
+  /*
+   * Feature flag for Chocolatey-specific NuGet behaviour (LegacyGallery suppression
+   * in v3 hosted service index, and mixed v2+v3 group routing). When true, enables
+   * Chocolatey support. Available values: true, false. Default value: true.
+   */
+  public static final String NUGET_CHOCOLATEY_ENABLED = "nexus.nuget.chocolatey.enabled";
+
+  public static final String NUGET_CHOCOLATEY_ENABLED_NAMED_VALUE = "${nexus.nuget.chocolatey.enabled:true}";
 
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
@@ -135,7 +141,7 @@ public class FeatureFlags
 
   public static final String CLEANUP_RETAIN_ALL_FORMATS = "nexus.cleanup.retainAllFormats.enabled";
 
-  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:false}";
+  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:true}";
 
   public static final String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
 
@@ -244,11 +250,31 @@ public class FeatureFlags
   public static final String NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE =
       "${nexus.security.password.iterations:}";
 
+  /*
+   * Short-lived cache of successfully verified credentials, keyed by a keyed hash of (stored-hash + submitted
+   * password). Lets repeated identical Basic-Auth requests skip the deliberately-expensive password KDF. Only
+   * successful verifications are cached (failures always pay the full KDF cost, preserving brute-force resistance),
+   * and the stored-hash is part of the key so a password change transparently invalidates prior entries.
+   */
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_ENABLED_NAMED_VALUE =
+      "${nexus.security.password.cache.enabled:true}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_SIZE_NAMED_VALUE =
+      "${nexus.security.password.cache.size:1000}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_EXPIRE_SECONDS_NAMED_VALUE =
+      "${nexus.security.password.cache.expireSeconds:2}";
+
   public static final String NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE =
       "${nexus.security.secrets.algorithm:PBKDF2WithHmacSHA1}";
 
   public static final String NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE =
       "${nexus.security.secrets.iterations:}";
+
+  /* Service Account tokens feature. Available values: true, false. Default value: false */
+  public static final String SERVICE_ACCOUNT_ENABLED = "nexus.service.account.enabled";
+
+  public static final String SERVICE_ACCOUNT_ENABLED_NAMED_VALUE = "${" + SERVICE_ACCOUNT_ENABLED + ":false}";
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED = "nexus.container.images.eval.enabled";
 
@@ -266,6 +292,13 @@ public class FeatureFlags
 
   public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_VALUE = "${nexus.firewall.container.workdirectory:}";
 
+  /* Layer download timeout for container image scanning, in minutes. When unset, the scanner default is used. */
+  public static final String FIREWALL_CONTAINER_DOWNLOAD_TIMEOUT_MINUTES =
+      "nexus.firewall.container.download.timeout.minutes";
+
+  public static final String FIREWALL_CONTAINER_DOWNLOAD_TIMEOUT_MINUTES_VALUE =
+      "${nexus.firewall.container.download.timeout.minutes:}";
+
   public static final String EGRESS_METRICS_AGGREGATION_TASK_VISIBLE = "${nexus.egressmetrics.task.visible:false}";
 
   /*
@@ -275,6 +308,16 @@ public class FeatureFlags
   public static final String PYPI_METADATA_ENABLED = "nexus.pypi.metadata.enabled";
 
   public static final String PYPI_METADATA_ENABLED_NAMED_VALUE = "${nexus.pypi.metadata.enabled:false}";
+
+  /*
+   * PyPI repair-metadata-content-type task visibility. When true, the task appears in the Tasks UI so
+   * operators can monitor and re-run it. Default: false (hidden; auto-scheduled via migration step).
+   */
+  public static final String PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE =
+      "nexus.pypi.repair.metadata.content.type.task.visible";
+
+  public static final String PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE_NAMED_VALUE =
+      "${" + PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE + ":false}";
 
   public static final String NEXUS_USER_CONFIGURATION_SOURCE_ENABLED = "nexus.user.configuration.source.enabled";
 
@@ -287,6 +330,14 @@ public class FeatureFlags
   public static final String REACT_CAPABILITIES_ENABLED = "nexus.react.capabilities.enabled";
 
   public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
+
+  /*
+   * Gates the new React onboarding wizard. When enabled, the ExtJS onboarding wizard defers so the React wizard can
+   * take over. Available values: true, false. Default value: false
+   */
+  public static final String REACT_ONBOARDING_ENABLED = "nexus.react.onboarding.enabled";
+
+  public static final String REACT_ONBOARDING_ENABLED_NAMED_VALUE = "${nexus.react.onboarding.enabled:false}";
 
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
@@ -430,10 +481,10 @@ public class FeatureFlags
 
   public static final String AUTH_RATE_LIMIT_ENABLED_NAMED_VALUE = "${nexus.auth.ratelimit.enabled:true}";
 
-  /* NuGet Symbol Server support. Available values: true, false. Default value: false */
+  /* NuGet Symbol Server support. Available values: true, false. Default value: true */
   public static final String NUGET_SYMBOL_SERVER_ENABLED = "nexus.nuget.symbol.server.enabled";
 
-  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:false}";
+  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:true}";
 
   /* Firewall capability shim for backwards API compatibility. Available values: true, false. Default value: true */
   public static final String FIREWALL_CAPABILITY_SHIM_ENABLED = "nexus.firewall.capability.shim.enabled";
@@ -447,4 +498,13 @@ public class FeatureFlags
    * Default value: true.
    */
   public static final String FIREWALL_REPOSITORY_SERVICE_ENABLED = "nexus.firewall.repository.service.enabled";
+
+  /*
+   * Feature flag for the Azure Blob Storage Direct Download (SAS URLs) feature. When enabled,
+   * Nexus mints short-lived Shared Access Signature URLs and redirects downloads directly to
+   * Azure, bypassing the proxied path. Pro-only. Available values: true, false. Default: false.
+   */
+  public static final String AZURE_SAS_ENABLED = "nexus.azure.sas.enabled";
+
+  public static final String AZURE_SAS_ENABLED_NAMED_VALUE = "${nexus.azure.sas.enabled:false}";
 }

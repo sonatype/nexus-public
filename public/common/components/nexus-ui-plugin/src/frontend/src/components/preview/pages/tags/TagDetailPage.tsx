@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   Badge,
   Box,
@@ -21,7 +21,6 @@ import {
   Heading,
   ScrollArea,
   Select,
-  Separator,
   Spinner,
   Table,
   Text,
@@ -42,33 +41,15 @@ import {
   X,
 } from 'lucide-react';
 import { useRouter, useCurrentStateAndParams } from '@uirouter/react';
-import { restClient, parseApiError } from '../../../../interface/api';
-import { APIConstants } from '../../../../constants/APIConstants';
+
 import { useToast } from '../../shared/Toast';
 import { ConfirmDialog } from '../../shared/form';
-import { exportToCsv, PageHeader } from '../../shared';
+import { exportToCsv, PageHeader, useRouteVisibility } from '../../shared';
 
-import { fetchTagDetail } from './tags.api';
-import type { TagDetail } from './tags.types';
+import { useTagDetailExtended, type TaggedComponent } from './hooks';
+import { useSearchNavigation } from '../search/unified/useSearchNavigation';
 
 import './TagDetailPage.scss';
-
-/**
- * Tagged component data from search API.
- */
-interface TaggedComponent {
-  id: string;
-  repository: string;
-  format: string;
-  group: string | null;
-  name: string;
-  version: string | null;
-  assets: Array<{
-    id: string;
-    downloadUrl: string;
-    path: string;
-  }>;
-}
 
 /**
  * Sort configuration.
@@ -85,13 +66,13 @@ const STRINGS = {
   loadingComponents: 'Loading tagged components...',
   error: 'Failed to load tag details',
   retry: 'Retry',
-  
+
   header: {
     created: 'Created',
     lastUpdated: 'Last Updated',
     totalComponents: 'Total Components',
   },
-  
+
   components: {
     title: 'Tagged Components',
     searchPlaceholder: 'Search components...',
@@ -102,8 +83,11 @@ const STRINGS = {
     exportCsv: 'Export CSV',
     empty: 'No components tagged with this tag yet.',
     emptyFiltered: 'No components match your filters.',
+    error: 'Failed to load tagged components',
+    loadMoreError: 'Failed to load more components',
+    retry: 'Retry',
   },
-  
+
   table: {
     component: 'Component',
     format: 'Format',
@@ -111,13 +95,13 @@ const STRINGS = {
     repository: 'Repository',
     actions: '',
   },
-  
+
   actions: {
     view: 'View Details',
     remove: 'Remove Tag',
     delete: 'Delete Tag',
   },
-  
+
   deleteDialog: {
     title: 'Delete Tag',
     message: 'Are you sure you want to delete this tag?',
@@ -165,135 +149,80 @@ function getFormatColor(format: string): 'red' | 'blue' | 'purple' | 'cyan' | 'o
 
 /**
  * TagDetailPage - Full page view of a single tag with its components.
+ *
+ * This component follows the three-layer architecture:
+ * - Layer 1: tagDetailMachine (XState state machine)
+ * - Layer 2: useTagDetailExtended (integration hook)
+ * - Layer 3: TagDetailPage (presentation component)
+ *
+ * The component contains only presentation logic:
+ * - Rendering UI based on state
+ * - Handling user input events
+ * - Displaying validation errors
+ * - Showing loading/error states
  */
 export function TagDetailPage(): JSX.Element {
   const router = useRouter();
   const { params } = useCurrentStateAndParams();
   const tagName = params.tagName as string;
   const toast = useToast();
+  const { navigateToDetail } = useSearchNavigation();
 
-  // Tag detail state
-  const [tagDetail, setTagDetail] = useState<TagDetail | null>(null);
-  const [tagLoading, setTagLoading] = useState(true);
-  const [tagError, setTagError] = useState<string | null>(null);
-  
-  // Components state
-  const [components, setComponents] = useState<TaggedComponent[]>([]);
-  const [componentsLoading, setComponentsLoading] = useState(true);
-  const [componentsError, setComponentsError] = useState<string | null>(null);
-  // continuationTokenRef is read inside the loadComponents async closure to avoid stale closure.
-  // continuationToken state drives the Load More button visibility in the render.
-  const [continuationToken, setContinuationToken] = useState<string | null>(null);
-  const continuationTokenRef = React.useRef<string | null>(null);
-  const [totalComponentCount, setTotalComponentCount] = useState<number | null>(null);
-  
-  // Filter state
+  // Check if user can navigate to Search component detail (same check the left-nav uses)
+  const canOpenComponent = useRouteVisibility('browse.search');
+
+  // Local UI state (filters, sort, etc.)
   const [searchFilter, setSearchFilter] = useState('');
   const [formatFilter, setFormatFilter] = useState('');
   const [repositoryFilter, setRepositoryFilter] = useState('');
-  
-  // Sort state
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  
-  // Delete dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // Tracks a confirm click so the dialog's synchronous auto-close can be ignored
+  // while the delete is in flight (see handleDeleteDialogOpenChange).
+  const confirmingDeleteRef = useRef(false);
 
   /**
-   * Fetch tag details.
+   * Navigate back to tags list.
    */
-  const loadTagDetail = useCallback(async () => {
-    if (!tagName) return;
-    
-    setTagLoading(true);
-    setTagError(null);
-    
-    try {
-      const detail = await fetchTagDetail(tagName);
-      setTagDetail(detail);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load tag';
-      setTagError(message);
-    } finally {
-      setTagLoading(false);
-    }
-  }, [tagName]);
+  const handleBack = useCallback(() => {
+    router.stateService.go('preview.browse.tags');
+  }, [router]);
 
-  /**
-   * Fetch the true total component count for this tag from the filtered tags API.
-   * This is separate from the paginated search results used for the table.
-   */
-  const loadTotalCount = useCallback(async () => {
-    if (!tagName) return;
-    try {
-      // nameFilter is a substring match on the backend. pageSize=100 (server max) maximises the
-      // chance the exact match is included. In systems with many similarly-named tags the exact
-      // match could still be excluded; in that case the badge falls back to loaded count.
-      const params = new URLSearchParams({ nameFilter: tagName, pageSize: '100', page: '0', sortField: 'name', sortDirection: 'asc' });
-      const data = await restClient.get<{ items: Array<{ name: string; componentCount: number }> }>(
-        `/service/rest/internal/ui/tags/filtered?${params.toString()}`
-      );
-      const match = data.items?.find((t) => t.name === tagName);
-      if (match !== undefined) {
-        setTotalComponentCount(match.componentCount);
-      }
-    } catch (err) {
-      // non-critical — badge falls back to loaded count
-      console.debug('Failed to fetch total component count for tag:', tagName, err);
-    }
-  }, [tagName]);
-
-  /**
-   * Fetch one page of tagged components from the search API.
-   * Pass append=true to load the next page (Load More).
-   */
-  const loadComponents = useCallback(async (append = false) => {
-    if (!tagName) return;
-
-    if (!append) {
-      setComponentsLoading(true);
-    }
-    setComponentsError(null);
-
-    try {
-      const params = new URLSearchParams();
-      params.set('tag', tagName);
-
-      if (append && continuationTokenRef.current) {
-        params.set('continuationToken', continuationTokenRef.current);
-      }
-
-      const data = await restClient.get<{items?: TaggedComponent[]; continuationToken?: string}>(
-        `/service/rest/v1/search?${params.toString()}`
-      );
-
-      const newComponents = (data.items || []) as TaggedComponent[];
-      setComponents(prev => append ? [...prev, ...newComponents] : newComponents);
-      const nextToken = data.continuationToken || null;
-      continuationTokenRef.current = nextToken;
-      setContinuationToken(nextToken);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load components';
-      setComponentsError(message);
-    } finally {
-      setComponentsLoading(false);
-    }
-  }, [tagName]);
-
-  // Reset continuation token ref when tag changes, then load fresh data
-  useEffect(() => {
-    continuationTokenRef.current = null;
-    setContinuationToken(null);
-    loadTagDetail();
-    loadComponents();
-    loadTotalCount();
-  }, [loadTagDetail, loadComponents, loadTotalCount]);
+  // Use the XState-powered hook
+  const {
+    tagDetail,
+    tagLoading,
+    tagError,
+    components,
+    componentsLoading,
+    componentsError,
+    hasMoreComponents,
+    totalComponentCount,
+    loadMoreComponents,
+    retry,
+    deleteTag,
+    deleting,
+  } = useTagDetailExtended({
+    tagName,
+    onDeleted: useCallback(() => {
+      setDeleteDialogOpen(false);
+      toast.success(`Tag "${tagName}" deleted`);
+      handleBack();
+    }, [tagName, toast, handleBack]),
+    onDeleteError: useCallback(
+      (message: string) => {
+        toast.error(message);
+      },
+      [toast]
+    ),
+  });
 
   /**
    * Get unique formats from components.
    */
   const formats = useMemo(() => {
-    const formatSet = new Set(components.map(c => c.format));
+    const formatSet = new Set(components.map((c) => c.format));
     return Array.from(formatSet).sort();
   }, [components]);
 
@@ -301,7 +230,7 @@ export function TagDetailPage(): JSX.Element {
    * Get unique repositories from components.
    */
   const repositories = useMemo(() => {
-    const repoSet = new Set(components.map(c => c.repository));
+    const repoSet = new Set(components.map((c) => c.repository));
     return Array.from(repoSet).sort();
   }, [components]);
 
@@ -310,27 +239,28 @@ export function TagDetailPage(): JSX.Element {
    */
   const filteredComponents = useMemo(() => {
     let filtered = [...components];
-    
+
     // Apply search filter
     if (searchFilter) {
       const search = searchFilter.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.name.toLowerCase().includes(search) ||
-        (c.group?.toLowerCase().includes(search)) ||
-        c.repository.toLowerCase().includes(search)
+      filtered = filtered.filter(
+        (c) =>
+          c.name.toLowerCase().includes(search) ||
+          (c.group?.toLowerCase().includes(search)) ||
+          c.repository.toLowerCase().includes(search)
       );
     }
-    
+
     // Apply format filter
     if (formatFilter) {
-      filtered = filtered.filter(c => c.format === formatFilter);
+      filtered = filtered.filter((c) => c.format === formatFilter);
     }
-    
+
     // Apply repository filter
     if (repositoryFilter) {
-      filtered = filtered.filter(c => c.repository === repositoryFilter);
+      filtered = filtered.filter((c) => c.repository === repositoryFilter);
     }
-    
+
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -350,41 +280,64 @@ export function TagDetailPage(): JSX.Element {
       }
       return sortDirection === 'desc' ? -comparison : comparison;
     });
-    
+
     return filtered;
   }, [components, searchFilter, formatFilter, repositoryFilter, sortField, sortDirection]);
 
   /**
    * Handle sort toggle.
    */
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField]);
-
-  /**
-   * Navigate back to tags list.
-   */
-  const handleBack = useCallback(() => {
-    router.stateService.go('preview.browse.tags');
-  }, [router]);
+  const handleSort = useCallback(
+    (field: SortField) => {
+      if (sortField === field) {
+        setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortField(field);
+        setSortDirection('asc');
+      }
+    },
+    [sortField]
+  );
 
   /**
    * Navigate to component detail.
    */
-  const handleViewComponent = useCallback((component: TaggedComponent) => {
-    if (component.assets?.[0]?.id && component.repository) {
-      router.stateService.go('preview.browse.search.asset', {
-        repositoryName: component.repository,
-        assetId: btoa(component.assets[0].id),
-        componentId: component.id,
+  const handleViewComponent = useCallback(
+    (component: TaggedComponent) => {
+      // Safety net: navigation needs both search-route permission and a component
+      // name to build the gaId. Rows without both are rendered non-interactive
+      // (see isRowInteractive below), so this guard should never fire in practice.
+      if (!canOpenComponent || !component.name) {
+        return;
+      }
+      // Navigate using the unified search navigation helper, which builds the
+      // correct gaId and calls the component detail route. Assets are not required.
+      navigateToDetail({
+        id: component.id,
+        name: component.name,
+        format: component.format,
+        repository: component.repository,
+        group: component.group ?? undefined,
+        // version is a required string on SearchResult; navigateToDetail treats a
+        // falsy value as "no version" (the detail page then auto-selects the first).
+        version: component.version ?? '',
       });
-    }
-  }, [router]);
+    },
+    [navigateToDetail, canOpenComponent]
+  );
+
+  /**
+   * Handle keyboard navigation for component rows.
+   */
+  const handleRowKeyDown = useCallback(
+    (component: TaggedComponent) => (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleViewComponent(component);
+      }
+    },
+    [handleViewComponent]
+  );
 
   const handleExportCsv = useCallback(() => {
     exportToCsv(
@@ -396,23 +349,35 @@ export function TagDetailPage(): JSX.Element {
         repository: c.repository,
       })),
       `${tagName}-components.csv`,
-      ['name', 'group', 'version', 'format', 'repository'],
+      ['name', 'group', 'version', 'format', 'repository']
     );
   }, [tagName, filteredComponents]);
 
   /**
-   * Handle delete tag.
+   * Handle delete tag with confirmation. Fire-and-forget: the hook's onDeleted /
+   * onDeleteError callbacks surface success and failure.
    */
-  const handleDeleteTag = useCallback(async () => {
-    try {
-      await restClient.delete(`${APIConstants.REST.PUBLIC.TAGS}/${encodeURIComponent(tagName)}`);
-      toast.success(`Tag "${tagName}" deleted`);
-      setDeleteDialogOpen(false);
-      handleBack();
-    } catch (err) {
-      toast.error(parseApiError(err).message);
+  const handleDeleteTag = useCallback(() => {
+    // ConfirmDialog fires onOpenChange(false) synchronously on confirm, before the
+    // machine has entered 'deleting' (the loading prop is still false this render).
+    // Flag the confirm so onOpenChange can swallow that one close and keep the
+    // dialog open (with a spinner) until the delete resolves.
+    confirmingDeleteRef.current = true;
+    deleteTag();
+  }, [deleteTag]);
+
+  /**
+   * Gate the dialog's open state: swallow the synchronous close triggered by the
+   * confirm click (so the dialog stays open while deleting, and remains open on
+   * error to allow a retry), but honor genuine cancels/dismissals.
+   */
+  const handleDeleteDialogOpenChange = useCallback((next: boolean) => {
+    if (!next && confirmingDeleteRef.current) {
+      confirmingDeleteRef.current = false;
+      return;
     }
-  }, [tagName, handleBack, toast]);
+    setDeleteDialogOpen(next);
+  }, []);
 
   /**
    * Render sort icon.
@@ -425,7 +390,13 @@ export function TagDetailPage(): JSX.Element {
   // Loading state
   if (tagLoading) {
     return (
-      <Box className="tag-detail-page">
+      <Box
+        className="tag-detail-page"
+        px={{ initial: '4', md: '6', lg: '6' }}
+        py={{ initial: '4', md: '5', lg: '6' }}
+        width="100%"
+        style={{ minWidth: 0, boxSizing: 'border-box' }}
+      >
         <Flex align="center" justify="center" p="9" gap="3">
           <Spinner size="3" />
           <Text>{STRINGS.loading}</Text>
@@ -437,18 +408,26 @@ export function TagDetailPage(): JSX.Element {
   // Error state
   if (tagError) {
     return (
-      <Box className="tag-detail-page">
+      <Box
+        className="tag-detail-page"
+        px={{ initial: '4', md: '6', lg: '6' }}
+        py={{ initial: '4', md: '5', lg: '6' }}
+        width="100%"
+        style={{ minWidth: 0, boxSizing: 'border-box' }}
+      >
         <PageHeader
           title={tagName || 'Tag Details'}
           breadcrumbs={[
             { label: 'Tags', onClick: handleBack },
-            { label: tagName || 'Unknown' }
+            { label: tagName || 'Unknown' },
           ]}
         />
         <Flex direction="column" align="center" justify="center" p="9" gap="3">
           <Text color="red">{STRINGS.error}</Text>
-          <Text color="gray" size="2">{tagError}</Text>
-          <Button variant="soft" onClick={loadTagDetail}>
+          <Text color="gray" size="2">
+            {tagError}
+          </Text>
+          <Button variant="soft" onClick={retry}>
             {STRINGS.retry}
           </Button>
         </Flex>
@@ -457,12 +436,18 @@ export function TagDetailPage(): JSX.Element {
   }
 
   return (
-    <Box className="tag-detail-page">
+    <Box
+      className="tag-detail-page"
+      px={{ initial: '4', md: '6', lg: '6' }}
+      py={{ initial: '4', md: '5', lg: '6' }}
+      width="100%"
+      style={{ minWidth: 0, boxSizing: 'border-box' }}
+    >
       <PageHeader
         title={tagName || 'Tag Details'}
         breadcrumbs={[
           { label: 'Tags', onClick: handleBack },
-          { label: tagName || 'Unknown' }
+          { label: tagName || 'Unknown' },
         ]}
       />
 
@@ -478,19 +463,28 @@ export function TagDetailPage(): JSX.Element {
               <Flex gap="4" mt="2" wrap="wrap">
                 <Flex align="center" gap="2">
                   <Calendar size={14} className="tag-detail-page__meta-icon" />
-                  <Text size="2" color="gray">{STRINGS.header.created}:</Text>
+                  <Text size="2" color="gray">
+                    {STRINGS.header.created}:
+                  </Text>
                   <Text size="2">{formatDate(tagDetail?.firstCreated || null)}</Text>
                 </Flex>
                 <Flex align="center" gap="2">
                   <Clock size={14} className="tag-detail-page__meta-icon" />
-                  <Text size="2" color="gray">{STRINGS.header.lastUpdated}:</Text>
+                  <Text size="2" color="gray">
+                    {STRINGS.header.lastUpdated}:
+                  </Text>
                   <Text size="2">{formatDate(tagDetail?.lastUpdated || null)}</Text>
                 </Flex>
                 <Flex align="center" gap="2">
                   <Package size={14} className="tag-detail-page__meta-icon" />
-                  <Text size="2" color="gray">{STRINGS.header.totalComponents}:</Text>
+                  <Text size="2" color="gray">
+                    {STRINGS.header.totalComponents}:
+                  </Text>
+                  {/* Show an explicit "unknown" indicator when the count could not be
+                      resolved, rather than falling back to the loaded page size — that
+                      fallback misrepresents a 500-component tag as its first-page count. */}
                   <Badge size="1" variant="soft" color="violet">
-                    {totalComponentCount !== null ? totalComponentCount : components.length}
+                    {totalComponentCount !== null ? totalComponentCount : '—'}
                   </Badge>
                 </Flex>
               </Flex>
@@ -533,93 +527,108 @@ export function TagDetailPage(): JSX.Element {
                   )}
                 </TextField.Root>
               </Box>
-              
-              <Select.Root value={formatFilter || '__all__'} onValueChange={(v) => setFormatFilter(v === '__all__' ? '' : v)}>
+
+              <Select.Root
+                value={formatFilter || '__all__'}
+                onValueChange={(v) => setFormatFilter(v === '__all__' ? '' : v)}
+              >
                 <Select.Trigger placeholder={STRINGS.components.allFormats} />
                 <Select.Content>
                   <Select.Item value="__all__">{STRINGS.components.allFormats}</Select.Item>
-                  {formats.map(format => (
-                    <Select.Item key={format} value={format}>{format}</Select.Item>
+                  {formats.map((format) => (
+                    <Select.Item key={format} value={format}>
+                      {format}
+                    </Select.Item>
                   ))}
                 </Select.Content>
               </Select.Root>
-              
-              <Select.Root value={repositoryFilter || '__all__'} onValueChange={(v) => setRepositoryFilter(v === '__all__' ? '' : v)}>
+
+              <Select.Root
+                value={repositoryFilter || '__all__'}
+                onValueChange={(v) => setRepositoryFilter(v === '__all__' ? '' : v)}
+              >
                 <Select.Trigger placeholder={STRINGS.components.allRepositories} />
                 <Select.Content>
                   <Select.Item value="__all__">{STRINGS.components.allRepositories}</Select.Item>
-                  {repositories.map(repo => (
-                    <Select.Item key={repo} value={repo}>{repo}</Select.Item>
+                  {repositories.map((repo) => (
+                    <Select.Item key={repo} value={repo}>
+                      {repo}
+                    </Select.Item>
                   ))}
                 </Select.Content>
               </Select.Root>
             </Flex>
 
             {/* Components Table */}
-            {componentsLoading ? (
+            {componentsLoading && components.length === 0 ? (
               <Flex align="center" justify="center" p="6" gap="2">
                 <Spinner size="2" />
                 <Text color="gray">{STRINGS.loadingComponents}</Text>
+              </Flex>
+            ) : componentsError && components.length === 0 ? (
+              <Flex direction="column" align="center" justify="center" p="6" gap="3">
+                <Text color="red">{STRINGS.components.error}</Text>
+                <Text color="gray" size="2">
+                  {componentsError}
+                </Text>
+                <Button variant="soft" onClick={retry}>
+                  {STRINGS.components.retry}
+                </Button>
               </Flex>
             ) : filteredComponents.length === 0 ? (
               <Flex direction="column" align="center" justify="center" p="6" gap="2">
                 <Package size={32} color="var(--gray-9)" />
                 <Text color="gray">
-                  {components.length === 0 
-                    ? STRINGS.components.empty 
-                    : STRINGS.components.emptyFiltered}
+                  {components.length === 0 ? STRINGS.components.empty : STRINGS.components.emptyFiltered}
                 </Text>
               </Flex>
             ) : (
               <Table.Root>
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeaderCell 
-                      onClick={() => handleSort('name')}
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <Table.ColumnHeaderCell onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
                       <Flex align="center" gap="1">
                         {STRINGS.table.component}
                         <SortIcon field="name" />
                       </Flex>
                     </Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell
-                      onClick={() => handleSort('format')}
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <Table.ColumnHeaderCell onClick={() => handleSort('format')} style={{ cursor: 'pointer' }}>
                       <Flex align="center" gap="1">
                         {STRINGS.table.format}
                         <SortIcon field="format" />
                       </Flex>
                     </Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell
-                      onClick={() => handleSort('version')}
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <Table.ColumnHeaderCell onClick={() => handleSort('version')} style={{ cursor: 'pointer' }}>
                       <Flex align="center" gap="1">
                         {STRINGS.table.version}
                         <SortIcon field="version" />
                       </Flex>
                     </Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell
-                      onClick={() => handleSort('repository')}
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <Table.ColumnHeaderCell onClick={() => handleSort('repository')} style={{ cursor: 'pointer' }}>
                       <Flex align="center" gap="1">
                         {STRINGS.table.repository}
                         <SortIcon field="repository" />
                       </Flex>
                     </Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>
-                      {STRINGS.table.actions}
-                    </Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{STRINGS.table.actions}</Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {filteredComponents.map((component) => (
-                    <Table.Row 
+                  {filteredComponents.map((component) => {
+                    // A row is interactive only when the user can open the Search
+                    // component route AND the component has a name to build the gaId.
+                    const isRowInteractive = canOpenComponent && Boolean(component.name);
+                    return (
+                    <Table.Row
                       key={component.id}
-                      className="tag-detail-page__component-row"
+                      className={`tag-detail-page__component-row${isRowInteractive ? ' tag-detail-page__component-row--clickable' : ''}`}
+                      {...(isRowInteractive && {
+                        onClick: () => handleViewComponent(component),
+                        onKeyDown: handleRowKeyDown(component),
+                        tabIndex: 0,
+                        role: 'button',
+                        'aria-label': `View ${component.name}`,
+                      })}
                     >
                       <Table.Cell>
                         <Flex direction="column" gap="1">
@@ -643,26 +652,49 @@ export function TagDetailPage(): JSX.Element {
                         <Text size="2">{component.repository}</Text>
                       </Table.Cell>
                       <Table.Cell>
-                        <Tooltip content={STRINGS.actions.view}>
-                          <Button 
-                            variant="ghost" 
-                            size="1"
-                            onClick={() => handleViewComponent(component)}
-                          >
-                            <ExternalLink size={14} />
-                          </Button>
-                        </Tooltip>
+                        {isRowInteractive && (
+                          <Tooltip content={STRINGS.actions.view}>
+                            <Button
+                              variant="ghost"
+                              size="1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewComponent(component);
+                              }}
+                            >
+                              <ExternalLink size={14} />
+                            </Button>
+                          </Tooltip>
+                        )}
                       </Table.Cell>
                     </Table.Row>
-                  ))}
+                    );
+                  })}
                 </Table.Body>
               </Table.Root>
             )}
 
+            {/* Load-more error: components are already loaded (the empty-state banner
+                above only covers the initial-load failure), so surface the failure
+                inline near the table with a retry rather than swallowing it. */}
+            {componentsError && components.length > 0 && (
+              <Flex direction="column" align="center" mt="4" gap="2">
+                <Text color="red" size="2">
+                  {STRINGS.components.loadMoreError}
+                </Text>
+                <Text color="gray" size="1">
+                  {componentsError}
+                </Text>
+                <Button variant="soft" onClick={loadMoreComponents}>
+                  {STRINGS.components.retry}
+                </Button>
+              </Flex>
+            )}
+
             {/* Load More */}
-            {continuationToken && !componentsLoading && (
+            {hasMoreComponents && !componentsLoading && !componentsError && (
               <Flex justify="center" mt="4">
-                <Button variant="soft" onClick={() => loadComponents(true)}>
+                <Button variant="soft" onClick={loadMoreComponents}>
                   Load More
                 </Button>
               </Flex>
@@ -675,7 +707,8 @@ export function TagDetailPage(): JSX.Element {
       <ConfirmDialog
         open={deleteDialogOpen}
         testId="delete-tag-dialog"
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={handleDeleteDialogOpenChange}
+        loading={deleting}
         title={STRINGS.deleteDialog.title}
         message={STRINGS.deleteDialog.message}
         confirmLabel={STRINGS.deleteDialog.confirm}
@@ -684,7 +717,9 @@ export function TagDetailPage(): JSX.Element {
         onConfirm={handleDeleteTag}
       >
         <Box mt="2">
-          <Text size="2" color="red">{STRINGS.deleteDialog.warning}</Text>
+          <Text size="2" color="red">
+            {STRINGS.deleteDialog.warning}
+          </Text>
         </Box>
       </ConfirmDialog>
     </Box>
@@ -692,4 +727,3 @@ export function TagDetailPage(): JSX.Element {
 }
 
 export default TagDetailPage;
-

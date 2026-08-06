@@ -36,6 +36,8 @@ import org.sonatype.nexus.repository.search.sql.ExpressionGroup;
 import org.sonatype.nexus.repository.search.sql.SearchResult;
 import org.sonatype.nexus.repository.search.sql.SqlSearchResultDecorator;
 import org.sonatype.nexus.repository.search.sql.index.SqlSearchEventHandler;
+import org.sonatype.nexus.repository.search.sql.query.security.SqlSearchPermissionException;
+import org.sonatype.nexus.repository.search.sql.query.security.UnknownRepositoriesException;
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -63,6 +65,12 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(MockitoExtension.class)
 class SqlSearchServiceTest
@@ -101,10 +109,19 @@ class SqlSearchServiceTest
 
   private SqlSearchService underTest;
 
+  private ListAppender<ILoggingEvent> logAppender;
+
   @BeforeEach
   public void setUp() {
     underTest = new SqlSearchService(searchStore, sqlSearchSortUtil, List.of(formatStoreManager), expressionBuilder,
         requestModifier, queryFactory, decorators, sqlSearchEventHandler, assetPermissionChecker);
+
+    // Set up log appender to capture log events for verifying log levels
+    Logger logger = (Logger) LoggerFactory.getLogger(SqlSearchService.class);
+    logger.setLevel(Level.WARN);
+    logAppender = new ListAppender<>();
+    logAppender.start();
+    logger.addAppender(logAppender);
   }
 
   /**
@@ -577,5 +594,67 @@ class SqlSearchServiceTest
     verify(sqlSearchEventHandler).getMinimumWaitTimeMs();
     // Verify it checked calm period multiple times during minimum wait (polls every 100ms for 1000ms = ~10 polls)
     verify(sqlSearchEventHandler, atLeast(9)).isCalmPeriod();
+  }
+
+  /**
+   * Verifies that SqlSearchPermissionException is handled gracefully and returns empty results.
+   * This exception is thrown when a user lacks permissions to search specified repositories,
+   * which is a normal authorization check outcome, not an error condition.
+   * The log level should be WARN (not ERROR) to avoid triggering monitoring alerts.
+   */
+  @Test
+  void testSearchReturnsEmptyWhenPermissionDenied() {
+    SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
+
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    // Mock expressionBuilder to return an expression
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+
+    // Mock queryFactory to throw SqlSearchPermissionException
+    when(queryFactory.build(expressionGroup))
+        .thenThrow(new SqlSearchPermissionException("User does not have permissions to required repositories."));
+
+    // The search should return empty results without throwing
+    var result = underTest.search(searchRequest);
+
+    assertThat(result.getSearchResults(), hasSize(0));
+    assertThat(result.getTotalHits(), equalTo(0L));
+
+    // Verify log level is DEBUG, not ERROR (this is the key fix for NEXUS-53777)
+    assertThat("Should not log at ERROR level for permission denied",
+        logAppender.list.stream().noneMatch(e -> e.getLevel() == Level.ERROR), equalTo(true));
+    assertThat("Should log at WARN level for permission denied",
+        logAppender.list.stream().anyMatch(e -> e.getLevel() == Level.WARN), equalTo(true));
+  }
+
+  /**
+   * Verifies that UnknownRepositoriesException is handled gracefully and returns zero count.
+   */
+  @Test
+  void testCountReturnsZeroWhenUnknownRepositories() {
+    SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
+
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    // Mock expressionBuilder to return an expression
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+
+    // Mock queryFactory to throw UnknownRepositoriesException
+    when(queryFactory.build(expressionGroup))
+        .thenThrow(new UnknownRepositoriesException(java.util.List.of("unknown-repo")));
+
+    // The count should return 0 without throwing
+    long count = underTest.count(searchRequest);
+
+    assertThat(count, equalTo(0L));
+
+    // Verify log level is DEBUG, not ERROR (this is the key fix for NEXUS-53777)
+    assertThat("Should not log at ERROR level for unknown repositories",
+        logAppender.list.stream().noneMatch(e -> e.getLevel() == Level.ERROR), equalTo(true));
+    assertThat("Should log at WARN level for unknown repositories",
+        logAppender.list.stream().anyMatch(e -> e.getLevel() == Level.WARN), equalTo(true));
   }
 }

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, } from '@testing-library/react';
 import {
   useUnsavedChangesWarning,
   clearDirtyState,

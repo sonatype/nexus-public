@@ -22,7 +22,9 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.UserPasswordChangedDistributedEvent;
 import org.sonatype.nexus.security.AbstractSecurityTest;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.TestAnonymousConfiguration;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
+import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authc.UserPasswordChanged;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.MockAuthorizationManagerB;
@@ -60,10 +62,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DefaultSecuritySystem}.
@@ -89,6 +94,14 @@ public class DefaultSecuritySystemTest
   public void setUp() throws Exception {
     super.setUp();
     reset(lookup(EventManager.class));
+    reset(sessionInvalidator);
+
+    // Setup anonymous manager mock for tests that need it
+    AnonymousManager anonymousManager = lookup(AnonymousManager.class);
+    TestAnonymousConfiguration config = new TestAnonymousConfiguration();
+    config.setEnabled(false);
+    config.setUserId("anonymous");
+    when(anonymousManager.getConfiguration()).thenReturn(config);
   }
 
   @Override
@@ -236,6 +249,42 @@ public class DefaultSecuritySystemTest
     verifyEventPosted(1, UserPrincipalsExpired.class, event -> {
       assertThat(event.getUserId(), is("testUpdateUser"));
     });
+
+    verify(sessionInvalidator)
+        .invalidateSessionsForUser(eq("testUpdateUser"), eq("MockUserManagerA"), eq("user deactivation"));
+  }
+
+  @Test
+  void testUpdateUser_deactivation_invalidatesActiveSessions() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Create an active user
+    User user = createUser("testDeactivation", UserStatus.active);
+    securitySystem.addUser(user, "test1234");
+
+    // Deactivate the user - use createUser to ensure the source is set correctly
+    User updatedUser = createUser("testDeactivation", UserStatus.disabled);
+    securitySystem.updateUser(updatedUser);
+
+    verify(sessionInvalidator)
+        .invalidateSessionsForUser(eq("testDeactivation"), eq("MockUserManagerA"), eq("user deactivation"));
+  }
+
+  @Test
+  void testUpdateUser_noStatusChange_doesNotInvalidateSessions() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Create an active user
+    User user = createUser("testNoStatusChange", UserStatus.active);
+    securitySystem.addUser(user, "test1234");
+
+    // Update user without changing status
+    User createdUser = securitySystem.getUser("testNoStatusChange");
+    createdUser.setEmailAddress("newemail@example.com");
+    securitySystem.updateUser(createdUser);
+
+    // No invalidation expected when status stays active
+    verify(sessionInvalidator, never()).invalidateSessionsForUser(any(), any(), any());
   }
 
   @Test
@@ -274,9 +323,23 @@ public class DefaultSecuritySystemTest
     // The invalidation source should be the Shiro realm name from the authenticated Subject,
     // not the UserManager "default" source of the internal user record.
     ArgumentCaptor<String> sourceCaptor = ArgumentCaptor.forClass(String.class);
-    verify(sessionInvalidator).invalidateSessionsForUser(eq("jcoder"), sourceCaptor.capture());
+    verify(sessionInvalidator)
+        .invalidateSessionsForUser(eq("jcoder"), sourceCaptor.capture(), eq("password change"));
     assertThat(sourceCaptor.getValue(), not(is("default")));
     assertNotNull(sourceCaptor.getValue());
+  }
+
+  @Test
+  void testDeleteUser_invalidatesActiveSessions() throws Exception {
+    SecuritySystem securitySystem = this.getSecuritySystem();
+
+    // Create a user to delete
+    User user = createUser("testDeleteUser_sessionInvalidation", UserStatus.active);
+    securitySystem.addUser(user, "test1234");
+
+    securitySystem.deleteUser("testDeleteUser_sessionInvalidation");
+    verify(sessionInvalidator).invalidateSessionsForUser(
+        eq("testDeleteUser_sessionInvalidation"), any(String.class), eq("user deletion"));
   }
 
   @Test

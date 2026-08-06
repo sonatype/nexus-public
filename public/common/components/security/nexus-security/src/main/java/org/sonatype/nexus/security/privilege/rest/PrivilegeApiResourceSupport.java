@@ -21,14 +21,19 @@ import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
+import org.sonatype.nexus.security.config.CPrivilege;
+import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException;
+
+import org.apache.shiro.authz.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,15 +53,25 @@ public abstract class PrivilegeApiResourceSupport
   public static final String PRIV_CONFLICT =
       "\"The privilege name '%s' does not match the name used in the path '%s'.\"";
 
+  public static final String PRIV_FORBIDDEN =
+      "\"The current user is not permitted to grant the effective permission of privilege '%s'.\"";
+
+  public static final String PRIV_TYPE_MISMATCH =
+      "\"Privilege '%s' is of type '%s' and cannot be updated via the '%s' endpoint.\"";
+
   private final SecuritySystem securitySystem;
+
+  private final SecurityHelper securityHelper;
 
   private final Map<String, PrivilegeDescriptor> privilegeDescriptors;
 
   public PrivilegeApiResourceSupport(
       final SecuritySystem securitySystem,
+      final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)
   {
     this.securitySystem = checkNotNull(securitySystem);
+    this.securityHelper = checkNotNull(securityHelper);
     this.privilegeDescriptors = QualifierUtil.buildQualifierBeanMap(checkNotNull(privilegeDescriptorsList));
   }
 
@@ -65,7 +80,10 @@ public abstract class PrivilegeApiResourceSupport
       PrivilegeDescriptor privilegeDescriptor = privilegeDescriptors.get(type);
       privilegeDescriptor.validate(apiPrivilege);
 
-      getDefaultAuthorizationManager().addPrivilege(apiPrivilege.asPrivilege());
+      Privilege privilege = apiPrivilege.asPrivilege();
+      checkGrantRights(privilegeDescriptor, privilege);
+
+      getDefaultAuthorizationManager().addPrivilege(privilege);
       return Response.status(Status.CREATED).build();
     }
     catch (DuplicatePrivilegeException e) {
@@ -82,12 +100,19 @@ public abstract class PrivilegeApiResourceSupport
             String.format(PRIV_CONFLICT, apiPrivilege.getName(), privilegeName), MediaType.APPLICATION_JSON);
       }
 
+      AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
+      Privilege privilege = authorizationManager.getPrivilegeByName(privilegeName);
+      if (!type.equals(privilege.getType())) {
+        throw new WebApplicationMessageException(Status.CONFLICT,
+            String.format(PRIV_TYPE_MISMATCH, privilegeName, privilege.getType(), type),
+            MediaType.APPLICATION_JSON);
+      }
       PrivilegeDescriptor privilegeDescriptor = privilegeDescriptors.get(type);
       privilegeDescriptor.validate(apiPrivilege);
 
-      AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
-      Privilege privilege = authorizationManager.getPrivilegeByName(privilegeName);
       Privilege newPrivilege = apiPrivilege.asPrivilege();
+      checkGrantRights(privilegeDescriptor, newPrivilege);
+
       privilege.setDescription(newPrivilege.getDescription());
       privilege.setProperties(newPrivilege.getProperties());
       authorizationManager.updatePrivilegeByName(privilege);
@@ -102,6 +127,33 @@ public abstract class PrivilegeApiResourceSupport
       throw new WebApplicationMessageException(Status.BAD_REQUEST, String.format(PRIV_INTERNAL, privilegeName),
           MediaType.APPLICATION_JSON);
     }
+  }
+
+  private void checkGrantRights(final PrivilegeDescriptor privilegeDescriptor, final Privilege privilege) {
+    Permission resolved = privilegeDescriptor.createPermission(toCPrivilege(privilege));
+    checkNotNull(resolved, "PrivilegeDescriptor for type '%s' returned a null permission", privilege.getType());
+    if (!securityHelper.allPermitted(resolved)) {
+      log.debug(
+          "Rejected privilege '{}' mutation: caller lacks the effective permission '{}' the privilege would grant.",
+          privilege.getName(), resolved);
+      throw new WebApplicationMessageException(Status.FORBIDDEN, String.format(PRIV_FORBIDDEN, privilege.getName()),
+          MediaType.APPLICATION_JSON);
+    }
+  }
+
+  private static CPrivilege toCPrivilege(final Privilege source) {
+    CPrivilegeBuilder builder = new CPrivilegeBuilder()
+        .type(source.getType())
+        .id(source.getId())
+        .name(source.getName())
+        .description(source.getDescription() == null ? "" : source.getDescription())
+        .readOnly(source.isReadOnly());
+    if (source.getProperties() != null) {
+      for (Map.Entry<String, String> entry : source.getProperties().entrySet()) {
+        builder.property(entry.getKey(), entry.getValue());
+      }
+    }
+    return builder.create();
   }
 
   protected ApiPrivilege toApiPrivilege(Privilege privilege) {

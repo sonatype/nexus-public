@@ -118,6 +118,36 @@ public interface SearchTableDAO
       @Param("limit") int limit);
 
   /**
+   * Delete search_components entries whose component_id no longer exists in the
+   * format-specific component table. Used after a rebuild to remove records for
+   * deleted components. Uses NOT EXISTS rather than last_modified timestamps to
+   * avoid false positives from old blob.blobCreated() timestamps.
+   *
+   * @param repositoryId the content repository identification
+   * @param format the repository format
+   * @param limit when positive limits the number of entries deleted per-call
+   * @return {@code true} if any record was deleted
+   */
+  boolean deleteOrphanedComponents(
+      @Param("repositoryId") Integer repositoryId,
+      @Param("format") String format,
+      @Param("limit") int limit);
+
+  /**
+   * Delete search_assets entries for a repository whose component_id no longer exists in
+   * search_components. Used after a rebuild to remove asset records for deleted components.
+   *
+   * @param repositoryId the content repository identification
+   * @param format the repository format
+   * @param limit when positive limits the number of entries deleted per-call
+   * @return {@code true} if any record was deleted
+   */
+  boolean deleteOrphanedAssets(
+      @Param("repositoryId") Integer repositoryId,
+      @Param("format") String format,
+      @Param("limit") int limit);
+
+  /**
    * Batch Insert data.
    *
    * @param records data to be saved.

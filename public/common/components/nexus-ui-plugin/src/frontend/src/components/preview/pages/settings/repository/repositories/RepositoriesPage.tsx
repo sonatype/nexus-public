@@ -11,13 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { ErrorState, PageHeader, type PageHeaderProps, useToast } from '../../../../shared';
+import { PageHeader, useToast } from '../../../../shared';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Button, Flex, Spinner, Text as RadixText } from '@radix-ui/themes';
+import { Box, Button, } from '@radix-ui/themes';
 import { Database, Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
-import { SettingsAlert, SettingsButton, WizardForm } from '../../../../shared/form';
+import { SettingsAlert, WizardForm } from '../../../../shared/form';
 
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
@@ -109,7 +109,7 @@ export function RepositoriesPage() {
   const [internalWizardStep, setInternalWizardStep] = useState(0);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [fetchingRepository, setFetchingRepository] = useState(false);
+  const [_fetchingRepository, _setFetchingRepository] = useState(false);
 
   // Confirmation dialog state for repository action buttons (rebuild index,
   // invalidate cache, toggle online). Each shares the same ConfirmDialog so
@@ -128,7 +128,6 @@ export function RepositoriesPage() {
     setError,
     fetchRepository,
     createRepository,
-    updateRepository,
     deleteRepository,
     invalidateCache,
     rebuildIndex,
@@ -189,7 +188,7 @@ export function RepositoriesPage() {
   const handleSelectRepository = useCallback((name: string) => navigateTo(`${BASE_PATH}/${encodeURIComponent(name)}`), []);
   const handleCreate = useCallback(() => navigateTo(`${BASE_PATH}/create`), []);
   const handleBack = useCallback(() => navigateTo(BASE_PATH), []);
-  const handleBackToTypeSelect = useCallback(() => navigateTo(`${BASE_PATH}/create`), []);
+  const _handleBackToTypeSelect = useCallback(() => navigateTo(`${BASE_PATH}/create`), []);
 
   const [canAdvanceFromStep0, setCanAdvanceFromStep0] = useState(false);
   const [canAdvanceFromStep1, setCanAdvanceFromStep1] = useState(false);
@@ -255,7 +254,7 @@ export function RepositoriesPage() {
       setCanAdvanceFromStep1(false);
       navigateTo(`${BASE_PATH}/create`);
     } else if (step === 2) {
-      if (pendingRecipe && pendingRecipe.type) {
+      if (pendingRecipe?.type) {
         navigateTo(`${BASE_PATH}/create/${encodeURIComponent(pendingRecipe.format)}/${encodeURIComponent(pendingRecipe.type)}`);
       }
     } else if (step === 3 && selectedRecipe) {
@@ -311,7 +310,7 @@ export function RepositoriesPage() {
       setSelectedFormat(recipe.format);
       setPendingRecipe(recipe);
       setInternalWizardStep(1);
-    } else if (recipe && recipe.type) {
+    } else if (recipe?.type) {
       // Type selected - auto-advance to configuration
       setCanAdvanceFromStep1(true);
       setPendingRecipe(recipe);

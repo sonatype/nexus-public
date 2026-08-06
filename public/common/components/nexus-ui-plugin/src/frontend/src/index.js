@@ -58,6 +58,9 @@ export * from './interface/versionUtil';
 
 export * from './utils/clipboardUtils';
 export * from './utils/loginUtils';
+export * from './utils/devModeUtils';
+
+export * from './hooks/useSideNavbarOpenState';
 
 export * from './interface/LocationUtils';
 export * from './interface/NavigationUtils';
@@ -74,6 +77,7 @@ export { ThemeSelector } from './components/widgets/ThemeSelector/ThemeSelector'
 export * from './components/layout';
 
 export { default as LoginPage } from './components/pages/login/LoginPage';
+export { default as OnboardingWizardMount } from './components/onboarding-wizard/OnboardingWizardMount';
 
 export * from './components/pages/admin/Usage/HistoricalUsageColumns';
 export { default as ChangeIcon } from './components/pages/admin/Usage/ChangeIcon';
@@ -113,9 +117,6 @@ export { StateProvider, useAppState } from './contexts/StateContext';
 // Preview UI: ExtJS Loader Utility
 export { isExtJSLoaded, onExtJSLoad, loadExtJS } from './utils/extJsLoader';
 
-// Shared dev-hostname utility (used by both self-hosted and cloud UIs)
-export { isLocalDevHostname } from './utils/isLocalDevHostname';
-
 // Preview UI: Shared Components (Sprint 13 - Shared Library Migration)
 // Note: PageHeader is NOT exported here to avoid collision with Classic UI PageHeader from ./components/layout
 export {
@@ -135,10 +136,15 @@ export {
   TooltipContainerProvider,
   usePortalContainer,
   ThemeSwitcher,
+  // FormatBadge + FormatIcon are the public API for rendering format icons.
+  // The underlying icon data (FORMAT_SVGS, FORMAT_IMAGES, FORMAT_ICONS, TYPE_ICONS,
+  // DEFAULT_FORMAT_ICON, IconComponent) is intentionally NOT re-exported here — it
+  // remains an internal implementation detail of the FormatIcon component. Consumers
+  // who need to render a custom format icon should extend FormatIcon rather than
+  // reach into the internal data maps.
   FormatBadge,
   FormatIcon,
   FORMAT_LABELS,
-  FORMAT_LOGOS,
   SearchRadix,
   NavItem,
   NavItemBox,
@@ -148,6 +154,13 @@ export {
   PreviewUIContext,
   SessionExpiryModal,
   useSessionExpiry,
+  useUnreadStatusFailure,
+  resetUnreadStatusFailure,
+  STATUS_BELL_ACK_STORAGE_KEY,
+  SystemStatusBell,
+  SystemAlerts,
+  SystemAlert,
+  CELimitsAlert,
 } from './components/preview/shared';
 
 // Preview UI: REST API Utilities
@@ -225,7 +238,6 @@ import React from 'react';
 
 // Browse pages
 export const BrowsePage         = React.lazy(() => import('./components/preview/pages/browse/BrowsePage'));
-export const AssetDetailPage    = React.lazy(() => import('./components/preview/pages/browse/asset-detail/AssetDetailPage'));
 
 // Settings hub + layout
 export const SettingsHubPage         = React.lazy(() => import('./components/preview/pages/settings/SettingsHubPage'));
@@ -253,12 +265,14 @@ export const RealmsPage          = React.lazy(() => import('./components/preview
 export const SamlPage            = React.lazy(() => import('./components/preview/pages/settings/security/saml/SamlPage'));
 export const SslCertificatesPage = React.lazy(() => import('./components/preview/pages/settings/security/sslcertificates/SslCertificatesPage'));
 export const UserTokensPage      = React.lazy(() => import('./components/preview/pages/settings/security/user-tokens/UserTokensPage'));
+export const ServiceAccountTokensPage = React.lazy(() => import('./components/preview/pages/settings/security/service-account-tokens/ServiceAccountTokensPage'));
 
 // Settings — Support
 export const LogsPage           = React.lazy(() => import('./components/preview/pages/settings/support/logs/LogsPage'));
 export const LoggingConfigPage  = React.lazy(() => import('./components/preview/pages/settings/support/logging-config/LoggingConfigPage'));
 export const SystemInfoPage     = React.lazy(() => import('./components/preview/pages/settings/support/system-info/SystemInfoPage'));
 export const MetricHealthPage   = React.lazy(() => import('./components/preview/pages/settings/support/metric-health/MetricHealthPage'));
+export const RecoveryModePage   = React.lazy(() => import('./components/preview/pages/settings/support/recovery-mode/RecoveryModePage'));
 export const SupportRequestPage = React.lazy(() => import('./components/preview/pages/settings/support/support-request/SupportRequestPage'));
 export const SupportZipPage     = React.lazy(() => import('./components/preview/pages/settings/support/support-zip/SupportZipPage'));
 
@@ -282,10 +296,9 @@ export const UserAccountPage = React.lazy(() => import('./components/preview/pag
 export const UserTokenPage     = React.lazy(() => import('./components/preview/pages/User/UserTokenPage'));
 export const NuGetApiTokenPage = React.lazy(() => import('./components/preview/pages/User/NuGetApiTokenPage'));
 
-// Search pages (generic + format-specific)
+// Search pages (format-specific)
 export const GASearchPage       = React.lazy(() => import('./components/preview/pages/search/results/GASearchPage'));
 export const GADetailPage       = React.lazy(() => import('./components/preview/pages/search/details/GADetailPage'));
-export const GenericSearchPage  = React.lazy(() => import('./components/preview/pages/search/generic/GenericSearchPage'));
 export const CustomSearchPage   = React.lazy(() => import('./components/preview/pages/search/custom/CustomSearchPage'));
 export const NpmSearchPage      = React.lazy(() => import('./components/preview/pages/search/npm/NpmSearchPage'));
 export const NpmDetailPage      = React.lazy(() => import('./components/preview/pages/search/npm/NpmDetailPage'));

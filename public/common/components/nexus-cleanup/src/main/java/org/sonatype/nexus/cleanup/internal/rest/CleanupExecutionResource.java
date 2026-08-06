@@ -50,7 +50,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -61,7 +60,6 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
  * REST resource for executing cleanup operations on repositories.
  */
 @Component
-@Tag(name = "Cleanup policies")
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RESOURCE_URI)

@@ -12,19 +12,19 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Flex, Text, Heading, Button } from '@radix-ui/themes';
+import { Box, Text, Button } from '@radix-ui/themes';
 import { Key, Plus, ArrowLeft } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
-import { useToast, PageHeader, type PageHeaderProps } from '../../../../shared';
-import { SettingsButton, SettingsAlert, ConfirmDialog, WizardForm } from '../../../../shared/form';
+import { useToast, PageHeader, } from '../../../../shared';
+import { SettingsAlert, ConfirmDialog, WizardForm } from '../../../../shared/form';
 import { PrivilegesList } from './PrivilegesList';
 import { PrivilegeDetail } from './PrivilegeDetail';
 import { PrivilegeForm } from './PrivilegeForm';
 import { PrivilegeProfilePage } from './PrivilegeProfilePage';
 import { PrivilegeTypeSelector } from './PrivilegeTypeSelector';
 import { usePrivilegesApi } from './usePrivilegesApi';
-import { Privilege, PrivilegeFormData, isReadOnlyPrivilege, getPrivilegeTypeLabel } from './types';
+import { Privilege, isReadOnlyPrivilege, getPrivilegeTypeLabel } from './types';
 
 import './PrivilegesPage.scss';
 
@@ -232,7 +232,7 @@ export function PrivilegesPage() {
       toast.success(`Privilege "${privilegeIdToDelete}" deleted successfully`);
       setRefreshKey((k) => k + 1);
       if (privilege && privilege.name === privilegeIdToDelete) handleBack();
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   }, [privilege, listDeletePrivilegeId, deletePrivilege, handleBack, toast]);
@@ -271,13 +271,13 @@ export function PrivilegesPage() {
             </Button>
           )
         };
-      case 'create':
+      case 'create': {
         const isSetupStep = internalWizardStep === 1;
         return {
           icon: Key,
           title: `Create ${getPrivilegeTypeLabel(routeState.typeId || '')} Privilege`,
-          description: isSetupStep 
-            ? 'Step 2: Basic setup' 
+          description: isSetupStep
+            ? 'Step 2: Basic setup'
             : 'Step 3: Configure privilege settings',
           actions: (
             <Button variant="ghost" onClick={handleBackToTypeSelect}>
@@ -285,6 +285,7 @@ export function PrivilegesPage() {
             </Button>
           )
         };
+      }
       case 'edit':
         return {
           icon: Key,

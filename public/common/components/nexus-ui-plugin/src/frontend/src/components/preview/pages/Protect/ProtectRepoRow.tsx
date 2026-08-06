@@ -12,9 +12,9 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { Flex, IconButton, Spinner, Switch, Table, Text, Tooltip } from '@radix-ui/themes';
-import { CheckCircle, CircleHelp } from 'lucide-react';
-import { restClient, ENDPOINTS } from '../../../../interface/api';
+import { Flex, Spinner, Switch, Table, Text, Tooltip } from '@radix-ui/themes';
+import { CheckCircle, } from 'lucide-react';
+import { restClient, ENDPOINTS, parseApiError } from '../../../../interface/api';
 import {
   disableFirewall,
   enableFirewallAudit,
@@ -79,12 +79,12 @@ export default function ProtectRepoRow({
           level === 'none' ? 'None' : level === 'audit' ? 'Audit' : 'Quarantine';
         toast.success(`Firewall protection set to ${label} for "${repo.name}"`);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
+        toast.error(parseApiError(e).message);
       } finally {
         setBusy(false);
       }
     },
-    [iqReady, onRefetch, repo.name, supported, toast]
+    [iqReady, onRefetch, repo.name, supported, toast, onRepoChanged]
   );
 
   const toggleHc = useCallback(
@@ -105,12 +105,12 @@ export default function ProtectRepoRow({
             : `Health Check disabled for "${repo.name}"`
         );
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
+        toast.error(parseApiError(e).message);
       } finally {
         setBusy(false);
       }
     },
-    [hcInstanceEnabled, onRefetch, repo.name, toast]
+    [hcInstanceEnabled, onRefetch, repo.name, toast, onRepoChanged]
   );
 
   const currentMalwareMode: MalwareRemediatorMode =
@@ -126,12 +126,12 @@ export default function ProtectRepoRow({
         await onRefetch();
         toast.success(`Auto Remediation set to ${MALWARE_MODE_LABELS[mode]} for "${repo.name}"`);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
+        toast.error(parseApiError(e).message);
       } finally {
         setBusy(false);
       }
     },
-    [currentMalwareMode, iqReady, onRefetch, repo.name, supported, toast]
+    [currentMalwareMode, iqReady, onRefetch, repo.name, supported, toast, onRepoChanged]
   );
 
   if (hardened) {

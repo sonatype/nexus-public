@@ -47,7 +47,7 @@ export type ListMachineEvent<TFilters = Record<string, unknown>> =
 /**
  * Initial configuration for creating a list machine (builder pattern)
  */
-export interface ListMachineConfig<T = unknown, TFilters = Record<string, unknown>> {
+export interface ListMachineConfig<_T = unknown, TFilters = Record<string, unknown>> {
   /** Unique machine ID */
   id: string;
   /** Initial context values */

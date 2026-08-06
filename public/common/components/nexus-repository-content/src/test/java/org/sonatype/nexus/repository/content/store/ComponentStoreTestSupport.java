@@ -36,7 +36,6 @@ import org.sonatype.nexus.repository.content.store.example.TestBespokeStoreProvi
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 
 import jakarta.inject.Provider;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
@@ -46,6 +45,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -62,16 +62,16 @@ public abstract class ComponentStoreTestSupport
 {
   private final int componentCount = 201;
 
-  @Mock
+  @MockitoBean
   private Repository repository;
 
-  @Mock
+  @MockitoBean
   private ContentFacetFinder contentFacetFinder;
 
-  @Mock
+  @MockitoBean
   private ContentFacetSupport contentFacetSupport;
 
-  @Mock
+  @MockitoBean
   private EventManager eventManager;
 
   private ComponentStore<TestComponentDAO> underTest;
@@ -89,8 +89,6 @@ public abstract class ComponentStoreTestSupport
     this.entityVersioningEnabled = entityVersioningEnabled;
     testContext = new AnnotationConfigApplicationContext();
     testContext.setParent(context);
-    testContext.registerBean(ContentFacetFinder.class, () -> contentFacetFinder);
-    testContext.registerBean(EventManager.class, () -> eventManager);
     testContext.registerBean(DataSessionSupplier.class, () -> sessionRule);
     testContext.registerBean(GlobalRepositorySettings.class, GlobalRepositorySettings::new);
     new TestBespokeStoreProvider().postProcessBeanDefinitionRegistry(testContext);

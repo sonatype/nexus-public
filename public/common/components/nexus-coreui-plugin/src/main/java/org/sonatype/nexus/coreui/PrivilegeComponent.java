@@ -17,17 +17,23 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.collect.Maps;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
+import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
+import org.sonatype.nexus.security.config.CPrivilege;
+import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException;
@@ -43,6 +49,7 @@ import jakarta.validation.groups.Default;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -60,15 +67,22 @@ public class PrivilegeComponent
 {
   private final SecuritySystem securitySystem;
 
+  private final SecurityHelper securityHelper;
+
   private final List<PrivilegeDescriptor> privilegeDescriptors;
+
+  private final Map<String, PrivilegeDescriptor> privilegeDescriptorsByType;
 
   @Autowired
   public PrivilegeComponent(
       final SecuritySystem securitySystem,
+      final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptors)
   {
     this.securitySystem = checkNotNull(securitySystem);
+    this.securityHelper = checkNotNull(securityHelper);
     this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
+    this.privilegeDescriptorsByType = QualifierUtil.buildQualifierBeanMap(privilegeDescriptors);
   }
 
   /**
@@ -118,7 +132,7 @@ public class PrivilegeComponent
       String filter = parameters.getFilter().get(0).getValue();
       result = xos.stream()
           .filter(xo -> xo.getName().contains(filter) || xo.getDescription().contains(filter) ||
-              xo.getPermission().contains(filter) || xo.getType().contains(filter))
+              (xo.getPermission() != null && xo.getPermission().contains(filter)) || xo.getType().contains(filter))
           .collect(Collectors.toList());
     }
 
@@ -177,6 +191,7 @@ public class PrivilegeComponent
     AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE);
     privilege.withId(
         privilege.getName()); // Use name as privilege ID (note: eventually IDs should go away in favor of names)
+    checkGrantRights(privilege);
     return convert(authorizationManager.addPrivilege(convert(privilege)));
   }
 
@@ -197,11 +212,46 @@ public class PrivilegeComponent
   {
     try {
       AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE);
+      checkGrantRights(privilege);
       return convert(authorizationManager.updatePrivilege(convert(privilege)));
     }
     catch (ReadonlyPrivilegeException e) {
       throw new IllegalAccessException("Privilege [" + privilege.getId() + "] is readonly and cannot be updated");
     }
+  }
+
+  /**
+   * Reject mutations whose effective permission the caller does not already hold.
+   * Prevents privilege self-escalation (NEXUS-53341).
+   * Fails closed when the privilege type is unknown so an unregistered type
+   * cannot bypass the check.
+   */
+  private void checkGrantRights(final PrivilegeXO privilege) {
+    PrivilegeDescriptor descriptor = privilegeDescriptorsByType.get(privilege.getType());
+    if (descriptor == null) {
+      log.warn("Rejected privilege '{}' mutation: unknown type '{}' has no descriptor to resolve grant rights.",
+          privilege.getName(), privilege.getType());
+      throw new AuthorizationException(
+          "Unknown privilege type '" + privilege.getType() + "'; cannot determine effective permission.");
+    }
+    Permission resolved = descriptor.createPermission(toCPrivilege(privilege));
+    checkNotNull(resolved, "PrivilegeDescriptor for type '%s' returned a null permission", privilege.getType());
+    securityHelper.ensurePermitted(resolved);
+  }
+
+  private static CPrivilege toCPrivilege(final PrivilegeXO source) {
+    String id = source.getId() != null ? source.getId() : source.getName();
+    CPrivilegeBuilder builder = new CPrivilegeBuilder()
+        .type(source.getType())
+        .id(id)
+        .name(source.getName() != null ? source.getName() : id)
+        .description(source.getDescription() == null ? "" : source.getDescription());
+    if (source.getProperties() != null) {
+      for (Map.Entry<String, String> entry : source.getProperties().entrySet()) {
+        builder.property(entry.getKey(), entry.getValue());
+      }
+    }
+    return builder.create();
   }
 
   /**
@@ -227,8 +277,15 @@ public class PrivilegeComponent
 
   /**
    * Convert privilege to XO.
+   * If the privilege type has no registered {@link PrivilegeDescriptor} (orphaned/unknown type),
+   * the permission field will be set to {@code "<unknown>"}.
    */
   PrivilegeXO convert(Privilege input) {
+    String permission = input.getPermission() != null ? input.getPermission().toString() : "<unknown>";
+    if ("<unknown>".equals(permission)) {
+      log.debug("Privilege '{}' has unknown type '{}' with no registered PrivilegeDescriptor; " +
+          "permission will be reported as <unknown>", input.getId(), input.getType());
+    }
     return new PrivilegeXO()
         .withId(input.getId())
         .withVersion(String.valueOf(input.getVersion()))
@@ -237,7 +294,7 @@ public class PrivilegeComponent
         .withType(input.getType())
         .withReadOnly(input.isReadOnly())
         .withProperties(Maps.newHashMap(input.getProperties()))
-        .withPermission(input.getPermission().toString());
+        .withPermission(permission);
   }
 
   /**

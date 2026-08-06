@@ -22,8 +22,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Task descriptor for {@link SearchUpdateTask}.
- *
- * @since 3.37
  */
 @AvailabilityVersion(from = "1.0")
 @Component
@@ -43,6 +41,11 @@ public class SearchUpdateTaskDescriptor
         messages.name(),
         NOT_VISIBLE,
         NOT_EXPOSED);
+  }
+
+  @Override
+  public boolean isSingletonTaskType() {
+    return true;
   }
 
   private interface Messages

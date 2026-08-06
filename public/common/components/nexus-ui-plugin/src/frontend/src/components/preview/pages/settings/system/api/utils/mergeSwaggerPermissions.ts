@@ -81,7 +81,7 @@ export function mergeSwaggerAndPermissions(
   const index = buildPermissionIndex(permissionEndpoints);
   const out: MergedApiEndpoint[] = [];
 
-  if (!isRecord(swagger) || !isRecord(swagger.paths)) {
+  if (!(isRecord(swagger) && isRecord(swagger.paths))) {
     for (const p of permissionEndpoints) {
       out.push({
         httpMethod: p.httpMethod.toUpperCase(),
@@ -114,7 +114,7 @@ export function mergeSwaggerAndPermissions(
       const perm = index.get(permissionLookupKey(methodUpper, fullPath)) ?? null;
       const opTyped = op as SwaggerOperationDoc;
       const tag =
-        (opTyped.tags && opTyped.tags[0]) || perm?.tag || inferTagFromPath(pathKey) || 'Other';
+        (opTyped.tags?.[0]) || perm?.tag || inferTagFromPath(pathKey) || 'Other';
       out.push({
         httpMethod: methodUpper,
         swaggerPathKey: pathKey.startsWith('/') ? pathKey : `/${pathKey}`,

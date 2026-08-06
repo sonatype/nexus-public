@@ -14,6 +14,8 @@ package org.sonatype.nexus.audit.internal.store;
 
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.audit.AuditData;
@@ -29,12 +31,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+/**
+ * Persists audit events to the database. For policed domains only listed types are persisted;
+ * everything else (e.g. task lifecycle noise) is skipped. Webhooks and file appenders are unaffected.
+ */
 @Component
 @ConditionalOnProperty(name = FeatureFlags.PREVIEW_UI_AUDIT_ENABLED, havingValue = "true")
 public class AuditEventPersistingSubscriber
     implements EventAware
 {
   private static final Logger log = LoggerFactory.getLogger(AuditEventPersistingSubscriber.class);
+
+  // For the tasks domain, persist only the two configuration-change types below.
+  // Everything else TaskAuditor emits (started, running, finished, blocked, ...) is
+  // per-run lifecycle noise and would flood the audit table.
+  private static final Map<String, Set<String>> PERSISTED_TYPES_BY_DOMAIN = Map.of(
+      "tasks", Set.of("scheduled", "deleted"));
 
   private final AuditEventStore auditEventStore;
 
@@ -49,8 +61,14 @@ public class AuditEventPersistingSubscriber
     if (EventHelper.isReplicating()) {
       return;
     }
+
+    AuditData data = event.getData();
+
+    if (isFiltered(data)) {
+      return;
+    }
+
     try {
-      AuditData data = event.getData();
       AuditEventData entity = new AuditEventData();
       entity.setDomain(data.getDomain());
       entity.setType(data.getType());
@@ -67,5 +85,13 @@ public class AuditEventPersistingSubscriber
     catch (Exception e) {
       log.warn("Failed to persist audit event", e);
     }
+  }
+
+  private boolean isFiltered(final AuditData data) {
+    Set<String> allowedTypes = PERSISTED_TYPES_BY_DOMAIN.get(data.getDomain());
+    if (allowedTypes == null) {
+      return false;
+    }
+    return data.getType() == null || !allowedTypes.contains(data.getType());
   }
 }

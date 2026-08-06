@@ -1,0 +1,117 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.onboarding-wizard__content {
+    width: 640px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-5, 20px);
+    gap: var(--space-4, 16px);
+    background-color: var(--color-panel-solid, #fff);
+    border-radius: var(--radius-4, 8px);
+}
+
+.onboarding-wizard__stepper-area {
+    min-height: 32px;
+}
+
+.onboarding-wizard__stepper {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-3, 12px);
+
+    &-item {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--gray-4, #e5e7eb);
+        color: var(--gray-11, #6b7280);
+        font-weight: 600;
+
+        &--active {
+            background-color: var(--accent-9, #3b82f6);
+            color: white;
+        }
+
+        &--completed {
+            background-color: var(--green-9, #10b981);
+            color: white;
+        }
+    }
+}
+
+.onboarding-wizard__body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+.onboarding-wizard__footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.onboarding-wizard__setup-complete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    padding: var(--space-6, 24px);
+
+    &-title {
+        font-size: var(--font-size-6, 24px);
+        font-weight: 600;
+        margin: 0 0 var(--space-4, 16px) 0;
+    }
+
+    &-description {
+        font-size: var(--font-size-3, 16px);
+        color: var(--gray-11, #6b7280);
+        max-width: 60ch;
+        margin: 0;
+    }
+}
+
+.onboarding-wizard__verifying {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.onboarding-wizard__error-container {
+    padding: var(--space-4, 16px);
+}
+
+.onboarding-wizard__error-title {
+    font-size: var(--font-size-5, 20px);
+    font-weight: 600;
+    margin: 0 0 var(--space-3, 12px) 0;
+}
+
+.onboarding-wizard__error-dismiss-help {
+    color: var(--gray-11, #6b7280);
+    font-size: var(--font-size-2, 14px);
+    margin: var(--space-3, 12px) 0 0 0;
+}
+
+.onboarding-wizard__error-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: var(--space-3, 12px);
+}

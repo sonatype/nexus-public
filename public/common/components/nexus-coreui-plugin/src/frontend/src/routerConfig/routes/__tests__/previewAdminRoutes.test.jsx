@@ -98,6 +98,21 @@ describe('previewAdminRoutes', () => {
     );
   });
 
+  it('uses SERVICE_ACCOUNTS.READ and statesEnabled for serviceaccounttokens route', () => {
+    const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.security.serviceaccounttokens');
+
+    expect(route).toBeDefined();
+    expect(route.url).toBe('/service-account-tokens');
+    expect(route.data.visibilityRequirements.requiresPermission).toBe(
+      Permissions.SERVICE_ACCOUNTS.READ,
+    );
+    expect(route.data.visibilityRequirements.statesEnabled).toBeDefined();
+    expect(route.data.visibilityRequirements.statesEnabled).toContainEqual({
+      key: 'serviceAccountEnabled',
+      defaultValue: false,
+    });
+  });
+
   it('uses LICENSING.READ for licensing route', () => {
     const route = previewAdminRoutes.find((r) => r.name === 'preview.admin.system.licensing');
 

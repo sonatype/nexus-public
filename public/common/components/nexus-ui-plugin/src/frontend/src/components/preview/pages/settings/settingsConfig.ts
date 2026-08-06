@@ -196,7 +196,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['active directory', 'ad', 'directory service'],
         cloudExcluded: true,
         featureKey: 'security.ldap',
-        visibilityRequirements: { requiresPermission: 'nexus:ldap:read' },
+        visibilityRequirements: { requiresPermission: 'nexus:ldap:read', editions: ['PRO', 'COMMUNITY'] },
       },
       {
         id: 'saml',
@@ -255,6 +255,18 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         visibilityRequirements: { requiresPermission: 'nexus:usertoken-settings:read' },
       },
       {
+        id: 'service-account-tokens',
+        path: 'security/service-account-tokens',
+        label: 'Service Account Tokens',
+        description: 'Manage tokens for automated service access',
+        searchTerms: ['service account', 'sat', 'ci', 'cd', 'automation', 'token', 'bearer'],
+        proOnly: true,
+        visibilityRequirements: {
+          requiresPermission: 'nexus:service-accounts:read',
+          statesEnabled: [{ key: 'serviceAccountEnabled', defaultValue: false }],
+        },
+      },
+      {
         id: 'ip-allowlist',
         path: 'security/ip-allowlist',
         label: 'IP Allow List',
@@ -306,6 +318,20 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['status', 'health', 'metrics', 'monitoring'],
         featureKey: 'support.metrics',
         visibilityRequirements: { requiresPermission: 'nexus:metrics:read' },
+      },
+      {
+        id: 'recovery-mode',
+        path: 'support/recoverymode',
+        label: 'Recovery Mode',
+        description: 'View status and toggle recovery mode for system maintenance and data repairs',
+        searchTerms: ['recovery', 'repair', 'reconcile', 'maintenance'],
+        adminOnly: true,
+        // Mirrors the route's visibilityRequirements: { permissions: [Permissions.ADMIN] }
+        // (Permissions.ADMIN === 'nexus:*'). isVisible() supports both the `permissions`
+        // array and the `requiresPermission` string identically, so this is functionally
+        // equivalent to requiresPermission: 'nexus:*' — the array shape is used here purely
+        // to match the route's declaration.
+        visibilityRequirements: { permissions: ['nexus:*'] },
       },
       {
         id: 'support-zip',

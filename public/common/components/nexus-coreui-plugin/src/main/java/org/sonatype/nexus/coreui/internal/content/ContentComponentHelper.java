@@ -51,6 +51,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
@@ -102,6 +103,8 @@ public class ContentComponentHelper
 
   private final SelectorFactory selectorFactory;
 
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
   private final Map<String, AssetXODescriptor> assetDescriptors;
 
   @Autowired
@@ -111,6 +114,7 @@ public class ContentComponentHelper
       final AssetPermissionChecker assetPermissionChecker,
       final SelectorFactory selectorFactory,
       final RepositoryManager repositoryManager,
+      final RepositoryPermissionChecker repositoryPermissionChecker,
       final List<AssetXODescriptor> assetDescriptorsList)
   {
     this.maintenanceService = checkNotNull(maintenanceService);
@@ -120,6 +124,7 @@ public class ContentComponentHelper
         checkNotNull(componentFinders.get("default"));
     this.selectorFactory = checkNotNull(selectorFactory);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
@@ -160,8 +165,16 @@ public class ContentComponentHelper
       final String jexlExpression,
       final QueryOptions queryOptions)
   {
+    // Defence-in-depth authorization filter: re-run the browse check on the caller's input set
+    // BEFORE group expansion. userCanBrowseRepositories tests direct RepositoryViewPermission, which
+    // does not recognise group-mediated access — filtering after expansion drops leaves the caller
+    // can only reach through a permitted parent group. Filtering pre-expansion preserves Nexus's
+    // group permission model: a permitted group entitles preview of every leaf under it.
+    List<Repository> permittedInputs =
+        repositoryPermissionChecker.userCanBrowseRepositories(selectedRepositories);
+
     Set<Repository> previewRepositories = new LinkedHashSet<>();
-    selectedRepositories.forEach(r -> {
+    permittedInputs.forEach(r -> {
       if (r.getType() instanceof GroupType) {
         previewRepositories.addAll(r.facet(GroupFacet.class).leafMembers());
       }

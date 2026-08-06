@@ -130,25 +130,12 @@ describe('CertificateViewDialog', () => {
   });
 
   describe('error state', () => {
-    it('shows error message and Retry button on API failure', async () => {
+    it('shows error message and only a Close button on API failure', async () => {
       mockedAxios.get.mockRejectedValue({ message: 'Network Error' });
       renderDialog();
       await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
-      expect(screen.getByText('Retry')).toBeInTheDocument();
-    });
-
-    it('retries the API call when Retry is clicked', async () => {
-      mockedAxios.get
-        .mockRejectedValueOnce({ message: 'Network Error' })
-        .mockImplementation((url: string) => {
-          if (url.includes('/ssl/truststore')) return Promise.resolve({ data: [] });
-          return Promise.resolve({ data: MOCK_CERT });
-        });
-
-      renderDialog();
-      await waitFor(() => expect(screen.getByText('Retry')).toBeInTheDocument());
-      fireEvent.click(screen.getByText('Retry'));
-      await waitFor(() => expect(screen.getByText('repo1.maven.org')).toBeInTheDocument());
+      expect(screen.queryByText('Retry')).not.toBeInTheDocument();
+      expect(screen.getByText('Close')).toBeInTheDocument();
     });
 
     it('uses server error message when available', async () => {

@@ -15,9 +15,9 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { SelectionInsights } from '../SelectionInsights';
-// @ts-ignore
+// @ts-expect-error
 import { useContentSelectorsApi } from '../../../repository/selectors/useContentSelectorsApi';
-// @ts-ignore
+// @ts-expect-error
 import { useRepositoryTree } from '../../../repository/repositories/useRepositoryTree';
 
 // Mock dependencies
@@ -180,7 +180,7 @@ describe('SelectionInsights', () => {
         '/org/alpha/v3.pom',
       ])
     });
-    const { getByLabelText } = renderWithTheme(
+    renderWithTheme(
       <SelectionInsights
         repository={mockRepository}
         contentSelector={mockContentSelector}

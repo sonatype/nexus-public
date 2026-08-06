@@ -74,7 +74,7 @@ export function PyPISearchPage({
         version: initialVersion,
       });
     }
-  }, []); // Only on mount
+  }, [initialName, initialVersion, search]); // Only on mount
 
   /**
    * Handle search submission.

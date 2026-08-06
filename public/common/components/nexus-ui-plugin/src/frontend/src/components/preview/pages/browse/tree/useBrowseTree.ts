@@ -260,9 +260,6 @@ function updateNodeInTree(
   });
 }
 
-/** Initial expand depth to match Heritage UI (2–3 levels visible when browsing into a repo). */
-const INITIAL_EXPAND_DEPTH = 2;
-
 /**
  * Hook for managing browse tree state with lazy loading.
  *
@@ -547,17 +544,11 @@ export function useBrowseTree(
     // so we can find nodes in previously fetched children
     let workingNodes = nodesRef.current;
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[BrowseTree:expandToPath] path=%s parts=%o rootNodes=%d',
-        path, pathParts, workingNodes.length);
-    }
-
     for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i];
       currentPath = currentPath ? `${currentPath}/${part}` : part;
 
       let node = findNodeByIdFlexible(workingNodes, currentPath);
-      let matchType = node ? 'exact' : 'none';
 
       // Fallback: version-aware fuzzy match for formats like NPM where the
       // tree uses tarball names (name-version.tgz) instead of version folders.
@@ -566,13 +557,6 @@ export function useBrowseTree(
         const parentNode = findNodeByIdFlexible(workingNodes, parentPath);
         const searchIn = parentNode?.children ?? workingNodes;
         node = findNodeByVersionFuzzy(searchIn, parentPath, part);
-        if (node) matchType = 'fuzzy';
-      }
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug('[BrowseTree:expandToPath] [%d/%d] segment=%s lookup=%s match=%s resolved=%s',
-          i + 1, pathParts.length, part, currentPath,
-          matchType, node?.node.id ?? '(none)');
       }
 
       if (!node) {
@@ -594,7 +578,7 @@ export function useBrowseTree(
             expanded: true,
             loading: false,
           }));
-        } catch (err) {
+        } catch (_err) {
           break;
         }
       }
@@ -617,9 +601,6 @@ export function useBrowseTree(
     }
 
     const finalNodeId = currentPath || path;
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[BrowseTree:expandToPath] selecting=%s expansions=%d', finalNodeId, expansions.length);
-    }
 
     // Select the final node (use currentPath which tracks the actual node id after encoding resolution)
     select(finalNodeId);

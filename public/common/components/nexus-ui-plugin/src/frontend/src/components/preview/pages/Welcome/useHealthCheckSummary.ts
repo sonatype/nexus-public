@@ -62,7 +62,7 @@ export function useHealthCheckSummary(): HealthCheckSummary {
   const [repos, setRepos] = useState<HealthCheckRepoStatus[]>([]);
   const [eligibleRepoNames, setEligibleRepoNames] = useState<string[]>([]);
   const [unsupportedFormatProxyCount, setUnsupportedFormatProxyCount] = useState(0);
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [_refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -104,7 +104,7 @@ export function useHealthCheckSummary(): HealthCheckSummary {
     })();
 
     return () => controller.abort();
-  }, [refetchTrigger]);
+  }, []);
 
   const refetch = useCallback(() => setRefetchTrigger((n) => n + 1), []);
 

@@ -194,8 +194,8 @@ describe('searchMachine', () => {
       expect(FORMATS_WITH_CUSTOM_FILTERS).toContain(format);
     });
 
-    it('covers all 27 formats', () => {
-      expect(ALL_FORMATS).toHaveLength(27); // 27 formats (26 specific + 'all')
+    it('covers all 26 formats', () => {
+      expect(ALL_FORMATS).toHaveLength(26); // 26 formats (25 specific + 'all')
     });
   });
 
@@ -288,13 +288,13 @@ describe('searchMachine', () => {
       service.stop();
     });
 
-    it('Composer declares vendor, package', () => {
+    it('Composer declares vendor, package, description, keywords', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'composer' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'vendor', 'package',
+        'vendor', 'package', 'description', 'keywords',
       ]);
 
       service.stop();

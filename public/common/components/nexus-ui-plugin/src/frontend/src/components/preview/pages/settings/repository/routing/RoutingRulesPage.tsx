@@ -17,7 +17,7 @@ import { Eye, Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, LoadingState, PageHeader } from '../../../../shared';
-import { SettingsButton, SettingsAlert, ConfirmDialog } from '../../../../shared/form';
+import { SettingsButton, SettingsAlert, } from '../../../../shared/form';
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { RoutingRulesList } from './RoutingRulesList';
 import { RoutingRuleForm } from './RoutingRuleForm';

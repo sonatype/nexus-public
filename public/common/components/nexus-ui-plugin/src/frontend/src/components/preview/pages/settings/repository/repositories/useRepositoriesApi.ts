@@ -13,6 +13,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { restClient, parseApiError, ENDPOINTS } from '../../../../../../interface/api';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import FeatureFlags from '../../../../../../constants/FeatureFlags';
 import {
   Repository,
   RepositoryFormData,
@@ -24,6 +26,8 @@ import {
   HealthCheckStatus,
 } from './types';
 
+const { NUGET_SYMBOL_SERVER_ENABLED } = FeatureFlags;
+
 // =============================================================================
 // API Endpoints - REST only, NO ExtDirect
 // =============================================================================
@@ -34,7 +38,7 @@ const REPOSITORIES_LIST_URL = '/service/rest/internal/ui/repositories';
 const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
 const BLOB_STORES_URL = '/service/rest/v1/blobstores';
 const ROUTING_RULES_URL = '/service/rest/v1/routing-rules';
-const CLEANUP_POLICIES_URL = '/service/rest/v1/cleanup-policies';
+const CLEANUP_POLICIES_URL = '/service/rest/internal/cleanup-policies';
 
 /**
  * Maps format names to REST API endpoint paths.
@@ -353,17 +357,20 @@ export function useRepositoriesApi() {
   }, []);
 
   /**
-   * Fetch cleanup policies for a format
-   * Uses REST API: GET /service/rest/v1/cleanup-policies
+   * Fetch cleanup policies for a format.
+   * Uses GET /service/rest/internal/cleanup-policies. The v1 endpoint at
+   * /service/rest/v1/cleanup-policies is Pro/Cloud-only and 404s in CE.
    */
   const fetchCleanupPolicies = useCallback(async (format?: string): Promise<CleanupPolicy[]> => {
     try {
       const data = await restClient.get<CleanupPolicy[]>(CLEANUP_POLICIES_URL);
       const policies = Array.isArray(data) ? data : [];
       
-      // Filter by format client-side if format is specified
+      // Filter by format client-side if format is specified; include the
+      // "all formats" sentinel '*' which the REST API uses to represent
+      // policies stored with format = 'ALL_FORMATS'.
       if (format) {
-        return policies.filter((p) => p.format === format);
+        return policies.filter((p) => p.format === format || p.format === '*');
       }
       return policies;
     } catch (err: unknown) {
@@ -628,9 +635,37 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
   // The `NpmConfig` type was removed accordingly — see types.ts.
 
   if (data.format === 'nuget' && data.type === 'proxy') {
+    // Symbol-server attributes are only emitted when the feature flag is enabled, matching
+    // the Classic UI behavior (see NugetProxy.js which gates `container.insert` for the two
+    // symbol fields on the same NX.State check). Without this gate the Preview UI would
+    // silently persist `allowAnonymousSymbolAccess: true` on every nuget-proxy create,
+    // even when the backend routes wired by the flag aren't registered — diverging from
+    // Classic UI and producing inert config that survives across flag toggles.
+    const symbolServerFlagEnabled = (() => {
+      try {
+        return Boolean(ExtJS.state()?.getValue?.(NUGET_SYMBOL_SERVER_ENABLED));
+      } catch {
+        return false;
+      }
+    })();
+
     config.nugetProxy = {
       queryCacheItemMaxAge: data.nugetProxy?.queryCacheItemMaxAge ?? 3600,
       nugetVersion: data.nugetProxy?.nugetVersion ?? 'V3',
+      ...(symbolServerFlagEnabled
+        ? {
+            // Symbol Server URL is optional per NugetAttributes.symbolServerUrl (@Nullable).
+            // Send verbatim when the user has typed something; omit when empty so the backend
+            // stores null rather than an empty string that later reads as "configured".
+            ...(data.nugetProxy?.symbolServerUrl
+              ? { symbolServerUrl: data.nugetProxy.symbolServerUrl }
+              : {}),
+            // Default to true when the user hasn't toggled, matching Classic UI's checkbox
+            // `value: true` seed and the backend NugetAttributes.allowAnonymousSymbolAccess
+            // default.
+            allowAnonymousSymbolAccess: data.nugetProxy?.allowAnonymousSymbolAccess ?? true,
+          }
+        : {}),
     };
   }
 

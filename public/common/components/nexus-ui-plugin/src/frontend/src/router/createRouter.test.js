@@ -454,4 +454,120 @@ describe('createRouter - otherwise handler - unrecognized URLs', () => {
     const expectedReturnTo = btoa('#/admin/some/path');
     expect(goSpy).toHaveBeenCalledWith('login', { returnTo: expectedReturnTo });
   });
+
+  it('redirects to login without returnTo when url is empty for protected path', async () => {
+    global.NX.Security.hasUser.mockReturnValue(false);
+    window.location.hash = '#admin/some/path';
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+    jest.spyOn(router.urlService, 'url').mockReturnValue('');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).toHaveBeenCalledWith('login');
+  });
+
+  it('defers to ExtJS for bookmark URLs containing = in hash outside preview routes', async () => {
+    global.NX.Security.hasUser.mockReturnValue(false);
+    window.location.hash = '#browse/search=format%3Dnpm:repository-id:path';
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).not.toHaveBeenCalledWith('login', expect.anything());
+    expect(goSpy).not.toHaveBeenCalledWith('missing.route', expect.anything(), expect.anything());
+  });
 });
+
+describe('createRouter - preserve URL hash on browser refresh', () => {
+  let router;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.NX.Permissions.check.mockReturnValue(false);
+    if (!global.NX.Security) {
+      global.NX.Security = { hasUser: jest.fn() };
+    }
+    ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+  });
+
+  afterEach(() => {
+    window.location.hash = '';
+  });
+
+  it('honors the URL hash for a registered route on browser refresh, not overriding with initialRoute', async () => {
+    // Uses #/login (not the initialRoute browse.welcome) — if the initial rule fired
+    // it would override to browse.welcome; with the fix the hash wins and router lands on login.
+    ExtJS.hasUser = jest.fn().mockReturnValue(false);
+    window.location.hash = '#/login';
+    router = getTestRouter();
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(router.stateService.current.name).toBe('login');
+  });
+
+  it('does not redirect to initialRoute when URL has an unrecognized settings hash', async () => {
+    // Settings pages such as #admin/repository/repositories are ExtJS routes not
+    // registered in the React router. Without the fix the initial rule fires for
+    // unrecognized URLs and redirects to browse.welcome. With the fix the otherwise
+    // handler runs instead, routing authenticated users to missing.route (404).
+    global.NX.Security.hasUser.mockReturnValue(true);
+    window.location.hash = '#admin/system/capabilities';
+    router = getTestRouter();
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).toHaveBeenCalledWith('missing.route', {}, { location: false });
+    expect(goSpy).not.toHaveBeenCalledWith('browse.welcome');
+  });
+
+  it('applies initial route rule when URL has only #/', async () => {
+    // #/ is treated as empty — initial rule should fire, so the otherwise handler (missing.route)
+    // is NOT used; the router falls through to the initial route instead.
+    global.NX.Security.hasUser.mockReturnValue(true);
+    window.location.hash = '#/';
+    router = getTestRouter();
+
+    const goSpy = jest.spyOn(router.stateService, 'go');
+
+    await router.urlService.sync();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(goSpy).not.toHaveBeenCalledWith('missing.route', expect.anything(), expect.anything());
+  });
+});
+
+describe('createRouter - onBefore - state with no visibilityRequirements', () => {
+  let router;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.NX.Permissions.check.mockReturnValue(true);
+    ExtJS.hasUser = jest.fn().mockReturnValue(true);
+    ExtJS.state = jest.fn().mockReturnValue({ getValue: jest.fn().mockReturnValue(false) });
+    router = getTestRouter();
+  });
+
+  it('allows navigation to a state with no visibilityRequirements', async () => {
+    router.stateRegistry.register({
+      name: 'unrestricted',
+      url: '/unrestricted',
+      component: () => null,
+    });
+    await router.urlService.sync();
+
+    await router.stateService.go('unrestricted');
+
+    expect(router.stateService.current.name).toBe('unrestricted');
+  });
+});
+

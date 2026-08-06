@@ -41,8 +41,6 @@ export function useAuditLogApi({
   const [error, setError] = useState<string | null>(null);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  const filterKey = JSON.stringify(filters);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -57,13 +55,19 @@ export function useAuditLogApi({
         params.append('limit', limit.toString());
 
         // Add category filters
-        filters.categories.forEach((cat) => params.append('categories', cat));
+        for (const cat of filters.categories) {
+          params.append('categories', cat);
+        }
 
         // Add event type filters
-        filters.eventTypes.forEach((type) => params.append('types', type));
+        for (const type of filters.eventTypes) {
+          params.append('types', type);
+        }
 
         // Add initiator filters
-        filters.initiators.forEach((init) => params.append('initiators', init));
+        for (const init of filters.initiators) {
+          params.append('initiators', init);
+        }
 
         // Add date range
         if (filters.dateRange !== 'custom') {
@@ -108,7 +112,8 @@ export function useAuditLogApi({
     return () => {
       cancelled = true;
     };
-  }, [filterKey, page, limit, refetchTrigger]);
+    // refetchTrigger is intentionally a dependency to enable manual refetch via setRefetchTrigger
+  }, [page, limit, refetchTrigger, filters]);
 
   const refetch = () => {
     setRefetchTrigger((prev) => prev + 1);

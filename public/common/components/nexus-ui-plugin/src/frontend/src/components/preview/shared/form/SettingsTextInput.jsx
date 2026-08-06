@@ -90,6 +90,7 @@ export function SettingsTextInput({
         onBlur={onBlur}
         onFocus={onFocus}
         onKeyDown={onKeyDown}
+        onWheel={(e) => { if (type === 'number') e.currentTarget.blur(); }}
         placeholder={placeholder}
         disabled={disabled}
         readOnly={readOnly}
@@ -101,6 +102,7 @@ export function SettingsTextInput({
         autoComplete={autoComplete}
         aria-describedby={`${helpText ? helpId : ''} ${error ? errorId : ''}`.trim() || undefined}
         aria-invalid={!!error}
+        aria-required={required}
         data-testid={`input-${name}`}
         color={error ? 'red' : undefined}
         size="2"

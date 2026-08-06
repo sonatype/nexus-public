@@ -67,13 +67,13 @@ describe('audit.constants', () => {
       });
 
       it('should map SamlRealm to security category', () => {
-        expect(DOMAIN_CATEGORY_MAP['SamlRealm']).toBe('security');
+        expect(DOMAIN_CATEGORY_MAP.SamlRealm).toBe('security');
       });
     });
 
     describe('Repository Domains', () => {
       it('should map repository to repository category', () => {
-        expect(DOMAIN_CATEGORY_MAP['repository']).toBe('repository');
+        expect(DOMAIN_CATEGORY_MAP.repository).toBe('repository');
       });
 
       it('should map repository.component to repository category', () => {
@@ -89,57 +89,57 @@ describe('audit.constants', () => {
       });
 
       it('should map blobstore to repository category', () => {
-        expect(DOMAIN_CATEGORY_MAP['blobstore']).toBe('repository');
+        expect(DOMAIN_CATEGORY_MAP.blobstore).toBe('repository');
       });
     });
 
     describe('Configuration Domains', () => {
       it('should map tasks to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['tasks']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.tasks).toBe('configuration');
       });
 
       it('should map capability to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['capability']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.capability).toBe('configuration');
       });
 
       it('should map cleanupPolicy to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['cleanupPolicy']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.cleanupPolicy).toBe('configuration');
       });
 
       it('should map ContentSelector to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['ContentSelector']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.ContentSelector).toBe('configuration');
       });
 
       it('should map RoutingRule to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['RoutingRule']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.RoutingRule).toBe('configuration');
       });
 
       it('should map email to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['email']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.email).toBe('configuration');
       });
 
       it('should map httpclient to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['httpclient']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.httpclient).toBe('configuration');
       });
 
       it('should map logging to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['logging']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.logging).toBe('configuration');
       });
 
       it('should map script to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['script']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.script).toBe('configuration');
       });
 
       it('should map license to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['license']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.license).toBe('configuration');
       });
 
       it('should map freeze to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['freeze']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.freeze).toBe('configuration');
       });
 
       it('should map DataStore to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['DataStore']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.DataStore).toBe('configuration');
       });
 
       it('should map database-migration to configuration category', () => {
@@ -147,7 +147,7 @@ describe('audit.constants', () => {
       });
 
       it('should map userToken to configuration category', () => {
-        expect(DOMAIN_CATEGORY_MAP['userToken']).toBe('configuration');
+        expect(DOMAIN_CATEGORY_MAP.userToken).toBe('configuration');
       });
 
       it('should map userToken.admin to configuration category', () => {
@@ -172,19 +172,19 @@ describe('audit.constants', () => {
 
   describe('CATEGORY_COLORS', () => {
     it('should have blue color for security category', () => {
-      expect(CATEGORY_COLORS['security']).toBe('blue');
+      expect(CATEGORY_COLORS.security).toBe('blue');
     });
 
     it('should have purple color for repository category', () => {
-      expect(CATEGORY_COLORS['repository']).toBe('purple');
+      expect(CATEGORY_COLORS.repository).toBe('purple');
     });
 
     it('should have gray color for configuration category', () => {
-      expect(CATEGORY_COLORS['configuration']).toBe('gray');
+      expect(CATEGORY_COLORS.configuration).toBe('gray');
     });
 
     it('should have amber color for protection category', () => {
-      expect(CATEGORY_COLORS['protection']).toBe('amber');
+      expect(CATEGORY_COLORS.protection).toBe('amber');
     });
 
     it('should have colors for all categories', () => {
@@ -197,19 +197,19 @@ describe('audit.constants', () => {
 
   describe('CATEGORY_LABELS', () => {
     it('should have Security label', () => {
-      expect(CATEGORY_LABELS['security']).toBe('Security');
+      expect(CATEGORY_LABELS.security).toBe('Security');
     });
 
     it('should have Repository label', () => {
-      expect(CATEGORY_LABELS['repository']).toBe('Repository');
+      expect(CATEGORY_LABELS.repository).toBe('Repository');
     });
 
     it('should have Configuration label', () => {
-      expect(CATEGORY_LABELS['configuration']).toBe('Configuration');
+      expect(CATEGORY_LABELS.configuration).toBe('Configuration');
     });
 
     it('should have Protection label', () => {
-      expect(CATEGORY_LABELS['protection']).toBe('Protection');
+      expect(CATEGORY_LABELS.protection).toBe('Protection');
     });
 
     it('should have labels for all categories', () => {

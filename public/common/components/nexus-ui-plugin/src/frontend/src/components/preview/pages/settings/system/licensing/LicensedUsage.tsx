@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Text, Card, Grid, Link } from '@radix-ui/themes';
+import { Box, Text, Card, Grid, Link } from '@radix-ui/themes';
 import { ExternalLink } from 'lucide-react';
 import { scrollToUsageCenter } from '../../../../../../interface/LocationUtils';
 

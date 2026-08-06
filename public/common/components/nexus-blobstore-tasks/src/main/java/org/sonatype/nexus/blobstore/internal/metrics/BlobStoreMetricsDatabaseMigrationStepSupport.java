@@ -19,10 +19,10 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.common.BlobStoreTaskSupport;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.repository.blobstore.BlobStoreConfigurationStore;
+import org.sonatype.nexus.repository.content.blobstore.metrics.upgrade.UpgradeBlobStoreMetricsStore;
+import org.sonatype.nexus.repository.internal.blobstore.upgrade.UpgradeBlobStoreConfigurationStore;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.upgrade.datastore.RepeatableDatabaseMigrationStep;
@@ -41,9 +41,9 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
 {
   private final String blobStoreType;
 
-  protected BlobStoreMetricsStore metricsStore;
+  protected UpgradeBlobStoreMetricsStore metricsStore;
 
-  protected BlobStoreConfigurationStore blobStoreConfigurationStore;
+  protected UpgradeBlobStoreConfigurationStore blobStoreConfigurationStore;
 
   private UpgradeTaskScheduler upgradeTaskScheduler;
 
@@ -53,8 +53,8 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
 
   @Autowired
   public final void initDependencies(
-      final BlobStoreMetricsStore metricsStore,
-      final BlobStoreConfigurationStore blobStoreConfigurationStore,
+      final UpgradeBlobStoreMetricsStore metricsStore,
+      final UpgradeBlobStoreConfigurationStore blobStoreConfigurationStore,
       final UpgradeTaskScheduler upgradeTaskScheduler)
   {
     this.metricsStore = checkNotNull(metricsStore);
@@ -84,7 +84,7 @@ public abstract class BlobStoreMetricsDatabaseMigrationStepSupport
   }
 
   /**
-   * Implementations should override this if additional filtering should apply, e.g. invoking {@link emptyOrZero}
+   * Implementations should override this if additional filtering should apply, e.g. skipping empty or zeroed metrics.
    */
   protected boolean shouldSaveMetricsToDatabase(final String blobStoreName) {
     return true;

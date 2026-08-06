@@ -11,9 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import type { SearchFormat, FilterValues } from './unified.types';
+import { useCallback } from 'react';
+import type { SearchFormat, FilterValues, SortField, SortDirection } from './unified.types';
 import { getFiltersForFormat, FORMATS } from './searchFilters';
+
+/** Default sort field — omitted from the URL when active. */
+export const DEFAULT_SORT_FIELD: SortField = 'lastUpdated';
+/** Default sort direction — omitted from the URL when active. */
+export const DEFAULT_SORT_DIRECTION: SortDirection = 'desc';
 
 /**
  * URL-synced search state.
@@ -25,32 +30,40 @@ export interface UrlSearchState {
   query: string;
   /** Filter values */
   filters: FilterValues;
+  /** Sort field (optional — defaults to lastUpdated when absent) */
+  sortField?: SortField;
+  /** Sort direction (optional — defaults to desc when absent) */
+  sortDirection?: SortDirection;
 }
 
 /**
  * Return type for useSearchUrlState hook.
+ *
+ * The hook exposes a minimal, read/write surface over the browser URL:
+ * the XState search machine is the single source of truth, and this hook
+ * serializes that state to (and rehydrates it from) the URL.
  */
 export interface UseSearchUrlStateReturn {
-  /** Current state */
-  state: UrlSearchState;
-  /** Set the search format (clears filters) */
-  setFormat: (format: SearchFormat) => void;
-  /** Set the search query */
-  setQuery: (query: string) => void;
-  /** Set a single filter value */
-  setFilter: (id: string, value: string) => void;
-  /** Set multiple filter values at once */
-  setFilters: (filters: FilterValues) => void;
-  /** Reset all state to defaults */
-  reset: () => void;
-  /** Build a shareable URL for current state */
-  getShareableUrl: () => string;
+  /** Read the current search state from the URL. */
+  readFromUrl: () => UrlSearchState;
+  /**
+   * Serialize the given search state into the browser URL. Pass replace=true
+   * for rapid keystroke-driven writes to avoid flooding browser history.
+   */
+  syncToUrl: (state: UrlSearchState, replace?: boolean) => void;
+  /** Build a shareable URL for the given state. */
+  getShareableUrl: (state: UrlSearchState) => string;
 }
 
 /**
  * Valid search formats for validation.
  */
 const VALID_FORMATS = new Set<string>(Object.keys(FORMATS));
+
+/** Valid sort fields for validation. */
+const VALID_SORT_FIELDS = new Set<string>(['name', 'version', 'lastUpdated', 'repository']);
+/** Valid sort directions for validation. */
+const VALID_SORT_DIRECTIONS = new Set<string>(['asc', 'desc']);
 
 /**
  * Check if a format string is a valid SearchFormat.
@@ -95,7 +108,18 @@ function parseUrlState(): UrlSearchState {
     }
   }
 
-  return { format, query, filters };
+  // Parse sort with validation (fall back to defaults on invalid values)
+  const sortParam = params.get('sort');
+  const sortField: SortField | undefined =
+    sortParam && VALID_SORT_FIELDS.has(sortParam) ? (sortParam as SortField) : undefined;
+
+  const directionParam = params.get('direction');
+  const sortDirection: SortDirection | undefined =
+    directionParam && VALID_SORT_DIRECTIONS.has(directionParam)
+      ? (directionParam as SortDirection)
+      : undefined;
+
+  return { format, query, filters, sortField, sortDirection };
 }
 
 /**
@@ -118,9 +142,19 @@ function buildQueryString(state: UrlSearchState): string {
   const filterDefs = getFiltersForFormat(state.format);
   for (const filterDef of filterDefs) {
     const value = state.filters[filterDef.id];
-    if (value && value.trim()) {
+    if (value?.trim()) {
       params.set(filterDef.apiParam, value.trim());
     }
+  }
+
+  // Add sort (skip defaults: lastUpdated / desc). Field and direction are
+  // written independently so a non-default direction on the default field
+  // (e.g. lastUpdated / asc) still survives a URL round-trip.
+  if (state.sortField && state.sortField !== DEFAULT_SORT_FIELD) {
+    params.set('sort', state.sortField);
+  }
+  if (state.sortDirection && state.sortDirection !== DEFAULT_SORT_DIRECTION) {
+    params.set('direction', state.sortDirection);
   }
 
   return params.toString();
@@ -129,7 +163,7 @@ function buildQueryString(state: UrlSearchState): string {
 /**
  * Update the browser URL with new state.
  */
-function updateBrowserUrl(state: UrlSearchState): void {
+function updateBrowserUrl(state: UrlSearchState, replace = false): void {
   const queryString = buildQueryString(state);
   const hash = window.location.hash;
 
@@ -148,144 +182,72 @@ function updateBrowserUrl(state: UrlSearchState): void {
       : window.location.pathname;
   }
 
-  window.history.pushState({}, '', newUrl);
+  // pushState for discrete commits (creates a back/forward entry);
+  // replaceState for rapid keystroke-driven writes (avoids history flooding).
+  if (replace) {
+    window.history.replaceState({}, '', newUrl);
+  } else {
+    window.history.pushState({}, '', newUrl);
+  }
 }
 
 /**
- * React hook that syncs search state with browser URL.
+ * Build a shareable URL from a search state.
+ */
+function buildShareableUrl(state: UrlSearchState): string {
+  const queryString = buildQueryString(state);
+  const origin = window.location.origin;
+  const hash = window.location.hash.split('?')[0] || '#preview/browse/search';
+
+  return queryString ? `${origin}${hash}?${queryString}` : `${origin}${hash}`;
+}
+
+/**
+ * React hook exposing read/write access to the search state carried in the
+ * browser URL.
  *
- * Features:
- * - Reads initial state from URL on mount
- * - Updates URL when state changes
- * - Supports hash-based routing (#preview/browse/search?format=maven&q=test)
- * - Validates format parameter
- * - Generates shareable URLs
+ * The XState search machine (see `useUnifiedSearch`) is the single source of
+ * truth. This hook is a thin, stateless serializer: the page reads the initial
+ * state from the URL on mount (and on back/forward) via `readFromUrl`, and
+ * pushes machine changes back to the URL via `syncToUrl`. No local React state
+ * is held here, avoiding a second competing source of truth.
  *
- * URL Format:
- * - `#preview/browse/search?format=maven&q=spring&maven.groupId=org.apache`
+ * URL format (readable query params):
+ * - `#preview/browse/search?q=spring&format=maven&maven.groupId=org.apache&sort=name`
  *
  * @example
  * ```tsx
- * function SearchPage() {
- *   const { state, setFormat, setQuery, setFilter } = useSearchUrlState();
- *
- *   return (
- *     <div>
- *       <select value={state.format} onChange={e => setFormat(e.target.value)}>
- *         ...
- *       </select>
- *       <input value={state.query} onChange={e => setQuery(e.target.value)} />
- *     </div>
- *   );
- * }
+ * const { readFromUrl, syncToUrl } = useSearchUrlState();
+ * // on mount: rehydrate the machine from readFromUrl()
+ * // on state change: syncToUrl(machineState)
  * ```
  */
 export function useSearchUrlState(): UseSearchUrlStateReturn {
-  const [state, setState] = useState<UrlSearchState>(parseUrlState);
+  /** Read the current search state from the URL. */
+  const readFromUrl = useCallback((): UrlSearchState => parseUrlState(), []);
 
-  // Handle browser back/forward navigation
-  useEffect(() => {
-    const handlePopState = (): void => {
-      setState(parseUrlState());
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+  /**
+   * Serialize the given search state into the browser URL.
+   *
+   * @param state the state to serialize
+   * @param replace when true, use replaceState (no history entry) for rapid
+   *   keystroke-driven writes; defaults to pushState for discrete commits.
+   */
+  const syncToUrl = useCallback((state: UrlSearchState, replace = false): void => {
+    updateBrowserUrl(state, replace);
   }, []);
 
-  /**
-   * Set the search format.
-   * Clears filters when format changes since filters are format-specific.
-   */
-  const setFormat = useCallback((format: SearchFormat): void => {
-    const newState: UrlSearchState = {
-      format,
-      query: state.query,
-      filters: {}, // Clear filters on format change
-    };
-    setState(newState);
-    updateBrowserUrl(newState);
-  }, [state.query]);
-
-  /**
-   * Set the search query.
-   */
-  const setQuery = useCallback((query: string): void => {
-    const newState: UrlSearchState = {
-      ...state,
-      query,
-    };
-    setState(newState);
-    updateBrowserUrl(newState);
-  }, [state]);
-
-  /**
-   * Set a single filter value.
-   */
-  const setFilter = useCallback((id: string, value: string): void => {
-    const newState: UrlSearchState = {
-      ...state,
-      filters: {
-        ...state.filters,
-        [id]: value,
-      },
-    };
-    setState(newState);
-    updateBrowserUrl(newState);
-  }, [state]);
-
-  /**
-   * Set multiple filter values at once.
-   */
-  const setFilters = useCallback((filters: FilterValues): void => {
-    const newState: UrlSearchState = {
-      ...state,
-      filters: {
-        ...state.filters,
-        ...filters,
-      },
-    };
-    setState(newState);
-    updateBrowserUrl(newState);
-  }, [state]);
-
-  /**
-   * Reset all state to defaults.
-   */
-  const reset = useCallback((): void => {
-    const newState: UrlSearchState = {
-      format: 'all',
-      query: '',
-      filters: {},
-    };
-    setState(newState);
-    updateBrowserUrl(newState);
-  }, []);
-
-  /**
-   * Build a shareable URL for the current state.
-   */
-  const getShareableUrl = useCallback((): string => {
-    const queryString = buildQueryString(state);
-    const origin = window.location.origin;
-    const hash = window.location.hash.split('?')[0] || '#preview/browse/search';
-
-    return queryString
-      ? `${origin}${hash}?${queryString}`
-      : `${origin}${hash}`;
-  }, [state]);
+  /** Build a shareable URL for the given state. */
+  const getShareableUrl = useCallback(
+    (state: UrlSearchState): string => buildShareableUrl(state),
+    [],
+  );
 
   return {
-    state,
-    setFormat,
-    setQuery,
-    setFilter,
-    setFilters,
-    reset,
+    readFromUrl,
+    syncToUrl,
     getShareableUrl,
   };
 }
 
 export default useSearchUrlState;
-
-

@@ -110,6 +110,52 @@ class QueryParameterForwardingHelperTest
   }
 
   @Test
+  void buildQueryStringMultiValuedParameterValuesAreSorted() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters params1 = new Parameters();
+    params1.set("tag", "beta", "alpha"); // unsorted order
+    params1.set("platform", "darwin");
+
+    Parameters params2 = new Parameters();
+    params2.set("tag", "alpha", "beta"); // different order
+    params2.set("platform", "darwin");
+
+    String result1 = helper.buildQueryString(params1);
+    String result2 = helper.buildQueryString(params2);
+
+    // Both should produce the same normalized query string
+    assertThat("Values should be sorted for cache deduplication", result1, is("platform=darwin&tag=alpha&tag=beta"));
+    assertThat("Both requests should produce identical query strings", result1, is(result2));
+  }
+
+  @Test
+  void buildQueryStringMultiValuedParameterWithNullValuesSortedCorrectly() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("tag", "zebra", null, "alpha"); // unsorted with null
+
+    String result = helper.buildQueryString(parameters);
+
+    // Null values should come first when sorted, then alphabetically
+    assertThat(result, is("tag&tag=alpha&tag=zebra"));
+  }
+
+  @Test
+  void buildQueryStringMultiValuedParameterReverseOrderSortedCorrectly() {
+    helper.updateConfig(true, Collections.emptyList());
+
+    Parameters parameters = new Parameters();
+    parameters.set("version", "v3.0", "v2.0", "v1.0"); // reverse order
+
+    String result = helper.buildQueryString(parameters);
+
+    // Should be sorted alphabetically
+    assertThat(result, is("version=v1.0&version=v2.0&version=v3.0"));
+  }
+
+  @Test
   void buildQueryString_parameterWithoutValue_noEqualsSign() {
     helper.updateConfig(true, Collections.emptyList());
 

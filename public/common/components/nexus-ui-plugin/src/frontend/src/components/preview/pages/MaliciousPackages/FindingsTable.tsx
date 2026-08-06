@@ -172,6 +172,7 @@ export function FindingsTable({
     loadFindings();
   }, [loadFindings]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: repoFilter is an intentional trigger to reset pagination, not read in the body
   useEffect(() => {
     setPage(1);
   }, [repoFilter]);

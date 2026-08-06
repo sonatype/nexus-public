@@ -55,6 +55,17 @@ function resolveConstraintMessage(message: string): string {
   return message;
 }
 
+// WebApplicationMessageException callers on the backend commonly pass a JSON string
+// literal as the message (e.g. `"\"Repository not found\""`), so the parsed `message`
+// field itself is wrapped in a redundant pair of literal quote characters. Strip one
+// layer so toasts show the plain text instead of `"Repository not found"`.
+function unwrapQuotedMessage(message: string | undefined): string | undefined {
+  if (message && message.length >= 2 && message.startsWith('"') && message.endsWith('"')) {
+    return message.slice(1, -1);
+  }
+  return message;
+}
+
 /**
  * Parse any error into a structured ApiError
  */
@@ -136,7 +147,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 403:
       return {
         status: 403,
-        message: data?.message || 'You do not have permission to perform this action. Contact your administrator if you need access.',
+        message: unwrapQuotedMessage(data?.message) || 'You do not have permission to perform this action. Contact your administrator if you need access.',
         code: 'FORBIDDEN',
         requestId,
         originalError: error,
@@ -145,7 +156,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 404:
       return {
         status: 404,
-        message: data?.message || 'The requested resource was not found.',
+        message: unwrapQuotedMessage(data?.message) || 'The requested resource was not found.',
         code: 'NOT_FOUND',
         requestId,
         originalError: error,
@@ -154,7 +165,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     case 409:
       return {
         status: 409,
-        message: data?.message || 'This resource already exists or conflicts with another resource.',
+        message: unwrapQuotedMessage(data?.message) || 'This resource already exists or conflicts with another resource.',
         code: 'CONFLICT',
         requestId,
         originalError: error,
@@ -172,7 +183,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
       if (typeof data === 'string' && data.trim()) {
         backendMessage = data;
       } else if (data?.message) {
-        backendMessage = data.message;
+        backendMessage = unwrapQuotedMessage(data.message);
       }
       
       const message = backendMessage 
@@ -191,7 +202,7 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
     default:
       return {
         status,
-        message: data?.message || 'Unable to complete request. Please try again.',
+        message: unwrapQuotedMessage(data?.message) || 'Unable to complete request. Please try again.',
         requestId,
         originalError: error,
       };
@@ -225,10 +236,10 @@ function parseBadRequest(
         // string so an `id` that legitimately contains those tokens deeper in
         // the property path (e.g. a field literally named myHelperBean.foo)
         // isn't mangled mid-key.
-        if (fieldName && fieldName.startsWith(HELPER_BEAN_PREFIX)) {
+        if (fieldName?.startsWith(HELPER_BEAN_PREFIX)) {
           fieldName = fieldName.slice(HELPER_BEAN_PREFIX.length);
         }
-        if (fieldName && fieldName.startsWith(ATTRIBUTES_PREFIX)) {
+        if (fieldName?.startsWith(ATTRIBUTES_PREFIX)) {
           fieldName = fieldName.slice(ATTRIBUTES_PREFIX.length);
         }
         messages.push(resolvedMessage);

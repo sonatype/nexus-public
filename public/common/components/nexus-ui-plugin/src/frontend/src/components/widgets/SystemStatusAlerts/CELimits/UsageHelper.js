@@ -14,7 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
+import {ExtJS} from '../../../../interface/ExtJS';
 import {indexBy, pathOr, prop} from 'ramda';
 
 const OVER_LIMITS = 'Over limits';
@@ -57,11 +57,15 @@ function useViewPurchaseALicenseUrl() {
   return `http://links.sonatype.com/products/nxrm3/ce/purchase-license?${addProductParams()}`;
 }
 
-function useViewLearnMoreUrl() {
-  if (useThrottlingStatus() === 'OVER_LIMITS_GRACE_PERIOD_ENDED') {
+function buildLearnMoreUrl(throttlingStatus) {
+  if (throttlingStatus === 'OVER_LIMITS_GRACE_PERIOD_ENDED') {
     return `http://links.sonatype.com/products/nxrm3/ce/learn-more-limits-enforced?${addProductParams()}`;
   }
   return `http://links.sonatype.com/products/nxrm3/ce/learn-more?${addProductParams()}`;
+}
+
+function useViewLearnMoreUrl() {
+  return buildLearnMoreUrl(useThrottlingStatus());
 }
 
 function useGracePeriodEndsDate() {
@@ -116,6 +120,7 @@ function useThrottlingStatus() {
 
 export const helperFunctions = {
   useViewLearnMoreUrl,
+  buildLearnMoreUrl,
   useViewPurchaseALicenseUrl,
   useGracePeriodEndDate,
   useThrottlingStatus,

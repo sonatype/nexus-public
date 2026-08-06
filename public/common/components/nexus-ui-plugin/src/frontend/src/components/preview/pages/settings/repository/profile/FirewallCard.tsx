@@ -15,7 +15,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Card, Flex, Text, Badge, Button, Tooltip, Grid, Separator } from '@radix-ui/themes';
 import { Shield, ShieldCheck, Info, ExternalLink, ShieldOff } from 'lucide-react';
 import type { FirewallData, IqCapabilities, MalwareCleanupSummary } from './types';
-import { useFirewallEnable, fetchIqAuditStatus } from '../../../../shared/security/useFirewallEnable';
+import { useFirewallEnable, } from '../../../../shared/security/useFirewallEnable';
 import {
   setMalwareRemediatorEnabledForRepository,
   type MalwareRemediatorMode,

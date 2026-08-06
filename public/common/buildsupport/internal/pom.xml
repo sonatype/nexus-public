@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.1-06</version>
+    <version>3.95.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-internal</artifactId>
@@ -34,7 +34,7 @@
     <sonatype-licensing.version>4.0.1</sonatype-licensing.version>
     <clm.dto.model.version>2.1.33-01</clm.dto.model.version>
     <insight-brain-client.version>2.1.10-01</insight-brain-client.version>
-    <insight-scanner.version>3.0.41-01</insight-scanner.version>
+    <insight-scanner.version>3.0.46-01</insight-scanner.version>
   </properties>
 
   <dependencyManagement>

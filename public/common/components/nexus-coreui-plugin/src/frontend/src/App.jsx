@@ -14,7 +14,7 @@ import React, { Suspense, useState, useEffect, useLayoutEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 import { UIRouter, UIView, useRouter } from '@uirouter/react';
-import { ExtJS, UnsavedChangesModal, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, TooltipContainerProvider as NuiTooltipContainerProvider } from '@sonatype/nexus-ui-plugin';
+import { ExtJS, UnsavedChangesModal, RouteLoadingFallback, ToastProvider, useToast, bootstrapFromREST, SessionExpiryModal, useSessionExpiry, TooltipContainerProvider as NuiTooltipContainerProvider, OnboardingWizardMount } from '@sonatype/nexus-ui-plugin';
 import LeftNavigationMenuRadix from './components/LeftNavigationMenu/LeftNavigationMenuRadix';
 import { Theme, AlertDialog, Button, Flex } from '@radix-ui/themes';
 import { TooltipContainerProvider } from './components/shared/Tooltip/TooltipContainerContext';
@@ -25,7 +25,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 import './App.scss';
 import './components/shared/Toast.scss';
-import SystemNotices from './components/widgets/SystemStatusAlerts/SystemNotices';
+import SystemNoticesSwitch from './components/widgets/SystemStatusAlerts/SystemNoticesSwitch';
 import UpgradeModal from './components/pages/user/Welcome/UpgradeModal';
 import { useRedirectOnLogout } from './hooks/useRedirectOnLogout';
 import usePreventPushStateOnHash from './hooks/usePreventPushStateOnHash';
@@ -148,9 +148,6 @@ export function App() {
 
   const isLoginRoute = currentStateName === ROUTE_NAMES.LOGIN;
 
-  // Test hub routes are standalone - no sidebar, no header
-  const isTestHubRoute = currentStateName.startsWith('preview.test');
-
   // Read branding from ExtJS state (available because we wait for ExtJS before rendering)
   const branding = ExtJS.state().getValue('branding');
 
@@ -164,29 +161,10 @@ export function App() {
     return <UIView />;
   }
 
-  // Render minimal layout for test hub routes (standalone, no navigation)
-  // SystemNotices renders ABOVE content (not in grid) since test hub uses full-width layout
-  if (isTestHubRoute) {
-    return (
-      <div className="nxrm-page nxrm-test-hub-page">
-        <SystemNotices />
-        <div className="nxrm-main-content nxrm-main-content--full-width">
-          <Theme appearance={effectiveTheme} accentColor="green" grayColor="slate" radius="medium">
-            <CoreuiToastProvider>
-              <Suspense fallback={<RouteLoadingFallback />}>
-                <UIView />
-              </Suspense>
-            </CoreuiToastProvider>
-          </Theme>
-        </div>
-      </div>
-    );
-  }
-
   // Render standard layout for all other routes
   return (
     <>
-      <SystemNotices />
+      <SystemNoticesSwitch />
 
       {headerEnabled && (
         <div
@@ -199,6 +177,8 @@ export function App() {
       <GlobalHeaderRadix />
 
       <LeftNavigationMenuRadix />
+
+      <OnboardingWizardMount />
 
       <UpgradeModal />
 

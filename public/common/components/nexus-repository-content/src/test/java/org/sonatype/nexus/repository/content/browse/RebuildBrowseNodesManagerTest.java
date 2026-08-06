@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.upgrade.datastore.UpgradeContext;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -56,11 +57,18 @@ public class RebuildBrowseNodesManagerTest
   @Mock
   private PeriodicJobService periodicJobService;
 
+  @Mock
+  private UpgradeContext upgradeContext;
+
   private RebuildBrowseNodesManager underTest;
 
   @Before
   public void setUp() {
-    underTest = new RebuildBrowseNodesManager(taskScheduler, repositoryManager, periodicJobService);
+    underTest = new RebuildBrowseNodesManager(taskScheduler, repositoryManager, periodicJobService, upgradeContext);
+  }
+
+  private void rebuildOnStart(final boolean value) {
+    when(upgradeContext.isFlagSet(RebuildBrowseNodesManager.REBUILD_BROWSE_NODES_ON_START)).thenReturn(value);
   }
 
   @Test
@@ -68,31 +76,29 @@ public class RebuildBrowseNodesManagerTest
     assertThat(underTest, is(notNullValue()));
   }
 
-  @Test
-  public void testSetRebuildOnStart() {
-    // setRebuildOnSart (note the typo in the original code) should not throw
-    underTest.setRebuildOnSart(true);
-    underTest.setRebuildOnSart(false);
-  }
-
   @Test(expected = NullPointerException.class)
   public void testNullTaskSchedulerRejected() {
-    new RebuildBrowseNodesManager(null, repositoryManager, periodicJobService);
+    new RebuildBrowseNodesManager(null, repositoryManager, periodicJobService, upgradeContext);
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullRepositoryManagerRejected() {
-    new RebuildBrowseNodesManager(taskScheduler, null, periodicJobService);
+    new RebuildBrowseNodesManager(taskScheduler, null, periodicJobService, upgradeContext);
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullPeriodicJobServiceRejected() {
-    new RebuildBrowseNodesManager(taskScheduler, repositoryManager, null);
+    new RebuildBrowseNodesManager(taskScheduler, repositoryManager, null, upgradeContext);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullUpgradeContextRejected() {
+    new RebuildBrowseNodesManager(taskScheduler, repositoryManager, periodicJobService, null);
   }
 
   @Test
   public void doStart_doesNothingWhenRebuildOnStartIsFalse() throws Exception {
-    underTest.setRebuildOnSart(false);
+    rebuildOnStart(false);
 
     underTest.start();
 
@@ -103,7 +109,7 @@ public class RebuildBrowseNodesManagerTest
 
   @Test
   public void doStart_schedulesRunOnceWhenRebuildOnStartIsTrue() throws Exception {
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
 
     underTest.start();
 
@@ -122,7 +128,7 @@ public class RebuildBrowseNodesManagerTest
     when(taskScheduler.createTaskConfigurationInstance(anyString())).thenReturn(taskConfig);
 
     // Capture the Runnable passed to runOnce and execute it
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));
@@ -151,7 +157,7 @@ public class RebuildBrowseNodesManagerTest
     TaskConfiguration taskConfig = mock(TaskConfiguration.class);
     when(taskScheduler.createTaskConfigurationInstance(anyString())).thenReturn(taskConfig);
 
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));
@@ -168,7 +174,7 @@ public class RebuildBrowseNodesManagerTest
     Repository emptyRepo = createRepositoryWithAssets("empty", 0);
     when(repositoryManager.browse()).thenReturn(Collections.singletonList(emptyRepo));
 
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));
@@ -184,7 +190,7 @@ public class RebuildBrowseNodesManagerTest
   public void maybeRebuild_doesNotSubmitTaskWhenNoRepositories() throws Exception {
     when(repositoryManager.browse()).thenReturn(Collections.emptyList());
 
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));
@@ -203,7 +209,7 @@ public class RebuildBrowseNodesManagerTest
     // Existing task already waiting
     when(taskScheduler.findWaitingTask(anyString(), any(Map.class))).thenReturn(true);
 
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));
@@ -220,7 +226,7 @@ public class RebuildBrowseNodesManagerTest
   public void maybeRebuild_handlesExceptionGracefully() throws Exception {
     when(repositoryManager.browse()).thenThrow(new RuntimeException("simulated failure"));
 
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));
@@ -241,7 +247,7 @@ public class RebuildBrowseNodesManagerTest
     TaskConfiguration taskConfig = mock(TaskConfiguration.class);
     when(taskScheduler.createTaskConfigurationInstance(anyString())).thenReturn(taskConfig);
 
-    underTest.setRebuildOnSart(true);
+    rebuildOnStart(true);
     ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
     underTest.start();
     verify(periodicJobService).runOnce(runnableCaptor.capture(), eq(0));

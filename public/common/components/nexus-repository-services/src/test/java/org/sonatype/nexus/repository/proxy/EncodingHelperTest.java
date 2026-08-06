@@ -84,4 +84,24 @@ public class EncodingHelperTest
     assertThat(helper.encodeUrlSegments("packages/ncurses-c++libs-6.2-4.rpm"),
         is("packages/ncurses-c%2B%2Blibs-6.2-4.rpm"));
   }
+
+  /**
+   * PyPI PEP 503 simple indexes serve DIFFERENT link prefixes for {@code /simple/pkg/}
+   * ({@code ../../packages/...}) vs {@code /simple/pkg} ({@code ../packages/...}). The
+   * preserve-trailing variant routes through {@link EscapeHelper#uriSegmentsPreserveTrailing}
+   * so the outbound URL keeps its trailing slash and upstream returns the correct link depth.
+   */
+  @Test
+  public void testEncodeUrlSegmentsPreserveTrailing_KeepsTrailingSlash() {
+    when(escapeHelper.uriSegmentsPreserveTrailing("simple/flask/")).thenReturn("simple/flask/");
+    EncodingHelper helper = new EncodingHelper(escapeHelper);
+
+    assertThat(helper.encodeUrlSegmentsPreserveTrailing("simple/flask/"), is("simple/flask/"));
+    verify(escapeHelper).uriSegmentsPreserveTrailing("simple/flask/");
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testEncodeUrlSegmentsPreserveTrailing_NullUrl_ThrowsException() {
+    new EncodingHelper(escapeHelper).encodeUrlSegmentsPreserveTrailing(null);
+  }
 }

@@ -15,6 +15,8 @@ import React from 'react';
 import { Box, Card, Flex, Heading, Text, Button } from '@radix-ui/themes';
 import { ScrollText, Code, ArrowRight } from 'lucide-react';
 
+import './ProtectAuditPage.scss';
+
 /**
  * Protect Audit Overview Page
  *
@@ -22,7 +24,7 @@ import { ScrollText, Code, ArrowRight } from 'lucide-react';
  */
 export function ProtectAuditPage() {
   return (
-    <Box p="6" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <Box p="6" className="nxrm-protect-audit-page">
       <Flex direction="column" gap="6">
         {/* Header */}
         <Box>
@@ -36,18 +38,18 @@ export function ProtectAuditPage() {
 
         {/* Quick Actions */}
         <Flex gap="4" wrap="wrap">
-          <Card style={{ flex: '1 1 400px' }}>
+          <Card className="nxrm-protect-audit-page__action-card">
             <Flex direction="column" gap="3" height="100%">
               <Flex align="center" gap="2">
-                <ScrollText size={24} style={{ color: 'var(--accent-11)' }} />
+                <ScrollText size={24} className="nxrm-protect-audit-page__action-icon" />
                 <Heading size="4">Audit Log Viewer</Heading>
               </Flex>
-              <Text size="2" color="gray" style={{ flex: 1 }}>
+              <Text size="2" color="gray" className="nxrm-protect-audit-page__action-description">
                 Browse and filter all audit events across Security, Repository, Configuration, and Protection domains.
                 View detailed event information including timestamps, initiators, and full attribute data.
               </Text>
               <Box>
-                <a href="http://localhost:8081/?debug#preview/admin/audit" style={{ textDecoration: 'none' }}>
+                <a href="http://localhost:8081/?debug#preview/admin/audit" className="nxrm-protect-audit-page__plain-link">
                   <Button size="2" variant="soft">
                     <Flex align="center" gap="2">
                       <span>Open Audit Log</span>
@@ -59,18 +61,18 @@ export function ProtectAuditPage() {
             </Flex>
           </Card>
 
-          <Card style={{ flex: '1 1 400px' }}>
+          <Card className="nxrm-protect-audit-page__action-card">
             <Flex direction="column" gap="3" height="100%">
               <Flex align="center" gap="2">
-                <Code size={24} style={{ color: 'var(--accent-11)' }} />
+                <Code size={24} className="nxrm-protect-audit-page__action-icon" />
                 <Heading size="4">API Documentation</Heading>
               </Flex>
-              <Text size="2" color="gray" style={{ flex: 1 }}>
+              <Text size="2" color="gray" className="nxrm-protect-audit-page__action-description">
                 Interactive REST API documentation for programmatic access to audit events. Includes request/response
                 examples, parameter reference, and curl commands for easy testing.
               </Text>
               <Box>
-                <a href="http://localhost:8081/?debug#preview/browse/protect/audit/api" style={{ textDecoration: 'none' }}>
+                <a href="http://localhost:8081/?debug#preview/browse/protect/audit/api" className="nxrm-protect-audit-page__plain-link">
                   <Button size="2" variant="soft">
                     <Flex align="center" gap="2">
                       <span>View API Docs</span>

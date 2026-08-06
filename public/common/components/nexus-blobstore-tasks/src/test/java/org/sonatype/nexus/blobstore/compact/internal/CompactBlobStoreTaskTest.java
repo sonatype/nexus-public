@@ -228,6 +228,27 @@ public class CompactBlobStoreTaskTest
   }
 
   @Test
+  public void testCompact_taskFailsWhenBlobStoreCompactThrows() {
+    configuration.setString(BLOBSTORE_NAME_FIELD_ID, "blobstore-one");
+
+    List<BlobStore> blobStores = mockBlobStores("blobstore-one");
+    doThrow(new RuntimeException("compaction failed"))
+        .when(blobStores.get(0))
+        .compact(any(BlobStoreUsageChecker.class), any(Duration.class));
+    doNothing()
+        .when(taskUtils)
+        .checkForConflictingTasks(anyString(), anyString(), any(List.class), any(Map.class));
+    when(changeBlobstoreStore.findByBlobStoreName(anyString())).thenReturn(Collections.emptyList());
+
+    underTest.configure(configuration);
+
+    assertThrows(Exception.class, () -> underTest.call());
+
+    verify(blobStores.get(0), times(1)).compact(any(BlobStoreUsageChecker.class), any(Duration.class));
+    assertThat("Failed blob store must not be counted as processed", underTest.result(), is(0));
+  }
+
+  @Test
   public void testCheckForConflicts_withNullRecoveryModeService() {
     // Create task with null RecoveryModeService (CORE edition scenario)
     CompactBlobStoreTask taskWithNullRecoveryMode =

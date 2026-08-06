@@ -178,6 +178,8 @@ describe('Unified Search - Format-Specific Filters', () => {
       expect(filterIds).toContain('repository');
       expect(filterIds).toContain('vendor');
       expect(filterIds).toContain('package');
+      expect(filterIds).toContain('description');
+      expect(filterIds).toContain('keywords');
       // Note: version is a global filter (above search results)
       expect(filterIds).not.toContain('version');
     });
@@ -188,6 +190,8 @@ describe('Unified Search - Format-Specific Filters', () => {
 
       expect(filterMap.get('vendor')?.apiParam).toBe('composer.vendor');
       expect(filterMap.get('package')?.apiParam).toBe('composer.package');
+      expect(filterMap.get('description')?.apiParam).toBe('composer.description');
+      expect(filterMap.get('keywords')?.apiParam).toBe('composer.keywords');
     });
   });
 

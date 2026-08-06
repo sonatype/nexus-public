@@ -15,16 +15,14 @@ package org.sonatype.nexus.repository.content.facet;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.ConstraintViolationException;
-
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -41,8 +39,10 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
+import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -359,8 +359,8 @@ class ContentFacetSupportTest
 
     ContentFacetSupport testFacet = createFacetWithWritePolicy(WritePolicy.DENY);
 
-    IllegalOperationException exception = assertThrows(IllegalOperationException.class,
-        () -> testFacet.checkAttachAllowed(asset));
+    IllegalOperationException exception =
+        assertThrows(IllegalOperationException.class, () -> testFacet.checkAttachAllowed(asset));
 
     assertThat(exception.getMessage(), containsString("test-repo"));
     assertThat(exception.getMessage(), containsString("/some/path"));
@@ -407,7 +407,7 @@ class ContentFacetSupportTest
     ContentFacetSupport testFacet = createFacetWithWritePolicy(WritePolicy.ALLOW_ONCE);
 
     // Execute and verify exception
-    IllegalOperationException exception = assertThrows(IllegalOperationException.class,
+    RedeployDisabledException exception = assertThrows(RedeployDisabledException.class,
         () -> testFacet.checkAttachAllowed(asset));
 
     // Verify error message includes enhanced text for ALLOW_ONCE
@@ -444,7 +444,7 @@ class ContentFacetSupportTest
     ContentFacetSupport testFacet = createFacetWithWritePolicy(WritePolicy.DENY);
 
     // Execute and verify exception
-    IllegalOperationException exception = assertThrows(IllegalOperationException.class,
+    RedeployDisabledException exception = assertThrows(RedeployDisabledException.class,
         () -> testFacet.checkAttachAllowed(asset));
 
     // Verify error message is standard (not enhanced) for DENY policy
@@ -463,8 +463,8 @@ class ContentFacetSupportTest
 
     ContentFacetSupport testFacet = createFacetWithWritePolicy(WritePolicy.DENY);
 
-    IllegalOperationException exception = assertThrows(IllegalOperationException.class,
-        () -> testFacet.checkDeleteAllowed(asset));
+    IllegalOperationException exception =
+        assertThrows(IllegalOperationException.class, () -> testFacet.checkDeleteAllowed(asset));
 
     assertThat(exception.getMessage(), containsString("my-repo"));
     assertThat(exception.getMessage(), containsString("/path/to/artifact.jar"));
@@ -643,8 +643,9 @@ class ContentFacetSupportTest
 
     ContentFacetSupport testFacet = createFacetWithWritePolicy(WritePolicy.DENY);
 
-    IllegalOperationException exception = assertThrows(IllegalOperationException.class,
-        () -> testFacet.checkAttachAllowed(asset));
+    IllegalOperationException exception =
+        assertThrows(IllegalOperationException.class,
+            () -> testFacet.checkAttachAllowed(asset));
 
     // Error message should be: "my-hosted-repo/my/artifact.tar.gz is read-only"
     assertThat(exception.getMessage(), is("my-hosted-repo/my/artifact.tar.gz is read-only"));

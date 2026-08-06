@@ -36,6 +36,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPathChangedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPreDeleteEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
@@ -390,7 +391,13 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetPath(final Asset asset) {
+    String oldPath = dao().readAsset(InternalIds.internalAssetId(asset))
+        .map(Asset::path)
+        .orElse(null);
+
     dao().updateAssetPath(asset, clustered);
+
+    postCommitEvent(() -> new AssetPathChangedEvent(asset, oldPath, asset.path()));
   }
 
   /**

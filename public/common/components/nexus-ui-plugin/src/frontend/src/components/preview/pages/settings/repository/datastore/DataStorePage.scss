@@ -45,11 +45,6 @@
     flex-shrink: 0;
   }
 
-  &__content {
-    flex: 1;
-    overflow: auto;
-  }
-
   &__loading {
     padding: var(--space-6, 24px);
     gap: var(--space-2, 8px);

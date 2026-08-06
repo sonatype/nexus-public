@@ -23,16 +23,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.validation.constraints.NotNull;
 
-import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.Continuations;
 import org.sonatype.nexus.common.event.EventManager;
@@ -75,10 +73,13 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
+import jakarta.validation.constraints.NotNull;
 import org.apache.maven.model.Model;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
@@ -104,8 +105,6 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 
 /**
  * A {@link MavenContentFacet} that persists to a {@link ContentFacet}.
@@ -123,17 +122,15 @@ public class MavenContentFacetImpl
 
   private static final String CONFIG_KEY = "maven";
 
-  private final Map<String, MavenPathParser> mavenPathParsers;
-
   private final MavenMetadataContentValidator metadataValidator;
 
   private final EventManager eventManager;
 
   private final boolean metadataValidationEnabled;
 
-  private Config config;
+  private final MavenPathParser mavenPathParser;
 
-  private MavenPathParser mavenPathParser;
+  private Config config;
 
   private MetadataRebuilder metadataRebuilder;
 
@@ -157,14 +154,14 @@ public class MavenContentFacetImpl
   @Autowired
   public MavenContentFacetImpl(
       @Qualifier(Maven2Format.NAME) final FormatStoreManager formatStoreManager,
-      final List<MavenPathParser> mavenPathParsersList,
+      final MavenPathParser mavenPathParser,
       final MetadataRebuilder metadataRebuilder,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
       @Value("${nexus.maven.metadata.validation.enabled:true}") final boolean metadataValidationEnabled)
   {
     super(formatStoreManager);
-    this.mavenPathParsers = QualifierUtil.buildQualifierBeanMap(checkNotNull(mavenPathParsersList));
+    this.mavenPathParser = checkNotNull(mavenPathParser);
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
@@ -187,12 +184,6 @@ public class MavenContentFacetImpl
   }
 
   @Override
-  protected void doInit(final Configuration configuration) throws Exception {
-    super.doInit(configuration);
-    mavenPathParser = checkNotNull(mavenPathParsers.get(getRepository().getFormat().getValue()));
-  }
-
-  @Override
   protected void doConfigure(final Configuration configuration) throws Exception {
     super.doConfigure(configuration);
     config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, MavenContentFacetImpl.Config.class);
@@ -210,9 +201,9 @@ public class MavenContentFacetImpl
     WritePolicy configuredWritePolicy = super.writePolicy(asset);
     if (ALLOW_ONCE == configuredWritePolicy) {
       String assetKind = asset.kind();
-      if (StringUtils.equals(REPOSITORY_METADATA.name(), assetKind)
-          || StringUtils.equals(REPOSITORY_INDEX.name(), assetKind)
-          || StringUtils.equals(ARTIFACT_SUBORDINATE.name(), assetKind)) {
+      if (Objects.equals(REPOSITORY_METADATA.name(), assetKind)
+          || Objects.equals(REPOSITORY_INDEX.name(), assetKind)
+          || Objects.equals(ARTIFACT_SUBORDINATE.name(), assetKind)) {
         return ALLOW;
       }
     }
@@ -278,8 +269,6 @@ public class MavenContentFacetImpl
         .name(coordinates.getArtifactId())
         .namespace(coordinates.getGroupId())
         .version(coordinates.getVersion())
-        .normalizedVersion(
-            versionNormalizerService().getNormalizedVersionByFormat(coordinates.getVersion(), repository().getFormat()))
         .kind(optionalKind)
         .getOrCreate();
 
@@ -596,13 +585,13 @@ public class MavenContentFacetImpl
     }
   }
 
-  @Transactional
   @Override
   public FluentComponent copy(final Component source) {
     FluentComponentBuilder componentBuilder = components()
         .name(source.name())
         .namespace(source.namespace())
-        .version(source.version());
+        .version(source.version())
+        .kind(source.kind());
 
     source.attributes().forEach(attribute -> {
       componentBuilder.attributes(attribute.getKey(), attribute.getValue());
@@ -614,10 +603,10 @@ public class MavenContentFacetImpl
     componentData.setNamespace(source.namespace());
     componentData.setName(source.name());
     componentData.setVersion(source.version());
-    componentData.setNormalizedVersion(
-        versionNormalizerService().getNormalizedVersionByFormat(source.version(), repository().getFormat()));
+    componentData.setKind(source.kind());
+    componentData.setNormalizedVersion(component.normalizedVersion());
     componentData.setRepositoryId(contentRepositoryId());
-    componentData.setBaseVersion(component.attributes().child("maven2").get("baseVersion").toString());
+    componentData.setBaseVersion(component.attributes().child(Maven2Format.NAME).get("baseVersion", String.class));
 
     Maven2ComponentStore componentStore = (Maven2ComponentStore) stores().componentStore;
     componentStore.updateBaseVersion(componentData);
@@ -681,7 +670,6 @@ public class MavenContentFacetImpl
         .name(artifactId)
         .namespace(groupId)
         .version(version)
-        .normalizedVersion(versionNormalizerService().getNormalizedVersionByFormat(version, repository().getFormat()))
         .getOrCreate();
 
     ImmutableMap.Builder<String, String> componentAttributes = ImmutableMap.builder();

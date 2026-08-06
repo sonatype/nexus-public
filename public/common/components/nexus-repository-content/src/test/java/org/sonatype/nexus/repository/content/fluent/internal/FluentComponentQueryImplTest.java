@@ -13,18 +13,22 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Collections;
+import java.util.function.Function;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.types.HostedType;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -51,6 +55,10 @@ public class FluentComponentQueryImplTest
   @Mock
   private Repository repository;
 
+  @Mock
+  private Function<String, String> versionNormalizer;
+
+  @InjectMocks
   private FluentComponentsImpl components;
 
   @Before
@@ -62,8 +70,6 @@ public class FluentComponentQueryImplTest
     when(repository.getType()).thenReturn(new HostedType());
     when(facet.repository()).thenReturn(repository);
     when(facet.contentRepositoryId()).thenReturn(1);
-
-    components = new FluentComponentsImpl(facet, componentStore);
   }
 
   @Test
@@ -83,7 +89,7 @@ public class FluentComponentQueryImplTest
 
   @Test
   public void testBrowseByKind() {
-    Continuation continuation = mock(Continuation.class);
+    Continuation<Component> continuation = mock();
     when(componentStore.browseComponents(anyInt(), anyInt(), anyString(), eq("DOCKER"), isNull(), isNull()))
         .thenReturn(continuation);
 
@@ -94,7 +100,7 @@ public class FluentComponentQueryImplTest
 
   @Test
   public void testBrowseEager() {
-    Continuation continuation = mock(Continuation.class);
+    Continuation<ComponentData> continuation = mock();
     when(componentStore.browseComponentsEager(any(), anyInt(), anyString(), eq("DOCKER"), isNull(), isNull()))
         .thenReturn(continuation);
 

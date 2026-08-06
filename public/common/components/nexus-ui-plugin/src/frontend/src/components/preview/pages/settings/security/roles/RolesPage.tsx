@@ -178,10 +178,10 @@ export function RolesPage() {
       toast.success(`Role "${listDeleteRoleName || roleIdToDelete}" deleted successfully`);
       setRefreshKey((k) => k + 1);
       if (role && role.id === roleIdToDelete) handleBack();
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
-  }, [role, listDeleteRoleId, deleteRole, handleBack, toast]);
+  }, [role, listDeleteRoleId, deleteRole, handleBack, toast, listDeleteRoleName]);
 
   const handleListDelete = useCallback((roleId: string, roleName?: string) => {
     setListDeleteRoleId(roleId);
@@ -190,7 +190,7 @@ export function RolesPage() {
   }, []);
 
   // Determine if role can be edited/deleted
-  const roleCanEdit = canUpdate && role && !isReadOnlyRole(role);
+  const _roleCanEdit = canUpdate && role && !isReadOnlyRole(role);
   const roleCanDelete = canDelete && role && !isReadOnlyRole(role);
 
   // Header configuration
@@ -207,7 +207,7 @@ export function RolesPage() {
             </Button>
           ) : undefined
         };
-      case 'create':
+      case 'create': {
         const createSteps = ['Type', 'Setup', 'Privileges', 'Contained Roles'];
         return {
           icon: Shield,
@@ -219,7 +219,8 @@ export function RolesPage() {
             </Button>
           )
         };
-      case 'edit':
+      }
+      case 'edit': {
         const editSteps = ['Type', 'Setup', 'Privileges', 'Contained Roles'];
         return {
           icon: Shield,
@@ -233,7 +234,8 @@ export function RolesPage() {
             </Button>
           )
         };
-      case 'profile':
+      }
+      case 'profile': {
         const canEditThisRole = canUpdate && role && !isReadOnlyRole(role);
         return {
           icon: Shield,
@@ -257,6 +259,7 @@ export function RolesPage() {
             </Flex>
           )
         };
+      }
       default:
         return {
           icon: Shield,
@@ -264,7 +267,7 @@ export function RolesPage() {
           description: 'Manage roles'
         };
     }
-  }, [routeState.viewMode, role, canCreate, handleCreate, handleBack, internalWizardStep]);
+  }, [routeState.viewMode, role, canCreate, handleCreate, handleBack, internalWizardStep, canUpdate, routeState.roleId]);
 
   return (
     <Box 

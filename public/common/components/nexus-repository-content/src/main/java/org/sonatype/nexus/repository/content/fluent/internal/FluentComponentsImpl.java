@@ -18,7 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -67,14 +69,21 @@ public class FluentComponentsImpl
 
   private final ComponentStore<?> componentStore;
 
-  public FluentComponentsImpl(final ContentFacetSupport facet, final ComponentStore<?> componentStore) {
+  private final Function<String, String> versionNormalizer;
+
+  public FluentComponentsImpl(
+      final ContentFacetSupport facet,
+      final ComponentStore<?> componentStore,
+      final Function<String, String> versionNormalizer)
+  {
     this.facet = checkNotNull(facet);
     this.componentStore = checkNotNull(componentStore);
+    this.versionNormalizer = checkNotNull(versionNormalizer);
   }
 
   @Override
   public FluentComponentBuilder name(final String name) {
-    return new FluentComponentBuilderImpl(facet, componentStore, name);
+    return new FluentComponentBuilderImpl(facet, componentStore, versionNormalizer, name);
   }
 
   @Override
@@ -298,7 +307,7 @@ public class FluentComponentsImpl
       return false;
     }
 
-    Map<String, Object> nugetProxy = (Map<String, Object>) conf.getAttributes().get("nugetProxy");
+    Map<String, Object> nugetProxy = conf.getAttributes().get("nugetProxy");
     if (nugetProxy == null) {
       return false;
     }

@@ -612,55 +612,23 @@ Ext.define('NX.coreui.controller.Tasks', {
     const me = this,
         store = me.getStore('ReconcilePlans');
 
-    if ("blobstore.executeReconciliationPlan" === model.get('typeId')) {
+    var typeId = model.get('typeId');
+    if ("blobstore.executeReconciliationPlan" === typeId || "blobstore.planReconciliation" === typeId) {
       store.on('load', me.updateReconciliationPlanInformation, me, { single: true });
       store.load();
     }
   },
 
   updateReconciliationPlanInformation: function(store, records) {
-    const planItems = (records[0] && records[0].data && records[0].data.items) || [];
+    const summary = records[0] ? records[0].data : {};
     const me = this;
 
-    var planCount = 0;
-    var blobstoreCount = 0;
-    var repositoryCount = 0;
-    var startDate, endDate;
-
-    for (var i = 0; i < planItems.length; i++) {
-      var planItem = planItems[i];
-      var conf = planItem.configuration;
-
-      if(Ext.Array.contains(['PLANNED', 'EXECUTE', 'EXECUTING', 'EXECUTED'], planItem.state)) {
-        planCount++;
-
-        if (conf && conf.planStartDate) {
-          const thisStartDate = new Date(conf.planStartDate);
-          if (!startDate || thisStartDate < startDate) {
-            startDate = thisStartDate;
-          }
-        }
-        if (conf && conf.planEndDate) {
-          const thisEndDate = new Date(conf.planEndDate);
-          if (!endDate || thisEndDate > endDate) {
-            endDate = thisEndDate;
-          }
-        }
-        if (planItem.repository && planItem.repository !== 'undefined') {
-          repositoryCount += 1;
-        }
-        if (planItem.blobStore && planItem.blobStore !== 'undefined') {
-          blobstoreCount += 1;
-        }
-      }
-    }
-
     me.getContent().down("#reconcilePlanInformation").setValues({
-      planCount: planCount,
-      blobStoreCount: blobstoreCount,
-      repositoryCount: repositoryCount,
-      startDate: startDate,
-      endDate: endDate
+      planCount: summary.planCount || 0,
+      blobStoreCount: summary.blobStoreCount || 0,
+      repositoryCount: summary.repositoryCount || 0,
+      startDate: summary.minStartDate || null,
+      endDate: summary.maxEndDate || null
     });
   }
 });

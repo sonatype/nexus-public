@@ -19,9 +19,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * Thread-safe: uses ConcurrentHashMap for all operations.
  */
-@Named
+@Component
 public class FailedRepositoryTracker
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());

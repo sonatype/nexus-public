@@ -185,7 +185,12 @@ public class SecurityDiagnosticResource
     Map<String, Object> privilegeData = new HashMap<>();
     privilegeData.put(DESCRIPTION_FIELD, privilege.getDescription());
     privilegeData.put(NAME_FIELD, privilege.getName());
-    privilegeData.put(PERMISSION_FIELD, privilege.getPermission());
+    String permission = privilege.getPermission() != null ? privilege.getPermission().toString() : "<unknown>";
+    if ("<unknown>".equals(permission)) {
+      log.debug("Privilege '{}' has unknown type '{}' with no registered PrivilegeDescriptor; " +
+          "permission will be reported as <unknown>", privilege.getId(), privilege.getType());
+    }
+    privilegeData.put(PERMISSION_FIELD, permission);
     privilegeData.put(PROPERTIES_FIELD, privilege.getProperties());
     privilegeData.put(VERSION_FIELD, privilege.getVersion());
     return privilegeData;

@@ -15,10 +15,6 @@ package org.sonatype.nexus.repository.httpbridge.internal;
 import java.io.IOException;
 import java.util.List;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.BadRequestException;
 import org.sonatype.nexus.repository.httpbridge.internal.describe.Description;
@@ -35,6 +31,9 @@ import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
 import org.sonatype.nexus.testcommon.extensions.LoggingExtension.TestLogAccessor;
 
 import com.google.common.net.HttpHeaders;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.BadMessageException;
 import org.eclipse.jetty.io.EofException;
 import org.junit.jupiter.api.BeforeEach;
@@ -177,7 +176,11 @@ class ViewServletTest
     String message = "message";
     when(httpServletRequest.getPathInfo()).thenThrow(new BadRequestException(message));
     underTest.service(httpServletRequest, servletResponse);
-    verify(servletResponse).sendError(SC_BAD_REQUEST, message);
+    // NEXUS-53528: the error message is now written to the response body (text/plain) instead of
+    // only the HTTP/1.1 reason phrase, so it survives an HTTP/2 hop that drops the reason phrase.
+    verify(servletResponse).setStatus(SC_BAD_REQUEST);
+    verify(servletResponse).setContentType("text/plain;charset=utf-8");
+    verify(servletResponse).getOutputStream();
   }
 
   @Test
@@ -185,12 +188,15 @@ class ViewServletTest
     String message = "Unable to parse form content";
     when(httpServletRequest.getPathInfo()).thenThrow(new BadMessageException(400, message));
     underTest.service(httpServletRequest, servletResponse);
-    verify(servletResponse).sendError(SC_BAD_REQUEST, message);
-    // BadMessageException is a client error — must not produce WARN or ERROR log noise
+    // NEXUS-53528: message written to the response body (see return400BadRequestOnBadRequestException).
+    verify(servletResponse).setStatus(SC_BAD_REQUEST);
+    verify(servletResponse).setContentType("text/plain;charset=utf-8");
+    verify(servletResponse).getOutputStream();
+    // BadMessageException is a QuietException — client error, must not produce WARN or ERROR log noise
     assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
     assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
-    // Should log at trace level to avoid stack traces in cloud environments where debug is enabled
-    assertThat(log.logs(), hasItem(logLevel(Level.TRACE)));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.INFO))));
+    assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
   }
 
   @Test
@@ -226,7 +232,23 @@ class ViewServletTest
     doThrow(re).when(defaultResponseSender).send(any(), any(), any());
     assertThrows(IOException.class, () -> underTest.service(httpServletRequest, servletResponse));
 
+    // EofException is a QuietException — logged at DEBUG, not WARN
     assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
+  }
+
+  @Test
+  void testQuietExceptionIsLoggedAtDebug() throws ServletException, IOException {
+    when(httpServletRequest.getPathInfo()).thenReturn("maven-central/some/path");
+
+    // EofException is a QuietException
+    doThrow(new EofException()).when(defaultResponseSender).send(any(), any(), any());
+    assertThrows(EofException.class, () -> underTest.service(httpServletRequest, servletResponse));
+
+    // QuietException should be logged at DEBUG level, not WARN or ERROR
+    assertThat(log.logs(), not(hasItem(logLevel(Level.INFO))));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(log.logs(), hasItem(logLevel(Level.DEBUG)));
   }
 
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {

@@ -182,5 +182,39 @@ describe('AuditFilterSidebar', () => {
       renderSidebar({ disabled: true });
       expect(screen.getByRole('button', { name: /reset filters/i })).toBeDisabled();
     });
+
+    it('should NOT disable initiator input when disabled prop is true (prevents focus loss)', () => {
+      // the initiator input should never be disabled even during loading to prevent focus loss when typing
+      renderSidebar({ disabled: true });
+      const initiatorInput = screen.getByPlaceholderText(/filter by initiator/i);
+      expect(initiatorInput).not.toBeDisabled();
+    });
+  });
+
+  describe('Initiator Filter', () => {
+    it('should call onInitiatorChange when typing in initiator input', async () => {
+      renderSidebar();
+      const input = screen.getByPlaceholderText(/filter by initiator/i);
+      await userEvent.type(input, 'admin');
+      expect(mockOnInitiatorChange).toHaveBeenCalled();
+    });
+
+    it('should allow typing multiple characters without losing focus', async () => {
+      renderSidebar();
+      const input = screen.getByPlaceholderText(/filter by initiator/i);
+      await userEvent.type(input, 'admin-user');
+      expect(mockOnInitiatorChange).toHaveBeenCalledTimes('admin-user'.length);
+      expect(input).toHaveFocus(); // directly assert focus is retained
+    });
+
+    it('should display initiator value from filters', () => {
+      const filtersWithInitiator: AuditFilters = {
+        ...defaultFilters,
+        initiator: 'admin',
+      };
+      renderSidebar({ filters: filtersWithInitiator });
+      const input = screen.getByPlaceholderText(/filter by initiator/i) as HTMLInputElement;
+      expect(input.value).toBe('admin');
+    });
   });
 });

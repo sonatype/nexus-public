@@ -122,7 +122,6 @@ export interface AssetXO {
   createdBy?: string;
   createdByIp?: string; // mapped from API but intentionally not rendered — privacy concern
   // Format-specific attributes are serialized by @JsonAnyGetter in AssetXO
-  // These arrive as top-level keys named by format (e.g., "terraformbackend": {"serial": 123})
   [key: string]: unknown; // Allow dynamic format-specific attributes
   attributes?: Record<string, unknown>;
   registryUrl?: string;

@@ -696,7 +696,7 @@ export default class ExtJS {
 
   /**
    * This function will wait for the ExtJS application to be fully loaded before executing the callback.
-   * NOTE: This no longer waits for permissions to be loaded (NEXUS-52583). The UI renders immediately
+   * NOTE: This no longer waits for permissions to be loaded (NEXUS-53199). The UI renders immediately
    * and permissions are loaded asynchronously in the background. Use waitForPermissions() if you need
    * to wait for permissions specifically.
    * @param callback
@@ -705,7 +705,7 @@ export default class ExtJS {
     const interval = setInterval(() => {
       try {
         // Only wait for ExtJS application to be initialized, NOT permissions
-        // This allows the UI to render immediately and load permissions in background (NEXUS-52583)
+        // This allows the UI to render immediately and load permissions in background (NEXUS-53199)
         if (Ext.getApplication()) {
           clearInterval(interval);
           callback();
@@ -719,7 +719,7 @@ export default class ExtJS {
   /**
    * Wait for ExtJS to be fully initialized.
    * Returns a Promise that resolves when ExtJS is ready.
-   * NOTE: This no longer waits for permissions (NEXUS-52583).
+   * NOTE: This no longer waits for permissions (NEXUS-53199).
    * @returns {Promise<void>}
    */
   static waitForExtJsReady() {

@@ -29,6 +29,8 @@ import { Copy, Download, FileCheck2, FileText, KeyRound, Shield } from 'lucide-r
 
 import { restClient } from '@/utils/api';
 
+import './OciAttestationsCard.scss';
+
 interface AttestationRow {
   digest: string;
   artifactType: string;
@@ -448,7 +450,7 @@ function ArtifactTypeCell({ artifactType }: { artifactType: string | null | unde
   if (needsTooltip) {
     return (
       <Tooltip content={artifactType}>
-        <Text size="1" style={{ cursor: 'default' }}>{display}</Text>
+        <Text size="1" className="nxrm-oci-attestations-card__tooltip-text">{display}</Text>
       </Tooltip>
     );
   }
@@ -473,7 +475,7 @@ function CopyButton({ value, label }: { value: string; label: string }): JSX.Ele
         size="1"
         onClick={handleCopy}
         aria-label={label}
-        style={{ padding: '0 2px' }}
+        className="nxrm-oci-attestations-card__copy-button"
       >
         <Copy size={12} color={copied ? 'var(--green-9)' : 'var(--gray-9)'} />
       </Button>

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Flex, Box, Text } from '@radix-ui/themes';
+import { Flex, Text } from '@radix-ui/themes';
 import { Check, Circle, ChevronRight } from 'lucide-react';
 
 import type { NistPhase } from './types';

@@ -292,6 +292,9 @@ const APIConstants = {
       get USER_TOKENS() {
         return `${this.BASE_URL}security/user-tokens`;
       },
+      get SERVICE_ACCOUNT_TOKENS() {
+        return `${this.BASE_URL}security/service-account-tokens`;
+      },
       get TAGS() {
         return `${this.BASE_URL}tags`;
       },
@@ -333,6 +336,9 @@ const APIConstants = {
       },
       get EVALUATION_SETTINGS_WITH_REPOS() {
         return `${this.BASE_URL}evaluation/settings-with-repos`;
+      },
+      get EVALUATION_REPOSITORIES() {
+        return `${this.BASE_URL}evaluation/repositories`;
       },
     },
     SYSTEM_INFORMATION: 'service/rest/atlas/system-information',

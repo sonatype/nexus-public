@@ -78,7 +78,6 @@ export function useUnsavedChangesWarning(isDirty: boolean, formId: string): void
       // Register this form as dirty
       if (!window.dirty.includes(formId)) {
         window.dirty.push(formId);
-        console.debug(`[UnsavedChanges] Added "${formId}" to dirty list:`, window.dirty);
       }
       isRegisteredRef.current = true;
     } else if (isRegisteredRef.current) {
@@ -86,7 +85,6 @@ export function useUnsavedChangesWarning(isDirty: boolean, formId: string): void
       const index = window.dirty.indexOf(formId);
       if (index > -1) {
         window.dirty.splice(index, 1);
-        console.debug(`[UnsavedChanges] Removed "${formId}" from dirty list:`, window.dirty);
       }
       isRegisteredRef.current = false;
     }
@@ -97,7 +95,7 @@ export function useUnsavedChangesWarning(isDirty: boolean, formId: string): void
   // can suppress the dialog for programmatic reloads after save.
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (window.dirty && window.dirty.includes(formId)) {
+      if (window.dirty?.includes(formId)) {
         event.preventDefault();
         event.returnValue = '';
         return '';
@@ -149,7 +147,6 @@ export function clearDirtyState(formId: string): void {
     const index = window.dirty.indexOf(formId);
     if (index > -1) {
       window.dirty.splice(index, 1);
-      console.debug(`[UnsavedChanges] Cleared "${formId}" from dirty list:`, window.dirty);
     }
   }
 }

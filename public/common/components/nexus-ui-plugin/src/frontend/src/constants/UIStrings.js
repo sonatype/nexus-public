@@ -30,6 +30,7 @@ export default {
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
     NEXT_BUTTON_LABEL: 'Next',
+    UPDATE_BUTTON_LABEL: 'Update',
     SAVE_BUTTON_LABEL: 'Save',
     DELETE_BUTTON_LABEL: 'Delete',
 

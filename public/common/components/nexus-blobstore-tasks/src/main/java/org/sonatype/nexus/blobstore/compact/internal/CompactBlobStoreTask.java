@@ -71,6 +71,8 @@ public class CompactBlobStoreTask
 
   private final AtomicInteger processed = new AtomicInteger();
 
+  private final AtomicInteger failed = new AtomicInteger();
+
   @Autowired
   public CompactBlobStoreTask(
       @Nullable final ChangeRepositoryBlobStoreStore changeBlobstoreStore,
@@ -115,25 +117,44 @@ public class CompactBlobStoreTask
     return () -> {
       CancelableHelper.checkCancellation();
 
-      if (blobStore != null) {
-        String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
-        log.debug("Starting compaction of blob store '{}'", blobStoreName);
-
-        try {
-          checkForConflicts(blobStoreName);
-          blobStore.compact(blobStoreUsageChecker, getBlobsOlderThanField());
-
-          int count = processed.incrementAndGet();
-          log.debug("Completed compaction of blob store '{}'", blobStoreName);
-          progress.info("Compacted {} blob stores", count);
-        }
-        catch (Exception e) {
-          log.error("Failed to compact blob store '{}'", blobStoreName, e);
-        }
-      }
-      else {
+      if (blobStore == null) {
         log.warn("Unable to find blob store: {}", getBlobStoreField());
+        return;
       }
+
+      String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
+      log.debug("Starting compaction of blob store '{}'", blobStoreName);
+
+      try {
+        checkForConflicts(blobStoreName);
+      }
+      catch (Exception e) {
+        // Conflicting or in-progress work (e.g. an active move task or recovery mode) means we skip this
+        // blob store for now. This is not a compaction failure, so it must not fail the task.
+        log.warn("Skipping compaction of blob store '{}': {}", blobStoreName, e.getMessage());
+        log.debug("Conflict detail for blob store '{}'", blobStoreName, e);
+        return;
+      }
+
+      // Allow compaction failures to propagate: ParallelTaskSupport collects them and reports the task as
+      // failed, instead of the run silently appearing successful while soft-deleted blobs remain (NEXUS-53394).
+      // Note: TaskInterruptedException thrown from a worker thread is collected by ParallelTaskSupport's
+      // exceptionHandler like any other exception; the primary thread polls CancelableHelper between futures
+      // to detect cancellation. Worker threads therefore complete their current blob store before stopping.
+      try {
+        blobStore.compact(blobStoreUsageChecker, getBlobsOlderThanField());
+      }
+      catch (Exception e) {
+        // Log before propagating so a per-store failure is visible in the task log even though
+        // ParallelTaskSupport.exceptionHandler collects exceptions silently.
+        log.error("Compaction of blob store '{}' failed ({} failure(s) so far): {}",
+            blobStoreName, failed.incrementAndGet(), e.getMessage());
+        throw e;
+      }
+
+      int count = processed.incrementAndGet();
+      log.debug("Completed compaction of blob store '{}'", blobStoreName);
+      progress.info("Compacted {} blob stores", count);
     };
   }
 

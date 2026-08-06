@@ -352,7 +352,7 @@ export function createGaDetailMachine(gaId: string, initialVersion?: string) {
           const detail = ctx.detail;
           return (
             !ctx.selectedVersion &&
-            !!detail &&
+            Boolean(detail) &&
             detail.versions.length > 0
           );
         },
@@ -360,7 +360,7 @@ export function createGaDetailMachine(gaId: string, initialVersion?: string) {
         // Guard: Should load assets when version is selected but not yet loaded
         shouldLoadAssets: (ctx) => {
           return (
-            !!ctx.selectedVersion &&
+            Boolean(ctx.selectedVersion) &&
             ctx.assets.length === 0 &&
             ctx.lastLoadedVersion !== ctx.selectedVersion
           );

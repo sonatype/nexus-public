@@ -15,6 +15,8 @@ import React from 'react';
 import { Box, Button, Flex, Heading, Text as RadixText } from '@radix-ui/themes';
 import { ChevronRight } from 'lucide-react';
 
+import './PageHeader.scss';
+
 export interface BreadcrumbItem {
   /** Display label */
   label: string;
@@ -139,7 +141,7 @@ export function PageHeader({
 
         {/* Actions */}
         {actions && (
-          <Flex gap="2" style={{ flexShrink: 0 }}>
+          <Flex gap="2" className="nxrm-page-header__actions">
             {actions}
           </Flex>
         )}

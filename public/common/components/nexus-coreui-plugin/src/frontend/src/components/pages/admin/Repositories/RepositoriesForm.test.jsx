@@ -310,6 +310,9 @@ describe('RepositoriesForm', () => {
     when(Axios.get)
       .calledWith(expect.stringContaining(ROUTING_RULES_URL))
       .mockResolvedValue({data: ROUTING_RULES_RESPONSE});
+    when(Axios.get)
+      .calledWith('/service/rest/beta/repositories')
+      .mockResolvedValue({data: []});
   });
 
   it('filters types by format', async () => {
@@ -1379,9 +1382,9 @@ describe('RepositoriesForm', () => {
         expect(screen.getByText('Delete repository?')).toBeInTheDocument();
       });
 
-      // Type repository name to confirm
-      const input = screen.getByPlaceholderText(`Type "${repo.name}" to confirm`);
-      fireEvent.change(input, { target: { value: repo.name } });
+      // Acknowledgement is the literal "Delete" (case-insensitive) — NEXUS-53356.
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      fireEvent.change(input, { target: { value: 'Delete' } });
 
       // Wait for button to become enabled
       await waitFor(() => {

@@ -73,7 +73,7 @@ export function SslCertificatesAddForm({
       setCertificateDetails(details);
       setShowPreview(true);
       setError(null);
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   }, [sslForm, loadCertificateDetails, setError]);

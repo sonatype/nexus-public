@@ -16,6 +16,7 @@
  */
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import {createRouter} from '@sonatype/nexus-ui-plugin';
+import {isSonatypeDevMode} from '@sonatype/nexus-ui-plugin';
 import {ROUTE_NAMES} from './routeNames/routeNames';
 import {browseRoutes} from './routes/browseRoutes';
 import {adminRoutes} from './routes/adminRoutes';
@@ -42,15 +43,7 @@ export function getRouter() {
     ...previewUserRoutes,
 
     // SONATYPE INTERNAL TEST PAGES — standalone (no Settings sidebar) at preview.test* level
-    // Gate: SONATYPE_INTERNAL build flag OR (localStorage flag AND debug mode in URL)
-    // The test hub menu should only appear when running with ?debug parameter
-    ...((typeof __SONATYPE_INTERNAL__ !== 'undefined' && __SONATYPE_INTERNAL__)
-      || (typeof localStorage !== 'undefined'
-          && localStorage.getItem('SONATYPE_INTERNAL') === 'true'
-          && typeof window !== 'undefined'
-          && window.location?.search?.includes('debug'))
-      ? sonatypeInternalTestRoutes
-      : []),
+    ...(isSonatypeDevMode() ? sonatypeInternalTestRoutes : []),
   ];
 
   const missingRoute = {

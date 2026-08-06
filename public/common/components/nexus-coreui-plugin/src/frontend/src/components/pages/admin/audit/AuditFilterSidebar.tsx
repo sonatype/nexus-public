@@ -219,6 +219,7 @@ export function AuditFilterSidebar({
         </Box>
 
         {/* Initiator */}
+        {/* Intentionally not disabled during loading to prevent focus loss while typing */}
         <Box>
           <Text as="p" size="2" weight="bold" mb="2">
             Initiator
@@ -227,7 +228,6 @@ export function AuditFilterSidebar({
             placeholder="Filter by initiator..."
             value={filters.initiator || ''}
             onChange={(e) => onInitiatorChange(e.target.value)}
-            disabled={disabled}
             size="2"
           />
         </Box>

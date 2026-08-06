@@ -12,7 +12,7 @@
  */
 
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Box, Text, Flex, Button, Callout, Spinner, Badge } from '@radix-ui/themes';
 import {
   ExternalLink,
@@ -34,9 +34,9 @@ import {
   SettingsAlert,
 } from '../../../../shared/form';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
-import { PageHeader, useToast } from '../../../../shared';
-import { SamlConfiguration, SamlPageProps } from './types';
-import { useSamlApi } from './useSamlApi';
+import { PageHeader } from '../../../../shared';
+import { SamlPageProps } from './types';
+import { useSamlForm } from './useSamlForm';
 import './SamlPage.scss';
 
 // Shared options for tri-state signature validation selects
@@ -46,188 +46,32 @@ const SIGNATURE_VALIDATION_OPTIONS = [
   { value: 'false', label: 'False' },
 ];
 
-/**
- * Convert tri-state value to API format (null | boolean).
- * Handles string values from select ('default', 'true', 'false') and
- * boolean values from API/state. Defensive for edge cases.
- */
-export function parseSignatureValidation(value: string | boolean | null | undefined): boolean | null {
-  if (value === 'default' || value === null || value === undefined) return null;
-  return value === 'true' || value === true;
-}
-
-const DEFAULT_CONFIG: SamlConfiguration = {
-  entityId: '',
-  idpMetadata: '',
-  usernameAttribute: 'username',
-  firstNameAttribute: 'firstName',
-  lastNameAttribute: 'lastName',
-  emailAttribute: 'email',
-  groupsAttribute: 'groups',
-  // Tri-state: null = Default (backend decides), true = Force enabled, false = Force disabled
-  validateResponseSignature: null,
-  validateAssertionSignature: null,
-};
-
-/**
- * Returns the default SAML configuration with the computed default Entity ID.
- * Uses ExtJS.urlOf() to preserve Nexus context path (e.g., /nexus),
- * then resolves to an absolute URI suitable for SAML Entity ID.
- */
-function getDefaultConfigWithEntityId(): SamlConfiguration {
-  const relativeUrl = ExtJS.urlOf('/service/rest/v1/security/saml/metadata');
-  // Resolve relative URL to absolute URI (ExtJS.urlOf may return relative paths)
-  const absoluteUrl = new URL(relativeUrl, window.location.href).toString();
-  return {
-    ...DEFAULT_CONFIG,
-    entityId: absoluteUrl,
-  };
-}
-
 export function SamlPage({ className }: SamlPageProps) {
   const {
-    loading,
+    config,
+    isConfigured,
+    isInitialLoading,
+    isBusy,
+    isPristine,
+    isConfirmingDelete,
     error,
-    setError,
-    fetchConfiguration,
-    saveConfiguration,
-    deleteConfiguration,
-    getMetadataUrl,
-  } = useSamlApi();
-
-  const [config, setConfig] = useState<SamlConfiguration>(DEFAULT_CONFIG);
-  const [isConfigured, setIsConfigured] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // Toast notifications (app-level provider)
-  const toast = useToast();
+    deleteError,
+    fieldError,
+    handleFieldChange,
+    handleSave,
+    handleDiscard,
+    requestDelete,
+    confirmDelete,
+    cancelDelete,
+    clearError,
+    getAbsoluteMetadataUrl,
+    copyMetadataUrl,
+  } = useSamlForm();
 
   // Permission checks
   const canUpdate = ExtJS.checkPermission('nexus:saml:update');
 
-  // Load initial configuration
-  const loadConfiguration = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const loadedConfig = await fetchConfiguration();
-      if (loadedConfig) {
-        setConfig(loadedConfig);
-        setIsConfigured(true);
-      } else {
-        // Pre-populate the default Entity ID with the metadata URL to match Legacy UI behavior
-        setConfig(getDefaultConfigWithEntityId());
-        setIsConfigured(false);
-      }
-      setValidationErrors({});
-    } catch {
-      // Error already set by hook
-    } finally {
-      setIsLoading(false);
-      setHasChanges(false);
-    }
-  }, [fetchConfiguration]);
-
-  useEffect(() => {
-    loadConfiguration();
-  }, [loadConfiguration]);
-
-  const handleFieldChange = useCallback((field: keyof SamlConfiguration, value: string | boolean | null) => {
-    setConfig((prev) => ({ ...prev, [field]: value }));
-    setHasChanges(true);
-
-    // Clear validation error for this field
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
-      });
-    }
-  }, [validationErrors]);
-
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!config.idpMetadata || config.idpMetadata.trim() === '') {
-      errors.idpMetadata = 'Identity Provider Metadata is required';
-    }
-
-    // Entity ID URI validation (parity with Legacy UI)
-    if (config.entityId && config.entityId.trim() !== '') {
-      const URI_REGEX = /^[a-zA-Z][a-zA-Z0-9+\-.]*:.+$/;
-      if (!URI_REGEX.test(config.entityId.trim())) {
-        errors.entityId = 'Entity ID must be a URI';
-      }
-    }
-
-    if (!config.usernameAttribute || config.usernameAttribute.trim() === '') {
-      errors.usernameAttribute = 'Username Attribute is required';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    // Trim attribute values before saving (parity with Legacy UI)
-    const trimmedConfig: SamlConfiguration = {
-      ...config,
-      entityId: config.entityId?.trim() || '',
-      usernameAttribute: config.usernameAttribute?.trim() || '',
-      firstNameAttribute: config.firstNameAttribute?.trim() || '',
-      lastNameAttribute: config.lastNameAttribute?.trim() || '',
-      emailAttribute: config.emailAttribute?.trim() || '',
-      groupsAttribute: config.groupsAttribute?.trim() || '',
-      // Convert tri-state to API format
-      validateResponseSignature: parseSignatureValidation(config.validateResponseSignature),
-      validateAssertionSignature: parseSignatureValidation(config.validateAssertionSignature),
-    };
-
-    try {
-      await saveConfiguration(trimmedConfig);
-      setIsConfigured(true);
-      setHasChanges(false);
-      toast.success('SAML configuration saved successfully');
-    } catch {
-      // Error already set by hook; keep dirty state so user can retry
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteConfiguration();
-      setConfig(getDefaultConfigWithEntityId());
-      setIsConfigured(false);
-      setHasChanges(false);
-      setShowDeleteConfirm(false);
-      toast.success('SAML configuration deleted successfully');
-    } catch {
-      // Error already set by hook
-    }
-  };
-
-  const handleCancel = () => {
-    loadConfiguration();
-    setShowDeleteConfirm(false);
-  };
-
-  // Resolve relative URL to absolute URI (ExtJS.urlOf may return relative paths)
-  const getAbsoluteMetadataUrl = (): string =>
-    new URL(ExtJS.urlOf(getMetadataUrl()), window.location.href).toString();
-
-  const copyMetadataUrl = () => {
-    navigator.clipboard.writeText(getAbsoluteMetadataUrl());
-    toast.success('Metadata URL copied to clipboard');
-  };
-
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <Box
         className={`saml-page ${className || ''}`}
@@ -249,7 +93,7 @@ export function SamlPage({ className }: SamlPageProps) {
     <Box
       className={`saml-page ${className || ''}`}
       data-testid="saml-page"
-      data-loading={loading ? 'true' : 'false'}
+      data-loading={isBusy ? 'true' : 'false'}
       data-configured={isConfigured ? 'true' : 'false'}
       px={{ initial: '4', md: '6', lg: '6' }}
       py={{ initial: '4', md: '5', lg: '6' }}
@@ -281,7 +125,7 @@ export function SamlPage({ className }: SamlPageProps) {
 
       {/* Alerts */}
       {error && (
-        <SettingsAlert type="error" className="mb-4" onClose={() => setError(null)}>
+        <SettingsAlert type="error" className="mb-4" onClose={clearError}>
           {error}
         </SettingsAlert>
       )}
@@ -315,24 +159,25 @@ export function SamlPage({ className }: SamlPageProps) {
       <SettingsForm
         title=""
         description={undefined}
-        loading={loading}
+        loading={isBusy}
         onSave={canUpdate ? handleSave : undefined}
         onSubmit={undefined}
-        onCancel={canUpdate ? handleCancel : undefined}
-        dirty={hasChanges}
-        pristine={!hasChanges}
+        onCancel={canUpdate ? handleDiscard : undefined}
+        dirty={!isPristine}
+        pristine={isPristine}
+        externalDirtyTracking
         submitLabel="Save"
         submitAnalyticsId="nxrm-saml-save"
         cancelAnalyticsId={undefined}
         data-testid="saml-form"
-        data-dirty={hasChanges ? 'true' : 'false'}
-        data-valid={Object.keys(validationErrors).length === 0 ? 'true' : 'false'}
+        data-dirty={!isPristine ? 'true' : 'false'}
+        data-valid={!fieldError('idpMetadata') && !fieldError('entityId') && !fieldError('usernameAttribute') ? 'true' : 'false'}
         footerExtra={
           isConfigured && canUpdate ? (
             <SettingsButton
               variant="danger"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={loading}
+              onClick={requestDelete}
+              disabled={isBusy}
               icon={Trash2}
               testId="saml-delete-button"
             >
@@ -386,7 +231,7 @@ export function SamlPage({ className }: SamlPageProps) {
             placeholder="Paste your Identity Provider metadata XML here..."
             rows={10}
             required
-            error={validationErrors.idpMetadata}
+            error={fieldError('idpMetadata')}
             helpText="The SAML metadata XML provided by your Identity Provider"
             disabled={!canUpdate}
             className="saml-idp-metadata-textarea"
@@ -399,7 +244,7 @@ export function SamlPage({ className }: SamlPageProps) {
             value={config.entityId || ''}
             onChange={(value) => handleFieldChange('entityId', value)}
             placeholder="https://your-idp.example.com"
-            error={validationErrors.entityId}
+            error={fieldError('entityId')}
             helpText="SAML Service Provider's unique identifying URI (optional - will be auto-generated if not specified)"
             disabled={!canUpdate}
             data-testid="saml-input-entityId"
@@ -408,29 +253,29 @@ export function SamlPage({ className }: SamlPageProps) {
 
         {/* Signature Validation */}
         <SettingsFormSection
-            title="Signature Validation"
-            description="Configure signature validation settings"
+          title="Signature Validation"
+          description="Configure signature validation settings"
         >
           <SettingsSelect
-              name="validateResponseSignature"
-              label="Validate Response Signature"
-              value={config.validateResponseSignature === null || config.validateResponseSignature === undefined ? 'default' : String(config.validateResponseSignature)}
-              onChange={(value) => handleFieldChange('validateResponseSignature', value === 'default' ? null : value === 'true')}
-              options={SIGNATURE_VALIDATION_OPTIONS}
-              helpText="Require a valid signature on SAML responses. 'Default' uses the IdP's signing key presence."
-              disabled={!canUpdate}
-              data-testid="saml-select-validateResponseSignature"
+            name="validateResponseSignature"
+            label="Validate Response Signature"
+            value={config.validateResponseSignature === null || config.validateResponseSignature === undefined ? 'default' : String(config.validateResponseSignature)}
+            onChange={(value) => handleFieldChange('validateResponseSignature', value === 'default' ? null : value === 'true')}
+            options={SIGNATURE_VALIDATION_OPTIONS}
+            helpText="Require a valid signature on SAML responses. 'Default' uses the IdP's signing key presence."
+            disabled={!canUpdate}
+            data-testid="saml-select-validateResponseSignature"
           />
 
           <SettingsSelect
-              name="validateAssertionSignature"
-              label="Validate Assertion Signature"
-              value={config.validateAssertionSignature === null || config.validateAssertionSignature === undefined ? 'default' : String(config.validateAssertionSignature)}
-              onChange={(value) => handleFieldChange('validateAssertionSignature', value === 'default' ? null : value === 'true')}
-              options={SIGNATURE_VALIDATION_OPTIONS}
-              helpText="Require a valid signature on SAML assertions. 'Default' uses the IdP's signing key presence."
-              disabled={!canUpdate}
-              data-testid="saml-select-validateAssertionSignature"
+            name="validateAssertionSignature"
+            label="Validate Assertion Signature"
+            value={config.validateAssertionSignature === null || config.validateAssertionSignature === undefined ? 'default' : String(config.validateAssertionSignature)}
+            onChange={(value) => handleFieldChange('validateAssertionSignature', value === 'default' ? null : value === 'true')}
+            options={SIGNATURE_VALIDATION_OPTIONS}
+            helpText="Require a valid signature on SAML assertions. 'Default' uses the IdP's signing key presence."
+            disabled={!canUpdate}
+            data-testid="saml-select-validateAssertionSignature"
           />
         </SettingsFormSection>
 
@@ -446,7 +291,7 @@ export function SamlPage({ className }: SamlPageProps) {
             onChange={(value) => handleFieldChange('usernameAttribute', value)}
             placeholder="e.g., NameID, uid, email"
             required
-            error={validationErrors.usernameAttribute}
+            error={fieldError('usernameAttribute')}
             helpText="SAML attribute name containing the username"
             disabled={!canUpdate}
             data-testid="saml-input-usernameAttribute"
@@ -502,16 +347,23 @@ export function SamlPage({ className }: SamlPageProps) {
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={showDeleteConfirm}
+        open={isConfirmingDelete}
         testId="delete-saml-config-dialog"
-        onOpenChange={setShowDeleteConfirm}
+        onOpenChange={(open) => { if (!open) cancelDelete(); }}
         title="Delete SAML Configuration"
         message="Are you sure you want to delete the SAML configuration? This will disable SAML authentication and users will no longer be able to log in via SAML."
         confirmLabel="Delete Configuration"
         cancelLabel="Cancel"
         variant="danger"
-        onConfirm={handleDelete}
-      />
+        onConfirm={confirmDelete}
+      >
+        {/* A failed delete keeps the dialog open with the error shown here. */}
+        {deleteError && (
+          <Box mt="3">
+            <SettingsAlert type="error">{deleteError}</SettingsAlert>
+          </Box>
+        )}
+      </ConfirmDialog>
     </Box>
   );
 }

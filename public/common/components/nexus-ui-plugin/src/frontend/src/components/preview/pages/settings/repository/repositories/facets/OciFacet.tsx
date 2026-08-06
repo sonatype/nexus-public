@@ -176,7 +176,7 @@ export function OciFacet({
               placeholder="e.g., ^https://github\.com/acme/.*$"
               required={keylessActive}
               error={
-                keylessActive && !(cosign.identityRegex && cosign.identityRegex.trim())
+                keylessActive && !(cosign.identityRegex?.trim())
                   ? 'Identity regex is required when Keyless enforcement is enabled'
                   : errors?.oci?.cosign?.identityRegex
               }
@@ -191,7 +191,7 @@ export function OciFacet({
               placeholder="e.g., ^https://token\.actions\.githubusercontent\.com$"
               required={keylessActive}
               error={
-                keylessActive && !(cosign.issuerRegex && cosign.issuerRegex.trim())
+                keylessActive && !(cosign.issuerRegex?.trim())
                   ? 'Issuer regex is required when Keyless enforcement is enabled'
                   : errors?.oci?.cosign?.issuerRegex
               }
@@ -309,7 +309,7 @@ function OciProxySection({ formData, onNestedChange, errors }: OciProxySectionPr
             placeholder="https://index.example.com"
             required
             error={
-              !(ociProxy.indexUrl && ociProxy.indexUrl.trim())
+              !(ociProxy.indexUrl?.trim())
                 ? 'Index URL is required when Custom index is selected'
                 : errors?.oci?.ociProxy?.indexUrl
             }

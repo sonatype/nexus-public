@@ -26,8 +26,7 @@ import {
   Tooltip,
 } from '@radix-ui/themes';
 import { useRouter } from '@uirouter/react';
-import { Eye, Copy, X, MoreHorizontal } from 'lucide-react';
-import { ExtJS } from '../../../../../interface/ExtJS';
+import { Copy, X, MoreHorizontal } from 'lucide-react';
 
 import type { Repository, HealthCheckStatus, FirewallStatus } from './repository-list.types';
 import { HealthCheckCell } from '../../../shared/security/HealthCheckCell';

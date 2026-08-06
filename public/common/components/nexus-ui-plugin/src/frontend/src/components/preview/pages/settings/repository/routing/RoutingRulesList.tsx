@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Flex, Text } from '@radix-ui/themes';
+import { Box, Flex, } from '@radix-ui/themes';
 import { 
   Search, 
   ChevronUp, 
@@ -103,11 +103,12 @@ export function RoutingRulesList({ onSelect, onCreate, onPreview }: RoutingRules
           aVal = a.mode || '';
           bVal = b.mode || '';
           break;
-        case 'assignedRepositoryCount':
+        case 'assignedRepositoryCount': {
           aVal = a.assignedRepositoryCount ?? 0;
           bVal = b.assignedRepositoryCount ?? 0;
           const numComparison = (aVal as number) - (bVal as number);
           return sortDirection === 'asc' ? numComparison : -numComparison;
+        }
       }
 
       const comparison = String(aVal).toLowerCase().localeCompare(String(bVal).toLowerCase());
@@ -183,7 +184,7 @@ export function RoutingRulesList({ onSelect, onCreate, onPreview }: RoutingRules
       )}
 
       {/* Empty State - using shared component */}
-      {!loadingRules && !error && sortedRules.length === 0 && (
+      {!(loadingRules || error ) && sortedRules.length === 0 && (
         <EmptyState
           icon={Route}
           title={filter ? 'No matching rules' : 'No Routing Rules'}
@@ -206,13 +207,14 @@ export function RoutingRulesList({ onSelect, onCreate, onPreview }: RoutingRules
       )}
 
       {/* Table */}
-      {!loadingRules && !error && sortedRules.length > 0 && (
+      {!(loadingRules || error ) && sortedRules.length > 0 && (
         <Box className="routing-rules-list__table-wrapper">
           <table className="routing-rules-list__table">
             <thead>
               <tr>
                 <th className="routing-rules-list__th routing-rules-list__th--sortable">
                   <button
+                    type="button"
                     onClick={() => handleSort('name')}
                     className="routing-rules-list__sort-button"
                     aria-label={`Sort by name${sortField === 'name' ? `, ${sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : 'not sorted'}` : ''}`}
@@ -225,6 +227,7 @@ export function RoutingRulesList({ onSelect, onCreate, onPreview }: RoutingRules
                 </th>
                 <th className="routing-rules-list__th routing-rules-list__th--sortable">
                   <button
+                    type="button"
                     onClick={() => handleSort('description')}
                     className="routing-rules-list__sort-button"
                     aria-label={`Sort by description${sortField === 'description' ? `, ${sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : 'not sorted'}` : ''}`}
@@ -237,6 +240,7 @@ export function RoutingRulesList({ onSelect, onCreate, onPreview }: RoutingRules
                 </th>
                 <th className="routing-rules-list__th routing-rules-list__th--sortable routing-rules-list__th--mode">
                   <button
+                    type="button"
                     onClick={() => handleSort('mode')}
                     className="routing-rules-list__sort-button"
                     aria-label={`Sort by mode${sortField === 'mode' ? `, ${sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : 'not sorted'}` : ''}`}
@@ -249,6 +253,7 @@ export function RoutingRulesList({ onSelect, onCreate, onPreview }: RoutingRules
                 </th>
                 <th className="routing-rules-list__th routing-rules-list__th--sortable routing-rules-list__th--repos">
                   <button
+                    type="button"
                     onClick={() => handleSort('assignedRepositoryCount')}
                     className="routing-rules-list__sort-button"
                     aria-label={`Sort by repositories${sortField === 'assignedRepositoryCount' ? `, ${sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : 'not sorted'}` : ''}`}

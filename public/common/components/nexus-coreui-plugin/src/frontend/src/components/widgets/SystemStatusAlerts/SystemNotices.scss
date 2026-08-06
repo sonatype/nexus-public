@@ -41,26 +41,6 @@
     margin-bottom: var(--nx-spacing-2x);
   }
 
-  // overrides for community edition error alerts
-  .ce-banner-over-limit-in-grace-period,
-  .ce-banner-over-limit-grace-period-ended,
-  .ce-banner-over-limit-non-admin {
-    a, button.nx-text-link {
-      font-weight: bold;
-      display: inline;
-    }
-  }
-
-  // overrides for community edition warning alerts - uses design tokens for dark mode
-  .ce-banner-under-limit-grace-period-ended,
-  .ce-banner-nearing-limit-non-admin,
-  .ce-banner-near-limit-never-in-grace-period {
-    a, button.nx-text-link {
-      font-weight: bold;
-      display: inline;
-    }
-  }
-
   // create appropriate space between text and finalize button in finalize upgrade message
   .nxrm-upgrade-alert-needs-upgrade {
     display: flex;

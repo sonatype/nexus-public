@@ -28,6 +28,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -59,15 +60,17 @@ public class OnboardingStateContributorTest
     when(adminPasswordFileManager.exists()).thenReturn(true);
     when(adminPasswordFileManager.getPath()).thenReturn("path/to/file");
 
-    underTest = new OnboardingStateContributor(onboardingConfiguration, onboardingManager, adminPasswordFileManager);
+    underTest =
+        new OnboardingStateContributor(onboardingConfiguration, onboardingManager, adminPasswordFileManager, false);
   }
 
   @Test
   public void testGetState() {
     Map<String, Object> state = underTest.getState();
-    assertThat(state.size(), is(2));
+    assertThat(state.size(), is(3));
     assertThat(state.get("onboarding.required"), is(true));
     assertThat(state.get("admin.password.file"), is("path/to/file"));
+    assertThat(state.get(REACT_ONBOARDING_ENABLED), is(false));
   }
 
   @Test
@@ -75,7 +78,14 @@ public class OnboardingStateContributorTest
     when(onboardingManager.needsOnboarding()).thenReturn(false);
     when(adminPasswordFileManager.exists()).thenReturn(false);
 
-    assertThat(underTest.getState(), nullValue());
+    Map<String, Object> state = underTest.getState();
+
+    // The React onboarding flag is always published so the frontend can read it via NX.State, regardless of whether
+    // the ExtJS wizard has anything else to contribute.
+    assertThat(state.size(), is(1));
+    assertThat(state.get("onboarding.required"), nullValue());
+    assertThat(state.get("admin.password.file"), nullValue());
+    assertThat(state.get(REACT_ONBOARDING_ENABLED), is(false));
   }
 
   @Test
@@ -101,5 +111,25 @@ public class OnboardingStateContributorTest
 
     Map<String, Object> state = underTest.getState();
     assertThat(state.get("admin.password.file"), nullValue());
+  }
+
+  @Test
+  public void testGetState_reactOnboardingFlagPublishedWhenEnabled() {
+    underTest =
+        new OnboardingStateContributor(onboardingConfiguration, onboardingManager, adminPasswordFileManager, true);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state.get(REACT_ONBOARDING_ENABLED), is(true));
+  }
+
+  @Test
+  public void testGetState_reactOnboardingFlagPublishedWhenDisabled() {
+    underTest =
+        new OnboardingStateContributor(onboardingConfiguration, onboardingManager, adminPasswordFileManager, false);
+
+    Map<String, Object> state = underTest.getState();
+
+    assertThat(state.get(REACT_ONBOARDING_ENABLED), is(false));
   }
 }

@@ -20,13 +20,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.content.browse.RebuildBrowseNodesManager;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
+import org.sonatype.nexus.upgrade.datastore.UpgradeContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import org.springframework.stereotype.Component;
 
 /**
  * Resolves an issue where multiple browse nodes were created with the same parent and the same display name.
@@ -41,17 +42,17 @@ public class BrowseNodeMigrationStep_1_1
 
   private static final String TABLE_NAME = "{format}_browse_node";
 
-  private final RebuildBrowseNodesManager rebuildBrowseNodesManager;
+  private final UpgradeContext upgradeContext;
 
-  private List<String> formats;
+  private final List<String> formats;
 
   @Autowired
   public BrowseNodeMigrationStep_1_1(
       final List<Format> formats,
-      final RebuildBrowseNodesManager rebuildBrowseNodesManager)
+      final UpgradeContext upgradeContext)
   {
     this.formats = formats.stream().map(Format::getValue).collect(Collectors.toList());
-    this.rebuildBrowseNodesManager = checkNotNull(rebuildBrowseNodesManager);
+    this.upgradeContext = checkNotNull(upgradeContext);
   }
 
   @Override
@@ -64,7 +65,8 @@ public class BrowseNodeMigrationStep_1_1
     for (String format : formats) {
       migrate(format, connection);
     }
-    rebuildBrowseNodesManager.setRebuildOnSart(true);
+    // Signals RebuildBrowseNodesManager (TASKS phase) to rebuild browse nodes when it starts.
+    upgradeContext.setFlag(RebuildBrowseNodesManager.REBUILD_BROWSE_NODES_ON_START);
   }
 
   private void migrate(final String formatName, final Connection conn) throws SQLException {

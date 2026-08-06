@@ -109,7 +109,10 @@
   </select>
 
   <select id="countUnnormalized" resultType="int">
-    SELECT COUNT(component_id) FROM ${format}_component WHERE normalized_version IS NULL;
+    SELECT COUNT(component_id)
+      FROM ${format}_component
+     WHERE normalized_version IS NULL
+        OR normalized_version = '';
   </select>
 
   <select id="browseComponents" resultType="ComponentData">
@@ -137,9 +140,11 @@
   </select>
 
   <select id="browseUnnormalized" resultType="ComponentData">
-    SELECT * FROM ${format}_component WHERE normalized_version IS NULL
+    SELECT * FROM ${format}_component
+     WHERE (normalized_version IS NULL 
+            OR normalized_version = '')
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
-    ORDER BY component_id LIMIT #{limit};
+     ORDER BY component_id LIMIT #{limit};
   </select>
 
   <select id="selectAssetBlobById"

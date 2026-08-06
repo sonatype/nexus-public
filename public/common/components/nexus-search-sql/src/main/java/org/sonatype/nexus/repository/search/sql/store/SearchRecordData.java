@@ -779,9 +779,9 @@ public class SearchRecordData
     // for BOTH the INSERT and UPDATE clauses, doubling the parameter count.
     //
     // Per-clause usage (then multiply by 2 for INSERT + UPDATE):
-    // - paths: 2× per clause (join + toQuotedTsVector) = 4× total
+    // - paths: 2× per clause (join + toTsVector) = 4× total
     // - All other collections: 1× per clause (toTsVector) = 2× total
-    int insertUpdateParamCount = (paths.size() * 2) + // join + toQuotedTsVector
+    int insertUpdateParamCount = (paths.size() * 2) + // join + toTsVector
         uploaders.size() +
         uploaderIps.size() +
         keywords.size() +

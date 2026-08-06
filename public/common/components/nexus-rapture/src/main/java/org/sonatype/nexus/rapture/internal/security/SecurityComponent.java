@@ -27,6 +27,7 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.anonymous.AnonymousHelper;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 import org.sonatype.nexus.security.privilege.Privilege;
@@ -146,6 +147,10 @@ public class SecurityComponent
     UserXO userXO = null;
 
     Subject subject = securitySystem.getSubject();
+    // Anonymous subjects must NOT be reported here even after NEXUS-47113: the ExtJS UI uses
+    // getUser() == null as the signal to show the Sign In button. Returning a populated UserXO
+    // for anonymous would hide the button and strand the UI in an anonymous session after logout.
+    // See getPermissions() below for the anonymous permission path.
     if (subject != null && subject.isAuthenticated()) {
       userXO = new UserXO();
       userXO.setAuthenticated(subject.isAuthenticated());
@@ -171,7 +176,8 @@ public class SecurityComponent
   public List<PermissionXO> getPermissions() {
     List<PermissionXO> permissions = null;
     Subject subject = securitySystem.getSubject();
-    if (subject != null && (subject.isAuthenticated() || subject.isRemembered())) {
+    if (subject != null
+        && (subject.isAuthenticated() || subject.isRemembered() || AnonymousHelper.isAnonymous(subject))) {
       permissions = calculatePermissions(subject);
     }
     return permissions;

@@ -13,7 +13,6 @@
 
 import { renderHook, act } from '@testing-library/react';
 import { useSearchNavigation } from '../useSearchNavigation';
-import { SearchResult } from '../unified.types';
 
 // Mock @uirouter/react to avoid UIRouter context requirement
 const mockGo = jest.fn();

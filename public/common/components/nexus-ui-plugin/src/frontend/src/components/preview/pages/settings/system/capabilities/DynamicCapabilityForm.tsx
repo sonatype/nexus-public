@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, } from 'react';
 import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
 import { Trash2, Loader2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -23,8 +23,6 @@ import {
   SettingsCheckbox,
   SettingsTextArea,
   SettingsButton,
-  SettingsAlert,
-  SettingsSelect,
   SettingsCombobox,
   SettingsTransferList,
 } from '../../../../shared/form';
@@ -88,13 +86,11 @@ export function DynamicCapabilityForm({
   isEnabled: isEnabledProp,
   onEnabledChange,
 }: DynamicCapabilityFormProps) {
-  const { createCapability, updateCapability, deleteCapability } = useCapabilitiesApi();
+  const { createCapability, updateCapability } = useCapabilitiesApi();
 
   // Use XState form hook
   const {
     form,
-    capability: loadedCapability,
-    isCreate: hookIsCreate,
   } = useCapabilitiesForm({
     capabilityId: isCreate ? undefined : capability?.id,
     capability: capability || undefined,
@@ -331,6 +327,8 @@ export function DynamicCapabilityForm({
               availableLabel="Available"
               selectedLabel="Selected"
               helpText={field.helpText}
+              error={fieldError}
+              required={field.required}
               disabled={field.disabled || field.readOnly}
             />
           );
@@ -439,8 +437,6 @@ export function DynamicCapabilityForm({
             placeholder="Select repository..."
           />
         );
-
-      case 'string':
       default:
         // Loading state for fields with storeApi
         if (field.storeApi && STORE_API_TO_REST[field.storeApi] && storeOptions[field.id] === undefined) {
@@ -491,7 +487,7 @@ export function DynamicCapabilityForm({
           />
         );
     }
-  }, [formData?.properties, form.validationErrors, handleFieldChange, repoOptions, storeOptions, capabilityType.id]);
+  }, [formData?.properties, form.validationErrors, handleFieldChange, repoOptions, storeOptions, form.touched]);
 
   const formFields = capabilityType.formFields || [];
 

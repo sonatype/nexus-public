@@ -32,7 +32,7 @@ jest.mock('@radix-ui/themes', () => {
           id={id}
           role="combobox"
           className={className}
-          disabled={props['disabled']}
+          disabled={props.disabled}
           aria-invalid={props['aria-invalid']}
           {...props}
         >
@@ -131,6 +131,16 @@ describe('SettingsSelect', () => {
     it('sets aria-invalid when error is present', () => {
       render(<SettingsSelect {...defaultProps} error="Error" />);
       expect(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('sets aria-required when required (NEXUS-53625 A7)', () => {
+      render(<SettingsSelect {...defaultProps} required />);
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-required', 'true');
+    });
+
+    it('sets aria-required to false when not required (NEXUS-53625 A7)', () => {
+      render(<SettingsSelect {...defaultProps} />);
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-required', 'false');
     });
 
     it('can be focused', () => {

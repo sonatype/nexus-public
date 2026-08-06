@@ -148,7 +148,16 @@ export default {
       TEST_CONNECTION: 'Test Connection',
       TEST_CONNECTION_ERROR: 'Connection failed, check the logs for more information',
       TEST_CONNECTION_SUCCESS: 'Connection succeeded',
-      TESTING: 'Testing connection'
+      TESTING: 'Testing connection',
+      PRE_SIGNED_URL: {
+        LABEL: 'Direct Download (SAS URLs)',
+        SUBLABEL: 'Reduces server bandwidth and improves download speed.',
+        CHECKBOX_LABEL: 'Redirect downloads directly to Azure Blob Storage',
+        RBAC_NOTE: "Requires the 'Storage Blob Delegator' role on the storage account. Verified on save.",
+        RBAC_ERROR: 'Could not enable direct download: the configured Azure principal cannot mint signed URLs. ' +
+                    "Grant the 'Storage Blob Delegator' role on the storage account to the configured identity, " +
+                    'then try again.'
+      }
     },
 
     GOOGLE: {

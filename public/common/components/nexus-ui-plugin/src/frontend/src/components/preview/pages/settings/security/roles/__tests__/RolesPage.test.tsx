@@ -63,7 +63,7 @@ jest.mock('../RoleForm', () => {
 });
 
 jest.mock('../RoleProfilePage', () => {
-  const React = jest.requireActual('react');
+  const _React = jest.requireActual('react');
   return {
     RoleProfilePage: () => <div data-testid="role-profile-page">Role Profile Page</div>,
   };

@@ -67,7 +67,7 @@ export function createContentSelectorFormMachine(
   selectorName: string | undefined,
   preloadedSelector?: ContentSelector
 ) {
-  const isEdit = Boolean(selectorName || preloadedSelector);
+  const _isEdit = Boolean(selectorName || preloadedSelector);
 
   return createFormMachine({
     id: `content-selector-form-${selectorName ?? 'new'}`,

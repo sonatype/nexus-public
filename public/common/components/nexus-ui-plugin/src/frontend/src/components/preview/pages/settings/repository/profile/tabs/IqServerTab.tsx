@@ -20,7 +20,6 @@ import {
   ShieldOff,
   AlertTriangle,
   CheckCircle,
-  XCircle,
   ExternalLink,
   Briefcase,
   AlertCircle,

@@ -14,24 +14,10 @@
 .iq-server-page {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  overflow-y: auto;
   padding: var(--space-4);
 
   &__connection-indicator {
     margin-bottom: var(--space-4);
-  }
-
-  &__config-grid {
-    display: grid;
-    grid-template-columns: minmax(280px, 1fr) minmax(240px, 320px);
-    gap: var(--space-6);
-    width: 100%;
-    align-items: start;
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-    }
   }
 
   &__form-column {
@@ -39,9 +25,8 @@
   }
 
   &__sidecar {
-    position: sticky;
-    top: var(--space-4);
     min-width: 0;
+    margin-bottom: var(--space-6);
   }
 
   &__verify-card {
@@ -91,6 +76,21 @@
 
   &__alerts {
     margin-bottom: var(--space-4);
+  }
+
+  &__properties {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin-bottom: var(--space-4);
+  }
+
+  &__properties-label {
+    font-weight: var(--font-weight-medium, 500);
+  }
+
+  &__properties-help {
+    margin-bottom: var(--space-2);
   }
 
   &__loading {
@@ -226,59 +226,6 @@
     color: var(--red-11);
   }
 
-  // Hide the sticky action bar when save confirmation modal is open
-  // Prevents visual clutter with modal showing "save?" and header showing "unsaved"
-  &__form-wrapper--modal-open {
-    .settings-form__action-bar {
-      display: none !important;
-    }
-  }
-
-  &__property-selector {
-    padding: var(--space-3);
-    background: var(--gray-1);
-    border: 1px solid var(--gray-4);
-    border-radius: var(--radius-2);
-  }
-
-  &__property-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    padding: var(--space-1) var(--space-2);
-    background: var(--gray-3);
-    border: 1px solid var(--gray-5);
-    border-radius: var(--radius-2);
-    cursor: pointer;
-    transition: all 0.1s;
-
-    &:hover {
-      background: var(--accent-3);
-      border-color: var(--accent-7);
-    }
-
-    code {
-      font-size: var(--font-size-1);
-      color: var(--gray-12);
-    }
-  }
-
-  &__property-icon {
-    color: var(--gray-9);
-  }
-
-  &__property-docs-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    color: var(--accent-11);
-    text-decoration: none;
-    margin-left: auto;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
 }
 
 // Hide form actions when security summary modal or classic modal is open

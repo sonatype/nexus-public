@@ -62,6 +62,7 @@ const defaultHookReturn = {
   setPage: jest.fn(),
   setPageSize: jest.fn(),
   retry: jest.fn(),
+  refresh: jest.fn(),
 };
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -121,7 +122,7 @@ describe('TagsPageRadix', () => {
       expect(screen.getByText(/of 2/)).toBeInTheDocument();
     });
 
-    it('renders total unfiltered count in page header description', () => {
+    it('renders total unfiltered count inline in the page header', () => {
       mockUseFilteredTags.mockReturnValue({
         ...defaultHookReturn,
         totalUnfilteredItems: 150,
@@ -232,7 +233,7 @@ describe('TagsPageRadix', () => {
   });
 
   describe('name filter', () => {
-    it('calls setFilters when name filter changes', () => {
+    it('calls setFilters when name filter changes (debounced)', async () => {
       const mockSetFilters = jest.fn();
       mockUseFilteredTags.mockReturnValue({
         ...defaultHookReturn,
@@ -244,8 +245,11 @@ describe('TagsPageRadix', () => {
       const filterInput = screen.getByPlaceholderText(/filter tags by name/i);
       fireEvent.change(filterInput, { target: { value: 'release' } });
 
-      expect(mockSetFilters).toHaveBeenCalledWith(
-        expect.objectContaining({ nameFilter: 'release' })
+      // The commit to setFilters is debounced, so it fires after the delay.
+      await waitFor(() =>
+        expect(mockSetFilters).toHaveBeenCalledWith(
+          expect.objectContaining({ nameFilter: 'release' })
+        )
       );
     });
 
@@ -259,7 +263,7 @@ describe('TagsPageRadix', () => {
       expect(screen.getByRole('button', { name: /clear filter/i })).toBeInTheDocument();
     });
 
-    it('calls setFilters with empty nameFilter when clear is clicked', () => {
+    it('calls setFilters with empty nameFilter when clear is clicked (debounced)', async () => {
       const mockSetFilters = jest.fn();
       mockUseFilteredTags.mockReturnValue({
         ...defaultHookReturn,
@@ -270,8 +274,10 @@ describe('TagsPageRadix', () => {
       render(<TagsPageRadix />, { wrapper: TestWrapper });
 
       fireEvent.click(screen.getByRole('button', { name: /clear filter/i }));
-      expect(mockSetFilters).toHaveBeenCalledWith(
-        expect.objectContaining({ nameFilter: '' })
+      await waitFor(() =>
+        expect(mockSetFilters).toHaveBeenCalledWith(
+          expect.objectContaining({ nameFilter: '' })
+        )
       );
     });
   });
@@ -346,7 +352,7 @@ describe('TagsPageRadix', () => {
 
       render(<TagsPageRadix />, { wrapper: TestWrapper });
 
-      const checkboxes = screen.getAllByRole('checkbox');
+      const _checkboxes = screen.getAllByRole('checkbox');
       const textEl = screen.getByText('1-10');
       const parentRow = textEl.parentElement;
       const checkbox = parentRow?.querySelector('button[role="checkbox"]');
@@ -415,10 +421,10 @@ describe('TagsPageRadix', () => {
     });
 
     it('calls createTag API and refreshes on successful create', async () => {
-      const mockRetry = jest.fn();
+      const mockRefresh = jest.fn();
       mockUseFilteredTags.mockReturnValue({
         ...defaultHookReturn,
-        retry: mockRetry,
+        refresh: mockRefresh,
       });
       mockCreateTag.mockResolvedValue({ name: 'new-tag', attributes: null } as any);
 
@@ -437,7 +443,7 @@ describe('TagsPageRadix', () => {
 
       await waitFor(() => {
         expect(mockCreateTag).toHaveBeenCalledWith('new-tag');
-        expect(mockRetry).toHaveBeenCalled();
+        expect(mockRefresh).toHaveBeenCalled();
       });
     });
 
@@ -630,6 +636,64 @@ describe('TagsPageRadix', () => {
       await waitFor(() => {
         expect(mockCreateTag).toHaveBeenCalledWith('new-tag');
       });
+    });
+  });
+
+  describe('tag list refresh after create', () => {
+    it('calls refresh (not retry) after successful tag creation', async () => {
+      const mockRefresh = jest.fn();
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        refresh: mockRefresh,
+      });
+      mockCreateTag.mockResolvedValue({ name: 'new-tag', attributes: null } as any);
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+
+      fireEvent.click(screen.getByTestId('create-tag-button'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\., release-1\.0/i)).toBeInTheDocument();
+      });
+
+      const tagNameInput = screen.getByPlaceholderText(/e\.g\., release-1\.0/i);
+      fireEvent.change(tagNameInput, { target: { value: 'new-tag' } });
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(mockCreateTag).toHaveBeenCalledWith('new-tag');
+        expect(mockRefresh).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('does NOT call refresh when tag creation fails', async () => {
+      const mockRefresh = jest.fn();
+      mockToastError.mockClear();
+      mockUseFilteredTags.mockReturnValue({
+        ...defaultHookReturn,
+        refresh: mockRefresh,
+      });
+      mockCreateTag.mockRejectedValue(new Error('Already exists'));
+
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+
+      fireEvent.click(screen.getByTestId('create-tag-button'));
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\., release-1\.0/i)).toBeInTheDocument();
+      });
+
+      const tagNameInput = screen.getByPlaceholderText(/e\.g\., release-1\.0/i);
+      fireEvent.change(tagNameInput, { target: { value: 'new-tag' } });
+      fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(mockCreateTag).toHaveBeenCalledWith('new-tag');
+        expect(mockToastError).toHaveBeenCalled();
+      });
+
+      // Refresh should NOT be called on failure
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
   });
 

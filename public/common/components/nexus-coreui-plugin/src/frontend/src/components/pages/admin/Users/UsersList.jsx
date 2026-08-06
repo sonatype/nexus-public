@@ -45,8 +45,11 @@ import UIStrings from '../../../../constants/UIStrings';
 const {USERS: {LIST: LABELS}} = UIStrings;
 const {COLUMNS} = LABELS;
 
-export default function UsersList({onCreate, onEdit}) {
-  const [current, send] = useMachine(Machine, {devTools: true});
+export default function UsersList({onCreate, onEdit, initialSourceFilter = 'default', onSourceFilterChange}) {
+  const [current, send] = useMachine(Machine, {
+    devTools: true,
+    context: {sourceFilter: initialSourceFilter},
+  });
   const isLoading = current.matches('loading') || current.matches('loadingSources');
   const {data, sources = {}, error, filter, sourceFilter} = current.context;
 
@@ -65,7 +68,10 @@ export default function UsersList({onCreate, onEdit}) {
   const sortByStatus = () => send({type: 'SORT_BY_STATUS'});
 
   const onUserIdFilterChange = (value) => send({type: 'FILTER', filter: value});
-  const onSourceFilterChange = (value) => send({type: 'FILTER_BY_SOURCE', filter: value});
+  const handleSourceFilterChange = (value) => {
+    send({type: 'FILTER_BY_SOURCE', filter: value});
+    onSourceFilterChange?.(value);
+  };
   const canCreate = ExtJS.checkPermission('nexus:users:create');
 
   const create = () => {
@@ -126,7 +132,7 @@ export default function UsersList({onCreate, onEdit}) {
                     id="userSourceFilter"
                     name="userSourceFilter"
                     value={sourceFilter}
-                    onChange={onSourceFilterChange}
+                    onChange={handleSourceFilterChange}
                 >
                   {Object.values(sources).map(({id, name}) => (
                       <option key={id} value={id}>{name}</option>

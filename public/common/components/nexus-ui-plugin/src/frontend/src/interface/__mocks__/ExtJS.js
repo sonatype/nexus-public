@@ -93,4 +93,5 @@ export default class ExtJS {
   static search = jest.fn();
   static isExtJsRendered = jest.fn(() => true);
   static waitForExtJs = jest.fn((callback) => callback());
+  static waitForPermissions = jest.fn().mockResolvedValue(undefined);
 }

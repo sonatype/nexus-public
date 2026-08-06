@@ -89,7 +89,7 @@ export function GASearchPage({
         artifactId: initialArtifactId,
       });
     }
-  }, []); // Only on mount
+  }, [initialArtifactId, initialGroupId, initialQuery, search]); // Only on mount
 
   /**
    * Handle search submission.

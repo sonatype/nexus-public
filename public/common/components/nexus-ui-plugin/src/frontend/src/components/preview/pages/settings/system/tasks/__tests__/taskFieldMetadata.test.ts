@@ -11,7 +11,28 @@
  * property of their respective owners.
  */
 
-import { TASK_FIELD_UI, TASK_TYPE_REPO_FILTERS, TaskFieldMeta, TaskRepoFilter } from '../taskFieldMetadata';
+import {
+  TASK_FIELD_UI,
+  TASK_TYPE_REPO_FILTERS,
+  MULTI_REPO_TASK_TYPES,
+  TaskFieldMeta,
+  TaskRepoFilter,
+  TASK_TYPE_FIELD_OVERRIDES,
+  resolveTaskFieldMeta,
+  getTaskFieldMeta,
+  PLAN_RECONCILE_TYPE_ID,
+  EXECUTE_RECONCILE_PLAN_TYPE_ID,
+  TASK_SCOPE_DATES,
+  resolveDefaultScope,
+  ALL_BLOB_STORES,
+  mdyToIso,
+  isoToMdy,
+  isSingletonTaskType,
+  isManualOnlyTaskType,
+  filterCreatableTaskTypes,
+  SINGLETON_TASK_TYPES,
+  MANUAL_ONLY_TASK_TYPES,
+} from '../taskFieldMetadata';
 
 describe('taskFieldMetadata', () => {
   describe('allowAll flag on repositoryName', () => {
@@ -242,6 +263,27 @@ describe('taskFieldMetadata', () => {
       const filter: TaskRepoFilter = { formats: ['test'], types: ['hosted'], includeAll: false };
       expect(filter.formats).toEqual(['test']);
     });
+
+    it('NEXUS-53354 Maven rebuild metadata: formats=[maven2], types=[hosted], includeAll=true (mirrors RebuildMaven2MetadataTaskDescriptor)', () => {
+      const filter: TaskRepoFilter = TASK_TYPE_REPO_FILTERS['repository.maven.rebuild-metadata'].repositoryName;
+      expect(filter.formats).toEqual(['maven2']);
+      expect(filter.types).toEqual(['hosted']);
+      expect(filter.includeAll).toBe(true);
+    });
+
+    it('NEXUS-53354 npm rebuild metadata: formats=[npm], types=[hosted], includeAll=true (mirrors BaseRebuildNpmMetadataTaskDescriptor)', () => {
+      const filter: TaskRepoFilter = TASK_TYPE_REPO_FILTERS['repository.npm.rebuild-metadata'].repositoryName;
+      expect(filter.formats).toEqual(['npm']);
+      expect(filter.types).toEqual(['hosted']);
+      expect(filter.includeAll).toBe(true);
+    });
+
+    it('NEXUS-53354 Composer rebuild metadata: formats=[composer], types=[hosted], includeAll=true (mirrors RebuildComposerMetadataTaskDescriptor)', () => {
+      const filter: TaskRepoFilter = TASK_TYPE_REPO_FILTERS['repository.composer.rebuild-metadata'].repositoryName;
+      expect(filter.formats).toEqual(['composer']);
+      expect(filter.types).toEqual(['hosted']);
+      expect(filter.includeAll).toBe(true);
+    });
   });
 
   describe('TASK_TYPE_REPO_FILTERS — facet and versionPolicy filters (NEXUS-53044)', () => {
@@ -295,6 +337,14 @@ describe('taskFieldMetadata', () => {
       expect(filter?.formats).toBeUndefined();
       expect(filter?.types).toBeUndefined();
     });
+
+    it('NEXUS-53354 Remove SNAPSHOT: facets=[RemoveSnapshotsFacet], versionPolicies=[!RELEASE], includeAll=true (mirrors RemoveSnapshotsTaskDescriptor)', () => {
+      const filter = TASK_TYPE_REPO_FILTERS['repository.maven.remove-snapshots']?.repositoryName;
+      expect(filter).toBeDefined();
+      expect(filter?.facets).toEqual(['org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet']);
+      expect(filter?.versionPolicies).toEqual(['!RELEASE']);
+      expect(filter?.includeAll).toBe(true);
+    });
   });
 
   describe('external.metadata.repository.format', () => {
@@ -312,5 +362,397 @@ describe('taskFieldMetadata', () => {
       const meta = TASK_FIELD_UI['external.metadata.repository.format'];
       expect(meta?.required).toBe(false);
     });
+  });
+
+  describe('NEXUS-53354 Composer field metadata', () => {
+    it('vendor renders as a non-required string with help text and placeholder', () => {
+      const meta = TASK_FIELD_UI['vendor'];
+      expect(meta).toBeDefined();
+      expect(meta?.label).toBe('Vendor');
+      expect(meta?.type).toBe('string');
+      expect(meta?.required).toBe(false);
+      expect(meta?.helpText).toMatch(/vendor/i);
+      expect(meta?.placeholder).toBeDefined();
+    });
+
+    it('baseUrl renders as a non-required URL field with help text referencing the Base URL Capability', () => {
+      const meta = TASK_FIELD_UI['baseUrl'];
+      expect(meta).toBeDefined();
+      expect(meta?.label).toBe('Base URL');
+      expect(meta?.type).toBe('url');
+      expect(meta?.required).toBe(false);
+      expect(meta?.helpText).toMatch(/Base URL Capability/i);
+    });
+  });
+
+  describe('NEXUS-53354 minimumRetained min boundary', () => {
+    it('accepts -1 to match RemoveSnapshotsTaskDescriptor.withMinimumValue(-1)', () => {
+      expect(TASK_FIELD_UI.minimumRetained.min).toBe(-1);
+    });
+
+    it('helpText explains the -1 = delete all semantic', () => {
+      expect(TASK_FIELD_UI.minimumRetained.helpText).toMatch(/-1/);
+      expect(TASK_FIELD_UI.minimumRetained.helpText).toMatch(/delete all/i);
+    });
+  });
+
+  describe('MULTI_REPO_TASK_TYPES sync invariant', () => {
+    it('every task type in MULTI_REPO_TASK_TYPES has a corresponding entry in TASK_TYPE_REPO_FILTERS', () => {
+      expect([...MULTI_REPO_TASK_TYPES].every((id) => id in TASK_TYPE_REPO_FILTERS)).toBe(true);
+    });
+  });
+
+  describe('NEXUS-53360 ScriptTask + H2BackupTask field metadata', () => {
+    it('TaskFieldMeta interface accepts an optional rows property', () => {
+      const meta: TaskFieldMeta = { label: 'Test', type: 'text', rows: 8 };
+      expect(meta.rows).toBe(8);
+    });
+
+    it('language renders as a string field (matches ScriptTaskDescriptor StringTextFormField)', () => {
+      const meta = TASK_FIELD_UI['language'];
+      expect(meta).toBeDefined();
+      expect(meta?.label).toBe('Language');
+      expect(meta?.type).toBe('string');
+      expect(meta?.helpText).toMatch(/script language/i);
+    });
+
+    it('language stays required by default (descriptor field is MANDATORY)', () => {
+      // No explicit required flag — relies on the metadata default (required !== false).
+      expect(TASK_FIELD_UI['language'].required).toBeUndefined();
+    });
+
+    it('source renders as a multi-line text area, NOT a checkbox', () => {
+      // Regression: source has no initial value, so restTemplateToTaskType's fallback
+      // heuristic (value === '' => checkbox) would mis-render it without this metadata.
+      const meta = TASK_FIELD_UI['source'];
+      expect(meta).toBeDefined();
+      expect(meta?.label).toBe('Script Source');
+      expect(meta?.type).toBe('text');
+      expect(meta?.type).not.toBe('checkbox');
+      expect(meta?.helpText).toMatch(/script source/i);
+    });
+
+    it('source declares a larger row count for proper sizing', () => {
+      expect(TASK_FIELD_UI['source'].rows).toBeGreaterThan(4);
+    });
+
+    it('multinode is an optional checkbox matching TaskDescriptorSupport constants', () => {
+      const meta = TASK_FIELD_UI['multinode'];
+      expect(meta).toBeDefined();
+      expect(meta?.type).toBe('checkbox');
+      // Mirrors MULTINODE_LABEL / MULTINODE_HELP in TaskDescriptorSupport.java
+      expect(meta?.label).toBe('Multi node');
+      expect(meta?.helpText).toBe('Run task on all nodes in the cluster.');
+    });
+
+    it('location (H2BackupTask) remains a string path field', () => {
+      const meta = TASK_FIELD_UI['location'];
+      expect(meta).toBeDefined();
+      expect(meta?.type).toBe('string');
+    });
+  });
+});
+
+describe('resolveTaskFieldMeta', () => {
+  it('prefers a per-task override over the shared field-id default', () => {
+    // onlyNotify has a generic "Notify Only" default but Data Repair Plan overrides the copy.
+    expect(TASK_FIELD_UI.onlyNotify.label).toBe('Notify Only');
+    const meta = resolveTaskFieldMeta(PLAN_RECONCILE_TYPE_ID, 'onlyNotify');
+    expect(meta?.label).toBe('Keep database records when blob is missing:');
+    expect(meta?.type).toBe('checkbox');
+  });
+
+  it('falls back to the shared default when no override exists for the task', () => {
+    expect(resolveTaskFieldMeta('repository.cleanup', 'onlyNotify')).toBe(TASK_FIELD_UI.onlyNotify);
+  });
+
+  it('falls back to the shared default for an unknown task type', () => {
+    expect(resolveTaskFieldMeta('totally.unknown.task', 'repositoryName')).toBe(TASK_FIELD_UI.repositoryName);
+  });
+
+  it('returns undefined for a genuinely unknown field (preserving the caller heuristic)', () => {
+    expect(resolveTaskFieldMeta(PLAN_RECONCILE_TYPE_ID, 'doesNotExist')).toBeUndefined();
+    expect(resolveTaskFieldMeta(undefined, 'doesNotExist')).toBeUndefined();
+  });
+});
+
+describe('Data Repair Plan field overrides (blobstore.planReconciliation)', () => {
+  const overrides = TASK_TYPE_FIELD_OVERRIDES[PLAN_RECONCILE_TYPE_ID];
+
+  it('declares an override set keyed by the backend type id', () => {
+    expect(PLAN_RECONCILE_TYPE_ID).toBe('blobstore.planReconciliation');
+    expect(overrides).toBeDefined();
+  });
+
+  it('renders the top banner as an info alert and the bottom banner as a warning alert', () => {
+    expect(overrides.topAlertBanner.type).toBe('alertBanner');
+    expect(overrides.topAlertBanner.bannerVariant).toBe('info');
+    expect(overrides.topAlertBanner.required).toBe(false);
+    expect(overrides.bottomAlertBanner.type).toBe('alertBanner');
+    expect(overrides.bottomAlertBanner.bannerVariant).toBe('warning');
+  });
+
+  // Freezes the banner copy verbatim against the backend source. The REST `/v1/tasks/templates`
+  // contract does not carry banner text, so there is nothing to snapshot against at runtime; this
+  // locks the hard-coded copy so any accidental edit (or a deliberate backend change that a dev
+  // forgets to mirror) is caught in CI. Source of truth: PlanReconciliationTaskDescriptor / its
+  // Messages interface (planReconciliationTopPanelMessage / planReconciliationBottomPanelMessage).
+  // Detecting backend-side drift automatically would require exposing the copy via the REST
+  // template — a deliberately deferred initiative (see ticket scope, NEXUS-47948 era).
+  it('freezes the banner copy verbatim to match the backend Messages source', () => {
+    expect(overrides.topAlertBanner.bannerText).toBe(
+      'This task generates recovery plans to reconcile blobstores and their associated repositories. ' +
+        'To apply generated plans, run the "Repair - Execute Data Repair Plan" task. ' +
+        'You can view created plans using the /v1/reconcile/plan API'
+    );
+    expect(overrides.bottomAlertBanner.bannerText).toBe(
+      'Tasks do not run automatically after creation. You must manually run the task after saving.'
+    );
+  });
+
+  it('orders the top banner first and the bottom banner last', () => {
+    expect(overrides.topAlertBanner.order).toBe(0);
+    expect(overrides.bottomAlertBanner.order).toBe(999);
+  });
+
+  it('makes onlyNotify a checkbox with the missing-blob copy', () => {
+    expect(overrides.onlyNotify.type).toBe('checkbox');
+    expect(overrides.onlyNotify.helpText).toContain('do not remove database records');
+  });
+
+  it('makes blobstoreName a blobstore-filtering multi-select (optional)', () => {
+    expect(overrides.blobstoreName.type).toBe('itemselect');
+    expect(overrides.blobstoreName.multiSelect).toBe(true);
+    expect(overrides.blobstoreName.filterByBlobstore).toBe(true);
+    expect(overrides.blobstoreName.required).toBe(false);
+  });
+
+  it('makes repositoryName an optional multi-select without its own blob-store filter flag', () => {
+    expect(overrides.repositoryName.type).toBe('itemselect');
+    expect(overrides.repositoryName.multiSelect).toBe(true);
+    expect(overrides.repositoryName.required).toBe(false);
+    expect(overrides.repositoryName.filterByBlobstore).toBeUndefined();
+  });
+
+  it('keeps taskScope a required radio field', () => {
+    expect(overrides.taskScope.type).toBe('taskScope');
+    expect(overrides.taskScope.required).toBe(true);
+  });
+
+  it('hides the name template field and flags it as the task-name default', () => {
+    expect(overrides.name.hidden).toBe(true);
+    expect(overrides.name.isNameTemplate).toBe(true);
+    expect(overrides.name.required).toBe(false);
+  });
+
+  it('groups the duration fields under scope=duration and the date fields under scope=dates', () => {
+    expect(overrides.sinceDays.scope).toBe('duration');
+    expect(overrides.sinceHours.scope).toBe('duration');
+    expect(overrides.sinceMinutes.scope).toBe('duration');
+    expect(overrides.reconcileStartDate.scope).toBe('dates');
+    expect(overrides.reconcileEndDate.type).toBe('date');
+    expect(overrides.reconcileEndDate.scope).toBe('dates');
+    // None of the timespan fields are required (backend defaults sinceMinutes=30).
+    expect(overrides.sinceMinutes.required).toBe(false);
+    expect(overrides.reconcileStartDate.required).toBe(false);
+  });
+
+  it('exposes the all-blob-stores sentinel constant', () => {
+    expect(ALL_BLOB_STORES).toBe('(All Blob Stores)');
+  });
+
+  it('defines no cloud-only fields — the task is self-hosted (pro + community) only', () => {
+    // blobstore.planReconciliation is not registered in the cloud edition
+    // (@ConditionalOnEdition(pro, community); cloud=true reverted in NEXUS-47948), so there is no
+    // cloud variant and no cloud-only field (e.g. the old planOptionsLabelId static info).
+    expect(overrides.planOptionsLabelId).toBeUndefined();
+  });
+});
+
+describe('date helpers (Classic m/d/Y <-> input YYYY-MM-DD)', () => {
+  it('converts m/d/Y to ISO for date inputs', () => {
+    expect(mdyToIso('06/24/2026')).toBe('2026-06-24');
+    expect(mdyToIso('6/4/2026')).toBe('2026-06-04');
+  });
+
+  it('passes already-ISO values through unchanged', () => {
+    expect(mdyToIso('2026-06-24')).toBe('2026-06-24');
+  });
+
+  it('returns empty string for blank/invalid input', () => {
+    expect(mdyToIso('')).toBe('');
+    expect(mdyToIso(undefined)).toBe('');
+    expect(mdyToIso('not-a-date')).toBe('');
+  });
+
+  it('converts ISO back to leading-zero m/d/Y for backend round-trip parity', () => {
+    expect(isoToMdy('2026-06-24')).toBe('06/24/2026');
+    expect(isoToMdy('')).toBe('');
+  });
+
+  it('round-trips a date without drift', () => {
+    expect(isoToMdy(mdyToIso('06/24/2026'))).toBe('06/24/2026');
+  });
+});
+
+describe('singleton task types', () => {
+  it('treats blobstore.planReconciliation as a singleton', () => {
+    expect(isSingletonTaskType(PLAN_RECONCILE_TYPE_ID)).toBe(true);
+    expect(SINGLETON_TASK_TYPES.has(PLAN_RECONCILE_TYPE_ID)).toBe(true);
+  });
+
+  it('treats blobstore.executeReconciliationPlan as a singleton', () => {
+    expect(isSingletonTaskType(EXECUTE_RECONCILE_PLAN_TYPE_ID)).toBe(true);
+    expect(SINGLETON_TASK_TYPES.has(EXECUTE_RECONCILE_PLAN_TYPE_ID)).toBe(true);
+  });
+
+  it('does not treat unrelated task types as singletons', () => {
+    expect(isSingletonTaskType('repository.cleanup')).toBe(false);
+    expect(isSingletonTaskType('db.backup')).toBe(false);
+    expect(isSingletonTaskType(undefined)).toBe(false);
+  });
+
+  describe('filterCreatableTaskTypes', () => {
+    const types = [
+      { id: PLAN_RECONCILE_TYPE_ID, name: 'Repair - Data Repair Plan' },
+      { id: 'repository.cleanup', name: 'Cleanup' },
+      { id: 'db.backup', name: 'Backup' },
+    ];
+
+    it('drops a singleton type once an instance already exists', () => {
+      const result = filterCreatableTaskTypes(types, new Set([PLAN_RECONCILE_TYPE_ID]));
+      expect(result.map((t) => t.id)).toEqual(['repository.cleanup', 'db.backup']);
+    });
+
+    it('keeps the singleton type when none exists yet', () => {
+      const result = filterCreatableTaskTypes(types, new Set());
+      expect(result.map((t) => t.id)).toContain(PLAN_RECONCILE_TYPE_ID);
+    });
+
+    it('never drops a non-singleton type, even when an instance already exists', () => {
+      const result = filterCreatableTaskTypes(types, new Set(['repository.cleanup', 'db.backup']));
+      expect(result.map((t) => t.id)).toEqual([
+        PLAN_RECONCILE_TYPE_ID,
+        'repository.cleanup',
+        'db.backup',
+      ]);
+    });
+  });
+});
+
+describe('manual-only task types', () => {
+  it('treats blobstore.planReconciliation as manual-only', () => {
+    expect(isManualOnlyTaskType(PLAN_RECONCILE_TYPE_ID)).toBe(true);
+    expect(MANUAL_ONLY_TASK_TYPES.has(PLAN_RECONCILE_TYPE_ID)).toBe(true);
+  });
+
+  it('does not treat unrelated task types as manual-only', () => {
+    expect(isManualOnlyTaskType('repository.cleanup')).toBe(false);
+    expect(isManualOnlyTaskType('db.backup')).toBe(false);
+    expect(isManualOnlyTaskType(undefined)).toBe(false);
+  });
+});
+
+describe('resolveDefaultScope', () => {
+  it('returns the constant for the Execute Data Repair Plan task type id', () => {
+    expect(EXECUTE_RECONCILE_PLAN_TYPE_ID).toBe('blobstore.executeReconciliationPlan');
+    expect(TASK_SCOPE_DATES).toBe('dates');
+    // Task 2 adds the override entry with defaultScope:'dates' so this resolves to 'dates'.
+    expect(resolveDefaultScope(EXECUTE_RECONCILE_PLAN_TYPE_ID)).toBe('dates');
+  });
+
+  it('defaults to "duration" for tasks without a defaultScope override', () => {
+    expect(resolveDefaultScope('blobstore.planReconciliation')).toBe('duration');
+    expect(resolveDefaultScope(undefined)).toBe('duration');
+    expect(resolveDefaultScope('some.unknown.task')).toBe('duration');
+  });
+});
+
+describe('Execute Data Repair Plan overrides', () => {
+  const T = EXECUTE_RECONCILE_PLAN_TYPE_ID;
+
+  it('registers all Execute fields with the right types and order', () => {
+    expect(resolveTaskFieldMeta(T, 'topAlertBanner')?.type).toBe('alertBanner');
+    expect(resolveTaskFieldMeta(T, 'topAlertBanner')?.bannerText).toContain('executes recovery plans');
+    expect(resolveTaskFieldMeta(T, 'planOptionsLabelId')?.type).toBe('staticInfo');
+    expect(resolveTaskFieldMeta(T, 'planOptionsLabelId')?.label).toBe('Execution Information');
+    expect(resolveTaskFieldMeta(T, 'planOptionsLabelId')?.cloudLabel).toBe('Plan Options');
+    expect(resolveTaskFieldMeta(T, 'planInformationLabelId')?.type).toBe('staticInfo');
+    expect(resolveTaskFieldMeta(T, 'planInformationLabelId')?.label).toBe('Plan Information');
+    expect(resolveTaskFieldMeta(T, 'planInformation')?.type).toBe('planInformation');
+    expect(resolveTaskFieldMeta(T, 'blobstoreName')?.type).toBe('itemselect');
+    expect(resolveTaskFieldMeta(T, 'blobstoreName')?.filterByBlobstore).toBeUndefined();
+    expect(resolveTaskFieldMeta(T, 'blobstoreName')?.readOnly).toBe(true);
+    expect(resolveTaskFieldMeta(T, 'repositoryName')?.type).toBe('itemselect');
+    expect(resolveTaskFieldMeta(T, 'repositoryName')?.readOnly).toBe(true);
+    expect(resolveTaskFieldMeta(T, 'taskScope')?.type).toBe('taskScope');
+    expect(resolveTaskFieldMeta(T, 'taskScope')?.readOnly).toBe(true);
+    expect(resolveTaskFieldMeta(T, 'reconcileStartDate')?.scope).toBe('dates');
+    expect(resolveTaskFieldMeta(T, 'reconcileStartDate')?.readOnly).toBe(true);
+    expect(resolveTaskFieldMeta(T, 'reconcileEndDate')?.scope).toBe('dates');
+    expect(resolveTaskFieldMeta(T, 'reconcileEndDate')?.readOnly).toBe(true);
+    expect(resolveTaskFieldMeta(T, 'name')?.hidden).toBe(true);
+    expect(resolveTaskFieldMeta(T, 'name')?.isNameTemplate).toBe(true);
+  });
+
+  it('defaults the Execute task scope to "dates"', () => {
+    expect(resolveDefaultScope(T)).toBe('dates');
+  });
+
+  it('does not declare any duration fields for the Execute task', () => {
+    const entry = TASK_TYPE_FIELD_OVERRIDES[T];
+    expect(entry.sinceDays).toBeUndefined();
+    expect(entry.sinceHours).toBeUndefined();
+    expect(entry.sinceMinutes).toBeUndefined();
+  });
+});
+
+describe('malware.remediator (NEXUS-53359)', () => {
+  it('renders the requirements field as an info banner, not a checkbox', () => {
+    const meta = resolveTaskFieldMeta('malware.remediator', 'malwareRemediatorTaskRequirements');
+    expect(meta?.type).toBe('alertBanner');
+    expect(meta?.bannerVariant).toBe('info');
+    expect(meta?.bannerText).toMatch(/Repository Firewall enabled with the Security-Malicious policy/);
+    expect(meta?.neverSerialize).toBe(true);
+  });
+
+  it('renders the cleanup message field as a warning banner, not a checkbox', () => {
+    const meta = resolveTaskFieldMeta('malware.remediator', 'enableMalwareCleanupMessage');
+    expect(meta?.type).toBe('alertBanner');
+    expect(meta?.bannerVariant).toBe('warning');
+    expect(meta?.bannerText).toMatch(/may remove dependencies currently in use/);
+    expect(meta?.neverSerialize).toBe(true);
+  });
+
+  it('maps enableMalwareCleanup to a checkbox with the descriptor label/help', () => {
+    const meta = resolveTaskFieldMeta('malware.remediator', 'enableMalwareCleanup');
+    expect(meta?.type).toBe('checkbox');
+    expect(meta?.label).toBe('Enable Malware Cleanup');
+    expect(meta?.helpText).toMatch(/scheduled to be cleaned up/);
+  });
+
+  it('maps repositoryName to a repo selector with the descriptor help text', () => {
+    const meta = resolveTaskFieldMeta('malware.remediator', 'repositoryName');
+    expect(meta?.type).toBe('repo');
+    expect(meta?.helpText).toBe('Select the proxy repository to remove malware from');
+  });
+
+  it('filters repositoryName to proxy maven2/npm/nuget/pypi with an All entry', () => {
+    expect(TASK_TYPE_REPO_FILTERS['malware.remediator']).toEqual({
+      repositoryName: { types: ['proxy'], formats: ['maven2', 'npm', 'nuget', 'pypi'], includeAll: true },
+    });
+  });
+
+  it('removes the stale, descriptor-less global enableMalwareCleanup* defaults', () => {
+    expect(getTaskFieldMeta('enableMalwareCleanup')).toBeUndefined();
+    expect(getTaskFieldMeta('enableMalwareCleanupMessage')).toBeUndefined();
+  });
+
+  it('banner fields are neverSerialize — empty values must not be sent to the backend', () => {
+    // validateTask iterates data.properties and serializeProperties sends them to the API.
+    // neverSerialize: true ensures both display-only fields are stripped before the payload
+    // is built. If either loses the flag, the empty string would reach the backend.
+    expect(resolveTaskFieldMeta('malware.remediator', 'malwareRemediatorTaskRequirements')?.neverSerialize).toBe(true);
+    expect(resolveTaskFieldMeta('malware.remediator', 'enableMalwareCleanupMessage')?.neverSerialize).toBe(true);
   });
 });

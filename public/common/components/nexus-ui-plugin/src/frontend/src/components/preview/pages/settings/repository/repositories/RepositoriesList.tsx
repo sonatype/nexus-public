@@ -13,7 +13,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Badge,
   Box,
   Card,
   DropdownMenu,
@@ -21,36 +20,24 @@ import {
   Grid,
   Heading,
   Inset,
-  Link,
   Spinner,
   Table,
   Text,
   TextField,
   Tooltip,
-  Button,
   IconButton,
   Select,
 } from '@radix-ui/themes';
 import {
   ArrowUpDown,
-  Ban,
-  CheckCircle,
   Copy,
   Database,
-  ExternalLink,
-  Eye,
-  Filter,
-  Pencil,
   Plus,
   Search,
-  Shield,
-  ShieldCheck,
-  Trash2,
   X,
   MoreHorizontal,
 } from 'lucide-react';
-import { ConfirmDialog } from '../../../../shared/form';
-import { DeleteConfirmationModal, PageHeader, TablePagination } from '../../../../shared';
+import { DeleteConfirmationModal, TablePagination } from '../../../../shared';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { restClient, ENDPOINTS } from '../../../../../../interface/api';
 import { useRouter } from '@uirouter/react';
@@ -59,18 +46,13 @@ import {
   EmptyState,
   ErrorState,
   HelpSection,
-  FormatBadge,
   SortableTableHeader,
   useToast,
 } from '../../../../shared';
-import { TypeBadge } from './TypeBadge';
 
-import { RepositoryListTable } from '../../../browse/repository-list/RepositoryListTable';
 import { BrowseFilterSidebar } from '../../../browse/repository-list/BrowseFilterSidebar';
-import { MobileFilterDrawer } from '../../../search/unified/MobileFilterDrawer';
 
 import { useRepositoriesApi } from './useRepositoriesApi';
-import { ensureTrailingSlash } from '../../../../../../utils/url';
 import {
   Repository,
   RepositoriesListProps,
@@ -80,7 +62,6 @@ import {
   TYPE_LABELS,
   HealthCheckStatus,
 } from './types';
-import { FormatIcon } from './components/FormatIcon';
 import { HealthCheckCell } from '../../../../shared/security/HealthCheckCell';
 import { FirewallCell } from '../../../../shared/security/FirewallCell';
 
@@ -103,6 +84,11 @@ function isIqServerEnabled(): boolean {
   catch { return false; }
 }
 
+function hasFirewall(): boolean {
+  try { return ExtJS.state().getValue('clm')?.hasFirewall ?? false; }
+  catch { return false; }
+}
+
 function canUpdateHealthCheck(): boolean {
   try { return ExtJS.checkPermission('nexus:healthcheck:update'); }
   catch { return false; }
@@ -111,6 +97,17 @@ function canUpdateHealthCheck(): boolean {
 function canReadFirewallStatus(): boolean {
   try { return ExtJS.checkPermission('nexus:iq-violation-summary:read'); }
   catch { return false; }
+}
+
+/**
+ * Health Check (RHC) is a lower-tier feature that is superseded by the IQ Server's Firewall product. When the
+ * customer already has Firewall configured (IQ Server is enabled AND the persisted {@code clm.hasFirewall} flag
+ * is {@code true}), the RHC column is redundant — the Firewall Report column shows richer data — so we hide it,
+ * matching the classic UI behaviour (NX.Conditions.hasNoFirewall in ExtJS). Requires the healthcheck:update
+ * permission on top of the tier gate (NEXUS-53278).
+ */
+function shouldShowHealthCheckColumn(): boolean {
+  return canUpdateHealthCheck() && !(isIqServerEnabled() && hasFirewall());
 }
 
 /**
@@ -147,14 +144,14 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
   const [repoToDelete, setRepoToDelete] = useState<Repository | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [firewallStatus, setFirewallStatus] = useState<Record<string, FirewallStatusData>>({});
-  const [firewallLoaded, setFirewallLoaded] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [_firewallLoaded, setFirewallLoaded] = useState(false);
+  const [_showMobileFilters, _setShowMobileFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { error, setError, fetchRepositories, deleteRepository } = useRepositoriesApi();
 
-  const [showHealthCheckColumn, setShowHealthCheckColumn] = useState(() => canUpdateHealthCheck());
+  const [showHealthCheckColumn, setShowHealthCheckColumn] = useState(() => shouldShowHealthCheckColumn());
   const [showFirewallColumn, setShowFirewallColumn] = useState(() => isIqServerEnabled() && canReadFirewallStatus());
 
   // Toast notifications
@@ -202,10 +199,11 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
         setLoadingRepos(false);
       }
 
-      // Re-check permissions after ExtJS state may have loaded
-      const healthEnabled = canUpdateHealthCheck();
+      // Re-check permissions and IQ/Firewall state after ExtJS state may have loaded. Health Check must be
+      // hidden when Firewall is configured (NEXUS-53278), so re-evaluate the full gate — do not just
+      // latch to true — otherwise a late-arriving clm state that flips hasFirewall on won't hide the column.
+      setShowHealthCheckColumn(shouldShowHealthCheckColumn());
       const firewallEnabled = isIqServerEnabled() && canReadFirewallStatus();
-      if (healthEnabled) setShowHealthCheckColumn(true);
       if (firewallEnabled) setShowFirewallColumn(true);
 
       const [health, firewall] = await Promise.all([
@@ -216,7 +214,11 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       setFirewallStatus(firewall);
       setFirewallLoaded(true);
 
-      if (Object.keys(health).length > 0) setShowHealthCheckColumn(true);
+      // Only surface the Health Check column when the tier gate allows it; the presence of health data
+      // alone is not sufficient (a Firewall-licensed customer may still have leftover RHC records).
+      if (Object.keys(health).length > 0 && shouldShowHealthCheckColumn()) {
+        setShowHealthCheckColumn(true);
+      }
       if (Object.keys(firewall).length > 0) setShowFirewallColumn(true);
     };
 
@@ -363,9 +365,10 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     } finally {
       setLoadingRepos(false);
     }
-    const healthEnabled = canUpdateHealthCheck();
+    // Mirrors the mount-effect logic — re-evaluate the tier gate rather than latching, so retries pick up
+    // any change in the IQ/Firewall configuration since the last attempt (NEXUS-53278).
+    setShowHealthCheckColumn(shouldShowHealthCheckColumn());
     const firewallEnabled = isIqServerEnabled() && canReadFirewallStatus();
-    if (healthEnabled) setShowHealthCheckColumn(true);
     if (firewallEnabled) setShowFirewallColumn(true);
 
     const [health, firewall] = await Promise.all([
@@ -375,7 +378,9 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     setHealthStatus(health);
     setFirewallStatus(firewall);
     setFirewallLoaded(true);
-    if (Object.keys(health).length > 0) setShowHealthCheckColumn(true);
+    if (Object.keys(health).length > 0 && shouldShowHealthCheckColumn()) {
+      setShowHealthCheckColumn(true);
+    }
     if (Object.keys(firewall).length > 0) setShowFirewallColumn(true);
   }, [fetchRepositories, fetchHealthCheck, fetchFirewallStatus, setError]);
 
@@ -455,9 +460,15 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
   // Handle copy URL with toast
   const handleCopyUrlButton = (url: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success('URL copied to clipboard');
-    });
+    // Ensure URL has trailing slash (NEXUS-53999)
+    const urlWithSlash = url.endsWith('/') ? url : `${url}/`;
+    navigator.clipboard.writeText(urlWithSlash)
+      .then(() => {
+        toast.success('URL copied to clipboard');
+      })
+      .catch(() => {
+        toast.error('Failed to copy URL to clipboard');
+      });
   };
 
   // Calculate column count for empty state (Name, Size, Type, Format, BlobStore, Status, URL, Actions)

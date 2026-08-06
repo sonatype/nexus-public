@@ -211,6 +211,29 @@ describe('AdminSecurityDirectoryPage', () => {
     });
   });
 
+  describe('Service Account Tokens Link', () => {
+    it('shows when serviceAccountEnabled flag is true', async () => {
+      givenPermissions({ [Permissions.SERVICE_ACCOUNTS.READ]: true });
+      givenExtJSState({ ...defaultExtState(), serviceAccountEnabled: true }, 'PRO');
+
+      await runLinkVisiblityTestForSecurityPage(UIStrings.SERVICE_ACCOUNT_TOKENS.MENU);
+    });
+
+    it('does not show when serviceAccountEnabled flag is false', async () => {
+      givenPermissions({ [Permissions.SERVICE_ACCOUNTS.READ]: true, [Permissions.SETTINGS.READ]: true });
+      givenExtJSState({ ...defaultExtState(), serviceAccountEnabled: false }, 'PRO');
+
+      await runLinkNotVisibleTestForSecurityPage(UIStrings.SERVICE_ACCOUNT_TOKENS.MENU);
+    });
+
+    it('does not show without service accounts read permission', async () => {
+      givenPermissions({ [Permissions.SERVICE_ACCOUNTS.READ]: false, [Permissions.SETTINGS.READ]: true });
+      givenExtJSState({ ...defaultExtState(), serviceAccountEnabled: true }, 'PRO');
+
+      await runLinkNotVisibleTestForSecurityPage(UIStrings.SERVICE_ACCOUNT_TOKENS.MENU);
+    });
+  });
+
   async function runLinkVisiblityTestForSecurityPage(menu) {
     await runLinkVisiblityTest(ROUTE_NAMES.ADMIN.SECURITY.DIRECTORY, 'Security', menu);
   }

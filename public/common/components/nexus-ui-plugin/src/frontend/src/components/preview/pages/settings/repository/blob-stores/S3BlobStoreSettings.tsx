@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Cloud, Plus, Trash2, AlertTriangle, Info } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import {
@@ -24,7 +24,7 @@ import {
   SettingsButton
 } from '../../../../shared/form';
 import { useS3DropdownValues } from './useBlobStores';
-import type { BlobStoreFormData, S3BlobStoreConfig, S3FailoverBucket } from './types';
+import type { BlobStoreFormData, S3BlobStoreConfig, } from './types';
 import './S3BlobStoreSettings.scss';
 
 interface S3BlobStoreSettingsProps {
@@ -137,7 +137,6 @@ export default function S3BlobStoreSettings({
   errors = {},
 }: S3BlobStoreSettingsProps) {
   const { values: dropdownValues, loading: dropdownLoading } = useS3DropdownValues();
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']));
 
   const isProEdition = ExtJS.isProEdition();
   const isFailoverAvailable = ExtJS.state().getValue('S3FailoverEnabled', false);
@@ -148,18 +147,6 @@ export default function S3BlobStoreSettings({
     encryption: {},
     advancedBucketConnection: {},
     failoverBuckets: []
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
   };
 
   const updateBucket = (field: string, value: unknown) => {

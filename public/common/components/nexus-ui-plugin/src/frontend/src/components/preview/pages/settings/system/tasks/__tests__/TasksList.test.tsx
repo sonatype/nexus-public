@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 import { TasksList } from '../TasksList';
@@ -88,12 +88,23 @@ jest.mock('../../../../../shared', () => ({
     </div>
   ),
   useToast: () => mockToast,
-  ConfirmDialog: ({ open, title, message, onConfirm, confirmLabel }: any) => (
+}));
+
+jest.mock('../../../../../shared/modals/DeleteConfirmationModal', () => ({
+  DeleteConfirmationModal: ({ open, entityName, entityType, onConfirm, loading, children }: any) => (
     open ? (
-      <div data-testid="confirm-dialog">
-        <div>{title}</div>
-        <div>{message}</div>
-        <button onClick={onConfirm}>{confirmLabel}</button>
+      <div data-testid="delete-confirmation-modal">
+        <div>Delete {entityType}?</div>
+        <div>This action cannot be undone</div>
+        {entityName && <div>{entityName}</div>}
+        <label>
+          Acknowledgement
+          <input type="text" data-testid="acknowledgement-input" />
+        </label>
+        {children}
+        <button onClick={onConfirm} disabled={loading}>
+          Delete
+        </button>
       </div>
     ) : null
   ),
@@ -344,9 +355,12 @@ describe('TasksList', () => {
       fireEvent.click(screen.getByLabelText('Delete Cleanup Task'));
 
       await waitFor(() => {
-        // Check for the new dialog title and message
-        expect(screen.getByText('Delete Task?')).toBeInTheDocument();
+        // Title uses entityType="task" via DeleteConfirmationModal
+        expect(screen.getByText('Delete task?')).toBeInTheDocument();
         expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument();
+        // Acknowledgement input must be present — single task delete requires the same
+        // verification as the in-form delete (parity fix from NEXUS-53356).
+        expect(screen.getByLabelText(/acknowledgement/i)).toBeInTheDocument();
       });
     });
   });
@@ -368,5 +382,161 @@ describe('TasksList', () => {
 
     const runningIcon = container.querySelector('.tasks-list__status-icon--running');
     expect(runningIcon).not.toBeNull();
+  });
+
+  // NEXUS-53525: the list polls so Status / Last Run / Last Result refresh live.
+  // It polls only while a visible row is non-terminal or inside the short window
+  // after Run/Stop, and goes quiet once everything is stable.
+  describe('live status polling', () => {
+    // mockTasks already contains a RUNNING row (task-3), so the list is "active".
+    const idleTasks: Task[] = mockTasks.map((t) => ({
+      ...t,
+      status: t.status === 'RUNNING' ? 'WAITING' : t.status,
+      stoppable: false,
+      runnable: true,
+    }));
+
+    const flush = () => act(async () => {
+      for (let i = 0; i < 5; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.resolve();
+      }
+    });
+    const advance = async (ms: number) => {
+      await act(async () => {
+        await Promise.resolve();
+        jest.advanceTimersByTime(ms);
+        await Promise.resolve();
+      });
+    };
+    const setVisibility = (state: 'visible' | 'hidden') => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state });
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+    });
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('polls fetchTasks on an interval while a visible row is running', async () => {
+      const fetchTasks = jest.fn().mockResolvedValue(mockTasks);
+      mockedUseTasksApi.mockReturnValue({ ...defaultMockApi, fetchTasks });
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+      await flush();
+      const afterLoad = fetchTasks.mock.calls.length;
+
+      await advance(5000);
+      expect(fetchTasks.mock.calls.length).toBeGreaterThan(afterLoad);
+    });
+
+    it('does not poll when every visible row is in a stable/terminal state', async () => {
+      const fetchTasks = jest.fn().mockResolvedValue(idleTasks);
+      mockedUseTasksApi.mockReturnValue({ ...defaultMockApi, fetchTasks });
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+      await flush();
+      const afterLoad = fetchTasks.mock.calls.length;
+
+      await advance(5000 * 4);
+      expect(fetchTasks.mock.calls.length).toBe(afterLoad); // stays quiet
+    });
+
+    it('pauses while the tab is hidden and resumes with a single catch-up poll', async () => {
+      const fetchTasks = jest.fn().mockResolvedValue(mockTasks);
+      mockedUseTasksApi.mockReturnValue({ ...defaultMockApi, fetchTasks });
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+      await flush();
+
+      setVisibility('hidden');
+      const beforeHidden = fetchTasks.mock.calls.length;
+      await advance(5000 * 3);
+      expect(fetchTasks.mock.calls.length).toBe(beforeHidden);
+
+      await act(async () => { setVisibility('visible'); await Promise.resolve(); });
+      expect(fetchTasks.mock.calls.length).toBe(beforeHidden + 1);
+    });
+
+    it('stops polling after unmount', async () => {
+      const fetchTasks = jest.fn().mockResolvedValue(mockTasks);
+      mockedUseTasksApi.mockReturnValue({ ...defaultMockApi, fetchTasks });
+
+      const { unmount } = renderWithTheme(<TasksList {...defaultProps} />);
+      await flush();
+      await advance(5000);
+      unmount();
+      const afterUnmount = fetchTasks.mock.calls.length;
+
+      await advance(5000 * 4);
+      expect(fetchTasks.mock.calls.length).toBe(afterUnmount);
+    });
+
+    it('opens a refresh window after Run even when all rows are idle', async () => {
+      const fetchTasks = jest.fn().mockResolvedValue(idleTasks);
+      const runTask = jest.fn().mockResolvedValue(undefined);
+      mockedUseTasksApi.mockReturnValue({ ...defaultMockApi, fetchTasks, runTask });
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+      await flush();
+      const beforeRun = fetchTasks.mock.calls.length;
+
+      await act(async () => {
+        fireEvent.click(screen.getByLabelText('Run Cleanup Task'));
+        await Promise.resolve();
+      });
+      expect(runTask).toHaveBeenCalledTimes(1);
+      // Exactly one immediate refresh poll (no duplicate one-shot + poll).
+      expect(fetchTasks.mock.calls.length).toBe(beforeRun + 1);
+
+      // The post-action window keeps refreshing for a few ticks.
+      const afterRun = fetchTasks.mock.calls.length;
+      await advance(5000);
+      expect(fetchTasks.mock.calls.length).toBeGreaterThan(afterRun);
+    });
+
+    // Guard for observed-#2: running task B must not drop a still-running task A.
+    // The list reflects server truth (fetchTasks), so as long as the server still
+    // reports A as RUNNING, the refetch triggered by running B keeps A RUNNING —
+    // there is no local per-row state that B's action could clobber. (The reported
+    // "A reverts to WAITING" was task A finishing sub-second before B was clicked,
+    // confirmed against the live server; not a UI regression.)
+    it('running another task keeps a still-running row running (no clobber)', async () => {
+      const aRunning = mockTasks[2]; // "Index Task" (task-3), status RUNNING
+      const afterRunningB = [
+        { ...mockTasks[0], status: 'RUNNING' as const, stoppable: true, runnable: false }, // task-1 now running
+        mockTasks[1],
+        aRunning, // task-3 STILL running per the server
+      ];
+      const fetchTasks = jest.fn()
+        .mockResolvedValueOnce(mockTasks)     // initial load: task-3 RUNNING
+        .mockResolvedValue(afterRunningB);    // refetch after running task-1
+      const runTask = jest.fn().mockResolvedValue(undefined);
+      mockedUseTasksApi.mockReturnValue({ ...defaultMockApi, fetchTasks, runTask });
+
+      // Target the status BADGE specifically (the row also has a 'Running' in the
+      // description cell), so we assert on the live status, not incidental text.
+      const runningBadge = () =>
+        screen.getByTestId('row-task-3').querySelector('.tasks-list__status-badge--running');
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+      await flush();
+      expect(runningBadge()).not.toBeNull();
+
+      // Run task-1 (B) — its handler refetches the whole list.
+      await act(async () => {
+        fireEvent.click(screen.getByLabelText('Run Cleanup Task'));
+        await Promise.resolve();
+      });
+      await flush();
+      expect(runTask).toHaveBeenCalledWith('task-1');
+
+      // task-3 (A) is NOT reset to WAITING — the refetch preserved its running state.
+      expect(runningBadge()).not.toBeNull();
+    });
   });
 });

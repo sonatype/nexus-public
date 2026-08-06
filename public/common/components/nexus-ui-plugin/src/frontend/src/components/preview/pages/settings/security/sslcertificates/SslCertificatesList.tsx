@@ -173,14 +173,14 @@ export function SslCertificatesList({ onSelect, onCreate }: SslCertificatesListP
       )}
 
       {/* Empty State */}
-      {!loading && !error && sortedCertificates.length === 0 && (
+      {!(loading || error ) && sortedCertificates.length === 0 && (
         <Box className="ssl-certificates-list__empty">
           <Text size="2">There are no SSL certificates available</Text>
         </Box>
       )}
 
       {/* Table */}
-      {!loading && !error && sortedCertificates.length > 0 && (
+      {!(loading || error ) && sortedCertificates.length > 0 && (
         <Box className="ssl-certificates-list__table-wrapper">
           <table className="ssl-certificates-list__table">
             <thead>

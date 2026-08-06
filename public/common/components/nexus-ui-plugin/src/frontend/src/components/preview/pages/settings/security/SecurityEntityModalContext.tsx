@@ -81,7 +81,7 @@ export function SecurityEntityModalProvider({ children }: { children: React.Reac
   };
 
   const modalTitle = useMemo(() => {
-    if (!state.entityType || !state.entityId) return '';
+    if (!(state.entityType && state.entityId)) return '';
     const typeLabel =
       state.entityType === 'role'
         ? 'Role'

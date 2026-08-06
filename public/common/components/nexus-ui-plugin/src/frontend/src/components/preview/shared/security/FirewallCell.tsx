@@ -109,12 +109,12 @@ export function FirewallCell({
     );
   }
 
-  const stillLoading = !firewallLoaded && !firewallStatus;
+  const stillLoading = !(firewallLoaded || firewallStatus);
   const { message } = firewallStatus ?? {};
-  const hasError = !!(firewallStatus?.errorMessage);
+  const hasError = Boolean((firewallStatus?.errorMessage));
 
-  const isUnprotected = !firewallStatus || (!!message && !message.includes('enabled'));
-  const isAudit = !!message?.toLowerCase().includes('audit');
+  const isUnprotected = !firewallStatus || (Boolean(message) && !message.includes('enabled'));
+  const isAudit = Boolean(message?.toLowerCase().includes('audit'));
   const openModal = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (stillLoading) return;

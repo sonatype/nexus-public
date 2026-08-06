@@ -30,27 +30,6 @@ Ext.define('NX.coreui.controller.SearchHelm', {
     var me = this,
         search = me.getController('NX.coreui.controller.Search');
 
-    search.registerCriteria([
-      {
-        id: 'name.raw',
-        group: NX.I18n.get('SearchHelm_Group'),
-        config: {
-          format: 'helm',
-          fieldLabel: NX.I18n.get('SearchHelm_Name_FieldLabel'),
-          width: 250
-        }
-      },
-      {
-        id: 'version',
-        group: NX.I18n.get('SearchHelm_Group'),
-        config: {
-          format: 'helm',
-          fieldLabel: NX.I18n.get('SearchHelm_Version_FieldLabel'),
-          width: 250
-        }
-      }
-    ], me);
-
     search.registerFilter({
       id: 'helm',
       name: 'helm',

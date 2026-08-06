@@ -41,6 +41,7 @@ import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 import org.sonatype.nexus.security.role.RoleContainsItselfException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -84,9 +85,38 @@ public class RoleApiResource
 
   private final SecuritySystem securitySystem;
 
+  private final RoleAssignabilityChecker roleAssignabilityChecker;
+
   @Autowired
-  public RoleApiResource(final SecuritySystem securitySystem) {
+  public RoleApiResource(
+      final SecuritySystem securitySystem,
+      final RoleAssignabilityChecker roleAssignabilityChecker)
+  {
     this.securitySystem = checkNotNull(securitySystem);
+    this.roleAssignabilityChecker = checkNotNull(roleAssignabilityChecker);
+  }
+
+  @Override
+  @GET
+  @Path("/assignable")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:roles:read")
+  public List<RoleXOResponse> getAssignableRoles(
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source)
+  {
+    log.debug("Getting assignable roles for current user");
+
+    try {
+      return securitySystem.listRoles(source)
+          .stream()
+          .filter(role -> roleAssignabilityChecker.isRoleAssignable(role.getRoleId()))
+          .map(RoleXOResponse::fromRole)
+          .sorted(Comparator.comparing(RoleXOResponse::getId))
+          .toList();
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
+    }
   }
 
   @Override

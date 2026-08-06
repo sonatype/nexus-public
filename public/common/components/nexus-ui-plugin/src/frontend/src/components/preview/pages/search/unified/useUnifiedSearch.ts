@@ -160,14 +160,14 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         abortControllerRef.current = abortController;
 
         const searchQuery = ctx.query.trim();
-        const nameOrVersion = ctx.filters['nameOrVersion']?.trim() || '';
+        const nameOrVersion = ctx.filters.nameOrVersion?.trim() || '';
         // Effective search: combine main query + name filter (matches buildQueryParams logic)
         const effectiveSearch = [searchQuery, nameOrVersion].filter(Boolean).join(' ').trim();
 
         if (isMockMode()) {
           const apiFormat =
             ctx.format !== 'all' ? getApiFormat(ctx.format) : undefined;
-          const repositoryFilter = ctx.filters['repository'] || undefined;
+          const repositoryFilter = ctx.filters.repository || undefined;
           const { items, continuationToken } = getMockSearchResults(
             effectiveSearch,
             apiFormat,

@@ -196,12 +196,6 @@ export const FORMATS: Record<SearchFormat, FormatInfo> = {
     apiFormat: 'terraform',
     placeholder: 'Search by module name',
   },
-  terraformbackend: {
-    id: 'terraformbackend',
-    label: 'Terraform Backend',
-    apiFormat: 'terraformbackend',
-    placeholder: 'Search by state file path',
-  },
   yum: {
     id: 'yum',
     label: 'Yum (RPM)',
@@ -286,6 +280,20 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
         type: 'text',
         apiParam: 'composer.package',
         placeholder: 'e.g., console',
+      },
+      {
+        id: 'description',
+        label: 'Description',
+        type: 'text',
+        apiParam: 'composer.description',
+        placeholder: 'Package description',
+      },
+      {
+        id: 'keywords',
+        label: 'Keywords',
+        type: 'text',
+        apiParam: 'composer.keywords',
+        placeholder: 'Package keywords',
       },
     ],
   },
@@ -679,12 +687,6 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
     ],
   },
 
-  // Terraform Backend - minimal filters (state files)
-  terraformbackend: {
-    format: FORMATS.terraformbackend,
-    filters: [REPOSITORY_FILTER],
-  },
-
   // Yum (RPM) - uses yum.name instead of global name
   yum: {
     format: FORMATS.yum,
@@ -716,7 +718,7 @@ export const FORMAT_FILTERS: Record<SearchFormat, FormatFilterConfig> = {
 export const FORMAT_ORDER: SearchFormat[] = [
   'alpine', 'ansiblegalaxy', 'apt', 'cargo', 'cocoapods', 'composer', 'conan', 'conda', 'docker', 'gitlfs',
   'go', 'helm', 'huggingface', 'maven', 'npm', 'nuget', 'p2', 'pub', 'pypi', 'r',
-  'raw', 'rubygems', 'swift', 'terraform', 'terraformbackend', 'yum',
+  'raw', 'rubygems', 'swift', 'terraform', 'yum',
 ];
 
 // =============================================================================
@@ -779,8 +781,8 @@ export function buildQueryParams(
   // Handle combined "nameOrVersion" filter (from UI above results)
   // Smart detection: if input looks like a version, use the 'version' API param
   // Otherwise use 'q' for general name search
-  const nameOrVersion = filters['nameOrVersion'];
-  if (nameOrVersion && nameOrVersion.trim()) {
+  const nameOrVersion = filters.nameOrVersion;
+  if (nameOrVersion?.trim()) {
     const value = nameOrVersion.trim();
     // Detect version-like patterns: starts with digit, or 'v' followed by digit
     const isVersionLike = /^v?\d/.test(value);
@@ -800,21 +802,21 @@ export function buildQueryParams(
   }
 
   // Handle repository filter
-  const repository = filters['repository'];
-  if (repository && repository.trim()) {
+  const repository = filters.repository;
+  if (repository?.trim()) {
     params.set('repository', repository.trim());
   }
 
   // Handle generic 'name' filter (universal API parameter across all formats)
-  const name = filters['name'];
-  if (name && name.trim()) {
+  const name = filters.name;
+  if (name?.trim()) {
     params.set('name', name.trim());
   }
 
   // Handle generic 'version' filter (universal API parameter across all formats)
   // Only add if not already set by nameOrVersion handling
-  const version = filters['version'];
-  if (version && version.trim() && !params.has('version')) {
+  const version = filters.version;
+  if (version?.trim() && !params.has('version')) {
     params.set('version', version.trim());
   }
 
@@ -826,7 +828,7 @@ export function buildQueryParams(
       continue;
     }
     const value = filters[filter.id];
-    if (value && value.trim()) {
+    if (value?.trim()) {
       params.set(filter.apiParam, value.trim());
     }
   }

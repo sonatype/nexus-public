@@ -102,9 +102,11 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
+    // Check for maintenance facet BEFORE deleting browse node to prevent orphaned browse nodes
+    ContentMaintenanceFacet facet = maintenanceFacet(repository);
     deleteBrowseNode(repository, asset);
 
-    return maintenanceFacet(repository).deleteAsset(asset);
+    return facet.deleteAsset(asset);
   }
 
   @Override
@@ -116,9 +118,11 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
+    // Check for maintenance facet BEFORE deleting browse node to prevent orphaned browse nodes
+    ContentMaintenanceFacet facet = maintenanceFacet(repository);
     deleteBrowseNode(repository, component);
 
-    return maintenanceFacet(repository).deleteComponent(component);
+    return facet.deleteComponent(component);
   }
 
   @Override

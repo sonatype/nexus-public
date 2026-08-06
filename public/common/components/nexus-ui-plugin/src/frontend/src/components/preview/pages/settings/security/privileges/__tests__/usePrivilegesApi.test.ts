@@ -266,7 +266,7 @@ describe('usePrivilegesApi', () => {
             type: 'wildcard',
             properties: {},
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });
@@ -331,7 +331,7 @@ describe('usePrivilegesApi', () => {
       await act(async () => {
         try {
           await result.current.deletePrivilege('test-privilege');
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });

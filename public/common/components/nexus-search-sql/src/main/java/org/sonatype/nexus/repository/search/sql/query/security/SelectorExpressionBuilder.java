@@ -161,11 +161,19 @@ public class SelectorExpressionBuilder
         if (changed && current[0] == operand) {
           // The operand has changed, so we need to create a clause for what we've already collected
           createClause.run();
-          compiled.add(operand);
+          compiled.add(element);
           working.clear();
         }
         else if (changed) {
-          consume.run();
+          // Emit all items except the last with the old operator between them.
+          // The last item seeds the new operator group (operator precedence: AND > OR).
+          for (int i = 0; i < working.size() - 1; i++) {
+            compiled.add(working.get(i));
+            compiled.add(current[0]);
+          }
+          Object carry = working.get(working.size() - 1);
+          working.clear();
+          working.add(carry);
         }
         current[0] = (Operand) element;
       }
@@ -175,7 +183,7 @@ public class SelectorExpressionBuilder
     }
 
     if (!working.isEmpty()) {
-      if (!compiled.isEmpty()) {
+      if (!compiled.isEmpty() && !(compiled.get(compiled.size() - 1) instanceof Operand)) {
         compiled.add(current[0]);
       }
       if (current[0] == operand) {

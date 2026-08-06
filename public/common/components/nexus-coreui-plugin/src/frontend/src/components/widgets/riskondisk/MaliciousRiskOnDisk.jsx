@@ -131,7 +131,7 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
         <button
             type="button"
             className="nx-collapsible-items__trigger"
-            onClick={onToggleCollapse || undefined}
+            onClick={onToggleCollapse}
             aria-expanded={isExpanded}
         >
           <div className="risk-on-disk-alert-title">

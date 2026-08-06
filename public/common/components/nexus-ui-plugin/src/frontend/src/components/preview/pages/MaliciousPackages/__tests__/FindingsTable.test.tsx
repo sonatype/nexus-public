@@ -19,7 +19,6 @@ import { Theme } from '@radix-ui/themes';
 import { FindingsTable } from '../FindingsTable';
 import type { MaliciousFinding } from '../types';
 import type { RemediateResponse, FindingsPage, TaskInfo } from '../useMaliciousPackagesData';
-import { FindingDetailPanel } from '../FindingDetailPanel';
 
 function renderWithTheme(ui: React.ReactElement) {
   return render(<Theme>{ui}</Theme>);

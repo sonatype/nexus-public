@@ -94,7 +94,7 @@ export const PREVIEW_FEATURE_FLAGS = {
   'security.crowd': false,           // Coming Soon
   'security.realms': true,           // Enabled — NEXUS-51085
   'security.sslcertificates': false, // Coming Soon
-  'security.usertokens': false,      // Coming Soon
+  'security.usertokens': true,       // Enabled — NEXUS-53608
 
   // =============================================================================
   // SUPPORT SECTION - ALL ENABLED (read-only pages, ready for release)
@@ -119,9 +119,9 @@ export const PREVIEW_FEATURE_FLAGS = {
   'system.api': true,             // Sprint 12 - ENABLED
 
   // =============================================================================
-  // IQ SERVER - Coming Soon
+  // IQ SERVER - ENABLED
   // =============================================================================
-  'iqserver': false,              // Coming Soon
+  'iqserver': true,               // Enabled
 
   // =============================================================================
   // USER ACCOUNT - ENABLED

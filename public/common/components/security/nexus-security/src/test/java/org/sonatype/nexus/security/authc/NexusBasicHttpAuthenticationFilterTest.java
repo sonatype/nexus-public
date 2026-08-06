@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -35,6 +36,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -308,34 +310,18 @@ public class NexusBasicHttpAuthenticationFilterTest
   }
 
   @Test
-  public void testOnAccessDenied_apiKeyToken_usesTokenBasedRateLimit() throws Exception {
-    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
-    injectField(filter, "rateLimiterService", rateLimiterService);
-
-    // Set up request for API key authentication
-    when(request.getAttribute("org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter.principal"))
-        .thenReturn("NuGetApiKey");
-    when(request.getAttribute("org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter.apiKey"))
-        .thenReturn("test-api-key");
-    when(request.getHeader("X-NuGet-ApiKey")).thenReturn("test-api-key");
-    when(request.getAttribute(DefaultSubjectContext.SESSION_CREATION_ENABLED)).thenReturn(null);
-
-    // Create an API key token
+  public void testGetRateLimitKey_forApiKeyToken_computesCorrectHash() throws Exception {
+    // Create an API key token with a known token value
     char[] tokenValue = "test-api-key".toCharArray();
     NexusApiKeyAuthenticationToken apiToken =
         new NexusApiKeyAuthenticationToken("NuGetApiKey", tokenValue, "192.168.1.1");
 
-    // We need to mock the createToken to return our API key token
-    // For this test, we'll directly test the checkRateLimit behavior via getRateLimitKey
-
     String expectedHash = filter.getRateLimitKey(apiToken);
-    when(rateLimiterService.checkByToken(expectedHash)).thenReturn(new RateLimitResult(30L, 6));
 
-    // Since we can't easily mock createToken, we verify the hash logic is correct
+    // Verify the hash is correct
     assertThat(expectedHash.length(), is(64)); // SHA-256 hex string
+    assertThat(expectedHash.matches("[0-9a-f]+"), is(true));
   }
-
-  // ===== Tests for review feedback =====
 
   @Test
   public void testHashToken_nullToken_throwsIllegalArgumentException() throws Exception {
@@ -477,6 +463,209 @@ public class NexusBasicHttpAuthenticationFilterTest
     // Verify the subject principal is used for request attributes
     verify(request).setAttribute(eq("nexus.user.principal"), eq("resolved-admin-user"));
     verify(request).setAttribute(eq("nexus.user.id"), eq("resolved-admin-user"));
+  }
+
+  /**
+   * Malformed base64 in the Authorization header is rethrown as a
+   * {@link NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException} so {@code cleanup}
+   * can answer 400 rather than 500 (NEXUS-53778).
+   */
+  @Test
+  public void testCreateToken_malformedBase64_throwsMalformedAuthorizationHeaderException() {
+    when(request.getHeader("Authorization")).thenReturn("Basic +++invalid===base64+++");
+    when(request.getRemoteAddr()).thenReturn("192.168.1.100");
+
+    assertThrows(NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException.class,
+        () -> filter.createToken(request, response));
+  }
+
+  /**
+   * A base64 blob whose length is not a multiple of four cannot be decoded and is rethrown as
+   * {@link NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException} (NEXUS-53778).
+   */
+  @Test
+  public void testCreateToken_base64WrongLength_throwsMalformedAuthorizationHeaderException() {
+    // 13 chars, all valid base64 alphabet, but the length is not a multiple of four
+    when(request.getHeader("Authorization")).thenReturn("Basic invalidbase64");
+    when(request.getRemoteAddr()).thenReturn("192.168.1.100");
+
+    assertThrows(NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException.class,
+        () -> filter.createToken(request, response));
+  }
+
+  /**
+   * Test that valid base64 credentials create a proper token.
+   */
+  @Test
+  public void testCreateTokenValidBase64ReturnsValidToken() throws Exception {
+    when(request.getHeader("Authorization")).thenReturn("Basic YWRtaW46YWRtaW4xMjM=");
+    when(request.getHeader("Host")).thenReturn("localhost:8081");
+
+    AuthenticationToken token = filter.createToken(request, response);
+
+    assertThat(token, is(notNullValue()));
+    assertThat(token.getPrincipal(), is("admin"));
+  }
+
+  /**
+   * Test that empty credentials (Og==) are handled correctly for anonymous access.
+   */
+  @Test
+  public void testCreateTokenEmptyCredentials() throws Exception {
+    when(request.getHeader("Authorization")).thenReturn("Basic Og==");
+    when(request.getHeader("Host")).thenReturn("localhost:8081");
+
+    AuthenticationToken token = filter.createToken(request, response);
+
+    assertThat(token.getPrincipal(), is(""));
+  }
+
+  /**
+   * A request with no Authorization header is not "malformed": createToken returns a normal,
+   * empty-principal token and does not throw, so the 400 path never fires. Missing credentials stay a
+   * 401 challenge handled by Shiro. Guards the narrowness of the malformed -> 400 mapping (NEXUS-53778).
+   */
+  @Test
+  public void testCreateToken_noAuthorizationHeader_returnsAnonymousToken() {
+    when(request.getHeader("Authorization")).thenReturn(null);
+
+    AuthenticationToken token = filter.createToken(request, response);
+
+    assertThat(token, is(notNullValue()));
+    assertThat(token.getPrincipal(), is(""));
+  }
+
+  /**
+   * End-to-end: drives the real Shiro chain
+   * ({@code onAccessDenied -> super.onAccessDenied -> executeLogin -> createToken}) to prove the
+   * unchecked {@link NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException}
+   * propagates unwrapped all the way to {@code cleanup}, which answers 400. This is the premise of
+   * NEXUS-53778 and guards against a future shiro-web change that wraps createToken failures.
+   */
+  @Test
+  public void testOnAccessDenied_malformedBase64_propagatesToCleanupAsBadRequest() throws Exception {
+    when(request.getHeader("Authorization")).thenReturn("Basic ${NPM_TOKEN}");
+    when(request.getRemoteAddr()).thenReturn("192.168.1.100");
+
+    Exception thrown = assertThrows(
+        NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException.class,
+        () -> filter.onAccessDenied(request, response));
+
+    filter.cleanup(request, response, thrown);
+
+    verify(response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Malformed Authorization header");
+  }
+
+  /**
+   * End-to-end with the pre-auth rate limiter enabled: {@code onAccessDenied} parses the token itself
+   * before delegating to Shiro, so a malformed header must still surface as
+   * {@link NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException} for cleanup to
+   * answer 400 (NEXUS-53778).
+   */
+  @Test
+  public void testOnAccessDenied_malformedBase64_withRateLimiter_propagatesToCleanupAsBadRequest() throws Exception {
+    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
+    injectField(filter, "rateLimiterService", rateLimiterService);
+
+    when(request.getHeader("Authorization")).thenReturn("Basic ${NPM_TOKEN}");
+    when(request.getRemoteAddr()).thenReturn("192.168.1.100");
+
+    Exception thrown = assertThrows(
+        NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException.class,
+        () -> filter.onAccessDenied(request, response));
+
+    filter.cleanup(request, response, thrown);
+
+    verify(response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Malformed Authorization header");
+  }
+
+  /**
+   * End-to-end: a request with no Authorization header must produce a 401 challenge
+   * ({@code WWW-Authenticate}), never a 400. Guards the malformed -> 400 mapping from widening to
+   * anonymous requests (e.g. anonymous v1 Docker search) (NEXUS-53778).
+   */
+  @Test
+  public void testOnAccessDenied_noAuthorizationHeader_sends401ChallengeNot400() throws Exception {
+    when(request.getHeader("Authorization")).thenReturn(null);
+
+    boolean result = filter.onAccessDenied(request, response);
+
+    verify(response).setHeader(eq("WWW-Authenticate"), anyString());
+    verify(response, never()).sendError(eq(HttpServletResponse.SC_BAD_REQUEST), anyString());
+    assertThat(result, is(false));
+  }
+
+  @Test
+  public void testCreateToken_illegalBase64Char_throwsMalformedAuthorizationHeaderException() {
+    when(request.getHeader("Authorization")).thenReturn("Basic :::invalid");
+    when(request.getRemoteAddr()).thenReturn("192.168.1.100");
+
+    assertThrows(NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException.class,
+        () -> filter.createToken(request, response));
+  }
+
+  /**
+   * The prod symptom (NEXUS-53778): {@code Authorization: Basic ${NPM_TOKEN}} — an unexpanded
+   * placeholder that is not valid base64. {@code createToken} throws, and {@code cleanup} must
+   * translate that to a 400 and not rethrow (so it never surfaces as a 500).
+   */
+  @Test
+  public void testCleanup_malformedAuthorizationHeader_sends400() throws Exception {
+    when(request.getHeader("Authorization")).thenReturn("Basic ${NPM_TOKEN}");
+    when(request.getRemoteAddr()).thenReturn("192.168.1.100");
+
+    Exception malformed = assertThrows(
+        NexusBasicHttpAuthenticationFilter.MalformedAuthorizationHeaderException.class,
+        () -> filter.createToken(request, response));
+
+    filter.cleanup(request, response, malformed);
+
+    verify(response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Malformed Authorization header");
+  }
+
+  /**
+   * Test that cleanup() properly rethrows ServletExceptions with IllegalArgumentException causes.
+   * Since base64 handling moved to createToken(), cleanup() no longer has special handling
+   * for IllegalArgumentException, so it passes through to the parent.
+   */
+  @Test
+  public void testCleanup_servletExceptionWithIllegalArgumentException_rethrown() throws Exception {
+    IllegalArgumentException otherException = new IllegalArgumentException("Some other error");
+    ServletException servletException = new ServletException(otherException);
+
+    ServletException e =
+        assertThrows(ServletException.class, () -> filter.cleanup(request, response, servletException));
+    assertThat(e.getCause(), is(otherException));
+  }
+
+  @Test
+  public void testGetRateLimitKeyEmptyPrincipalReturnsNull() throws Exception {
+    // Create a token with empty principal (as returned for malformed base64)
+    AuthenticationToken token = new UsernamePasswordToken("", "password");
+
+    String rateLimitKey = filter.getRateLimitKey(token);
+
+    assertThat(rateLimitKey, is(nullValue()));
+  }
+
+  @Test
+  public void testOnLoginFailureEmptyPrincipalSkipsRateLimit() throws Exception {
+    AuthRateLimiterService rateLimiterService = mock(AuthRateLimiterService.class);
+    injectField(filter, "rateLimiterService", rateLimiterService);
+
+    // Token with empty principal (simulating malformed base64 case)
+    AuthenticationToken token = new UsernamePasswordToken("", "");
+    AuthenticationException e = new AuthenticationException("bad credentials",
+        new IncorrectCredentialsException());
+
+    boolean result = filter.onLoginFailure(token, e, request, response);
+
+    // Verify rate limiter was NOT called (skipped due to null key)
+    verify(rateLimiterService, never()).checkAndRecord(anyString());
+    verify(rateLimiterService, never()).checkAndRecordByToken(anyString());
+    // Verify no 429 was sent - should fall through to normal 401 handling
+    verify(response, never()).sendError(eq(429), anyString());
+    assertThat(result, is(false));
   }
 
   private static void injectField(final Object target, final String name, final Object value) throws Exception {

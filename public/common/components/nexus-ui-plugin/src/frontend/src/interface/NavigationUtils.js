@@ -135,7 +135,7 @@ export function isVisible(visibilityRequirements) {
     return false;
   }
 
-  if (requiresUser && !Security.hasUser()) {
+  if (requiresUser && !Security.hasUser() && !hasAnonymousPermissions()) {
     return false
   }
 
@@ -295,6 +295,25 @@ function hasValidDependencies() {
       !!window.NX.getApplication();
 
   return !!(Application && State && Permissions && Security && appReady);
+}
+
+// A `requiresUser` route should also be visible to an anonymous subject that has
+// been granted permissions (e.g. anonymous assigned nx-admin — NEXUS-47114).
+// Per-route permission checks above already filter routes the anonymous user
+// cannot access, so this only re-opens routes the anonymous user genuinely has
+// rights to.
+//
+// Permissions live at NX.Permissions.permissions (a flat map of id → permitted),
+// populated by NX.controller.Permissions from rapture_Security.getPermissions.
+// They are NOT contributed to NX.State — SecurityComponent.getState() only
+// contributes `user` and `anonymousUsername`.
+function hasAnonymousPermissions() {
+  const Security = NX?.Security;
+  if (!Security || Security.hasUser()) {
+    return false;
+  }
+  const perms = NX?.Permissions?.permissions;
+  return !!perms && Object.keys(perms).length > 0;
 }
 
 export function useIsVisible(visibilityRequirements) {

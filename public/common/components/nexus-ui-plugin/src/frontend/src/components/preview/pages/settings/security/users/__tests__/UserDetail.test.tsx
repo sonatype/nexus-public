@@ -99,7 +99,7 @@ const mockUser: User = {
   roles: ['nx-admin'],
 };
 
-const mockExternalUser: User = {
+const _mockExternalUser: User = {
   userId: 'ldapuser',
   firstName: 'LDAP',
   lastName: 'User',
@@ -153,7 +153,11 @@ describe('UserDetail', () => {
       { wrapper: TestWrapper }
     );
 
-    expect(screen.getByText(/Loading user details/i)).toBeInTheDocument();
+    const loadingText = screen.getByText(/Loading user details/i);
+    expect(loadingText).toBeInTheDocument();
+    const loadingContainer = loadingText.closest('[role="status"]');
+    expect(loadingContainer).toHaveAttribute('aria-live', 'polite');
+    expect(loadingContainer).toHaveAttribute('aria-busy', 'true');
   });
 
   it('shows not found state when user is null and not loading', () => {
@@ -170,7 +174,10 @@ describe('UserDetail', () => {
       { wrapper: TestWrapper }
     );
 
-    expect(screen.getByText(/User not found/i)).toBeInTheDocument();
+    const notFoundText = screen.getByText(/User not found/i);
+    expect(notFoundText).toBeInTheDocument();
+    const notFoundContainer = notFoundText.closest('[role="alert"]');
+    expect(notFoundContainer).toHaveAttribute('aria-live', 'assertive');
   });
 
   it('renders read-only view when canEdit is false', async () => {

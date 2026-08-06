@@ -11,13 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Flex, Text, Heading, Card, IconButton, Tooltip, TextField, Separator, ScrollArea, Badge, AlertDialog, Button, Grid } from '@radix-ui/themes';
-import { Shield, Loader2, Info, ExternalLink, CheckCircle, XCircle, List, Copy, Search, X, Minimize2, Check, Plus } from 'lucide-react';
-
-import { ExtJS } from '../../../../../../interface/ExtJS';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Box, Flex, Text, Heading, Card, IconButton, Tooltip, TextField, Separator, ScrollArea, Badge, Grid } from '@radix-ui/themes';
+import { Shield, ShieldCheck, Loader2, Info, ExternalLink, CheckCircle, XCircle, List, Copy, Search, X, Minimize2, Check } from 'lucide-react';
 
 import {
   SettingsForm,
@@ -26,47 +22,18 @@ import {
   SettingsTextInput,
   SettingsPasswordInput,
   SettingsSelect,
-  SettingsTextArea,
   SettingsAlert,
   SettingsButton,
 } from '../../../../shared/form';
 import { PageHeader } from '../../../../shared';
-import { useIqServerApi } from './useIqServerApi';
-import { ConnectionIndicator, ConnectionStatus } from './ConnectionIndicator';
-import { useToast } from '../../../../shared/Toast';
-import {
-  IqServerConfiguration,
-  IqServerPageProps,
-  DEFAULT_IQ_CONFIGURATION,
-  IqValidationErrors,
-  IqVerificationResult,
-  PASSWORD_PLACEHOLDER,
-  IqCapabilities,
-  DEFAULT_IQ_CAPABILITIES,
-} from './types';
+import { useIqServerForm } from './useIqServerForm';
+import { ConnectionIndicator } from './ConnectionIndicator';
+import { parseApplicationReason } from './iqServerUtils';
+import { IqServerPageProps } from './types';
+import { CertificateViewDialog } from '../../repository/repositories/facets/CertificateViewDialog';
+import { PropertyListEditor } from './PropertyListEditor';
 
 import './IqServerPage.scss';
-
-/**
- * Common IQ properties examples for the property selector tool
- */
-const IQ_PROPERTY_EXAMPLES = [
-  {
-    label: 'Fail Open Mode',
-    value: 'nexus.iq.failOpenModeEnabled=true',
-    description: 'Allow component downloads if IQ Server is unreachable.',
-  },
-  {
-    label: 'Malware Remediation',
-    value: 'com.sonatype.insight.client.remediation.MalwareRemediationService.enabled=true',
-    description: 'Enable automated malware remediation.',
-  },
-  {
-    label: 'Malware Asset Limit',
-    value: 'com.sonatype.insight.client.remediation.MalwareRemediationService.assetLimit=1000',
-    description: 'Limit the number of assets remediated per task run.',
-  },
-];
 
 /**
  * Full-screen application list — uses the exact same fixed-position container pattern
@@ -252,395 +219,72 @@ function IqApplicationListModal({
 }
 
 /**
- * Parses the verification reason into application names or a status message.
- * Backend returns either comma-separated app names or messages like "No applications configured yet."
- */
-function parseApplicationReason(reason: string): { isList: boolean; items: string[] } {
-  const trimmed = reason.trim();
-  const appsPrefix = 'Applications: ';
-  if (trimmed.includes(appsPrefix)) {
-    const after = trimmed.split(appsPrefix)[1]?.trim() ?? '';
-    const items = after.split(',').map((s) => s.trim()).filter(Boolean);
-    return { isList: items.length > 0, items };
-  }
-  if (
-    trimmed.toLowerCase().startsWith('no applications') ||
-    (trimmed.startsWith('Connection successful') && !trimmed.includes(','))
-  ) {
-    return { isList: false, items: [trimmed] };
-  }
-  const items = trimmed.split(',').map((s) => s.trim()).filter(Boolean);
-  return { isList: items.length > 0, items };
-}
-
-/**
- * Validates if a string is a valid URL
- */
-function isValidUrl(url: string): boolean {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Validates IQ Server configuration and returns validation errors
- */
-function validateIqConfig(config: IqServerConfiguration, pristineConfig: IqServerConfiguration): IqValidationErrors {
-  const errors: IqValidationErrors = {};
-
-  if (!config.enabled) {
-    return errors;
-  }
-
-  if (!config.url?.trim()) {
-    errors.url = 'IQ Server URL is required';
-  } else if (!isValidUrl(config.url)) {
-    errors.url = 'Please enter a valid URL';
-  }
-
-  if (!config.authenticationType) {
-    errors.authenticationType = 'Authentication method is required';
-  }
-
-  if (config.authenticationType === 'USER') {
-    if (!config.username?.trim()) {
-      errors.username = 'Username is required';
-    }
-
-    // Password is required for new configs or when URL changes
-    const urlChanged = pristineConfig.url && pristineConfig.url !== config.url;
-    const isPlaceholder = config.password === PASSWORD_PLACEHOLDER;
-    
-    if (!config.password?.trim() && !isPlaceholder) {
-      errors.password = 'Password is required';
-    } else if (urlChanged && isPlaceholder) {
-      errors.password = 'Password is required when changing the URL';
-    }
-  }
-
-  if (config.timeoutSeconds !== null && (config.timeoutSeconds < 1 || config.timeoutSeconds > 3600)) {
-    errors.timeoutSeconds = 'Timeout must be between 1 and 3600 seconds';
-  }
-
-  return errors;
-}
-
-/**
  * IqServerPage - IQ Server configuration page for Preview UI
  *
  * Configures Sonatype IQ Server integration for Repository Firewall and Lifecycle.
+ * Render-only component — all business logic is in useIqServerForm hook.
  */
 export function IqServerPage({ className }: IqServerPageProps) {
-  const { loading, verifying, error, setError, fetchSettings, fetchCapabilities, fetchCapabilitiesWithConfig, saveSettings, verifyConnection } = useIqServerApi();
+  const {
+    data: settings,
+    field,
+    checkbox,
+    select,
+    hasValidationErrors,
+    isLoading,
+    isSaving,
+    isPristine,
+    saveError,
+    handleFieldChange,
+    handleUrlChange,
+    verify,
+    connectionStatus,
+    connectionMessage,
+    verificationResult,
+    capabilities,
+    isCloud,
+    canUpdate,
+    canOpenDashboard,
+    dashboardUrl,
+    submit,
+    reset,
+    clearSaveError,
+    setProperties,
+    propertyValidations,
+    hasPropertyErrors,
+    showAllValidation,
+    showClearAllConfirm,
+    requestClearAllProperties,
+    confirmClearAllProperties,
+    cancelClearAllProperties,
+    propertiesDroppedLineCount,
+    showPropertiesDroppedWarning,
+    dismissPropertiesDroppedWarning,
+  } = useIqServerForm();
 
-  const [settings, setSettings] = useState<IqServerConfiguration>(DEFAULT_IQ_CONFIGURATION);
-  const [pristineSettings, setPristineSettings] = useState<IqServerConfiguration>(DEFAULT_IQ_CONFIGURATION);
-  const [capabilities, setCapabilities] = useState<IqCapabilities>(DEFAULT_IQ_CAPABILITIES);
-  const [loadingInitial, setLoadingInitial] = useState(true);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [verificationResult, setVerificationResult] = useState<IqVerificationResult | null>(null);
+  // Application-list modal is pure UI state — stays local.
   const [showApplicationListModal, setShowApplicationListModal] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
-  const [connectionMessage, setConnectionMessage] = useState<string | undefined>(undefined);
-  const [hasAutoTested, setHasAutoTested] = useState(false);
-  const [showSaveConfirmModal, setShowSaveConfirmModal] = useState(false);
+  const [showCertDialog, setShowCertDialog] = useState(false);
 
-  const toast = useToast();
-  const canUpdate = ExtJS.checkPermission('nexus:settings:update');
-  const isCloud = ExtJS.state?.()?.getValue?.('isCloud', false) ?? false;
-
-  // Load settings on mount
-  useEffect(() => {
-    const loadData = async () => {
-      setLoadingInitial(true);
-      try {
-        const [iqSettings, iqCapabilities] = await Promise.all([
-          fetchSettings(),
-          fetchCapabilities()
-        ]);
-        setSettings(iqSettings);
-        setPristineSettings(iqSettings);
-        setCapabilities(iqCapabilities);
-      } catch (err) {
-        // Error is set by the hook
-      } finally {
-        setLoadingInitial(false);
-      }
-    };
-
-    loadData();
-  }, [fetchSettings, fetchCapabilities]);
-
-  // Clear success message after delay
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
-  // Auto-test connection on page load when settings exist
-  useEffect(() => {
-    const autoTestConnection = async () => {
-      // Only auto-test if:
-      // 1. Not already tested
-      // 2. Not loading
-      // 3. Settings have a URL configured (indicating IQ Server is set up)
-      // 4. IQ Server is enabled
-      if (hasAutoTested || loadingInitial || !pristineSettings.url?.trim() || !pristineSettings.enabled) {
-        return;
-      }
-
-      setHasAutoTested(true);
-      setConnectionStatus('testing');
-      setConnectionMessage(undefined);
-
-      try {
-        const result = await verifyConnection(pristineSettings);
-        if (result.success) {
-          // Extract version from reason if available (format: "Connected to IQ Server vX.Y.Z" or similar)
-          const versionMatch = result.reason?.match(/v?(\d+\.\d+(?:\.\d+)?)/);
-          const versionText = versionMatch ? ` (v${versionMatch[1]})` : '';
-          setConnectionStatus('connected');
-          setConnectionMessage(`Connected to IQ Server${versionText}`);
-        } else {
-          setConnectionStatus('failed');
-          // Format the error message
-          const errorMessage = result.reason || 'Unknown error';
-          setConnectionMessage(`Connection failed: ${errorMessage}`);
-        }
-      } catch (err: any) {
-        setConnectionStatus('failed');
-        setConnectionMessage(`Connection failed: ${err?.message || 'Unknown error'}`);
-      }
-    };
-
-    autoTestConnection();
-  }, [loadingInitial, pristineSettings, hasAutoTested, verifyConnection]);
-
-  // Check if pristine
-  const isPristine = useMemo(() => {
-    // Robust comparison that ignores minor type differences (null/undefined/empty string)
-    const normalize = (config: IqServerConfiguration) => ({
-      ...config,
-      url: config.url || '',
-      username: config.username || '',
-      password: config.password || '',
-      properties: config.properties || '',
-      timeoutSeconds: config.timeoutSeconds === null ? null : Number(config.timeoutSeconds),
-    });
-    return JSON.stringify(normalize(settings)) === JSON.stringify(normalize(pristineSettings));
-  }, [settings, pristineSettings]);
-
-  // Can open dashboard?
-  const canOpenDashboard = pristineSettings.enabled && isValidUrl(pristineSettings.url);
-
-  // Validation errors
-  const validationErrors = useMemo(() => {
-    const allErrors = validateIqConfig(settings, pristineSettings);
-    const visibleErrors: IqValidationErrors = {};
-
-    Object.keys(allErrors).forEach((key) => {
-      if (touched[key]) {
-        visibleErrors[key as keyof IqValidationErrors] = allErrors[key as keyof IqValidationErrors];
-      }
-    });
-
-    return visibleErrors;
-  }, [settings, pristineSettings, touched]);
-
-  // Check if form has validation errors
-  const hasValidationErrors = useMemo(() => {
-    const allErrors = validateIqConfig(settings, pristineSettings);
-    return Object.keys(allErrors).length > 0;
-  }, [settings, pristineSettings]);
-
-  // Handle field change
-  const handleChange = useCallback(<K extends keyof IqServerConfiguration>(
-    field: K,
-    value: IqServerConfiguration[K]
-  ) => {
-    setSettings((prev) => ({ ...prev, [field]: value }));
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    setVerificationResult(null);
-    
-    // Reset connection status if disabled or if significant settings change
-    if (field === 'enabled' && !value) {
-      setConnectionStatus('idle');
-      setConnectionMessage(undefined);
-    } else if (connectionStatus !== 'idle' && connectionStatus !== 'testing') {
-      // Clear connection status when form values change (stale result)
-      setConnectionStatus('idle');
-      setConnectionMessage(undefined);
-    }
-  }, [connectionStatus]);
-
-  // Handle URL change - clear password if it's a placeholder
-  const handleUrlChange = useCallback((value: string) => {
-    setSettings((prev) => {
-      const newSettings = { ...prev, url: value };
-
-      // If URL changes and password is placeholder, clear it
-      if (prev.password === PASSWORD_PLACEHOLDER && pristineSettings.url !== value) {
-        newSettings.password = '';
-      }
-
-      // Also handle trust store - only valid for HTTPS
-      if (!value?.startsWith('https://')) {
-        newSettings.useTrustStoreForUrl = false;
-      }
-
-      return newSettings;
-    });
-    setTouched((prev) => ({ ...prev, url: true, password: true }));
-    setVerificationResult(null);
-    // Clear connection status when URL changes (stale result)
-    if (connectionStatus !== 'idle' && connectionStatus !== 'testing') {
-      setConnectionStatus('idle');
-      setConnectionMessage(undefined);
-    }
-  }, [pristineSettings.url, connectionStatus]);
-
-  // Handle authentication type change
+  // Handle auth type change — clear username/password when switching
+  // Must be defined before early returns to follow React hooks rules
   const handleAuthTypeChange = useCallback((value: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      authenticationType: value as IqServerConfiguration['authenticationType'],
-      username: '',
-      password: '',
-    }));
-    setTouched((prev) => ({ ...prev, authenticationType: true }));
-    setVerificationResult(null);
-    // Clear connection status when auth type changes (stale result)
-    if (connectionStatus !== 'idle' && connectionStatus !== 'testing') {
-      setConnectionStatus('idle');
-      setConnectionMessage(undefined);
-    }
-  }, [connectionStatus]);
+    handleFieldChange('authenticationType', value);
+    handleFieldChange('username', '');
+    handleFieldChange('password', '');
+  }, [handleFieldChange]);
 
-  // Handle blur
-  const handleBlur = useCallback((field: keyof IqServerConfiguration) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-  }, []);
-
-  // Verify connection - uses current form values (not saved values)
-  const handleVerifyConnection = useCallback(async () => {
-    setVerificationResult(null);
-    setShowApplicationListModal(false);
-    setConnectionStatus('testing');
-    setConnectionMessage(undefined);
-
-    const result = await verifyConnection(settings);
-    setVerificationResult(result);
-
-    if (result.success) {
-      const versionMatch = result.reason?.match(/v?(\d+\.\d+(?:\.\d+)?)/);
-      const versionText = versionMatch ? ` (v${versionMatch[1]})` : '';
-      setConnectionStatus('connected');
-      setConnectionMessage(`Connected to IQ Server${versionText}`);
-
-      // Re-fetch capabilities on successful test using the same unsaved settings
-      const iqCapabilities = await fetchCapabilitiesWithConfig(settings);
-      setCapabilities(iqCapabilities);
-
-      // Show save confirmation modal if form has unsaved changes
-      if (!isPristine) {
-        setShowSaveConfirmModal(true);
-      }
-    } else {
-      setConnectionStatus('failed');
-      const errorMessage = result.reason || 'Unknown error';
-      setConnectionMessage(`Connection failed: ${errorMessage}`);
-    }
-  }, [settings, verifyConnection, isPristine]);
-
-  // Save handler - returns true on success, false on failure
-  const handleSubmit = useCallback(async (): Promise<boolean> => {
-    // Mark all required fields as touched
-    setTouched({
-      url: true,
-      authenticationType: true,
-      username: true,
-      password: true,
-    });
-
-    if (hasValidationErrors) {
-      return false;
-    }
-
-    try {
-      const savedSettings = await saveSettings(settings);
-      setSettings(savedSettings);
-      setPristineSettings(savedSettings);
-      
-      // Re-fetch capabilities after save
-      const iqCapabilities = await fetchCapabilities();
-      setCapabilities(iqCapabilities);
-
-      // Use toast notification instead of inline success message
-      toast.success('IQ Server configuration saved successfully');
-      setSuccessMessage(null);
-      setTouched({});
-      setVerificationResult(null);
-      // Show saved connection status without auto-retesting (avoids multi-minute
-      // blocking when the IQ server is slow to respond on cloud)
-      if (savedSettings.enabled && savedSettings.url?.trim()) {
-        setConnectionStatus('idle');
-        setConnectionMessage('Saved. Click "Test Connection" to verify.');
-      } else {
-        setConnectionStatus('idle');
-        setConnectionMessage(undefined);
-      }
-      // Clear window.dirty so navigation guards don't think the form is still dirty
-      if (typeof window !== 'undefined' && window.dirty) {
-        window.dirty.length = 0;
-      }
-      return true;
-    } catch (err) {
-      throw err;
-    }
-  }, [settings, hasValidationErrors, saveSettings, toast]);
-
-  // Discard changes
-  const handleDiscard = useCallback(() => {
-    setSettings(pristineSettings);
-    setTouched({});
-    setError(null);
-    setVerificationResult(null);
-    setShowApplicationListModal(false);
-    // Reset connection indicator to show last known state from pristine settings
-    // The auto-test effect will re-run if needed
-  }, [pristineSettings, setError]);
-
-  // Insert property helper
-  const insertProperty = useCallback((propValue: string) => {
-    setSettings((prev) => {
-      const currentProps = prev.properties || '';
-      const lines = currentProps.split('\n').map(l => l.trim()).filter(Boolean);
-      
-      // Check if property already exists
-      const propKey = propValue.split('=')[0];
-      const existingIndex = lines.findIndex(l => l.startsWith(`${propKey}=`));
-      
-      let newProps = '';
-      if (existingIndex >= 0) {
-        lines[existingIndex] = propValue;
-        newProps = lines.join('\n');
-      } else {
-        newProps = currentProps ? `${currentProps}\n${propValue}` : propValue;
-      }
-      
-      return { ...prev, properties: newProps };
-    });
-    setTouched((prev) => ({ ...prev, properties: true }));
-  }, []);
+  const parsedApplicationReason = useMemo(
+    () => (verificationResult?.reason ? parseApplicationReason(verificationResult.reason) : null),
+    [verificationResult?.reason],
+  );
+  const applicationListItems = parsedApplicationReason?.isList ? parsedApplicationReason.items : [];
+  const applicationListMessage = parsedApplicationReason && (!parsedApplicationReason.isList || parsedApplicationReason.items.length === 0)
+    ? (parsedApplicationReason.items[0] || verificationResult?.reason)
+    : undefined;
 
   // Loading state
-  if (loadingInitial) {
+  if (isLoading) {
     return (
       <Box className={`iq-server-page ${className || ''}`.trim()}>
         <Flex align="center" justify="center" className="iq-server-page__loading">
@@ -683,6 +327,8 @@ export function IqServerPage({ className }: IqServerPageProps) {
     );
   }
 
+  const verifying = connectionStatus === 'testing';
+
   return (
     <Box className={`iq-server-page ${className || ''}`.trim()}>
       {/* Header */}
@@ -702,95 +348,11 @@ export function IqServerPage({ className }: IqServerPageProps) {
         className="iq-server-page__connection-indicator"
       />
 
-      {/* License & Features - Read Only Indicators */}
-      {connectionStatus === 'connected' && (
-        <Box className="iq-server-page__capabilities" mb="4">
-          <Card size="2">
-            <Flex direction="column" gap="3">
-              <Flex align="center" gap="2">
-                <Info size={16} color="var(--gray-9)" />
-                <Text size="2" weight="bold">Licensed IQ Features</Text>
-              </Flex>
-              <Separator size="4" />
-              <Grid columns={{ initial: '1', sm: '2' }} gap="4">
-                {/* Lifecycle Indicator */}
-                <Flex direction="column" gap="2">
-                  <Flex align="center" justify="between" wrap="wrap" gap="2">
-                    <Text size="2" weight="medium">Sonatype Lifecycle</Text>
-                    {capabilities.hasLifecycle ? (
-                      <Badge color="green" variant="soft">
-                        <Flex align="center" gap="1">
-                          <CheckCircle size={12} />
-                          Active
-                        </Flex>
-                      </Badge>
-                    ) : (
-                      <Badge color="gray" variant="soft">
-                        <Flex align="center" gap="1">
-                          <XCircle size={12} />
-                          Not Available
-                        </Flex>
-                      </Badge>
-                    )}
-                  </Flex>
-                  {!capabilities.hasLifecycle && (
-                    <Text size="1" color="gray">
-                      <a
-                        href="https://links.sonatype.com/products/nxrm3/browse/lc-learn"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="iq-server-page__link"
-                      >
-                        Learn More <ExternalLink size={10} />
-                      </a>
-                    </Text>
-                  )}
-                </Flex>
-
-                {/* Firewall Indicator */}
-                <Flex direction="column" gap="2">
-                  <Flex align="center" justify="between" wrap="wrap" gap="2">
-                    <Text size="2" weight="medium">Repository Firewall</Text>
-                    {capabilities.hasFirewall ? (
-                      <Badge color="green" variant="soft">
-                        <Flex align="center" gap="1">
-                          <CheckCircle size={12} />
-                          Active
-                        </Flex>
-                      </Badge>
-                    ) : (
-                      <Badge color="gray" variant="soft">
-                        <Flex align="center" gap="1">
-                          <XCircle size={12} />
-                          Not Available
-                        </Flex>
-                      </Badge>
-                    )}
-                  </Flex>
-                  {!capabilities.hasFirewall && (
-                    <Text size="1" color="gray">
-                      <a
-                        href="https://links.sonatype.com/nexus-repository-firewall"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="iq-server-page__link"
-                      >
-                        Learn More <ExternalLink size={10} />
-                      </a>
-                    </Text>
-                  )}
-                </Flex>
-              </Grid>
-            </Flex>
-          </Card>
-        </Box>
-      )}
-
       {/* Dashboard Link */}
       {canOpenDashboard && (
         <Box className="iq-server-page__dashboard-link">
           <a
-            href={pristineSettings.url}
+            href={dashboardUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="iq-server-page__link"
@@ -802,36 +364,120 @@ export function IqServerPage({ className }: IqServerPageProps) {
       )}
 
       {/* Alerts */}
-      {error && (
+      {saveError && (
         <Box className="iq-server-page__alerts">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
-            {error}
+          <SettingsAlert type="error" onClose={clearSaveError}>
+            {saveError}
           </SettingsAlert>
         </Box>
       )}
-      {successMessage && (
+
+      {showPropertiesDroppedWarning && (
         <Box className="iq-server-page__alerts">
-          <SettingsAlert type="success" onClose={() => setSuccessMessage(null)}>
-            {successMessage}
+          <SettingsAlert type="warning" onClose={dismissPropertiesDroppedWarning}>
+            {propertiesDroppedLineCount} {propertiesDroppedLineCount === 1 ? 'line' : 'lines'} in the existing
+            Properties configuration weren't recognized (comments or non "name=value" syntax) and will be
+            removed if you save.
           </SettingsAlert>
         </Box>
       )}
 
       {/* Form */}
-      <Box className={showSaveConfirmModal ? 'iq-server-page__form-wrapper--modal-open' : ''}>
+      <Box>
         <SettingsForm
           title=""
-          onSubmit={handleSubmit}
-          onCancel={handleDiscard}
-          loading={loading}
+          onSubmit={submit}
+          onCancel={reset}
+          loading={isSaving}
           pristine={isPristine}
-          submitDisabled={hasValidationErrors}
-          showActions={!showSaveConfirmModal}
+          submitDisabled={hasValidationErrors || hasPropertyErrors}
         >
         <SettingsFormSection title="IQ Server Configuration">
-          <Box className="iq-server-page__config-grid">
-            {/* Left column: form fields */}
-            <Box className="iq-server-page__form-column">
+          {/* License & Features - Read Only Indicators */}
+          {connectionStatus === 'connected' && (
+            <Box className="iq-server-page__capabilities" mb="4">
+              <Card size="2">
+                <Flex direction="column" gap="3">
+                  <Flex align="center" gap="2">
+                    <Info size={16} color="var(--gray-9)" />
+                    <Text size="2" weight="bold">Licensed IQ Features</Text>
+                  </Flex>
+                  <Separator size="4" />
+                  <Grid columns={{ initial: '1', sm: '2' }} gap="4">
+                    {/* Lifecycle Indicator */}
+                    <Flex direction="column" gap="2">
+                      <Flex align="center" justify="between" wrap="wrap" gap="2">
+                        <Text size="2" weight="medium">Sonatype Lifecycle</Text>
+                        {capabilities.hasLifecycle ? (
+                          <Badge color="green" variant="soft">
+                            <Flex align="center" gap="1">
+                              <CheckCircle size={12} />
+                              Active
+                            </Flex>
+                          </Badge>
+                        ) : (
+                          <Badge color="gray" variant="soft">
+                            <Flex align="center" gap="1">
+                              <XCircle size={12} />
+                              Not Available
+                            </Flex>
+                          </Badge>
+                        )}
+                      </Flex>
+                      {!capabilities.hasLifecycle && (
+                        <Text size="1" color="gray">
+                          <a
+                            href="https://links.sonatype.com/products/nxrm3/browse/lc-learn"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="iq-server-page__link"
+                          >
+                            Learn More <ExternalLink size={10} />
+                          </a>
+                        </Text>
+                      )}
+                    </Flex>
+
+                    {/* Firewall Indicator */}
+                    <Flex direction="column" gap="2">
+                      <Flex align="center" justify="between" wrap="wrap" gap="2">
+                        <Text size="2" weight="medium">Repository Firewall</Text>
+                        {capabilities.hasFirewall ? (
+                          <Badge color="green" variant="soft">
+                            <Flex align="center" gap="1">
+                              <CheckCircle size={12} />
+                              Active
+                            </Flex>
+                          </Badge>
+                        ) : (
+                          <Badge color="gray" variant="soft">
+                            <Flex align="center" gap="1">
+                              <XCircle size={12} />
+                              Not Available
+                            </Flex>
+                          </Badge>
+                        )}
+                      </Flex>
+                      {!capabilities.hasFirewall && (
+                        <Text size="1" color="gray">
+                          <a
+                            href="https://links.sonatype.com/nexus-repository-firewall"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="iq-server-page__link"
+                          >
+                            Learn More <ExternalLink size={10} />
+                          </a>
+                        </Text>
+                      )}
+                    </Flex>
+                  </Grid>
+                </Flex>
+              </Card>
+            </Box>
+          )}
+
+          <Box className="iq-server-page__form-column">
           <Text size="2" className="iq-server-page__intro">
             <a
               href="https://links.sonatype.com/products/nxrm3/browse/lc-learn"
@@ -849,20 +495,15 @@ export function IqServerPage({ className }: IqServerPageProps) {
           </Text>
 
           <SettingsCheckbox
-            name="enabled"
+            {...checkbox('enabled')}
             label="Enable IQ Server"
-            checked={settings.enabled}
-            onChange={(checked) => handleChange('enabled', checked)}
             description="Enable the use of IQ Server"
           />
 
           <SettingsTextInput
-            name="url"
+            {...field('url')}
             label="IQ Server URL"
-            value={settings.url}
             onChange={handleUrlChange}
-            onBlur={() => handleBlur('url')}
-            error={validationErrors.url}
             helpText={
               isCloud
                 ? 'The IQ Server URL is set for your cloud environment and cannot be changed here.'
@@ -874,21 +515,37 @@ export function IqServerPage({ className }: IqServerPageProps) {
           />
 
           {settings.url?.startsWith('https://') && (
-            <SettingsCheckbox
-              name="useTrustStoreForUrl"
-              label="Use Nexus Repository Trust Store"
-              checked={settings.useTrustStoreForUrl}
-              onChange={(checked) => handleChange('useTrustStoreForUrl', checked)}
-              description="Use certificates from the Nexus Repository trust store"
+            <Box>
+              <SettingsCheckbox
+                {...checkbox('useTrustStoreForUrl')}
+                label="Use Nexus Repository Trust Store"
+                description="Use certificates from the Nexus Repository trust store"
+              />
+              <Box mt="2" ml="6">
+                <SettingsButton
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={() => setShowCertDialog(true)}
+                  icon={ShieldCheck}
+                >
+                  View Certificate
+                </SettingsButton>
+              </Box>
+            </Box>
+          )}
+
+          {showCertDialog && (
+            <CertificateViewDialog
+              remoteUrl={settings.url}
+              onClose={() => setShowCertDialog(false)}
             />
           )}
 
           <SettingsSelect
-            name="authenticationType"
+            {...select('authenticationType')}
             label="Authentication Method"
-            value={settings.authenticationType}
             onChange={handleAuthTypeChange}
-            error={validationErrors.authenticationType}
             required
             placeholder="Select authentication method..."
             options={[
@@ -900,175 +557,146 @@ export function IqServerPage({ className }: IqServerPageProps) {
           {settings.authenticationType === 'USER' && (
             <>
               <SettingsTextInput
-                name="username"
+                {...field('username')}
                 label="Username"
-                value={settings.username}
-                onChange={(value) => handleChange('username', value)}
-                onBlur={() => handleBlur('username')}
-                error={validationErrors.username}
                 helpText="User with access to the IQ Server"
                 required
               />
 
               <SettingsPasswordInput
-                name="password"
+                {...field('password')}
                 label="Password"
-                value={settings.password}
-                onChange={(value) => handleChange('password', value)}
-                onBlur={() => handleBlur('password')}
-                error={validationErrors.password}
                 helpText="Credentials for the IQ Server user"
                 autoComplete="new-password"
                 required
               />
             </>
           )}
-            </Box>
-
-            {/* Right column: Test Connection - greyed out until valid data */}
-            <Box className="iq-server-page__sidecar">
-              <Card className={`iq-server-page__verify-card ${hasValidationErrors ? 'iq-server-page__verify-card--disabled' : ''}`}>
-                <Flex direction="column" gap="3">
-                  <Text size="2" weight="medium">Test Connection</Text>
-                  {hasValidationErrors ? (
-                    <Text size="2" color="gray">
-                      Enter IQ Server URL and credentials to test the connection.
-                    </Text>
-                  ) : (
-                    <>
-                      <SettingsButton
-                        type="button"
-                        variant="secondary"
-                        onClick={handleVerifyConnection}
-                        disabled={verifying}
-                        loading={verifying}
-                      >
-                        Test Connection
-                      </SettingsButton>
-
-                      {verificationResult && (
-                        <Box className="iq-server-page__verify-result">
-                          {verificationResult.success ? (
-                            <>
-                              <Flex align="center" gap="2" className="iq-server-page__verify-success">
-                                <CheckCircle size={16} />
-                                <Text size="2">Connection successful.</Text>
-                              </Flex>
-                              {verificationResult.reason && (
-                                <SettingsButton
-                                  type="button"
-                                  variant="secondary"
-                                  size="1"
-                                  onClick={() => setShowApplicationListModal(true)}
-                                  className="iq-server-page__view-app-list-trigger"
-                                  icon={List}
-                                >
-                                  View application list
-                                </SettingsButton>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <Flex align="center" gap="2" className="iq-server-page__verify-error">
-                                <XCircle size={16} />
-                                <Text size="2">Connection failed.</Text>
-                              </Flex>
-                              {verificationResult.reason && (
-                                <Text size="2" as="p" className="iq-server-page__error-reason">
-                                  {verificationResult.reason}
-                                </Text>
-                              )}
-                            </>
-                          )}
-                        </Box>
-                      )}
-                    </>
-                  )}
-                </Flex>
-              </Card>
-            </Box>
           </Box>
         </SettingsFormSection>
 
         <SettingsFormSection title="Advanced Settings" collapsible defaultCollapsed>
           <SettingsTextInput
-            name="timeoutSeconds"
+            {...field('timeoutSeconds')}
             label="Connection Timeout (seconds)"
             type="number"
             value={settings.timeoutSeconds !== null ? String(settings.timeoutSeconds) : ''}
-            onChange={(value) => handleChange('timeoutSeconds', value ? parseInt(value, 10) : null)}
-            onBlur={() => handleBlur('timeoutSeconds')}
-            error={validationErrors.timeoutSeconds}
+            onChange={(value) => handleFieldChange('timeoutSeconds', value ? parseInt(value, 10) : null)}
             helpText="Seconds to wait for activity before stopping and retrying. Leave blank for globally defined HTTP timeout."
             placeholder="Globally Defined"
             min={1}
             max={3600}
           />
 
-          <SettingsTextArea
-            name="properties"
-            label="Properties"
-            value={settings.properties}
-            onChange={(value) => handleChange('properties', value)}
-            helpText="Additional properties to configure for IQ Server"
-            rows={4}
-          />
+          <Box className="iq-server-page__properties">
+            <Text size="2" weight="medium" className="iq-server-page__properties-label">Properties</Text>
+            <Text size="2" color="gray" className="iq-server-page__properties-help">
+              Additional properties to configure for IQ Server
+            </Text>
 
-          {/* Property Selector Tool */}
-          <Box className="iq-server-page__property-selector" mb="4">
-            <Flex align="center" gap="2" mb="2">
-              <Text size="1" weight="medium" color="gray">Common Properties</Text>
-              <Tooltip content="Click to insert or update property. See documentation for more details.">
-                <Info size={12} color="var(--gray-8)" />
-              </Tooltip>
-            </Flex>
-            <Flex wrap="wrap" gap="2">
-              {IQ_PROPERTY_EXAMPLES.map((example) => (
-                <Box
-                  key={example.value}
-                  className="iq-server-page__property-chip"
-                  onClick={() => insertProperty(example.value)}
-                  title={example.description}
-                >
-                  <Plus size={10} className="iq-server-page__property-icon" />
-                  <code style={{ fontSize: 'var(--font-size-1)', color: 'var(--gray-12)' }}>{example.label}</code>
-                </Box>
-              ))}
-              <Separator orientation="vertical" size="1" />
-              <a
-                href="https://links.sonatype.com/products/nxc/docs/properties"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="iq-server-page__property-docs-link"
-              >
-                <Text size="1">Documentation <ExternalLink size={10} /></Text>
-              </a>
-            </Flex>
+            {showClearAllConfirm && (
+              <SettingsAlert type="warning">
+                <Flex justify="between" align="center" gap="3">
+                  <Text size="2">Clear all properties? This will remove all configured properties.</Text>
+                  <Flex gap="2">
+                    <SettingsButton variant="secondary" onClick={cancelClearAllProperties}>
+                      Cancel
+                    </SettingsButton>
+                    <SettingsButton variant="danger" onClick={confirmClearAllProperties}>
+                      Clear All
+                    </SettingsButton>
+                  </Flex>
+                </Flex>
+              </SettingsAlert>
+            )}
+
+            <PropertyListEditor
+              properties={settings.properties}
+              onChange={setProperties}
+              onClearAll={requestClearAllProperties}
+              disabled={!canUpdate || isSaving}
+              validations={propertyValidations}
+              showAllValidation={showAllValidation}
+            />
           </Box>
 
           <SettingsCheckbox
-            name="showLink"
+            {...checkbox('showLink')}
             label="Show IQ Server Link"
-            checked={settings.showLink}
-            onChange={(checked) => handleChange('showLink', checked)}
             description="Show IQ Server link in the Browse menu when the server is enabled"
           />
         </SettingsFormSection>
 
+        {/* Test Connection - greyed out until valid data */}
+        <Box className="iq-server-page__sidecar">
+          <Card className={`iq-server-page__verify-card ${hasValidationErrors ? 'iq-server-page__verify-card--disabled' : ''}`}>
+            <Flex direction="column" gap="3">
+              <Text size="2" weight="medium">Test Connection</Text>
+              {hasValidationErrors ? (
+                <Text size="2" color="gray">
+                  Enter IQ Server URL and credentials to test the connection.
+                </Text>
+              ) : (
+                <>
+                  <SettingsButton
+                    type="button"
+                    variant="secondary"
+                    onClick={verify}
+                    disabled={verifying}
+                    loading={verifying}
+                  >
+                    Test Connection
+                  </SettingsButton>
+
+                  {verificationResult && (
+                    <Box className="iq-server-page__verify-result">
+                      {verificationResult.success ? (
+                        <>
+                          <Flex align="center" gap="2" className="iq-server-page__verify-success">
+                            <CheckCircle size={16} />
+                            <Text size="2">Connection successful.</Text>
+                          </Flex>
+                          {verificationResult.reason && (
+                            <SettingsButton
+                              type="button"
+                              variant="secondary"
+                              size="1"
+                              onClick={() => setShowApplicationListModal(true)}
+                              className="iq-server-page__view-app-list-trigger"
+                              icon={List}
+                            >
+                              View application list
+                            </SettingsButton>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Flex align="center" gap="2" className="iq-server-page__verify-error">
+                            <XCircle size={16} />
+                            <Text size="2">Connection failed.</Text>
+                          </Flex>
+                          {verificationResult.reason && (
+                            <Text size="2" as="p" className="iq-server-page__error-reason">
+                              {verificationResult.reason}
+                            </Text>
+                          )}
+                        </>
+                      )}
+                    </Box>
+                  )}
+                </>
+              )}
+            </Flex>
+          </Card>
+        </Box>
+
         {/* Full-screen Application List - same control pattern as Repository Structure Tree */}
-        {(() => {
-          const parsed = verificationResult?.reason ? parseApplicationReason(verificationResult.reason) : null;
-          const appItems = parsed?.isList ? parsed.items : [];
-          const appMessage = parsed && (!parsed.isList || parsed.items.length === 0) ? (parsed.items[0] || verificationResult?.reason) : undefined;
-          return (
-            <IqApplicationListModal
-              isOpen={showApplicationListModal && !!verificationResult?.reason}
-              items={appItems}
-              message={appMessage}
-              onClose={() => setShowApplicationListModal(false)}
-            />
-          );
-        })()}
+        <IqApplicationListModal
+          isOpen={showApplicationListModal && !!verificationResult?.reason}
+          items={applicationListItems}
+          message={applicationListMessage}
+          onClose={() => setShowApplicationListModal(false)}
+        />
 
         {/* Help Section */}
         <Box className="iq-server-page__help">
@@ -1083,7 +711,7 @@ export function IqServerPage({ className }: IqServerPageProps) {
           <Text size="2" className="iq-server-page__help-text">
             See our{' '}
             <a
-              href="http://links.sonatype.com/products/nxrm3/docs/iq"
+              href="http://links.sonatype.com/products/nxrm3/browse/lc-learn"
               target="_blank"
               rel="noopener noreferrer"
               className="iq-server-page__help-link"
@@ -1095,63 +723,6 @@ export function IqServerPage({ className }: IqServerPageProps) {
           </Text>
         </Box>
 
-        {/* Save Configuration Confirmation Modal - shown after successful connection test with unsaved changes */}
-        <AlertDialog.Root open={showSaveConfirmModal}>
-          <AlertDialog.Content maxWidth="450px">
-            <Flex align="center" gap="3" mb="3">
-              <Box
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 36,
-                  height: 36,
-                  borderRadius: 'var(--radius-2)',
-                  backgroundColor: 'var(--green-3)',
-                  color: 'var(--green-11)',
-                  flexShrink: 0,
-                }}
-              >
-                <CheckCircle size={20} aria-hidden="true" />
-              </Box>
-              <AlertDialog.Title>Connection Test Successful</AlertDialog.Title>
-            </Flex>
-
-            <AlertDialog.Description size="2">
-              The connection to IQ Server was successful. Would you like to save this configuration?
-            </AlertDialog.Description>
-
-            <Flex gap="3" mt="4" justify="between">
-              <Button
-                variant="solid"
-                color="green"
-                size="2"
-                onClick={async () => {
-                  await handleSubmit();
-                  setShowSaveConfirmModal(false);
-                }}
-                disabled={loading}
-                data-testid="save-config-confirm"
-              >
-                {loading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
-                Save
-              </Button>
-              <Button
-                variant="surface"
-                color="gray"
-                size="2"
-                disabled={loading}
-                onClick={() => {
-                  setShowSaveConfirmModal(false);
-                  handleDiscard();
-                }}
-                data-testid="save-config-cancel"
-              >
-                Don't Save
-              </Button>
-            </Flex>
-          </AlertDialog.Content>
-        </AlertDialog.Root>
       </SettingsForm>
       </Box>
     </Box>
@@ -1159,5 +730,3 @@ export function IqServerPage({ className }: IqServerPageProps) {
 }
 
 export default IqServerPage;
-
-

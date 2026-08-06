@@ -14,10 +14,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Box, Flex, Text, Heading } from '@radix-ui/themes';
-import { X, Search, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 
 import { SettingsButton, SettingsTransferList } from '../../../../shared/form';
-import { PrivilegeReference, PrivilegesSelectionModalProps } from './types';
+import { PrivilegesSelectionModalProps } from './types';
 
 import './PrivilegesSelectionModal.scss';
 
@@ -76,7 +76,7 @@ export function PrivilegesSelectionModal({
               <Heading size="5">Select Privileges</Heading>
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="privileges-modal__close" aria-label="Close">
+              <button type="button" className="privileges-modal__close" aria-label="Close">
                 <X size={18} />
               </button>
             </Dialog.Close>

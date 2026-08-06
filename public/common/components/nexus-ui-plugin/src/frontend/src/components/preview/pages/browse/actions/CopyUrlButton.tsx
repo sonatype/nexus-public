@@ -14,7 +14,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { IconButton, Tooltip } from '@radix-ui/themes';
 import { Copy, Check } from 'lucide-react';
-import { ExtJS } from '../../../../../interface/ExtJS';
 import { useToast } from '../../../shared';
 
 import { ACTION_STRINGS, type CopyUrlButtonProps } from './actions.types';
@@ -104,7 +103,7 @@ export function CopyUrlButton({
         toast.error(ACTION_STRINGS.copyUrl.errorMessage);
       }
     },
-    [url, disabled, successMessage]
+    [url, disabled, successMessage, toast.error, toast.success]
   );
 
   const iconSize = ICON_SIZES[size] || ICON_SIZES.medium;

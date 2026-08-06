@@ -22,6 +22,8 @@ export default {
       icon: faShieldAlt
     },
 
+    CONNECTION_SETTINGS_BREADCRUMB: 'Connection Settings',
+
     OPEN_DASHBOARD: 'Open IQ Server Dashboard',
     OPEN_DASHBOARD_LINK: 'IQ Server Dashboard',
 

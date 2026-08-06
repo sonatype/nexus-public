@@ -15,7 +15,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign} from 'xstate';
-import {APIConstants, ExtAPIUtils, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtAPIUtils, ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
 const {EXT: {TAGS_LIST: {ACTION, METHODS}}} = APIConstants;
 
@@ -33,6 +33,7 @@ export default ListMachineUtils.buildListMachine({
   },
   services: {
     fetchData: async () => {
+      await ExtJS.waitForPermissions();
       const tagListData = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ_TAGS);
       ExtAPIUtils.checkForError(tagListData);
       return tagListData.data.result;

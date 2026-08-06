@@ -14,7 +14,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Flex, Text, Tabs, Badge } from '@radix-ui/themes';
 import { ExtJS } from '../../../../../../interface/ExtJS';
-import { Key, Shield, Users, Info, Pencil, Check } from 'lucide-react';
+import { Key, Shield, Users, Info, ArrowLeft, Pencil, Check } from 'lucide-react';
 
 import {
   PageHeader,
@@ -29,7 +29,6 @@ import {
 import { SettingsFormSection, SettingsButton } from '../../../../shared/form';
 import { usePrivilegeProfile } from './usePrivilegeProfile';
 import { useSecurityEntityModal } from '../SecurityEntityModalContext';
-import { usePrivilegesApi } from './usePrivilegesApi';
 import { getPrivilegeTypeLabel, getActionsForPrivilegeType, PRIVILEGE_TYPES } from './types';
 import { Role, formatRoleSourceDisplay } from '../roles/types';
 import { User, DEFAULT_SOURCE, getSourceLabel } from '../users/types';
@@ -217,7 +216,6 @@ export function PrivilegeProfilePage({
         title={privilege.name}
         description={`${getPrivilegeTypeLabel(privilege.type)}${privilege.readOnly ? ' (Read Only)' : ''}`}
         breadcrumbs={[
-          { label: 'Settings', onClick: () => { window.location.hash = '#preview/admin/settings'; } },
           { label: 'Privileges', onClick: onBack },
           { label: privilege.name },
         ]}
@@ -229,6 +227,9 @@ export function PrivilegeProfilePage({
                   Edit Privilege
                 </SettingsButton>
               )}
+              <SettingsButton variant="ghost" onClick={onBack} icon={ArrowLeft}>
+                Back to List
+              </SettingsButton>
             </Flex>
           ) : undefined
         }

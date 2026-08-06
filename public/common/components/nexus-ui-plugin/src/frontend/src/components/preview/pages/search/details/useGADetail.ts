@@ -214,7 +214,7 @@ export function useGADetail({ gaId, initialVersion }: UseGADetailOptions): UseGA
   // Empty deps is intentional: machine identity must be stable across renders
   const machine = useMemo(
     () => createGaDetailMachine(gaId, initialVersion),
-    [], // eslint-disable-line react-hooks/exhaustive-deps
+    [gaId, initialVersion], 
   );
 
   // Wire the machine with service overrides
@@ -320,7 +320,7 @@ export function useGADetail({ gaId, initialVersion }: UseGADetailOptions): UseGA
     }
     allItemsRef.current = [];
     send({ type: 'LOAD' });
-  }, [gaId, send]);
+  }, [send]);
 
   // Sync initialVersion from URL to machine when it changes
   // Uses a ref guard to prevent re-sending for the same version

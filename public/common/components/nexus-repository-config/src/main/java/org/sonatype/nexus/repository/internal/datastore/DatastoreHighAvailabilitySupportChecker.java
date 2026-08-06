@@ -55,7 +55,6 @@ public class DatastoreHighAvailabilitySupportChecker
         .add("composer")
         .add("huggingface")
         .add("terraform")
-        .add("terraformbackend")
         .add("swift")
         .add("pub")
         .add("ansiblegalaxy")

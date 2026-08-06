@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.blobstore.metrics;
 
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * DAO for access blobstore metrics
@@ -50,4 +51,9 @@ public interface BlobStoreMetricsDAO
    * Clears the summary metrics associated to the given blob store (total size , blob count).
    */
   void clearCountMetrics(String blobStoreName);
+
+  /**
+   * Rename the metrics record for a blob store.
+   */
+  void rename(@Param("oldName") String oldName, @Param("newName") String newName);
 }

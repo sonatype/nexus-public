@@ -55,7 +55,6 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 const mockedUseUsersApi = useUsersApiModule.useUsersApi as jest.MockedFunction<typeof useUsersApiModule.useUsersApi>;
 const mockedUseUsersForm = useUsersFormModule.useUsersForm as jest.MockedFunction<typeof useUsersFormModule.useUsersForm>;
@@ -109,7 +108,7 @@ const mockRoles = [
 describe('UserForm', () => {
   const mockOnSave = jest.fn();
   const mockOnCancel = jest.fn();
-  const mockOnDelete = jest.fn();
+  const _mockOnDelete = jest.fn();
   const mockFetchRoles = jest.fn();
   const mockFetchSources = jest.fn();
 
@@ -563,7 +562,7 @@ describe('UserForm', () => {
       };
     });
 
-    const { rerender } = render(
+    render(
       <UserForm
         isCreate={false}
         user={user}
@@ -639,6 +638,87 @@ describe('UserForm', () => {
 
     await waitFor(() => {
       expect(mockDirtyChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  it('marks external role chips as aria-disabled when role inspector is unavailable (wizardStep=0)', async () => {
+    const externalUser: User = {
+      userId: 'ldapuser',
+      firstName: 'LDAP',
+      lastName: 'User',
+      emailAddress: 'ldap@example.com',
+      source: 'LDAP',
+      realm: 'LDAP',
+      status: 'active',
+      roles: ['nx-anonymous'],
+      externalRoles: ['LDAP-Admin'],
+    };
+
+    mockedUseUsersForm.mockReturnValueOnce({
+      form: createMockForm(
+        { userId: 'ldapuser', firstName: 'LDAP', lastName: 'User', emailAddress: 'ldap@example.com', password: '', passwordConfirm: '', status: true, roles: ['nx-anonymous'], source: 'LDAP' },
+        { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }], user: externalUser }
+      ) as any,
+      user: externalUser,
+      isCreate: false,
+    });
+
+    render(
+      <UserForm
+        user={externalUser}
+        isCreate={false}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        wizardStep={0}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      const chip = screen.getByTestId('external-role-LDAP-Admin');
+      expect(chip).toHaveAttribute('aria-disabled', 'true');
+      expect(chip).toHaveAttribute('tabindex', '-1');
+    });
+  });
+
+  it('makes external role chips interactive when role inspector is available (wizardStep=1)', async () => {
+    const externalUser: User = {
+      userId: 'ldapuser',
+      firstName: 'LDAP',
+      lastName: 'User',
+      emailAddress: 'ldap@example.com',
+      source: 'LDAP',
+      realm: 'LDAP',
+      status: 'active',
+      roles: ['nx-anonymous'],
+      externalRoles: ['LDAP-Admin'],
+    };
+
+    mockedUseUsersForm.mockReturnValueOnce({
+      form: createMockForm(
+        { userId: 'ldapuser', firstName: 'LDAP', lastName: 'User', emailAddress: 'ldap@example.com', password: '', passwordConfirm: '', status: true, roles: ['nx-anonymous'], source: 'LDAP' },
+        { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }], user: externalUser }
+      ) as any,
+      user: externalUser,
+      isCreate: false,
+    });
+
+    render(
+      <UserForm
+        user={externalUser}
+        isCreate={false}
+        onSave={mockOnSave}
+        onCancel={mockOnCancel}
+        hideActions={true}
+        wizardStep={1}
+      />,
+      { wrapper: TestWrapper }
+    );
+
+    await waitFor(() => {
+      const chip = screen.getByTestId('external-role-LDAP-Admin');
+      expect(chip).toHaveAttribute('aria-disabled', 'false');
+      expect(chip).not.toHaveAttribute('tabindex');
     });
   });
 });

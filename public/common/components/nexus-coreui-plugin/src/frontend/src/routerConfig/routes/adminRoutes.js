@@ -36,6 +36,7 @@ const UsersExt = lazyLoad(() => import('../../components/pages/admin/Users/Users
 const AnonymousSettings = lazyLoad(() => import('../../components/pages/admin/AnonymousSettings/AnonymousSettings'));
 const Realms = lazyLoad(() => import('../../components/pages/admin/Realms/Realms'));
 const UserTokens = lazyLoad(() => import('../../components/pages/admin/UserTokens/UserTokens'));
+const ServiceAccountTokens = lazyLoad(() => import('../../components/pages/admin/ServiceAccountTokens/ServiceAccountTokens'));
 const CrowdSettings = lazyLoad(() => import('../../components/pages/admin/CrowdSettings/CrowdSettings'));
 const SamlConfiguration = lazyLoad(() => import('../../components/pages/admin/SamlConfiguration/SamlConfiguration'));
 const OAuth2Configuration = lazyLoad(() => import('../../components/pages/admin/OAuth2Configuration/OAuth2Configuration'));
@@ -519,6 +520,27 @@ export const adminRoutes = [
   },
 
   {
+    name: ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.ROOT,
+    url: '/satokens',
+    component: ServiceAccountTokens,
+    data: {
+      visibilityRequirements: {
+        requiresUser: true,
+        permissions: [Permissions.SERVICE_ACCOUNTS.READ],
+        // Cloud uses Preview UI; classic UI is PRO-only. Backend allows PRO+CLOUD via @ConditionalOnEdition.
+        editions: ['PRO'],
+        statesEnabled: [
+          {
+            key: 'serviceAccountEnabled',
+            defaultValue: false,
+          },
+        ],
+      },
+      title: ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.TITLE,
+    },
+  },
+
+  {
     name: ADMIN.SECURITY.ATLASSIANCROWD.ROOT,
     url: '/atlassiancrowd',
     component: CrowdSettings,
@@ -944,7 +966,13 @@ export const adminRoutes = [
     },
     data: {
       visibilityRequirements: {
-        permissions: [Permissions.SETTINGS.READ],
+        // Reached via cross-app deep-link from IQ on a fresh page load; the async permissions
+        // fetch (NEXUS-52583) is often still in-flight when the route check runs, so a
+        // permissions:[…] gate here would redirect to welcome before the real permission set
+        // arrives. Gate on requiresUser instead — server APIs and inner components still
+        // enforce nexus:settings:read, so non-admins get an empty page rather than a deep
+        // link that silently bounces.
+        requiresUser: true,
         statesEnabled: [
           {
             key: 'hostedRepositoryEvaluationEnabled',

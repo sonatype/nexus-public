@@ -225,6 +225,15 @@ public class SearchRequest
       return this;
     }
 
+    /**
+     * Replaces the current search filters with the provided collection. Useful when a
+     * {@code modifyRequest} hook needs to rewrite filters rather than append to them.
+     */
+    public Builder replaceSearchFilters(final Collection<SearchFilter> searchFilters) {
+      this.searchFilters = new ArrayList<>(searchFilters);
+      return this;
+    }
+
     public Builder repository(final String repositoryName) {
       this.repositories.add(repositoryName);
       return this;

@@ -114,7 +114,14 @@ export function createRouter({initialRoute, menuRoutes, missingRoute}) {
   const router = new UIRouterReact();
   router.plugin(servicesPlugin);
   router.plugin(hashLocationPlugin);
-  router.urlService.rules.initial({state: initialRoute});
+
+  // Only set the initial route when there is no meaningful hash. On browser refresh
+  // the hash is already present, and hashLocationPlugin will sync it to router state;
+  // setting initial() here would override that and redirect to the welcome page.
+  const currentHash = window.location.hash;
+  if (!currentHash || currentHash === '#' || currentHash === '#/') {
+    router.urlService.rules.initial({state: initialRoute});
+  }
 
   // validate permissions and configuration on each route request
   router.transitionService.onBefore({}, async (transition) => {

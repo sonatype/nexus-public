@@ -15,7 +15,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {Flex, Box, IconButton, Button, Dialog, Text, Popover, TextArea, Heading} from '@radix-ui/themes';
 import {Tooltip} from '@sonatype/nexus-ui-plugin';
 import {RefreshCw, Repeat, Menu} from 'lucide-react';
-import {ExtJS, handleExtJsUnsavedChanges, restClient} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, handleExtJsUnsavedChanges, hasUnsavedChanges, restClient, useSideNavbarOpenState} from '@sonatype/nexus-ui-plugin';
 import {useRouter} from '@uirouter/react';
 import {useTheme} from '../../contexts/ThemeContext';
 
@@ -31,7 +31,6 @@ import SystemStatusRadix from './SystemStatusRadix';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import HelpMenuRadix from './HelpMenuRadix';
 import LoginAndUserButtonRadix from './LoginAndUserButtonRadix';
-import useSideNavbarCollapsedState from '../../hooks/useSideNavbarCollapsedState';
 import {refreshReactPage} from '../../routerConfig/routerUtils';
 import {getHeritageEquivalent} from './previewHeritageNavigation';
 
@@ -255,17 +254,23 @@ export default function GlobalHeaderRadix() {
   }, []);
 
   const onRefreshClick = () => {
+    if (!ExtJS.isExtJsRendered()) {
+      // Preview UI: ExtJS warnBeforeNavigate crashes when there is no backing ExtJS
+      // controller, so handle React dirty state directly here (NEXUS-53775).
+      if (hasUnsavedChanges() && !window.confirm('You have unsaved changes. Refreshing will discard them. Continue?')) {
+        return;
+      }
+      refreshReactPage(router);
+      return;
+    }
+
     const menuCtrl =
       window.Ext && Ext.getApplication && Ext.getApplication().getController
         ? Ext.getApplication().getController('Menu')
         : null;
 
     handleExtJsUnsavedChanges(menuCtrl, () => {
-      if (ExtJS.isExtJsRendered()) {
-        ExtJS.refresh();
-      } else {
-        refreshReactPage(router);
-      }
+      ExtJS.refresh();
     });
   };
 
@@ -287,29 +292,17 @@ export default function GlobalHeaderRadix() {
         : "Core";
   }
 
-  const [isSidebarOpen] = useSideNavbarCollapsedState(false);
+  const [isSidebarOpen] = useSideNavbarOpenState(false);
   const onSidebarToggle = useCallback(() => {
     window.dispatchEvent(new CustomEvent('nx-sidebar-toggle'));
   }, []);
 
   return (
     <div className="nxrm-global-header-radix nx-global-header-2" data-testid="global-header">
-      <Box
-        asChild
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          width: '100%',
-          paddingTop: 'var(--space-3)',
-          paddingBottom: 'var(--space-3)',
-          borderBottom: '1px solid var(--gray-6)',
-          backgroundColor: 'var(--color-surface)',
-        }}
-      >
-        <Flex align="center" justify="between" gap="4" px="4" style={{width: '100%'}}>
+      <Box asChild className="nxrm-global-header-radix__sticky-bar">
+        <Flex align="center" justify="between" gap="4" px="4" className="nxrm-global-header-radix__row">
           {/* Left: Sidebar toggle + Logo */}
-          <Flex align="center" gap="4" style={{flexShrink: 0}}>
+          <Flex align="center" gap="4" className="nxrm-global-header-radix__side">
             <Tooltip content={isSidebarOpen ? 'Expand Sidebar' : 'Collapse Sidebar'}>
               <IconButton
                 variant="outline"
@@ -326,27 +319,19 @@ export default function GlobalHeaderRadix() {
                 <img
                   src={getLogo()}
                   alt={`Sonatype Nexus Repository ${getEditionText()}`}
-                  style={{height: '32px', display: 'block'}}
+                  className="nxrm-global-header-radix__logo"
                 />
               </a>
             </Box>
           </Flex>
 
           {/* Center: Search Bar */}
-          <Box
-            style={{
-              flex: '1 1 0',
-              maxWidth: '600px',
-              minWidth: '200px',
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
+          <Box className="nxrm-global-header-radix__search">
             <SearchRadix isPreviewUI={isPreviewUI} />
           </Box>
 
           {/* Right: Utility buttons */}
-          <Flex align="center" gap="3" style={{flexShrink: 0}}>
+          <Flex align="center" gap="3" className="nxrm-global-header-radix__side">
             {canAccessPreviewUi && !isDisableLegacyUi && (
               isPreviewUI ? (
                 isDisableSwitchFeedback ? (
@@ -354,7 +339,7 @@ export default function GlobalHeaderRadix() {
                     <Button
                       variant="soft"
                       color="green"
-                      style={{cursor: 'pointer'}}
+                      className="nxrm-global-header-radix__clickable"
                       aria-label="Switch to Classic UI"
                       title="Switch to Classic UI"
                       data-testid="ui-toggle-button"
@@ -374,7 +359,7 @@ export default function GlobalHeaderRadix() {
                         <Button
                           variant="soft"
                           color="green"
-                          style={{cursor: 'pointer'}}
+                          className="nxrm-global-header-radix__clickable"
                           aria-label="Switch to Classic UI"
                           aria-haspopup="dialog"
                           title="Switch to Classic UI"
@@ -424,7 +409,7 @@ export default function GlobalHeaderRadix() {
                             variant="soft"
                             color="green"
                             size="2"
-                            style={{cursor: isFeedbackTooLong ? 'not-allowed' : 'pointer'}}
+                            className={isFeedbackTooLong ? 'nxrm-global-header-radix__clickable--disabled' : 'nxrm-global-header-radix__clickable'}
                             onClick={switchToClassicUI}
                             disabled={isFeedbackTooLong}
                             aria-label="Use Classic UI"
@@ -444,7 +429,7 @@ export default function GlobalHeaderRadix() {
                     variant="soft"
                     color="green"
                     onClick={switchToNexusOneUI}
-                    style={{cursor: 'pointer'}}
+                    className="nxrm-global-header-radix__clickable"
                     aria-label="Switch to Nexus One UI"
                     title="Switch to Nexus One UI"
                     data-testid="ui-toggle-button"

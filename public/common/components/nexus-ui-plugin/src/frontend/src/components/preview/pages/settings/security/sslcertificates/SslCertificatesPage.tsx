@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Box, } from '@radix-ui/themes';
+import { Plus, } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, PageHeader } from '../../../../shared';

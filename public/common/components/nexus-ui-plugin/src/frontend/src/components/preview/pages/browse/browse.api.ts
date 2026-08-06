@@ -299,6 +299,67 @@ export async function fetchAsset(assetId: string, repositoryName: string): Promi
 }
 
 // =============================================================================
+// DELETE PERMISSION PREFLIGHT (ExtDirect)
+// =============================================================================
+
+/**
+ * Preflight: can the current user delete this asset?
+ *
+ * Calls coreui_Component.canDeleteAsset — the same @DirectMethod Classic UI's
+ * mixin/ComponentUtils.js uses. Server resolves against the concrete
+ * repository/format/asset (including content-selector grants), so users with
+ * specific-scope delete permissions are not falsely denied — unlike a
+ * client-side ExtJS.checkPermission wildcard check, which returns false against
+ * specific-scope grants (Shiro WildcardPermission asymmetry). See NEXUS-53861.
+ *
+ * Returns false on any error: hidden is the safe default.
+ */
+export async function canDeleteAsset(assetId: string, repositoryName: string): Promise<boolean> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'canDeleteAsset', {
+      data: [assetId, repositoryName],
+    });
+    return ExtAPIUtils.checkForErrorAndExtract(response) === true;
+  } catch (err: unknown) {
+    console.error('Failed to check asset delete permission:', err);
+    return false;
+  }
+}
+
+/**
+ * Preflight: can the current user delete this component?
+ *
+ * Server signature accepts a JSON-stringified ComponentXO (matches Classic UI's
+ * payload from NX.direct.coreui_Component.canDeleteComponent).
+ */
+export async function canDeleteComponent(component: ComponentXO): Promise<boolean> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'canDeleteComponent', {
+      data: [JSON.stringify(component)],
+    });
+    return ExtAPIUtils.checkForErrorAndExtract(response) === true;
+  } catch (err: unknown) {
+    console.error('Failed to check component delete permission:', err);
+    return false;
+  }
+}
+
+/**
+ * Preflight: can the current user delete this folder?
+ */
+export async function canDeleteFolder(path: string, repositoryName: string): Promise<boolean> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'canDeleteFolder', {
+      data: [path, repositoryName],
+    });
+    return ExtAPIUtils.checkForErrorAndExtract(response) === true;
+  } catch (err: unknown) {
+    console.error('Failed to check folder delete permission:', err);
+    return false;
+  }
+}
+
+// =============================================================================
 // DELETE API (REST for component/asset, ExtDirect for folder)
 // =============================================================================
 

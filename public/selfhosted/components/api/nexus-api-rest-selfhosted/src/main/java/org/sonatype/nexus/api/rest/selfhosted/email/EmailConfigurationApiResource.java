@@ -30,6 +30,7 @@ import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.email.EmailManager;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.validation.Validate;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -50,9 +51,12 @@ public class EmailConfigurationApiResource
 
   private final EmailManager emailManager;
 
+  private final AntiSsrfService antiSsrfService;
+
   @Autowired
-  public EmailConfigurationApiResource(EmailManager emailManager) {
+  public EmailConfigurationApiResource(EmailManager emailManager, AntiSsrfService antiSsrfService) {
     this.emailManager = emailManager;
+    this.antiSsrfService = antiSsrfService;
   }
 
   @GET
@@ -66,6 +70,7 @@ public class EmailConfigurationApiResource
   @Validate
   @RequiresPermissions("nexus:settings:update")
   public void setEmailConfiguration(@NotNull @Valid final ApiEmailConfiguration apiEmailConfiguration) {
+    antiSsrfService.validateHostWithoutCache(apiEmailConfiguration.getHost());
     emailManager.setConfiguration(convert(apiEmailConfiguration), apiEmailConfiguration.getPassword());
   }
 
@@ -91,7 +96,13 @@ public class EmailConfigurationApiResource
     catch (EmailException e) {
       log.warn("Unable to send verification", e);
       Throwable rootCause = ExceptionUtils.getRootCause(e);
-      String exceptionMessage = rootCause.getMessage().replace(rootCause.getClass().getName() + ": ", "");
+      if (rootCause == null) {
+        rootCause = e;
+      }
+      String rawMessage = rootCause.getMessage();
+      String exceptionMessage = rawMessage != null
+          ? rawMessage.replace(rootCause.getClass().getName() + ": ", "")
+          : rootCause.getClass().getSimpleName();
 
       return Response.status(BAD_REQUEST)
           .entity(new ApiEmailValidation(false, exceptionMessage))

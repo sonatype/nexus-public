@@ -147,7 +147,7 @@ export function HttpClientFacet({
   }, [formData.httpClient]);
 
   useEffect(() => {
-    if (!isEdit || !originalRemoteUrl) {
+    if (!(isEdit && originalRemoteUrl)) {
       return;
     }
 
@@ -351,7 +351,7 @@ export function HttpClientFacet({
                   handleConnectionFieldChange('retries', 0);
                 } else {
                   const n = parseInt(v, 10);
-                  if (!isNaN(n)) handleConnectionFieldChange('retries', n);
+                  if (!Number.isNaN(n)) handleConnectionFieldChange('retries', n);
                 }
               }}
               type="number"
@@ -367,7 +367,7 @@ export function HttpClientFacet({
                   handleConnectionFieldChange('timeout', 0);
                 } else {
                   const n = parseInt(v, 10);
-                  if (!isNaN(n)) handleConnectionFieldChange('timeout', n);
+                  if (!Number.isNaN(n)) handleConnectionFieldChange('timeout', n);
                 }
               }}
               type="number"

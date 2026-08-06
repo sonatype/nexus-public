@@ -25,8 +25,10 @@ import {
 
 describe('JDBC Parameters Config', () => {
   describe('JDBC_PARAMETERS_CONFIG', () => {
-    it('contains expected number of parameters', () => {
-      expect(JDBC_PARAMETERS_CONFIG.length).toBeGreaterThanOrEqual(20);
+    it('contains a small, curated set of parameters', () => {
+      // Deliberately curated (not the full pgjdbc property list) — see the module doc comment.
+      expect(JDBC_PARAMETERS_CONFIG.length).toBeGreaterThanOrEqual(8);
+      expect(JDBC_PARAMETERS_CONFIG.length).toBeLessThanOrEqual(15);
     });
 
     it('has all required fields for each parameter', () => {
@@ -103,7 +105,7 @@ describe('JDBC Parameters Config', () => {
 
     it('includes unit when present', () => {
       const desc = getParameterDescription('socketTimeout');
-      expect(desc).toContain('ms');
+      expect(desc).toContain('seconds');
     });
 
     it('includes default value when present', () => {
@@ -150,7 +152,7 @@ describe('JDBC Parameters Config', () => {
 
     describe('number parameters', () => {
       it('accepts valid numbers within range', () => {
-        expect(validateParameterValue('socketTimeout', '1000')).toBeUndefined();
+        expect(validateParameterValue('socketTimeout', '30')).toBeUndefined();
         expect(validateParameterValue('socketTimeout', '0')).toBeUndefined();
       });
 
@@ -186,7 +188,7 @@ describe('JDBC Parameters Config', () => {
     describe('string parameters', () => {
       it('accepts any string value', () => {
         expect(validateParameterValue('ApplicationName', 'MyApp')).toBeUndefined();
-        expect(validateParameterValue('sslcert', '/path/to/cert')).toBeUndefined();
+        expect(validateParameterValue('currentSchema', 'my_schema')).toBeUndefined();
       });
     });
 

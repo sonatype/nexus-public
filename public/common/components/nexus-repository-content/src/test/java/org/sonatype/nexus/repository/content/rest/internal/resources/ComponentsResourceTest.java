@@ -17,15 +17,12 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -51,8 +48,14 @@ import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
 import com.google.common.collect.ImmutableSet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,8 +64,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
-import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
@@ -79,6 +80,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -480,6 +482,19 @@ class ComponentsResourceTest
     catch (WebApplicationMessageException e) {
       assertThat(e.getResponse().getStatus(), is(400));
     }
+  }
+
+  @Test
+  void uploadComponent_throwsConflictOnRedeployDisabledException() throws Exception {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
+
+    doThrow(new RedeployDisabledException(repository, "/foo", "Repository does not allow upload")).when(uploadManager)
+        .handle(repository, request);
+
+    WebApplicationMessageException e =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getResponse().getStatus(), is(409));
   }
 
   @Test

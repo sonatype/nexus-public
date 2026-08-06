@@ -19,16 +19,17 @@ import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.MissingBlobException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
@@ -50,6 +51,12 @@ public class ExceptionHandler
   public Response handle(@Nonnull final Context context) throws Exception { // NOSONAR
     try {
       return context.proceed();
+    }
+    catch (RedeployDisabledException e) {
+      log.debug("Attempted redeploy in repository '{}': {} {}: {}",
+          context.getRepository() != null ? context.getRepository().getName() : "unknown",
+          context.getRequest().getAction(), context.getRequest().getPath(), e.toString());
+      return HttpResponses.conflict(e.getMessage());
     }
     catch (IllegalOperationException e) {
       log.warn("Illegal operation in repository '{}': {} {}: {}",

@@ -14,7 +14,6 @@
 import React, { useState, useCallback } from 'react';
 import {
   Box,
-  Card,
   Flex,
   Heading,
   Text,
@@ -393,7 +392,7 @@ export function AssetDetailPanel({
           <Heading size="4">{displayName}</Heading>
         </Flex>
         <Flex className="detail-panel__actions">
-          {component && component.version && (
+          {component?.version && (
             <DeepResearchLink
               ecosystem={format}
               packageName={format === 'maven2' && component.group ? `${component.group}:${component.name}` : component.name}
@@ -603,7 +602,7 @@ export function AssetDetailPanel({
                 {iqEnabled ? (
                   <>
                     <Text color="gray">Component security analysis available in IQ Server.</Text>
-                    {component && component.version && (
+                    {component?.version && (
                       <Button
                         variant="soft"
                         size="2"
@@ -642,7 +641,7 @@ export function AssetDetailPanel({
       {/* Footer Actions */}
       <Separator size="4" />
       <Flex p="3" gap="2" justify="end">
-        {component && component.version && (
+        {component?.version && (
           <DeepResearchLink
             ecosystem={format}
             packageName={format === 'maven2' && component.group ? `${component.group}:${component.name}` : component.name}

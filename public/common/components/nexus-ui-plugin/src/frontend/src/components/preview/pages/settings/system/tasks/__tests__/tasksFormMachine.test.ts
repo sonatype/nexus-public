@@ -13,7 +13,8 @@
 
 import { interpret } from 'xstate';
 import { waitFor } from 'xstate/lib/waitFor';
-import { createTaskFormMachine } from '../tasksFormMachine';
+import { createTaskFormMachine, validateTask } from '../tasksFormMachine';
+import { EXECUTE_RECONCILE_PLAN_TYPE_ID } from '../taskFieldMetadata';
 
 // Mock the local API module used by tasksFormMachine
 jest.mock('../../../../../../../interface/api', () => ({
@@ -72,6 +73,56 @@ const MOCK_TASK_TYPES = [
     },
     concurrentRun: true,
   },
+  {
+    // NEXUS-53360: ScriptTask — language has a default, source is MANDATORY/empty.
+    // multinode is included unconditionally here on purpose to verify the checkbox is
+    // never required; the real template only includes it on clustered deployments.
+    type: 'script',
+    name: 'Admin - Execute script',
+    enabled: true,
+    alertEmail: null,
+    notificationCondition: 'FAILURE',
+    frequency: { schedule: 'manual' },
+    properties: { language: 'groovy', source: '', multinode: 'false' },
+    concurrentRun: true,
+  },
+  {
+    // NEXUS-53484: Execute Data Repair Plan. planIds is the only stored property;
+    // blobstoreName / repositoryName / dates are display-only, derived from the Plan task.
+    type: 'blobstore.executeReconciliationPlan',
+    name: 'Repair - Execute Data Repair Plan',
+    enabled: true,
+    alertEmail: null,
+    notificationCondition: 'FAILURE',
+    frequency: { schedule: 'manual' },
+    properties: { planIds: '' },
+    concurrentRun: false,
+  },
+  {
+    // NEXUS-53485: Data Repair Plan (self-hosted). Mirrors TaskTemplateXO.toTaskTemplateXO —
+    // every descriptor form field id is a property keyed to its initial value.
+    type: 'blobstore.planReconciliation',
+    name: 'Repair - Data Repair Plan',
+    enabled: true,
+    alertEmail: null,
+    notificationCondition: 'FAILURE',
+    frequency: { schedule: 'manual' },
+    properties: {
+      topAlertBanner: '',
+      bottomAlertBanner: '',
+      onlyNotify: 'true',
+      blobstoreName: '(All Blob Stores)',
+      repositoryName: '',
+      taskScope: 'duration',
+      name: 'Repair - Data Repair Plan',
+      sinceDays: '',
+      sinceHours: '',
+      sinceMinutes: '30',
+      reconcileStartDate: '',
+      reconcileEndDate: '',
+    },
+    concurrentRun: false,
+  },
 ];
 
 /**
@@ -127,11 +178,14 @@ describe('tasksFormMachine', () => {
       const service = await startAndLoad(machine);
 
       const context = service.getSnapshot().context as any;
-      expect(context.taskTypes).toHaveLength(4);
+      expect(context.taskTypes).toHaveLength(MOCK_TASK_TYPES.length);
       expect(context.taskTypes[0].id).toBe('repository.cleanup');
       expect(context.taskTypes[1].id).toBe('blobstore.compact');
       expect(context.taskTypes[2].id).toBe('db.backup');
       expect(context.taskTypes[3].id).toBe('tags.cleanup');
+      expect(context.taskTypes[4].id).toBe('script');
+      expect(context.taskTypes[5].id).toBe('blobstore.executeReconciliationPlan');
+      expect(context.taskTypes[6].id).toBe('blobstore.planReconciliation');
 
       service.stop();
     });
@@ -321,6 +375,195 @@ describe('tasksFormMachine', () => {
     });
   });
 
+  describe('Data Repair Plan (blobstore.planReconciliation)', () => {
+    it('prefills the task name from the descriptor default and omits it from properties', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+
+      const ctx = service.getSnapshot().context as any;
+      expect(ctx.data.name).toBe('Repair - Data Repair Plan');
+      // The hidden `name` template field must not become a persisted property.
+      expect(ctx.data.properties).not.toHaveProperty('name');
+      // taskScope default and the blob-store sentinel are seeded from the template.
+      expect(ctx.data.properties.taskScope).toBe('duration');
+      expect(ctx.data.properties.blobstoreName).toBe('(All Blob Stores)');
+
+      service.stop();
+    });
+
+    it('does not overwrite a name the user already typed', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'My Custom Plan' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+
+      expect((service.getSnapshot().context as any).data.name).toBe('My Custom Plan');
+
+      service.stop();
+    });
+
+    it('rejects an end date before the start date when scope=dates', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.taskScope', value: 'dates' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.reconcileStartDate', value: '06/25/2026' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.reconcileEndDate', value: '06/24/2026' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.reconcileEndDate).toBe('End date must be on or after start date');
+
+      service.stop();
+    });
+
+    it('accepts an end date on or after the start date', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.taskScope', value: 'dates' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.reconcileStartDate', value: '06/24/2026' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.reconcileEndDate', value: '06/25/2026' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.reconcileEndDate).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('does not apply date-range validation in duration scope', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      // Even with an inconsistent (stale) inactive-side date pair, duration scope ignores them.
+      service.send({ type: 'UPDATE', name: 'properties.reconcileStartDate', value: '06/25/2026' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.reconcileEndDate', value: '06/24/2026' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.reconcileEndDate).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('does not flag blank duration fields as non-numeric', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceDays', value: '' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceHours', value: '' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceMinutes', value: '30' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.sinceDays).toBeUndefined();
+      expect(errors.properties?.sinceHours).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('treats a "null" duration value (loaded sentinel) as empty, not as a bad number', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceDays', value: 'null' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.sinceDays).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('still rejects a non-numeric duration value', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceDays', value: 'abc' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.sinceDays).toBe('Days must be a number');
+
+      service.stop();
+    });
+
+    it('allows save when all three duration fields are blank', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'blobstore.planReconciliation' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Plan' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceDays', value: '' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceHours', value: '' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.sinceMinutes', value: '' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.sinceDays).toBeUndefined();
+      expect(errors.properties?.sinceHours).toBeUndefined();
+      expect(errors.properties?.sinceMinutes).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('normalizes a loaded "null" duration value back to empty on edit', async () => {
+      const planTask: any = {
+        id: 'plan-1', enabled: true, name: 'Repair - Data Repair Plan',
+        typeId: 'blobstore.planReconciliation', typeName: 'Repair - Data Repair Plan',
+        status: 'WAITING', statusDescription: '', runnable: true, stoppable: false,
+        alertEmail: '', notificationCondition: 'FAILURE', schedule: 'manual',
+        properties: { taskScope: 'duration', sinceDays: 'null', sinceHours: 'null', sinceMinutes: '30', onlyNotify: 'true' },
+      };
+      const machine = createTaskFormMachine('plan-1', planTask);
+      const service = await startAndLoad(machine);
+
+      const props = (service.getSnapshot().context as any).data.properties;
+      expect(props.sinceDays).toBe('');
+      expect(props.sinceHours).toBe('');
+      expect(props.sinceMinutes).toBe('30');
+
+      service.stop();
+    });
+
+    it('does not relax numeric validation for unrelated task types', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      // tags.cleanup has the numeric firstCreatedDays field (no serializeEmptyAs override).
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'tags.cleanup' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Tags' } as any);
+      service.send({ type: 'UPDATE', name: 'properties.firstCreatedDays', value: 'abc' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+      let errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.firstCreatedDays).toBeTruthy();
+
+      // ...but a blank value is still accepted (unchanged behavior).
+      service.send({ type: 'UPDATE', name: 'properties.firstCreatedDays', value: '' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+      errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.firstCreatedDays).toBeUndefined();
+
+      service.stop();
+    });
+  });
+
   describe('validation', () => {
     it('validates name is required', async () => {
       const machine = createTaskFormMachine(undefined);
@@ -494,6 +737,35 @@ describe('tasksFormMachine', () => {
       service.stop();
     });
 
+    it('NEXUS-53360: requires script source, accepts the default language, and never requires multinode', async () => {
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'My Script' } as any);
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'script' } as any);
+      // source starts empty (MANDATORY) -> error; language defaults to 'groovy' -> ok.
+      service.send({ type: 'SUBMIT' } as any);
+
+      const errors = service.getSnapshot().context.validationErrors as any;
+      expect(errors.properties?.source).toContain('required');
+      expect(errors.properties?.language).toBeUndefined();
+      // multinode is a checkbox — never user-required even when blank/false.
+      expect(errors.properties?.multinode).toBeUndefined();
+
+      // Filling in the source clears the error.
+      service.send({
+        type: 'UPDATE',
+        name: 'properties',
+        value: { language: 'groovy', source: 'log.info("hi")', multinode: 'false' },
+      } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const cleared = service.getSnapshot().context.validationErrors as any;
+      expect(cleared.properties?.source).toBeUndefined();
+
+      service.stop();
+    });
+
     it('does not report a required error for tags.cleanup properties left blank', async () => {
       const machine = createTaskFormMachine(undefined);
       const service = await startAndLoad(machine);
@@ -557,7 +829,6 @@ describe('tasksFormMachine', () => {
       // ExternalMetadataTask declares external.metadata.repository.format with
       // required: false; clearing it must not produce a validation error.
       const machine = createTaskFormMachine(undefined);
-
       restClient.get.mockImplementation((url: string) => {
         if (url.includes('templates')) {
           return Promise.resolve([
@@ -593,6 +864,94 @@ describe('tasksFormMachine', () => {
 
       service.stop();
     });
+
+    /**
+     * NEXUS-53357: when the selected task type exposes formFields with
+     * required=true, validateTask must surface per-property errors so the
+     * Configure step can block advancement and the form can highlight the
+     * empty fields. Without this, users would submit empty required fields
+     * and the backend would reject with "Property 'X' not found".
+     */
+    it('surfaces per-type required-field errors under errors.properties', async () => {
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) {
+          return Promise.resolve([
+            {
+              type: 'repository.export',
+              name: 'Repository - Export assets',
+              properties: { repositoryName: '', targetDir: '', exportThreshold: '' },
+              formFields: [
+                {id: 'repositoryName', type: 'repository', label: 'Source repository', required: true},
+                {id: 'targetDir', type: 'string', label: 'Target directory', required: true},
+                {id: 'exportThreshold', type: 'number', label: 'Threshold (days)', required: false},
+              ],
+            },
+          ]);
+        }
+        return Promise.resolve([]);
+      });
+
+      const machine = createTaskFormMachine(undefined);
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'repository.export' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Export task' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      const props = (state.context.validationErrors as Record<string, unknown>).properties as
+        | Record<string, string>
+        | undefined;
+      expect(props).toBeDefined();
+      // Both fields are flagged required — the descriptive TASK_FIELD_UI-driven message wins
+      // over the generic "Required" fallback when both validation passes apply.
+      expect(props?.repositoryName).toBe('Repository is required');
+      expect(props?.targetDir).toBe('Target Directory is required');
+      // Optional field must not produce an error.
+      expect(props?.exportThreshold).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('clears per-type required-field errors once the fields are filled', async () => {
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) {
+          return Promise.resolve([
+            {
+              type: 'repository.export',
+              name: 'Repository - Export assets',
+              properties: { repositoryName: '', targetDir: '' },
+              formFields: [
+                {id: 'repositoryName', type: 'repository', label: 'Source repository', required: true},
+                {id: 'targetDir', type: 'string', label: 'Target directory', required: true},
+              ],
+            },
+          ]);
+        }
+        return Promise.resolve([]);
+      });
+
+      const machine = createTaskFormMachine(undefined);
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      service.send({ type: 'TASK_TYPE_CHANGE', value: 'repository.export' } as any);
+      service.send({ type: 'UPDATE', name: 'name', value: 'Export task' } as any);
+      service.send({
+        type: 'UPDATE',
+        name: 'properties',
+        value: { repositoryName: 'maven-public', targetDir: '/tmp/export' },
+      } as any);
+
+      const state = service.getSnapshot();
+      const props = (state.context.validationErrors as Record<string, unknown>).properties as
+        | Record<string, string>
+        | undefined;
+      expect(props).toBeUndefined();
+
+      service.stop();
+    });
   });
 
   describe('once schedule carries inherited startDate verbatim', () => {
@@ -623,6 +982,88 @@ describe('tasksFormMachine', () => {
       service.send({ type: 'SCHEDULE_CHANGE', value: 'once' } as any);
 
       expect(service.getSnapshot().context.data.startDate).toEqual(futureDate);
+      service.stop();
+    });
+  });
+
+  /**
+   * NEXUS-53357: fetchTaskTypes prefers the backend's per-field metadata
+   * (template.formFields) over the legacy properties-only synthesis. This
+   * test verifies the new path lights up when the metadata is present.
+   */
+  describe('fetchTaskTypes (per-field metadata)', () => {
+    it('consumes template.formFields when the backend provides it', async () => {
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) {
+          return Promise.resolve([
+            {
+              type: 'repository.import',
+              name: 'Repository - Import external files',
+              properties: { repositoryName: '', sourceDir: '', batchSize: '', enableHardLinks: '' },
+              formFields: [
+                {
+                  id: 'repositoryName', type: 'repository', label: 'Target repository', required: true,
+                  storeFilters: { type: 'hosted' },
+                },
+                {
+                  id: 'sourceDir', type: 'string', label: 'Source directory', required: true,
+                  helpText: 'Absolute path on the host',
+                },
+                {
+                  id: 'batchSize', type: 'number', label: 'Batch Size', required: false,
+                  minValue: '1', maxValue: '2147483647', regexValidation: '^[0-9]+$',
+                },
+                {
+                  id: 'enableHardLinks', type: 'checkbox', label: 'Enable Hard Links', required: false,
+                },
+              ],
+            },
+          ]);
+        }
+        return Promise.resolve([]);
+      });
+
+      const machine = createTaskFormMachine(undefined);
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const context = service.getSnapshot().context as any;
+      const importType = (context.taskTypes as any[]).find((t) => t.id === 'repository.import');
+      expect(importType).toBeDefined();
+      expect(importType.formFields).toHaveLength(4);
+      // Order is preserved.
+      expect(importType.formFields.map((f: any) => f.id)).toEqual([
+        'repositoryName', 'sourceDir', 'batchSize', 'enableHardLinks',
+      ]);
+      // Required flag honoured.
+      expect(importType.formFields[0].required).toBe(true);
+      expect(importType.formFields[2].required).toBe(false);
+      // storeFilters threaded through.
+      expect(importType.formFields[0].storeFilters).toEqual({ type: 'hosted' });
+      // Number metadata threaded through.
+      expect(importType.formFields[2].minValue).toBe('1');
+      expect(importType.formFields[2].maxValue).toBe('2147483647');
+
+      service.stop();
+    });
+
+    it('falls back to TASK_FIELD_UI-enriched synthesis when formFields is absent', async () => {
+      // MOCK_TASK_TYPES (above) has no `formFields` arrays — the shared transformer
+      // (taskTransformers.restTemplateToTaskType) must still enrich known field ids
+      // via TASK_FIELD_UI so EDIT renders the same combobox/required markers as CREATE
+      // on backends that don't yet publish formFields metadata.
+      const machine = createTaskFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      const context = service.getSnapshot().context as any;
+      const blobstoreType = (context.taskTypes as any[]).find((t) => t.id === 'blobstore.compact');
+      expect(blobstoreType).toBeDefined();
+      expect(blobstoreType.formFields).toHaveLength(1);
+      expect(blobstoreType.formFields[0].id).toBe('blobstoreName');
+      // TASK_FIELD_UI: blobstoreName → type 'blobstore', required by default.
+      expect(blobstoreType.formFields[0].type).toBe('blobstore');
+      expect(blobstoreType.formFields[0].required).toBe(true);
+
       service.stop();
     });
   });
@@ -940,8 +1381,26 @@ describe('tasksFormMachine', () => {
     });
   });
 
-  describe('edit mode', () => {
-    it('loads task data and enters correct schedule sub-state', async () => {
+  describe('validateTask — Execute date range', () => {
+    const base = (over: any) => ({
+      typeId: EXECUTE_RECONCILE_PLAN_TYPE_ID,
+      name: 'Repair - Execute Data Repair Plan', enabled: true, schedule: 'manual',
+      properties: { taskScope: 'dates', ...over },
+    }) as any;
+
+    it('rejects end before start for the Execute task', () => {
+      const errors: any = validateTask(base({ reconcileStartDate: '06/10/2026', reconcileEndDate: '06/01/2026' }));
+      expect(errors.properties?.reconcileEndDate).toMatch(/on or after start date/);
+    });
+
+    it('accepts end on or after start', () => {
+      const errors: any = validateTask(base({ reconcileStartDate: '06/01/2026', reconcileEndDate: '06/10/2026' }));
+      expect(errors.properties?.reconcileEndDate).toBeUndefined();
+    });
+  });
+
+describe('edit mode', () => {
+  it('loads task data and enters correct schedule sub-state', async () => {
       const preloadedTask = {
         id: 'task-123',
         enabled: true,
@@ -1007,5 +1466,298 @@ describe('tasksFormMachine', () => {
 
       service.stop();
     });
+  });
+
+  describe('nexus.cloud.blobstore.removal quirks', () => {
+    const CLOUD_BLOBSTORE_REMOVAL_TASK_TYPE = {
+      type: 'nexus.cloud.blobstore.removal',
+      name: 'Cloud - Remove blob store',
+      enabled: true,
+      alertEmail: null,
+      notificationCondition: 'FAILURE',
+      frequency: { schedule: 'once' },
+      properties: { blobstoreName: '' },
+    };
+
+    const TASK_TYPES_WITH_CLOUD = [...MOCK_TASK_TYPES, CLOUD_BLOBSTORE_REMOVAL_TASK_TYPE];
+
+    async function startWithCloudTypes(machine: ReturnType<typeof createTaskFormMachine>) {
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(TASK_TYPES_WITH_CLOUD);
+        return Promise.resolve([]);
+      });
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+      return service;
+    }
+
+    it('clears blobstoreName property for display when loading cloud removal task', async () => {
+      const taskWithBlobstore = {
+        id: 'cloud-removal-task',
+        enabled: true,
+        name: 'Remove deleted blob store',
+        type: 'nexus.cloud.blobstore.removal',
+        currentState: 'WAITING',
+        schedule: 'once',
+        startDate: null,
+        nextRun: new Date('2026-06-27T10:00:00Z'),
+        properties: { blobstoreName: 'deleted-blob-store' }, // <-- persisted value
+        alertEmail: null,
+        notificationCondition: 'FAILURE',
+        message: '',
+        lastRun: null,
+        lastRunResult: null,
+      };
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(TASK_TYPES_WITH_CLOUD);
+        return Promise.resolve(taskWithBlobstore);
+      });
+
+      const machine = createTaskFormMachine('cloud-removal-task');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const ctx = service.getSnapshot().context as any;
+      // The displayed value should be cleared to avoid showing orphan blob store
+      expect(ctx.data.properties.blobstoreName).toBe('');
+      // The original task should still carry the persisted value
+      expect(ctx.task.properties.blobstoreName).toBe('deleted-blob-store');
+
+      service.stop();
+    });
+
+    it('falls back to nextRun when startDate is null for cloud removal task', async () => {
+      const nextRunDate = new Date('2026-06-27T10:00:00Z');
+      const taskWithoutStartDate = {
+        id: 'cloud-removal-task',
+        enabled: true,
+        name: 'Remove deleted blob store',
+        type: 'nexus.cloud.blobstore.removal',
+        currentState: 'WAITING',
+        schedule: 'once',
+        startDate: null, // <-- missing
+        nextRun: nextRunDate, // <-- should be used as fallback
+        properties: { blobstoreName: 'old-blob-store' },
+        alertEmail: null,
+        notificationCondition: 'FAILURE',
+        message: '',
+        lastRun: null,
+        lastRunResult: null,
+      };
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(TASK_TYPES_WITH_CLOUD);
+        return Promise.resolve(taskWithoutStartDate);
+      });
+
+      const machine = createTaskFormMachine('cloud-removal-task');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const ctx = service.getSnapshot().context as any;
+      // startDate should fall back to nextRun
+      expect(ctx.data.startDate).toBeTruthy();
+      expect(ctx.data.startDate.getTime()).toBe(nextRunDate.getTime());
+      // startTime is extracted using local time (getHours/getMinutes), so derive expected value the same way
+      const expectedTime = `${String(nextRunDate.getHours()).padStart(2, '0')}:${String(nextRunDate.getMinutes()).padStart(2, '0')}`;
+      expect(ctx.data.startTime).toBe(expectedTime);
+
+      service.stop();
+    });
+
+    it('does not fall back to nextRun for non-cloud tasks (regression guard)', async () => {
+      const nextRunDate = new Date('2026-06-27T10:00:00Z');
+      const regularTask = {
+        id: 'regular-task',
+        enabled: true,
+        name: 'Regular Task',
+        type: 'repository.cleanup',
+        currentState: 'WAITING',
+        schedule: 'once',
+        startDate: null,
+        nextRun: nextRunDate,
+        properties: { repositoryName: 'maven-releases' },
+        alertEmail: null,
+        notificationCondition: 'FAILURE',
+        message: '',
+        lastRun: null,
+        lastRunResult: null,
+      };
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(TASK_TYPES_WITH_CLOUD);
+        return Promise.resolve(regularTask);
+      });
+
+      const machine = createTaskFormMachine('regular-task');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const ctx = service.getSnapshot().context as any;
+      // startDate should remain null (no fallback)
+      expect(ctx.data.startDate).toBeNull();
+
+      service.stop();
+    });
+
+    it('blocks Save when blobstoreName is empty for cloud removal task', async () => {
+      const taskWithEmptyBlobstore = {
+        id: 'cloud-removal-task',
+        enabled: true,
+        name: 'Remove deleted blob store',
+        type: 'nexus.cloud.blobstore.removal',
+        currentState: 'WAITING',
+        schedule: 'once',
+        startDate: new Date('2026-06-27T10:00:00Z'),
+        nextRun: new Date('2026-06-27T10:00:00Z'),
+        properties: { blobstoreName: '' }, // <-- empty triggers validation
+        alertEmail: null,
+        notificationCondition: 'FAILURE',
+        message: '',
+        lastRun: null,
+        lastRunResult: null,
+      };
+
+      restClient.get.mockImplementation((url: string) => {
+        if (url.includes('templates')) return Promise.resolve(TASK_TYPES_WITH_CLOUD);
+        return Promise.resolve(taskWithEmptyBlobstore);
+      });
+
+      const machine = createTaskFormMachine('cloud-removal-task');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'Updated Name' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      const errors = state.context.validationErrors as any;
+      // Validation should fail because blobstoreName is required (not exempted)
+      expect(errors.properties?.blobstoreName).toContain('required');
+
+      service.stop();
+    });
+  });
+});
+
+describe('create mode — Execute Data Repair Plan pre-fetches Plan task fields on type selection', () => {
+  it('populates blobstoreName/repositoryName/taskScope when EXECUTE_RECONCILE_PLAN_TYPE_ID is selected', async () => {
+    restClient.get.mockImplementation((url: string) => {
+      if (url.includes('templates')) {
+        return Promise.resolve(MOCK_TASK_TYPES);
+      }
+      // GET /v1/tasks (list) — Plan task is on the first page
+      if (url === '/service/rest/v1/tasks') {
+        return Promise.resolve({
+          items: [
+            {
+              type: 'blobstore.planReconciliation',
+              properties: {
+                blobstoreName: 'default',
+                repositoryName: 'maven-central',
+                taskScope: 'duration',
+                sinceDays: 'null',
+                sinceHours: 'null',
+                sinceMinutes: '30',
+              },
+            },
+          ],
+        });
+      }
+      return Promise.resolve({});
+    });
+
+    // Create mode: no taskId
+    const machine = createTaskFormMachine(undefined);
+    const service = interpret(machine).start();
+    await waitFor(service, (state) => state.matches('editing'));
+
+    // Before type selection — fields are empty
+    expect(service.getSnapshot().context.data.typeId).toBe('');
+
+    // Select the Execute task type
+    service.send({ type: 'TASK_TYPE_CHANGE', value: EXECUTE_RECONCILE_PLAN_TYPE_ID } as any);
+
+    const props = service.getSnapshot().context.data.properties;
+    expect(props.blobstoreName).toBe('default');
+    expect(props.repositoryName).toBe('maven-central');
+    expect(props.taskScope).toBe('dates');
+    expect(props.reconcileStartDate).toBeTruthy();
+    expect(props.reconcileEndDate).toBeTruthy();
+
+    service.stop();
+  });
+
+  it('leaves fields empty when no Plan task exists', async () => {
+    restClient.get.mockImplementation((url: string) => {
+      if (url.includes('templates')) return Promise.resolve(MOCK_TASK_TYPES);
+      // No Plan task in the list
+      return Promise.resolve({ items: [] });
+    });
+
+    const machine = createTaskFormMachine(undefined);
+    const service = interpret(machine).start();
+    await waitFor(service, (state) => state.matches('editing'));
+
+    service.send({ type: 'TASK_TYPE_CHANGE', value: EXECUTE_RECONCILE_PLAN_TYPE_ID } as any);
+
+    const props = service.getSnapshot().context.data.properties;
+    expect(props.blobstoreName).toBeUndefined();
+    expect(props.repositoryName).toBeUndefined();
+
+    service.stop();
+  });
+});
+
+describe('load — Execute Data Repair Plan derives blob store / repository from the Plan task', () => {
+  it('synthesizes blobstoreName/repositoryName/taskScope from the sibling Data Repair Plan task', async () => {
+    restClient.get.mockImplementation((url: string) => {
+      if (url.includes('templates')) {
+        return Promise.resolve(MOCK_TASK_TYPES);
+      }
+      if (url.endsWith('/tasks')) {
+        // The list endpoint carries per-item properties; the Plan task has the real selection.
+        return Promise.resolve({
+          items: [
+            {
+              type: 'blobstore.planReconciliation',
+              properties: {
+                blobstoreName: 'default',
+                repositoryName: 'maven-central',
+                taskScope: 'duration',
+                sinceDays: 'null',
+                sinceHours: 'null',
+                sinceMinutes: '30',
+              },
+            },
+          ],
+        });
+      }
+      // GET /v1/tasks/{id}: the Execute task itself stores no blob store / repository (only planIds).
+      return Promise.resolve({
+        id: 'exec-1',
+        type: EXECUTE_RECONCILE_PLAN_TYPE_ID,
+        name: 'Repair - Execute Data Repair Plan',
+        enabled: true,
+        currentState: 'WAITING',
+        properties: {},
+        schedule: 'manual',
+      });
+    });
+
+    const machine = createTaskFormMachine('exec-1');
+    const service = interpret(machine).start();
+    await waitFor(service, (state) => state.matches('editing'));
+
+    const props = service.getSnapshot().context.data.properties;
+    expect(props.blobstoreName).toBe('default');
+    expect(props.repositoryName).toBe('maven-central');
+    expect(props.taskScope).toBe('dates');
+    // Plan used a duration → a computed start/end date range is present.
+    expect(props.reconcileStartDate).toBeTruthy();
+    expect(props.reconcileEndDate).toBeTruthy();
+
+    service.stop();
   });
 });

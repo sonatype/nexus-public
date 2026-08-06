@@ -12,7 +12,7 @@
  */
 
 import React, { useMemo, useCallback, useEffect, useState } from 'react';
-import { Box, Flex, Text, ScrollArea, Button as RadixButton } from '@radix-ui/themes';
+import { Box, Flex, Text, Button as RadixButton } from '@radix-ui/themes';
 import { Trash2, Loader2, Key, RefreshCw } from 'lucide-react';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
@@ -73,8 +73,8 @@ export function UserForm({
   const toast = useToast();
   const isPro = ExtJS.isProEdition();
   const state = ExtJS.state();
-  const isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
-  const isCurrentUser = user?.userId === state?.getUser?.()?.id;
+  const _isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
+  const _isCurrentUser = user?.userId === state?.getUser?.()?.id;
   const isAdminUser = user?.userId === 'admin';
   const activeCapabilities = state?.getValue?.('capabilityActiveTypes') || [];
   const isUserTokenCapabilityActive = activeCapabilities.includes('usertoken');
@@ -210,8 +210,15 @@ export function UserForm({
   // Show loading state while data loads
   if (isLoading) {
     return (
-      <Flex align="center" justify="center" className="user-form__loading">
-        <Loader2 size={24} className="user-form__spinner" />
+      <Flex
+        align="center"
+        justify="center"
+        className="user-form__loading"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Loader2 size={24} className="user-form__spinner" aria-hidden="true" />
         <Text size="2">Loading form...</Text>
       </Flex>
     );
@@ -224,7 +231,7 @@ export function UserForm({
     try {
       await resetUserToken(currentUser.userId, currentUser.realm || currentUser.source);
       toast.success(`User token has been reset for ${getFullName(currentUser)}`);
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     } finally {
       setIsResettingToken(false);
@@ -399,16 +406,17 @@ export function UserForm({
                     const role = allRoles.find((r: { id: string }) => r.id === roleId);
                     const label = role?.name ?? roleId;
                     return (
-                      <Box
-                        key={roleId}
-                        as="button"
-                        type="button"
-                        className="user-form__external-role-chip"
-                        onClick={() => showRoleInspector && setInspectedRoleId(roleId)}
-                        data-testid={`external-role-${roleId}`}
-                        title="Click to view role contents in Inspector"
-                      >
-                        {label}
+                      <Box key={roleId} asChild className="user-form__external-role-chip">
+                        <button
+                          type="button"
+                          onClick={() => showRoleInspector && setInspectedRoleId(roleId)}
+                          data-testid={`external-role-${roleId}`}
+                          title="Click to view role contents in Inspector"
+                          aria-disabled={!showRoleInspector}
+                          tabIndex={!showRoleInspector ? -1 : undefined}
+                        >
+                          {label}
+                        </button>
                       </Box>
                     );
                   })}

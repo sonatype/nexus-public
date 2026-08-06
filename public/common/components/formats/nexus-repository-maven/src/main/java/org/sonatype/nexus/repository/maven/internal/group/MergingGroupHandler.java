@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.group;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,14 +30,17 @@ import org.sonatype.nexus.repository.HasFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.group.GroupHandler;
+import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -145,15 +149,24 @@ public class MergingGroupHandler
           return cached.get();
         }
 
+        // When rebuilding a stale/missing group cache in response to a HEAD request, dispatch
+        // GET sub-requests to members. Remote proxies satisfy HEAD without downloading a body
+        // (NEXUS-40204), which produces body-less HeaderOnlyPayloads. Merging those would cache
+        // truncated metadata (NEXUS-53780). A GET-driven rebuild yields real content that the
+        // HEAD response can then be served from.
+        final Request memberRequest = toMemberRequest(context.getRequest());
+
         // Check members to prime
-        Map<Repository, Response> passThroughResponses = getAll(context, proxiesOrGroups, dispatched, isStale);
+        Map<Repository, Response> passThroughResponses =
+            getAll(memberRequest, context, proxiesOrGroups, dispatched, isStale);
 
         // Content is stale or missing - rebuild from members
         log.trace("Parent group {} is stale or has no cached content, rebuilding from members",
             repository.getName());
 
         // this will fetch the remaining responses, thanks to the 'dispatched' tracking
-        Map<Repository, Response> remainingResponses = getAll(context, members, dispatched, isStale);
+        Map<Repository, Response> remainingResponses =
+            getAll(memberRequest, context, members, dispatched, isStale);
 
         // merge the two sets of responses according to member order
         LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
@@ -228,5 +241,30 @@ public class MergingGroupHandler
   {
     return metadataCooperation.on(call)
         .cooperate(repository.getName(), path.toString());
+  }
+
+  /**
+   * Build the request used for member sub-dispatch when rebuilding stale/missing group
+   * metadata (NEXUS-53780).
+   * <p>
+   * For a HEAD group request the members are re-issued as GET so remote proxies fetch real
+   * bodies rather than body-less {@code HeaderOnlyPayload}s. {@link Request.Builder#copy}
+   * preserves every field on {@link Request} (including payload and multipart) so this is
+   * robust against future field additions. A fresh {@link AttributesMap} is installed on the
+   * synthetic request so mutations by downstream handlers — {@code DispatchedRepositories}
+   * tracking, {@code PROXY_THROTTLED_ANALYTICS_MARKED}, {@code IQ_MEMBER_REPO_NAME}, and any
+   * format-specific state — cannot leak back into the outer HEAD request. For non-HEAD
+   * requests the original is returned unchanged.
+   */
+  @VisibleForTesting
+  static Request toMemberRequest(final Request original) {
+    if (!HttpMethods.HEAD.equals(original.getAction())) {
+      return original;
+    }
+    return new Request.Builder()
+        .copy(original)
+        .action(HttpMethods.GET)
+        .attributes(new AttributesMap(new HashMap<>(original.getAttributes().backing())))
+        .build();
   }
 }

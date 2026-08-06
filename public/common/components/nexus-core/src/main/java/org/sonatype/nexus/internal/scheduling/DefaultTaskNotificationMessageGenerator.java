@@ -13,8 +13,7 @@
 package org.sonatype.nexus.internal.scheduling;
 
 import java.net.URL;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.time.temporal.ChronoUnit.MILLIS;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -57,8 +55,14 @@ public class DefaultTaskNotificationMessageGenerator
   public String completed(final TaskInfo taskInfo) {
     URL template = DefaultTaskNotificationMessageGenerator.class.getResource("task-completed.vm");
     TemplateParameters params = new TemplateParameters();
-    String formattedDuration = DateTimeFormatter.ISO_LOCAL_TIME
-        .format(LocalTime.MIDNIGHT.plus(taskInfo.getLastRunState().getRunDuration(), MILLIS));
+
+    // Use Duration to handle durations > 24 hours correctly
+    Duration duration = Duration.ofMillis(taskInfo.getLastRunState().getRunDuration());
+    String formattedDuration = String.format("%02d:%02d:%02d",
+        duration.toHours(),
+        duration.toMinutesPart(),
+        duration.toSecondsPart());
+
     params.set("formattedDuration", formattedDuration);
     params.set("taskInfo", taskInfo);
     return templateHelper.render(template, params);

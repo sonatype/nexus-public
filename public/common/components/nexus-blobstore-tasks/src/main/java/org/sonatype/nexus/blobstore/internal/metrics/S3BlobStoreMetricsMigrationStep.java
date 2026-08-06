@@ -24,10 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.blobstore.api.metrics.BlobStoreMetricsEntity;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
-import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
-import org.sonatype.nexus.kv.GlobalKeyValueStore;
 import org.sonatype.nexus.kv.NexusKeyValue;
 import org.sonatype.nexus.kv.ValueType;
+import org.sonatype.nexus.kv.upgrade.UpgradeNexusKeyValueStore;
+import org.sonatype.nexus.upgrade.datastore.UpgradeCooperation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,7 +51,7 @@ public class S3BlobStoreMetricsMigrationStep
 
   private final ObjectMapper objectMapper;
 
-  private final GlobalKeyValueStore kv;
+  private final UpgradeNexusKeyValueStore kv;
 
   private final Cooperation2 cooperation;
 
@@ -59,15 +59,14 @@ public class S3BlobStoreMetricsMigrationStep
 
   @Autowired
   public S3BlobStoreMetricsMigrationStep(
-      final GlobalKeyValueStore kv,
+      final UpgradeNexusKeyValueStore kv,
       final ObjectMapper objectMapper,
-      final Cooperation2Factory cooperationFactory)
+      final UpgradeCooperation upgradeCooperation)
   {
     super(BLOB_STORE_TYPE);
     this.kv = checkNotNull(kv);
     this.objectMapper = checkNotNull(objectMapper);
-    this.cooperation = checkNotNull(cooperationFactory).configure()
-        .build(NAME);
+    this.cooperation = checkNotNull(upgradeCooperation).get(NAME);
   }
 
   @Override

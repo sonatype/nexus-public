@@ -20,8 +20,8 @@ jest.mock('../../../../../interface/api', () => {
   return {
     __esModule: true,
     restClient: {
-      get: jest.fn(function() { return mockGet.apply(null, arguments); }),
-      post: jest.fn(function() { return mockPost.apply(null, arguments); }),
+      get: jest.fn((...args) => mockGet(...args)),
+      post: jest.fn((...args) => mockPost(...args)),
     },
     ENDPOINTS: {
       MALWARE_COUNTS: '/service/rest/internal/ui/malware/counts',
@@ -29,6 +29,7 @@ jest.mock('../../../../../interface/api', () => {
       MALICIOUS_RISK_HISTORY: '/service/rest/v1/malicious-risk/history',
       MALICIOUS_RISK_ACKNOWLEDGE: '/service/rest/v1/malicious-risk/acknowledge',
       MALICIOUS_RISK_DELETE_FINDING: '/service/rest/v1/malicious-risk/delete-finding',
+      MALICIOUS_RISK_REMEDIATE: '/service/rest/v1/malicious-risk/remediate',
       IQ_CAPABILITIES: '/service/rest/v1/iq/capabilities',
       REPOSITORIES: '/service/rest/v1/repositories',
       HEALTH_CHECK_SUMMARY: '/service/rest/internal/ui/healthcheck/summary',
@@ -256,6 +257,60 @@ describe('useMaliciousPackagesData', () => {
 
     expect(result.current.historyFindings).toHaveLength(1);
     expect(result.current.historyFindings[0].id).toBe(10);
+  });
+
+  it('fetchFindings calls the history endpoint with sinceDays/limit/offset and parses the page', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('malicious-risk/history')) {
+        return Promise.resolve({ items: MOCK_ACTIVE_FINDINGS, totalCount: 2 });
+      }
+      if (url.includes('malware/counts')) return Promise.resolve(MOCK_MALWARE_COUNTS);
+      if (url.includes('active-findings')) return Promise.resolve(MOCK_ACTIVE_FINDINGS);
+      if (url.includes('iq/capabilities')) return Promise.resolve(MOCK_IQ_CAPABILITIES);
+      if (url.includes('healthcheck/summary')) return Promise.resolve([]);
+      if (url.includes('repositories')) return Promise.resolve(MOCK_REPOSITORIES);
+      return Promise.resolve(null);
+    });
+
+    const { result } = renderHook(() => useMaliciousPackagesData());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    const page = await result.current.fetchFindings(30, 20, 0);
+
+    expect(mockGet).toHaveBeenCalledWith(
+      '/service/rest/v1/malicious-risk/history?sinceDays=30&limit=20&offset=0'
+    );
+    expect(page.items).toHaveLength(2);
+    expect(page.totalCount).toBe(2);
+  });
+
+  it('fetchFindings appends the repositoryName filter when provided', async () => {
+    const { result } = renderHook(() => useMaliciousPackagesData());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await result.current.fetchFindings(30, 20, 0, 'maven-proxy');
+
+    expect(mockGet).toHaveBeenCalledWith(
+      '/service/rest/v1/malicious-risk/history?sinceDays=30&limit=20&offset=0&repositoryName=maven-proxy'
+    );
+  });
+
+  it('remediateFindings posts to the remediate endpoint and refetches', async () => {
+    mockPost.mockResolvedValue({ results: [] });
+
+    const { result } = renderHook(() => useMaliciousPackagesData());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const initialCallCount = mockGet.mock.calls.length;
+
+    await act(async () => {
+      await result.current.remediateFindings([1, 2]);
+    });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      '/service/rest/v1/malicious-risk/remediate',
+      { findingIds: [1, 2] }
+    );
+    expect(mockGet.mock.calls.length).toBeGreaterThan(initialCallCount);
   });
 
   it('sets hasFirewall false when IQ capabilities fail', async () => {

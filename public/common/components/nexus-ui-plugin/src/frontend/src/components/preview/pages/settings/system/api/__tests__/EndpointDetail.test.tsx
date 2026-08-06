@@ -18,7 +18,6 @@ import { Theme } from '@radix-ui/themes';
 
 import { EndpointDetail } from '../EndpointDetail';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
-import type { EndpointAccessDot } from '../utils/endpointAccess';
 
 jest.mock('../tabs/TryItTab', () => ({
   TryItTab: ({ accessDenied }: any) => (

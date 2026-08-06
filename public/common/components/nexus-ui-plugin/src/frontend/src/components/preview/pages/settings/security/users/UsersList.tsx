@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Flex, Text, TextField, IconButton, Tooltip } from '@radix-ui/themes';
-import { Search, Users, Plus, UserPlus, CheckCircle, XCircle, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Search, Users, Plus, UserPlus, Eye, Pencil, Trash2 } from 'lucide-react';
 
 import {
   EntityTable,
@@ -93,7 +93,7 @@ export function UsersList({
 
     users.forEach((user) => {
       const source = user.source || DEFAULT_SOURCE;
-      const label = source === DEFAULT_SOURCE ? 'Local' : source;
+      const _label = source === DEFAULT_SOURCE ? 'Local' : source;
       sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1);
     });
 
@@ -418,7 +418,7 @@ export function UsersList({
         tip="Users are assigned roles which grant them access to Nexus Repository features."
       />
     );
-  }, [filter, sourceFilter, statusFilter, handleClearFilters, onCreate]);
+  }, [filter, sourceFilter, statusFilter, handleClearFilters, onCreate, isCloud]);
 
   return (
     <Flex className="users-list" gap="4" data-testid="users-list">
@@ -442,6 +442,7 @@ export function UsersList({
             className="users-list__search-input"
             data-testid="users-search"
             data-analytics-id="nxrm-user-filter"
+            aria-label="Search users"
           >
             <TextField.Slot>
               <Search size={16} />

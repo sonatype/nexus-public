@@ -14,7 +14,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ExtJS } from '../../../../../interface/ExtJS';
 import { APIConstants } from '../../../../../constants/APIConstants';
-import { ExtAPIUtils } from '../../../../../interface/ExtAPIUtils';
 import { restClient, ENDPOINTS, parseApiError } from '../../../../../interface/api';
 import type {
   Repository,

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import type { AuditEvent, AuditEventDisplay, AuditCategory } from './audit.types';
+import type { AuditEvent, AuditEventDisplay, } from './audit.types';
 import { DOMAIN_CATEGORY_MAP } from './audit.constants';
 
 /**

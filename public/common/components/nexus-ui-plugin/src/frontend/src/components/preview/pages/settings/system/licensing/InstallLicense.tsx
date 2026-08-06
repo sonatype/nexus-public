@@ -76,7 +76,7 @@ export function InstallLicense({ hasExistingLicense, onLicenseInstalled }: Insta
     } catch {
       // uploadLicense sets the error via useLicensingApi's setError; no additional handling needed here
     }
-  }, [files, uploadLicense, onLicenseInstalled]);
+  }, [files, uploadLicense, onLicenseInstalled, setError]);
 
   // Handle decline agreement
   const handleDecline = useCallback(() => {

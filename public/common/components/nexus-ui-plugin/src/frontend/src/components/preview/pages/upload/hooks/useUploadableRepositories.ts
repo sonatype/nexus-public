@@ -95,7 +95,7 @@ function sortRepositories(
   column: SortColumn | null,
   direction: SortDirection
 ): UploadableRepository[] {
-  if (!column || !direction) {
+  if (!(column && direction)) {
     return repositories;
   }
 

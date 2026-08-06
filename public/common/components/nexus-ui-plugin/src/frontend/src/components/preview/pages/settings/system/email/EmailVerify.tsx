@@ -13,7 +13,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
-import { Send, Loader2 } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 import { SettingsTextInput, SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { EmailVerificationResult } from './types';

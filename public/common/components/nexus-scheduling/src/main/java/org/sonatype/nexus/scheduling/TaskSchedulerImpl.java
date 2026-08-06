@@ -15,6 +15,7 @@ package org.sonatype.nexus.scheduling;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.events.TaskScheduledEvent;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
@@ -157,6 +159,14 @@ public class TaskSchedulerImpl
     checkNotNull(schedule);
 
     TaskDescriptor descriptor = checkNotNull(taskFactory.findDescriptor(config.getTypeId()));
+
+    if (descriptor.isSingletonTaskType()) {
+      TaskInfo existing = getTaskByTypeId(config.getTypeId());
+      if (existing != null && !Objects.equals(existing.getId(), config.getId())) {
+        log.warn("Singleton task type {} is already scheduled, rejecting duplicate", config.getTypeId());
+        throw new ValidationErrorsException("Task " + config.getTypeId() + " already exists, ignoring");
+      }
+    }
 
     descriptor.completeConfiguration(config);
     config.validate();

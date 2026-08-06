@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 import { SettingsCombobox } from '../SettingsCombobox';

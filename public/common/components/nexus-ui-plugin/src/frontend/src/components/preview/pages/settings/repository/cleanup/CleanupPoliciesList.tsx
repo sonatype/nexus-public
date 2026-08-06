@@ -70,7 +70,7 @@ export function CleanupPoliciesList({ onSelect, onCreate }: CleanupPoliciesListP
         (p) =>
           p.name.toLowerCase().includes(lowerFilter) ||
           p.format.toLowerCase().includes(lowerFilter) ||
-          (p.notes && p.notes.toLowerCase().includes(lowerFilter))
+          (p.notes?.toLowerCase().includes(lowerFilter))
       );
     }
 

@@ -80,7 +80,7 @@ export function GARepositoriesTab({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterTypes, filterFormats]);
+  }, []);
 
   const versionFilteredRepos = useMemo(() => {
     if (!selectedVersion || !versions) return [...repositories];
@@ -358,6 +358,7 @@ export function GARepositoriesTab({
                 </Box>
                 <Button asChild size="2" variant="outline" color="gray">
                   <button
+                    type="button"
                     disabled={sortedRepos.length === 0}
                     aria-label="Export all filtered results as CSV"
                     onClick={() =>

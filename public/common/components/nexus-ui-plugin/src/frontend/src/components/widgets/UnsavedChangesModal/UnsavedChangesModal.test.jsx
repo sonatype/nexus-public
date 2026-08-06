@@ -32,6 +32,17 @@ describe('UnsavedChangesModal', () => {
     handleContinueSpy = jest.spyOn(unsavedChangesDialog, 'handleContinue');
   });
 
+  afterEach(() => {
+    // Clear the module-level dialog singleton (setVisible reference + any
+    // unresolved resolveFn) between cases so a leaked prompt from one test
+    // can't leave the next test starting with visible=true. Wrapped in act()
+    // because resetDialogState() calls setVisible(false) on the still-mounted
+    // component (RTL auto-cleanup fires after this afterEach hook).
+    act(() => {
+      unsavedChangesDialog.resetDialogState();
+    });
+  });
+
   function renderComponent() {
     return render(<UnsavedChangesModal />);
   }
@@ -92,5 +103,53 @@ describe('UnsavedChangesModal', () => {
     });
 
     expect(handleContinueSpy).toHaveBeenCalled();
+  });
+
+  // App.test.jsx now exercises the "hide after click" path against a portal-free
+  // mock (NEXUS-53515), so these two cases keep the real NxModal-backed removal
+  // path covered here. Without them, dropping setVisible(false) from either
+  // handler in unsavedChangesDialog.js would silently pass every test.
+  it('should hide the modal after the cancel button is clicked', async () => {
+    renderComponent();
+
+    act(() => {
+      unsavedChangesDialog.showUnsavedChangesModal();
+    });
+
+    await waitFor(() => {
+      expect(selectors.cancelButton()).toBeInTheDocument();
+    });
+
+    act(() => {
+      selectors.cancelButton().click();
+    });
+
+    await waitFor(() => {
+      expect(selectors.modalTitle()).not.toBeInTheDocument();
+    });
+    expect(selectors.modalContent()).not.toBeInTheDocument();
+    expect(selectors.cancelButton()).not.toBeInTheDocument();
+  });
+
+  it('should hide the modal after the continue button is clicked', async () => {
+    renderComponent();
+
+    act(() => {
+      unsavedChangesDialog.showUnsavedChangesModal();
+    });
+
+    await waitFor(() => {
+      expect(selectors.continueButton()).toBeInTheDocument();
+    });
+
+    act(() => {
+      selectors.continueButton().click();
+    });
+
+    await waitFor(() => {
+      expect(selectors.modalTitle()).not.toBeInTheDocument();
+    });
+    expect(selectors.modalContent()).not.toBeInTheDocument();
+    expect(selectors.continueButton()).not.toBeInTheDocument();
   });
 });

@@ -11,15 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-
-const navigateTo = (path: string) => {
-  window.location.hash = path;
-}
-
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
-import { Loader2, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, Trash2, CheckCircle } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import {
@@ -31,155 +25,130 @@ import {
   SettingsAlert,
   SettingsFormSection,
 } from '../../../../shared/form';
-import { HelpSection, clearDirtyState, useToast, PageHeader } from '../../../../shared';
-import { useCrowdApi } from './useCrowdApi';
-import { CrowdConfig, DEFAULT_CROWD_CONFIG, CrowdPageProps } from './types';
+import { HelpSection, PageHeader } from '../../../../shared';
+import { useCrowdSettings } from './useCrowdSettings';
+import { CrowdConfig, CrowdPageProps } from './types';
 
 import './CrowdPage.scss';
 
+const navigateTo = (path: string) => {
+  window.location.hash = path;
+};
+
+// Fields with inline validation errors that participate in touched-gating.
+const VALIDATED_FIELDS = ['url', 'applicationName', 'applicationPassword', 'timeout'] as const;
+
 /**
  * CrowdPage - Atlassian Crowd configuration page for Preview UI
+ *
+ * State/validation/async are owned by the XState machine (via useCrowdSettings).
+ * This component adds two presentation-only concerns retained from upstream:
+ * - touched-gating: validation errors are only shown for fields the user has
+ *   interacted with (or after a save attempt reveals all);
+ * - a raw timeout string so non-numeric/blank input never renders as "NaN".
  */
 export function CrowdPage({ className }: CrowdPageProps) {
-  const { loading, error, setError, fetchConfig, saveConfig, verifyConnection, clearCache } = useCrowdApi();
-  const [config, setConfig] = useState<CrowdConfig>(DEFAULT_CROWD_CONFIG);
-  const [pristineConfig, setPristineConfig] = useState<CrowdConfig>(DEFAULT_CROWD_CONFIG);
-  const [loadingInitial, setLoadingInitial] = useState(true);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const {
+    config,
+    validationErrors,
+    isDirty,
+    isFormValid,
+    isInitialLoading,
+    isBusy,
+    error,
+    handleChange,
+    handleSubmit,
+    handleDiscard,
+    handleVerifyConnection,
+    handleClearCache,
+    clearError,
+  } = useCrowdSettings();
 
-  // Toast notifications (app-level provider)
-  const toast = useToast();
-
+  const canRead = ExtJS.checkPermission('nexus:crowd:read');
   const canUpdate = ExtJS.checkPermission('nexus:crowd:update');
 
-  // Load configuration on mount
+  // Presentation-only: which fields to reveal errors for.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  // Presentation-only: raw string for the timeout input so NaN/null never reach the DOM value.
+  const [timeoutRaw, setTimeoutRaw] = useState<string>('');
+
+  // Keep the raw timeout string in sync with the machine's config whenever the
+  // form is pristine (initial load, after discard, after a successful save).
+  // While the form is dirty the user's raw input is authoritative.
   useEffect(() => {
-    const loadConfig = async () => {
-      setLoadingInitial(true);
-      try {
-        const data = await fetchConfig();
-        setConfig(data);
-        setPristineConfig(data);
-      } catch (err) {
-        // Error handled by hook
-      } finally {
-        setLoadingInitial(false);
-      }
-    };
+    if (!isDirty) {
+      const t = config.timeout;
+      setTimeoutRaw(t != null && !Number.isNaN(t) ? String(t) : '');
+    }
+  }, [isDirty, config.timeout]);
 
-    loadConfig();
-  }, [fetchConfig]);
-
-  // Check if form is pristine
-  const isPristine = JSON.stringify(config) === JSON.stringify(pristineConfig);
-
-  // Calculate dirty state for unsaved changes warning
-  const isDirty = !isPristine;
-
-  // Handle field change
-  const handleChange = useCallback((field: keyof CrowdConfig, value: string | boolean | number | undefined) => {
-    setConfig((prev) => ({ ...prev, [field]: value }));
-    // Clear validation error when field is modified
-    setValidationErrors((prev) => {
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
+  const markTouched = useCallback((field: string) => {
+    setTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
   }, []);
 
-  // Validate form
-  const validateForm = useCallback((): boolean => {
-    const errors: Record<string, string> = {};
+  const markAllTouched = useCallback(() => {
+    setTouched(Object.fromEntries(VALIDATED_FIELDS.map((f) => [f, true])));
+  }, []);
 
-    // URL validation
-    if (config.url) {
-      const urlPattern = /^https?:\/\/.+/;
-      if (!urlPattern.test(config.url)) {
-        errors.url = 'URL is not valid';
-      }
-    }
+  // Change handler that also records the field as touched (fallback for
+  // environments where blur may not fire).
+  const changeField = useCallback(
+    (field: keyof CrowdConfig, value: string | boolean | number | undefined) => {
+      handleChange(field, value);
+      markTouched(field as string);
+    },
+    [handleChange, markTouched]
+  );
 
-    // Required fields
-    if (!config.applicationName?.trim()) {
-      errors.applicationName = 'Application name is required';
-    }
-    if (!config.applicationPassword?.trim()) {
-      errors.applicationPassword = 'Application password is required';
-    }
+  const changeTimeout = useCallback(
+    (val: string) => {
+      setTimeoutRaw(val);
+      markTouched('timeout');
+      // Empty clears the value; non-numeric input flows through as NaN so the
+      // machine's validation surfaces "Timeout must be a number".
+      handleChange('timeout', val === '' ? undefined : Number(val));
+    },
+    [handleChange, markTouched]
+  );
 
-    // Timeout validation
-    if (config.timeout !== undefined && config.timeout !== null) {
-      const timeout = Number(config.timeout);
-      if (isNaN(timeout) || timeout < 1 || timeout > 3600) {
-        errors.timeout = 'Timeout must be between 1 and 3600 seconds';
-      }
-    }
+  const onSubmit = useCallback(() => {
+    // Reveal all field errors on a save attempt; the machine's guard still
+    // blocks the actual save while the form is invalid.
+    markAllTouched();
+    handleSubmit();
+  }, [markAllTouched, handleSubmit]);
 
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [config]);
+  const onVerify = useCallback(() => {
+    markAllTouched();
+    handleVerifyConnection();
+  }, [markAllTouched, handleVerifyConnection]);
 
-  // Handle form submit
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onDiscard = useCallback(() => {
+    handleDiscard();
+    setTouched({});
+  }, [handleDiscard]);
 
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      await saveConfig(config);
-      clearDirtyState('crowd-form');
-      setPristineConfig(config);
-      toast.success('Atlassian Crowd settings updated');
-    } catch (err) {
-      throw err;
-    }
-  }, [validateForm, saveConfig, config, toast]);
-
-  // Handle discard
-  const handleDiscard = useCallback(() => {
-    setConfig(pristineConfig);
-    setValidationErrors({});
-    setError(null);
-  }, [pristineConfig, setError]);
-
-  // Handle verify connection
-  const handleVerifyConnection = useCallback(async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      await verifyConnection(config);
-      toast.success('Connection to Crowd server verified');
-    } catch (err) {
-      // Error handled by hook
-    }
-  }, [validateForm, verifyConnection, config, toast]);
-
-  // Handle clear cache
-  const handleClearCache = useCallback(async () => {
-    try {
-      await clearCache();
-      toast.success('Crowd cache has been cleared');
-    } catch (err) {
-      // Error handled by hook
-    }
-  }, [clearCache, toast]);
+  // Only show errors for fields the user has interacted with.
+  const visibleErrors: Record<string, string> = Object.fromEntries(
+    Object.entries(validationErrors).filter(([field]) => touched[field])
+  );
 
   // Check if URL is HTTPS for truststore option
   const showTrustStore = config.url?.startsWith('https');
 
-  // Calculate form validity
-  const isFormValid = Object.keys(validationErrors).length === 0;
+  // Show aggregate error banner when the form is dirty with validation errors
+  const showValidationSummary = isDirty && !isFormValid;
+  const validationErrorCount = Object.keys(validationErrors).length;
 
-  if (loadingInitial) {
+  if (isInitialLoading) {
     return (
       <Box
         className={`crowd-page ${className || ''}`.trim()}
         data-testid="crowd-page"
         data-view="edit"
+        data-loading="true"
+        aria-busy="true"
+        aria-live="polite"
       >
         <Flex align="center" justify="center" className="crowd-page__loading">
           <Loader2 size={24} className="crowd-page__spinner" />
@@ -202,19 +171,26 @@ export function CrowdPage({ className }: CrowdPageProps) {
         <PageHeader
           title="Atlassian Crowd"
           description="Manage Atlassian Crowd configuration for user authentication"
-        
           breadcrumbs={[
             { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
             { label: 'Crowd' }
           ]}
-/>
+        />
       </Box>
 
       {/* Alerts */}
       {error && (
         <Box className="crowd-page__alerts">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
+          <SettingsAlert type="error" onClose={clearError}>
             {error}
+          </SettingsAlert>
+        </Box>
+      )}
+
+      {showValidationSummary && (
+        <Box className="crowd-page__alerts">
+          <SettingsAlert type="error">
+            {`Please fix ${validationErrorCount} validation error${validationErrorCount !== 1 ? 's' : ''} to continue.`}
           </SettingsAlert>
         </Box>
       )}
@@ -223,10 +199,7 @@ export function CrowdPage({ className }: CrowdPageProps) {
       {!canUpdate && (
         <Box className="crowd-page__alerts">
           <SettingsAlert type="warning">
-            <Flex align="center" gap="2">
-              <AlertTriangle size={16} />
-              You don't have permission to edit this page. Contact your administrator to request access.
-            </Flex>
+            You don't have permission to edit this page. Contact your administrator to request access.
           </SettingsAlert>
         </Box>
       )}
@@ -235,37 +208,42 @@ export function CrowdPage({ className }: CrowdPageProps) {
       <SettingsForm
         title=""
         showHeader={false}
-        onSubmit={handleSubmit}
-        onCancel={handleDiscard}
-        loading={loading}
+        onSubmit={canUpdate ? onSubmit : undefined}
+        onCancel={canUpdate ? onDiscard : undefined}
+        loading={isBusy}
         dirty={isDirty}
-        submitDisabled={!isFormValid}
-        showActions={canUpdate}
+        showActions={canRead || canUpdate}
         testId="crowd-form"
         className="crowd-page__form"
         data-valid={isFormValid ? 'true' : 'false'}
         data-mode="edit"
+        submitAnalyticsId="nxrm-crowd-save"
+        cancelAnalyticsId="nxrm-crowd-discard"
         footerExtra={
-          canUpdate && (
+          canRead && (
             <Flex gap="2">
               <SettingsButton
                 type="button"
                 variant="secondary"
-                onClick={handleVerifyConnection}
-                disabled={loading || Object.keys(validationErrors).length > 0}
+                onClick={onVerify}
+                disabled={isBusy || !isFormValid}
                 icon={CheckCircle}
+                data-analytics-id="nxrm-crowd-verify-connection"
               >
                 Verify connection
               </SettingsButton>
-              <SettingsButton
-                type="button"
-                variant="secondary"
-                onClick={handleClearCache}
-                disabled={loading}
-                icon={Trash2}
-              >
-                Clear cache
-              </SettingsButton>
+              {canUpdate && (
+                <SettingsButton
+                  type="button"
+                  variant="secondary"
+                  onClick={handleClearCache}
+                  disabled={isBusy}
+                  icon={Trash2}
+                  data-analytics-id="nxrm-crowd-clear-cache"
+                >
+                  Clear cache
+                </SettingsButton>
+              )}
             </Flex>
           )
         }
@@ -276,17 +254,19 @@ export function CrowdPage({ className }: CrowdPageProps) {
             name="enabled"
             label="Enable Crowd"
             checked={config.enabled}
-            onChange={(checked) => handleChange('enabled', checked)}
-            helpText="Enable Crowd Capability"
+            onChange={(checked) => changeField('enabled', checked)}
+            description="Enable Crowd Capability"
             disabled={!canUpdate}
+            analyticsId="nxrm-crowd-toggle-enabled"
           />
           <SettingsCheckbox
             name="realmActive"
             label="Enable Crowd Realm for authentication"
             checked={config.realmActive}
-            onChange={(checked) => handleChange('realmActive', checked)}
-            helpText="To control ordering, go to the Realms page"
+            onChange={(checked) => changeField('realmActive', checked)}
+            description={<>To control ordering, go to the <a href="#preview/admin/security/realms">Realms</a> page.</>}
             disabled={!canUpdate}
+            analyticsId="nxrm-crowd-toggle-realm-active"
           />
         </SettingsFormSection>
 
@@ -296,12 +276,14 @@ export function CrowdPage({ className }: CrowdPageProps) {
             name="url"
             label="Crowd server URL"
             value={config.url}
-            onChange={(val) => handleChange('url', val)}
+            onChange={(val) => changeField('url', val)}
+            onBlur={() => markTouched('url')}
             helpText="For example: http://localhost:8095/crowd"
-            error={validationErrors.url}
+            error={visibleErrors.url}
             disabled={!canUpdate}
             type="url"
             placeholder="http://localhost:8095/crowd"
+            required
           />
 
           {showTrustStore && (
@@ -309,9 +291,10 @@ export function CrowdPage({ className }: CrowdPageProps) {
               name="useTrustStoreForUrl"
               label="Use the NXRM truststore"
               checked={config.useTrustStoreForUrl}
-              onChange={(checked) => handleChange('useTrustStoreForUrl', checked)}
-              helpText="Use certificates stored in the NXRM truststore to connect to external systems"
+              onChange={(checked) => changeField('useTrustStoreForUrl', checked)}
+              description={<>Use certificates stored in the NXRM truststore to connect to external systems. <a href="#preview/admin/security/sslcertificates">Configure the NXRM truststore</a></>}
               disabled={!canUpdate}
+              analyticsId="nxrm-crowd-toggle-truststore"
             />
           )}
 
@@ -319,8 +302,9 @@ export function CrowdPage({ className }: CrowdPageProps) {
             name="applicationName"
             label="Crowd application name"
             value={config.applicationName}
-            onChange={(val) => handleChange('applicationName', val)}
-            error={validationErrors.applicationName}
+            onChange={(val) => changeField('applicationName', val)}
+            onBlur={() => markTouched('applicationName')}
+            error={visibleErrors.applicationName}
             required
             disabled={!canUpdate}
             autoComplete="off"
@@ -330,8 +314,9 @@ export function CrowdPage({ className }: CrowdPageProps) {
             name="applicationPassword"
             label="Crowd application password"
             value={config.applicationPassword}
-            onChange={(val) => handleChange('applicationPassword', val)}
-            error={validationErrors.applicationPassword}
+            onChange={(val) => changeField('applicationPassword', val)}
+            onBlur={() => markTouched('applicationPassword')}
+            error={visibleErrors.applicationPassword}
             required
             disabled={!canUpdate}
             autoComplete="new-password"
@@ -340,14 +325,13 @@ export function CrowdPage({ className }: CrowdPageProps) {
           <SettingsTextInput
             name="timeout"
             label="Connection timeout"
-            value={config.timeout !== undefined ? String(config.timeout) : ''}
-            onChange={(val) => handleChange('timeout', val ? Number(val) : undefined)}
+            value={timeoutRaw}
+            onChange={changeTimeout}
+            onBlur={() => markTouched('timeout')}
             helpText="Seconds to wait for activity before stopping and retrying the connection. Leave blank to use the globally defined HTTP timeout."
-            error={validationErrors.timeout}
+            error={visibleErrors.timeout}
             disabled={!canUpdate}
-            type="number"
-            min={1}
-            max={3600}
+            type="text"
           />
         </SettingsFormSection>
 
@@ -366,6 +350,3 @@ export function CrowdPage({ className }: CrowdPageProps) {
 }
 
 export default CrowdPage;
-
-
-

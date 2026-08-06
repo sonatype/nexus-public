@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
@@ -239,7 +239,9 @@ describe('RepositoriesPage', () => {
 
       // Clear and type correct name
       await userEvent.clear(confirmInput);
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is now the literal word "Delete" (case-insensitive) for every
+      // entity (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      await userEvent.type(confirmInput, 'Delete');
       expect(confirmDeleteButton).not.toBeDisabled();
     });
 
@@ -257,7 +259,9 @@ describe('RepositoriesPage', () => {
 
       // Type repository name
       const confirmInput = await screen.findByRole('textbox', { name: /acknowledgement/i });
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is now the literal word "Delete" (case-insensitive) for every
+      // entity (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      await userEvent.type(confirmInput, 'Delete');
 
       // Click delete
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
@@ -320,7 +324,9 @@ describe('RepositoriesPage', () => {
 
       // Type repository name and confirm
       const confirmInput = await screen.findByRole('textbox', { name: /acknowledgement/i });
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is now the literal word "Delete" (case-insensitive) for every
+      // entity (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      await userEvent.type(confirmInput, 'Delete');
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
       await userEvent.click(confirmDeleteButton);
 

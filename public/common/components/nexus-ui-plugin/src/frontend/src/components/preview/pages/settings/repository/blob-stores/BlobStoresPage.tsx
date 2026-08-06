@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading, Button, TextField, Card } from '@radix-ui/themes';
+import React, { useState, useEffect, useCallback, useMemo, } from 'react';
+import { Box, Flex, Text, Button, TextField, } from '@radix-ui/themes';
 import {
   HardDrive,
   Plus,
@@ -252,7 +252,7 @@ export default function BlobStoresPage() {
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [_refreshKey, setRefreshKey] = useState(0);
 
   // Toast notifications (app-level provider)
   const toast = useToast();
@@ -938,9 +938,7 @@ export default function BlobStoresPage() {
           data-dirty={isDirty ? 'true' : 'false'}
           data-valid={Object.keys(validationErrors).length === 0 ? 'true' : 'false'}
           data-mode={isEdit ? 'edit' : 'create'}
-          headerActions={
-            <>
-              {canConvertToGroup && hasUpdatePermissions && (
+          headerActions={canConvertToGroup && hasUpdatePermissions && (
                 <SettingsButton
                   variant="secondary"
                   onClick={() => setShowConvertModal(true)}
@@ -951,8 +949,6 @@ export default function BlobStoresPage() {
                   {STRINGS.CONVERT_TO_GROUP_BUTTON}
                 </SettingsButton>
               )}
-            </>
-          }
           footerExtra={
             isEdit && (
               <SettingsButton

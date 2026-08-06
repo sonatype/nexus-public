@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
 import { CleanupPolicyDryRun } from '../CleanupPolicyDryRun';
@@ -140,6 +139,49 @@ describe('CleanupPolicyDryRun', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Failed to load repositories')).toBeInTheDocument();
+      });
+    });
+
+    it('restricts dropdown to selectedRepositories when provided and does not fetch all repos', async () => {
+      render(
+        <CleanupPolicyDryRun
+          policyData={mockPolicyDataWithCriteria}
+          selectedRepositories={['repo-a', 'repo-b']}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      // fetchRepositories must not be called when Applied Repositories are provided
+      await Promise.resolve();
+      expect(mockFetchRepositories).not.toHaveBeenCalled();
+    });
+
+    it('shows empty dropdown when no Applied Repositories and format supports per-repo application', async () => {
+      const goFormatPolicy: CleanupPolicyFormData = {
+        ...mockPolicyDataWithCriteria,
+        format: 'go',
+      };
+
+      render(
+        <CleanupPolicyDryRun policyData={goFormatPolicy} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      // For formats using the Applied Repositories dual-list, we must NOT fall back
+      // to fetching every repository — the dropdown stays empty.
+      await Promise.resolve();
+      expect(mockFetchRepositories).not.toHaveBeenCalled();
+    });
+
+    it('falls back to fetching all repos when format does not support per-repo application', async () => {
+      render(
+        <CleanupPolicyDryRun policyData={mockPolicyDataWithCriteria} selectedRepositories={[]} />,
+        { wrapper: TestWrapper }
+      );
+
+      // maven2 is NOT in REPOSITORIES_FIELD_SUPPORTED_FORMATS, so behavior is preserved.
+      await waitFor(() => {
+        expect(mockFetchRepositories).toHaveBeenCalledWith('maven2');
       });
     });
   });

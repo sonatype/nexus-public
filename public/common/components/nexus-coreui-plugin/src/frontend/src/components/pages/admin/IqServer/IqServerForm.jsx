@@ -93,10 +93,6 @@ export default function IqServerForm() {
     send({type: 'RESET'});
   }
 
-  function goBack() {
-    router.stateService.go(ROUTE_NAMES.ADMIN.IQ.CONNECTED);
-  }
-
   function handleUrlChange(url) {
     send({
       type: 'UPDATE_URL',
@@ -126,7 +122,7 @@ export default function IqServerForm() {
 
   return <NxStatefulForm
       {...formProps}
-      submitBtnText={UIStrings.SETTINGS.NEXT_BUTTON_LABEL}
+      submitBtnText={fromConnected ? UIStrings.SETTINGS.UPDATE_BUTTON_LABEL : UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
       submitBtnClasses={isNextDisabled ? 'disabled' : ''}
       validationErrors={FormUtils.saveTooltip({isPristine, isInvalid})}
       onSubmit={() => {
@@ -135,9 +131,6 @@ export default function IqServerForm() {
         }
       }}
       additionalFooterBtns={<>
-        <NxButton type="button" variant="tertiary" disabled={!fromConnected} onClick={goBack}>
-          {UIStrings.SETTINGS.BACK_BUTTON_LABEL}
-        </NxButton>
         <NxButton type="button" variant="tertiary" disabled={isInvalid} onClick={verifyConnection}>
           {UIStrings.IQ_SERVER.VERIFY_CONNECTION_BUTTON_LABEL}
         </NxButton>

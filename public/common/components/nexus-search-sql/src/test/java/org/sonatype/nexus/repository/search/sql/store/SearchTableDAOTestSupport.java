@@ -384,12 +384,17 @@ public abstract class SearchTableDAOTestSupport
   @DatabaseTest(postgresql = true)
   public void testSaveWithManyPaths() {
     SearchRecordData tableData = GENERATED_DATA.get(0);
+    List<String> rawPaths = new ArrayList<>();
     for (int i = 0; i < 120; i++) {
-      tableData.addPath(String.format("/org/sonatype/test/file_%s.jar", i));
+      String rawPath = String.format("/org/sonatype/test/file_%s.jar", i);
+      rawPaths.add(rawPath);
+      tableData.addPath(rawPath);
     }
     searchDAO.save(tableData);
 
-    Expression clause = SqlClause.create(Operand.AND, tableData.getPaths()
+    // Use raw (unescaped) paths in WildcardTerm — getPaths() returns tsEscaped values
+    // which would produce a malformed tsquery against the correctly-stored tsvector_paths.
+    Expression clause = SqlClause.create(Operand.AND, rawPaths
         .stream()
         .map(path -> new SqlPredicate(EQ, PATHS, new WildcardTerm(path)))
         .toArray(SqlPredicate[]::new));
@@ -615,6 +620,46 @@ public abstract class SearchTableDAOTestSupport
 
     SqlSearchRequest request = SqlSearchRequest.builder().limit(10).build();
     assertThat(searchDAO.count(request), is(1L));
+  }
+
+  /**
+   * NEXUS-53263: after an incremental save() (e.g. triggered by tag association), the tsvector_paths
+   * column must still be searchable by a content-selector prefix query (path =^ "/prefix/").
+   *
+   * Previously, save() used toQuotedTsVector for tsvector_paths, which double-escaped paths that
+   * SearchRecordData.addPath() had already wrapped with tsEscape(). The resulting tsvector stored
+   * the surrounding single-quote characters as part of the lexeme text, so a prefix query starting
+   * with '/' never matched a lexeme starting with '\''. Components became invisible to content-
+   * selector users after any tag association.
+   */
+  @DatabaseTest(postgresql = true)
+  public void testSaveIncrementalPreservesPathsForContentSelectorQuery() {
+    SearchRecordData tableData = GENERATED_DATA.get(0);
+    // Simulate a Docker component with a content-selector-governed path
+    tableData.addPath("/v2/pws-blueprint/maven/manifests/1.0.0");
+
+    // First save — mimics the initial full rebuild (saveBatch path)
+    searchDAO.save(tableData);
+    session.getTransaction().commit();
+    session.getTransaction().begin();
+
+    // Second save — mimics the incremental reindex triggered by a tag association.
+    // Before the fix, this would corrupt tsvector_paths by double-escaping the path.
+    searchDAO.save(tableData);
+    session.getTransaction().commit();
+    session.getTransaction().begin();
+
+    // Build a content-selector-style prefix query: path =^ "/v2/pws-blueprint/"
+    // This uses the RAW (un-escaped) prefix, exactly as CselToExpression generates it.
+    SqlPredicate pathPredicate = new SqlPredicate(EQ, PATHS, new WildcardTerm("/v2/pws-blueprint/", false));
+    SqlSearchQueryCondition queryCondition =
+        conditionBuilder.build(new ExpressionGroup(pathPredicate, null)).getComponentCondition();
+
+    SqlSearchRequest request = prepareSearchRequest(10, 0, queryCondition);
+    long count = searchDAO.count(request);
+
+    assertThat("Component must remain visible via content-selector path prefix after incremental save()", count,
+        is(1L));
   }
 
   protected abstract SearchConditionFactory createSearchConditionFactory();

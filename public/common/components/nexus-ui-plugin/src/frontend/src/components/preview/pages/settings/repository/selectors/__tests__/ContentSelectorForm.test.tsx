@@ -102,7 +102,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 
 describe('ContentSelectorForm', () => {
   const mockOnCancel = jest.fn();
-  const mockOnComplete = jest.fn();
+  const _mockOnComplete = jest.fn();
 
   const mockSelector: ContentSelector = {
     name: 'test-selector',

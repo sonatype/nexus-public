@@ -45,6 +45,7 @@ public interface RepositoryPrivilegeApiResourceDoc
       @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
+      @ApiResponse(responseCode = "409", description = NexusSecurityApiConstants.PRIVILEGE_CONFLICT),
       @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)
   })
   void updatePrivilege(
@@ -67,6 +68,7 @@ public interface RepositoryPrivilegeApiResourceDoc
       @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
+      @ApiResponse(responseCode = "409", description = NexusSecurityApiConstants.PRIVILEGE_CONFLICT),
       @ApiResponse(responseCode = "204", description = NexusSecurityApiConstants.SUCCESS)
   })
   void updatePrivilege(
@@ -88,7 +90,8 @@ public interface RepositoryPrivilegeApiResourceDoc
   @ApiResponses(value = {
       @ApiResponse(responseCode = "400", description = NexusSecurityApiConstants.PRIVILEGE_MISCONFIGURED),
       @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS),
-      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND)
+      @ApiResponse(responseCode = "404", description = NexusSecurityApiConstants.PRIVILEGE_NOT_FOUND),
+      @ApiResponse(responseCode = "409", description = NexusSecurityApiConstants.PRIVILEGE_CONFLICT)
   })
   void updatePrivilege(
       @Parameter(description = "The name of the privilege to update.") @NotNull final String privilegeName,

@@ -25,7 +25,10 @@ public interface SessionInvalidator
    * @param userSource the user source/realm (e.g., "default", "LDAP", "SAML"); consulted
    *          by the JWT implementation to scope the invalidation to the correct realm.
    *          Session-mode implementations may ignore this.
+   * @param reason human-readable reason for the invalidation (e.g., "password change",
+   *          "user deletion", "user deactivation"); surfaced in log lines and audit records
+   *          so operators can distinguish invalidation triggers.
    * @return the number of sessions (or invalidation markers) that were recorded
    */
-  int invalidateSessionsForUser(String username, String userSource);
+  int invalidateSessionsForUser(String username, String userSource, String reason);
 }

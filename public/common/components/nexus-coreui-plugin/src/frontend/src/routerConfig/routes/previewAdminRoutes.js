@@ -66,10 +66,12 @@ import {
   SamlPage as SamlPageRaw,
   SslCertificatesPage as SslCertificatesPageRaw,
   UserTokensPage as UserTokensPageRaw,
+  ServiceAccountTokensPage,
   LogsPage as LogsPageRaw,
   LoggingConfigPage as LoggingConfigPageRaw,
   SystemInfoPage as SystemInfoPageRaw,
   MetricHealthPage as MetricHealthPageRaw,
+  RecoveryModePage as RecoveryModePageRaw,
   SupportRequestPage as SupportRequestPageRaw,
   SupportZipPage as SupportZipPageRaw,
   TasksPage as TasksPageRaw,
@@ -180,6 +182,7 @@ const LoggingConfigPage = withCloudExcluded(
 );
 const SystemInfoPage = withFeatureGate(SystemInfoPageRaw, 'support.systeminfo', 'System Information');
 const MetricHealthPage = withFeatureGate(MetricHealthPageRaw, 'support.metrics', 'Metric Health');
+const RecoveryModePage = RecoveryModePageRaw;
 const SupportRequestPage = withFeatureGate(SupportRequestPageRaw, 'support.supportrequest', 'Support Request');
 const SupportZipPage = withFeatureGate(SupportZipPageRaw, 'support.supportzip', 'Support ZIP');
 
@@ -678,6 +681,7 @@ export const previewAdminRoutes = [
       title: 'LDAP',
       visibilityRequirements: {
         requiresPermission: Permissions.LDAP.READ,
+        editions: ['PRO', 'COMMUNITY'],
       },
     },
   },
@@ -736,6 +740,19 @@ export const previewAdminRoutes = [
       title: 'User Tokens',
       visibilityRequirements: {
         requiresPermission: Permissions.USER_TOKENS_SETTINGS.READ,
+      },
+    },
+  },
+  {
+    name: 'preview.admin.security.serviceaccounttokens',
+    url: '/service-account-tokens',
+    component: ServiceAccountTokensPage,
+    data: {
+      title: 'Service Account Tokens',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SERVICE_ACCOUNTS.READ,
+        editions: ['PRO'],
+        statesEnabled: [{ key: 'serviceAccountEnabled', defaultValue: false }],
       },
     },
   },
@@ -893,6 +910,17 @@ export const previewAdminRoutes = [
       title: 'Metric Health',
       visibilityRequirements: {
         requiresPermission: 'nexus:metrics:read',
+      },
+    },
+  },
+  {
+    name: 'preview.admin.support.recoverymode',
+    url: '/recoverymode',
+    component: RecoveryModePage,
+    data: {
+      title: 'Recovery Mode',
+      visibilityRequirements: {
+        permissions: [Permissions.ADMIN],
       },
     },
   },

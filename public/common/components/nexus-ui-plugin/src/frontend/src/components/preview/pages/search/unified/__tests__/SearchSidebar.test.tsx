@@ -241,6 +241,93 @@ describe('SearchSidebar', () => {
     });
   });
 
+  describe('external filter changes (browser back/forward)', () => {
+    it('updates the input when the filters prop transitions to a new value', () => {
+      const { rerender } = renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{ artifactId: 'guava' }}
+        />,
+      );
+
+      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      expect(input.value).toBe('guava');
+
+      // User types a new value (local override diverges from prop)
+      fireEvent.change(input, { target: { value: 'spring-core' } });
+      expect(input.value).toBe('spring-core');
+      fireEvent.blur(input);
+
+      // Browser Back: parent rehydrates the machine, filters prop transitions
+      // to a different value than what the user typed.
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{ artifactId: 'commons-lang3' }}
+          />
+        </Theme>,
+      );
+
+      // Input must reflect the restored prop value, not the stale typed value.
+      expect(input.value).toBe('commons-lang3');
+    });
+
+    it('clears the input when an external change removes the filter', () => {
+      const { rerender } = renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{ artifactId: 'commons-lang3' }}
+        />,
+      );
+
+      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      fireEvent.change(input, { target: { value: 'spring-core' } });
+      fireEvent.blur(input);
+
+      // Back to a state with no artifactId filter
+      rerender(
+        <Theme>
+          <SearchSidebar {...defaultProps} selectedFormat="maven" filters={{}} />
+        </Theme>,
+      );
+
+      expect(input.value).toBe('');
+    });
+
+    it('does not disrupt the focused input during an external change', () => {
+      const { rerender } = renderWithTheme(
+        <SearchSidebar
+          {...defaultProps}
+          selectedFormat="maven"
+          filters={{ artifactId: 'commons-lang3' }}
+        />,
+      );
+
+      const input = screen.getByLabelText(/Artifact ID/i) as HTMLInputElement;
+      input.focus();
+      fireEvent.change(input, { target: { value: 'in-progress' } });
+      expect(document.activeElement).toBe(input);
+
+      // A filters prop change arrives while the user is actively editing.
+      rerender(
+        <Theme>
+          <SearchSidebar
+            {...defaultProps}
+            selectedFormat="maven"
+            filters={{ artifactId: 'something-else' }}
+          />
+        </Theme>,
+      );
+
+      // The focused input keeps the user's in-progress text.
+      expect(input.value).toBe('in-progress');
+    });
+  });
+
   describe('nameOrVersion filter exclusion', () => {
     it('never renders a nameOrVersion input in the sidebar even if format filters include it', () => {
       // Temporarily inject a nameOrVersion filter into maven's format-specific filters

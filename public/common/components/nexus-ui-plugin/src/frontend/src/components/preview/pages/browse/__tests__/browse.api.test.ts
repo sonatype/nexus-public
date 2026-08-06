@@ -67,6 +67,9 @@ import {
   fetchBrowseNodes,
   fetchComponent,
   fetchAsset,
+  canDeleteAsset,
+  canDeleteComponent,
+  canDeleteFolder,
   deleteComponent,
   deleteAsset,
   deleteFolder,
@@ -363,6 +366,115 @@ describe('browse.api', () => {
       });
 
       await expect(fetchAsset('invalid-id', 'maven-central')).rejects.toThrow('Asset not found');
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('canDeleteAsset (NEXUS-53861)', () => {
+    const ASSET_ID = 'asset-42';
+    const REPO_NAME = 'maven-hosted';
+
+    it('returns true when the server responds with true', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(true);
+
+      const result = await canDeleteAsset(ASSET_ID, REPO_NAME);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith('coreui_Component', 'canDeleteAsset', {
+        data: [ASSET_ID, REPO_NAME],
+      });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the server responds with false', async () => {
+      // extractResult() with no default coerces false → undefined; canDeleteAsset
+      // must not read that as a truthy result.
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await canDeleteAsset(ASSET_ID, REPO_NAME)).toBe(false);
+    });
+
+    it('returns false and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('repo not found');
+      });
+
+      expect(await canDeleteAsset(ASSET_ID, REPO_NAME)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('canDeleteComponent (NEXUS-53861)', () => {
+    const COMPONENT: ComponentXO = {
+      id: 'comp-9',
+      repositoryName: 'maven-hosted',
+      format: 'maven2',
+      group: 'com.example',
+      name: 'demo',
+      version: '1.0.0',
+    };
+
+    it('sends JSON-stringified ComponentXO to the server', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(true);
+
+      const result = await canDeleteComponent(COMPONENT);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith(
+        'coreui_Component',
+        'canDeleteComponent',
+        { data: [JSON.stringify(COMPONENT)] }
+      );
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the server denies', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await canDeleteComponent(COMPONENT)).toBe(false);
+    });
+
+    it('returns false and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('component gone');
+      });
+
+      expect(await canDeleteComponent(COMPONENT)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('canDeleteFolder (NEXUS-53861)', () => {
+    const FOLDER_PATH = '/org/apache';
+    const REPO_NAME = 'maven-hosted';
+
+    it('passes path and repository to the server', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(true);
+
+      const result = await canDeleteFolder(FOLDER_PATH, REPO_NAME);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith('coreui_Component', 'canDeleteFolder', {
+        data: [FOLDER_PATH, REPO_NAME],
+      });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the server denies', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await canDeleteFolder(FOLDER_PATH, REPO_NAME)).toBe(false);
+    });
+
+    it('returns false and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+      expect(await canDeleteFolder(FOLDER_PATH, REPO_NAME)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
   });

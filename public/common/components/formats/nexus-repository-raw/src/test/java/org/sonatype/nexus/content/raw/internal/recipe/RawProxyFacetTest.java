@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -52,7 +53,8 @@ public class RawProxyFacetTest
   @Before
   public void setUp() throws Exception {
     rawProxyFacet = new RawProxyFacet();
-    configureEscapeRules(rawProxyFacet);
+    // Initialize EscapeHelper which is needed for URL encoding
+    ReflectionTestUtils.setField(rawProxyFacet, "escapeHelper", new EscapeHelper((String) null));
     queryParamHelper = rawProxyFacet.queryParamHelper;
   }
 
@@ -419,10 +421,6 @@ public class RawProxyFacetTest
   {
     queryParamHelper.updateConfig(forwardQueryParameters,
         excludedQueryParameters != null ? excludedQueryParameters : Collections.emptyList());
-  }
-
-  private static void configureEscapeRules(final RawProxyFacet facet) {
-    ReflectionTestUtils.invokeMethod(facet, "configureUrlEscapeRules", (String) null);
   }
 
   private static void configureQueryParamForwarding(final RawProxyFacet facet, final Configuration configuration) {

@@ -57,11 +57,50 @@ export const SearchSidebar = React.memo(function SearchSidebar({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Track the focused input element so focus can be restored after disabled toggles
   const focusedInputRef = useRef<HTMLElement | null>(null);
+  // Track which filter id is currently focused, so external filter changes
+  // (e.g. browser back/forward) don't yank text out from under an active edit.
+  const focusedFilterIdRef = useRef<string | null>(null);
   const prevDisabledRef = useRef(disabled);
 
   // Local text values — decoupled from parent state so typing never depends on a
   // round-trip through the search machine. Cleared only when onReset fires.
   const [localValues, setLocalValues] = useState<Record<string, string>>({});
+
+  // Reconcile local text values when the filters prop changes from an external
+  // source (browser back/forward, deep-link rehydration, format reset). Without
+  // this, localValues (which takes precedence in the input) would keep showing
+  // stale values even though results and the URL have changed.
+  //
+  // We only drop a local override when the *prop value for that key actually
+  // transitioned* (prev !== next). This distinguishes a genuine external change
+  // (e.g. back button: artifactId 'a' -> 'b') from the common case where the
+  // parent re-renders with a still-unchanged filters value while the user is
+  // mid-type (prop stays '' because the machine hasn't been told yet). The
+  // currently-focused filter is always skipped so typing is never disrupted.
+  const prevFiltersRef = useRef(filters);
+  useEffect(() => {
+    const prevFilters = prevFiltersRef.current;
+    prevFiltersRef.current = filters;
+
+    setLocalValues((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const id of Object.keys(prev)) {
+        if (id === focusedFilterIdRef.current) {
+          continue;
+        }
+        const prevPropValue = prevFilters[id] ?? '';
+        const nextPropValue = filters[id] ?? '';
+        // Only reconcile when the authoritative prop value itself changed AND
+        // it no longer matches the local override.
+        if (prevPropValue !== nextPropValue && nextPropValue !== prev[id]) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [filters]);
 
   // Restore focus after disabled transitions false→true→false (search in-flight)
   useEffect(() => {
@@ -119,7 +158,7 @@ export const SearchSidebar = React.memo(function SearchSidebar({
     [onFilterChange, onSearch],
   );
 
-  const repositoryValue = filters['repository'] || '';
+  const repositoryValue = filters.repository || '';
 
   // Format-specific filters (exclude repository and nameOrVersion — both rendered elsewhere)
   const formatSpecificFilters = useMemo(() => {
@@ -200,8 +239,14 @@ export const SearchSidebar = React.memo(function SearchSidebar({
                         placeholder={filter.placeholder}
                         value={localValues[filter.id] ?? filters[filter.id] ?? ''}
                         onChange={(e) => handleTextFilterChange(filter.id, e.target.value)}
-                        onFocus={(e) => { focusedInputRef.current = e.currentTarget; }}
-                        onBlur={() => { if (!disabled) focusedInputRef.current = null; }}
+                        onFocus={(e) => {
+                          focusedInputRef.current = e.currentTarget;
+                          focusedFilterIdRef.current = filter.id;
+                        }}
+                        onBlur={() => {
+                          if (!disabled) focusedInputRef.current = null;
+                          focusedFilterIdRef.current = null;
+                        }}
                         disabled={disabled}
                         size="2"
                         mt="1"

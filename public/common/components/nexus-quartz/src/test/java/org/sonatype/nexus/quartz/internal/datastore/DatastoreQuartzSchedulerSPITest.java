@@ -33,7 +33,6 @@ import org.sonatype.nexus.quartz.internal.bulkread.BulkReadScheduler;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -156,17 +155,21 @@ public class DatastoreQuartzSchedulerSPITest
   }
 
   @Test
-  void schedulingPlanReconcileExist() throws SchedulerException {
-    DateTime startAt = DateTime.parse("2010-06-30T01:20");
-    underTest.scheduleTask(validTaskConfiguration(), new Hourly(startAt.toDate()));
+  void scheduleTask_doesNotDeduplicateByTypeId() throws SchedulerException, JobPersistenceException {
+    // QuartzSchedulerSPI no longer deduplicates by type ID.
+    // TaskSchedulerImpl handles singleton enforcement (NEXUS-53454).
+    // Verify that scheduling the same type-ID twice does NOT throw at this layer.
+    TaskConfiguration first = validTaskConfiguration();
+    first.setTypeId("blobstore.planReconciliation");
+    underTest.scheduleTask(first, new Manual());
 
-    Exception exception = assertThrows(ValidationErrorsException.class, () -> {
-      // Code that is expected to throw the exception
-      throw new ValidationErrorsException("Task blobstore.planReconciliation already exist, ignoring");
-    });
+    TaskConfiguration second = validTaskConfiguration();
+    second.setTypeId("blobstore.planReconciliation");
 
-    // Optionally, check the exception message
-    assertTrue(exception.getMessage().contains("Task blobstore.planReconciliation already exist, ignoring"));
+    // Should not throw ValidationErrorsException at the SPI level
+    underTest.scheduleTask(second, new Manual());
+
+    verify(jobStore, times(2)).storeJobAndTrigger(any(), any());
   }
 
   @Test

@@ -60,7 +60,7 @@ export function MavenUploadFields({
   const generatePomValue = values[MAVEN_FIELD_NAMES.GENERATE_POM] as boolean;
   const isPackagingDisabled =
     disabledFields.has(MAVEN_FIELD_NAMES.PACKAGING) ||
-    (!generatePomValue && !hasPomFile);
+    (!(generatePomValue || hasPomFile));
 
   const findField = (fieldName: string): UploadComponentField | undefined => {
     return coordFields.find((f) => f.name === fieldName);
@@ -160,7 +160,7 @@ export function MavenUploadFields({
         <SettingsCheckbox
           name="generate-pom"
           label={maven.generatePomLabel}
-          checked={generatePomValue || false}
+          checked={generatePomValue}
           onChange={(checked) =>
             onChange(MAVEN_FIELD_NAMES.GENERATE_POM, checked)
           }

@@ -124,7 +124,10 @@ export default FormUtils.buildFormMachine({
     userTokenExpirationEnabled: ({isTouched}) => isTouched?.expirationEnabled
   },
   services: {
-    fetchData: () => Axios.get(API_URL),
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.get(API_URL);
+    },
     saveData: ({data}) => Axios.put(API_URL, data),
     delete: () => Axios.delete(API_URL)
   }

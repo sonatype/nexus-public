@@ -12,6 +12,85 @@
  */
 
 .ldap-form {
+  // Horizontal field row (e.g. Protocol / Hostname / Port, Email / Password).
+  // Each field renders label -> helpText -> control. Help-text (and label)
+  // lengths differ per column, which would otherwise push the controls to
+  // different heights. Instead of moving help text around, stretch every
+  // column to equal height and anchor the control to the bottom
+  // (margin-top: auto). This keeps the help text in its natural position
+  // (between label and control) while the controls line up across columns —
+  // a vertical "space-between" effect that also tolerates wrapped labels.
+  &__field-row {
+    align-items: stretch;
+
+    // Equal-width columns when fields sit directly in the row (e.g. Email /
+    // Password, User ID / Real Name).
+    & > .settings-text-input,
+    & > .settings-select {
+      flex: 1;
+      min-width: 0;
+    }
+
+    // Columns wrapped in a field-col (Protocol / Host / Port) keep their own
+    // width ratio, but must become flex containers so their inner field can
+    // stretch to full column height and anchor its control at the bottom too.
+    & > .ldap-form__field-col {
+      display: flex;
+      flex-direction: column;
+      // Flex items default to min-width: auto, which prevents shrinking below
+      // intrinsic content width and makes the row overflow on narrow viewports
+      // (e.g. sidebar open). Allow the columns to compress gracefully instead.
+      min-width: 0;
+
+      & > .settings-text-input,
+      & > .settings-select {
+        flex: 1;
+      }
+    }
+
+    // Push the control (and anything after it) to the bottom of the column so
+    // every control aligns regardless of label / help-text height.
+    .settings-text-input > .rt-TextFieldRoot,
+    .settings-select > .settings-select__wrapper {
+      margin-top: auto;
+    }
+  }
+
+  &__field-col {
+    &--protocol {
+      flex: 1;
+    }
+
+    &--host {
+      flex: 2;
+    }
+
+    &--port {
+      flex: 0 0 120px;
+    }
+  }
+
+  // Add vertical breathing room between fields within each section. The rows
+  // whose help text wraps below the control (Protocol / Port) otherwise sit
+  // too close to the next field (e.g. Search Base DN).
+  //
+  // `display: flex` is restated here because Radix's `.rt-Box` (same 0,1,0
+  // specificity, but loaded later) resets the container to `display: block`,
+  // which would make `gap` a no-op. This rule's (0,2,0) specificity wins.
+  .settings-section__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  // Match select triggers to the 32px height of the size-2 text inputs. The
+  // shared SettingsSelect forces `min-height: 40px`, which `height` alone
+  // cannot shrink (min-height always wins). Override the min-height with a
+  // higher-specificity rule (0,3,0 beats the component's 0,2,0).
+  .settings-select .settings-select__trigger {
+    min-height: var(--space-6);
+  }
+
   &__tabs {
     display: flex;
     gap: var(--space-1);
@@ -96,35 +175,6 @@
     color: var(--gray-12);
   }
 
-  &__user-list {
-    max-height: 200px;
-    overflow-y: auto;
-    padding: var(--space-2);
-    background: var(--color-background);
-    border: 1px solid var(--gray-5);
-    border-radius: var(--radius-2);
-  }
-
-  &__user-item {
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--gray-4);
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  &__user-detail {
-    color: var(--gray-10);
-    margin-left: var(--space-2);
-  }
-
-  &__user-more {
-    padding: var(--space-2);
-    color: var(--gray-10);
-    font-style: italic;
-  }
-
   &__actions {
     margin-top: var(--space-6);
     padding-top: var(--space-4);
@@ -160,6 +210,26 @@
         margin-top: 2px;
       }
     }
+  }
+
+  &__modal-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1, 4px);
+  }
+
+  // Visually-hidden live region (NEXUS-53625 A4). Present in the DOM so screen
+  // readers announce status changes, but removed from the visual layout.
+  &__sr-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
 

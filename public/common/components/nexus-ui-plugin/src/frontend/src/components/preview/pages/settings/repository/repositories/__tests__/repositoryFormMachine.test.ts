@@ -1335,5 +1335,14 @@ describe('repositoryFormMachine', () => {
 
       service.stop();
     });
+
+    it('loads cleanup policies from the internal endpoint so CE returns 200, not 404', async () => {
+      const machine = createRepositoryFormMachine({ format: 'maven2' });
+      const service = await startAndLoad(machine);
+
+      expect(restClient.get).toHaveBeenCalledWith('/service/rest/internal/cleanup-policies');
+
+      service.stop();
+    });
   });
 });

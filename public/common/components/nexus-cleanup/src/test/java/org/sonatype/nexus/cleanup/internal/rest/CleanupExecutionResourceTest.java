@@ -14,6 +14,7 @@ package org.sonatype.nexus.cleanup.internal.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -191,15 +192,26 @@ public class CleanupExecutionResourceTest
     ExecutorService pool = Executors.newFixedThreadPool(callers);
     CountDownLatch startGate = new CountDownLatch(1);
     List<Future<Response>> futures = new ArrayList<>();
+    // Shiro 2.x ThreadContext is a plain ThreadLocal (no longer InheritableThreadLocal), so the pool
+    // worker threads do not inherit the Subject bound in setup(). Capture the submitting thread's
+    // resources and rebind them on each worker so runCleanup executes under the authenticated Subject,
+    // then clear them so the pooled threads are not left holding a stale context.
+    Map<Object, Object> contextResources = ThreadContext.getResources();
     try {
       for (int i = 0; i < callers; i++) {
         futures.add(pool.submit(() -> {
-          CleanupExecutionRequestXO request = new CleanupExecutionRequestXO();
-          request.setRepository("repo-1");
-          request.setPolicy("policy-1");
-          request.setDryRun(false);
-          startGate.await();
-          return underTest.runCleanup(request);
+          ThreadContext.setResources(contextResources);
+          try {
+            CleanupExecutionRequestXO request = new CleanupExecutionRequestXO();
+            request.setRepository("repo-1");
+            request.setPolicy("policy-1");
+            request.setDryRun(false);
+            startGate.await();
+            return underTest.runCleanup(request);
+          }
+          finally {
+            ThreadContext.remove();
+          }
         }));
       }
       startGate.countDown();
@@ -322,5 +334,20 @@ public class CleanupExecutionResourceTest
     }
     assertThat(follow).isNotNull();
     assertThat(follow.getStatus()).isEqualTo(Response.Status.ACCEPTED.getStatusCode());
+  }
+
+  /**
+   * The {@code /v1/cleanup/run} endpoint must NOT appear in the generated OpenAPI document.
+   * {@code SwaggerModel.scan} filters out any resource without a class-level {@code @Tag},
+   * so guard against a class-level {@code @Tag} being re-added on this resource.
+   */
+  @Test
+  public void classMustNotBeAnnotatedTag() {
+    assertThat(
+        CleanupExecutionResource.class
+            .isAnnotationPresent(io.swagger.v3.oas.annotations.tags.Tag.class))
+                .as("CleanupExecutionResource must not carry a class-level @Tag; doing so surfaces "
+                    + "/v1/cleanup/run in the published OpenAPI document.")
+                .isFalse();
   }
 }

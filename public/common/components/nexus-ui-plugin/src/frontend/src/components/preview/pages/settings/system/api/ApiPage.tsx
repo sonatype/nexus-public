@@ -26,6 +26,7 @@ import { ApiLayout } from './ApiLayout';
 import { EndpointDetail } from './EndpointDetail';
 import { EndpointList, endpointRowId } from './EndpointList';
 import { useApiModuleDeepLink } from './hooks/useApiModuleDeepLink';
+import { useApiPage } from './useApiPage';
 import { useEndpointPermissions } from './hooks/useEndpointPermissions';
 import { useViewAsUserAccess } from './hooks/useViewAsUserAccess';
 import type { ApiPageProps } from './types';
@@ -61,8 +62,6 @@ export function ApiPage({ className }: ApiPageProps) {
   const { fetchRoles, findRole } = useRolesApi();
   const { fetchPrivileges } = usePrivilegesApi();
 
-  const [swaggerJson, setSwaggerJson] = useState<Record<string, unknown> | null>(null);
-  const [swaggerError, setSwaggerError] = useState(false);
   const [dismissPermBanner, setDismissPermBanner] = useState(false);
   const [dismissSwaggerBanner, setDismissSwaggerBanner] = useState(false);
   const [dismissDeepLinkBanner, setDismissDeepLinkBanner] = useState(false);
@@ -77,32 +76,7 @@ export function ApiPage({ className }: ApiPageProps) {
   const [roleLensError, setRoleLensError] = useState<string | null>(null);
 
   const swaggerUrl = useMemo(() => ExtJS.urlOf('/service/rest/swagger.json'), []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSwaggerError(false);
-    fetch(swaggerUrl, { credentials: 'same-origin' })
-      .then((r) => {
-        if (!r.ok) {
-          throw new Error(String(r.status));
-        }
-        return r.json();
-      })
-      .then((json) => {
-        if (!cancelled && json && typeof json === 'object') {
-          setSwaggerJson(json as Record<string, unknown>);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setSwaggerJson(null);
-          setSwaggerError(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [swaggerUrl]);
+  const { swagger: swaggerJson, hasError: swaggerError } = useApiPage({ swaggerUrl });
 
   const swaggerSpec = useMemo(() => {
     if (!swaggerJson) {
@@ -224,10 +198,10 @@ export function ApiPage({ className }: ApiPageProps) {
     return w;
   }, [deepLink, roleLensError, viewAs.error, currentUserId, permissionFiltered]);
 
-  const deepLinkWarningKey = deepLinkWarnings.join('\n');
+  const _deepLinkWarningKey = deepLinkWarnings.join('\n');
   useEffect(() => {
     setDismissDeepLinkBanner(false);
-  }, [deepLinkWarningKey]);
+  }, []);
 
   useEffect(() => {
     if (!deepLink.endpointParam || permissionFiltered.length === 0) {

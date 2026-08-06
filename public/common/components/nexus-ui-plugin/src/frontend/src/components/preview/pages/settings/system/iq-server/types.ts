@@ -92,4 +92,31 @@ export interface IqValidationErrors {
  */
 export const PASSWORD_PLACEHOLDER = '#~NXRM~PLACEHOLDER~PASSWORD~#';
 
+/**
+ * A single IQ Server "properties" name/value row.
+ */
+export interface IqProperty {
+  id: string;
+  name: string;
+  value: string;
+}
 
+/**
+ * Validation result for a single property row.
+ */
+export interface PropertyValidation {
+  id: string;
+  error?: string;
+}
+
+/**
+ * Form-shape variant of IqServerConfiguration: `properties` is a parsed row array
+ * instead of the raw wire string, plus one load-time-only informational field.
+ */
+export interface IqServerFormData extends Omit<IqServerConfiguration, 'properties'> {
+  properties: IqProperty[];
+  /** Count of non-blank lines from the loaded `properties` string that weren't valid
+   *  name=value pairs (comments, ':'-separated, etc.) and would be dropped on next save.
+   *  Set once at load; excluded from the PUT payload. */
+  propertiesDroppedLineCount: number;
+}

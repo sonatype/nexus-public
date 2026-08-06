@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
@@ -30,7 +30,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
-import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
@@ -38,23 +37,27 @@ import org.sonatype.nexus.repository.search.normalize.VersionNormalizerService;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class MavenContentFacetImplTest
-
 {
   private MavenContentFacetImpl underTest;
 
@@ -76,7 +79,7 @@ public class MavenContentFacetImplTest
   @Mock
   private FluentAssets fluentAssets;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_SELF)
   private FluentAssetBuilder fluentAssetBuilder;
 
   @Mock
@@ -88,7 +91,7 @@ public class MavenContentFacetImplTest
   @Mock
   private FluentComponents fluentComponents;
 
-  @Mock
+  @Mock(answer = Answers.RETURNS_SELF)
   private FluentComponentBuilder fluentComponentBuilder;
 
   @Mock
@@ -101,34 +104,31 @@ public class MavenContentFacetImplTest
   private Maven2ComponentStore maven2ComponentStore;
 
   @Mock
-  private ContentFacetStores contentFacetStores;
-
-  @Mock
   private VersionNormalizerService versionNormalizerService;
 
   @Mock
   private TempBlob tempBlob;
 
-  private MavenPathParser mavenPathParser;
+  private MavenPathParser mavenPathParser = new Maven2MavenPathParser();
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
-    mavenPathParser = new Maven2MavenPathParser();
-    List<MavenPathParser> mavenPathParsers = Collections.singletonList(mavenPathParser);
-
     underTest = spy(new MavenContentFacetImpl(
         formatStoreManager,
-        mavenPathParsers,
+        mavenPathParser,
         metadataRebuilder,
         metadataValidator,
         eventManager,
         true));
 
-    when(repository.getFormat()).thenReturn(new Maven2Format());
-
     underTest.attach(repository);
+    lenient().when(underTest.components()).thenReturn(fluentComponents);
+    lenient().when(underTest.assets()).thenReturn(fluentAssets);
+    lenient().doReturn(versionNormalizerService).when(underTest).versionNormalizerService();
 
-    when(underTest.assets()).thenReturn(fluentAssets);
+    when(formatStoreManager.componentStore(anyString())).thenReturn(maven2ComponentStore);
+    ContentFacetStores contentStores = new ContentFacetStores(mock(), "", formatStoreManager, "");
+    lenient().when(underTest.stores()).thenReturn(contentStores);
   }
 
   @Test
@@ -205,5 +205,37 @@ public class MavenContentFacetImplTest
     boolean result = underTest.delete(mavenPath);
 
     assertFalse(result);
+  }
+
+  @Test
+  public void testCopyComponent() throws Exception {
+    when(fluentComponents.name(anyString())).thenReturn(fluentComponentBuilder);
+    when(underTest.contentRepositoryId()).thenReturn(123);
+
+    Component source = mock();
+    when(source.namespace()).thenReturn("tomcat");
+    when(source.name()).thenReturn("catalina");
+    when(source.version()).thenReturn("5.0.28");
+    // maven doesn't use kind today future proof
+    when(source.kind()).thenReturn("plugin");
+
+    NestedAttributesMap attr = new NestedAttributesMap();
+    when(source.attributes()).thenReturn(attr);
+
+    FluentComponent created = mock();
+    when(created.normalizedVersion()).thenReturn("005.000.028");
+    when(created.attributes()).thenReturn(new NestedAttributesMap());
+    when(fluentComponentBuilder.getOrCreate()).thenReturn(created);
+
+    underTest.copy(source);
+
+    verify(fluentComponents).name("catalina");
+    verify(fluentComponentBuilder).namespace("tomcat");
+    verify(fluentComponentBuilder).version("5.0.28");
+    verify(fluentComponentBuilder).kind("plugin");
+
+    ArgumentCaptor<Maven2ComponentData> captor = ArgumentCaptor.forClass(Maven2ComponentData.class);
+    verify(maven2ComponentStore).updateBaseVersion(captor.capture());
+    assertThat(captor.getValue().normalizedVersion(), is("005.000.028"));
   }
 }

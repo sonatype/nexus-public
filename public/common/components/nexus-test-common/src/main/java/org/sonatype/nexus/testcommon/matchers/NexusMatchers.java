@@ -26,6 +26,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
 import org.slf4j.event.Level;
 
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.testcommon.extensions.LoggingExtension.convert;
@@ -64,6 +65,36 @@ public class NexusMatchers
       @Override
       protected boolean matchesSafely(final OffsetDateTime item) {
         return dateTime.isEqual(item);
+      }
+    };
+  }
+
+  /**
+   * Utility method combining logLevel, loggedArguments and logMessage
+   */
+  public static Matcher<ILoggingEvent> logged(final Level level, final String message, final Object... arguments) {
+    return allOf(logLevel(level), logMessage(message), loggedArguments(arguments));
+  }
+
+  /**
+   * Matches {@link ILoggingEvent} instances with the provided list of arguments
+   *
+   * @param arguments the arguments expected to be associated with the log event
+   */
+  public static Matcher<ILoggingEvent> loggedArguments(final Object... arguments) {
+    List<Object> expected = List.of(arguments);
+    return new TypeSafeMatcher<ILoggingEvent>()
+    {
+      @Override
+      public void describeTo(final Description description) {
+        description.appendText("an log event with arguments ").appendText(" ");
+        expected.stream()
+            .forEach(description::appendValue);
+      }
+
+      @Override
+      protected boolean matchesSafely(final ILoggingEvent item) {
+        return expected.equals(List.of(item.getArgumentArray()));
       }
     };
   }

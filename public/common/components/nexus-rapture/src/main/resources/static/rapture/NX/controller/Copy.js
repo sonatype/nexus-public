@@ -45,19 +45,23 @@ Ext.define('NX.controller.Copy', {
       component: {
         'nx-copywindow button[action=close]': {
           click: me.copyToClipboard
-        },
-        'button.nx-copy-widget': {
-          click: me.onCopyWidgetClick
         }
       }
     });
+
+    // Raw HTML button (not an Ext component). Must use a DOM-level delegate, not the component: listener domain.
+    Ext.getBody().on('click', me.onCopyWidgetClick, me, { delegate: 'button.nx-copy-widget' });
   },
 
   copyToClipboard: function() {
     this.getCopyModal().close();
   },
 
-  onCopyWidgetClick: function(button) {
+  onCopyWidgetClick: function(e) {
+    var button = e.getTarget('button.nx-copy-widget');
+    if (!button) {
+      return;
+    }
     var copyText = button.getAttribute('data-copy-text'),
         repoFormat = button.getAttribute('data-repo-format');
     Ext.widget('nx-copywindow', {

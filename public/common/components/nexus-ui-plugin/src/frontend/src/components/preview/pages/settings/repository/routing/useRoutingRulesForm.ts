@@ -63,7 +63,7 @@ export function useRoutingRulesForm({
 }: UseRoutingRulesFormOptions): UseRoutingRulesFormReturn {
   const toast = useToast();
   const { createRoutingRule, updateRoutingRule } = useRoutingRulesApi();
-  const isCreate = !ruleName && !rule;
+  const isCreate = !(ruleName || rule);
 
   // Create the form machine - memoized based on ruleName and rule
   const machine = useMemo(

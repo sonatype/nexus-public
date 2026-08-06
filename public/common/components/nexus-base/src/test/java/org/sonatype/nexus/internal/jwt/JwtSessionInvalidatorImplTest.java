@@ -63,7 +63,7 @@ class JwtSessionInvalidatorImplTest
   void invalidate_callsInvalidateUserOnRevocationService_withNowAndNowPlusJwtLifetime() {
     OffsetDateTime before = OffsetDateTime.now();
 
-    int count = underTest.invalidateSessionsForUser("alice", "default");
+    int count = underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     assertThat(count, is(1));
 
@@ -88,24 +88,25 @@ class JwtSessionInvalidatorImplTest
   void invalidate_auditRecorded_whenSuccess() {
     when(auditRecorder.isEnabled()).thenReturn(true);
 
-    underTest.invalidateSessionsForUser("alice", "default");
+    underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     ArgumentCaptor<AuditData> captor = ArgumentCaptor.forClass(AuditData.class);
     verify(auditRecorder).record(captor.capture());
 
     AuditData data = captor.getValue();
     assertThat(data.getDomain(), is("security.session"));
-    assertThat(data.getType(), is("password-change-invalidation"));
+    assertThat(data.getType(), is("user-session-invalidation"));
     assertThat(data.getAttributes().get("username"), is("alice"));
     assertThat(data.getAttributes().get("sessionType"), is("jwt"));
     assertThat(data.getAttributes().get("sessionCount"), is("1"));
+    assertThat(data.getAttributes().get("reason"), is("password change"));
   }
 
   @Test
   void invalidate_auditNotRecorded_whenAuditDisabled() {
     when(auditRecorder.isEnabled()).thenReturn(false);
 
-    underTest.invalidateSessionsForUser("alice", "default");
+    underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     verify(auditRecorder, never()).record(any(AuditData.class));
   }
@@ -116,7 +117,7 @@ class JwtSessionInvalidatorImplTest
         .invalidateUser(anyString(), anyString(), any(), any());
     when(auditRecorder.isEnabled()).thenReturn(true);
 
-    int count = underTest.invalidateSessionsForUser("alice", "default");
+    int count = underTest.invalidateSessionsForUser("alice", "default", "password change");
 
     assertThat(count, is(0));
     verify(auditRecorder, never()).record(any(AuditData.class));

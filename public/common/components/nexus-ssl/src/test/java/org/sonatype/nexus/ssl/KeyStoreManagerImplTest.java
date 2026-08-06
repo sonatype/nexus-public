@@ -189,8 +189,8 @@ public class KeyStoreManagerImplTest
     assertThat(cause.getMessage(), equalTo("Error generating X.509 certificate"));
 
     cause = cause.getCause();
-    assertThat(cause, instanceOf(CertificateParsingException.class));
-    assertThat(cause.getMessage(), equalTo("Empty issuer DN not allowed in X509Certificates"));
+    assertThat(cause, instanceOf(IllegalArgumentException.class));
+    assertThat(cause.getMessage(), equalTo("certificate issuer is an empty distinguished name"));
   }
 
   /**
@@ -204,7 +204,7 @@ public class KeyStoreManagerImplTest
     // now create a server cert and add it.
     X509Certificate certificate =
         generateCertificate(10, "Foo Bar", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     keyStoreManager.importTrustCertificate(certificate, "other-alias");
 
     // verify the TrustManager[] does not have any certs, we have not trusted anyone yet.
@@ -228,7 +228,7 @@ public class KeyStoreManagerImplTest
     // now create a server cert and add it.
     X509Certificate certificate1 =
         generateCertificate(10, "original cert", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     keyStoreManager.importTrustCertificate(certificate1, "other-alias");
 
     // verify the TrustManager[] does not have any certs, we have not trusted anyone yet.
@@ -237,7 +237,7 @@ public class KeyStoreManagerImplTest
     // create a new certificate and import that using the same alias
     X509Certificate certificate2 =
         generateCertificate(10, "new cert", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     keyStoreManager.importTrustCertificate(certificate2, "other-alias");
 
     assertThat(originalTrustManagers, notNullValue());
@@ -281,7 +281,7 @@ public class KeyStoreManagerImplTest
   public void testGetTrustedCertificateNonExistentAlias() throws Exception {
     X509Certificate certificate =
         generateCertificate(10, "Foo Bar", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     keyStoreManager.importTrustCertificate(certificate, "valie-alias");
 
     keyStoreManager.getTrustedCertificate("alias-that-does-not-exist");
@@ -304,13 +304,13 @@ public class KeyStoreManagerImplTest
   public void testGetTrustedCertificates() throws Exception {
     X509Certificate certificate1 =
         generateCertificate(10, "Cert One", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     X509Certificate certificate2 =
         generateCertificate(10, "Cert Two", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     X509Certificate certificate3 =
         generateCertificate(10, "Cert Three", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     keyStoreManager.importTrustCertificate(certificate1, "one");
     keyStoreManager.importTrustCertificate(certificate2, "two");
     keyStoreManager.importTrustCertificate(certificate3, "three");
@@ -336,7 +336,7 @@ public class KeyStoreManagerImplTest
   public void testRemoveCertificate() throws Exception {
     X509Certificate certificate =
         generateCertificate(10, "Delete Me", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
     keyStoreManager.importTrustCertificate(certificate, "delete-me");
     assertEquals(1, keyStoreManager.getTrustedCertificates().size());
 
@@ -371,7 +371,7 @@ public class KeyStoreManagerImplTest
     // now create a server cert and add it.
     X509Certificate certificate =
         generateCertificate(10, "Foo Bar", "other-org-unit", "other-org", "other-locality", "other-state",
-            "other-country");
+            "XX");
 
     String certString = CertificateUtil.serializeCertificateInPEM(certificate);
 
@@ -389,7 +389,7 @@ public class KeyStoreManagerImplTest
   @Test
   public void importCertificateWithDuplicateAliasReplacePrevious() throws Exception {
     keyStoreManager.generateAndStoreKeyPair("Joe Coder", "dev", "codeSoft", "AnyTown", "state", "US");
-    X509Certificate cert1 = generateCertificate(10, "a", "b", "c", "d", "e", "f");
+    X509Certificate cert1 = generateCertificate(10, "a", "b", "c", "d", "e", "US");
     String cert1Pem = CertificateUtil.serializeCertificateInPEM(cert1);
     keyStoreManager.importTrustCertificate(cert1Pem, "alias1");
     assertEquals(1, keyStoreManager.getTrustedCertificates().size());
@@ -399,7 +399,7 @@ public class KeyStoreManagerImplTest
     assertEquals(1, keyStoreManager.getTrustedCertificates().size()); // still same size, replaced
 
     // now try different cert, same alias
-    X509Certificate cert2 = generateCertificate(10, "a2", "b2", "c2", "d2", "e2", "f2");
+    X509Certificate cert2 = generateCertificate(10, "a2", "b2", "c2", "d2", "e2", "CA");
     String cert2Pem = CertificateUtil.serializeCertificateInPEM(cert2);
     keyStoreManager.importTrustCertificate(cert2Pem, "alias1");
     assertEquals(1, keyStoreManager.getTrustedCertificates().size()); // still same size, replaced

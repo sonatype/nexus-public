@@ -93,14 +93,6 @@ a.nxrm-internal-link:hover {
     min-width: 0;
     background-color: var(--color-background);
 
-    // Full-width layout for standalone pages (test hub, etc.)
-    // These pages don't have sidebar/header, so fill the available space
-    &.nxrm-main-content--full-width {
-      flex: 1;
-      min-height: 0;
-      width: 100%;
-    }
-
     // Flex layout needed for Default UI pages (NxPageSidebar + NxPageMain)
     display: flex;
     flex-direction: column;
@@ -170,22 +162,6 @@ a.nxrm-internal-link:hover {
       padding: var(--nx-spacing-6x, 24px);
       overflow: auto;
       box-sizing: border-box;
-    }
-  }
-
-  // Test hub page uses flex column layout (not grid)
-  // SystemNotices sits at top, content fills remaining space
-  &.nxrm-test-hub-page {
-    display: flex;
-    flex-direction: column;
-
-    .nxrm-system-notices {
-      flex-shrink: 0;
-    }
-
-    .nxrm-main-content {
-      flex: 1;
-      min-height: 0;
     }
   }
 

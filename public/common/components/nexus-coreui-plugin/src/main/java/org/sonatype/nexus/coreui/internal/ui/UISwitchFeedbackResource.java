@@ -72,7 +72,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_SWITCH_FEEDB
 @Component
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-@ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true")
+@ConditionalOnProperty(name = PREVIEW_UI_SETTINGS_ENABLED, havingValue = "true", matchIfMissing = true)
 @Path("internal/ui/switch-feedback")
 public class UISwitchFeedbackResource
     implements Resource

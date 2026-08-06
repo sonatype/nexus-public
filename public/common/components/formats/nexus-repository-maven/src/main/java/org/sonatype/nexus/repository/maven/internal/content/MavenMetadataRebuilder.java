@@ -83,7 +83,7 @@ public class MavenMetadataRebuilder
   {
     checkNotNull(repository);
     MetadataRebuildWorker worker =
-        new MetadataRebuildWorker(repository, update, groupId, artifactId, baseVersion, bufferSize);
+        new MetadataRebuildWorker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize);
     return rebuildWithWorker(worker, rebuildChecksums, cascadeUpdate, groupId, artifactId, baseVersion);
   }
 

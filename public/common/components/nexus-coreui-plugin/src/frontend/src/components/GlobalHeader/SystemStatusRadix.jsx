@@ -12,59 +12,10 @@
  */
 
 import React from 'react';
-import {IconButton, Box} from '@radix-ui/themes';
-import {Bell, AlertCircle} from 'lucide-react';
-import {ExtJS, useIsVisible} from '@sonatype/nexus-ui-plugin';
-import {useRouter} from '@uirouter/react';
+import {SystemStatusBell} from '@sonatype/nexus-ui-plugin';
+
+import './SystemStatusRadix.scss';
 
 export default function SystemStatusRadix() {
-  const supportStatusStateIdentifier = 'admin.support.status';
-  const healthChecksFailed = ExtJS.useState(() => ExtJS.state().getValue('health_checks_failed', false));
-  const router = useRouter();
-
-  const visibilityRequirements =
-      router.stateRegistry.get(supportStatusStateIdentifier)
-          ?.data
-          ?.visibilityRequirements;
-
-  const isVisibleValue = useIsVisible(visibilityRequirements);
-
-  // Cloud / preview may not register admin.support.status; avoid console noise.
-  if (!visibilityRequirements || !isVisibleValue) {
-    return null;
-  }
-
-  function onClick() {
-    router.stateService.go(supportStatusStateIdentifier);
-  }
-
-  return (
-    <Box style={{position: 'relative'}}>
-      <IconButton
-        variant="ghost"
-        onClick={onClick}
-        title="System Status"
-        aria-label={healthChecksFailed ? "System status -- unhealthy" : "System Status"}
-      >
-        <Bell size={18} />
-      </IconButton>
-      {healthChecksFailed && (
-        <Box
-          style={{
-            position: 'absolute',
-            top: '4px',
-            right: '4px',
-            pointerEvents: 'none'
-          }}
-        >
-          <AlertCircle size={12} color="var(--red-9)" />
-        </Box>
-      )}
-    </Box>
-  );
+  return <SystemStatusBell className="nxrm-system-status-radix" />;
 }
-
-
-
-
-

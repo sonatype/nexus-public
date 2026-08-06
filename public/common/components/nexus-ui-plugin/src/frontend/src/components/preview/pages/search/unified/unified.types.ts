@@ -50,7 +50,6 @@ export type SearchFormat =
   | 'rubygems'
   | 'swift'
   | 'terraform'
-  | 'terraformbackend'
   | 'yum';
 
 /**

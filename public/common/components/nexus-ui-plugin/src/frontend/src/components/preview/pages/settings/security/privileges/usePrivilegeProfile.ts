@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, } from 'react';
 import { useRolesApi } from '../roles/useRolesApi';
 import { useUsersApi } from '../users/useUsersApi';
 import { usePrivilegesApi } from './usePrivilegesApi';

@@ -28,10 +28,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import jakarta.validation.ValidationException;
-import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.cooperation2.Cooperation2;
 import org.sonatype.nexus.common.cooperation2.Cooperation2Factory;
@@ -72,8 +71,8 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import jakarta.validation.ValidationException;
+import jakarta.validation.constraints.NotNull;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -87,12 +86,14 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.util.EntityUtils;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -215,6 +216,9 @@ public abstract class ProxyFacetSupport
 
   private EscapeHelper escapeHelper;
 
+  @Nullable
+  private String urlEscapeRulesConfig;
+
   private EncodingHelper encodingHelper;
 
   private static final String CTX_REQ_STOPWATCH = "request.stopwatch";
@@ -266,7 +270,8 @@ public abstract class ProxyFacetSupport
   protected void configureUrlEscapeRules(
       @Nullable @Value("${nexus.proxy.url.escape.rules:#{null}}") final String urlEscapeRulesConfig)
   {
-    this.escapeHelper = new EscapeHelper(urlEscapeRulesConfig);
+    // Store the raw configuration - will be parsed in doConfigure() when we have repository name
+    this.urlEscapeRulesConfig = urlEscapeRulesConfig;
   }
 
   @Autowired
@@ -343,9 +348,46 @@ public abstract class ProxyFacetSupport
     // normalize URL path to contain trailing slash
     config.remoteUrl = normalizeURLPath(config.remoteUrl);
 
+    // Parse repository-specific URL escape rules
+    String repositoryName = getRepository().getName();
+    Map<String, String> repoRules = UrlEscapeRulesParser.parseRepositoryRules(
+        urlEscapeRulesConfig, repositoryName);
+
+    // Prepare EscapeHelper with appropriate rules
+    // Behavior for repository-specific URL escape rules:
+    // 1. Repository NOT in config → use DEFAULT_RULES (standard encoding rules)
+    // 2. Repository with empty {} → use DEFAULT_RULES (same as not in config)
+    // 3. Repository with custom rules → merge custom rules with DEFAULT_RULES
+    //
+    // Notes:
+    // - DEFAULT_RULES are: %→%25, :→%3A, space→%20
+    // - Custom rules override defaults for matching characters
+    // - The escapeHelper is always created to support encoding operations
+    if (repoRules != null && !repoRules.isEmpty()) {
+      // Merge DEFAULT_RULES with repository-specific rules
+      Map<String, String> mergedRules = EscapeHelper.getDefaultRules(); // Start with defaults
+      mergedRules.putAll(repoRules); // Override/add with repository-specific rules
+      log.debug("Using repository-specific URL escape rules for {}", repositoryName);
+      this.escapeHelper = new EscapeHelper(mergedRules);
+    }
+    else {
+      log.debug("Using built-in default URL escape rules for repository {}", repositoryName);
+      this.escapeHelper = new EscapeHelper(); // Uses DEFAULT_RULES (%:%25, ::%3A, :%20)
+    }
+
+    // Enable two-stage URL encoding when preserveEncodedCharacters is enabled
+    // This preserves encoded characters in proxy URLs (e.g., %2B for + in PyPI versions)
+    //
+    // The preserveEncodedCharacters checkbox is the primary control:
+    // - When true: two-stage encoding is active with custom or default rules
+    // - When false: standard single-stage encoding (legacy behavior)
+    //
+    // Repository-specific rules customize the encoding behavior but do not enable encoding on their own.
+    // An empty {} config is treated the same as no configuration (uses defaults, no encoding unless checkbox is on).
     if (config.preserveEncodedCharacters) {
       this.encodingHelper = new EncodingHelper(escapeHelper);
-      log.debug("Preserve encoded characters enabled for repository: {}", getRepository().getName());
+      log.debug("Two-stage URL encoding enabled for repository: {} (custom rules: {})",
+          repositoryName, repoRules != null && !repoRules.isEmpty());
     }
     else {
       this.encodingHelper = null;
@@ -403,7 +445,7 @@ public abstract class ProxyFacetSupport
     boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
     String format = getRepository().getFormat().getValue();
     getEventManager().post(new ProxyRequestEvent(format, isReplication));
-    if (!isStale(context, content)) {
+    if (!isReplication && !isStale(context, content)) {
       getEventManager().post(new ProxyCacheHitEvent(format, isReplication));
       return content;
     }
@@ -456,8 +498,8 @@ public abstract class ProxyFacetSupport
     return proxyCooperation.on(() -> doGet(context, staleContent))
         .checkFunction(() -> {
           Content latestContent = maybeGetCachedContent(context);
-          if (!isStale(context, latestContent)) {
-            boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
+          boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
+          if (!isReplication && !isStale(context, latestContent)) {
             getEventManager().post(new ProxyCacheHitEvent(getRepository().getFormat().getValue(), isReplication));
             return Optional.of(latestContent);
           }
@@ -626,8 +668,7 @@ public abstract class ProxyFacetSupport
     }
   }
 
-  @VisibleForTesting
-  <X extends Throwable> String buildLogContentMessage(
+  protected static String buildLogContentMessage(
       @Nullable final Content content,
       @Nullable final StatusLine statusLine)
   {

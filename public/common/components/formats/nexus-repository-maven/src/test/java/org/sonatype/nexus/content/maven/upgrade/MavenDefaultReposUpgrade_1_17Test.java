@@ -13,107 +13,84 @@
 package org.sonatype.nexus.content.maven.upgrade;
 
 import java.sql.Connection;
-import java.util.Arrays;
 import java.util.Collections;
 
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.repository.config.ConfigurationDAO;
 import org.sonatype.nexus.repository.config.internal.ConfigurationData;
-import org.sonatype.nexus.repository.maven.internal.MavenDefaultRepositoriesContributor;
-import org.sonatype.nexus.testdb.DataSessionRule;
+import org.sonatype.nexus.testdb.DataSessionConfiguration;
+import org.sonatype.nexus.testdb.DatabaseTest;
+import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-public class MavenDefaultReposUpgrade_1_17Test
-
+/**
+ * Real-database tests for {@link MavenDefaultReposUpgrade_1_17} against the {@code repository} table. These
+ * run against H2 only; PostgreSQL parity (the {@code JSON} vs {@code JSONB} attributes binding) is not
+ * exercised here and will be covered by the forthcoming {@code UpgradeMatrixIT} in
+ * {@code nexus-integration-tests}.
+ */
+class MavenDefaultReposUpgrade_1_17Test
 {
-  @Rule
-  public DataSessionRule sessionRule = new DataSessionRule(DEFAULT_DATASTORE_NAME)
-      .access(ConfigurationDAO.class);
+  @DataSessionConfiguration(daos = {ConfigurationDAO.class})
+  TestDataSessionSupplier dataSessionSupplier;
 
-  private DataStore<?> store;
+  private final MavenDefaultReposUpgrade_1_17 underTest = new MavenDefaultReposUpgrade_1_17();
 
-  private ConfigurationDAO configurationDAO;
+  @DatabaseTest
+  void migrate_setsInlineContentDispositionOnDefaultMavenHostedAndProxyReposOnly() throws Exception {
+    seedRepositories();
 
-  private MavenDefaultReposUpgrade_1_17 migrationStep;
+    try (Connection conn = dataSessionSupplier.openConnection()) {
+      underTest.migrate(conn);
+    }
 
-  private ConfigurationData hostedRepo;
+    try (DataSession<?> session = dataSessionSupplier.openSession(DEFAULT_DATASTORE_NAME)) {
+      ConfigurationDAO dao = session.access(ConfigurationDAO.class);
 
-  private ConfigurationData proxyRepo;
-
-  private ConfigurationData groupRepo;
-
-  private ConfigurationData nonDefaultRepo;
-
-  @Before
-  public void setUp() {
-    createMockData();
-
-    MavenDefaultRepositoriesContributor mockContributor = mock(MavenDefaultRepositoriesContributor.class);
-    when(mockContributor.getRepositoryConfigurations()).thenReturn(Arrays.asList(hostedRepo, proxyRepo, groupRepo));
-
-    migrationStep = new MavenDefaultReposUpgrade_1_17(mockContributor);
+      // every default non-group Maven repository (releases/snapshots hosted, central proxy) gets INLINE
+      assertThat(contentDisposition(dao, "maven-releases")).isEqualTo("INLINE");
+      assertThat(contentDisposition(dao, "maven-snapshots")).isEqualTo("INLINE");
+      assertThat(contentDisposition(dao, "maven-central")).isEqualTo("INLINE");
+      // the default group repository is not in the set, so it is unchanged
+      assertThat(contentDisposition(dao, "maven-public")).isEqualTo("ATTACHMENT");
+      // non-default repositories are unchanged
+      assertThat(contentDisposition(dao, "my-custom-repo")).isEqualTo("ATTACHMENT");
+    }
   }
 
-  private void createMockData() {
-    store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME).get();
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      configurationDAO = session.access(ConfigurationDAO.class);
-
-      hostedRepo = createConfig("hosted1", "maven2-hosted", null);
-      nonDefaultRepo = createConfig("hosted2", "maven2-hosted", "ATTACHMENT");
-      proxyRepo = createConfig("proxy", "maven2-proxy", null);
-      groupRepo = createConfig("group", "maven2-group", "ATTACHMENT");
-
+  private void seedRepositories() {
+    try (DataSession<?> session = dataSessionSupplier.openSession(DEFAULT_DATASTORE_NAME)) {
+      ConfigurationDAO dao = session.access(ConfigurationDAO.class);
+      create(dao, "maven-releases", "maven2-hosted", null);
+      create(dao, "maven-snapshots", "maven2-hosted", null);
+      create(dao, "maven-central", "maven2-proxy", null);
+      create(dao, "maven-public", "maven2-group", "ATTACHMENT");
+      create(dao, "my-custom-repo", "maven2-hosted", "ATTACHMENT");
       session.getTransaction().commit();
     }
   }
 
-  @Test
-  public void testMigrationWorksAsExpected() throws Exception {
-    try (Connection conn = store.openConnection()) {
-      migrationStep.migrate(conn);
-    }
-
-    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
-      configurationDAO = session.access(ConfigurationDAO.class);
-
-      ConfigurationData modifiedHostedRepo = configurationDAO.readByName(hostedRepo.getName()).get();
-      ConfigurationData modifiedProxyRepo = configurationDAO.readByName(proxyRepo.getName()).get();
-      ConfigurationData groupRepo = configurationDAO.readByName(this.groupRepo.getName()).get();
-
-      ConfigurationData nonDefault = configurationDAO.readByName(nonDefaultRepo.getName()).get();
-
-      assertEquals("INLINE", modifiedHostedRepo.attributes("maven").get("contentDisposition", String.class));
-      assertEquals("INLINE", modifiedProxyRepo.attributes("maven").get("contentDisposition", String.class));
-
-      // if it is a group repo , it shouldn't change
-      assertEquals("ATTACHMENT", groupRepo.attributes("maven").get("contentDisposition", String.class));
-
-      // If it is a non-default repo , then the value shouldn't change
-      assertEquals("ATTACHMENT", nonDefault.attributes("maven").get("contentDisposition", String.class));
-    }
+  private static String contentDisposition(final ConfigurationDAO dao, final String name) {
+    ConfigurationData config = dao.readByName(name).orElseThrow();
+    return config.attributes("maven").get("contentDisposition", String.class);
   }
 
-  private ConfigurationData createConfig(final String name, final String recipeName, String contentDisposition) {
+  private static void create(
+      final ConfigurationDAO dao,
+      final String name,
+      final String recipeName,
+      final String contentDisposition)
+  {
     ConfigurationData config = new ConfigurationData();
     config.setName(name);
     config.setRecipeName(recipeName);
     config.setAttributes(ImmutableMap.of("maven", contentDisposition != null
-        ? ImmutableMap.of("contentDisposition",
-            contentDisposition)
+        ? ImmutableMap.of("contentDisposition", contentDisposition)
         : Collections.emptyMap()));
-
-    configurationDAO.create(config);
-    return config;
+    dao.create(config);
   }
 }

@@ -106,7 +106,6 @@ Ext.define('NX.coreui.controller.Repositories', {
     'repository.recipe.RubygemsHosted',
     'repository.recipe.RubygemsProxy',
     'repository.recipe.TerraformHosted',
-    'repository.recipe.TerraformbackendHosted',
     'repository.recipe.TerraformProxy',
     'repository.recipe.SwiftProxy',
     'repository.recipe.SwiftHosted',
@@ -270,6 +269,15 @@ Ext.define('NX.coreui.controller.Repositories', {
       me.logWarn('Could not find settings form for: ' + model.getId());
     }
     else if (Ext.isDefined(model)) {
+      // The per-repo evaluation-settings endpoint only exists when the Hosted Repository
+      // Evaluation feature flag is on, and only supports hosted repositories. Skip the
+      // GET when either condition is false to avoid failing requests (CLM-42084).
+      var isEvaluationEnabled = NX.State.getValue('hostedRepositoryEvaluationEnabled', false);
+      if (!isEvaluationEnabled || model.get('type') !== 'hosted') {
+        me.loadRepositoryForm(model, formCls, settingsPanel);
+        return;
+      }
+
       // Force reload evaluation settings from backend to get fresh data
       // This ensures evaluation mode reflects current state after bulk edits
       var repositoryName = model.get('name');

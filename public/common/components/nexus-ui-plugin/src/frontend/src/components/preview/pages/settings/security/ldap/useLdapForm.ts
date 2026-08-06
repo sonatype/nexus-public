@@ -32,6 +32,7 @@ export interface UseLdapFormReturn {
   isCreate: boolean;
   applyTemplate: (template: LdapSchemaTemplate) => void;
   changeProtocol: (protocol: string) => void;
+  confirmPasswordAndSubmit: (password: string) => void;
 }
 
 /**
@@ -52,7 +53,7 @@ export function useLdapForm({
   updateServer,
 }: UseLdapFormOptions): UseLdapFormReturn {
   const toast = useToast();
-  const isCreate = !serverId && !server;
+  const isCreate = !(serverId || server);
 
   // Create the form machine - memoized based on serverId and server
   const machine = useMemo(
@@ -67,22 +68,20 @@ export function useLdapForm({
     },
     services: {
       save: async (ctx: { data: LdapFormData; server: LdapServer | null }) => {
-        try {
-          if (isCreate) {
-            await createServer(ctx.data);
-            toast.success(`LDAP server "${ctx.data.name}" created successfully`);
-          } else {
-            await updateServer(ctx.data);
-            toast.success(`LDAP server "${ctx.data.name}" updated successfully`);
-          }
-          if (onSave) {
-            await onSave(ctx.data);
-          }
-          onCancel();
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Operation failed');
-          throw err;
+        // createServer/updateServer call setError on the shared useLdapApi instance (owned by
+        // LdapPage) when they fail, so the error surfaces via the `error` prop passed to
+        // LdapForm → WizardForm. Re-throwing here keeps the XState machine in the error state.
+        if (isCreate) {
+          await createServer(ctx.data);
+          toast.success(`LDAP server "${ctx.data.name}" created successfully`);
+        } else {
+          await updateServer(ctx.data);
+          toast.success(`LDAP server "${ctx.data.name}" updated successfully`);
         }
+        if (onSave) {
+          await onSave(ctx.data);
+        }
+        onCancel();
       },
     },
   });
@@ -111,11 +110,24 @@ export function useLdapForm({
     [form]
   );
 
+  /**
+   * Confirm a re-entered password (edit mode) and submit in the same
+   * synchronous transition, avoiding a setTimeout-based race between the
+   * UPDATE and SUBMIT events.
+   */
+  const confirmPasswordAndSubmit = useCallback(
+    (password: string) => {
+      form.send({ type: 'CONFIRM_PASSWORD_AND_SUBMIT', value: password } as any);
+    },
+    [form]
+  );
+
   return {
     form,
     server: loadedServer,
     isCreate,
     applyTemplate,
     changeProtocol,
+    confirmPasswordAndSubmit,
   };
 }

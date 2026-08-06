@@ -48,7 +48,20 @@ public class EncodingHelper
    */
   public String encodeUrlSegments(final String url) {
     checkNotNull(url);
-    return encodeSpecialChars(url);
+    return encodeSpecialChars(url, false);
+  }
+
+  /**
+   * Variant of {@link #encodeUrlSegments(String)} that preserves trailing empty segments so a URL
+   * like {@code simple/flask/} keeps its trailing slash after encoding. Only needed by callers that
+   * resolve relative links against the resulting base URI (e.g. PEP 503 PyPI simple-index proxies).
+   *
+   * @param url the URL to encode
+   * @return the encoded URL with trailing slashes preserved
+   */
+  public String encodeUrlSegmentsPreserveTrailing(final String url) {
+    checkNotNull(url);
+    return encodeSpecialChars(url, true);
   }
 
   /**
@@ -83,9 +96,11 @@ public class EncodingHelper
    * @param url the URL to encode
    * @return the encoded URL
    */
-  private String encodeSpecialChars(final String url) {
+  private String encodeSpecialChars(final String url, final boolean preserveTrailing) {
     // Start with EscapeHelper rules (encodes %, :, space)
-    String encoded = escapeHelper.uriSegments(url);
+    String encoded = preserveTrailing
+        ? escapeHelper.uriSegmentsPreserveTrailing(url)
+        : escapeHelper.uriSegments(url);
 
     // Explicitly encode additional problematic characters
     encoded = encoded.replace("+", "%2B"); // Plus sign - AWS S3, Cloudflare, etc.

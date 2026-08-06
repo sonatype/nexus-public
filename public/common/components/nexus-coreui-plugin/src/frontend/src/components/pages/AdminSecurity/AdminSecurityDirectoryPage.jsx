@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { DirectoryList, DirectoryPage } from '@sonatype/nexus-ui-plugin';
+import { DirectoryList, DirectoryPage, ExtJS } from '@sonatype/nexus-ui-plugin';
 import UIStrings from '../../../constants/UIStrings';
 import { ROUTE_NAMES } from '../../../routerConfig/routeNames/routeNames';
 
@@ -103,6 +103,15 @@ export default function AdminSecurityDirectoryPage() {
               description={UIStrings.USER_TOKEN_CONFIGURATION.MENU.description}
               routeName={ADMIN.SECURITY.USERTOKEN.ROOT}
           />
+
+          {ExtJS.state().getValue('serviceAccountEnabled', false) &&
+            <DirectoryList.DirectoryListItem
+                data-analytics-id="nxrm-admin-security-directory-service-account-tokens-lnk"
+                text={UIStrings.SERVICE_ACCOUNT_TOKENS.MENU.text}
+                description={UIStrings.SERVICE_ACCOUNT_TOKENS.MENU.description}
+                routeName={ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.ROOT}
+            />
+          }
 
         </DirectoryList>
       </DirectoryPage>);

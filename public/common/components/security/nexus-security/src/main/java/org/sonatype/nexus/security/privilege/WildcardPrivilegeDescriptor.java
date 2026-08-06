@@ -13,10 +13,15 @@
 package org.sonatype.nexus.security.privilege;
 
 import java.util.List;
+
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response.Status;
+
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.authz.WildcardPermission2;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
@@ -112,6 +117,10 @@ public class WildcardPrivilegeDescriptor
 
   @Override
   public void validate(final ApiPrivilegeWildcardRequest apiPrivilege) {
-    // not validating anything in particular here
+    if (apiPrivilege.getPattern() == null || apiPrivilege.getPattern().isBlank()) {
+      throw new WebApplicationMessageException(Status.BAD_REQUEST,
+          "\"Wildcard privilege pattern must not be blank.\"",
+          MediaType.APPLICATION_JSON);
+    }
   }
 }

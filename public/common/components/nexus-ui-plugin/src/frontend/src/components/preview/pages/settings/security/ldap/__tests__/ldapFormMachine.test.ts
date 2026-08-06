@@ -133,6 +133,46 @@ describe('ldapFormMachine', () => {
 
       service.stop();
     });
+
+    it('pins DEFAULT_LDAP_SERVER to the full expected shape, including group-as-roles defaults', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      const state = service.getSnapshot();
+      expect(state.context.data).toEqual({
+        name: '',
+        protocol: 'ldap',
+        useTrustStore: false,
+        host: '',
+        port: 389,
+        searchBase: '',
+        authScheme: 'simple',
+        authUsername: '',
+        authPassword: '',
+        connectionTimeout: 30,
+        connectionRetryDelay: 300,
+        maxIncidentsCount: 3,
+        userBaseDn: '',
+        userSubtree: false,
+        userObjectClass: 'inetOrgPerson',
+        userLdapFilter: '',
+        userIdAttribute: 'uid',
+        userRealNameAttribute: 'cn',
+        userEmailAddressAttribute: 'mail',
+        userPasswordAttribute: '',
+        ldapGroupsAsRoles: true,
+        groupType: 'dynamic',
+        groupBaseDn: '',
+        groupSubtree: false,
+        groupObjectClass: 'groupOfUniqueNames',
+        groupIdAttribute: 'cn',
+        groupMemberAttribute: 'uniqueMember',
+        groupMemberFormat: 'uid=${username},ou=people,dc=example,dc=com',
+        userMemberOfAttribute: 'memberOf',
+      });
+
+      service.stop();
+    });
   });
 
   describe('edit mode', () => {
@@ -249,6 +289,189 @@ describe('ldapFormMachine', () => {
 
       service.stop();
     });
+
+    it('requires authPassword only when isCreate is true (create mode)', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'test' } as any);
+      service.send({ type: 'UPDATE', name: 'host', value: 'ldap.example.com' } as any);
+      service.send({ type: 'UPDATE', name: 'searchBase', value: 'dc=example,dc=com' } as any);
+      service.send({ type: 'UPDATE', name: 'authUsername', value: 'cn=admin,dc=example,dc=com' } as any);
+      // authPassword left blank
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.authPassword).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('does not require authPassword in edit mode', async () => {
+      const server = buildPreloadedServer({ authPassword: '' });
+      const machine = createLdapFormMachine('test-server-id', server);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.authPassword).toBeFalsy();
+
+      service.stop();
+    });
+  });
+
+  describe('host format validation', () => {
+    it('rejects a malformed hostname', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'host', value: 'not a valid host!!' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.host).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('accepts a valid hostname', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'host', value: 'ldap.example.com' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.host).toBeFalsy();
+
+      service.stop();
+    });
+
+    it('accepts a valid IPv4 address as host', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'host', value: '192.168.1.1' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.host).toBeFalsy();
+
+      service.stop();
+    });
+  });
+
+  describe('numeric connection field validation', () => {
+    it('requires connectionTimeout to be at least 1 second', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'connectionTimeout', value: 0 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.connectionTimeout).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('rejects connectionTimeout above 3600 seconds', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'connectionTimeout', value: 3601 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.connectionTimeout).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('accepts connectionTimeout at the 1-3600 second boundaries', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'connectionTimeout', value: 1 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+      expect(service.getSnapshot().context.validationErrors.connectionTimeout).toBeFalsy();
+
+      service.send({ type: 'UPDATE', name: 'connectionTimeout', value: 3600 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+      expect(service.getSnapshot().context.validationErrors.connectionTimeout).toBeFalsy();
+
+      service.stop();
+    });
+
+    it('rejects a negative connectionRetryDelay', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'connectionRetryDelay', value: -1 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.connectionRetryDelay).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('accepts connectionRetryDelay of 0 (no backend upper bound)', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'connectionRetryDelay', value: 0 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.connectionRetryDelay).toBeFalsy();
+
+      service.stop();
+    });
+
+    it('rejects a negative maxIncidentsCount', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'maxIncidentsCount', value: -1 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.maxIncidentsCount).toBeTruthy();
+
+      service.stop();
+    });
+
+    it('accepts maxIncidentsCount of 0 (no backend upper bound)', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'maxIncidentsCount', value: 0 } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.maxIncidentsCount).toBeFalsy();
+
+      service.stop();
+    });
+
+    // Machine-level contract: ValidationUtils.isInRange treats blank/undefined
+    // as "not provided" and skips validation. A real user can't actually
+    // reach the machine with a blank value here - LdapForm.tsx's onChange
+    // coerces a cleared numeric input back to its default before sending
+    // UPDATE - but this test sends UPDATE directly, bypassing that
+    // coercion, to pin the machine's own contract independent of the UI.
+    it('allows blank numeric connection fields (not required)', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'connectionTimeout', value: '' } as any);
+      service.send({ type: 'UPDATE', name: 'connectionRetryDelay', value: '' } as any);
+      service.send({ type: 'UPDATE', name: 'maxIncidentsCount', value: '' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      const state = service.getSnapshot();
+      expect(state.context.validationErrors.connectionTimeout).toBeFalsy();
+      expect(state.context.validationErrors.connectionRetryDelay).toBeFalsy();
+      expect(state.context.validationErrors.maxIncidentsCount).toBeFalsy();
+
+      service.stop();
+    });
   });
 
   describe('user mapping validation', () => {
@@ -346,7 +569,8 @@ describe('ldapFormMachine', () => {
       const machine = createLdapFormMachine(undefined);
       const service = await startAndLoad(machine);
 
-      // ldapGroupsAsRoles defaults to false
+      // Explicitly disable roles-from-groups, independent of the field's default value
+      service.send({ type: 'UPDATE', name: 'ldapGroupsAsRoles', value: false } as any);
       service.send({ type: 'SUBMIT' } as any);
 
       const state = service.getSnapshot();
@@ -446,6 +670,42 @@ describe('ldapFormMachine', () => {
     });
   });
 
+  describe('CONFIRM_PASSWORD_AND_SUBMIT event', () => {
+    it('assigns the re-entered password synchronously', async () => {
+      const server = buildPreloadedServer({ authPassword: '' });
+      const machine = createLdapFormMachine('test-id', server);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'CONFIRM_PASSWORD_AND_SUBMIT', value: 'new-secret' } as any);
+
+      // No setTimeout/async wait required: the password is applied in the
+      // same synchronous transition as the event itself.
+      const state = service.getSnapshot();
+      expect(state.context.data.authPassword).toBe('new-secret');
+
+      service.stop();
+    });
+
+    it('proceeds straight to validating/saving instead of staying blocked in editing', async () => {
+      const server = buildPreloadedServer({ authPassword: '' });
+      const machine = createLdapFormMachine('test-id', server);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'CONFIRM_PASSWORD_AND_SUBMIT', value: 'new-secret' } as any);
+
+      const state = service.getSnapshot();
+      // Edit mode does not require a pre-existing password, so validation
+      // passes and the transient 'validating' state synchronously moves on
+      // to 'saving' (which then invokes the save service asynchronously) -
+      // rather than remaining blocked in 'editing' waiting on password
+      // validation.
+      expect(state.context.validationErrors.authPassword).toBeFalsy();
+      expect(state.matches('saving')).toBe(true);
+
+      service.stop();
+    });
+  });
+
   describe('APPLY_TEMPLATE event', () => {
     it('applies template values to user/group mapping fields', async () => {
       const machine = createLdapFormMachine(undefined);
@@ -540,6 +800,22 @@ describe('ldapFormMachine', () => {
       });
       const errors = validateLdap(data);
       expect(errors.userMemberOfAttribute).toBeTruthy();
+    });
+
+    it('requires bind password on create but not on edit (PG5)', () => {
+      const data = validLdapFormData({ authScheme: 'simple', authUsername: 'cn=admin', authPassword: '' });
+
+      // Create mode (default): password is required.
+      expect(validateLdap(data, true).authPassword).toBeTruthy();
+
+      // Edit mode: blank password is allowed (means "keep the stored password").
+      expect(validateLdap(data, false).authPassword).toBeFalsy();
+    });
+  });
+
+  describe('defaults (PG12)', () => {
+    it('defaults new servers to dynamic group type', () => {
+      expect(DEFAULT_LDAP_SERVER.groupType).toBe('dynamic');
     });
   });
 });

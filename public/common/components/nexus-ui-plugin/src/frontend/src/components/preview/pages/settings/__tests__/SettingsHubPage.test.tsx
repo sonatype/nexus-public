@@ -720,7 +720,7 @@ describe('SettingsHubPage', () => {
     });
 
     it('renders badge after label name', () => {
-      const { container } = renderWithTheme(<SettingsHubPage />);
+      renderWithTheme(<SettingsHubPage />);
 
       // Find the Users card link and check badge is after label text
       const usersCard = screen.getByText('Users').closest('a');
@@ -763,8 +763,10 @@ describe('SettingsHubPage', () => {
       renderWithTheme(<SettingsHubPage />);
 
       // LDAP and IP Allow List (filtered by adminOnly) still present — but
-      // since IP Allow List is hidden (non-admin) and LDAP has no visibilityRequirements,
-      // the section should still show LDAP
+      // since IP Allow List is hidden (non-admin) and the mock only returns
+      // false for requiresPermission 'nexus:users:read'/'nexus:roles:read'
+      // (LDAP's own visibilityRequirements — requiresPermission: 'nexus:ldap:read'
+      // plus editions — isn't one of those), the section should still show LDAP
       expect(screen.getByText('LDAP')).toBeInTheDocument();
       expect(screen.queryByText('Users')).not.toBeInTheDocument();
       expect(screen.queryByText('Roles')).not.toBeInTheDocument();

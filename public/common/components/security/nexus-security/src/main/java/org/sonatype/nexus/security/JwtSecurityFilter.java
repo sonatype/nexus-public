@@ -118,32 +118,30 @@ public class JwtSecurityFilter
               ? userSessionIdClaim.asString()
               : null;
           Claim userClaim = decodedJwt.getClaim(USER);
-          String usernameClaim = userClaim != null && !userClaim.isNull() ? userClaim.asString() : null;
+          String username = userClaim != null && !userClaim.isNull() ? userClaim.asString() : null;
+          Claim realmClaim = decodedJwt.getClaim(REALM);
+          String realmName = realmClaim != null && !realmClaim.isNull() ? realmClaim.asString() : null;
 
           // Session-level revocation (logout)
           if (userSessionId != null && jwtSessionRevocationService.isRevoked(userSessionId)) {
-            return rejectAndFallback(request, response, cookie, usernameClaim, userSessionId,
+            return rejectAndFallback(request, response, cookie, username, userSessionId,
                 "Attempt to use revoked JWT token detected and blocked.");
           }
 
-          // User-level invalidation (e.g. password change after the JWT was issued)
+          // User-level invalidation covers password change, user deletion and user deactivation:
+          // DefaultSecuritySystem invokes SessionInvalidator on each of these paths, which records
+          // a cutoff timestamp read here. Any JWT issued before that cutoff is rejected without a
+          // per-request lookup against the user store.
           Date issuedAt = decodedJwt.getIssuedAt();
-          if (usernameClaim != null && issuedAt != null) {
+          if (username != null && issuedAt != null) {
             OffsetDateTime iat = issuedAt.toInstant().atOffset(ZoneOffset.UTC);
-            if (jwtSessionRevocationService.isUserInvalidatedAfter(usernameClaim, iat)) {
-              return rejectAndFallback(request, response, cookie, usernameClaim,
+            if (jwtSessionRevocationService.isUserInvalidatedAfter(username, iat)) {
+              return rejectAndFallback(request, response, cookie, username,
                   userSessionId != null ? userSessionId : "unknown",
-                  "Attempt to use JWT token issued before user invalidation (e.g. password change).");
+                  "Attempt to use JWT token issued before user invalidation "
+                      + "(password change, user deletion, or user deactivation).");
             }
           }
-
-          Claim user = decodedJwt.getClaim(USER);
-          Claim realm = decodedJwt.getClaim(REALM);
-
-          // Handle case where user or realm claims are missing/null
-          // Check both if claim is null and if asString() returns null
-          String username = user != null && !user.isNull() ? user.asString() : null;
-          String realmName = realm != null && !realm.isNull() ? realm.asString() : null;
 
           if (username == null || realmName == null) {
             log.debug("Invalid JWT token: missing user or realm claim");

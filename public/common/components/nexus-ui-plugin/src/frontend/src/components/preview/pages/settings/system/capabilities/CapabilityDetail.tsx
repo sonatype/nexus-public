@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { TYPE_ICONS, DEFAULT_TYPE_ICON } from './capabilityConstants';
 import DOMPurify from 'dompurify';
-import { SettingsButton, SettingsAlert, SettingsFormSection, SettingsTextArea } from '../../../../shared/form';
+import { SettingsButton, SettingsAlert, SettingsFormSection, } from '../../../../shared/form';
 import { ConfirmDialog } from '../../../../shared';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import {

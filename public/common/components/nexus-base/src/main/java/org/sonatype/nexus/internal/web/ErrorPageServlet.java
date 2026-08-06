@@ -15,18 +15,15 @@ package org.sonatype.nexus.internal.web;
 import java.io.IOException;
 import java.util.stream.Stream;
 
+import org.sonatype.nexus.common.app.WebFilterPriority;
+import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.sonatype.nexus.common.app.WebFilterPriority;
-import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
-
-import com.google.common.base.Throwables;
-import org.eclipse.jetty.http.BadMessageException;
-import org.eclipse.jetty.io.EofException;
+import org.eclipse.jetty.io.QuietException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,11 +115,8 @@ public class ErrorPageServlet
       // Log java.lang.Error exceptions at error level
       log.error("Unexpected exception", getRootCause(cause));
     }
-    else if (isEofException(cause)) {
-      log.trace("Client terminated connection", cause);
-    }
-    else if (isBadMessageException(cause)) {
-      log.trace("Bad request (malformed content)", cause);
+    else if (isQuietException(cause)) {
+      log.trace("Caught Jetty QuietException ignoring", cause);
     }
     else {
       log.debug("Attaching cause", cause);
@@ -131,34 +125,19 @@ public class ErrorPageServlet
     request.setAttribute(ERROR_EXCEPTION, cause);
   }
 
+  /*
+   * Jetty uses QuietExceptions for failures outside the application such as the client disconnecting or invalid
+   * encoding.
+   */
+  private static boolean isQuietException(final Throwable e) {
+    if (QuietException.isQuiet(e)) {
+      return true;
+    }
+    return Stream.of(e.getSuppressed())
+        .anyMatch(t -> t instanceof QuietException);
+  }
+
   private static boolean isJavaLangError(final Throwable e) {
     return getRootCause(e) instanceof Error;
-  }
-
-  /**
-   * Jetty throws an EofException when the client terminates the connection and the application attempts to write to the
-   * servlets stream.
-   *
-   * @see EofException
-   */
-  private static boolean isEofException(final Throwable e) {
-    if (e instanceof EofException || Throwables.getRootCause(e) instanceof EofException) {
-      return true;
-    }
-    return Stream.of(e.getSuppressed())
-        .anyMatch(t -> t instanceof EofException);
-  }
-
-  /**
-   * Jetty throws a {@link BadMessageException} when it cannot parse an incoming request (e.g. a binary body sent
-   * with {@code Content-Type: application/x-www-form-urlencoded}). These are client errors, not server faults, and
-   * should be suppressed at trace level to avoid log noise in cloud environments where debug is enabled.
-   */
-  private static boolean isBadMessageException(final Throwable e) {
-    if (e instanceof BadMessageException || getRootCause(e) instanceof BadMessageException) {
-      return true;
-    }
-    return Stream.of(e.getSuppressed())
-        .anyMatch(t -> t instanceof BadMessageException);
   }
 }

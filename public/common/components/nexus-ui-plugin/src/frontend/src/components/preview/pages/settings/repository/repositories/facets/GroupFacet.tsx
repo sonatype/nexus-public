@@ -11,15 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Text, Flex } from '@radix-ui/themes';
 import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import axios from 'axios';
 
 import {
+  SettingsAlert,
   SettingsFormSection,
   SettingsSelect,
-  SettingsButton,
 } from '../../../../../shared/form';
 
 import {
@@ -46,6 +47,13 @@ interface GroupFacetProps {
 
 const FORMATS_WITH_GROUP_WRITE = ['npm', 'docker', 'conan'];
 
+interface RepositoryListItem {
+  format: string;
+  type: string;
+  name: string;
+  nugetProxy?: { nugetVersion?: string };
+}
+
 /**
  * GroupFacet - Group member repository selection
  */
@@ -61,13 +69,69 @@ export function GroupFacet({
 
   const groupWritableEnabled = useMemo(() => {
     try {
-      return ExtJS.state().getValue('groupWritableEnabled') || false;
+      return ExtJS.state().getValue('groupWritableEnabled');
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const chocolateyEnabled = useMemo(() => {
+    try {
+      return ExtJS.state().getValue('nugetChocolateyEnabled') === true;
     } catch {
       return false;
     }
   }, []);
 
   const showWritableMember = groupWritableEnabled && format && FORMATS_WITH_GROUP_WRITE.includes(format);
+
+  const [nugetProxyVersions, setNugetProxyVersions] = useState<Record<string, string>>({});
+  const [nugetVersionFetchError, setNugetVersionFetchError] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (format !== 'nuget') return;
+    setNugetVersionFetchError(false);
+    // /beta/repositories is used intentionally: it is the only endpoint that exposes
+    // nugetProxy.nugetVersion. The stable /v1/repositories returns a summary schema
+    // without format-specific attributes.
+    axios
+      .get('/service/rest/beta/repositories')
+      .then(({ data }: { data: RepositoryListItem[] }) => {
+        const versions: Record<string, string> = {};
+        data.forEach((repo) => {
+          if (repo.format === 'nuget' && repo.type === 'proxy' && repo.nugetProxy?.nugetVersion) {
+            versions[repo.name] = repo.nugetProxy.nugetVersion;
+          }
+        });
+        setNugetProxyVersions(versions);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load repository list for NuGet version detection', error);
+        setNugetVersionFetchError(true);
+      });
+  }, [format]);
+
+  const mixedVersionConflict = useMemo(() => {
+    if (format !== 'nuget') return null;
+    let firstMemberName: string | null = null;
+    let firstMemberVersion: string | null = null;
+    for (const memberName of currentMembers) {
+      const version = nugetProxyVersions[memberName];
+      if (!version) continue;
+      if (!firstMemberName) {
+        firstMemberName = memberName;
+        firstMemberVersion = version;
+      } else if (version !== firstMemberVersion) {
+        return {
+          conflictingName: memberName,
+          conflictingVersion: version === 'V3' ? 'v3' : 'v2',
+          firstMemberName,
+          firstMemberVersion: firstMemberVersion === 'V3' ? 'v3' : 'v2',
+        };
+      }
+    }
+    return null;
+  }, [format, currentMembers, nugetProxyVersions]);
 
   // Filter out already-selected members and sort alphabetically
   const availableOptions = useMemo(() => {
@@ -207,6 +271,23 @@ export function GroupFacet({
           </Box>
         )}
       </Box>
+
+      {mixedVersionConflict && !chocolateyEnabled && (
+        <SettingsAlert type="warning">
+          {UIStrings.NUGET.MIXED_VERSION_WARNING(
+            mixedVersionConflict.conflictingName,
+            mixedVersionConflict.conflictingVersion,
+            mixedVersionConflict.firstMemberName,
+            mixedVersionConflict.firstMemberVersion,
+          )}
+        </SettingsAlert>
+      )}
+
+      {format === 'nuget' && nugetVersionFetchError && (
+        <SettingsAlert type="error">
+          Unable to load NuGet proxy versions. Mixed-version group detection is unavailable.
+        </SettingsAlert>
+      )}
     </SettingsFormSection>
   );
 }

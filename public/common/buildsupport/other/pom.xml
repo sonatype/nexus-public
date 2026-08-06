@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.1-06</version>
+    <version>3.95.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -317,6 +317,9 @@
       </dependency>
 
       <!--
+        NEXUS-54004: Upgrade netty-bom to 4.2.16.Final to resolve CVE-2026-56819
+        (netty-codec-http2 memory leak in the HTTP/2 decompressor - CWE-401,
+        CVSS 7.5, GHSA-93wv-jw9v-4972).
         NEXUS-53122: Upgrade netty-bom to 4.2.15.Final to resolve CVE-2026-42587
         (codec-http/http2 decompression limit bypass - CVSS 8.7). The earlier
         4.2.14.Final upgrade addressed the following CVEs but not 42587:
@@ -329,7 +332,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.15.Final</version>
+        <version>4.2.16.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

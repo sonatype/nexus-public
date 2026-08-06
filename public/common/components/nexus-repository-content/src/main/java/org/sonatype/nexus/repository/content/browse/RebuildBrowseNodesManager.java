@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.upgrade.datastore.UpgradeContext;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
@@ -46,6 +47,12 @@ import org.springframework.stereotype.Component;
 public class RebuildBrowseNodesManager
     extends StateGuardLifecycleSupport
 {
+  /**
+   * {@link UpgradeContext} flag key raised by an UPGRADE-phase migration step to request a one-time
+   * browse-node rebuild when this manager starts (TASKS phase).
+   */
+  public static final String REBUILD_BROWSE_NODES_ON_START = "browse.rebuildNodesOnStart";
+
   private static final String ALL_REPOSITORIES = "*";
 
   private final TaskScheduler taskScheduler;
@@ -54,26 +61,24 @@ public class RebuildBrowseNodesManager
 
   private final PeriodicJobService periodicJobService;
 
-  private boolean rebuildOnStart = false;
+  private final UpgradeContext upgradeContext;
 
   @Autowired
   public RebuildBrowseNodesManager(
       final TaskScheduler taskScheduler,
       final RepositoryManager repositoryManager,
-      final PeriodicJobService periodicJobService)
+      final PeriodicJobService periodicJobService,
+      final UpgradeContext upgradeContext)
   {
     this.taskScheduler = checkNotNull(taskScheduler);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.periodicJobService = checkNotNull(periodicJobService);
-  }
-
-  public void setRebuildOnSart(final boolean rebuildOnStart) {
-    this.rebuildOnStart = rebuildOnStart;
+    this.upgradeContext = checkNotNull(upgradeContext);
   }
 
   @Override
   protected void doStart() { // NOSONAR
-    if (!rebuildOnStart) {
+    if (!upgradeContext.isFlagSet(REBUILD_BROWSE_NODES_ON_START)) {
       return;
     }
 

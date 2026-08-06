@@ -16,10 +16,10 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { Theme } from '@radix-ui/themes';
 
 import { LogViewer } from '../LogViewer';
-import * as useLogsApiModule from '../useLogsApi';
+import * as useLogViewerModule from '../useLogViewer';
 
-// Mock the API hook
-jest.mock('../useLogsApi');
+// Mock the integration hook
+jest.mock('../useLogViewer');
 
 // Mock ExtJS
 jest.mock('../../../../../../../interface/ExtJS', () => ({
@@ -30,7 +30,7 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
   },
 }));
 
-const mockedUseLogsApi = useLogsApiModule.useLogsApi as jest.MockedFunction<typeof useLogsApiModule.useLogsApi>;
+const mockedUseLogViewer = useLogViewerModule.useLogViewer as jest.MockedFunction<typeof useLogViewerModule.useLogViewer>;
 
 // Wrapper component for Radix Theme
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -41,33 +41,30 @@ const mockLogContent = `2024-01-01 12:00:00 INFO  [main] - Starting application
 2024-01-01 12:00:01 INFO  [main] - Loading configuration
 2024-01-01 12:00:02 INFO  [main] - Application started successfully`;
 
+function makeHook(overrides: Partial<ReturnType<typeof useLogViewerModule.useLogViewer>> = {}) {
+  return {
+    logContent: mockLogContent,
+    isLoading: false,
+    error: null,
+    mark: '',
+    refreshPeriod: 0,
+    logSize: 25,
+    setMark: jest.fn(),
+    setRefreshPeriod: jest.fn(),
+    setLogSize: jest.fn(),
+    handleInsertMark: jest.fn(),
+    handleDownload: jest.fn(),
+    textareaRef: { current: null } as React.RefObject<HTMLTextAreaElement>,
+    ...overrides,
+  };
+}
+
 describe('LogViewer', () => {
-  const mockFetchLogContent = jest.fn();
-  const mockInsertMark = jest.fn();
-  const mockGetDownloadUrl = jest.fn();
-  const mockSetError = jest.fn();
   const mockOnBack = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
-
-    mockFetchLogContent.mockResolvedValue(mockLogContent);
-    mockGetDownloadUrl.mockReturnValue('/service/rest/internal/logging/logs/nexus.log');
-
-    mockedUseLogsApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: mockSetError,
-      fetchLogs: jest.fn(),
-      fetchLogContent: mockFetchLogContent,
-      insertMark: mockInsertMark,
-      getDownloadUrl: mockGetDownloadUrl,
-    });
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
+    mockedUseLogViewer.mockReturnValue(makeHook());
   });
 
   it('renders log viewer with filename in title', async () => {
@@ -78,12 +75,8 @@ describe('LogViewer', () => {
     });
   });
 
-  it('loads and displays log content', async () => {
+  it('displays log content in textarea', async () => {
     render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
-
-    await waitFor(() => {
-      expect(mockFetchLogContent).toHaveBeenCalledWith('nexus.log', -25600); // 25KB * -1024
-    });
 
     await waitFor(() => {
       const textarea = screen.getByLabelText('Log content for nexus.log');
@@ -92,7 +85,7 @@ describe('LogViewer', () => {
   });
 
   it('shows loading state while fetching content', () => {
-    mockFetchLogContent.mockImplementation(() => new Promise(() => {}));
+    mockedUseLogViewer.mockReturnValue(makeHook({ isLoading: true, logContent: '' }));
 
     render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
@@ -107,8 +100,9 @@ describe('LogViewer', () => {
     });
   });
 
-  it('calls download function when download button is clicked', async () => {
-    const { ExtJS } = require('../../../../../../../interface/ExtJS');
+  it('calls handleDownload when download button is clicked', async () => {
+    const mockHandleDownload = jest.fn();
+    mockedUseLogViewer.mockReturnValue(makeHook({ handleDownload: mockHandleDownload }));
 
     render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
@@ -118,7 +112,7 @@ describe('LogViewer', () => {
 
     fireEvent.click(screen.getByText('Download'));
 
-    expect(ExtJS.downloadUrl).toHaveBeenCalled();
+    expect(mockHandleDownload).toHaveBeenCalled();
   });
 
   it('shows mark input for nexus.log', async () => {
@@ -141,8 +135,9 @@ describe('LogViewer', () => {
     expect(screen.queryByText('Marker to insert:')).not.toBeInTheDocument();
   });
 
-  it('inserts mark when insert button is clicked', async () => {
-    mockInsertMark.mockResolvedValue(undefined);
+  it('calls setMark when mark input changes', async () => {
+    const mockSetMark = jest.fn();
+    mockedUseLogViewer.mockReturnValue(makeHook({ setMark: mockSetMark }));
 
     render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
@@ -151,20 +146,31 @@ describe('LogViewer', () => {
     });
 
     const markInput = screen.getByPlaceholderText('MARK');
-    await act(async () => {
-      fireEvent.change(markInput, { target: { value: 'TEST_MARK' } });
+    fireEvent.change(markInput, { target: { value: 'TEST_MARK' } });
+
+    expect(mockSetMark).toHaveBeenCalledWith('TEST_MARK', expect.anything());
+  });
+
+  it('calls handleInsertMark when Insert button is clicked', async () => {
+    const mockHandleInsertMark = jest.fn();
+    mockedUseLogViewer.mockReturnValue(makeHook({ mark: 'TEST_MARK', handleInsertMark: mockHandleInsertMark }));
+
+    render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('Insert')).toBeInTheDocument();
     });
+
     await act(async () => {
       fireEvent.click(screen.getByText('Insert'));
     });
 
-    await waitFor(() => {
-      expect(mockInsertMark).toHaveBeenCalledWith('TEST_MARK');
-    });
+    expect(mockHandleInsertMark).toHaveBeenCalled();
   });
 
-  it('inserts mark when Enter is pressed in mark input', async () => {
-    mockInsertMark.mockResolvedValue(undefined);
+  it('calls handleInsertMark when Enter is pressed in mark input', async () => {
+    const mockHandleInsertMark = jest.fn();
+    mockedUseLogViewer.mockReturnValue(makeHook({ mark: 'TEST_MARK', handleInsertMark: mockHandleInsertMark }));
 
     render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
@@ -174,13 +180,10 @@ describe('LogViewer', () => {
 
     const markInput = screen.getByPlaceholderText('MARK');
     await act(async () => {
-      fireEvent.change(markInput, { target: { value: 'TEST_MARK' } });
       fireEvent.keyDown(markInput, { key: 'Enter' });
     });
 
-    await waitFor(() => {
-      expect(mockInsertMark).toHaveBeenCalledWith('TEST_MARK');
-    });
+    expect(mockHandleInsertMark).toHaveBeenCalled();
   });
 
   it('has refresh rate selector', async () => {
@@ -206,21 +209,12 @@ describe('LogViewer', () => {
       expect(screen.getByText('Size:')).toBeInTheDocument();
     });
 
-    // Size selector should be present (Radix UI Select interaction is complex in JSDOM)
     const comboboxes = screen.getAllByRole('combobox');
     expect(comboboxes.length).toBeGreaterThan(0);
   });
 
-  it('displays error alert when fetch fails', async () => {
-    mockedUseLogsApi.mockReturnValue({
-      loading: false,
-      error: 'Failed to load log content',
-      setError: mockSetError,
-      fetchLogs: jest.fn(),
-      fetchLogContent: mockFetchLogContent.mockRejectedValue(new Error('Failed')),
-      insertMark: mockInsertMark,
-      getDownloadUrl: mockGetDownloadUrl,
-    });
+  it('displays error alert when error is present', async () => {
+    mockedUseLogViewer.mockReturnValue(makeHook({ error: 'Failed to load log content', logContent: '' }));
 
     render(<LogViewer filename="nexus.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
@@ -230,8 +224,6 @@ describe('LogViewer', () => {
   });
 
   it('displays raw filenames including spaces and special characters', async () => {
-    // With raw: true on the route param, filenames arrive unencoded.
-    // A space is a literal space in the filename, not %20.
     render(<LogViewer filename="test log.log" onBack={mockOnBack} />, { wrapper: TestWrapper });
 
     await waitFor(() => {
@@ -246,9 +238,7 @@ describe('LogViewer', () => {
       expect(screen.getByText('Refresh Rate:')).toBeInTheDocument();
     });
 
-    // Refresh rate selector should be present
     const comboboxes = screen.getAllByRole('combobox');
     expect(comboboxes.length).toBeGreaterThan(0);
   });
 });
-

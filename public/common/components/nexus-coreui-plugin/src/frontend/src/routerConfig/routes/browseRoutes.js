@@ -49,7 +49,6 @@ const SearchRExt = lazyLoad(() => import('../../components/pages/browse/Search/S
 const SearchRawExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchRawExt'));
 const SearchRubygemsExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchRubygemsExt'));
 const SearchTerraformExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchTerraformExt'));
-const SearchTerraformStateBackendExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchTerraformStateBackendExt'));
 const SearchSwiftExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchSwiftExt'));
 const SearchYumExt = lazyLoad(() => import('../../components/pages/browse/Search/SearchYumExt'));
 const Tags = lazyLoad(() => import('../../components/pages/browse/Tags/Tags'));
@@ -559,25 +558,6 @@ export const browseRoutes = [
       visibilityRequirements: {
         permissions: ['nexus:search:read'],
         browseableFormat: 'terraform',
-      },
-      title: BROWSE.SEARCH.TITLE,
-    },
-    params: {
-      keyword: {
-        value: null,
-        raw: true,
-        dynamic: true,
-      },
-    },
-  },
-  {
-    name: BROWSE.SEARCH.TERRAFORM_STATE_BACKEND,
-    url: '/terraformbackend/:keyword',
-    component: SearchTerraformStateBackendExt,
-    data: {
-      visibilityRequirements: {
-        permissions: ['nexus:search:read'],
-        browseableFormat: 'terraformbackend',
       },
       title: BROWSE.SEARCH.TITLE,
     },

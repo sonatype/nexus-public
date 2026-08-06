@@ -12,7 +12,7 @@
  */
 
 import React, { useState } from 'react';
-import { Box, Flex, Text, Heading, Separator } from '@radix-ui/themes';
+import { Box, Flex, Text, Separator } from '@radix-ui/themes';
 import { Loader2, Key, RefreshCw, AlertTriangle } from 'lucide-react';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
@@ -29,7 +29,6 @@ import { useUsersApi } from './useUsersApi';
 import {
   User,
   UserFormData,
-  DEFAULT_SOURCE,
   isExternalUser,
   getFullName,
 } from './types';
@@ -67,7 +66,7 @@ export function UserDetail({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [showResetToken, setShowResetToken] = useState(false);
+  const [_showResetToken, setShowResetToken] = useState(false);
   const [resetTokenDialogOpen, setResetTokenDialogOpen] = useState(false);
 
   const isPro = ExtJS.isProEdition();
@@ -88,8 +87,15 @@ export function UserDetail({
   // Loading state
   if (loading) {
     return (
-      <Flex align="center" justify="center" className="user-detail__loading">
-        <Loader2 size={24} className="user-detail__spinner" />
+      <Flex
+        align="center"
+        justify="center"
+        className="user-detail__loading"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Loader2 size={24} className="user-detail__spinner" aria-hidden="true" />
         <Text size="2">Loading user details...</Text>
       </Flex>
     );
@@ -98,8 +104,12 @@ export function UserDetail({
   // No user found
   if (!user) {
     return (
-      <Box className="user-detail__not-found">
-        <AlertTriangle size={24} />
+      <Box
+        className="user-detail__not-found"
+        role="alert"
+        aria-live="assertive"
+      >
+        <AlertTriangle size={24} aria-hidden="true" />
         <Text size="2">User not found</Text>
       </Box>
     );
@@ -123,7 +133,7 @@ export function UserDetail({
       setShowChangePassword(false);
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   };
@@ -138,7 +148,7 @@ export function UserDetail({
       await resetUserToken(user.userId, user.realm || user.source);
       toast.success(`User token has been reset for ${getFullName(user)}`);
       setShowResetToken(false);
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   };
@@ -148,34 +158,34 @@ export function UserDetail({
     return (
       <Box className="user-detail">
         <SettingsFormSection title="User Information" defaultOpen>
-          <Box className="user-detail__info">
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">ID</Text>
-              <Text size="2">{user.userId}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">First Name</Text>
-              <Text size="2">{user.firstName}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Last Name</Text>
-              <Text size="2">{user.lastName}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Email</Text>
-              <Text size="2">{user.emailAddress || user.email}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Status</Text>
-              <Text size="2" className={`user-detail__status user-detail__status--${user.status}`}>
+          <dl className="user-detail__info">
+            <div className="user-detail__row">
+              <dt className="user-detail__label">ID</dt>
+              <dd className="user-detail__value">{user.userId}</dd>
+            </div>
+            <div className="user-detail__row">
+              <dt className="user-detail__label">First Name</dt>
+              <dd className="user-detail__value">{user.firstName}</dd>
+            </div>
+            <div className="user-detail__row">
+              <dt className="user-detail__label">Last Name</dt>
+              <dd className="user-detail__value">{user.lastName}</dd>
+            </div>
+            <div className="user-detail__row">
+              <dt className="user-detail__label">Email</dt>
+              <dd className="user-detail__value">{user.emailAddress || user.email}</dd>
+            </div>
+            <div className="user-detail__row">
+              <dt className="user-detail__label">Status</dt>
+              <dd className={`user-detail__value user-detail__status user-detail__status--${user.status}`}>
                 {user.status}
-              </Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Source</Text>
-              <Text size="2">{isExternal ? user.source : 'Local'}</Text>
-            </Flex>
-          </Box>
+              </dd>
+            </div>
+            <div className="user-detail__row">
+              <dt className="user-detail__label">Source</dt>
+              <dd className="user-detail__value">{isExternal ? user.source : 'Local'}</dd>
+            </div>
+          </dl>
         </SettingsFormSection>
 
         <SettingsFormSection title="Assigned Roles">

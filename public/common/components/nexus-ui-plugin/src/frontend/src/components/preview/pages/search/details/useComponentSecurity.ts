@@ -128,7 +128,7 @@ export function useComponentSecurity({ gaId, version }: UseComponentSecurityOpti
   const [data, setData] = useState<ComponentSecurityData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iqConnected, setIqConnected] = useState<boolean | null>(null);
-  const [fetchCount, setFetchCount] = useState(0);
+  const [_fetchCount, setFetchCount] = useState(0);
 
   const refetch = useCallback(() => {
     setFetchCount((c) => c + 1);
@@ -229,7 +229,7 @@ export function useComponentSecurity({ gaId, version }: UseComponentSecurityOpti
     return () => {
       cancelled = true;
     };
-  }, [gaId, version, fetchCount]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gaId, version]); 
 
   return { data, loading, error, iqConnected, refetch };
 }

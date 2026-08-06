@@ -113,6 +113,9 @@ export const ENDPOINTS = {
   NODES: `${API_INTERNAL_UI}/nodes`,
   HEALTH_CHECK: `${API_INTERNAL_UI}/healthcheck`,
   HEALTH_CHECK_ANALYZE: (repoName: string) => `${API_V1}/repositories/${encodeURIComponent(repoName)}/health-check`,
+  /** Enable/disable Repository Health Check (POST enable / DELETE disable) */
+  REPOSITORY_HEALTH_CHECK: (repoName: string) =>
+    `${API_V1}/repositories/${encodeURIComponent(repoName)}/health-check`,
   HEALTH_CHECK_SUMMARY: `${API_INTERNAL_UI}/healthcheck/summary`,
   FIREWALL_STATUS: `${API_INTERNAL_UI}/firewall/status`,
   FIREWALL_STATUS_SUMMARY: `${API_INTERNAL_UI}/firewall/status/summary`,
@@ -121,6 +124,13 @@ export const ENDPOINTS = {
   BLOBSTORES_TYPES: `${API_INTERNAL_UI}/blobstores/types`,
   BLOBSTORES_QUOTA_TYPES: `${API_INTERNAL_UI}/blobstores/quotaTypes`,
   DATASTORE: `${API_INTERNAL_UI}/datastore`,
+
+  // Malicious risk (mirrors nexus-coreui-plugin's utils/api/rest-client.ts)
+  MALICIOUS_RISK_ACTIVE_FINDINGS: `${API_V1}/malicious-risk/active-findings`,
+  MALICIOUS_RISK_HISTORY: `${API_V1}/malicious-risk/history`,
+  MALICIOUS_RISK_ACKNOWLEDGE: `${API_V1}/malicious-risk/acknowledge`,
+  MALICIOUS_RISK_DELETE_FINDING: `${API_V1}/malicious-risk/delete-finding`,
+  MALICIOUS_RISK_REMEDIATE: `${API_V1}/malicious-risk/remediate`,
 } as const;
 
 /**
@@ -153,7 +163,7 @@ function createClient(): AxiosInstance {
       // Prevent browser caching of GET requests
       if (config.method === 'get') {
         config.headers['Cache-Control'] = 'no-cache';
-        config.headers['Pragma'] = 'no-cache';
+        config.headers.Pragma = 'no-cache';
       }
 
       // Let Axios set Content-Type automatically for FormData (multipart/form-data with boundary)

@@ -1,0 +1,26 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+/*
+ * Radix Themes' BaseDialogOverlay leaves z-index at "auto", which loses against any
+ * page chrome that sits inside its own stacking context (e.g. SettingsForm's sticky
+ * action-bar at z-index: 1). When that happens the action-bar floats above the
+ * destructive-confirmation modal — visually broken and dangerous. Scope a high
+ * z-index to this modal only via the body class toggle managed in the component.
+ *
+ * z-index: 100 chosen to be well above typical page elements (usually z-index < 10)
+ * while leaving headroom for browser-level dialogs and overlays (z-index > 1000).
+ */
+body.nxrm-delete-confirmation-open .rt-BaseDialogOverlay {
+  z-index: 100;
+}

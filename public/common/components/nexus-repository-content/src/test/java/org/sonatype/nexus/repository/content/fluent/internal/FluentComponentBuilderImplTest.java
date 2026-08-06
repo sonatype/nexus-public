@@ -71,7 +71,21 @@ public class FluentComponentBuilderImplTest
     when(facet.contentRepositoryId()).thenReturn(REPOSITORY_ID);
     when(facet.repository()).thenReturn(repository);
 
-    underTest = new FluentComponentBuilderImpl(facet, componentStore, COMPONENT_NAME);
+    underTest = new FluentComponentBuilderImpl(facet, componentStore, FluentComponentBuilderImplTest::normalize,
+        COMPONENT_NAME);
+  }
+
+  @Test
+  public void testVersionNormalizedAutomatically() {
+    when(componentStore.getOrCreate(any(Supplier.class), any(Supplier.class))).thenAnswer(invocation -> {
+      Supplier<Component> create = invocation.getArgument(1);
+      return create.get();
+    });
+
+    underTest.version("1.0.0");
+    FluentComponent component = underTest.getOrCreate();
+
+    assertThat(component.normalizedVersion(), is("normalized-1.0.0"));
   }
 
   @Test
@@ -84,7 +98,8 @@ public class FluentComponentBuilderImplTest
     // readCoordinate should be called with empty string for namespace
     when(componentStore.readCoordinate(REPOSITORY_ID, "", COMPONENT_NAME, "")).thenReturn(Optional.empty());
 
-    FluentComponentBuilderImpl freshBuilder = new FluentComponentBuilderImpl(facet, componentStore, COMPONENT_NAME);
+    FluentComponentBuilderImpl freshBuilder = new FluentComponentBuilderImpl(facet, componentStore,
+        FluentComponentBuilderImplTest::normalize, COMPONENT_NAME);
     freshBuilder.find();
 
     verify(componentStore).readCoordinate(REPOSITORY_ID, "", COMPONENT_NAME, "");
@@ -426,17 +441,17 @@ public class FluentComponentBuilderImplTest
 
   @Test(expected = NullPointerException.class)
   public void testConstructorRejectsNullFacet() {
-    new FluentComponentBuilderImpl(null, componentStore, COMPONENT_NAME);
+    new FluentComponentBuilderImpl(null, componentStore, FluentComponentBuilderImplTest::normalize, COMPONENT_NAME);
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructorRejectsNullComponentStore() {
-    new FluentComponentBuilderImpl(facet, null, COMPONENT_NAME);
+    new FluentComponentBuilderImpl(facet, null, FluentComponentBuilderImplTest::normalize, COMPONENT_NAME);
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructorRejectsNullName() {
-    new FluentComponentBuilderImpl(facet, componentStore, null);
+    new FluentComponentBuilderImpl(facet, componentStore, FluentComponentBuilderImplTest::normalize, null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -467,6 +482,10 @@ public class FluentComponentBuilderImplTest
   @Test(expected = NullPointerException.class)
   public void testAttributesRejectsNullValue() {
     underTest.attributes("key", null);
+  }
+
+  private static String normalize(final String version) {
+    return "normalized-" + version;
   }
 
   private GroupFacet mockGroupFacetWithMembers(final int memberRepositoryId) {

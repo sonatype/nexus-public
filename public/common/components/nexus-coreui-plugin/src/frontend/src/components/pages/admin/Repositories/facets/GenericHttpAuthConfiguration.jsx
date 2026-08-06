@@ -18,6 +18,8 @@ import {NxFormGroup, NxFormSelect, NxTextInput} from '@sonatype/react-shared-com
 
 import UIStrings from '../../../../../constants/UIStrings';
 
+import DockerEcrAuthConfiguration from './DockerEcrAuthConfiguration';
+
 const {EDITOR} = UIStrings.REPOSITORIES;
 
 export default function GenericHttpAuthConfiguration({parentMachine}) {
@@ -83,6 +85,9 @@ export default function GenericHttpAuthConfiguration({parentMachine}) {
           </NxFormGroup>
         </div>
       )}
+
+      {/* AWS ECR session token — self-gated to Docker ECR proxies with username auth. */}
+      <DockerEcrAuthConfiguration parentMachine={parentMachine} />
 
       {type === 'ntlm' && (
         <div className="nx-form-row">

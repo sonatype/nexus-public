@@ -21,7 +21,6 @@ import {
   RoleReference,
   PrivilegeReference,
   RoleSource,
-  NEXUS_SOURCE,
   DEFAULT_SOURCE,
 } from './types';
 

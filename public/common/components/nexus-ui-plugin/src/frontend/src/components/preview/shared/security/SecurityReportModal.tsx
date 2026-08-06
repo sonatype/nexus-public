@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Dialog, Flex, Text, Box, Button, Grid, Badge, Separator, Heading } from '@radix-ui/themes';
+import { Dialog, Flex, Text, Box, Button, Grid, Separator, Heading } from '@radix-ui/themes';
 import { Shield, ExternalLink, ShieldCheck, X } from 'lucide-react';
 import { SecurityStatusData } from './security.types';
 

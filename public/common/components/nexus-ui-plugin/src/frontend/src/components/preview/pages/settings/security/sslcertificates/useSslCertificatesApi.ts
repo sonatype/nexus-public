@@ -31,7 +31,7 @@ function parseRemoteHostUrl(url: string): [string, number | null, string | null]
     const portNumber = port ? parseInt(port, 10) : null;
     const protocolHint = hasProtocol ? protocol : null;
     return [hostname, portNumber, protocolHint];
-  } catch (error) {
+  } catch (_error) {
     // If URL parsing fails, try to extract hostname manually
     const hostname = url.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
     return [hostname, null, null];

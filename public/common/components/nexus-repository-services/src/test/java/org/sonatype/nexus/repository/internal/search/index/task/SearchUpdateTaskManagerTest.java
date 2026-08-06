@@ -18,6 +18,7 @@ import org.sonatype.nexus.common.scheduling.PeriodicJobService;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
@@ -153,5 +154,25 @@ public class SearchUpdateTaskManagerTest
     when(taskScheduler.findAndSubmit(any())).thenReturn(true);
     underTest.doStart();
     verify(taskScheduler, never()).submit(any());
+  }
+
+  @Test
+  public void onStartup_submit_throwsValidationError_doesNotLogError() {
+    when(searchUpdateService.needsReindex(repository1)).thenReturn(true);
+    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(taskScheduler.findAndSubmit(any())).thenReturn(false);
+    when(taskScheduler.submit(any()))
+        .thenThrow(new ValidationErrorsException("Task repository.search.update already exists, ignoring"));
+
+    // Must not throw — startup should survive the ValidationErrorsException
+    try {
+      underTest.doStart();
+    }
+    catch (Exception e) {
+      fail("Expected ValidationErrorsException to be swallowed gracefully, but got: " + e);
+    }
+
+    // submit() was called — it just threw because another node won the race
+    verify(taskScheduler).submit(any());
   }
 }

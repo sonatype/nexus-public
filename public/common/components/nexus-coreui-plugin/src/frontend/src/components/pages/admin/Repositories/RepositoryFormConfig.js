@@ -43,7 +43,6 @@ import AptEnforceDistributionConfiguration from './facets/AptEnforceDistribution
 import AptSigningConfiguration from './facets/AptSigningConfiguration';
 import AptFlatConfiguration from './facets/AptFlatConfiguration';
 import TerraformSigningConfiguration from './facets/TerraformSigningConfiguration';
-import TerraformStateBackendEncryptionConfiguration from './facets/TerraformStateBackendEncryptionConfiguration';
 import AlpineSigningConfiguration from './facets/AlpineSigningConfiguration';
 import RawQueryParamsConfiguration from './facets/RawQueryParamsConfiguration';
 
@@ -449,35 +448,6 @@ const repositoryFormats = {
       ...genericValidators.group(data)
     })
   },
-  terraformbackend_hosted: {
-    facets: [TerraformStateBackendEncryptionConfiguration, ...genericFacets.hosted],
-    defaultValues: {
-      ...genericDefaultValues.hosted,
-      terraformStateBackend: {
-        encryption: {
-          enabled: true,  // Always enabled - encryption is mandatory
-          encryptionKey: ''
-        },
-        lockTimeoutMinutes: 30,
-        maxStateSizeMB: 256
-      }
-    },
-    validators: (data) => {
-      const baseValidators = genericValidators.hosted(data);
-
-      // Encryption is MANDATORY - always validate encryption key
-      return {
-        ...baseValidators,
-        terraformStateBackend: {
-          encryption: {
-            encryptionKey: ValidationUtils.validateNotBlank(data.terraformStateBackend?.encryption?.encryptionKey)
-          },
-          lockTimeoutMinutes: validateLockTimeout(data.terraformStateBackend?.lockTimeoutMinutes),
-          maxStateSizeMB: validateMaxStateSize(data.terraformStateBackend?.maxStateSizeMB)
-        }
-      };
-    }
-  },
   conda_hosted: {
     facets: [...genericFacets.hosted],
     defaultValues: {
@@ -546,20 +516,3 @@ export const getDefaultValues = (format, type) =>
 
 export const getValidators = (format, type) =>
   repositoryFormats[`${format}_${type}`]?.validators || genericValidators[type] || (() => ({}));
-
-// Terraform State Backend validators
-const validateLockTimeout = (value) => {
-  if (value === undefined || value === null || value === '') {
-    return null;
-  }
-  return ValidationUtils.isInRange({value, min: 1, max: 1440, allowDecimals: false}) ||
-    ValidationUtils.validateNotBlank(value);
-};
-
-const validateMaxStateSize = (value) => {
-  if (value === undefined || value === null || value === '') {
-    return null;
-  }
-  return ValidationUtils.isInRange({value, min: 1, max: 512, allowDecimals: false}) ||
-    ValidationUtils.validateNotBlank(value);
-};

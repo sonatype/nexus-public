@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
 
@@ -22,11 +22,9 @@ import {
   SettingsSelect,
   SettingsButton,
   SettingsAlert,
-  ConfirmDialog,
 } from '../../../../shared/form';
-import { useToast } from '../../../../shared';
-import { useLoggingConfigApi } from './useLoggingConfigApi';
-import { Logger, LogLevel, LOG_LEVELS } from './types';
+import { useLoggerForm } from './useLoggerForm';
+import { LOG_LEVELS } from './types';
 
 import './LoggerForm.scss';
 
@@ -41,85 +39,14 @@ interface LoggerFormProps {
 /**
  * LoggerForm - Create or edit a logger configuration
  */
-export function LoggerForm({
-  loggerName,
-  isCreate = false,
-  onSave,
-  onCancel,
-  onDelete,
-}: LoggerFormProps) {
-  const toast = useToast();
+export function LoggerForm({ loggerName, isCreate = false, onSave, onCancel, onDelete }: LoggerFormProps) {
+  const { name, level, isDirty, isLoading, isSaving, error, setName, setLevel, handleSubmit } = useLoggerForm({
+    loggerName,
+    isCreate,
+    onSave,
+    onCancel,
+  });
 
-  const [name, setName] = useState('');
-  const [level, setLevel] = useState<LogLevel>('INFO');
-  const [originalLevel, setOriginalLevel] = useState<LogLevel>('INFO');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(!isCreate);
-  const [formError, setFormError] = useState<string | null>(null);
-  
-  // Track if the form has been modified
-  const isDirty = isCreate ? name.trim().length > 0 : level !== originalLevel;
-
-  const { fetchLogger, updateLogger, loading, error, setError } = useLoggingConfigApi();
-
-  // Load logger data when editing
-  useEffect(() => {
-    if (!isCreate && loggerName) {
-      const loadLogger = async () => {
-        setIsLoading(true);
-        try {
-          const logger = await fetchLogger(loggerName);
-          if (logger) {
-            setName(logger.name);
-            setLevel(logger.level);
-            setOriginalLevel(logger.level);
-          }
-        } catch (err: any) {
-          setFormError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      loadLogger();
-    }
-  }, [isCreate, loggerName, fetchLogger]);
-
-  // Validate form
-  const validateForm = useCallback((): string | null => {
-    if (!name.trim()) {
-      return 'Logger name is required';
-    }
-    return null;
-  }, [name]);
-
-  // Handle form submission
-  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-
-    const validationError = validateForm();
-    if (validationError) {
-      setFormError(validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setFormError(null);
-    setError(null);
-
-    try {
-      await updateLogger(name, level);
-      toast.success(isCreate ? `Logger "${name}" created successfully` : `Logger "${name}" updated to ${level}`);
-      onSave();
-    } catch (err) {
-      throw err;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [name, level, isCreate, validateForm, updateLogger, setError, onSave]);
-
-  // Handle Enter key
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -144,17 +71,9 @@ export function LoggerForm({
   return (
     <Box className="logger-form">
       {/* Error alert */}
-      {(error || formError) && (
+      {error && (
         <Box mb="4">
-          <SettingsAlert
-            type="error"
-            onClose={() => {
-              setError(null);
-              setFormError(null);
-            }}
-          >
-            {error || formError}
-          </SettingsAlert>
+          <SettingsAlert type="error">{error}</SettingsAlert>
         </Box>
       )}
 
@@ -163,19 +82,15 @@ export function LoggerForm({
         onSubmit={handleSubmit}
         onCancel={onCancel}
         dirty={isDirty}
-        loading={isSubmitting}
+        loading={isSaving}
         submitLabel={isCreate ? 'Create Logger' : 'Save'}
-        footerExtra={!isCreate && onDelete ? (
-          <SettingsButton
-            type="button"
-            variant="danger"
-            onClick={onDelete}
-            disabled={isSubmitting || loading}
-            testId="form-delete"
-          >
-            Delete
-          </SettingsButton>
-        ) : undefined}
+        footerExtra={
+          !isCreate && onDelete ? (
+            <SettingsButton type="button" variant="danger" onClick={onDelete} disabled={isSaving} testId="form-delete">
+              Delete
+            </SettingsButton>
+          ) : undefined
+        }
       >
         <SettingsFormSection>
           {/* Logger Name */}
@@ -204,7 +119,7 @@ export function LoggerForm({
               name="loggerLevel"
               label="Logger Level"
               value={level}
-              onChange={(value) => setLevel(value as LogLevel)}
+              onChange={setLevel}
               options={LOG_LEVELS.map((l) => ({ value: l, label: l }))}
               helpText="Log level: ERROR (least verbose) through TRACE (most verbose)"
             />
@@ -214,13 +129,9 @@ export function LoggerForm({
             </Text>
           </Box>
         </SettingsFormSection>
-
-        {/* Actions are in the sticky header bar via SettingsForm */}
       </SettingsForm>
     </Box>
   );
 }
 
 export default LoggerForm;
-
-

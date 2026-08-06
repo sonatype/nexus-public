@@ -34,7 +34,7 @@ import { restClient, urlBuilder, parseApiError } from '../../../../../../../inte
 
 // Get mock references
 const mockRestClient = restClient as jest.Mocked<typeof restClient>;
-const mockUrlBuilder = urlBuilder as jest.Mocked<typeof urlBuilder>;
+const _mockUrlBuilder = urlBuilder as jest.Mocked<typeof urlBuilder>;
 const mockParseApiError = parseApiError as jest.MockedFunction<typeof parseApiError>;
 
 describe('useLdapApi', () => {
@@ -164,6 +164,96 @@ describe('useLdapApi', () => {
       });
 
       expect(server).toBeNull();
+    });
+  });
+
+  describe('groupType normalization', () => {
+    it('normalizes STATIC groupType to lowercase static on read', async () => {
+      mockRestClient.get.mockResolvedValueOnce({
+        ...mockRestServer,
+        ldapGroupsAsRoles: true,
+        groupType: 'STATIC',
+      });
+
+      const { result } = renderHook(() => useLdapApi());
+
+      let server: LdapServer | null = null;
+      await act(async () => {
+        server = await result.current.fetchServer('Test LDAP');
+      });
+
+      expect(server).not.toBeNull();
+      expect(server!.groupType).toBe('static');
+    });
+
+    it('normalizes DYNAMIC groupType to lowercase dynamic on read', async () => {
+      mockRestClient.get.mockResolvedValueOnce({
+        ...mockRestServer,
+        ldapGroupsAsRoles: true,
+        groupType: 'DYNAMIC',
+      });
+
+      const { result } = renderHook(() => useLdapApi());
+
+      let server: LdapServer | null = null;
+      await act(async () => {
+        server = await result.current.fetchServer('Test LDAP');
+      });
+
+      expect(server).not.toBeNull();
+      expect(server!.groupType).toBe('dynamic');
+    });
+
+    it('leaves undefined groupType undefined on read', async () => {
+      // mockRestServer has no groupType field
+      mockRestClient.get.mockResolvedValueOnce({ ...mockRestServer });
+
+      const { result } = renderHook(() => useLdapApi());
+
+      let server: LdapServer | null = null;
+      await act(async () => {
+        server = await result.current.fetchServer('Test LDAP');
+      });
+
+      expect(server).not.toBeNull();
+      expect(server!.groupType).toBeUndefined();
+    });
+
+    it('preserves group type on load-then-save round-trip', async () => {
+      // First call: fetchServer returns UPPERCASE groupType from REST API
+      mockRestClient.get.mockResolvedValueOnce({
+        ...mockRestServer,
+        ldapGroupsAsRoles: true,
+        groupType: 'STATIC',
+      });
+
+      const { result } = renderHook(() => useLdapApi());
+
+      let fetchedServer: LdapServer | null = null;
+      await act(async () => {
+        fetchedServer = await result.current.fetchServer('Test LDAP');
+      });
+
+      // The hook should have normalized groupType to lowercase
+      expect(fetchedServer!.groupType).toBe('static');
+
+      // Second call: PUT (returns 204 no body) + subsequent GET
+      mockRestClient.put.mockResolvedValueOnce(undefined);
+      mockRestClient.get.mockResolvedValueOnce({
+        ...mockRestServer,
+        ldapGroupsAsRoles: true,
+        groupType: 'STATIC',
+      });
+
+      await act(async () => {
+        await result.current.updateServer({ ...fetchedServer!, authPassword: 'x' } as any);
+      });
+
+      // The PUT payload must contain lowercase groupType (backend accepts case-insensitive)
+      expect(mockRestClient.put).toHaveBeenCalledWith(
+        expect.stringContaining('/service/rest/v1/security/ldap/'),
+        expect.objectContaining({ groupType: 'static' })
+      );
     });
   });
 
@@ -332,7 +422,7 @@ describe('useLdapApi', () => {
   });
 
   describe('verifyLogin', () => {
-    it('verifies user login credentials using REST API', async () => {
+    it('posts LdapVerifyLoginXo shape: base64 credentials nested under ldapServer', async () => {
       mockRestClient.post.mockResolvedValueOnce(undefined);
 
       const { result } = renderHook(() => useLdapApi());
@@ -344,10 +434,90 @@ describe('useLdapApi', () => {
       expect(mockRestClient.post).toHaveBeenCalledWith(
         '/service/rest/v1/security/ldap/verify-login',
         expect.objectContaining({
-          testUsername: 'testuser',
-          testPassword: 'password123',
+          base64Username: btoa('testuser'),
+          base64Password: btoa('password123'),
+          ldapServer: expect.objectContaining({
+            name: 'Test LDAP',
+            authScheme: 'SIMPLE',
+          }),
         })
       );
+    });
+
+    it('does not include flat testUsername or testPassword fields in the payload', async () => {
+      mockRestClient.post.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useLdapApi());
+
+      await act(async () => {
+        await result.current.verifyLogin(mockUiServer, 'testuser', 'password123');
+      });
+
+      const payload = (mockRestClient.post as jest.Mock).mock.calls[0][1];
+      expect(payload).not.toHaveProperty('testUsername');
+      expect(payload).not.toHaveProperty('testPassword');
+    });
+
+    it('appends existingServerName query param when provided', async () => {
+      mockRestClient.post.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useLdapApi());
+
+      await act(async () => {
+        await result.current.verifyLogin(mockUiServer, 'testuser', 'password123', 'Test LDAP');
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        '/service/rest/v1/security/ldap/verify-login?existingServerName=Test%20LDAP',
+        expect.any(Object)
+      );
+    });
+
+    it('posts to base URL without query param when existingServerName is not provided', async () => {
+      mockRestClient.post.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useLdapApi());
+
+      await act(async () => {
+        await result.current.verifyLogin(mockUiServer, 'testuser', 'password123');
+      });
+
+      expect(mockRestClient.post).toHaveBeenCalledWith(
+        '/service/rest/v1/security/ldap/verify-login',
+        expect.any(Object)
+      );
+    });
+
+    it('throws error on login verification failure', async () => {
+      const error = new Error('Invalid credentials');
+      mockRestClient.post.mockRejectedValueOnce(error);
+
+      const { result } = renderHook(() => useLdapApi());
+
+      await expect(
+        act(async () => {
+          await result.current.verifyLogin(mockUiServer, 'testuser', 'wrongpass');
+        })
+      ).rejects.toThrow('Invalid credentials');
+    });
+
+    it('encodes non-ASCII credentials as UTF-8 before base64', async () => {
+      mockRestClient.post.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useLdapApi());
+
+      const cyrillicUsername = 'пользователь';
+      const cyrillicPassword = 'пароль';
+
+      await act(async () => {
+        await result.current.verifyLogin(mockUiServer, cyrillicUsername, cyrillicPassword);
+      });
+
+      const encodeUtf8 = (str: string): string => btoa(unescape(encodeURIComponent(str)));
+
+      const payload = (mockRestClient.post as jest.Mock).mock.calls[0][1];
+      expect(payload.base64Username).toBe(encodeUtf8(cyrillicUsername));
+      expect(payload.base64Password).toBe(encodeUtf8(cyrillicPassword));
     });
   });
 

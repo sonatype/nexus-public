@@ -654,6 +654,15 @@ export default FormUtils.buildFormMachine({
           // field on the Error would be dead weight today.
           throw new Error(HOSTED_ENFORCEMENT_ERROR_PREFIX + JSON.stringify(enforcementPayload));
         }
+        // NEXUS-53344: UploadResource now returns HTTP 400 (instead of 200 with
+        // success=false) for deployment-policy / duplicate-asset rejections. The
+        // body is still the same ExtJS-RPC envelope, so unwrap its message here
+        // and forward through the standard saveError path that the 200 case below
+        // also uses. Other axios failures (network, 5xx, etc.) keep propagating.
+        const envelopeMessage = err?.response?.data?.[0]?.message;
+        if (envelopeMessage) {
+          throw new Error(envelopeMessage);
+        }
         throw err;
       }
 

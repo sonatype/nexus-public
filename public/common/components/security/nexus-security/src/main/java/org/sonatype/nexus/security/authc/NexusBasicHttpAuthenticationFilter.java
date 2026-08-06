@@ -109,6 +109,28 @@ public class NexusBasicHttpAuthenticationFilter
   }
 
   /**
+   * Rethrows a malformed {@code Authorization} header as a typed, unchecked exception so that
+   * {@link #cleanup} can answer 400 rather than letting it become a 500. {@code super.createToken}
+   * throws {@link IllegalArgumentException} only for a Base64 decode failure (e.g. an unexpanded
+   * {@code ${TOKEN}} placeholder from a broken {@code .npmrc}/CI config). A dedicated exception type
+   * keeps {@code cleanup}'s handling narrow: any other {@code IllegalArgumentException} is left to
+   * surface as a 500. See NEXUS-53778.
+   */
+  @Override
+  protected AuthenticationToken createToken(final ServletRequest request, final ServletResponse response) {
+    try {
+      return super.createToken(request, response);
+    }
+    catch (IllegalArgumentException e) {
+      if (log.isDebugEnabled()) {
+        log.debug("Malformed Authorization header from {}: {}",
+            WebUtils.toHttp(request).getRemoteAddr(), e.getMessage(), e);
+      }
+      throw new MalformedAuthorizationHeaderException(e);
+    }
+  }
+
+  /**
    * Permissive {@link AuthorizationException} 401 and 403 handling.
    */
   @Override
@@ -123,8 +145,14 @@ public class NexusBasicHttpAuthenticationFilter
       cause = cause.getCause();
     }
 
+    // malformed Authorization header -> 400 Bad Request (a client error, not a server-side 500)
+    if (cause instanceof MalformedAuthorizationHeaderException) {
+      // clear the failure so super.cleanup does not rethrow it as a 500
+      failure = null;
+      WebUtils.toHttp(response).sendError(HttpServletResponse.SC_BAD_REQUEST, "Malformed Authorization header");
+    }
     // special handling for authz failures due to permissive
-    if (cause instanceof AuthorizationException) {
+    else if (cause instanceof AuthorizationException) {
       // clear the failure
       failure = null;
 
@@ -312,28 +340,44 @@ public class NexusBasicHttpAuthenticationFilter
    * <p>
    * For regular username/password authentication, uses the principal (username).
    *
+   * <p>
+   * Returns {@code null} for tokens with empty principal (e.g., malformed base64),
+   * indicating that rate limiting should be skipped.
+   *
    * @param token the authentication token
-   * @return the rate limit key
+   * @return the rate limit key, or {@code null} if rate limiting should be skipped
    */
+  @Nullable
   protected String getRateLimitKey(final AuthenticationToken token) {
     if (token instanceof NexusApiKeyAuthenticationToken) {
       // For API keys, use a hash of the token to isolate rate limits per token
       char[] credentials = getCredentialsSafely(token);
       if (credentials == null) {
         // Fallback to principal if credentials cannot be extracted as char[]
-        return token.getPrincipal().toString();
+        Object principal = token.getPrincipal();
+        return principal != null ? principal.toString() : null;
       }
       return hashToken(credentials);
     }
     // For regular auth (username/password), use the principal (username)
-    return token.getPrincipal().toString();
+    Object principal = token.getPrincipal();
+    if (principal == null || principal.toString().isEmpty()) {
+      return null; // Skip rate limiting for malformed base64 (empty principal)
+    }
+    return principal.toString();
   }
 
   /**
    * Checks if the given token is currently rate-limited without incrementing the counter,
    * using a precomputed rate limit key to avoid recomputing the token hash.
+   *
+   * @return the rate limit result, or {@code null} if rate limiting should be skipped
    */
+  @Nullable
   private RateLimitResult checkRateLimitForKey(final AuthenticationToken token, final String rateLimitKey) {
+    if (rateLimitKey == null) {
+      return null; // Skip rate limiting for malformed base64
+    }
     if (token instanceof NexusApiKeyAuthenticationToken
         && getCredentialsSafely(token) != null) {
       return rateLimiterService.checkByToken(rateLimitKey);
@@ -344,8 +388,14 @@ public class NexusBasicHttpAuthenticationFilter
   /**
    * Records a failed authentication attempt and checks if rate limiting should be applied,
    * using a precomputed rate limit key to avoid recomputing the token hash.
+   *
+   * @return the rate limit result, or {@code null} if rate limiting should be skipped
    */
+  @Nullable
   private RateLimitResult recordFailedAttemptForKey(final AuthenticationToken token, final String rateLimitKey) {
+    if (rateLimitKey == null) {
+      return null; // Skip rate limiting for malformed base64
+    }
     if (token instanceof NexusApiKeyAuthenticationToken
         && getCredentialsSafely(token) != null) {
       return rateLimiterService.checkAndRecordByToken(rateLimitKey);
@@ -358,6 +408,9 @@ public class NexusBasicHttpAuthenticationFilter
    */
   private void clearRateLimitOnSuccess(final AuthenticationToken token) {
     String rateLimitKey = getRateLimitKey(token);
+    if (rateLimitKey == null) {
+      return; // Skip for malformed base64
+    }
     if (token instanceof NexusApiKeyAuthenticationToken
         && getCredentialsSafely(token) != null) {
       rateLimiterService.recordSuccessByToken(rateLimitKey);
@@ -468,5 +521,19 @@ public class NexusBasicHttpAuthenticationFilter
       hexString.append(String.format("%02x", b));
     }
     return hexString.toString();
+  }
+
+  /**
+   * Signals a client {@code Authorization} header that could not be Base64-decoded. Unchecked so it
+   * propagates through Shiro's {@code createToken}/{@code executeLogin} without signature changes;
+   * mapped to 400 Bad Request in {@link #cleanup}. See NEXUS-53778.
+   */
+  // package-private so same-package tests can assert the thrown type
+  static class MalformedAuthorizationHeaderException
+      extends RuntimeException
+  {
+    MalformedAuthorizationHeaderException(final Throwable cause) {
+      super(cause);
+    }
   }
 }

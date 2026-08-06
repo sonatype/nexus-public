@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.1-06</version>
+    <version>3.95.0-07</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-httpclient</artifactId>
@@ -52,6 +52,46 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>4.4.15</version>
+      </dependency>
+
+      <!--
+        NEXUS-53729 / NEXUS-53728: force the Apache HttpComponents Client 5 / Core 5 stack to the matched,
+        upstream-tested 5.6.2 / 5.4.3 release set to clear Security-High denial-of-service CVEs flagged by
+        Sonatype IQ. These arrive transitively via OpenSAML (nexus-saml-plugin ->
+        spring-security-saml2-service-provider -> opensaml-saml-impl -> httpclient5), pinned by the Shibboleth
+        parent at vulnerable versions:
+          - httpcore5 5.2.5    CVE-2026-54399 (CVSS 8.7) - HTTP/1.1 message-parser DoS
+          - httpcore5-h2 5.2.4 CVE-2026-54428 (CVSS 7.5) - HTTP/2 HPACK-decoder DoS
+        OpenSAML uses httpclient5 at runtime (SAML metadata resolution / SOAP), so the artifacts cannot be
+        excluded without risking SAML failures. httpcore5 5.4.3 is the version httpclient5 ships with natively
+        only as of httpclient5 5.6.2 (see httpclient5-parent <httpcore.version>5.4.3</httpcore.version>), so we
+        move the whole stack to that matched set rather than run an untested client5(5.3.1)/core5(5.4.3) skew.
+        httpcore5 / httpcore5-h2 are still pinned explicitly because opensaml-saml-impl declares httpcore5
+        directly (at 5.2.5), which would otherwise win nearest-conflict resolution over httpclient5's
+        transitive 5.4.3. All four versions are policy-compliant with no known vulnerabilities per Sonatype IQ.
+      -->
+      <dependency>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5</artifactId>
+        <version>5.6.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5-cache</artifactId>
+        <version>5.6.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5</artifactId>
+        <version>5.4.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5-h2</artifactId>
+        <version>5.4.3</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

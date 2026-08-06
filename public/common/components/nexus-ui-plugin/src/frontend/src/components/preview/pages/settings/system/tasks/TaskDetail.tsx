@@ -31,17 +31,16 @@ import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirm
 import { TaskScheduler } from './TaskScheduler';
 import { DynamicFormFields } from './TaskTypeSelector';
 import { TaskHistory } from './TaskHistory';
+import { isManualOnlyTaskType } from './taskFieldMetadata';
 import { useTasksForm } from './useTasksForm';
 import { useTasksApi } from './useTasksApi';
 import {
   Task,
-  TaskType,
   TaskFormData,
   TaskDetailProps,
   ScheduleData,
   ScheduleType,
   formatDate,
-  getStatusColor,
   NOTIFICATION_CONDITIONS,
 } from './types';
 
@@ -68,7 +67,7 @@ function getStatusIcon(status: string) {
 }
 
 // Summary item icon mapping
-const SUMMARY_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const _SUMMARY_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   status: CheckCircle,
   lastResult: FileText,
   schedule: Calendar,
@@ -80,6 +79,7 @@ const SUMMARY_ICONS: Record<string, React.ComponentType<{ size?: number; classNa
 
 export function TaskDetail({
   task: initialTask,
+  liveTask,
   taskId: taskIdFromRoute,
   loading: initialLoading = false,
   canEdit = false,
@@ -135,7 +135,54 @@ export function TaskDetail({
 
   // Use task from form machine when loaded; fall back to initialTask (e.g. when TasksPage
   // fetched it before machine load, or in tests where useForm is mocked)
-  const displayTask = task ?? initialTask ?? null;
+  const baseTask = task ?? initialTask ?? null;
+
+  // Live-execution snapshot, freshest AUTHORITATIVE source first (NEXUS-53525):
+  //   liveTask (latest poll) → initialTask (TasksPage's seed, fetched via the hardened
+  //   transform) → baseTask (the form machine's own task).
+  // The form machine's task is only a form seed; its status is incidental and can be
+  // stale (e.g. WAITING right after a refresh while the task is actually running). So
+  // for the live-derived display fields we prefer the authoritative live source, which
+  // makes the badge/Stop reflect true server state IMMEDIATELY on load — not after the
+  // first poll. The id guards stop a previous task's snapshot bleeding through.
+  let liveSource: Task | null = baseTask;
+  if (initialTask && baseTask && initialTask.id === baseTask.id) {
+    liveSource = initialTask;
+  }
+  if (liveTask && baseTask && liveTask.id === baseTask.id) {
+    liveSource = liveTask;
+  }
+
+  // Form-state protection: we overlay ONLY the live-derived fields (status,
+  // lastRun/Result, nextRun, runnable/stoppable, description) and deliberately leave
+  // every form-bound field (enabled, alertEmail, notificationCondition, properties,
+  // schedule) sourced from the form seed. Because the overlay never touches form data,
+  // an in-flight edit can never be clobbered by a poll.
+  const displayTask: Task | null = baseTask && liveSource
+    ? {
+        ...baseTask,
+        status: liveSource.status,
+        statusDescription: liveSource.statusDescription,
+        lastRun: liveSource.lastRun,
+        lastRunResult: liveSource.lastRunResult,
+        nextRun: liveSource.nextRun,
+        runnable: liveSource.runnable,
+        stoppable: liveSource.stoppable,
+      }
+    : null;
+
+  // Manual-only tasks (e.g. Data Repair Plan) cannot be scheduled — hide the Schedule tab entirely
+  // (parity with Classic, which hides the schedule fieldset). The persisted schedule stays Manual
+  // because there is no UI to change it. Decide from the task's typeId (known immediately).
+  const isManualOnly = isManualOnlyTaskType(displayTask?.typeId ?? selectedTaskType?.id);
+
+  // Defensive: if the active tab is ever the (now-removed) Schedule tab for a manual-only task,
+  // fall back to Summary so the user never lands on a blank pane after the type resolves.
+  useEffect(() => {
+    if (isManualOnly && activeTab === 'schedule') {
+      setActiveTab('summary');
+    }
+  }, [isManualOnly, activeTab]);
 
   const handlePropertyChange = useCallback((fieldId: string, value: string) => {
     const currentProps = formData.properties || {};
@@ -281,9 +328,11 @@ export function TaskDetail({
             <Tabs.Trigger value="settings">
               <Settings size={16} /> Settings
             </Tabs.Trigger>
-            <Tabs.Trigger value="schedule">
-              <Calendar size={16} /> Schedule
-            </Tabs.Trigger>
+            {!isManualOnly && (
+              <Tabs.Trigger value="schedule">
+                <Calendar size={16} /> Schedule
+              </Tabs.Trigger>
+            )}
             <Tabs.Trigger value="history">
               <History size={16} /> History
             </Tabs.Trigger>
@@ -312,7 +361,7 @@ export function TaskDetail({
                   icon={<Calendar size={16} />}
                   label="Schedule"
                   value={displayTask.schedule || '-'}
-                  onClick={canEdit ? () => setActiveTab('schedule') : undefined}
+                  onClick={canEdit && !isManualOnly ? () => setActiveTab('schedule') : undefined}
                 />
                 <SummaryItem
                   icon={<Clock size={16} />}
@@ -412,24 +461,26 @@ export function TaskDetail({
               )}
             </Tabs.Content>
 
-            {/* Schedule Tab */}
-            <Tabs.Content value="schedule">
-              <SettingsFormSection title="Schedule Configuration">
-                <TaskScheduler
-                  value={scheduleData}
-                  onChange={handleScheduleChange}
-                  errors={{
-                    schedule: form.touched?.schedule ? form.validationErrors?.schedule : undefined,
-                    startDate: form.touched?.startDate ? form.validationErrors?.startDate : undefined,
-                    startTime: form.touched?.startTime ? form.validationErrors?.startTime : undefined,
-                    recurringDays: form.touched?.recurringDays ? form.validationErrors?.recurringDays : undefined,
-                    cronExpression: form.touched?.cronExpression ? form.validationErrors?.cronExpression : undefined,
-                  }}
-                  disabled={!canEdit || form.isSaving}
-                  allowedSchedules={allowedSchedules}
-                />
-              </SettingsFormSection>
-            </Tabs.Content>
+            {/* Schedule Tab — omitted for manual-only tasks (no configurable schedule) */}
+            {!isManualOnly && (
+              <Tabs.Content value="schedule">
+                <SettingsFormSection title="Schedule Configuration">
+                  <TaskScheduler
+                    value={scheduleData}
+                    onChange={handleScheduleChange}
+                    errors={{
+                      schedule: form.touched?.schedule ? form.validationErrors?.schedule : undefined,
+                      startDate: form.touched?.startDate ? form.validationErrors?.startDate : undefined,
+                      startTime: form.touched?.startTime ? form.validationErrors?.startTime : undefined,
+                      recurringDays: form.touched?.recurringDays ? form.validationErrors?.recurringDays : undefined,
+                      cronExpression: form.touched?.cronExpression ? form.validationErrors?.cronExpression : undefined,
+                    }}
+                    disabled={!canEdit || form.isSaving}
+                    allowedSchedules={allowedSchedules}
+                  />
+                </SettingsFormSection>
+              </Tabs.Content>
+            )}
 
             {/* History Tab */}
             <Tabs.Content value="history">

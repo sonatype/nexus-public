@@ -48,18 +48,15 @@ export interface UseSearchNavigationReturn {
 }
 
 /**
- * Build the GA Detail URL for a search result.
+ * Build a URL string for a search result's component detail, returned by
+ * {@link useSearchNavigation}'s `getDetailRoute`. This only builds a string; it
+ * does not navigate — the primary navigation path is `navigateToDetail`, which
+ * uses `router.stateService.go('preview.browse.search.component', { gaId, version })`.
  *
- * Navigates to the component detail page (GADetailPage) which shows
- * Overview, Versions, Repositories, Files, and Security tabs.
+ * The gaId format is `format:group:name` (or `format:name` when there is no group).
  *
- * The gaId format is: format:group:name (or format:name if no group).
- *
- * UIRouter route structure:
- *   preview.browse.search.maven       → /maven/:keyword
- *   preview.browse.search.maven.detail → /ga/:gaId
- *
- * So the full URL is: preview/browse/search/maven/{keyword}/ga/{gaId}
+ * The returned string has the form:
+ *   preview/browse/search/maven/{encodeURIComponent(name)}/ga/{encodeURIComponent(gaId)}[?version=...]
  *
  * Examples:
  * - preview/browse/search/maven/lodash/ga/npm%3Alodash

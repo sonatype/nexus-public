@@ -18,6 +18,16 @@ import { Theme } from '@radix-ui/themes';
 import { ProxyFacet } from '../ProxyFacet';
 import { RepositoryFormData } from '../../types';
 
+const mockGetValue = jest.fn().mockReturnValue(false);
+
+jest.mock('@sonatype/nexus-ui-plugin', () => ({
+  ExtJS: {
+    state: () => ({
+      getValue: mockGetValue,
+    }),
+  },
+}));
+
 const defaultFormData: RepositoryFormData = {
   name: 'test-repo',
   format: 'maven2',
@@ -45,6 +55,14 @@ function renderFacet(props: Partial<React.ComponentProps<typeof ProxyFacet>> = {
 }
 
 describe('ProxyFacet', () => {
+  beforeEach(() => {
+    mockGetValue.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders Remote Storage field', () => {
     renderFacet();
     const remoteUrlInput = screen.getByDisplayValue('https://repo1.maven.org/maven2/');
@@ -92,6 +110,166 @@ describe('ProxyFacet', () => {
     renderFacet({ formData, format: 'pypi' });
 
     expect(screen.getByText(/https:\/\/pypi\.org/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for swift format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'swift' });
+
+    expect(screen.getByText(/https:\/\/github\.com/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for cargo format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'cargo' });
+
+    expect(screen.getByText(/https:\/\/index\.crates\.io/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for terraform format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'terraform' });
+
+    expect(screen.getByText(/https:\/\/registry\.terraform\.io/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for composer format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'composer' });
+
+    expect(screen.getByText(/https:\/\/repo\.packagist\.org/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for conan format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'conan' });
+
+    expect(screen.getByText(/https:\/\/center\.conan\.io/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for pub format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'pub' });
+
+    expect(screen.getByText(/https:\/\/pub\.dev/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for r format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'r' });
+
+    expect(screen.getByText(/https:\/\/cran\.r-project\.org/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for rubygems format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'rubygems' });
+
+    expect(screen.getByText(/https:\/\/rubygems\.org/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for huggingface format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'huggingface' });
+
+    expect(screen.getByText(/https:\/\/huggingface\.co/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for docker format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'docker' });
+
+    expect(screen.getByText(/https:\/\/registry-1\.docker\.io/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for yum format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'yum' });
+
+    expect(screen.getByText(/https:\/\/mirror\.stream\.centos\.org/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for maven2 format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'maven2' });
+
+    expect(screen.getByText(/https:\/\/repo1\.maven\.org\/maven2/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for nuget format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'nuget' });
+
+    expect(screen.getByText(/https:\/\/api\.nuget\.org/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for raw format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'raw' });
+
+    expect(screen.getByText(/https:\/\/example\.com\/files/)).toBeInTheDocument();
+  });
+
+  it('shows correct placeholder for ansiblegalaxy format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'ansiblegalaxy' });
+
+    expect(screen.getByText(/https:\/\/galaxy\.ansible\.com/)).toBeInTheDocument();
+  });
+
+  it('shows default placeholder for unknown format', () => {
+    const formData = {
+      ...defaultFormData,
+      proxy: { ...defaultFormData.proxy!, remoteUrl: '' },
+    };
+    renderFacet({ formData, format: 'unknown' });
+
+    expect(screen.getByText(/https:\/\/example\.com\/repository/)).toBeInTheDocument();
   });
 
   it('renders Preserve Encoded Characters checkbox', () => {
@@ -202,6 +380,114 @@ describe('ProxyFacet', () => {
       fireEvent.change(input, { target: { value: '-5' } });
 
       expect(mockOnNestedChange).toHaveBeenCalledWith('proxy', { metadataMaxAge: -1 });
+    });
+  });
+
+  describe('NuGet remote URL help text', () => {
+    const nugetFormData: RepositoryFormData = {
+      name: 'nuget-proxy',
+      format: 'nuget',
+      type: 'proxy',
+      proxy: {
+        remoteUrl: '',
+        contentMaxAge: 1440,
+        metadataMaxAge: 1440,
+      },
+    };
+
+    it('shows standard help text when chocolatey is disabled', () => {
+      mockGetValue.mockReturnValue(false);
+      renderFacet({ formData: nugetFormData, format: 'nuget' });
+      expect(
+        screen.getByText(/Location of the remote repository being proxied/i)
+      ).toBeInTheDocument();
+    });
+
+    it('shows chocolatey help text when chocolatey is enabled', () => {
+      mockGetValue.mockImplementation((key: string) =>
+        key === 'nugetChocolateyEnabled' ? true : false
+      );
+      renderFacet({ formData: nugetFormData, format: 'nuget' });
+      expect(
+        screen.getByText(/Supports NuGet V2, NuGet V3, and Chocolatey/i)
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('NuGet symbol server fields', () => {
+    // The Symbol Server URL and Allow Anonymous Symbol Access fields are rendered inside
+    // ProxyFacet (not NugetFacet) because they must appear immediately after Remote Storage
+    // per the Classic UI layout. They are double-gated: format must be 'nuget' AND the
+    // nexus.nuget.symbol.server.enabled flag must be true. Backend routes (see
+    // NugetProxyRecipe.addSymSrvRoute) are gated on the same flag, so hiding the fields
+    // when the flag is off prevents operators from configuring an inert URL that the
+    // backend won't consult.
+
+    const enableSymbolFlag = () => {
+      mockGetValue.mockImplementation((key: string) =>
+        key === 'nexus.nuget.symbol.server.enabled' ? true : false
+      );
+    };
+
+    it('does not render Symbol Server fields for non-nuget formats even with the flag on', () => {
+      enableSymbolFlag();
+      renderFacet({ format: 'maven2' });
+      expect(screen.queryByText('Symbol Server URL')).not.toBeInTheDocument();
+      expect(screen.queryByText('Allow Anonymous Symbol Access')).not.toBeInTheDocument();
+    });
+
+    it('does not render Symbol Server fields for nuget when the flag is off', () => {
+      // Default mockGetValue returns false via the top-level beforeEach.
+      const formData: RepositoryFormData = {
+        ...defaultFormData,
+        format: 'nuget',
+        proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json' },
+      };
+      renderFacet({ formData, format: 'nuget' });
+      expect(screen.queryByText('Symbol Server URL')).not.toBeInTheDocument();
+      expect(screen.queryByText('Allow Anonymous Symbol Access')).not.toBeInTheDocument();
+    });
+
+    it('renders Symbol Server URL and Allow Anonymous Symbol Access when nuget + flag on', () => {
+      enableSymbolFlag();
+      const formData: RepositoryFormData = {
+        ...defaultFormData,
+        format: 'nuget',
+        proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json' },
+        nugetProxy: {
+          queryCacheItemMaxAge: 3600,
+          nugetVersion: 'V3',
+          symbolServerUrl: '',
+          allowAnonymousSymbolAccess: true,
+        },
+      };
+      renderFacet({ formData, format: 'nuget' });
+      expect(screen.getByText('Symbol Server URL')).toBeInTheDocument();
+      expect(screen.getByText('Allow Anonymous Symbol Access')).toBeInTheDocument();
+    });
+
+    it('propagates Symbol Server URL edits to onNestedChange', () => {
+      enableSymbolFlag();
+      const mockOnNestedChange = jest.fn();
+      const formData: RepositoryFormData = {
+        ...defaultFormData,
+        format: 'nuget',
+        proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json' },
+        nugetProxy: {
+          queryCacheItemMaxAge: 3600,
+          nugetVersion: 'V3',
+          symbolServerUrl: '',
+          allowAnonymousSymbolAccess: true,
+        },
+      };
+      renderFacet({ formData, format: 'nuget', onNestedChange: mockOnNestedChange });
+
+      const input = screen.getByRole('textbox', { name: /Symbol Server URL/i });
+      fireEvent.change(input, { target: { value: 'https://symbols.nuget.org/download/symbols' } });
+
+      expect(mockOnNestedChange).toHaveBeenCalledWith('nugetProxy', {
+        symbolServerUrl: 'https://symbols.nuget.org/download/symbols',
+      });
     });
   });
 });

@@ -76,6 +76,7 @@ export function FirewallNotSupportedEmptyState({
     <Tooltip content={tooltipText}>
       <Flex
         align="center"
+        justify="center"
         gap="1"
         data-testid="firewall-not-supported-badge"
         aria-label={`Firewall: Not supported for ${format}`}

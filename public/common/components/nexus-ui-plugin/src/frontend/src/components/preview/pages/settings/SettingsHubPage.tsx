@@ -29,7 +29,6 @@ import { ExtJS } from '../../../../interface/ExtJS';
 import { isVisible } from '../../../../interface/NavigationUtils';
 import { PageHeader } from '../../shared';
 import { SETTINGS_SECTIONS } from './settingsConfig';
-import SettingsCard from './SettingsCard';
 import SettingsSection from './SettingsSection';
 
 /**
@@ -147,7 +146,6 @@ export function SettingsHubPage() {
         card.searchTerms?.some((term) => term.toLowerCase().includes(query))
       ),
     })).filter((section) => section.cards.length > 0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, isCloud, isProEdition, isAdmin, permissionsVersion]);
 
   const hasResults = filteredSections.length > 0;

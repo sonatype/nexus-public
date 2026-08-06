@@ -133,7 +133,9 @@ describe('useFilteredTags', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.error).toBe('Failed to load tags. Please try again.');
+      // fetchTagsFiltered propagates the underlying error message; the machine
+      // surfaces it verbatim when the rejection is an Error instance.
+      expect(result.current.error).toBe('Network error');
       expect(result.current.tags).toEqual([]);
     });
   });
@@ -152,6 +154,12 @@ describe('useFilteredTags', () => {
       });
 
       expect(result.current.currentPage).toBe(2);
+
+      // Let the fetch triggered by SET_PAGE settle so the machine returns to
+      // `ready` and can accept the next event.
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
       // Set filters should reset page
       act(() => {
@@ -233,6 +241,11 @@ describe('useFilteredTags', () => {
       expect(result.current.sortField).toBe('name');
       expect(result.current.sortDirection).toBe('desc');
 
+      // Let the refetch settle before sending the next TOGGLE_SORT.
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
       // Click again -> toggle back to asc
       act(() => {
         result.current.toggleSort('name');
@@ -253,6 +266,11 @@ describe('useFilteredTags', () => {
       });
 
       expect(result.current.currentPage).toBe(3);
+
+      // Let the fetch triggered by SET_PAGE settle before sorting.
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
       act(() => {
         result.current.toggleSort('lastUpdated');
@@ -288,6 +306,11 @@ describe('useFilteredTags', () => {
 
       act(() => {
         result.current.setPage(2);
+      });
+
+      // Let the fetch triggered by SET_PAGE settle before changing page size.
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
       });
 
       act(() => {

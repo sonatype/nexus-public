@@ -114,7 +114,7 @@ describe('useUploadDefinition', () => {
     expect(result.current.componentFieldsByGroup).toHaveProperty('Component coordinates');
     expect(result.current.componentFieldsByGroup).toHaveProperty('Options');
     expect(result.current.componentFieldsByGroup['Component coordinates']).toHaveLength(3);
-    expect(result.current.componentFieldsByGroup['Options']).toHaveLength(1);
+    expect(result.current.componentFieldsByGroup.Options).toHaveLength(1);
   });
 
   it('returns error when repository is not found', async () => {

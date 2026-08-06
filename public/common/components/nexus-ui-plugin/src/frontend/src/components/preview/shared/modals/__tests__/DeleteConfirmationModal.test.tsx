@@ -81,7 +81,7 @@ describe('DeleteConfirmationModal', () => {
   });
 
   describe('Entity Name Mode (Repositories, Blob Stores)', () => {
-    it('requires exact entity name when entityName provided', async () => {
+    it('requires typing "Delete" regardless of entity name', async () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -92,22 +92,23 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "my-repository" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
       const deleteButton = screen.getByRole('button', { name: /delete/i });
 
-      // Initially disabled
       expect(deleteButton).toBeDisabled();
 
-      // Type exact name
+      // Typing the entity name does NOT enable the button — only the literal word.
       await userEvent.type(input, 'my-repository');
+      expect(deleteButton).toBeDisabled();
 
-      // Button should be enabled
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Delete');
       await waitFor(() => {
         expect(deleteButton).toBeEnabled();
       });
     });
 
-    it('shows error for incorrect entity name', async () => {
+    it('shows error for non-matching input', async () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -118,21 +119,17 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "my-repository" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
 
-      // Type wrong name
       await userEvent.type(input, 'wrong-name');
 
-      // Should show error
       expect(
         screen.getByText('The confirmation text provided is incorrect')
       ).toBeInTheDocument();
-
-      // Button should be disabled
       expect(screen.getByRole('button', { name: /delete/i })).toBeDisabled();
     });
 
-    it('shows expected entity name in warning box', () => {
+    it('shows entity name in description, "Delete" in warning box', () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -143,13 +140,18 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      expect(screen.getByText('test-blob-store')).toBeInTheDocument();
-      expect(screen.getByText('Type this to confirm deletion')).toBeInTheDocument();
+      // Entity name surfaces in the description so the user knows what they're deleting.
+      expect(screen.getByText(/test-blob-store/)).toBeInTheDocument();
+      // Warning box always shows the literal acknowledgement word (assert via the
+      // unique helper caption next to it — the bare word also appears on the
+      // submit button so a `getByText('Delete')` would be ambiguous).
+      const helper = screen.getByText('Type this to confirm deletion');
+      expect(helper.parentElement).toHaveTextContent('Delete');
     });
   });
 
-  describe('DELETE Mode (All other entities)', () => {
-    it('requires typing "DELETE" when entityName is null', async () => {
+  describe('Acknowledgement word verification', () => {
+    it('requires typing the acknowledgement word when entityName is null', async () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -159,14 +161,14 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
       const deleteButton = screen.getByRole('button', { name: /delete/i });
 
       // Initially disabled
       expect(deleteButton).toBeDisabled();
 
-      // Type DELETE
-      await userEvent.type(input, 'DELETE');
+      // Type Delete
+      await userEvent.type(input, 'Delete');
 
       // Button should be enabled
       await waitFor(() => {
@@ -174,7 +176,7 @@ describe('DeleteConfirmationModal', () => {
       });
     });
 
-    it('is case-sensitive for DELETE verification', async () => {
+    it('accepts any casing of the acknowledgement word', async () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -184,21 +186,33 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      const deleteButton = screen.getByRole('button', { name: /delete/i });
 
-      // Type lowercase
+      // Lowercase confirms.
       await userEvent.type(input, 'delete');
-
-      // Should show error
+      await waitFor(() => expect(deleteButton).toBeEnabled());
       expect(
-        screen.getByText('The confirmation text provided is incorrect')
-      ).toBeInTheDocument();
+        screen.queryByText('The confirmation text provided is incorrect')
+      ).not.toBeInTheDocument();
 
-      // Button should be disabled
-      expect(screen.getByRole('button', { name: /delete/i })).toBeDisabled();
+      // Sentence case (the canonical form) confirms.
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Delete');
+      await waitFor(() => expect(deleteButton).toBeEnabled());
+
+      // Uppercase also confirms.
+      await userEvent.clear(input);
+      await userEvent.type(input, 'DELETE');
+      await waitFor(() => expect(deleteButton).toBeEnabled());
+
+      // Mixed case also confirms.
+      await userEvent.clear(input);
+      await userEvent.type(input, 'DeLeTe');
+      await waitFor(() => expect(deleteButton).toBeEnabled());
     });
 
-    it('shows "DELETE" in warning box when no entity name provided', () => {
+    it('shows "Delete" in warning box when no entity name provided', () => {
       render(
         <DeleteConfirmationModal
           open={true}
@@ -208,7 +222,10 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      expect(screen.getByText('DELETE')).toBeInTheDocument();
+      // Same disambiguation trick as the entity-name test: target via the unique
+      // helper caption to avoid colliding with the Delete submit button label.
+      const helper = screen.getByText('Type this to confirm deletion');
+      expect(helper.parentElement).toHaveTextContent('Delete');
     });
   });
 
@@ -223,15 +240,15 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
       const deleteButton = screen.getByRole('button', { name: /delete/i });
 
       expect(deleteButton).toBeDisabled();
 
-      await userEvent.type(input, 'DEL');
+      await userEvent.type(input, 'Del');
       expect(deleteButton).toBeDisabled();
 
-      await userEvent.type(input, 'ETE');
+      await userEvent.type(input, 'ete');
       await waitFor(() => {
         expect(deleteButton).toBeEnabled();
       });
@@ -243,19 +260,24 @@ describe('DeleteConfirmationModal', () => {
           open={true}
           onClose={mockOnClose}
           onConfirm={mockOnConfirm}
-          entityName="test"
+          entityName="test-resource"
           entityType="repository"
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "test" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
 
-      // Type partial match
-      await userEvent.type(input, 't');
+      // Non-matching first character → error shown
+      await userEvent.type(input, 'x');
       expect(screen.getByText('The confirmation text provided is incorrect')).toBeInTheDocument();
 
-      // Complete the match
-      await userEvent.type(input, 'est');
+      // Clear and type a correct-so-far prefix → no error (in-progress input)
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Del');
+      expect(screen.queryByText('The confirmation text provided is incorrect')).not.toBeInTheDocument();
+
+      // Complete the word
+      await userEvent.type(input, 'ete');
       await waitFor(() => {
         expect(screen.queryByText('The confirmation text provided is incorrect')).not.toBeInTheDocument();
       });
@@ -288,8 +310,8 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
-      await userEvent.type(input, 'DELETE');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      await userEvent.type(input, 'Delete');
 
       const deleteButton = screen.getByRole('button', { name: /delete/i });
       await userEvent.click(deleteButton);
@@ -339,8 +361,8 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
-      await userEvent.type(input, 'DELETE');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      await userEvent.type(input, 'Delete');
 
       // Close modal
       rerender(
@@ -362,7 +384,7 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const newInput = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const newInput = screen.getByPlaceholderText('Type "Delete" to confirm');
       expect(newInput).toHaveValue('');
     });
   });
@@ -378,8 +400,8 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
-      await userEvent.type(input, 'DELETE');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+      await userEvent.type(input, 'Delete');
       fireEvent.keyDown(input, { key: 'Enter' });
 
       expect(mockOnConfirm).toHaveBeenCalledTimes(1);
@@ -395,7 +417,7 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
       await userEvent.type(input, 'wrong');
       fireEvent.keyDown(input, { key: 'Enter' });
 
@@ -463,7 +485,7 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
       expect(input).toBeDisabled();
     });
 
@@ -510,7 +532,7 @@ describe('DeleteConfirmationModal', () => {
         />
       );
 
-      const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
+      const input = screen.getByPlaceholderText('Type "Delete" to confirm');
       await userEvent.type(input, 'wrong');
 
       const errorMessage = screen.getByRole('alert');

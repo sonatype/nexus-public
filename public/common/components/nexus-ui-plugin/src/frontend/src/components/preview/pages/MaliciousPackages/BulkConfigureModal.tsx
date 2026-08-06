@@ -19,7 +19,6 @@ import {
   Flex,
   Progress,
   RadioGroup,
-  Spinner,
   Text,
 } from '@radix-ui/themes';
 import { CheckCircle } from 'lucide-react';

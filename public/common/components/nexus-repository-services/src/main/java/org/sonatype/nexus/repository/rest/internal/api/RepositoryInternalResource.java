@@ -35,6 +35,7 @@ import jakarta.ws.rs.QueryParam;
 import java.util.HashMap;
 
 import org.sonatype.nexus.common.QualifierUtil;
+import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.MissingFacetException;
@@ -89,6 +90,14 @@ public class RepositoryInternalResource
 
   static final String ALL_FORMATS = "*";
 
+  /*
+   * Defense-in-depth for the client-supplied `facets` query param (see parseFacets). Three layers
+   * constrain what a caller can reference: (1) this package allow-list rejects names outside the
+   * Nexus namespaces; (2) resolution goes through GlobalComponentLookupHelper.type(), which only
+   * returns classes visible to the application context (not an arbitrary classloader); and (3) the
+   * Facet.class.isAssignableFrom() check rejects any resolved class that is not a Facet. Together
+   * these bound the blast radius to registered Nexus Facet types.
+   */
   private static final Set<String> ALLOWED_FACET_PACKAGES = Set.of("org.sonatype.nexus.", "com.sonatype.nexus.");
 
   private final List<Format> formats;
@@ -116,6 +125,8 @@ public class RepositoryInternalResource
    */
   private final Optional<RepositoryMetricsService> repositoryMetricsService;
 
+  private final GlobalComponentLookupHelper componentLookupHelper;
+
   @Autowired
   public RepositoryInternalResource(
       final List<Format> formats,
@@ -126,7 +137,8 @@ public class RepositoryInternalResource
       final AuthorizingRepositoryManager authorizingRepositoryManager,
       final List<ApiRepositoryAdapter> convertersByFormatList,
       @Qualifier("default") final ApiRepositoryAdapter defaultAdapter,
-      @Nullable final RepositoryMetricsService repositoryMetricsService)
+      @Nullable final RepositoryMetricsService repositoryMetricsService,
+      final GlobalComponentLookupHelper componentLookupHelper)
   {
     this.formats = checkNotNull(formats);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -137,6 +149,7 @@ public class RepositoryInternalResource
     this.convertersByFormat = QualifierUtil.buildQualifierBeanMap(checkNotNull(convertersByFormatList));
     this.defaultAdapter = checkNotNull(defaultAdapter);
     this.repositoryMetricsService = Optional.ofNullable(repositoryMetricsService);
+    this.componentLookupHelper = checkNotNull(componentLookupHelper);
   }
 
   @GET
@@ -151,6 +164,13 @@ public class RepositoryInternalResource
   {
     // Parse facets filter (comma-separated fully-qualified class names)
     List<Class<? extends Facet>> facetClasses = parseFacets(facetsParam);
+    // A non-blank facet filter that resolved to NOTHING must exclude all repositories (Classic:
+    // an unknown facet type matches no repo), rather than the facetClasses.isEmpty() fall-through.
+    // Note: in a comma-separated list, unresolved entries are skipped (see parseFacets' log.warn) —
+    // as long as at least one resolves, the filter runs on the resolved subset (any-of semantics),
+    // so this only trips when EVERY listed facet fails to resolve. All current callers send a single
+    // facet, so this is all-or-nothing in practice.
+    final boolean facetFilterUnsatisfiable = !isBlank(facetsParam) && facetClasses.isEmpty();
     // Parse type filter (comma-separated, with ! prefix for exclusions)
     List<String> typeIncludes = parseIncludes(type);
     List<String> typeExcludes = parseExcludes(type);
@@ -167,7 +187,8 @@ public class RepositoryInternalResource
         .stream()
         .filter(repository -> matchesFilter(repository.getType().getValue(), typeIncludes, typeExcludes))
         .filter(repository -> matchesFilter(repository.getFormat().getValue(), formatIncludes, formatExcludes))
-        .filter(repository -> facetClasses.isEmpty() || hasAnyFacet(repository, facetClasses))
+        .filter(repository -> !facetFilterUnsatisfiable
+            && (facetClasses.isEmpty() || hasAnyFacet(repository, facetClasses)))
         .filter(repository -> matchesNullableFilter(getVersionPolicy(repository), versionPolicyIncludes,
             versionPolicyExcludes))
         .map(repository -> new RepositoryXO(repository.getName(), repository.getName()))
@@ -202,23 +223,25 @@ public class RepositoryInternalResource
     List<Class<? extends Facet>> result = new ArrayList<>();
     for (String facetName : facetsParam.split(",")) {
       String trimmed = facetName.trim();
-      if (!trimmed.isEmpty()) {
-        if (ALLOWED_FACET_PACKAGES.stream().noneMatch(trimmed::startsWith)) {
-          log.warn("Facet class name '{}' is not in an allowed package", trimmed);
-          continue;
-        }
-        try {
-          Class<?> clazz = Class.forName(trimmed);
-          if (Facet.class.isAssignableFrom(clazz)) {
-            result.add((Class<? extends Facet>) clazz);
-          }
-          else {
-            log.warn("Class {} is not a Facet", trimmed);
-          }
-        }
-        catch (ClassNotFoundException e) {
-          log.warn("Facet class not found: {}", trimmed);
-        }
+      if (trimmed.isEmpty()) {
+        continue;
+      }
+      if (ALLOWED_FACET_PACKAGES.stream().noneMatch(trimmed::startsWith)) {
+        log.warn("Facet class name '{}' is not in an allowed package", trimmed);
+        continue;
+      }
+      // Resolve via GlobalComponentLookupHelper — the same resolver the Classic RepositoryUiService
+      // uses — so facet classes declared in any plugin resolve identically to the Classic UI.
+      Class<?> clazz = componentLookupHelper.type(trimmed);
+      if (clazz == null) {
+        log.warn("Facet class not found: {}", trimmed);
+        continue;
+      }
+      if (Facet.class.isAssignableFrom(clazz)) {
+        result.add((Class<? extends Facet>) clazz);
+      }
+      else {
+        log.warn("Class {} is not a Facet", trimmed);
       }
     }
     return result;

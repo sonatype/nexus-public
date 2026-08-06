@@ -87,7 +87,7 @@ export function DockerSearchPage({
         tag: initialTag,
       });
     }
-  }, []); // Only on mount
+  }, [initialImageName, initialQuery, initialTag, search]); // Only on mount
 
   /**
    * Handle search submission.

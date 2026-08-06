@@ -90,7 +90,7 @@ export function HealthCheckCard({
 
   useEffect(() => {
     setReportOpenError(null);
-  }, [healthCheck?.detailUrl]);
+  }, []);
 
   const openFullReport = useCallback(async () => {
     const url = healthCheck?.detailUrl;

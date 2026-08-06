@@ -90,11 +90,19 @@ public class SqlSearchFacetImpl
     Integer repositoryId = repository.facet(ContentFacet.class).contentRepositoryId();
     log.info("Processing the {} repository: {}", repositoryFormat, repository.getName());
 
-    // delete the old search data
-    store.deleteAllForRepository(repositoryId, repositoryFormat);
-    store.deleteAllSearchAssets(repositoryId, repositoryFormat);
-
     populateComponents(repository);
+
+    // Remove orphaned records: search_components entries whose component_id no longer
+    // exists in the format-specific component table. Using NOT EXISTS is correct
+    // regardless of blob age — last_modified reflects blob.blobCreated() which can be
+    // arbitrarily old and must not be used for orphan detection.
+    log.info("Removing orphaned search records for repository: {}", repository.getName());
+    // deleteOrphanedComponents must run before deleteOrphanedAssets because
+    // deleteOrphanedAssets relies on search_components rows to identify which
+    // asset rows are still valid. Reversing the order would cause all assets
+    // to appear orphaned and be incorrectly deleted.
+    store.deleteOrphanedComponents(repositoryId, repositoryFormat);
+    store.deleteOrphanedAssets(repositoryId, repositoryFormat);
   }
 
   private void populateComponents(final Repository repository) {

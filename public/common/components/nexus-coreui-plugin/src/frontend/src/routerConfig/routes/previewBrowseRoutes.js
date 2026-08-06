@@ -41,7 +41,6 @@ import {
   GADetailPage,
   CustomSearchPage,
   UnifiedSearchPage,
-  AssetDetailPage,
 } from '@sonatype/nexus-ui-plugin';
 import {lazyLoad} from './lazyLoad';
 
@@ -224,9 +223,8 @@ export const previewBrowseRoutes = [
     params: {
       repoName: { type: 'string', value: null, dynamic: true },
       path: { value: null, raw: true, dynamic: true },
-      tab: { type: 'string', value: 'summary', dynamic: true },
-      format: { type: 'string', value: null, dynamic: true, inherit: true },
       tab: { type: 'string', value: 'summary', dynamic: true }, // Default tab
+      format: { type: 'string', value: null, dynamic: true, inherit: true },
     },
     data: {title: 'Browse'},
   },
@@ -438,27 +436,15 @@ export const previewBrowseRoutes = [
   // =============================================================================
   {
     name: 'preview.browse.search.unified',
-    url: '?q',
+    url: '?q&format&sort&direction',
     component: UnifiedSearchPage,
     params: {
       q: { value: null, dynamic: true },
+      format: { value: null, dynamic: true },
+      sort: { value: null, dynamic: true },
+      direction: { value: null, dynamic: true },
     },
     data: {title: 'Search Components'},
-  },
-
-  // =============================================================================
-  // ASSET DETAIL
-  // =============================================================================
-  {
-    name: 'preview.browse.search.asset',
-    url: '/asset/:repositoryName/:assetId',
-    component: AssetDetailPage,
-    params: {
-      repositoryName: {type: 'string', raw: true},
-      assetId: {type: 'string', raw: true},
-      componentId: {type: 'string', value: null, raw: true, dynamic: true},
-    },
-    data: {title: 'Asset Details'},
   },
 
   // =============================================================================

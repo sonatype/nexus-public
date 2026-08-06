@@ -46,7 +46,7 @@ export interface UseRepositoryFormOptions {
   /** Repository type for create mode (defaults to 'hosted') */
   repositoryType?: RepositoryType;
   /** Optional callback after save completes. Return { skipNavigate: true } to prevent automatic navigation. */
-  onSave?: (data: RepositoryFormData) => Promise<void | { skipNavigate?: boolean }>;
+  onSave?: (data: RepositoryFormData) => Promise<undefined | { skipNavigate?: boolean }>;
   /** Callback to navigate back / cancel the form */
   onCancel: () => void;
   /** When true, save only calls onSave (advance wizard) without creating/updating */

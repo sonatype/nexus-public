@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 import { SettingsButton } from '../../../../shared/form';
-import { RoutingRuleMatcherProps, RoutingMode } from './types';
+import { RoutingRuleMatcherProps, } from './types';
 
 import './RoutingRuleMatcher.scss';
 
@@ -207,7 +207,7 @@ export function RoutingRuleMatcher({
     if (matchers.length !== matcherPresets.length) {
       setMatcherPresets(matchers.map(m => detectPresetFromPattern(m)));
     }
-  }, [matchers.length]);
+  }, [matchers.length, matcherPresets.length, matchers.map]);
 
   const handleMatcherChange = useCallback((index: number, value: string) => {
     const newMatchers = [...matchers];
@@ -247,7 +247,7 @@ export function RoutingRuleMatcher({
   }, [matchers, localTestPath]);
 
   // Check if any matcher is invalid (blocks save)
-  const hasInvalidMatchers = useMemo(() => {
+  const _hasInvalidMatchers = useMemo(() => {
     return matchers.some((m, i) => m.trim() && !matcherValidation[i].isValid);
   }, [matchers, matcherValidation]);
 

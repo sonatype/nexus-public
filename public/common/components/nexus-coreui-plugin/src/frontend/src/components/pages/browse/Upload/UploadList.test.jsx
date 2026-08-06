@@ -32,7 +32,7 @@ const {EXT: {URL, UPLOAD, REPOSITORY}} = APIConstants;
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.tableSelectors,
-  getEmptyMessage: () => screen.getByText('No repositories found.'),
+  getEmptyMessage: () => screen.findByText('No repositories found.'),
   getFilterInput: () => screen.getByPlaceholderText('Filter'),
 };
 
@@ -69,7 +69,7 @@ describe('UploadList', function() {
   it('renders the resolved empty text', async function() {
     await renderView([])
 
-    expect(selectors.getEmptyMessage()).toBeInTheDocument();
+    expect(await selectors.getEmptyMessage()).toBeInTheDocument();
   });
 
   it('renders the error message', async function() {

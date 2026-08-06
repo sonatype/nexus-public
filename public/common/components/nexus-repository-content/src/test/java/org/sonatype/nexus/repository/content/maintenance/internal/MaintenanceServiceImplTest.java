@@ -47,10 +47,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.InOrder;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -58,6 +60,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -679,5 +682,164 @@ public class MaintenanceServiceImplTest
     boolean result = underTest.canDeleteAsset(repository, asset);
 
     assertFalse(result);
+  }
+
+  @Test
+  public void testDeleteAsset_ChecksFacetBeforeDeletingBrowseNode() {
+    // Test that the maintenance facet is checked BEFORE browse node deletion
+    // This prevents orphaned browse nodes if the facet is missing
+    Format format = mock(Format.class);
+
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(42);
+    assetData.setPath("/test/asset");
+    assetData.setKind("FILE");
+    assetData.setRepositoryId(1);
+
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.getName()).thenReturn("raw-repo");
+    when(format.getValue()).thenReturn("raw");
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
+    when(contentMaintenanceFacet.deleteAsset(assetData)).thenReturn(Set.of("/test/asset"));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), eq(DELETE), any())).thenReturn(true);
+    when(variableResolverAdapterManager.get("raw")).thenReturn(mock(VariableResolverAdapter.class));
+    when(variableResolverAdapterManager.get("raw").fromPath(anyString(), anyString()))
+        .thenReturn(mock(VariableSource.class));
+    when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+
+    Set<String> result = underTest.deleteAsset(repository, assetData);
+
+    // Verify return value
+    assertEquals(Set.of("/test/asset"), result);
+
+    // Verify ordering: facet must be retrieved BEFORE browse node deletion
+    InOrder inOrder = inOrder(repository, browseFacet, contentMaintenanceFacet);
+    inOrder.verify(repository).facet(ContentMaintenanceFacet.class);
+    inOrder.verify(browseFacet).deleteByAssetIdAndPath(eq(42), eq("/test/asset"));
+    inOrder.verify(contentMaintenanceFacet).deleteAsset(assetData);
+  }
+
+  @Test
+  public void testDeleteComponent_ChecksFacetBeforeDeletingBrowseNode() {
+    // Test that the maintenance facet is checked BEFORE browse node deletion for components
+    // This prevents orphaned browse nodes if the facet is missing
+    MaintenanceServiceImpl underTestSpy = spy(underTest);
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    FluentAsset asset = mock(FluentAsset.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    when(format.getValue()).thenReturn("raw");
+    when(asset.path()).thenReturn("/foo/bar");
+    when(fluentComponent.assets()).thenReturn(Set.of(asset));
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(mock(VariableSource.class));
+    when(repository.facet(ContentMaintenanceFacet.class)).thenReturn(contentMaintenanceFacet);
+    when(repository.optionalFacet(ContentFacet.class)).thenReturn(Optional.of(contentFacet));
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.getName()).thenReturn("raw-repo");
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(),
+        any(VariableSource.class))).thenReturn(true);
+    when(contentMaintenanceFacet.deleteComponent(any(Component.class))).thenReturn(Set.of("/foo/bar"));
+    when(variableResolverAdapterManager.get(any())).thenReturn(variableResolverAdapter);
+    // Note: isPostgresql=false means browse node deletion is skipped entirely.
+    // The ordering protection is still verified for the facet check itself.
+    // For full PostgreSQL path coverage, see testDeleteComponent_PostgresBrowseNodeDeletion.
+    when(databaseCheck.isPostgresql()).thenReturn(false);
+
+    Set<String> result = underTestSpy.deleteComponent(repository, component);
+
+    // Verify return value
+    assertEquals(Set.of("/foo/bar"), result);
+
+    // Verify ordering: facet must be retrieved BEFORE any other operations
+    InOrder inOrder = inOrder(repository, contentMaintenanceFacet);
+    inOrder.verify(repository).facet(ContentMaintenanceFacet.class);
+    inOrder.verify(contentMaintenanceFacet).deleteComponent(component);
+  }
+
+  @Test
+  public void testDeleteAsset_MissingFacetPreventsBrowseNodeDeletion() {
+    // Test that when facet is missing, browse node is NOT deleted (prevents orphaned browse nodes)
+    Format format = mock(Format.class);
+
+    AssetData assetData = new AssetData();
+    assetData.setAssetId(42);
+    assetData.setPath("/some/asset");
+    assetData.setKind("FILE");
+    assetData.setRepositoryId(1);
+
+    when(repository.getName()).thenReturn("my-repo");
+    when(repository.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("raw");
+    when(variableResolverAdapterManager.get("raw")).thenReturn(mock(VariableResolverAdapter.class));
+    when(variableResolverAdapterManager.get("raw").fromPath(anyString(), anyString()))
+        .thenReturn(mock(VariableSource.class));
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(), any())).thenReturn(true);
+    when(databaseCheck.isPostgresql()).thenReturn(true);
+    when(repository.optionalFacet(BrowseFacet.class)).thenReturn(Optional.of(browseFacet));
+
+    // Repository does NOT have ContentMaintenanceFacet
+    MissingFacetException missingFacetException = new MissingFacetException(repository, ContentMaintenanceFacet.class);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenThrow(missingFacetException);
+
+    // Verify IllegalOperationException is thrown with MissingFacetException as cause
+    IllegalOperationException thrown = assertThrows(
+        IllegalOperationException.class,
+        () -> underTest.deleteAsset(repository, assetData));
+
+    // Verify the cause is the original MissingFacetException
+    assertEquals(missingFacetException, thrown.getCause());
+
+    // Browse node should NOT be deleted since facet check failed first
+    verify(browseFacet, never()).deleteByAssetIdAndPath(any(), anyString());
+  }
+
+  @Test
+  public void testDeleteComponent_MissingFacetPreventsBrowseNodeDeletion() {
+    // Test that when facet is missing, browse node is NOT deleted for component deletion
+    MaintenanceServiceImpl underTestSpy = spy(underTest);
+    Component component = mock(Component.class);
+    Format format = mock(Format.class);
+    FluentAsset asset = mock(FluentAsset.class);
+    FluentComponent fluentComponent = mock(FluentComponent.class);
+    FluentComponents fluentComponents = mock(FluentComponents.class);
+    ContentFacet contentFacet = mock(ContentFacet.class);
+    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
+
+    when(format.getValue()).thenReturn("raw");
+    when(asset.path()).thenReturn("/foo/bar");
+    when(fluentComponent.assets()).thenReturn(Set.of(asset));
+    when(fluentComponents.with(component)).thenReturn(fluentComponent);
+    when(contentFacet.components()).thenReturn(fluentComponents);
+    when(variableResolverAdapter.fromPath(anyString(), anyString())).thenReturn(mock(VariableSource.class));
+    when(repository.optionalFacet(ContentFacet.class)).thenReturn(Optional.of(contentFacet));
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+    when(repository.getFormat()).thenReturn(format);
+    when(repository.getName()).thenReturn("raw-repo");
+    when(contentPermissionChecker.isPermitted(anyString(), anyString(), anyString(),
+        any(VariableSource.class))).thenReturn(true);
+    when(variableResolverAdapterManager.get(any())).thenReturn(variableResolverAdapter);
+
+    // Repository does NOT have ContentMaintenanceFacet
+    MissingFacetException missingFacetException = new MissingFacetException(repository, ContentMaintenanceFacet.class);
+    when(repository.facet(ContentMaintenanceFacet.class)).thenThrow(missingFacetException);
+
+    // Verify IllegalOperationException is thrown with MissingFacetException as cause
+    IllegalOperationException thrown = assertThrows(
+        IllegalOperationException.class,
+        () -> underTestSpy.deleteComponent(repository, component));
+
+    // Verify the cause is the original MissingFacetException
+    assertEquals(missingFacetException, thrown.getCause());
+
+    // Verify component maintenance was not called (facet missing)
+    verify(contentMaintenanceFacet, never()).deleteComponent(any());
   }
 }

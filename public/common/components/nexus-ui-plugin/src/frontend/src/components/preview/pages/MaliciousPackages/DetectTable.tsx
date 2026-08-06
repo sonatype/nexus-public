@@ -76,7 +76,7 @@ export interface DetectTableProps {
 function formatTimestamp(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
+  if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleString(undefined, {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
   });
@@ -123,7 +123,7 @@ function isTaskFreshForScan(task: TaskInfo, rhcCompletedAt: number | null): bool
   if (!task.lastRun) return false;
   if (!rhcCompletedAt) return false;
   const taskRanAt = new Date(task.lastRun).getTime();
-  if (isNaN(taskRanAt)) return false;
+  if (Number.isNaN(taskRanAt)) return false;
   return taskRanAt >= rhcCompletedAt;
 }
 
@@ -306,7 +306,7 @@ export function useDetectRows(
     }
 
     return rows;
-  }, [proxyRepos, hcEnabledRepos, countsByRepo, rhcScans, tasks, activeFindings, identifyFailures]);
+  }, [proxyRepos, countsByRepo, rhcScans, tasks, activeFindings, identifyFailures]);
 }
 
 type RowFingerprint = `${DetectionState}|${ResponseState}|${number}`;

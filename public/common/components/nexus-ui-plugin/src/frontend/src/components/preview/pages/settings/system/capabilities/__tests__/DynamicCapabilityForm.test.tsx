@@ -12,12 +12,13 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import { DynamicCapabilityForm } from '../DynamicCapabilityForm';
 import { useCapabilitiesApi } from '../useCapabilitiesApi';
 import { useCapabilitiesForm } from '../useCapabilitiesForm';
+import { restClient } from '../../../../../../../interface/api';
 import { CapabilityType, FormField, Capability } from '../types';
 
 // Mock hooks
@@ -27,6 +28,7 @@ jest.mock('../../../../../../../interface/api', () => ({ restClient: { get: jest
 
 const mockUseCapabilitiesApi = useCapabilitiesApi as jest.MockedFunction<typeof useCapabilitiesApi>;
 const mockUseCapabilitiesForm = useCapabilitiesForm as jest.MockedFunction<typeof useCapabilitiesForm>;
+const mockRestClientGet = restClient.get as jest.MockedFunction<typeof restClient.get>;
 
 function createMockCapForm(data: any = {}) {
   return {
@@ -818,6 +820,69 @@ describe('DynamicCapabilityForm', () => {
 
       expect(screen.getByText('Different Type')).toBeInTheDocument();
       expect(screen.getByLabelText(/New Field/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('itemselect (transfer list) required field (NEXUS-53839)', () => {
+    const webhookType: CapabilityType = {
+      id: 'webhook.repository',
+      name: 'Webhook: Repository',
+      about: '',
+      formFields: [
+        {
+          id: 'names',
+          type: 'itemselect',
+          label: 'Event Types',
+          helpText: 'Select event types',
+          required: true,
+          storeApi: 'coreui_Webhook.listWithTypeRepository',
+        },
+      ],
+    };
+
+    beforeEach(() => {
+      // Return options so the transfer list renders its populated (non-fallback) branch
+      mockRestClientGet.mockResolvedValue([
+        { id: 'rm:repository:created', name: 'rm:repository:created' },
+        { id: 'rm:repository:updated', name: 'rm:repository:updated' },
+      ] as any);
+    });
+
+    it('marks the Event Types transfer list as required (shows required indicator)', async () => {
+      mockUseCapabilitiesForm.mockReturnValue({
+        form: createMockCapForm({ typeId: 'webhook.repository', enabled: true, notes: '', properties: { names: '' } }),
+        capability: null, capabilityTypes: [], selectedCapabilityType: null, isCreate: true,
+      } as any);
+
+      renderWithTheme(
+        <DynamicCapabilityForm capabilityType={webhookType} isCreate={true} onSave={mockOnSave} onCancel={mockOnCancel} />
+      );
+
+      // Wait for the transfer list to render with loaded options, then verify the
+      // required indicator "*" is shown next to the Event Types label and uses the
+      // shared required styling (rendered red, matching other fields — NEXUS-53839).
+      const label = await screen.findByText('Event Types');
+      expect(label.textContent).toContain('*');
+      const indicator = label.querySelector('.settings-transfer-list__required');
+      expect(indicator).not.toBeNull();
+      expect(indicator).toHaveTextContent('*');
+    });
+
+    it('displays the validation error on the Event Types transfer list when empty', async () => {
+      mockUseCapabilitiesForm.mockReturnValue({
+        form: {
+          ...createMockCapForm({ typeId: 'webhook.repository', enabled: true, notes: '', properties: { names: '' } }),
+          validationErrors: { 'properties.names': 'Event Types is required' },
+          touched: { properties: true },
+        },
+        capability: null, capabilityTypes: [], selectedCapabilityType: null, isCreate: true,
+      } as any);
+
+      renderWithTheme(
+        <DynamicCapabilityForm capabilityType={webhookType} isCreate={true} onSave={mockOnSave} onCancel={mockOnCancel} />
+      );
+
+      expect(await screen.findByText('Event Types is required')).toBeInTheDocument();
     });
   });
 

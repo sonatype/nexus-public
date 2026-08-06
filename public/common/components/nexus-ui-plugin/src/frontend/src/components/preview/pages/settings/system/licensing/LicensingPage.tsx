@@ -11,11 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Box, Flex, Text, Tabs } from '@radix-ui/themes';
 import { Loader2 } from 'lucide-react';
-import { ExtJS } from '../../../../../../interface/ExtJS';
-import { parseApiError } from '../../../../../../interface/api';
 
 import { SettingsAlert } from '../../../../shared/form';
 import { PageHeader } from '../../../../shared';
@@ -24,8 +22,7 @@ import { LicensedUsage } from './LicensedUsage';
 import { InstallLicense } from './InstallLicense';
 import { LicenseExpiryAlert } from './LicenseExpiryAlert';
 import { HistoricalUsagePreview } from './HistoricalUsagePreview';
-import { useLicensingApi } from './useLicensingApi';
-import { LicenseData } from './types';
+import { useLicensing } from './useLicensing';
 
 import './LicensingPage.scss';
 
@@ -34,37 +31,16 @@ const navigateTo = (path: string) => {
 };
 
 export function LicensingPage() {
-  const [license, setLicense] = useState<LicenseData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('license');
-
-  const { fetchLicense } = useLicensingApi();
-
-  const canViewHistoricalUsage = ExtJS.checkPermission('nexus:metrics:read');
-
-  useEffect(() => {
-    const loadLicense = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const licenseData = await fetchLicense();
-        setLicense(licenseData);
-      } catch (err) {
-        const apiError = parseApiError(err);
-        setError(apiError.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadLicense();
-  }, [fetchLicense]);
-
-  const handleLicenseInstalled = useCallback((licenseData: LicenseData) => {
-    setError(null);
-    setLicense(licenseData);
-  }, []);
+  const {
+    license,
+    loading,
+    error,
+    activeTab,
+    setActiveTab,
+    handleLicenseInstalled,
+    dismissError,
+    canViewHistoricalUsage,
+  } = useLicensing();
 
   if (loading) {
     return (
@@ -79,9 +55,7 @@ export function LicensingPage() {
 
   const showDetails = !error && license?.contactCompany;
   const showLicensedUsage =
-    !error &&
-    license?.maxRepoRequests != null &&
-    license?.maxRepoComponents != null;
+    !error && license?.maxRepoRequests != null && license?.maxRepoComponents != null;
 
   return (
     <Box className="licensing-page">
@@ -96,7 +70,7 @@ export function LicensingPage() {
 
       {error && (
         <Box className="licensing-page__alerts">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
+          <SettingsAlert type="error" onClose={dismissError}>
             {error}
           </SettingsAlert>
         </Box>

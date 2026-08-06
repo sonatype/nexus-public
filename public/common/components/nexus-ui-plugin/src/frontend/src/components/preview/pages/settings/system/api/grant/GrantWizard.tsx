@@ -128,7 +128,7 @@ export function GrantWizard({ row, active }: GrantWizardProps) {
   const canAdvance = useMemo(() => {
     if (wizardStep === 0) return true;
     if (wizardStep === 1) {
-      if (ctx.mode === 'existing') return !!ctx.existingRoleId;
+      if (ctx.mode === 'existing') return Boolean(ctx.existingRoleId);
       const id = ctx.newRoleId.trim();
       return NEW_ROLE_ID_PATTERN.test(id) && ctx.newRoleName.trim().length > 0;
     }
