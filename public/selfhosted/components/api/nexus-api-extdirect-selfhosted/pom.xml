@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.components</groupId>
     <artifactId>nexus-selfhosted-components-api-parent</artifactId>
-    <version>3.95.1-01</version>
+    <version>3.95.2-01</version>
   </parent>
 
   <artifactId>nexus-api-extdirect-selfhosted</artifactId>

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-api-parent</artifactId>
-    <version>3.95.1-01</version>
+    <version>3.95.2-01</version>
   </parent>
 
   <artifactId>nexus-swagger</artifactId>
