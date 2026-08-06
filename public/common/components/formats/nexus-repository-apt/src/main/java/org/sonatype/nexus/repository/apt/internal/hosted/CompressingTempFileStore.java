@@ -27,7 +27,6 @@ import java.util.zip.GZIPOutputStream;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.bouncycastle.util.io.TeeOutputStream;
@@ -44,9 +43,9 @@ public class CompressingTempFileStore
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  private final Map<String, FileHolder> holdersByKey = new HashMap<>();
+  private final Map<DistComponentArchKey, FileHolder> holdersByKey = new HashMap<>();
 
-  public Writer openOutput(final String key) {
+  public Writer openOutput(final DistComponentArchKey key) {
     try {
       if (holdersByKey.containsKey(key)) {
         throw new IllegalStateException("Output already opened");
@@ -63,8 +62,25 @@ public class CompressingTempFileStore
     }
   }
 
-  public Map<String, FileMetadata> getFiles() {
-    return Maps.transformValues(holdersByKey, holder -> new FileMetadata(holder));
+  public boolean isEmpty() {
+    return holdersByKey.isEmpty();
+  }
+
+  public Map<String, Map<String, Map<String, FileMetadata>>> getFiles() {
+    
+    Map<String, Map<String, Map<String, FileMetadata>>> filesByDistComponentAndArch = new HashMap<>();
+
+    for (Map.Entry<DistComponentArchKey, FileHolder> entry : holdersByKey.entrySet()) {
+      DistComponentArchKey key = entry.getKey();
+      FileHolder holder = entry.getValue();
+
+      filesByDistComponentAndArch
+          .computeIfAbsent(key.getDistribution(), k -> new HashMap<>())
+          .computeIfAbsent(key.getComponent(), k -> new HashMap<>())
+          .put(key.getArchitecture(), new FileMetadata(holder));
+    }
+
+    return filesByDistComponentAndArch;
   }
 
   public void close() {
@@ -86,6 +102,54 @@ public class CompressingTempFileStore
     }
     catch (IOException e) { // NOSONAR
       paths.add(path);
+    }
+  }
+
+  public static class DistComponentArchKey {
+    private final String distribution;
+
+    private final String component;
+
+    private final String architecture;
+
+    public DistComponentArchKey(final String distribution, final String component, final String architecture) {
+      this.distribution = distribution;
+      this.component = component;
+      this.architecture = architecture;
+    }
+
+    public String getDistribution() {
+      return distribution;
+    }
+
+    public String getComponent() {
+      return component;
+    }
+
+    public String getArchitecture() {
+      return architecture;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof DistComponentArchKey)) {
+        return false;
+      }
+      DistComponentArchKey that = (DistComponentArchKey) o;
+      return distribution.equals(that.distribution)
+          && component.equals(that.component)
+          && architecture.equals(that.architecture);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = distribution.hashCode();
+      result = 31 * result + component.hashCode();
+      result = 31 * result + architecture.hashCode();
+      return result;
     }
   }
 

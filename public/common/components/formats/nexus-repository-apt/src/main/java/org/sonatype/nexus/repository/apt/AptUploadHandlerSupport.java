@@ -14,13 +14,22 @@ package org.sonatype.nexus.repository.apt;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.Arrays;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
+import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
+import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
 import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
+
+
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIBUTION_HELP_TEXT;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_COMPONENT_HELP_TEXT;
 
 /**
  * Common base for an Apt upload handlers
@@ -53,7 +62,12 @@ public abstract class AptUploadHandlerSupport
   @Override
   public UploadDefinition getDefinition() {
     if (definition == null) {
-      definition = getDefinition(AptFormat.NAME, false);
+      definition = getDefinition(AptFormat.NAME, false,
+          Arrays.asList(),
+          Arrays.asList(new UploadFieldDefinition(P_DISTRIBUTION, P_DISTRIBUTION_HELP_TEXT, true, Type.STRING), 
+          new UploadFieldDefinition(P_COMPONENT, P_COMPONENT_HELP_TEXT, true, Type.STRING)),
+          null
+      );
     }
     return definition;
   }

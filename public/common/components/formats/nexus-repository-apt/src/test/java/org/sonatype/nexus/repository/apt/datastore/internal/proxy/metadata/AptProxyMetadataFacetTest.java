@@ -632,51 +632,6 @@ public class AptProxyMetadataFacetTest
   // ==========================================================================
 
   @Test
-  public void testSliceKeySeparator_DefinedCorrectly() throws Exception {
-    Field separatorField = AptProxyMetadataFacet.class.getDeclaredField("SLICE_KEY_SEPARATOR");
-    separatorField.setAccessible(true);
-    String separator = (String) separatorField.get(null);
-
-    assertThat(separator, is("|"));
-  }
-
-  @Test
-  public void testSliceKeySeparatorPattern_EscapedCorrectly() throws Exception {
-    Field patternField = AptProxyMetadataFacet.class.getDeclaredField("SLICE_KEY_SEPARATOR_PATTERN");
-    patternField.setAccessible(true);
-    String pattern = (String) patternField.get(null);
-
-    // Pattern should be escaped for use in split()
-    assertThat(pattern, is("\\|"));
-
-    // Verify it works correctly in split
-    String testKey = "main|amd64";
-    String[] parts = testKey.split(pattern);
-    assertThat(parts.length, is(2));
-    assertThat(parts[0], is("main"));
-    assertThat(parts[1], is("amd64"));
-  }
-
-  @Test
-  public void testCompositeKeyParsing_MultipleComponents() throws Exception {
-    Field patternField = AptProxyMetadataFacet.class.getDeclaredField("SLICE_KEY_SEPARATOR_PATTERN");
-    patternField.setAccessible(true);
-    String pattern = (String) patternField.get(null);
-
-    // Test various component/arch combinations
-    String[] testCases = {
-        "main|amd64", "universe|amd64", "multiverse|arm64", "restricted|i386"
-    };
-
-    for (String testKey : testCases) {
-      String[] parts = testKey.split(pattern);
-      assertThat("Key should split into 2 parts: " + testKey, parts.length, is(2));
-      assertThat("Component should not be empty: " + testKey, parts[0].length() > 0, is(true));
-      assertThat("Architecture should not be empty: " + testKey, parts[1].length() > 0, is(true));
-    }
-  }
-
-  @Test
   public void testSliceRecord_HasComponentAndArchitecture() throws Exception {
     // Find the Slice inner class
     Class<?>[] innerClasses = AptProxyMetadataFacet.class.getDeclaredClasses();

@@ -210,19 +210,6 @@ public abstract class AptMetadataFacetSupport
   protected abstract Content doRebuildMetadata() throws IOException;
 
   /**
-   * Stores a package index file.
-   * Both hosted and proxy use content().put() for storing package indices.
-   *
-   * @param path asset path
-   * @param payload content payload
-   * @return the stored asset
-   * @throws IOException if storage fails
-   */
-  protected FluentAsset storePackageIndex(final String path, final StreamPayload payload) throws IOException {
-    return content().put(path, payload);
-  }
-
-  /**
    * Adds a signature item (checksum + size + filename) to the Release file builder.
    * Used to populate MD5Sum and SHA256 sections of the Release file.
    *

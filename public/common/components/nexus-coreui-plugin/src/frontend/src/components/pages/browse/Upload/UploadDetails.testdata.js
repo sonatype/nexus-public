@@ -223,6 +223,31 @@ const rawUploadDefinition = {
   assetFields: []
 };
 
+const aptUploadDefinition = {
+  uiUpload: true,
+  multipleUpload: true,
+  format: 'apt',
+  componentFields: [
+    {
+      displayName: 'Distribution',
+      helpText: null,
+      name: 'distribution',
+      optional: true,
+      type: 'STRING',
+      group: null
+    },
+    {
+      displayName: 'Component',
+      helpText: null,
+      name: 'component',
+      optional: true,
+      type: 'STRING',
+      group: null
+    }
+  ],
+  assetFields: []
+};
+
 export const sampleUploadDefinitions = {
   data: {
     result: {
@@ -233,6 +258,7 @@ export const sampleUploadDefinitions = {
         regexUploadDefinition,
         mavenUploadDefinition,
         rawUploadDefinition,
+        aptUploadDefinition,
         uiUploadDisabledUploadDefinition
       ]
     }
