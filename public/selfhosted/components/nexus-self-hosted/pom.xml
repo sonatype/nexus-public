@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.components</groupId>
     <artifactId>nexus-selfhosted-components-parent</artifactId>
-    <version>3.95.0-07</version>
+    <version>3.95.1-01</version>
   </parent>
 
   <artifactId>nexus-self-hosted</artifactId>
