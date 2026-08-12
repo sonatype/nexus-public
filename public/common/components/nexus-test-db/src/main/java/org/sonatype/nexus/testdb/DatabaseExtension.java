@@ -18,36 +18,27 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
-import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
+import org.sonatype.goodies.common.ComponentSupport;
 
-import org.apache.ibatis.type.TypeHandler;
-import org.assertj.db.type.Table;
 import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.TestTemplateInvocationContext;
+import org.junit.jupiter.api.extension.TestTemplateInvocationContextProvider;
 import org.junit.platform.commons.support.AnnotationSupport;
-import org.junit.platform.commons.support.ReflectionSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.utility.DockerImageName;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * <p>
@@ -66,26 +57,22 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
  * &#64;DataSessionConfiguration(MyDAO.class)
  * TestDataSessionSupplier dataSessionSupplier;
  *
- * &#64;TestTable("my_table")
- * Table table;
+ * &#64;DatabaseTest
+ * void testMyDAO() {
+ * }
  * </pre>
  */
 public class DatabaseExtension
-    implements Extension, BeforeEachCallback, BeforeAllCallback, AfterAllCallback, AfterEachCallback, ParameterResolver
+    extends ComponentSupport
+    implements Extension, BeforeAllCallback, AfterAllCallback, TestTemplateInvocationContextProvider
 {
-  private static final Logger log = LoggerFactory.getLogger(DatabaseExtension.class);
-
   private static final String JDBC_URL = System.getProperty("test.jdbcUrl");
-
-  private static final boolean TEST_POSTGRES = getBoolean("test.postgres", false);
-
-  private final Map<String, MyBatisDataStore> stores = new HashMap<>();
 
   private PostgreSQLContainer<?> postgres;
 
   @Override
   public void beforeAll(final ExtensionContext context) throws Exception {
-    if (JDBC_URL == null && TEST_POSTGRES) {
+    if (findDataSessionConfiguration(context).postgresql()) {
       startPostgres();
     }
   }
@@ -96,104 +83,50 @@ public class DatabaseExtension
   }
 
   @Override
-  public void beforeEach(final ExtensionContext context) throws Exception {
-    Optional<Object> testObj = context.getTestInstance();
-    if (testObj.isEmpty()) {
-      return;
-    }
-
-    Object test = testObj.get();
-
-    for (Field field : AnnotationSupport.findAnnotatedFields(test.getClass(), DataSessionConfiguration.class)) {
-      addSession(test, field, context);
-    }
-
-    AnnotationSupport.findAnnotatedFields(test.getClass(), TestTable.class).forEach(field -> {
-      try {
-        TestTable testTable = field.getAnnotation(TestTable.class);
-        field.setAccessible(true);
-        field.set(test, new Table(store(testTable.storeName()).getDataSource(), testTable.table()));
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
-  private void addSession(final Object test, final Field field, final ExtensionContext context) {
-    try {
-      DataSessionConfiguration dataSession = field.getAnnotation(DataSessionConfiguration.class);
-      String storeName = dataSession.storeName();
-      MyBatisDataStore store =
-          newStore(storeName, Map.of("jdbcUrl", discoverJdbcUrl(context.getTestMethod().get().getName())));
-
-      store.start();
-
-      for (Class<? extends TypeHandler<?>> handler : dataSession.typeHandlers()) {
-        store.register(ReflectionSupport.newInstance(handler));
-      }
-      Stream.of(dataSession.daos()).forEach(store::register);
-      stores.put(storeName, store);
-
-      field.setAccessible(true);
-      field.set(test, new TestDataSessionSupplier(storeName, store));
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  public boolean supportsTestTemplate(final ExtensionContext context) {
+    return context.getTestMethod().isPresent();
   }
 
   @Override
-  public void afterEach(final ExtensionContext context) throws Exception {
-    for (MyBatisDataStore store : stores.values()) {
-      try {
-        store.stop();
-      }
-      catch (Exception e) {
-        log.error("Failed to stop store", e);
-      }
-    }
-    stores.clear();
-  }
-
-  @Override
-  public Object resolveParameter(
-      final ParameterContext parameterContext,
-      final ExtensionContext extensionContext) throws ParameterResolutionException
+  public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(
+      final ExtensionContext extensionContext)
   {
-    // We don't inject DAOs because they won't auto-commit transactions.
-    if (match(Table.class, parameterContext)) {
-      TestTable testTable = parameterContext.getAnnotatedElement().getAnnotation(TestTable.class);
+    DataSessionConfiguration session = findDataSessionConfiguration(extensionContext);
+    DatabaseTest databaseTest = findDatabaseTest(extensionContext);
+    String displayName = extensionContext.getDisplayName();
+    Map<String, String> databaseToUrl = new HashMap<>();
 
-      return new Table(store(testTable.storeName()).getDataSource(), testTable.table());
+    if (session.h2() && databaseTest.h2()) {
+      databaseToUrl.put("[h2] " + displayName, "jdbc:h2:mem:${storeName}");
     }
-    throw new IllegalArgumentException();
+    if (session.postgresql() && databaseTest.postgresql()) {
+      String schemaName = displayName.replaceAll("[^a-zA-Z0-9_]", "");
+      createSchema(schemaName);
+      databaseToUrl.put("[postgres] " + displayName,
+          Optional.ofNullable(JDBC_URL).orElse(getPostgresqlUrl(schemaName)));
+    }
+
+    return databaseToUrl.entrySet()
+        .stream()
+        .map(entry -> new DatabaseTestTemplateInvocationContext(entry.getKey(), entry.getValue()));
   }
 
-  @Override
-  public boolean supportsParameter(
-      final ParameterContext parameterContext,
-      final ExtensionContext extensionContext) throws ParameterResolutionException
-  {
-    return match(Table.class, parameterContext) && parameterContext.isAnnotated(TestTable.class);
+  static DataSessionConfiguration findDataSessionConfiguration(final ExtensionContext context) {
+    Class<?> testClass = context.getRequiredTestClass();
+    while (testClass != null && testClass != Object.class) {
+      for (Field field : testClass.getDeclaredFields()) {
+        if (field.isAnnotationPresent(DataSessionConfiguration.class)) {
+          return field.getAnnotation(DataSessionConfiguration.class);
+        }
+      }
+      testClass = testClass.getSuperclass();
+    }
+    throw new IllegalStateException("No @DataSessionConfiguration found");
   }
 
-  private static boolean match(final Class<?> clazz, final ParameterContext parameterContext) {
-    return clazz.isAssignableFrom(parameterContext.getParameter().getType());
-  }
-
-  /**
-   * Discover the JDBC URL to run the tests against.
-   */
-  private String discoverJdbcUrl(@Nullable final String testname) {
-    if (JDBC_URL != null) {
-      return JDBC_URL;
-    }
-    else if (TEST_POSTGRES) {
-      createSchema(testname);
-      return getPostgresqlUrl(testname);
-    }
-    return "jdbc:h2:mem:${storeName}";
+  static DatabaseTest findDatabaseTest(final ExtensionContext context) {
+    return AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), DatabaseTest.class)
+        .orElseThrow();
   }
 
   private void startPostgres() {
@@ -205,7 +138,7 @@ public class DatabaseExtension
         DockerImageName.parse("sonatype.repo.sonatype.app/docker-all/postgres:15.15-alpine")
             .asCompatibleSubstituteFor("postgres"));
 
-    postgres.withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("postgres")))
+    postgres.withLogConsumer(new Slf4jLogConsumer(getLogger("postgres")))
         .withCommand("postgres", "-c",
             "max_connections=110");
     postgres.start();
@@ -243,19 +176,26 @@ public class DatabaseExtension
     return postgres.getJdbcUrl() + "&currentSchema=" + schema;
   }
 
-  private MyBatisDataStore store(final String name) {
-    return checkNotNull(stores.get(name));
-  }
+  private static class DatabaseTestTemplateInvocationContext
+      implements TestTemplateInvocationContext
+  {
+    private final String testName;
 
-  private static MyBatisDataStore newStore(final String storeName, final Map<String, String> attributes) {
-    DataStoreConfiguration config = new DataStoreConfiguration();
-    config.setName(storeName);
-    config.setSource("test");
-    config.setType("jdbc");
-    config.setAttributes(attributes);
+    private final String jdbcUrl;
 
-    MyBatisDataStore store = new MyBatisDataStore();
-    store.setConfiguration(config);
-    return store;
+    DatabaseTestTemplateInvocationContext(final String testName, final String jdbcUrl) {
+      this.testName = testName;
+      this.jdbcUrl = jdbcUrl;
+    }
+
+    @Override
+    public String getDisplayName(final int invocationIndex) {
+      return testName;
+    }
+
+    @Override
+    public List<Extension> getAdditionalExtensions() {
+      return List.of(new DatabaseSpecificExtension(jdbcUrl));
+    }
   }
 }

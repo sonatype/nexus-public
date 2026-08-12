@@ -22,14 +22,12 @@ import org.sonatype.nexus.quartz.internal.datastore.QuartzDAO;
 import org.sonatype.nexus.quartz.internal.datastore.QuartzJobDataTypeHandler;
 import org.sonatype.nexus.quartz.internal.store.ConfigStoreConnectionProvider;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestReporter;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.Job;
@@ -68,8 +66,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTOR
 /**
  * Unit tests for {@link BulkReadSchedulerImpl}.
  */
-@ExtendWith(DatabaseExtension.class)
-public class BulkReadSchedulerImplTest
+class BulkReadSchedulerImplTest
     extends Test5Support
 {
   private static final String SCHEDULER_NAME = "nexus-test";
@@ -84,7 +81,7 @@ public class BulkReadSchedulerImplTest
   private Scheduler underlyingScheduler;
 
   @BeforeEach
-  public void setup() throws Exception {
+  void setup() throws Exception {
     // Create the Quartz schema
     sessionSupplier.openSession(DEFAULT_DATASTORE_NAME).access(QuartzDAO.class).createSchema();
 
@@ -108,22 +105,22 @@ public class BulkReadSchedulerImplTest
   }
 
   @AfterEach
-  public void afterEach() throws Exception {
+  void afterEach() throws Exception {
     if (underlyingScheduler != null) {
       underlyingScheduler.shutdown();
     }
   }
 
-  @Test
-  public void testGetJobDetailsForGroup_empty() throws Exception {
+  @DatabaseTest
+  void testGetJobDetailsForGroup_empty() throws Exception {
     Map<JobKey, JobDetail> result = bulkReadScheduler.getJobDetailsForGroup(TEST_GROUP);
 
     assertThat(result, notNullValue());
     assertThat(result.entrySet(), hasSize(0));
   }
 
-  @Test
-  public void testGetJobDetailsForGroup_singleJob() throws Exception {
+  @DatabaseTest
+  void testGetJobDetailsForGroup_singleJob() throws Exception {
     // Create a job
     JobDetail job = JobBuilder.newJob(TestJob.class)
         .withIdentity("job1", TEST_GROUP)
@@ -143,8 +140,8 @@ public class BulkReadSchedulerImplTest
     assertJobDetailEqual(result.get(jobKey("job1", TEST_GROUP)), "job1", TEST_GROUP, "Test Job 1");
   }
 
-  @Test
-  public void testGetJobDetailsForGroup_multipleJobs() throws Exception {
+  @DatabaseTest
+  void testGetJobDetailsForGroup_multipleJobs() throws Exception {
     // Create multiple jobs using helper
     createJobs(5, "job", "Test Job");
 
@@ -155,16 +152,16 @@ public class BulkReadSchedulerImplTest
     assertJobDetails(result, 5, "job", "Test Job");
   }
 
-  @Test
-  public void testGetTriggersForGroup_empty() throws Exception {
+  @DatabaseTest
+  void testGetTriggersForGroup_empty() throws Exception {
     Map<TriggerKey, Trigger> result = bulkReadScheduler.getTriggersForGroup(TEST_GROUP);
 
     assertThat(result, notNullValue());
     assertThat(result.entrySet(), hasSize(0));
   }
 
-  @Test
-  public void testGetTriggersForGroup_cronTrigger() throws Exception {
+  @DatabaseTest
+  void testGetTriggersForGroup_cronTrigger() throws Exception {
     // Create a cron trigger using helper
     String cronExpression = "0 0 12 * * ?";
     createCronTriggers(1, "job", "trigger", cronExpression);
@@ -176,8 +173,8 @@ public class BulkReadSchedulerImplTest
     assertTriggers(result, 1, 0, "job", null, "trigger", "trigger", cronExpression, 0);
   }
 
-  @Test
-  public void testGetTriggersForGroup_simpleTrigger() throws Exception {
+  @DatabaseTest
+  void testGetTriggersForGroup_simpleTrigger() throws Exception {
     // Create a simple trigger using helper
     int intervalInSeconds = 60;
     createSimpleTriggers(1, "simple-job", "trigger", intervalInSeconds);
@@ -189,8 +186,8 @@ public class BulkReadSchedulerImplTest
     assertTriggers(result, 0, 1, null, "simple-job", "trigger", "trigger", "", intervalInSeconds * 1000L);
   }
 
-  @Test
-  public void testGetTriggersForGroup_multipleTriggers() throws Exception {
+  @DatabaseTest
+  void testGetTriggersForGroup_multipleTriggers() throws Exception {
     // Create 2 simple triggers and 1 cron trigger using helpers
     String cronExpression = "0 0 12 * * ?";
     int simpleInterval = 60;
@@ -206,8 +203,8 @@ public class BulkReadSchedulerImplTest
         simpleInterval * 1000L);
   }
 
-  @Test
-  public void testBulkReadPerformance(TestReporter testReporter) throws Exception {
+  @DatabaseTest
+  void testBulkReadPerformance(TestReporter testReporter) throws Exception {
     // Create 100 jobs and triggers using helpers
     String cronExpression = "0 0 12 * * ?";
     createCronTriggers(100, "job", "trigger", cronExpression);
@@ -229,8 +226,8 @@ public class BulkReadSchedulerImplTest
         "Bulk read 100 jobs in " + jobsTime + "ms, 100 triggers in " + triggersTime + "ms");
   }
 
-  @Test
-  public void testDelegateMethodsWorkCorrectly() throws Exception {
+  @DatabaseTest
+  void testDelegateMethodsWorkCorrectly() throws Exception {
     // Test that delegate methods still work
     assertThat(bulkReadScheduler.getSchedulerName(), equalTo(SCHEDULER_NAME));
     assertThat(bulkReadScheduler.isStarted(), is(false));
@@ -242,8 +239,8 @@ public class BulkReadSchedulerImplTest
     assertThat(bulkReadScheduler.isInStandbyMode(), is(true));
   }
 
-  @Test
-  public void testBulkReadMatchesStandardQuartzAPI_jobs() throws Exception {
+  @DatabaseTest
+  void testBulkReadMatchesStandardQuartzAPI_jobs() throws Exception {
     // Create test jobs using standard API
     String cronExpression = "0 0 12 * * ?";
     createCronTriggers(5, "job", "trigger", cronExpression);
@@ -261,8 +258,8 @@ public class BulkReadSchedulerImplTest
     }
   }
 
-  @Test
-  public void testBulkReadMatchesStandardQuartzAPI_cronTriggers() throws Exception {
+  @DatabaseTest
+  void testBulkReadMatchesStandardQuartzAPI_cronTriggers() throws Exception {
     // Create test cron triggers using standard API
     String cronExpression = "0 0 12 * * ?";
     createCronTriggers(3, "job", "trigger", cronExpression);
@@ -281,8 +278,8 @@ public class BulkReadSchedulerImplTest
     }
   }
 
-  @Test
-  public void testBulkReadMatchesStandardQuartzAPI_simpleTriggers() throws Exception {
+  @DatabaseTest
+  void testBulkReadMatchesStandardQuartzAPI_simpleTriggers() throws Exception {
     // Create test simple triggers using standard API
     int intervalInSeconds = 60;
     createSimpleTriggers(3, "job", "trigger", intervalInSeconds);
@@ -301,8 +298,8 @@ public class BulkReadSchedulerImplTest
     }
   }
 
-  @Test
-  public void testJobDataMapDeserialization() throws Exception {
+  @DatabaseTest
+  void testJobDataMapDeserialization() throws Exception {
     // Create a job with complex JobDataMap
     JobDataMap originalData = new JobDataMap();
     originalData.put("stringKey", "testValue");
@@ -617,7 +614,7 @@ public class BulkReadSchedulerImplTest
   /**
    * Simple test job for testing purposes.
    */
-  public static class TestJob
+  static class TestJob
       implements Job
   {
     @Override

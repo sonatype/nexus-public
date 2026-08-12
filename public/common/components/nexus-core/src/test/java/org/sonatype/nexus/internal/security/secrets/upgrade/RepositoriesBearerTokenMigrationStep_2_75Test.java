@@ -19,11 +19,9 @@ import org.sonatype.nexus.internal.security.secrets.SecretsDAO;
 import org.sonatype.nexus.internal.security.secrets.task.RepositoriesBearerTokenConfigMigrationTaskDescriptor;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -31,7 +29,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
-@ExtendWith({DatabaseExtension.class})
 class RepositoriesBearerTokenMigrationStep_2_75Test
     extends Test5Support
 {
@@ -44,7 +41,7 @@ class RepositoriesBearerTokenMigrationStep_2_75Test
   @InjectMocks
   private RepositoriesBearerTokenMigrationStep_2_75 migrationStep;
 
-  @Test
+  @DatabaseTest
   void testMigrationSchedulesTaskWhenSecretsTableExists() throws Exception {
     try (Connection connection = dataSession.openConnection(DEFAULT_DATASTORE_NAME)) {
       migrationStep.migrate(connection);

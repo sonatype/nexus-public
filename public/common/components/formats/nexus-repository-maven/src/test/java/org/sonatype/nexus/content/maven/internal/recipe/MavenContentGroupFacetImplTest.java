@@ -482,4 +482,73 @@ public class MavenContentGroupFacetImplTest
     when(member.optionalFacet(ProxyFacet.class)).thenReturn(Optional.of(proxyFacet));
     return member;
   }
+
+  /**
+   * Regression test for NEXUS-47909: {@code getCached} must accept archetype-catalog.xml hash paths
+   * (e.g. {@code archetype-catalog.xml.sha1}) without throwing {@code IllegalArgumentException} from
+   * {@code checkMergeHandled}. Prior to the fix, the guard compared {@code mavenPath.getFileName()}
+   * directly to the constant, which fails for subordinate hash paths. The guard now normalizes via
+   * {@code mavenPath.main().getFileName()}, matching the symmetric check used for repository metadata.
+   */
+  @Test
+  public void getCached_archetypeCatalogHashPaths_doesNotThrow() throws Exception {
+    Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
+
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(pathParser);
+
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+
+    org.sonatype.nexus.repository.view.Content content = mock(org.sonatype.nexus.repository.view.Content.class);
+    when(content.getSize()).thenReturn(40L);
+
+    FluentAsset asset = mock(FluentAsset.class);
+    when(asset.download()).thenReturn(content);
+    when(assetBuilder.find()).thenReturn(Optional.of(asset));
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("test-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+
+    for (String suffix : new String[]{".sha1", ".md5", ".sha256", ".sha512"}) {
+      MavenPath hashPath = pathParser.parsePath("archetype-catalog.xml" + suffix);
+      // Must not throw IllegalArgumentException from checkMergeHandled; hash paths bypass staleness
+      // checks and return the cached hash content directly.
+      assertThat(underTest.getCached(hashPath), notNullValue());
+    }
+  }
+
+  /**
+   * Companion check for NEXUS-47909: the main {@code archetype-catalog.xml} path itself must still be
+   * accepted by {@code checkMergeHandled}. This guards against regressions that would restrict the
+   * guard too aggressively (e.g. forgetting the {@code .main()} call entirely).
+   */
+  @Test
+  public void getCached_archetypeCatalogMainPath_doesNotThrow() throws Exception {
+    Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
+
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(pathParser);
+
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+    when(assetBuilder.find()).thenReturn(Optional.empty());
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("test-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+
+    MavenPath mainPath = pathParser.parsePath("archetype-catalog.xml");
+    // cache miss returns null, but no exception from the merge-handled guard
+    assertThat(underTest.getCached(mainPath), nullValue());
+  }
 }

@@ -17,11 +17,8 @@ import java.sql.Statement;
 
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * - Graceful handling of missing tables
  * - Compatibility with both H2 and PostgreSQL
  */
-@ExtendWith(DatabaseExtension.class)
 class ApiKeyCreatorTrackingMigrationStep_2_108Test
     extends Test5Support
 {
@@ -45,7 +41,7 @@ class ApiKeyCreatorTrackingMigrationStep_2_108Test
   @DataSessionConfiguration(daos = {})
   TestDataSessionSupplier dataSessionSupplier;
 
-  @Test
+  @DatabaseTest
   void testMigrate_addsCreatorTrackingColumns() throws Exception {
     ApiKeyCreatorTrackingMigrationStep_2_108 underTest = new ApiKeyCreatorTrackingMigrationStep_2_108();
 
@@ -70,7 +66,7 @@ class ApiKeyCreatorTrackingMigrationStep_2_108Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_idempotent() throws Exception {
     ApiKeyCreatorTrackingMigrationStep_2_108 underTest = new ApiKeyCreatorTrackingMigrationStep_2_108();
 
@@ -91,7 +87,7 @@ class ApiKeyCreatorTrackingMigrationStep_2_108Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_missingTable() throws Exception {
     ApiKeyCreatorTrackingMigrationStep_2_108 underTest = new ApiKeyCreatorTrackingMigrationStep_2_108();
 
@@ -102,7 +98,7 @@ class ApiKeyCreatorTrackingMigrationStep_2_108Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_withExistingData() throws Exception {
     ApiKeyCreatorTrackingMigrationStep_2_108 underTest = new ApiKeyCreatorTrackingMigrationStep_2_108();
 
@@ -133,7 +129,7 @@ class ApiKeyCreatorTrackingMigrationStep_2_108Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_doesNotCreateIndexes() throws Exception {
     ApiKeyCreatorTrackingMigrationStep_2_108 underTest = new ApiKeyCreatorTrackingMigrationStep_2_108();
 

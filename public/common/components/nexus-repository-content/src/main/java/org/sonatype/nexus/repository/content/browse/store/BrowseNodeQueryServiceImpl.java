@@ -138,14 +138,25 @@ public class BrowseNodeQueryServiceImpl
       selectors = emptyList();
     }
 
-    // Only check browse permission if there are no selectors
-    if (selectors.isEmpty() && !hasBrowsePermission(repositoryName, format)) {
+    final boolean canBrowseRepository = hasBrowsePermission(repositoryName, format);
+
+    if (!canBrowseRepository && selectors.isEmpty()) {
       return emptyList(); // no browse permission and no selectors -> no results
     }
 
-    Map<String, Object> filterParameters = new HashMap<>();
-    String contentFilter = buildContentAuthFilter(repository, selectors, filterParameters);
-    boolean hasJexl = selectors.stream().anyMatch(this::isJexl);
+    // PRIVILEGE HIERARCHY: Only apply SQL content selector filters if user lacks browse permission
+    // Full repository permissions take precedence over content selector restrictions
+    final Map<String, Object> filterParameters;
+    final String contentFilter;
+    if (canBrowseRepository) {
+      filterParameters = null;
+      contentFilter = null;
+    }
+    else {
+      filterParameters = new HashMap<>();
+      contentFilter = buildContentAuthFilter(repository, selectors, filterParameters);
+    }
+    final boolean hasJexl = selectors.stream().anyMatch(this::isJexl);
 
     List<BrowseNode> results;
     if (repository.getType() instanceof GroupType) {
@@ -157,7 +168,8 @@ public class BrowseNodeQueryServiceImpl
 
       // overlay member results, first-one-wins if there are any nodes with the same name
       results = members(repository)
-          .map(m -> selectByPath(m, displayPath, maxNodes, contentFilter, filterParameters, hasJexl))
+          .map(m -> selectByPath(m, displayPath, maxNodes, contentFilter, filterParameters, hasJexl,
+              canBrowseRepository))
           .flatMap(List::stream)
           .map(browseNodeEquivalence::wrap)
           .distinct()
@@ -167,7 +179,8 @@ public class BrowseNodeQueryServiceImpl
           .collect(toList());
     }
     else {
-      results = selectByPath(repository, displayPath, maxNodes, contentFilter, filterParameters, hasJexl);
+      results = selectByPath(repository, displayPath, maxNodes, contentFilter, filterParameters, hasJexl,
+          canBrowseRepository);
     }
 
     results.sort(getBrowseNodeComparator(format));
@@ -184,20 +197,20 @@ public class BrowseNodeQueryServiceImpl
       final int maxNodes,
       @Nullable final String contentFilter,
       @Nullable final Map<String, Object> filterParams,
-      final boolean hasJexl)
+      final boolean hasJexl,
+      final boolean canBrowseRepository)
   {
     List<BrowseNode> nodes = repository.optionalFacet(BrowseFacet.class)
         .map(facet -> facet.getByDisplayPath(displayPath, maxNodes, contentFilter, filterParams))
         .orElse(ImmutableList.of());
 
     if (hasJexl) {
-      // additional filtering that we couldn't do in SQL
-      String repositoryName = repository.getName();
-      String format = repository.getFormat().getValue();
-
       // PRIVILEGE HIERARCHY: If user has full browse permission, skip content selector filtering
       // Full repository permissions take precedence over content selector restrictions
-      if (!hasBrowsePermission(repositoryName, format)) {
+      if (!canBrowseRepository) {
+        // additional filtering that we couldn't do in SQL
+        String repositoryName = repository.getName();
+        String format = repository.getFormat().getValue();
         nodes = nodes.stream()
             .filter(node -> contentAuthHelper.checkPathPermissionsJexlOnly(node.getPath(), format, repositoryName))
             .collect(toList());

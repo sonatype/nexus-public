@@ -284,6 +284,96 @@ class SqlSearchServiceTest
   }
 
   /**
+   * Verifies that OrderBy returns null when distinctNameAndNamespace is true and sorting by namespace
+   */
+  @Test
+  void testSearch_distinctNameAndNamespace_withNamespaceSortReturnsNullOrderBy() {
+    SearchRequest searchRequest = SearchRequest.builder()
+        .limit(100)
+        .distinctNameAndNamespace()
+        .sortField("namespace")
+        .sortDirection(SortDirection.ASC)
+        .build();
+
+    SqlSearchQueryConditionGroup queryCondition = mockQueryCondition(searchRequest);
+    when(sqlSearchSortUtil.getSortExpression("namespace")).thenReturn(Optional.of("cs.namespace"));
+
+    SearchResult searchResult = createMockSearchResult("npm-hosted", "@scope/package", 1);
+    when(searchStore.searchComponents(anyInt(), anyInt(), any(), isNull(), isNull(), eq(true)))
+        .thenReturn(List.of(searchResult));
+
+    underTest.search(searchRequest);
+
+    verify(searchStore).searchComponents(
+        eq(100),
+        eq(0),
+        eq(queryCondition),
+        isNull(),
+        isNull(),
+        eq(true));
+  }
+
+  /**
+   * Verifies that OrderBy returns null when distinctNameAndNamespace is true and sorting by name
+   */
+  @Test
+  void testSearch_distinctNameAndNamespace_withNameSortReturnsNullOrderBy() {
+    SearchRequest searchRequest = SearchRequest.builder()
+        .limit(100)
+        .distinctNameAndNamespace()
+        .sortField("name")
+        .sortDirection(SortDirection.ASC)
+        .build();
+
+    SqlSearchQueryConditionGroup queryCondition = mockQueryCondition(searchRequest);
+    when(sqlSearchSortUtil.getSortExpression("name")).thenReturn(Optional.of("cs.search_component_name"));
+
+    SearchResult searchResult = createMockSearchResult("npm-hosted", "@scope/package", 1);
+    when(searchStore.searchComponents(anyInt(), anyInt(), any(), isNull(), isNull(), eq(true)))
+        .thenReturn(List.of(searchResult));
+
+    underTest.search(searchRequest);
+
+    verify(searchStore).searchComponents(
+        eq(100),
+        eq(0),
+        eq(queryCondition),
+        isNull(),
+        isNull(),
+        eq(true));
+  }
+
+  /**
+   * Verifies that OrderBy returns normal values when distinctNameAndNamespace is true but sorting by other field
+   */
+  @Test
+  void testSearch_distinctNameAndNamespace_withVersionSortReturnsNormalOrderBy() {
+    SearchRequest searchRequest = SearchRequest.builder()
+        .limit(100)
+        .distinctNameAndNamespace()
+        .sortField("version")
+        .sortDirection(SortDirection.DESC)
+        .build();
+
+    SqlSearchQueryConditionGroup queryCondition = mockQueryCondition(searchRequest);
+    when(sqlSearchSortUtil.getSortExpression("version")).thenReturn(Optional.of("cs.version"));
+
+    SearchResult searchResult = createMockSearchResult("npm-hosted", "@scope/package", 1);
+    when(searchStore.searchComponents(anyInt(), anyInt(), any(), eq("cs.version"), eq(SortDirection.DESC), eq(true)))
+        .thenReturn(List.of(searchResult));
+
+    underTest.search(searchRequest);
+
+    verify(searchStore).searchComponents(
+        eq(100),
+        eq(0),
+        eq(queryCondition),
+        eq("cs.version"),
+        eq(SortDirection.DESC),
+        eq(true));
+  }
+
+  /**
    * Verifies that assets for a component are filtered by the user's privileges
    */
   @Test
@@ -402,6 +492,20 @@ class SqlSearchServiceTest
     underTest.search(searchRequest);
 
     verify(searchStore).searchComponents(eq(10), eq(0), eq(queryCondition), isNull(), isNull(), eq(false));
+  }
+
+  /**
+   * Helper method to set up common mocks for expression builder and query factory
+   */
+  private SqlSearchQueryConditionGroup mockQueryCondition(final SearchRequest searchRequest) {
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    SqlSearchQueryConditionGroup queryCondition = mock(SqlSearchQueryConditionGroup.class);
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+    when(queryFactory.build(expression.get())).thenReturn(queryCondition);
+
+    return queryCondition;
   }
 
   /**

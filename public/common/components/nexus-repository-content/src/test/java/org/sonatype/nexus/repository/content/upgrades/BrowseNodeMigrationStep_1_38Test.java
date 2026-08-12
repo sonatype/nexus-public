@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.mockito.Mock;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -67,7 +67,7 @@ class BrowseNodeMigrationStep_1_38Test
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
 
-  @Test
+  @DatabaseTest
   void testIndexCreation() throws Exception {
     ContentRepositoryData repo = createContentRepository(generateContentRepository());
     insertBrowseNode(repo.contentRepositoryId(), 0, "jquery", "/jquery/");
@@ -83,7 +83,7 @@ class BrowseNodeMigrationStep_1_38Test
         "Index should exist after migration");
   }
 
-  @Test
+  @DatabaseTest
   void testIdempotentMigration() throws Exception {
     ContentRepositoryData repo = createContentRepository(generateContentRepository());
     insertBrowseNode(repo.contentRepositoryId(), 0, "jquery", "/jquery/");
@@ -103,7 +103,7 @@ class BrowseNodeMigrationStep_1_38Test
         "Index should still exist after second migration");
   }
 
-  @Test
+  @DatabaseTest
   void testNonExistentTable() throws Exception {
     when(testFormat.getValue()).thenReturn("nonexistent");
     BrowseNodeMigrationStep_1_38 step = new BrowseNodeMigrationStep_1_38(Collections.singletonList(testFormat));
@@ -116,7 +116,7 @@ class BrowseNodeMigrationStep_1_38Test
         "Index should not be created for non-existent table");
   }
 
-  @Test
+  @DatabaseTest
   void testMultipleFormats() throws Exception {
     ContentRepositoryData repo = createContentRepository(generateContentRepository());
     insertBrowseNode(repo.contentRepositoryId(), 0, "jquery", "/jquery/");
@@ -132,7 +132,7 @@ class BrowseNodeMigrationStep_1_38Test
         "Test index should exist after migration");
   }
 
-  @Test
+  @DatabaseTest
   void testEmptyTable() throws Exception {
     createContentRepository(generateContentRepository());
 

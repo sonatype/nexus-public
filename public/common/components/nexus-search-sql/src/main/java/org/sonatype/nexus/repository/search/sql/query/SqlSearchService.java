@@ -341,6 +341,15 @@ public class SqlSearchService
       sortDirection = sqlSearchSortUtil.getSortDirection(sortField).orElse(null);
     }
 
+    if (searchRequest.isDistinctNameAndNamespace()) {
+      String column = sortColumnName.orElse(null);
+      if ("cs.namespace".equals(column) || "cs.search_component_name".equals(column)) {
+        // Ordering is already applied via DISTINCT ON columns, no need to duplicate in ORDER BY.
+        // isDistinctNameAndNamespace is only used on npm search which not accept custom sortDirection
+        return new OrderBy(null, null);
+      }
+    }
+
     return new OrderBy(sortColumnName.orElse(null), sortDirection);
   }
 

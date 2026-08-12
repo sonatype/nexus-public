@@ -28,7 +28,7 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.UpgradeTaskScheduler;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.mockito.Mock;
 
 import static java.util.UUID.randomUUID;
@@ -65,7 +65,7 @@ class BrowseNodeMigrationStep_2_3Test
     store = sessionRule.getDataStore(DEFAULT_DATASTORE_NAME);
   }
 
-  @Test
+  @DatabaseTest
   void testMigrationEmptyRepository() throws Exception {
 
     try (Connection conn = store.openConnection()) {
@@ -74,7 +74,7 @@ class BrowseNodeMigrationStep_2_3Test
     verify(upgradeTaskScheduler, never()).schedule(configuration);
   }
 
-  @Test
+  @DatabaseTest
   void testMigration() throws Exception {
     ContentRepositoryData contentRepositoryData = generateContentRepository();
     createRepository(contentRepositoryData);
@@ -87,7 +87,7 @@ class BrowseNodeMigrationStep_2_3Test
     cleanContentRepository(contentRepositoryData);
   }
 
-  @Test
+  @DatabaseTest
   void testMigrationWithNonExistingTable() throws Exception {
     OssBrowseNodeMigrationStep_2_3 ossUnderTest =
         spy(new OssBrowseNodeMigrationStep_2_3(taskScheduler, upgradeTaskScheduler));

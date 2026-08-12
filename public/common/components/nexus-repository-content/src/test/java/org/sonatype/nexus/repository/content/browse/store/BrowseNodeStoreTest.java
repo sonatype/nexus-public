@@ -34,7 +34,7 @@ import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -151,7 +151,7 @@ class BrowseNodeStoreTest
         sessionRule, "nexus", TestBrowseNodeDAO.class);
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesWithRangeBasedApproach() {
     // Verify we have nodes before deletion
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -172,14 +172,14 @@ class BrowseNodeStoreTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesEmptyRepository() {
     // Delete from empty repository
     boolean deleted = browseNodeStore.deleteBrowseNodes(999);
     assertThat(deleted, is(false));
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesWithLargeBatches() {
     // Create many more nodes to test batching behavior
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -211,7 +211,7 @@ class BrowseNodeStoreTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesPartialDeletion() {
     // Create additional nodes with gaps in node_id sequence
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {

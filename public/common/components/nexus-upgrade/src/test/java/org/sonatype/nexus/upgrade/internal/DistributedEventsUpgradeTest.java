@@ -16,23 +16,20 @@ import java.sql.Connection;
 
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-@ExtendWith(DatabaseExtension.class)
 class DistributedEventsUpgradeTest
     extends Test5Support
 {
   @DataSessionConfiguration(daos = {})
   TestDataSessionSupplier supplier;
 
-  @Test
+  @DatabaseTest
   void shouldBeNoOp() throws Exception {
     DistributedEventsUpgrade underTest = new DistributedEventsUpgrade();
     try (Connection conn = supplier.openConnection()) {

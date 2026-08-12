@@ -36,7 +36,7 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
@@ -158,7 +158,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testPlainBrowsing() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -205,7 +205,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testFilteredBrowsing() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -244,7 +244,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testComponentAssetDeletesNullify() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -305,7 +305,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testRepositoryDeleteCascades() {
     assumeFalse(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -340,7 +340,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testFilterClauseIsolation() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -351,7 +351,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testGetByRequestPath() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -362,7 +362,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteByAssetIdAndPath() {
     assumeTrue(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -375,7 +375,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testGetNodeParents() {
     assumeTrue(isPostgreSQL());
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
@@ -390,7 +390,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testGetMaxNodeId() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -405,7 +405,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesByIdRange() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -430,7 +430,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesByIdRangeEmptyRange() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -447,7 +447,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testDeleteBrowseNodesByIdRangeNonExistentRepository() {
     try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
       BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
@@ -460,7 +460,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testTrimBrowseNodes_removesOrphanedDirectoriesWithComponentId() {
     // NEXUS-45497: Test that trimBrowseNodes removes orphaned directory nodes even when they have component_id set
     // This simulates the scenario where duplicate RPMs are uploaded to different paths and one is deleted
@@ -537,7 +537,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testTrimBrowseNodes_preservesDirectoriesWithChildren() {
     // Test that trimBrowseNodes does NOT remove directory nodes that have children
     // but DOES remove orphaned nodes like alpha (no asset, no children) and betaTwo (component-only node)
@@ -571,7 +571,7 @@ class BrowseNodeDAOTest
     }
   }
 
-  @Test
+  @DatabaseTest
   void testTrimBrowseNodes_preservesNodesWithAssets() {
     // Test that trimBrowseNodes does NOT remove nodes that have asset_id set
     // We'll use the existing betaThree node which already has an asset

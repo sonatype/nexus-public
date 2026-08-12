@@ -375,7 +375,7 @@ public class MavenContentGroupFacetImpl
   private void checkMergeHandled(final MavenPath mavenPath) {
     checkArgument(
         getRepository().facet(MavenContentFacet.class).getMavenPathParser().isRepositoryMetadata(mavenPath)
-            || mavenPath.getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME),
+            || mavenPath.main().getFileName().equals(Constants.ARCHETYPE_CATALOG_FILENAME),
         "Not handled by Maven2GroupFacet merge: %s",
         mavenPath);
   }

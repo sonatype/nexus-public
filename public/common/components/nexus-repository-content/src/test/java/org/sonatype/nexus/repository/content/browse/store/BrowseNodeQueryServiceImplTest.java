@@ -158,13 +158,44 @@ class BrowseNodeQueryServiceImplTest
   }
 
   @Test
-  void testContentSelectorsAppliedEvenWithBrowsePermission() {
+  void testBrowsePermissionBypassesCselSqlFilter() {
+    BrowseNode mockNode1 = mock(BrowseNode.class);
+    BrowseNode mockNode2 = mock(BrowseNode.class);
+
+    // Mock should receive null as contentFilter (no SQL filtering)
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq(null), any()))
+        .thenReturn(new ArrayList<>(asList(mockNode1, mockNode2)));
+
+    // User has full browse permission
+    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(true);
+
+    // Content selectors are active
+    SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
+    lenient().when(seclSelector.getType()).thenReturn("csel");
+    when(selectorManager.browseActive(anyList(), anyList())).thenReturn(asList(seclSelector));
+
+    // This should NOT be called since user has browse permission
+    lenient().when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
+        .thenReturn("path_filter");
+
+    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
+
+    // User with browse permission should see ALL content (both nodes), SQL filter bypassed
+    assertThat(((List<BrowseNode>) result).size(), is(2));
+  }
+
+  @Test
+  void testNoBrowsePermissionAppliesCselSqlFilter() {
     BrowseNode mockNode = mock(BrowseNode.class);
 
+    // Mock should receive the SQL filter
     when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq("path_filter"), any()))
         .thenReturn(new ArrayList<>(asList(mockNode)));
 
-    // But content selectors are active and should be applied
+    // User has NO browse permission
+    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
+
+    // Content selectors are active
     SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
     when(seclSelector.getType()).thenReturn("csel");
     when(selectorManager.browseActive(anyList(), anyList())).thenReturn(asList(seclSelector));
@@ -172,10 +203,108 @@ class BrowseNodeQueryServiceImplTest
     when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
         .thenReturn("path_filter");
 
-    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("team-a"), 100);
+    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
 
-    // Content selectors should be applied via SQL filter, restricting results
+    // User without browse permission should have SQL filter applied
     assertThat(((List<BrowseNode>) result).size(), is(1));
+  }
+
+  @Test
+  void testBrowsePermissionBypassesBothCselAndJexlFilters() {
+    BrowseNode mockNode1 = mock(BrowseNode.class);
+    lenient().when(mockNode1.getPath()).thenReturn("/batman/file1.txt");
+    BrowseNode mockNode2 = mock(BrowseNode.class);
+    lenient().when(mockNode2.getPath()).thenReturn("/superman/file2.txt");
+
+    // Mock should receive null as contentFilter (no SQL filtering)
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq(null), any()))
+        .thenReturn(new ArrayList<>(asList(mockNode1, mockNode2)));
+
+    // User has full browse permission
+    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(true);
+
+    // Mix of JEXL and CSEL selectors
+    SelectorConfiguration jexlSelector = mock(SelectorConfiguration.class);
+    when(jexlSelector.getType()).thenReturn("jexl");
+
+    SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
+    lenient().when(seclSelector.getType()).thenReturn("csel");
+
+    when(selectorManager.browseActive(anyList(), anyList()))
+        .thenReturn(asList(jexlSelector, seclSelector));
+
+    lenient().when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
+        .thenReturn("path_filter");
+
+    // JEXL filtering should NOT be called since user has browse permission
+    lenient().when(contentAuthHelper.checkPathPermissionsJexlOnly(anyString(), anyString(), anyString()))
+        .thenReturn(false); // Would block if called
+
+    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
+
+    // User with browse permission should see ALL content, both SQL and JEXL filters bypassed
+    assertThat(((List<BrowseNode>) result).size(), is(2));
+  }
+
+  @Test
+  void testNoBrowsePermissionAppliesBothFilters() {
+    BrowseNode mockNode1 = mock(BrowseNode.class);
+    when(mockNode1.getPath()).thenReturn("/batman/file1.txt");
+    BrowseNode mockNode2 = mock(BrowseNode.class);
+    when(mockNode2.getPath()).thenReturn("/superman/file2.txt");
+
+    // Mock receives SQL filter and returns both nodes
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq("path_filter"), any()))
+        .thenReturn(new ArrayList<>(asList(mockNode1, mockNode2)));
+
+    // User has NO browse permission
+    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(false);
+
+    // Mix of JEXL and CSEL selectors
+    SelectorConfiguration jexlSelector = mock(SelectorConfiguration.class);
+    when(jexlSelector.getType()).thenReturn("jexl");
+
+    SelectorConfiguration seclSelector = mock(SelectorConfiguration.class);
+    lenient().when(seclSelector.getType()).thenReturn("csel");
+
+    when(selectorManager.browseActive(anyList(), anyList()))
+        .thenReturn(asList(jexlSelector, seclSelector));
+
+    when(selectorFilterBuilder.buildFilter(anyString(), anyString(), anyList(), any()))
+        .thenReturn("path_filter");
+
+    // JEXL filter allows only first node
+    when(contentAuthHelper.checkPathPermissionsJexlOnly(eq("/batman/file1.txt"), anyString(), anyString()))
+        .thenReturn(true);
+    when(contentAuthHelper.checkPathPermissionsJexlOnly(eq("/superman/file2.txt"), anyString(), anyString()))
+        .thenReturn(false);
+
+    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
+
+    // Both SQL and JEXL filters applied, only first node passes JEXL
+    assertThat(((List<BrowseNode>) result).size(), is(1));
+    assertThat(((List<BrowseNode>) result).get(0), is(mockNode1));
+  }
+
+  @Test
+  void testBrowsePermissionWithNoSelectors() {
+    BrowseNode mockNode1 = mock(BrowseNode.class);
+    BrowseNode mockNode2 = mock(BrowseNode.class);
+
+    // No content filter should be passed (null)
+    when(browseFacet.getByDisplayPath(anyList(), anyInt(), eq(null), any()))
+        .thenReturn(new ArrayList<>(asList(mockNode1, mockNode2)));
+
+    // User has full browse permission
+    when(securityHelper.anyPermitted(any(RepositoryViewPermission.class))).thenReturn(true);
+
+    // No content selectors configured
+    when(selectorManager.browseActive(anyList(), anyList())).thenReturn(emptyList());
+
+    Iterable<BrowseNode> result = underTest.getByPath(repository, asList("test"), 100);
+
+    // User with browse permission and no selectors should see all content
+    assertThat(((List<BrowseNode>) result).size(), is(2));
   }
 
   @Test

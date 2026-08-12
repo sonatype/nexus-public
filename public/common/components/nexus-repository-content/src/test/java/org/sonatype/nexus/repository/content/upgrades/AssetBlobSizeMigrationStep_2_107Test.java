@@ -19,18 +19,17 @@ import java.util.List;
 import org.sonatype.goodies.testsupport.Test5Support;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.testdb.DataSessionConfiguration;
-import org.sonatype.nexus.testdb.DatabaseExtension;
+
 import org.sonatype.nexus.testdb.TestDataSessionSupplier;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.sonatype.nexus.testdb.DatabaseTest;
+
 import org.mockito.Mock;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(DatabaseExtension.class)
 class AssetBlobSizeMigrationStep_2_107Test
     extends Test5Support
 {
@@ -48,7 +47,7 @@ class AssetBlobSizeMigrationStep_2_107Test
   @Mock
   private Format rawFormat;
 
-  @Test
+  @DatabaseTest
   void testMigrate_addsColumnToAssetTables() throws Exception {
     when(maven2Format.getValue()).thenReturn("maven2");
     when(npmFormat.getValue()).thenReturn("npm");
@@ -74,7 +73,7 @@ class AssetBlobSizeMigrationStep_2_107Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_idempotent() throws Exception {
     when(maven2Format.getValue()).thenReturn("maven2");
     when(npmFormat.getValue()).thenReturn("npm");
@@ -102,7 +101,7 @@ class AssetBlobSizeMigrationStep_2_107Test
     }
   }
 
-  @Test
+  @DatabaseTest
   void testMigrate_noTables() throws Exception {
     when(maven2Format.getValue()).thenReturn("maven2");
     AssetBlobSizeMigrationStep_2_107 underTest = new AssetBlobSizeMigrationStep_2_107(List.of(maven2Format));

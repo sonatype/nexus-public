@@ -20,7 +20,7 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskState;
 
-import org.junit.jupiter.api.Test;
+import org.sonatype.nexus.testdb.DatabaseTest;
 import org.springframework.test.context.TestPropertySource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.hasSize;
 class QuartzJobKeyUnificationTaskTest
     extends QuartzJobKeyUnificationTaskTestSupport
 {
-  @Test
+  @DatabaseTest
   void shouldMigrateNonRunningTasks() {
     // Create legacy tasks with mismatched job_name and config_id
     QuartzTaskInfo task1 = createLegacyTask("Legacy Task 1");
@@ -64,7 +64,7 @@ class QuartzJobKeyUnificationTaskTest
     assertTaskUnified(migratedTask3);
   }
 
-  @Test
+  @DatabaseTest
   void shouldSkipRunningTaskAndMigrateAfterCompletion() throws Exception {
     // Create a legacy task
     QuartzTaskInfo legacyTask = createLegacyTask("Running Legacy Task");
@@ -95,7 +95,7 @@ class QuartzJobKeyUnificationTaskTest
     assertTaskUnified(migratedTask);
   }
 
-  @Test
+  @DatabaseTest
   void shouldSkipAlreadyMigratedTasks() {
     // Create tasks WITHOUT the mock - they get unified IDs by default
     QuartzTaskInfo task1 = createNamedTask("Already Unified Task 1");
