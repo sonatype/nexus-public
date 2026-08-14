@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.apt.internal.hosted;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -27,14 +28,21 @@ import java.util.zip.GZIPOutputStream;
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 
 import com.google.common.base.Charsets;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.BZ2;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.GZ;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.XZ;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
-import org.apache.commons.io.output.CountingOutputStream;
-import org.bouncycastle.util.io.TeeOutputStream;
+import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Stores a set of temp files, automatically compressing each into a GZIP, BZ2 and plain format.
+ * Stores a set of plain-text temp files keyed by distribution/component/architecture.
+ * Compression (gz/bz2/xz) is intentionally not handled here — callers are expected
+ * to compress from {@link FileMetadata#plainSupplier()} on demand, immediately
+ * consume the compressed temp file, and delete it right after. This avoids holding
+ * multiple compressor instances (particularly XZ/LZMA2, which is memory heavy)
+ * alive at once, and avoids caching compressed variants that may never be read.
  *
  * @since 3.17
  */
@@ -52,10 +60,7 @@ public class CompressingTempFileStore
       }
       FileHolder holder = new FileHolder();
       holdersByKey.put(key, holder);
-      return new OutputStreamWriter(new TeeOutputStream(
-          new TeeOutputStream(new GZIPOutputStream(Files.newOutputStream(holder.gzTempFile)),
-              new BZip2CompressorOutputStream(Files.newOutputStream(holder.bzTempFile))),
-          Files.newOutputStream(holder.plainTempFile)), Charsets.UTF_8);
+      return new OutputStreamWriter(Files.newOutputStream(holder.plainTempFile), Charsets.UTF_8);
     }
     catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -87,8 +92,7 @@ public class CompressingTempFileStore
     List<Path> notDeletedFiles = new LinkedList<>();
 
     for (FileHolder holder : holdersByKey.values()) {
-      deleteFile(holder.bzTempFile, notDeletedFiles);
-      deleteFile(holder.gzTempFile, notDeletedFiles);
+      deleteFile(holder.plainTempFile, notDeletedFiles);
     }
 
     if (!notDeletedFiles.isEmpty()) {
@@ -155,59 +159,59 @@ public class CompressingTempFileStore
 
   public static class FileMetadata
   {
+    /**
+     * Low-memory XZ preset — preset 6 (xz-java default) costs ~100MB per encoder,
+     * preset 9 costs ~700MB+. Index files are text and don't need higher presets.
+     */
+    private static final int XZ_PRESET = 0;
+
     private final FileHolder holder;
 
     private FileMetadata(final FileHolder holder) {
       this.holder = holder;
     }
 
-    public long bzSize() {
-      return holder.bzStream.getByteCount();
+    public Path plainFile() {
+      return holder.plainTempFile;
     }
 
-    public InputStreamSupplier bzSupplier() {
-      return () -> Files.newInputStream(holder.bzTempFile);
+    /**
+     * Compresses the plain file to a new temp file using a single compressor instance.
+     * The caller is responsible for deleting the returned file once it's been consumed.
+     */
+    public Path compressToTemp(final String type) throws IOException {
+      Path tempFile = Files.createTempFile("", "");
+      try (OutputStream fileOut = Files.newOutputStream(tempFile);
+          OutputStream compressorOut = wrap(fileOut, type)) {
+        Files.copy(holder.plainTempFile, compressorOut);
+      }
+      catch (IOException e) {
+        Files.deleteIfExists(tempFile);
+        throw e;
+      }
+      return tempFile;
     }
 
-    public long gzSize() {
-      return holder.gzStream.getByteCount();
-    }
-
-    public InputStreamSupplier gzSupplier() {
-      return () -> Files.newInputStream(holder.gzTempFile);
-    }
-
-    public long plainSize() {
-      return holder.plainStream.getByteCount();
-    }
-
-    public InputStreamSupplier plainSupplier() {
-      return () -> Files.newInputStream(holder.plainTempFile);
+    private static OutputStream wrap(final OutputStream out, final String type) throws IOException {
+      switch (type) {
+        case GZ:
+          return new GZIPOutputStream(out);
+        case BZ2:
+          return new BZip2CompressorOutputStream(out);
+        case XZ:
+          return new XZCompressorOutputStream(out, XZ_PRESET);
+        default:
+          throw new IllegalArgumentException("Unsupported compression type: " + type);
+      }
     }
   }
 
   private static class FileHolder
   {
-    final CountingOutputStream plainStream;
-
     final Path plainTempFile;
 
-    final CountingOutputStream gzStream;
-
-    final Path gzTempFile;
-
-    final CountingOutputStream bzStream;
-
-    final Path bzTempFile;
-
-    public FileHolder() throws IOException {
-      super();
+    FileHolder() throws IOException {
       this.plainTempFile = Files.createTempFile("", "");
-      this.plainStream = new CountingOutputStream(Files.newOutputStream(plainTempFile));
-      this.gzTempFile = Files.createTempFile("", "");
-      this.gzStream = new CountingOutputStream(Files.newOutputStream(gzTempFile));
-      this.bzTempFile = Files.createTempFile("", "");
-      this.bzStream = new CountingOutputStream(Files.newOutputStream(bzTempFile));
     }
   }
 }
