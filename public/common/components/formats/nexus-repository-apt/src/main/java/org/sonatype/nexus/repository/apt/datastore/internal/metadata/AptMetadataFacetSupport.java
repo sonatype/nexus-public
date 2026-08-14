@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.apt.datastore.internal.metadata;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,6 +59,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.BZ2;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.GZ;
+import static org.sonatype.nexus.repository.apt.internal.AptProperties.XZ;
 import static org.apache.http.protocol.HttpDateGenerator.PATTERN_RFC1123;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.INRELEASE;
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.RELEASE;
@@ -324,12 +327,27 @@ public abstract class AptMetadataFacetSupport
       final StringBuilder md5Builder,
       final StringBuilder sha256Builder) throws IOException
   {
-    putPackageIndexWithSignatures(aptFacet, distribution, component, arch, StringUtils.EMPTY, metadata.plainSupplier(),
-        metadata.plainSize(), AptMimeTypes.TEXT, md5Builder, sha256Builder);
-    putPackageIndexWithSignatures(aptFacet, distribution, component, arch, GZ, metadata.gzSupplier(),
-        metadata.gzSize(), AptMimeTypes.GZIP, md5Builder, sha256Builder);
-    putPackageIndexWithSignatures(aptFacet, distribution, component, arch, BZ2, metadata.bzSupplier(),
-        metadata.bzSize(), AptMimeTypes.BZIP, md5Builder, sha256Builder);
+    Path plain = metadata.plainFile();
+    putPackageIndexWithSignatures(aptFacet, distribution, component, arch, StringUtils.EMPTY,
+        () -> Files.newInputStream(plain),Files.size(plain), AptMimeTypes.TEXT, md5Builder, sha256Builder);
+
+    Path gz = metadata.compressToTemp(GZ);
+    try {
+      putPackageIndexWithSignatures(aptFacet, distribution, component, arch, GZ,
+          () -> Files.newInputStream(gz), Files.size(gz), AptMimeTypes.GZIP, md5Builder, sha256Builder);
+    }
+    finally {
+      Files.deleteIfExists(gz);
+    }
+
+    Path xz = metadata.compressToTemp(XZ);
+    try {
+      putPackageIndexWithSignatures(aptFacet, distribution, component, arch, XZ,
+          () -> Files.newInputStream(xz), Files.size(xz), AptMimeTypes.XZ, md5Builder, sha256Builder);
+    }
+    finally {
+      Files.deleteIfExists(xz);
+    }
   }
 
   /**
