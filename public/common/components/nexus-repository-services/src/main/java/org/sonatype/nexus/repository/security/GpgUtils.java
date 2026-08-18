@@ -136,12 +136,12 @@ public class GpgUtils
    */
   public static byte[] signExternal(
       final InputStream input,
-      final String secretKey,
-      @Nullable final String passphrase) throws IOException
+      final PGPSecretKey signKey,
+      final PGPPrivateKey privateKey) throws IOException
   {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
-      PGPSignatureGenerator sigGenerator = initPgpSignatureGenerator(secretKey, passphrase, BINARY_DOCUMENT);
+      PGPSignatureGenerator sigGenerator = buildSignatureGenerator(signKey, privateKey, BINARY_DOCUMENT);
       try (ArmoredOutputStream aOut = new ArmoredOutputStream(buffer)) {
         BCPGOutputStream bOut = new BCPGOutputStream(aOut);
         sigGenerator.update(ByteStreams.toByteArray(input));
@@ -164,13 +164,12 @@ public class GpgUtils
    */
   public static byte[] signInline(
       final String input,
-      final String secretKey,
-      final String passphrase) throws IOException
+      final PGPSecretKey signKey,
+      final PGPPrivateKey privateKey) throws IOException
   {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
-      PGPSecretKey signKey = readSecretKey(secretKey);
-      PGPSignatureGenerator sigGenerator = initPgpSignatureGenerator(secretKey, passphrase, CANONICAL_TEXT_DOCUMENT);
+      PGPSignatureGenerator sigGenerator = buildSignatureGenerator(signKey, privateKey, CANONICAL_TEXT_DOCUMENT);
 
       Iterator<String> userIds = signKey.getUserIDs();
       if (userIds.hasNext()) {
@@ -218,7 +217,7 @@ public class GpgUtils
    * @param secretKey the GPG secret/private key.
    * @return the {@link PGPSecretKey} object.
    */
-  private static PGPSecretKey readSecretKey(final String secretKey) throws IOException {
+  public static PGPSecretKey readSecretKey(final String secretKey) throws IOException {
     try (InputStream decoderStream = PGPUtil.getDecoderStream(
         new ByteArrayInputStream(secretKey.getBytes(UTF_8)))) {
       PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(
@@ -243,14 +242,11 @@ public class GpgUtils
     throw new IllegalStateException("Can't find signing key in key ring.");
   }
 
-  private static PGPSignatureGenerator initPgpSignatureGenerator(
-      final String secretKey,
-      final String passphrase,
-      final int pgpSignature) throws IOException, PGPException
+  private static PGPSignatureGenerator buildSignatureGenerator(
+      final PGPSecretKey signKey,
+      final PGPPrivateKey privateKey,
+      final int pgpSignature) throws PGPException
   {
-    PBESecretKeyDecryptor keyDecryptor = getSecretKeyDecryptor(passphrase);
-    PGPSecretKey signKey = readSecretKey(secretKey);
-    PGPPrivateKey privateKey = signKey.extractPrivateKey(keyDecryptor);
     PGPSignatureGenerator sigGenerator = new PGPSignatureGenerator(
         new JcaPGPContentSignerBuilder(signKey.getPublicKey().getAlgorithm(), SHA256)
             .setProvider(BC_PROVIDER));
@@ -258,7 +254,7 @@ public class GpgUtils
     return sigGenerator;
   }
 
-  private static PBESecretKeyDecryptor getSecretKeyDecryptor(final String passphrase) throws PGPException {
+  public static PBESecretKeyDecryptor getSecretKeyDecryptor(final String passphrase) throws PGPException {
     char[] pass = StringUtils.isNotBlank(passphrase) ? passphrase.toCharArray() : EMPTY_PASSPHRASE;
     return new JcePBESecretKeyDecryptorBuilder()
         .setProvider(BC_PROVIDER)

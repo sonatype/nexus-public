@@ -35,7 +35,11 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.BCPGOutputStream;
+import org.bouncycastle.openpgp.PGPException;
+import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
+import org.bouncycastle.openpgp.PGPSecretKey;
+import org.bouncycastle.openpgp.operator.PBESecretKeyDecryptor;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -52,6 +56,9 @@ public class AptSigningFacet
     extends FacetSupport
 {
   public static final String CONFIG_KEY = "aptSigning";
+
+  private volatile PGPPrivateKey cachedPrivateKey;
+  private volatile PGPSecretKey cachedSecretKey;
 
   @VisibleForTesting
   static class Config
@@ -103,13 +110,33 @@ public class AptSigningFacet
     return new Content(new BytesPayload(buffer.toByteArray(), AptMimeTypes.PUBLICKEY));
   }
 
+  private synchronized void ensureKeysLoaded() throws IOException, PGPException {
+    if (cachedPrivateKey == null) {
+      PBESecretKeyDecryptor keyDecryptor = GpgUtils.getSecretKeyDecryptor(config.passphrase);
+      cachedSecretKey = GpgUtils.readSecretKey(config.keypair);
+      cachedPrivateKey = cachedSecretKey.extractPrivateKey(keyDecryptor);
+    }
+  }
+
   public byte[] signInline(final String input) throws IOException {
-    return GpgUtils.signInline(input, config.keypair, config.passphrase);
+    try {
+      ensureKeysLoaded();
+    }
+    catch (PGPException e) {
+      throw new RuntimeException(e); // NOSONAR
+    }
+    return GpgUtils.signInline(input, cachedSecretKey, cachedPrivateKey);
   }
 
   public byte[] signExternal(final String input) throws IOException {
+    try {
+      ensureKeysLoaded();
+    }
+    catch (PGPException e) {
+      throw new RuntimeException(e); // NOSONAR
+    }
     try (InputStream is = IOUtils.toInputStream(input, StandardCharsets.UTF_8)) {
-      return GpgUtils.signExternal(is, config.keypair, config.passphrase);
+      return GpgUtils.signExternal(is, cachedSecretKey, cachedPrivateKey);
     }
   }
 }
