@@ -74,6 +74,7 @@ import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_DISTRIB
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_INDEX_SECTION;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_NAME;
 import static org.sonatype.nexus.repository.apt.internal.AptProperties.P_PACKAGE_VERSION;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 
 /**
  * Apt content facet
@@ -170,12 +171,10 @@ public class AptContentFacetImpl
       final Payload payload,
       @Nullable final PackageInfo packageInfo) throws IOException
   {
-    String normalizedPath = normalizeAssetPath(path);
-
     try (TempBlob tempBlob = blobs().ingest(payload, AptFacetHelper.hashAlgorithms)) {
-      return isDebPackageContentType(normalizedPath)
-          ? findOrCreateDebAsset(normalizedPath, tempBlob, packageInfo)
-          : findOrCreateMetadataAsset(tempBlob, normalizedPath);
+      return isDebPackageContentType(path)
+          ? findOrCreateDebAsset(path, tempBlob, packageInfo)
+          : findOrCreateMetadataAsset(tempBlob, path);
     }
   }
 
@@ -240,15 +239,33 @@ public class AptContentFacetImpl
 
     // Check if asset already exists with CacheInfo (from upstream passthrough)
     Optional<FluentAsset> existing = assets().path(normalizedPath).find();
-    boolean hadCacheInfo = existing.isPresent() &&
-        existing.get().attributes().contains(CacheInfo.CACHE);
+    boolean hadCacheInfo = false;
+    boolean contentChanged = true;
+    FluentAsset asset = null;
+    if (existing.isPresent()) {
+      asset = existing.get();
+      hadCacheInfo = asset.attributes().contains(CacheInfo.CACHE);
 
-    // Save the asset with new blob
-    FluentAsset asset = assets()
+    contentChanged = asset.blob()
+        .map(existingBlob -> {
+          String existingSha256 = existingBlob.checksums().get(HashAlgorithm.SHA256.name());
+          String newSha256 = tempBlob.getHashes().get(HashAlgorithm.SHA256).toString();
+          return existingSha256 == null || !existingSha256.equals(newSha256);
+        })
+        .orElse(true);
+    }
+
+    if (contentChanged || asset == null) {
+      // Save the asset with new blob
+      log.debug("Metadata asset changed, updating blob: {}", path);
+      asset = assets()
         .path(normalizedPath)
         .blob(tempBlob)
         .save();
-
+    } else {
+      log.debug("Metadata asset unchanged, skipping blob update: {}", path);
+    }
+    
     // For generated metadata (proxy signing mode):
     // 1. Clear CacheInfo if it exists (from upstream passthrough)
     // 2. Always set lastModified to NOW (as millis) for proper staleness tracking
