@@ -116,7 +116,13 @@ public class AptHostedHandler
 
   private boolean isMetadataRebuildRequired(final String path, final AptContentFacet contentFacet) {
     if (path.startsWith("dists")) {
-      String inReleasePath = "dists/" + contentFacet.getDistribution() + "/" + INRELEASE;
+      // Rebuild if metadata for the requested distribution is missing.
+      String[] parts = path.split("/");
+      if (parts.length < 2) {
+        return false;
+      }
+      String distribution = parts[1];
+      String inReleasePath = "dists/" + distribution + "/" + INRELEASE;
       return contentFacet.get(inReleasePath).isEmpty();
     }
     return false;
