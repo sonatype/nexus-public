@@ -35,8 +35,18 @@ public final class AptProperties
 
   public static final String P_PACKAGE_VERSION = "package_version";
 
+  public static final String P_DISTRIBUTION = "distribution";
+
+  public static final String P_DISTRIBUTION_HELP_TEXT = "Comma-separated codenames (e.g. `trixie,forky`). If left blank, repository settings will be used.";
+
+  public static final String P_COMPONENT = "component";
+
+  public static final String P_COMPONENT_HELP_TEXT = "Component name (e.g. `main`, `contrib` or `non-free`). If left blank, `main` will be used.";
+
   // Apt supported metadata archive file extensions
   public static final String GZ = ".gz";
 
   public static final String BZ2 = ".bz2";
+
+  public static final String XZ = ".xz";
 }

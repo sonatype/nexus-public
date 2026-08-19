@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -49,6 +50,8 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
 import org.sonatype.nexus.repository.apt.internal.gpg.AptSigningFacet;
 import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore.DistComponentArchKey;
+import org.sonatype.nexus.repository.apt.internal.hosted.CompressingTempFileStore.FileMetadata;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -117,13 +120,6 @@ public class AptProxyMetadataFacet
    * Length of hash prefix to display in debug logs (first 8 hex characters).
    */
   private static final int HASH_PREFIX_LENGTH = 8;
-
-  /**
-   * Separator for composite keys (component|architecture) in CompressingTempFileStore.
-   */
-  private static final String SLICE_KEY_SEPARATOR = "|";
-
-  private static final String SLICE_KEY_SEPARATOR_PATTERN = "\\|";
 
   private static final Comparator<PackageEntry> STABLE_COMPARATOR = Comparator
       .comparing(PackageEntry::packageName)
@@ -699,7 +695,7 @@ public class AptProxyMetadataFacet
               slice.architecture());
 
           // Write with deterministic ordering - use composite key for store
-          String storeKey = slice.component() + SLICE_KEY_SEPARATOR + slice.architecture();
+          DistComponentArchKey storeKey = new DistComponentArchKey(distribution, slice.component(), slice.architecture());
           Writer writer = writersBySlice.computeIfAbsent(slice, k -> store.openOutput(storeKey));
           for (PackageEntry entry : sortedEntries) {
             writer.write(entry.indexSection());
@@ -713,13 +709,17 @@ public class AptProxyMetadataFacet
         }
       }
 
-      // Store package index files - parse composite key to get component and arch
-      for (Map.Entry<String, CompressingTempFileStore.FileMetadata> entry : store.getFiles().entrySet()) {
-        String[] parts = entry.getKey().split(SLICE_KEY_SEPARATOR_PATTERN);
-        String component = parts[0];
-        String arch = parts[1];
-        storePackageIndexFiles(aptFacet, distribution, component, arch, entry.getValue(),
+      // Store package index files
+      Map<String, Map<String, Map<String, FileMetadata>>> pkgIndexes = store.getFiles();
+      for (Entry<String, Map<String, Map<String, FileMetadata>>> distEntry : pkgIndexes.entrySet()) {
+          for (Entry<String, Map<String, FileMetadata>> componentEntry : distEntry.getValue().entrySet()) {
+          String component = componentEntry.getKey();
+          for (Entry<String, FileMetadata> archEntry : componentEntry.getValue().entrySet()) {
+            String arch = archEntry.getKey();
+            storePackageIndexFiles(aptFacet, distribution, component, arch, archEntry.getValue(),
             md5Builder, sha256Builder);
+          }
+        }
       }
     }
 
@@ -784,7 +784,7 @@ public class AptProxyMetadataFacet
 
           architectures.add(arch);
           // Use composite key with DEFAULT_COMPONENT
-          String storeKey = DEFAULT_COMPONENT + SLICE_KEY_SEPARATOR + arch;
+          DistComponentArchKey storeKey = new DistComponentArchKey(distribution, DEFAULT_COMPONENT, arch);
           Writer writer = writersByArch.computeIfAbsent(arch, k -> store.openOutput(storeKey));
           for (PackageEntry entry : sortedEntries) {
             writer.write(entry.indexSection());
@@ -798,13 +798,17 @@ public class AptProxyMetadataFacet
         }
       }
 
-      // Store package index files - parse composite key to get component and arch
-      for (Map.Entry<String, CompressingTempFileStore.FileMetadata> entry : store.getFiles().entrySet()) {
-        String[] parts = entry.getKey().split(SLICE_KEY_SEPARATOR_PATTERN);
-        String component = parts[0];
-        String arch = parts[1];
-        storePackageIndexFiles(aptFacet, distribution, component, arch, entry.getValue(),
+      // Store package index files
+      Map<String, Map<String, Map<String, FileMetadata>>> pkgIndexes = store.getFiles();
+      for (Entry<String, Map<String, Map<String, FileMetadata>>> distEntry : pkgIndexes.entrySet()) {
+          for (Entry<String, Map<String, FileMetadata>> componentEntry : distEntry.getValue().entrySet()) {
+          String component = componentEntry.getKey();
+          for (Entry<String, FileMetadata> archEntry : componentEntry.getValue().entrySet()) {
+            String arch = archEntry.getKey();
+            storePackageIndexFiles(aptFacet, distribution, component, arch, archEntry.getValue(),
             md5Builder, sha256Builder);
+          }
+        }
       }
     }
 

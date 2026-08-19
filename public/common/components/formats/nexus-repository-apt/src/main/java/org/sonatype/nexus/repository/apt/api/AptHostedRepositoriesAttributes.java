@@ -28,7 +28,7 @@ public class AptHostedRepositoriesAttributes
       "Defines the distribution path used in metadata structure (e.g., dists/{distribution}/Release). " +
       "Clients must configure this exact distribution name in their APT sources.",
       example = "bionic",
-      required = true)
+      required = false)
   @NotEmpty
   protected final String distribution;
 
