@@ -29,6 +29,7 @@ import org.sonatype.nexus.security.internal.rest.ApiUser;
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.DuplicateUserException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -137,6 +138,19 @@ class UserApiResourceTest
     WebApplicationMessageException ex = assertThrows(WebApplicationMessageException.class,
         () -> underTest.createUser(createUser), "Unable to locate source: default");
     assertThat(ex.getResponse().getStatusInfo(), is(Status.NOT_FOUND));
+  }
+
+  @Test
+  void testCreateUser_duplicateUser() throws Exception {
+    User user = createUser();
+    when(securitySystem.addUser(user, "admin123")).thenThrow(new DuplicateUserException(USER_ID));
+
+    ApiCreateUser createUser = new ApiCreateUser(USER_ID, "John", "Smith", "jsmith@example.org", "admin123",
+        ApiUserStatus.disabled, Collections.singleton("nx-admin"));
+
+    WebApplicationMessageException ex = assertThrows(WebApplicationMessageException.class,
+        () -> underTest.createUser(createUser), "User '" + USER_ID + "' already exists.");
+    assertThat(ex.getResponse().getStatusInfo(), is(Status.BAD_REQUEST));
   }
 
   /*
