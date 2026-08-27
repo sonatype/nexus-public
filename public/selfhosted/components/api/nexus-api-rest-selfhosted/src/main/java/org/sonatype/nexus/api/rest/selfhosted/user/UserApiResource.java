@@ -38,6 +38,7 @@ import org.sonatype.nexus.security.internal.rest.ApiUser;
 import org.sonatype.nexus.security.internal.rest.ApiUserStatus;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.DuplicateUserException;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
@@ -90,6 +91,10 @@ public class UserApiResource
     try {
       User user = securitySystem.addUser(createUser.toUser(), createUser.getPassword());
       return fromUser(user);
+    }
+    catch (DuplicateUserException e) {
+      log.debug("Unable to create duplicate user: {}", createUser.getUserId(), e);
+      throw createWebException(Status.BAD_REQUEST, "User '" + createUser.getUserId() + "' already exists.");
     }
     catch (NoSuchUserManagerException e) {
       log.error("Unable to locate default usermanager.", e);
