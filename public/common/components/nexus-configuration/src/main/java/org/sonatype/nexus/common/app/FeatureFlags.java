@@ -345,22 +345,33 @@ public class FeatureFlags
 
   public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:false}";
 
-  /*
-   * Per-realm principal permissions cache maximum size. Default value: 1000. Override per realm by appending the
-   * realm name, e.g. nexus.authorizingrealm.permissionscache.maximumsize.LdapRealm=5000.
-   */
+  /* Principal permissions cache maximum size. Default value: 250 */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE =
       "nexus.authorizingrealm.permissionscache.maximumsize";
 
   public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.maximumsize:1000}";
+      "${nexus.authorizingrealm.permissionscache.maximumsize:250}";
 
-  /* Principal permissions cache record statistics. Default value: false (enable when diagnosing). */
+  /* Principal permissions cache expire after write in minutes. Default value: 60 */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES =
+      "nexus.authorizingrealm.permissionscache.expireafterwrite.minutes";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.expireafterwrite.minutes:60}";
+
+  /* Principal permissions cache expire after access in minutes. Default value: 60 */
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES =
+      "nexus.authorizingrealm.permissionscache.expireafteraccess.minutes";
+
+  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES_NAMED_VALUE =
+      "${nexus.authorizingrealm.permissionscache.expireafteraccess.minutes:60}";
+
+  /* Principal permissions cache record statistics. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS =
       "nexus.authorizingrealm.permissionscache.recordstats";
 
   public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.recordstats:false}";
+      "${nexus.authorizingrealm.permissionscache.recordstats:true}";
 
   /* Principal permissions cache concurrency level. Default value: 16 */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL =

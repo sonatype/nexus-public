@@ -16,14 +16,11 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.nexus.capability.CapabilitySupport;
-import org.sonatype.nexus.capability.Condition;
-import org.sonatype.nexus.common.app.ManagedLifecycleManager;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;
+import org.sonatype.nexus.capability.CapabilitySupport;
+import org.sonatype.nexus.capability.Condition;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
-import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -55,17 +52,10 @@ public class DefaultRoleCapability
 
   private final DefaultRoleRealm defaultRoleRealm;
 
-  private final EventManager eventManager;
-
   @Autowired
-  public DefaultRoleCapability(
-      final RealmManager realmManager,
-      final DefaultRoleRealm defaultRoleRealm,
-      final EventManager eventManager)
-  {
+  public DefaultRoleCapability(final RealmManager realmManager, final DefaultRoleRealm defaultRoleRealm) {
     this.realmManager = checkNotNull(realmManager);
     this.defaultRoleRealm = checkNotNull(defaultRoleRealm);
-    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -88,16 +78,8 @@ public class DefaultRoleCapability
   protected void onActivate(final DefaultRoleCapabilityConfiguration defaultRoleCapabilityConfiguration) {
     defaultRoleRealm.setRole(defaultRoleCapabilityConfiguration.getRole());
 
-    try {
-      // install realm if needed
-      realmManager.enableRealm(DefaultRoleRealm.NAME);
-    }
-    finally {
-      // The role field is already mutated, so always invalidate the authorization + permission caches - even if
-      // enableRealm above threw - otherwise entries for the previous role stay live for a full cache TTL. This makes
-      // the new role take effect immediately rather than after TTL (NEXUS-53719).
-      eventManager.post(new AuthorizationConfigurationChanged());
-    }
+    // install realm if needed
+    realmManager.enableRealm(DefaultRoleRealm.NAME);
   }
 
   @Override
@@ -108,8 +90,6 @@ public class DefaultRoleCapability
     else {
       disableDefaultRoleRealm();
       defaultRoleRealm.setRole(null);
-      // Default role removed: invalidate caches so the previously-granted role stops applying immediately.
-      eventManager.post(new AuthorizationConfigurationChanged());
     }
   }
 
@@ -123,16 +103,7 @@ public class DefaultRoleCapability
     }
   }
 
-  /**
-   * Uses the platform's authoritative shutdown flag instead of a thread-name string match.
-   * The previous implementation matched only Apache Felix / OSGi thread names ("FelixStartLevel")
-   * and missed the actual production shutdown path (JettyShutdownThread), causing the DefaultRole
-   * realm to be persistently removed from the active realms list on graceful JVM shutdown
-   * (NEXUS-53486). {@link ManagedLifecycleManager#isShuttingDown()} is flipped to {@code true} at
-   * the entry point of the shutdown lifecycle transition, well before the CAPABILITIES phase is
-   * stopped, so it is guaranteed to be observable here.
-   */
   private boolean isShuttingDown() {
-    return ManagedLifecycleManager.isShuttingDown();
+    return Thread.currentThread().getName().contains("FelixStartLevel");
   }
 }

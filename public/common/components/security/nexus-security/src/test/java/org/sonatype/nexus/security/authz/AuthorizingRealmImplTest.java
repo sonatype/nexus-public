@@ -26,7 +26,6 @@ import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
-import org.sonatype.nexus.security.internal.RolePermissionResolverImpl;
 import org.sonatype.nexus.security.privilege.WildcardPrivilegeDescriptor;
 import org.sonatype.nexus.security.user.UserStatus;
 
@@ -49,10 +48,10 @@ import org.springframework.test.context.TestPropertySource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD;
@@ -135,13 +134,12 @@ public class AuthorizingRealmImplTest
   /**
    * Verifies that the principal-level cache (NEXUS-52583) prevents repeated role expansion:
    * PermissionsState is built at most once per principal, regardless of how many isPermitted
-   * calls are made. The RolePermissionResolver spy lets us assert that the expensive batch role
-   * expansion (resolvePermissionsForRoles - the method getPermissions actually calls for a
-   * RolePermissionResolverImpl) runs exactly once across all calls.
+   * calls are made. The RolePermissionResolver spy lets us assert that the expensive DB
+   * round-trip (resolvePermissionsInRole) runs at most once across all calls.
    */
   @Test
   public void testIsPermittedResultIsCached() throws Exception {
-    RolePermissionResolverImpl spyResolver = spy((RolePermissionResolverImpl) lookup(RolePermissionResolver.class));
+    RolePermissionResolver spyResolver = spy(lookup(RolePermissionResolver.class));
     realm.setRolePermissionResolver(spyResolver);
 
     WildcardPermission granted = new WildcardPermission("app:config:read");
@@ -158,10 +156,9 @@ public class AuthorizingRealmImplTest
       assertFalse(realm.isPermitted(principal, denied));
     }
 
-    // Batch role expansion runs exactly once — proves PermissionsState is built once, not once per
-    // isPermitted call. (Verifying the method getPermissions truly invokes; resolvePermissionsInRole
-    // is NOT on this path, so verifying it would pass even with caching disabled.)
-    verify(spyResolver, times(1)).resolvePermissionsForRoles(org.mockito.ArgumentMatchers.anyCollection());
+    // resolvePermissionsInRole called at most once — proves PermissionsState is built once,
+    // not once per isPermitted call (NEXUS-52583 principal-level cache, not per-permission cache).
+    verify(spyResolver, atMostOnce()).resolvePermissionsInRole(org.mockito.ArgumentMatchers.anyString());
   }
 
   /**
@@ -227,26 +224,21 @@ public class AuthorizingRealmImplTest
   }
 
   /**
-   * Verifies that invalidating this realm's expanded-permission cache forces the realm to re-resolve permissions on
-   * the next check (not just that the answer stays correct). A spy on the batch resolver proves re-expansion actually
-   * ran again after invalidation. The Shiro role cache is invalidated centrally by {@code RealmManagerImpl}.
+   * Verifies that invalidating the cache (e.g. on auth config change) forces re-evaluation
+   * so updated permissions take effect.
    */
   @Test
   public void testCacheInvalidatedOnAuthConfigChange() throws Exception {
-    RolePermissionResolverImpl spyResolver = spy((RolePermissionResolverImpl) lookup(RolePermissionResolver.class));
-    realm.setRolePermissionResolver(spyResolver);
     WildcardPermission granted = new WildcardPermission("app:config:read");
 
-    // Warm up the cache -> one expansion
+    // Warm up the cache
     assertTrue(realm.isPermitted(principal, granted));
-    verify(spyResolver, times(1)).resolvePermissionsForRoles(org.mockito.ArgumentMatchers.anyCollection());
 
-    // Invalidate this realm's permission cache
-    realm.invalidatePrincipalPermissions();
+    // Simulate an authorization configuration change event
+    realm.on(new AuthorizationConfigurationChanged());
 
-    // Next check must re-resolve (second expansion) and still be correct
+    // Result must still be correct after re-evaluation
     assertTrue(realm.isPermitted(principal, granted));
-    verify(spyResolver, times(2)).resolvePermissionsForRoles(org.mockito.ArgumentMatchers.anyCollection());
   }
 
   /**

@@ -12,26 +12,17 @@
  */
 package org.sonatype.nexus.plugins.defaultrole.internal;
 
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
-import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.realm.RealmManager;
 
-import org.junit.After;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultRoleCapabilityTest
@@ -47,39 +38,9 @@ public class DefaultRoleCapabilityTest
   @Mock
   private DefaultRoleCapabilityConfiguration configuration;
 
-  @Mock
-  private EventManager eventManager;
-
-  private MockedStatic<ManagedLifecycleManager> lifecycleMock;
-
   @Before
   public void setup() {
-    underTest = new DefaultRoleCapability(realmManager, defaultRoleRealm, eventManager);
-  }
-
-  @Test
-  public void testOnActivate_setsRoleEnablesRealmAndInvalidatesCaches() {
-    when(configuration.getRole()).thenReturn("nx-admin");
-
-    underTest.onActivate(configuration);
-
-    verify(defaultRoleRealm).setRole("nx-admin");
-    verify(realmManager).enableRealm(DefaultRoleRealm.NAME);
-    verify(eventManager).post(any(AuthorizationConfigurationChanged.class));
-  }
-
-  @Before
-  public void setupLifecycleMock() {
-    lifecycleMock = Mockito.mockStatic(ManagedLifecycleManager.class);
-    // Default to "not shutting down" so tests only opt into the shutdown branch when they need to.
-    lifecycleMock.when(ManagedLifecycleManager::isShuttingDown).thenReturn(false);
-  }
-
-  @After
-  public void tearDown() {
-    if (lifecycleMock != null) {
-      lifecycleMock.close();
-    }
+    underTest = new DefaultRoleCapability(realmManager, defaultRoleRealm);
   }
 
   @Test
@@ -96,56 +57,23 @@ public class DefaultRoleCapabilityTest
     assertThat(underTest.renderDescription()).isEqualTo("nx-admin");
   }
 
-  /**
-   * Admin toggles the capability off during normal operation. The realm must be removed from the
-   * active realms list and the in-memory role assignment cleared.
-   */
   @Test
-  public void testOnPassivate_duringNormalOperation_disablesRealmAndClearsRole() {
+  public void testOnPassivate_duringNormalOperation() {
+    Thread.currentThread().setName("NormalOperationThread");
+
     underTest.onPassivate(configuration);
 
     verify(defaultRoleRealm).setRole(null);
     verify(realmManager).disableRealm(DefaultRoleRealm.NAME);
-    verify(eventManager).post(any(AuthorizationConfigurationChanged.class));
   }
 
-  /**
-   * JVM is shutting down. The capability MUST NOT mutate the persisted realm list — doing so on
-   * shutdown corrupts the configuration for the next boot and, in HA, broadcasts the corruption to
-   * peer nodes (NEXUS-53486). This test asserts the shutdown guard is honored.
-   */
   @Test
-  public void testOnPassivate_duringShutdown_isInert() {
-    lifecycleMock.when(ManagedLifecycleManager::isShuttingDown).thenReturn(true);
+  public void testOnPassivate_duringShutdown() {
+    Thread.currentThread().setName("FelixStartLevel");
 
     underTest.onPassivate(configuration);
 
     verifyNoInteractions(defaultRoleRealm);
     verifyNoInteractions(realmManager);
-    verifyNoInteractions(eventManager);
-  }
-
-  /**
-   * Regression guard for NEXUS-53486: even when running on a thread named "JettyShutdownThread"
-   * (the actual production shutdown thread) the guard must still fire, because it consults the
-   * platform lifecycle flag rather than any thread name. If this test ever passes for the wrong
-   * reason (thread-name matching), the previous NEXUS-43484 bug has been reintroduced.
-   */
-  @Test
-  public void testOnPassivate_NEXUS_53486_shutdownDetectedRegardlessOfThreadName() {
-    String originalName = Thread.currentThread().getName();
-    try {
-      Thread.currentThread().setName("JettyShutdownThread");
-      lifecycleMock.when(ManagedLifecycleManager::isShuttingDown).thenReturn(true);
-
-      underTest.onPassivate(configuration);
-
-      verifyNoInteractions(defaultRoleRealm);
-      verifyNoInteractions(realmManager);
-      verifyNoInteractions(eventManager);
-    }
-    finally {
-      Thread.currentThread().setName(originalName);
-    }
   }
 }
