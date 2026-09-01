@@ -30,6 +30,7 @@ export default {
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
     NEXT_BUTTON_LABEL: 'Next',
+    UPDATE_BUTTON_LABEL: 'Update',
     SAVE_BUTTON_LABEL: 'Save',
     DELETE_BUTTON_LABEL: 'Delete',
 
@@ -64,6 +65,7 @@ export default {
     INVALID_NAME_CHARS: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',
     MAX_CHARS: (max) => `This field has a limit of ${max} characters`,
     INVALID_URI: 'URI should be in the format <protocol>:<path>',
+    INVALID_JSON_OBJECT: 'Must be a valid JSON object with string values, for example {"key": "value"}',
     INVALID_EMAIL: 'Enter a valid email address',
     URL_ERROR: 'URL should be in the format "http://www.example.com"',
     URL_NEEDS_TRAILING_SLASH: 'URL should be in the format "http://www.example.com/" and must include a trailing slash',

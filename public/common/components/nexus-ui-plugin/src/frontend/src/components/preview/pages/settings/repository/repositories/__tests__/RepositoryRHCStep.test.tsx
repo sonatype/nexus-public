@@ -66,4 +66,49 @@ describe('RepositoryRHCStep', () => {
 
     expect(screen.getByRole('switch')).toBeChecked();
   });
+
+  describe('when capabilityEnabled is false', () => {
+    it('disables the switch', () => {
+      render(<RepositoryRHCStep mode="deferred" value="none" onChoice={jest.fn()} capabilityEnabled={false} />);
+
+      expect(screen.getByRole('switch')).toBeDisabled();
+    });
+
+    it('shows the capability-disabled callout', () => {
+      render(<RepositoryRHCStep mode="deferred" value="none" onChoice={jest.fn()} capabilityEnabled={false} />);
+
+      expect(screen.getByTestId('rhc-capability-disabled-callout')).toBeInTheDocument();
+      expect(screen.getByText(/system capability is not enabled/i)).toBeInTheDocument();
+    });
+
+    it('shows a link to system capabilities', () => {
+      render(<RepositoryRHCStep mode="deferred" value="none" onChoice={jest.fn()} capabilityEnabled={false} />);
+
+      const link = screen.getByRole('link', { name: /go to system capabilities/i });
+      expect(link).toHaveAttribute('href', '#preview/admin/system/capabilities');
+    });
+
+    it('does not call onChoice when switch is clicked', async () => {
+      const onChoice = jest.fn();
+      render(<RepositoryRHCStep mode="deferred" value="none" onChoice={onChoice} capabilityEnabled={false} />);
+
+      await userEvent.click(screen.getByRole('switch'));
+
+      expect(onChoice).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when capabilityEnabled is true (default)', () => {
+    it('switch is enabled', () => {
+      render(<RepositoryRHCStep mode="deferred" value="none" onChoice={jest.fn()} capabilityEnabled={true} />);
+
+      expect(screen.getByRole('switch')).not.toBeDisabled();
+    });
+
+    it('does not show the capability-disabled callout', () => {
+      render(<RepositoryRHCStep mode="deferred" value="none" onChoice={jest.fn()} capabilityEnabled={true} />);
+
+      expect(screen.queryByTestId('rhc-capability-disabled-callout')).not.toBeInTheDocument();
+    });
+  });
 });

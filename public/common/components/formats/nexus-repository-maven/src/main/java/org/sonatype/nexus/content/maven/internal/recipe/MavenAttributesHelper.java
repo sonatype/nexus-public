@@ -54,6 +54,8 @@ final class MavenAttributesHelper
 {
   private static final String JAR = "jar";
 
+  private static final int MAX_POM_FIELD_LENGTH = 10_000;
+
   private MavenAttributesHelper() {
     // no-op
   }
@@ -74,8 +76,12 @@ final class MavenAttributesHelper
 
     optionalModel.ifPresent(model -> {
       mavenAttributes.put(P_PACKAGING, getPackaging(model));
-      ofNullable(model.getName()).ifPresent(name -> mavenAttributes.put(P_POM_NAME, name));
-      ofNullable(model.getDescription()).ifPresent(desc -> mavenAttributes.put(P_POM_DESCRIPTION, desc));
+      ofNullable(model.getName())
+          .map(MavenAttributesHelper::truncate)
+          .ifPresent(name -> mavenAttributes.put(P_POM_NAME, name));
+      ofNullable(model.getDescription())
+          .map(MavenAttributesHelper::truncate)
+          .ifPresent(desc -> mavenAttributes.put(P_POM_DESCRIPTION, desc));
     });
 
     component.attributes(OVERLAY, NAME, mavenAttributes);
@@ -99,6 +105,16 @@ final class MavenAttributesHelper
   static String getPackaging(final Model model) {
     String packaging = model.getPackaging();
     return packaging == null ? JAR : packaging;
+  }
+
+  /**
+   * Truncates the given value if it exceeds the maximum allowed length for POM metadata fields.
+   * This prevents oversized strings from causing issues during JSON deserialization.
+   */
+  private static String truncate(final String value) {
+    return value.length() > MAX_POM_FIELD_LENGTH
+        ? value.substring(0, MAX_POM_FIELD_LENGTH)
+        : value;
   }
 
   static String assetKind(final MavenPath mavenPath, final MavenPathParser mavenPathParser) {

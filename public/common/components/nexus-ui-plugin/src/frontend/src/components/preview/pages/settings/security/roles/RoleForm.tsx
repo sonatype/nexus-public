@@ -28,9 +28,6 @@ import {
 import { useRolesApi } from './useRolesApi';
 import { useRolesForm } from './useRolesForm';
 import {
-  Role,
-  RoleReference,
-  PrivilegeReference,
   RoleFormData,
   RoleFormProps,
   RolesFormContext,
@@ -143,7 +140,7 @@ export function RoleForm({
   const allRoles = context.allRoles || [];
   const allSources = context.allSources || [];
 
-  const sourceOptions = useMemo(() => {
+  const _sourceOptions = useMemo(() => {
     const options = allSources.map(s => ({ value: s.id, label: s.name }));
     if (!options.some(o => o.value === NEXUS_SOURCE)) {
       options.unshift({ value: NEXUS_SOURCE, label: NEXUS_SOURCE });
@@ -256,19 +253,23 @@ export function RoleForm({
 
   const formContent = (
     <>
-      {/* Step 0: Role Type Selection - only shown when creating a new role */}
+      {/* Step 0: Role Type — create mode only. Edit mode skips this step at the
+          wizard level (RolesPage never passes wizardStep=0 when !isCreate) because
+          the role type is immutable once persisted; showing a read-only step there
+          adds no value. Props are passed individually (not via form.field spread)
+          so the explicit value={... ?? 'nexus'} default is unambiguous. */}
       {wizardStep === 0 && isCreate && (
         <SettingsFormSection title="Role Type" defaultOpen>
           <Text size="2" className="role-form__section-help">
             Choose the type of role to create.
           </Text>
           <SettingsSelect
-            {...form.field('roleType')}
+            name="roleType"
+            onChange={(value) => form.send({ type: 'UPDATE', name: 'roleType', value })}
             label="Type"
             options={roleTypeOptions}
             helpText="Select whether this is a standard Nexus role or maps to an external authentication source"
-            disabled={!isCreate || isReadOnly}
-            value={formData.roleType || 'nexus'}
+            value={formData.roleType ?? 'nexus'}
           />
         </SettingsFormSection>
       )}

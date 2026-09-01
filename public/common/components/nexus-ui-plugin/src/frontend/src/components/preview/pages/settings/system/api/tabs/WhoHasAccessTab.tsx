@@ -93,13 +93,13 @@ export function WhoHasAccessTab({ row, active }: WhoHasAccessTabProps) {
         </Flex>
       )}
 
-      {!loading && !error && !noMappedPermissions && qualifyingRoles.length === 0 && (
+      {!((loading || error ) || noMappedPermissions ) && qualifyingRoles.length === 0 && (
         <Text size="2" color="gray" mb="3">
           No roles contain the required privileges for this endpoint.
         </Text>
       )}
 
-      {!loading && !noMappedPermissions && qualifyingRoles.length > 0 && (
+      {!(loading || noMappedPermissions ) && qualifyingRoles.length > 0 && (
         <>
           <Heading as="h3" size="3" weight="medium" mb="2">
             Roles

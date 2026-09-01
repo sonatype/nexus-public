@@ -52,8 +52,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -124,6 +126,17 @@ class UISwitchFeedbackResourceTest
   void tearDown() {
     ThreadContext.unbindSubject();
     ThreadContext.unbindSecurityManager();
+  }
+
+  @Test
+  void shouldConfigureConditionalOnPropertyToRegisterBeanByDefault() {
+    ConditionalOnProperty annotation =
+        UISwitchFeedbackResource.class.getAnnotation(ConditionalOnProperty.class);
+
+    assertThat(annotation, notNullValue());
+    assertThat(annotation.name(), arrayContaining("nexus.previewui.enabled"));
+    assertThat(annotation.havingValue(), is("true"));
+    assertThat(annotation.matchIfMissing(), is(true));
   }
 
   @Test

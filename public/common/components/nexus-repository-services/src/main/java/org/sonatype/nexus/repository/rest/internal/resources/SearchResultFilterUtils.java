@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,11 +21,13 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.nexus.repository.rest.SearchMapping;
+import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.search.AssetSearchResult;
 import org.sonatype.nexus.repository.search.ComponentSearchResult;
 import org.sonatype.nexus.repository.search.SearchUtils;
@@ -52,10 +55,17 @@ public class SearchResultFilterUtils
   private final Map<String, SearchMapping> mappingsByAttribute;
 
   @Autowired
-  public SearchResultFilterUtils(final SearchUtils searchUtils, final List<SearchMapping> mappings) {
+  public SearchResultFilterUtils(final SearchUtils searchUtils, final List<SearchMappings> searchMappings) {
     this.searchUtils = checkNotNull(searchUtils);
-    this.mappingsByAttribute = checkNotNull(mappings).stream()
-        .collect(Collectors.toMap(SearchMapping::getAttribute, Function.identity()));
+    Map<String, SearchMapping> byAttribute = new HashMap<>();
+    checkNotNull(searchMappings).stream()
+        .map(SearchMappings::get)
+        .flatMap(iterable -> StreamSupport.stream(iterable.spliterator(), false))
+        .forEach(mapping -> {
+          byAttribute.put(mapping.getAttribute(), mapping);
+          byAttribute.putIfAbsent(mapping.getAlias(), mapping);
+        });
+    this.mappingsByAttribute = byAttribute;
   }
 
   /**

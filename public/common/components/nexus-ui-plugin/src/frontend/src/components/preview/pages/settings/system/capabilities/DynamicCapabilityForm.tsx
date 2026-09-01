@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, } from 'react';
 import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
 import { Trash2, Loader2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -23,8 +23,6 @@ import {
   SettingsCheckbox,
   SettingsTextArea,
   SettingsButton,
-  SettingsAlert,
-  SettingsSelect,
   SettingsCombobox,
   SettingsTransferList,
 } from '../../../../shared/form';
@@ -59,6 +57,13 @@ interface DynamicCapabilityFormProps {
   onDelete?: () => void;
   loading?: boolean;
   error?: string;
+  /**
+   * When false, hides the Save button so a user without nexus:capabilities:update
+   * cannot submit edits (NEXUS-54212). Matches Classic CapabilitySettingsForm, whose
+   * editableCondition is NX.Conditions.isPermitted('nexus:capabilities:update').
+   * Defaults to true; create mode is gated on nexus:capabilities:create at navigation.
+   */
+  canEdit?: boolean;
   /** When true, skip the SettingsForm wrapper (for use in WizardForm) */
   embedded?: boolean;
   /** Ref callback to expose submit function (for embedded mode) */
@@ -83,18 +88,17 @@ export function DynamicCapabilityForm({
   onDelete,
   loading = false,
   error,
+  canEdit = true,
   embedded = false,
   onSubmitRef,
   isEnabled: isEnabledProp,
   onEnabledChange,
 }: DynamicCapabilityFormProps) {
-  const { createCapability, updateCapability, deleteCapability } = useCapabilitiesApi();
+  const { createCapability, updateCapability } = useCapabilitiesApi();
 
   // Use XState form hook
   const {
     form,
-    capability: loadedCapability,
-    isCreate: hookIsCreate,
   } = useCapabilitiesForm({
     capabilityId: isCreate ? undefined : capability?.id,
     capability: capability || undefined,
@@ -331,6 +335,8 @@ export function DynamicCapabilityForm({
               availableLabel="Available"
               selectedLabel="Selected"
               helpText={field.helpText}
+              error={fieldError}
+              required={field.required}
               disabled={field.disabled || field.readOnly}
             />
           );
@@ -439,8 +445,6 @@ export function DynamicCapabilityForm({
             placeholder="Select repository..."
           />
         );
-
-      case 'string':
       default:
         // Loading state for fields with storeApi
         if (field.storeApi && STORE_API_TO_REST[field.storeApi] && storeOptions[field.id] === undefined) {
@@ -491,7 +495,7 @@ export function DynamicCapabilityForm({
           />
         );
     }
-  }, [formData?.properties, form.validationErrors, handleFieldChange, repoOptions, storeOptions, capabilityType.id]);
+  }, [formData?.properties, form.validationErrors, handleFieldChange, repoOptions, storeOptions, form.touched]);
 
   const formFields = capabilityType.formFields || [];
 
@@ -582,7 +586,7 @@ export function DynamicCapabilityForm({
     <Box className="dynamic-capability-form">
       <SettingsForm
         testId="capability-form"
-        onSubmit={handleSubmit}
+        onSubmit={canEdit ? handleSubmit : undefined}
         onCancel={onCancel}
         loading={form.isSaving || loading}
         pristine={isCreate ? false : form.isPristine}

@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 import UIStrings from '../../../constants/UIStrings';
 import { useRouter } from '@uirouter/react';
 import { RouteNames } from "../../../constants/RouteNames";
+import { resolveDefaultLandingRoute, returnToTargetsClassicLanding, PREVIEW_WELCOME_ROUTE, PREVIEW_WELCOME_HASH, USER_REQUESTED_LEGACY_KEY } from '../../../utils/loginUtils';
 
 const { SSO_BUTTON, SSO_BUTTON_CLOUD, SSO_BUTTON_LOADING } = UIStrings;
 
@@ -55,8 +56,25 @@ export default function SsoLogin({ autoFocus = true }) {
   const handleSsoLogin = () => {
     setIsRedirecting(true);
     try {
-      window.location.assign(buildUrlReturnTo(router.globals.params.returnTo));
+      // A fresh login starts a new session: reset any in-session "use Classic UI"
+      // preference so the defaultToPreviewUi setting is honored again (NEXUS-53957).
+      sessionStorage.removeItem(USER_REQUESTED_LEGACY_KEY);
+      const state = ExtJS.state();
+      const landingRoute = resolveDefaultLandingRoute({
+        defaultToPreviewUi: state?.getValue('defaultToPreviewUi', false) ?? false,
+        canAccessPreviewUi: state?.getValue('loggedInEnabled', false) ?? false,
+        userRequestedLegacy: false
+      });
+      let returnToParam = router.globals.params.returnTo;
+      if (landingRoute === PREVIEW_WELCOME_ROUTE && returnToTargetsClassicLanding(returnToParam)) {
+        // "Default to Nexus One UI": override a missing or Classic landing returnTo with the
+        // Preview dashboard, but preserve Classic deep links (matches the GlobalHeaderRadix
+        // soft default). SSO backends (SAML/OIDC filters) Base64-decode the hash param.
+        returnToParam = btoa(PREVIEW_WELCOME_HASH);
+      }
+      window.location.assign(buildUrlReturnTo(returnToParam));
     } catch (ex) {
+      setIsRedirecting(false);
       console.warn('redirection unsuccessful: ', ex);
       router.stateService.go(RouteNames.MISSING_ROUTE);
     }

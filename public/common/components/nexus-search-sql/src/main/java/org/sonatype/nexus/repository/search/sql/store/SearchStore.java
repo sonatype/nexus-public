@@ -158,6 +158,37 @@ public class SearchStore
   }
 
   /**
+   * Delete search_components entries whose component_id no longer exists in the
+   * format-specific component table (orphaned records). Uses NOT EXISTS to avoid
+   * dependency on last_modified timestamps, which reflect blob.blobCreated() and
+   * can be arbitrarily old regardless of when the component was last indexed.
+   *
+   * @param repositoryId the content repository identification
+   * @param format the repository format
+   */
+  @Transactional
+  public void deleteOrphanedComponents(final Integer repositoryId, final String format) {
+    while (dao().deleteOrphanedComponents(repositoryId, format, deleteBatchSize)) {
+      commitChangesSoFar();
+    }
+  }
+
+  /**
+   * Delete search_assets entries whose component_id no longer exists in search_components.
+   * Used after a rebuild to remove asset records for components deleted from the repository.
+   * Note: search_assets has no last_modified column, so orphans are identified via a NOT EXISTS anti-join.
+   *
+   * @param repositoryId the content repository identification
+   * @param format the repository format
+   */
+  @Transactional
+  public void deleteOrphanedAssets(final Integer repositoryId, final String format) {
+    while (dao().deleteOrphanedAssets(repositoryId, format, deleteBatchSize)) {
+      commitChangesSoFar();
+    }
+  }
+
+  /**
    * Search for components using the given {@link SqlSearchQueryCondition}
    */
   @Transactional
@@ -188,6 +219,32 @@ public class SearchStore
     log.debug("Search request - filters: {}, filter values: {}", request.filter, request.filterParams);
 
     return dao().count(request);
+  }
+
+  /**
+   * Browses distinct versions of a component.
+   *
+   * @param request the filter, sort, and page bounds
+   * @return one entry per distinct version, newest first
+   */
+  @Transactional
+  public List<ComponentVersionData> browseComponentVersions(final ComponentVersionSearchRequest request) {
+    log.debug("Browse component versions - filter: {}, params: {}, sort: {} {}, limit: {}, offset: {}",
+        request.filter, request.filterParams, request.sortExpression, request.sortDirection,
+        request.limit, request.offset);
+    return dao().browseComponentVersions(request);
+  }
+
+  /**
+   * Counts distinct versions matching the filter.
+   *
+   * @param request the filter
+   * @return the number of distinct versions
+   */
+  @Transactional
+  public long countComponentVersions(final ComponentVersionSearchRequest request) {
+    log.debug("Count component versions - filter: {}, params: {}", request.filter, request.filterParams);
+    return dao().countComponentVersions(request);
   }
 
   /**

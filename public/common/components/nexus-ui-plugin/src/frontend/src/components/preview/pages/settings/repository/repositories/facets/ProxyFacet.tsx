@@ -15,7 +15,8 @@ import React, { useMemo, useState } from 'react';
 import { Box, Text } from '@radix-ui/themes';
 import { ShieldCheck } from 'lucide-react';
 
-import { ExtJS } from '../../../../../../../interface/ExtJS';
+import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import FeatureFlags from '../../../../../../../constants/FeatureFlags';
 
 import {
   SettingsFormSection,
@@ -36,6 +37,7 @@ import {
 
 const REPLICATION_FEATURE = 'replicationFeatureEnabled';
 const REPLICATION_FORMATS = 'replicationSupportedFormats';
+const { NUGET_SYMBOL_SERVER_ENABLED } = FeatureFlags;
 
 interface ProxyFacetProps {
   formData: RepositoryFormData;
@@ -49,16 +51,26 @@ interface ProxyFacetProps {
   originChangeWarning?: boolean;
 }
 
+const NUGET_REMOTE_URL_EXAMPLE_DEFAULT = 'e.g., https://api.nuget.org/v3/index.json';
+
 // Remote URL examples by format
 const REMOTE_URL_EXAMPLES: Record<string, string> = {
   maven2: 'e.g., https://repo1.maven.org/maven2/',
   npm: 'e.g., https://registry.npmjs.org/',
-  nuget: 'e.g., https://api.nuget.org/v3/index.json',
   pypi: 'e.g., https://pypi.org/',
   docker: 'e.g., https://registry-1.docker.io',
   raw: 'e.g., https://example.com/files/',
   yum: 'e.g., https://mirror.stream.centos.org/',
   ansiblegalaxy: 'e.g., https://galaxy.ansible.com',
+  swift: 'e.g., https://github.com/',
+  cargo: 'e.g., https://index.crates.io',
+  terraform: 'e.g., https://registry.terraform.io',
+  composer: 'e.g., https://repo.packagist.org',
+  conan: 'e.g., https://center.conan.io (v1) or https://center2.conan.io (v2)',
+  pub: 'e.g., https://pub.dev',
+  r: 'e.g., https://cran.r-project.org',
+  rubygems: 'e.g., https://rubygems.org',
+  huggingface: 'e.g., https://huggingface.co/',
   default: 'e.g., https://example.com/repository/',
 };
 
@@ -89,7 +101,7 @@ export function ProxyFacet({
       onNestedChange('proxy', { contentMaxAge: undefined });
     } else {
       const numValue = parseInt(value, 10);
-      if (!isNaN(numValue)) {
+      if (!Number.isNaN(numValue)) {
         // Clamp values below -1 to -1 (minimum allowed value)
         onNestedChange('proxy', { contentMaxAge: Math.max(-1, numValue) });
       }
@@ -104,7 +116,7 @@ export function ProxyFacet({
       onNestedChange('proxy', { metadataMaxAge: undefined });
     } else {
       const numValue = parseInt(value, 10);
-      if (!isNaN(numValue)) {
+      if (!Number.isNaN(numValue)) {
         onNestedChange('proxy', { metadataMaxAge: Math.max(-1, numValue) });
       }
     }
@@ -124,7 +136,25 @@ export function ProxyFacet({
     onNestedChange('replication', { assetPathRegex: value });
   };
 
-  const urlExample = format ? REMOTE_URL_EXAMPLES[format] || REMOTE_URL_EXAMPLES.default : REMOTE_URL_EXAMPLES.default;
+  const chocolateyEnabled = useMemo(() => {
+    try {
+      return ExtJS.state().getValue('nugetChocolateyEnabled') === true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const urlExample =
+    format === 'nuget'
+      ? NUGET_REMOTE_URL_EXAMPLE_DEFAULT
+      : format
+        ? REMOTE_URL_EXAMPLES[format] || REMOTE_URL_EXAMPLES.default
+        : REMOTE_URL_EXAMPLES.default;
+
+  const remoteUrlHelpText =
+    format === 'nuget' && chocolateyEnabled
+      ? UIStrings.PROXY.REMOTE_STORAGE.nugetChocolateyHelpText
+      : UIStrings.PROXY.REMOTE_STORAGE.helpText(urlExample);
   const remoteUrl = formData.proxy?.remoteUrl || '';
   const showTrustStore = remoteUrl.startsWith('https://');
 
@@ -148,13 +178,26 @@ export function ProxyFacet({
   const formatReplicationSupported = useMemo(() => {
     try {
       const supportedFormats = ExtJS.state().getValue(REPLICATION_FORMATS);
-      return (supportedFormats instanceof Array) && format && supportedFormats.includes(format);
+      return (Array.isArray(supportedFormats)) && format && supportedFormats.includes(format);
     } catch {
       return false;
     }
   }, [format]);
 
   const preemptivePullEnabled = formData.replication?.preemptivePullEnabled || false;
+
+  // Symbol server fields render only for NuGet proxy repos when the feature flag is on.
+  // Backend routing / facets are also gated on the same flag; see NugetProxyRecipe.
+  // Feature flags don't change during a component's lifetime, so useMemo (matches the
+  // chocolatey/replication checks above) is the right shape here.
+  const symbolServerEnabled = useMemo(() => {
+    try {
+      return Boolean(ExtJS.state().getValue(NUGET_SYMBOL_SERVER_ENABLED));
+    } catch {
+      return false;
+    }
+  }, []);
+  const showNugetSymbolFields = format === 'nuget' && symbolServerEnabled;
 
   return (
     <SettingsFormSection title={UIStrings.PROXY.SECTION.title}>
@@ -166,8 +209,28 @@ export function ProxyFacet({
         error={errors?.proxy?.remoteUrl}
         required
         placeholder={UIStrings.PROXY.REMOTE_STORAGE.placeholder}
-        helpText={UIStrings.PROXY.REMOTE_STORAGE.helpText(urlExample)}
+        helpText={remoteUrlHelpText}
       />
+
+      {showNugetSymbolFields && (
+        <>
+          <SettingsTextInput
+            name="nugetProxy-symbolServerUrl"
+            label={UIStrings.NUGET.SYMBOL_SERVER_URL.label}
+            value={formData.nugetProxy?.symbolServerUrl ?? ''}
+            onChange={(value) => onNestedChange('nugetProxy', { symbolServerUrl: value })}
+            placeholder={UIStrings.NUGET.SYMBOL_SERVER_URL.placeholder}
+            helpText={UIStrings.NUGET.SYMBOL_SERVER_URL.helpText}
+          />
+          <SettingsCheckbox
+            name="nugetProxy-allowAnonymousSymbolAccess"
+            label={UIStrings.NUGET.ALLOW_ANONYMOUS_SYMBOL_ACCESS.label}
+            checked={formData.nugetProxy?.allowAnonymousSymbolAccess ?? true}
+            onChange={(checked) => onNestedChange('nugetProxy', { allowAnonymousSymbolAccess: checked })}
+            description={UIStrings.NUGET.ALLOW_ANONYMOUS_SYMBOL_ACCESS.description}
+          />
+        </>
+      )}
 
       {originChangeWarning && (
         <SettingsAlert type="warning">

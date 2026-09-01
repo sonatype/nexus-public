@@ -17,12 +17,6 @@ import java.util.Enumeration;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.BadRequestException;
@@ -44,15 +38,21 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.web.util.WebUtils;
 import org.eclipse.jetty.http.BadMessageException;
-import org.eclipse.jetty.io.EofException;
+import org.eclipse.jetty.io.QuietException;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -142,8 +142,8 @@ public class ViewServlet
       send(null, HttpResponses.badRequest(e.getReason()), httpResponse);
     }
     catch (Exception e) {
-      if (isEofException(e)) {
-        log.info("Client terminated connection", log.isDebugEnabled() ? e : null);
+      if (isQuietException(e)) {
+        log.debug("Caught jetty QuietException", e);
       }
       else if (!(e instanceof AuthorizationException)) {
         log.warn("Failure servicing: {} {}", httpRequest.getMethod(), uri, e);
@@ -156,12 +156,16 @@ public class ViewServlet
     }
   }
 
-  private static boolean isEofException(final Exception e) {
-    if (e instanceof EofException || Throwables.getRootCause(e) instanceof EofException) {
+  /*
+   * Jetty uses QuietExceptions for failures outside the application such as the client disconnecting or invalid
+   * encoding.
+   */
+  private static boolean isQuietException(final Exception e) {
+    if (QuietException.isQuiet(e)) {
       return true;
     }
     return Stream.of(e.getSuppressed())
-        .anyMatch(t -> t instanceof EofException);
+        .anyMatch(t -> t instanceof QuietException);
   }
 
   protected void doService(

@@ -186,6 +186,7 @@ $nxrm-brand-hover: #008f68;
 }
 
 .nxrm-login-divider {
+  flex: 1;
   height: 1px;
   background-color: var(--gray-5);
 
@@ -208,7 +209,7 @@ $nxrm-brand-hover: #008f68;
 }
 
 .nxrm-login-filepath {
-  font-family: monospace;
+  font-family: var(--font-family-mono);
   overflow-wrap: break-word;
 }
 

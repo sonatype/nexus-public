@@ -63,7 +63,7 @@ export function ContentSelectorPreview({ type, expression }: ContentSelectorPrev
 
   // Check if preview is available
   const isPreviewAvailable = useMemo(() => {
-    return !!expression.trim();
+    return Boolean(expression.trim());
   }, [expression]);
 
   // Handle preview

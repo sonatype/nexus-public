@@ -13,6 +13,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import {
+  Badge,
   Box,
   Button,
   Card,
@@ -28,6 +29,7 @@ import {
   Table,
   Text,
   TextField,
+  VisuallyHidden,
 } from '@radix-ui/themes';
 import {
   AlertCircle,
@@ -52,6 +54,19 @@ interface GAFilesTabProps {
   assets: readonly GAAsset[];
   selectedVersion: string | null;
   loading: boolean;
+}
+
+/** Rendered wherever an asset carries no usable timestamp. */
+const NO_DATE = '—';
+
+/**
+ * Sort key for an asset's timestamp. Undated assets collapse to one bucket at the bottom of a
+ * descending sort rather than to NaN, which would make the whole ordering arbitrary.
+ */
+function lastModifiedSortValue(asset: GAAsset): number {
+  if (!asset.lastModified) return -Infinity;
+  const time = new Date(asset.lastModified).getTime();
+  return Number.isNaN(time) ? -Infinity : time;
 }
 
 /**
@@ -79,7 +94,7 @@ export function GAFilesTab({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filterExtensions]);
+  }, []);
 
   const extensionOptions = useMemo(() => {
     const exts = new Set(assets.map((a) => a.extension));
@@ -90,11 +105,16 @@ export function GAFilesTab({
     return assets.filter((a) => {
       const q = searchQuery.trim().toLowerCase();
       const fileName = a.path.split('/').pop() || a.path;
+      // `repository` is matched because it is the sub-line under each filename and the only
+      // field distinguishing assets that share one (NEXUS-54201). `classifier` stays in the
+      // list for the mock path, but the real API never populates it — see
+      // componentVersionDetailApi.toAsset — so it matches nothing in production.
       if (
         q &&
         !(
           fileName.toLowerCase().includes(q) ||
           a.extension.toLowerCase().includes(q) ||
+          a.repository.toLowerCase().includes(q) ||
           (a.classifier?.toLowerCase().includes(q) ?? false)
         )
       ) {
@@ -128,11 +148,14 @@ export function GAFilesTab({
         case 'size':
           cmp = a.size - b.size;
           break;
-        case 'lastModified':
-          cmp =
-            new Date(a.lastModified).getTime() -
-            new Date(b.lastModified).getTime();
+        case 'lastModified': {
+          // Compared, not subtracted: -Infinity - -Infinity is NaN, and a NaN comparator makes
+          // the ordering of two undated assets arbitrary.
+          const aTime = lastModifiedSortValue(a);
+          const bTime = lastModifiedSortValue(b);
+          cmp = aTime === bTime ? 0 : aTime < bTime ? -1 : 1;
           break;
+        }
         default:
           return 0;
       }
@@ -229,7 +252,8 @@ export function GAFilesTab({
     </Box>
   );
 
-  if (!selectedVersion) {
+  // === null, not truthiness: '' is the valid selected version for versionless formats (raw).
+  if (selectedVersion === null) {
     return (
       <Callout.Root color="amber">
         <Callout.Icon>
@@ -324,20 +348,24 @@ export function GAFilesTab({
                 </Box>
                 <Button asChild size="2" variant="outline" color="gray">
                   <button
+                    type="button"
                     disabled={sortedAssets.length === 0}
                     aria-label="Export all filtered results as CSV"
                     onClick={() =>
+                      // `repository` replaces `classifier`: the real API never populates the
+                      // latter (componentVersionDetailApi.toAsset hardcodes it undefined), so the
+                      // column was always blank, and the repository is what the rows now show.
                       exportToCsv(
                         sortedAssets.map((a) => ({
                           file: a.path.split('/').pop() || a.path,
                           extension: a.extension,
-                          classifier: a.classifier,
+                          repository: a.repository,
                           size: a.size,
-                          lastModified: a.lastModified,
+                          lastModified: a.lastModified ?? '',
                           downloadUrl: a.downloadUrl,
                         })),
                         'files.csv',
-                        ['file', 'extension', 'classifier', 'size', 'lastModified', 'downloadUrl'],
+                        ['file', 'extension', 'repository', 'size', 'lastModified', 'downloadUrl'],
                       )
                     }
                   >
@@ -491,13 +519,20 @@ function AssetRow({ asset }: { asset: GAAsset }) {
   return (
     <Table.Row>
       <Table.Cell>
-        <Flex direction="column" gap="1">
+        {/* align="start": Flex defaults to stretch, which would grow the badge's pill background
+            to the column's full width instead of hugging the repository name. */}
+        <Flex direction="column" gap="1" align="start">
           <Text size="2" weight="medium">
             {fileName}
           </Text>
-          <Text size="2" color="gray">
-            {asset.classifier || '-'}
-          </Text>
+          {/* Same badge convention as the per-row repository/version counts in GAVersionsTab and
+              GARepositoriesTab. Unlike those, this one has no column header to anchor it, so it
+              still needs the hidden label — without it a screen reader announces the File cell as
+              two bare strings. */}
+          <Badge color="gray" variant="solid" radius="full" size="1">
+            <VisuallyHidden>Repository: </VisuallyHidden>
+            {asset.repository}
+          </Badge>
         </Flex>
       </Table.Cell>
 
@@ -553,16 +588,22 @@ function formatFileSize(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-function formatDate(dateString: string): string {
-  try {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return dateString;
-  }
+/**
+ * An asset with no timestamp renders as an em dash, not as "Invalid Date".
+ *
+ * The try/catch cannot cover this on its own: `new Date('')` and `new Date('nonsense')` throw
+ * nothing, they produce an Invalid Date whose toLocaleDateString() returns the literal string
+ * "Invalid Date". Both the null and the unparseable case have to be checked explicitly.
+ */
+function formatDate(dateString: string | null): string {
+  if (!dateString) return NO_DATE;
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return NO_DATE;
+  return parsed.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export default GAFilesTab;

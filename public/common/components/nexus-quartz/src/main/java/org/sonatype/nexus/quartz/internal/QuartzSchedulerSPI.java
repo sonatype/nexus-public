@@ -42,7 +42,6 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
@@ -109,8 +108,6 @@ public abstract class QuartzSchedulerSPI
   public static final String MISSING_TRIGGER_RECOVERY = ".missingTriggerRecovery";
 
   public static final String MISSING_TRIGGER_DEFAULT_MESSAGE = "Job with key '%s' is missing its trigger";
-
-  public static final String PLAN_RECONCILIATION_TASK_ID = "blobstore.planReconciliation";
 
   protected static final String GROUP_NAME = "nexus";
 
@@ -660,11 +657,6 @@ public abstract class QuartzSchedulerSPI
       if (old != null) {
         return updateJob(old, config, schedule);
       }
-
-      if (PLAN_RECONCILIATION_TASK_ID.equals(config.getTypeId()) && findTaskByTypeId(config.getTypeId()).isPresent()) {
-        log.warn("Task {} already scheduled, ignoring", PLAN_RECONCILIATION_TASK_ID);
-        throw new ValidationErrorsException("Task {} already exist, ignoring", PLAN_RECONCILIATION_TASK_ID);
-      }
       return createNewJob(config, schedule);
     }
     catch (SchedulerException e) {
@@ -681,15 +673,6 @@ public abstract class QuartzSchedulerSPI
           log.isDebugEnabled() ? e : e.getMessage());
       return Optional.empty();
     }
-  }
-
-  private Optional<QuartzTaskInfo> findTaskByTypeId(final String typeId) throws SchedulerException {
-    Map<JobKey, QuartzTaskInfo> tasks = allTasks();
-    return tasks.entrySet()
-        .stream()
-        .filter(entry -> entry.getValue().getConfiguration().getTypeId().equals(typeId))
-        .findFirst()
-        .map(Entry::getValue);
   }
 
   protected QuartzTaskInfo createNewJob(

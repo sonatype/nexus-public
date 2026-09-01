@@ -24,13 +24,13 @@ jest.mock('../../../../../../shared/form', () => ({
   SettingsTextInput: ({ name, label, value, onChange }: any) => (
     <div>
       <label htmlFor={name}>{label}</label>
-      <input id={name} role="textbox" aria-label={label} value={value || ''} onChange={(e: any) => onChange && onChange(e.target.value)} />
+      <input id={name} aria-label={label} value={value || ''} onChange={(e: any) => onChange?.(e.target.value)} />
     </div>
   ),
   SettingsPasswordInput: ({ name, label, value, onChange }: any) => (
     <div>
       <label htmlFor={name}>{label}</label>
-      <input id={name} type="password" aria-label={label} value={value || ''} onChange={(e: any) => onChange && onChange(e.target.value)} />
+      <input id={name} type="password" aria-label={label} value={value || ''} onChange={(e: any) => onChange?.(e.target.value)} />
     </div>
   ),
 }));

@@ -61,7 +61,10 @@ export default FormUtils.buildFormMachine({
   },
   services:
       {
-        fetchData: () => Axios.get('service/rest/internal/ui/datastore'),
+        fetchData: async () => {
+          await ExtJS.waitForPermissions();
+          return Axios.get('service/rest/internal/ui/datastore');
+        },
         saveData: ({data}) => {
           return Axios.put('service/rest/internal/ui/datastore', data);
         }

@@ -55,7 +55,7 @@ export function useGrantWizard(row: MergedApiEndpoint | null, active: boolean) {
   const { fetchSources, fetchUsers, updateUser } = useUsersApi();
   const { fetchPrivileges } = usePrivilegesApi();
 
-  const [cacheGen, setCacheGen] = useState(0);
+  const [_cacheGen, setCacheGen] = useState(0);
   const [dirError, setDirError] = useState<string | null>(null);
   const [loadingDir, setLoadingDir] = useState(false);
 
@@ -65,7 +65,7 @@ export function useGrantWizard(row: MergedApiEndpoint | null, active: boolean) {
   }, [fetchPrivileges]);
 
   useEffect(() => {
-    if (!active || !row) {
+    if (!(active && row)) {
       return undefined;
     }
     if (getSecurityDirectoryCache()) {
@@ -100,14 +100,14 @@ export function useGrantWizard(row: MergedApiEndpoint | null, active: boolean) {
     };
   }, [active, row, fetchRoles, fetchAllPrivileges, fetchSources, fetchUsers]);
 
-  const session = useMemo(() => getSecurityDirectoryCache(), [cacheGen]);
+  const session = useMemo(() => getSecurityDirectoryCache(), []);
 
   const { qualifyingRoles, noMappedPermissions } = useMemo(() => {
-    if (!row || !session) {
+    if (!(row && session)) {
       return { qualifyingRoles: [] as { role: Role; userCount: number }[], noMappedPermissions: false };
     }
     return computeEndpointAccessSummaries(row, session.roles, session.privileges, session.users);
-  }, [row, session, cacheGen]);
+  }, [row, session]);
 
   const recommendedRoles = useMemo(() => {
     const roles = qualifyingRoles.map((q) => q.role);
@@ -115,7 +115,7 @@ export function useGrantWizard(row: MergedApiEndpoint | null, active: boolean) {
       return [] as Role[];
     }
     return rankRolesForGrantRecommendations(roles, session.roles);
-  }, [qualifyingRoles, session, cacheGen]);
+  }, [qualifyingRoles, session]);
 
   const userCountByRoleId = useMemo(() => {
     const m = new Map<string, number>();

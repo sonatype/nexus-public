@@ -13,7 +13,7 @@
 
 import { assign } from 'xstate';
 import { ENDPOINTS, restClient } from '../../../../../../interface/api';
-import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
+import { createFormMachine, type ValidationErrors } from '../../../../../../interface/form';
 
 import {
   Capability,
@@ -80,7 +80,7 @@ function validateCapability(
       // Number range validation
       if (field.type === 'number') {
         const numValue = parseFloat(value);
-        if (isNaN(numValue)) {
+        if (Number.isNaN(numValue)) {
           errors[`properties.${field.id}`] = `${field.label} must be a number`;
         } else {
           if (field.minValue !== undefined && numValue < field.minValue) {

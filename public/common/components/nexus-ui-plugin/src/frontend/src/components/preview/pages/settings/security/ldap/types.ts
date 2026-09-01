@@ -116,7 +116,15 @@ export interface LdapFormData extends Omit<LdapServer, 'id' | 'order' | 'url'> {
 }
 
 /**
- * Validation errors for LDAP form
+ * Validation errors for LDAP form.
+ *
+ * Not consumed internally by this module - ldapFormMachine.ts's
+ * validateConnection/validateUserGroup/validateLdap return the generic
+ * ValidationErrors type from the shared form interface instead (see
+ * NEXUS-53623 F7). This interface is kept and re-exported (index.ts) purely
+ * as a typed error-shape for external/plugin consumers that want static
+ * typing on LDAP form error keys; keep it in sync with the keys actually
+ * produced by ldapFormMachine.ts's validators when adding new fields.
  */
 export interface LdapFormErrors {
   name?: string;
@@ -126,6 +134,9 @@ export interface LdapFormErrors {
   authScheme?: string;
   authUsername?: string;
   authPassword?: string;
+  connectionTimeout?: string;
+  connectionRetryDelay?: string;
+  maxIncidentsCount?: string;
   userObjectClass?: string;
   userIdAttribute?: string;
   userRealNameAttribute?: string;
@@ -152,7 +163,7 @@ export interface LdapListProps {
   servers: LdapServer[];
   onSelect: (server: LdapServer) => void;
   onCreate: () => void;
-  onReorder: (serverIds: string[]) => void;
+  onReorder: (serverNames: string[]) => Promise<void>;
   onDelete: (server: LdapServer) => void;
   onClearCache: () => void;
   loading?: boolean;
@@ -202,8 +213,8 @@ export const DEFAULT_LDAP_SERVER: LdapFormData = {
   userRealNameAttribute: 'cn',
   userEmailAddressAttribute: 'mail',
   userPasswordAttribute: '',
-  ldapGroupsAsRoles: false,
-  groupType: 'static',
+  ldapGroupsAsRoles: true,
+  groupType: 'dynamic',
   groupBaseDn: '',
   groupSubtree: false,
   groupObjectClass: 'groupOfUniqueNames',
@@ -212,5 +223,3 @@ export const DEFAULT_LDAP_SERVER: LdapFormData = {
   groupMemberFormat: 'uid=${username},ou=people,dc=example,dc=com',
   userMemberOfAttribute: 'memberOf',
 };
-
-

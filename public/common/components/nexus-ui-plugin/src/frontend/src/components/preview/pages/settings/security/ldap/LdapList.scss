@@ -145,11 +145,17 @@
   }
 
   &__drag-handle {
-    color: var(--gray-9);
+    // Also rendered inside the portalled Change Order dialog, so it needs a
+    // literal fallback for when the Radix theme scope is unavailable.
+    color: var(--gray-9, #8b8b92);
     cursor: grab;
 
     &:active {
       cursor: grabbing;
+    }
+
+    [data-theme='dark'] & {
+      color: var(--gray-9, #706f78);
     }
   }
 
@@ -178,14 +184,18 @@
       color: var(--gray-12);
     }
 
+    // Visible keyboard focus ring (NEXUS-53625 A2) so the row action buttons
+    // (e.g. delete) are highlighted when tabbed to.
+    &:focus-visible {
+      outline: 2px solid var(--accent-9);
+      outline-offset: 1px;
+      color: var(--gray-12);
+    }
+
     &--delete:hover {
       background: var(--red-3);
       color: var(--red-11);
     }
-  }
-
-  &__row-edit-icon {
-    color: var(--gray-9);
   }
 
   &__no-matches {
@@ -238,6 +248,14 @@
   }
 
   // Modal styles
+  //
+  // The Change Order dialog renders through Radix's Dialog.Portal, which mounts
+  // to document.body — outside the app's `.radix-themes` scope. Radix theme CSS
+  // variables (--gray-*, --accent-*, --space-*, --radius-*, --color-background)
+  // are only defined within that scope, so every var used below carries a literal
+  // fallback and dark-mode is handled with `[data-theme='dark'] &` overrides.
+  // This matches the convention used by the other portalled dialogs in this app
+  // (e.g. RolesSelectionModal, PrivilegesSelectionModal, UserTokensPage).
   &__modal-overlay {
     position: fixed;
     inset: 0;
@@ -251,16 +269,21 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--color-background);
-    border-radius: var(--radius-3);
+    background: var(--color-background, #fff);
+    border-radius: var(--radius-3, 8px);
     box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.35), 0 10px 20px -15px rgba(0, 0, 0, 0.2);
-    padding: var(--space-5);
+    padding: var(--space-5, 24px);
     width: 90vw;
     max-width: 450px;
     max-height: 85vh;
     overflow-y: auto;
     z-index: 1001;
     animation: fadeIn 0.15s ease-out;
+
+    [data-theme='dark'] & {
+      background: var(--gray-2, #19191b);
+      box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -15px rgba(0, 0, 0, 0.5);
+    }
 
     &--order {
       max-width: 500px;
@@ -272,54 +295,111 @@
   }
 
   &__modal-title {
-    font-size: var(--font-size-5);
+    font-size: var(--font-size-5, 20px);
     font-weight: 600;
-    color: var(--gray-12);
-    margin-bottom: var(--space-3);
+    color: var(--gray-12, #1c2024);
+    margin-bottom: var(--space-3, 12px);
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+    }
   }
 
   &__modal-description {
-    font-size: var(--font-size-2);
-    color: var(--gray-11);
+    font-size: var(--font-size-2, 14px);
+    color: var(--gray-11, #60646c);
     line-height: 1.5;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-4, 16px);
+
+    [data-theme='dark'] & {
+      color: var(--gray-11, #9898a1);
+    }
   }
 
   &__modal-icon--danger {
-    color: var(--red-9);
+    color: var(--red-9, #e5484d);
   }
 
   &__modal-actions {
-    margin-top: var(--space-4);
+    margin-top: var(--space-4, 16px);
   }
 
   // Order modal list
   &__order-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    margin: var(--space-4) 0;
+    gap: var(--space-2, 8px);
+    margin: var(--space-4, 16px) 0;
     max-height: 300px;
     overflow-y: auto;
   }
 
   &__order-item {
-    padding: var(--space-3);
-    background: var(--gray-2);
-    border: 1px solid var(--gray-6);
-    border-radius: var(--radius-2);
+    padding: var(--space-3, 12px);
+    // Explicit text color so the Radix <Text> server names (which inherit
+    // currentColor) stay legible inside the portal, where the theme scope and
+    // its default text color are otherwise absent.
+    color: var(--gray-12, #1c2024);
+    background: var(--gray-2, #f9f9fb);
+    border: 1px solid var(--gray-6, #d9d9e0);
+    border-radius: var(--radius-2, 6px);
     cursor: grab;
     transition: background-color 0.15s, border-color 0.15s;
 
     &:hover {
-      background: var(--gray-3);
-      border-color: var(--gray-7);
+      background: var(--gray-3, #f0f0f3);
+      border-color: var(--gray-7, #d0d0d4);
     }
 
     &:active {
       cursor: grabbing;
-      background: var(--accent-3);
-      border-color: var(--accent-7);
+      background: var(--accent-3, #e6f0ff);
+      border-color: var(--accent-7, #96c7f2);
+    }
+
+    [data-theme='dark'] & {
+      color: var(--gray-12, #edeef0);
+      background: var(--gray-2, #19191b);
+      border-color: var(--gray-6, #3d3d43);
+
+      &:hover {
+        background: var(--gray-3, #222225);
+        border-color: var(--gray-7, #474750);
+      }
+
+      &:active {
+        background: var(--accent-3, #0d2847);
+        border-color: var(--accent-7, #2870bd);
+      }
+    }
+  }
+
+  &__order-item-move-buttons {
+    margin-left: auto;
+  }
+
+  &__order-move-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--gray-6);
+    border-radius: var(--radius-1);
+    color: var(--gray-10);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+
+    &:hover:not(:disabled) {
+      background: var(--gray-4);
+      color: var(--gray-12);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
   }
 }

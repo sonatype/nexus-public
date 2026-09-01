@@ -99,16 +99,6 @@ public class NexusProperties
     nexusProperties.put(key, value);
   }
 
-  /**
-   * Enforces analytics to be enabled for Community Edition.
-   * This method should only be called by ApplicationLauncher when running in CE mode.
-   */
-  public void enforceCommunityEditionAnalytics() {
-    nexusProperties.put("nexus.analytics.enabled", "true");
-    // Sync to System properties since init() has already completed and won't sync this change automatically
-    System.setProperty("nexus.analytics.enabled", "true");
-  }
-
   String get(final String property, final String defaultValue) {
     String value = getProperty(property);
 

@@ -50,7 +50,7 @@ export function useAnonymousForm(options: UseAnonymousFormOptions = {}) {
   const { onSave, messages } = options;
   const toast = useToast();
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
-  const [pendingData, setPendingData] = useState<AnonymousFormData | null>(null);
+  const [_pendingData, setPendingData] = useState<AnonymousFormData | null>(null);
 
   // Create the form machine - stable across renders
   const machine = useMemo(() => createAnonymousFormMachine(), []);

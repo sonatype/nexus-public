@@ -25,12 +25,7 @@ import { RemediateTab } from './RemediateTab';
 import { HardenTab, computeHardenCount } from './HardenTab';
 import { ReportTab } from './ReportTab';
 import { IdentifyTaskModal } from './IdentifyTaskModal';
-import { computeNistPhase, getFindingStatus, type FindingStatus, type MaliciousFinding, type TabCounts, type TabId, type ViewMode } from './types';
-import { NistStepper } from './NistStepper';
-import { NextStepCallout } from './NextStepCallout';
-import { MetricCards } from './MetricCards';
-import { FindingsTable } from './FindingsTable';
-import { AcknowledgeDialog } from './AcknowledgeDialog';
+import { getFindingStatus, type TabCounts, type TabId, } from './types';
 
 import './MaliciousPackagesPage.scss';
 

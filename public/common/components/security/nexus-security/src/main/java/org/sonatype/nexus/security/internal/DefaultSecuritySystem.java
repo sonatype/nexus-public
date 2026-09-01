@@ -65,7 +65,7 @@ import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.LifecycleUtils;
+import org.apache.shiro.lang.util.LifecycleUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -262,6 +262,7 @@ public class DefaultSecuritySystem
     final User oldUser = userManager.getUser(user.getUserId());
     userManager.updateUser(user);
     if (oldUser.getStatus().isActive() && user.getStatus() != oldUser.getStatus()) {
+      sessionInvalidator.invalidateSessionsForUser(user.getUserId(), user.getSource(), "user deactivation");
       // clear the realm authc caches as user got disabled
       eventManager.post(new UserPrincipalsExpired(user.getUserId(), user.getSource()));
     }
@@ -319,6 +320,8 @@ public class DefaultSecuritySystem
 
     UserManager userManager = getUserManager(source);
     userManager.deleteUser(userId);
+
+    sessionInvalidator.invalidateSessionsForUser(userId, source, "user deletion");
 
     // flush authc
     eventManager.post(new UserPrincipalsExpired(userId, source));
@@ -597,7 +600,7 @@ public class DefaultSecuritySystem
           userId, user.getSource());
     }
 
-    sessionInvalidator.invalidateSessionsForUser(userId, resolveInvalidationSource(userId, user));
+    sessionInvalidator.invalidateSessionsForUser(userId, resolveInvalidationSource(userId, user), "password change");
 
     // Post event containing the userId for which the password has been changed
     eventManager.post(new UserPasswordChanged(userId, clearCache));

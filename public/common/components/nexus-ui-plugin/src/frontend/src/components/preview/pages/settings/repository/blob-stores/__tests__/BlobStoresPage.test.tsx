@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, } from '@testing-library/react';
 import BlobStoresPage from '../BlobStoresPage';
 import * as useBlobStoresModule from '../useBlobStores';
 
@@ -707,7 +707,7 @@ describe('soft quota validation', () => {
     fireEvent.click(checkbox);
 
     // Force save attempt via the handler (not the disabled button path)
-    const form = screen.getByTestId('settings-form');
+    const _form = screen.getByTestId('settings-form');
     // Simulate clicking the save button while dirty but with invalid quota
     const submitBtn = screen.getByTestId('form-submit');
     await act(async () => { fireEvent.click(submitBtn); });

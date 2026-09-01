@@ -24,4 +24,20 @@
     min-height: 400px;
     padding: var(--space-4);
   }
+
+  // App.scss resets every preview-UI anchor to `color: inherit; text-decoration:
+  // none` at specificity 0-4-2, which is why these rendered as plain text. The class
+  // is repeated 5x to outrank it without hard-coding App.scss's layout classes —
+  // 4 only ties, and source order can't break the tie from a lazy-loaded chunk.
+  // The .rt-Text child is targeted because the anchors wrap a Radix <Text>.
+  a#{&}__entity-link#{&}__entity-link#{&}__entity-link#{&}__entity-link#{&}__entity-link {
+    color: var(--accent-9);
+    text-decoration: underline;
+    cursor: pointer;
+
+    .rt-Text {
+      color: var(--accent-9);
+      text-decoration: underline;
+    }
+  }
 }

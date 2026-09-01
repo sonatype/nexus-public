@@ -13,7 +13,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { ChevronDown, ChevronRight, Filter, RotateCcw } from 'lucide-react';
-import { Checkbox, Text, Flex } from '@radix-ui/themes';
+import { Checkbox, Text, } from '@radix-ui/themes';
 
 import './BrowseSidebar.scss';
 

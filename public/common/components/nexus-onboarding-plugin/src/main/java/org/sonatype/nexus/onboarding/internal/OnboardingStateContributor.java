@@ -15,19 +15,18 @@ package org.sonatype.nexus.onboarding.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rapture.StateContributor;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED;
+import static org.sonatype.nexus.common.app.FeatureFlags.REACT_ONBOARDING_ENABLED_NAMED_VALUE;
 import org.springframework.stereotype.Component;
 
-/**
- * @since 3.17
- */
 @Component
 public class OnboardingStateContributor
     implements StateContributor
@@ -38,26 +37,32 @@ public class OnboardingStateContributor
 
   private final AdminPasswordFileManager adminPasswordFileManager;
 
+  private final boolean isReactOnboardingEnabled;
+
   private boolean needsOnboarding = true;
 
   @Autowired
   public OnboardingStateContributor(
       final OnboardingConfiguration onboardingConfiguration,
       final OnboardingManager onboardingManager,
-      final AdminPasswordFileManager adminPasswordFileManager)
+      final AdminPasswordFileManager adminPasswordFileManager,
+      @Value(REACT_ONBOARDING_ENABLED_NAMED_VALUE) final boolean isReactOnboardingEnabled)
   {
     this.onboardingConfiguration = checkNotNull(onboardingConfiguration);
     this.onboardingManager = checkNotNull(onboardingManager);
     this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
+    this.isReactOnboardingEnabled = isReactOnboardingEnabled;
   }
 
-  @Nullable
   @Override
   public Map<String, Object> getState() {
     // cache the onboarding flag, once it's false there is no longer a need to check anymore
     needsOnboarding = needsOnboarding && onboardingConfiguration.isEnabled() && onboardingManager.needsOnboarding();
 
-    HashMap<String, Object> properties = new HashMap<>();
+    Map<String, Object> properties = new HashMap<>();
+
+    // Always publish the React onboarding flag so both ExtJS and React can read it via NX.State.
+    properties.put(REACT_ONBOARDING_ENABLED, isReactOnboardingEnabled);
 
     if (needsOnboarding) {
       properties.put("onboarding.required", true);
@@ -67,6 +72,6 @@ public class OnboardingStateContributor
       properties.put("admin.password.file", adminPasswordFileManager.getPath());
     }
 
-    return properties.isEmpty() ? null : properties;
+    return properties;
   }
 }

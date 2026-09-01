@@ -71,7 +71,8 @@ public class RepositoryCombobox
   private static final Messages messages = I18N.create(Messages.class);
 
   public RepositoryCombobox(String id, String label, String helpText, boolean required, String regexValidation) {
-    super(id, label, helpText, required, regexValidation);
+    super(id, label, helpText, required);
+    withRegexValidation(regexValidation);
   }
 
   public RepositoryCombobox(String id, String label, String helpText, boolean required) {

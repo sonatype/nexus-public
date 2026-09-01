@@ -36,19 +36,29 @@ import org.sonatype.nexus.repository.search.sql.ExpressionGroup;
 import org.sonatype.nexus.repository.search.sql.SearchResult;
 import org.sonatype.nexus.repository.search.sql.SqlSearchResultDecorator;
 import org.sonatype.nexus.repository.search.sql.index.SqlSearchEventHandler;
+import org.sonatype.nexus.repository.search.sql.query.security.SqlSearchPermissionException;
+import org.sonatype.nexus.repository.search.sql.query.security.UnknownRepositoriesException;
 import org.sonatype.nexus.repository.search.sql.store.SearchStore;
 import org.sonatype.nexus.rest.ValidationErrorsException;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension.CaptureLogsFor;
+import org.sonatype.nexus.testcommon.extensions.LoggingExtension.TestLogAccessor;
 
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -63,11 +73,15 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.logLevel;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, LoggingExtension.class})
 class SqlSearchServiceTest
 {
   private static final String FORMAT = "maven2";
+
+  @CaptureLogsFor(value = SqlSearchService.class, level = Level.DEBUG)
+  TestLogAccessor logs;
 
   @Mock
   private SearchStore searchStore;
@@ -577,5 +591,119 @@ class SqlSearchServiceTest
     verify(sqlSearchEventHandler).getMinimumWaitTimeMs();
     // Verify it checked calm period multiple times during minimum wait (polls every 100ms for 1000ms = ~10 polls)
     verify(sqlSearchEventHandler, atLeast(9)).isCalmPeriod();
+  }
+
+  /**
+   * Verifies that SqlSearchPermissionException is converted to ForbiddenException.
+   * This exception is thrown when a user lacks permissions to search specified repositories,
+   * and should result in a 403 Forbidden response.
+   */
+  @Test
+  void testSearchThrowsForbiddenExceptionWhenPermissionDenied() {
+    SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
+
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    // Mock expressionBuilder to return an expression
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+
+    // Mock queryFactory to throw SqlSearchPermissionException
+    when(queryFactory.build(expressionGroup))
+        .thenThrow(new SqlSearchPermissionException("User does not have permissions to required repositories."));
+
+    // The search should throw ForbiddenException
+    ForbiddenException exception = assertThrows(ForbiddenException.class, () -> underTest.search(searchRequest));
+
+    assertThat(exception.getMessage(), equalTo("User lacks permission to specified repository"));
+
+    // Verify log level is DEBUG, not ERROR or WARN
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(logs.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  /**
+   * Verifies that UnknownRepositoriesException is converted to BadRequestException in search.
+   */
+  @Test
+  void testSearchThrowsBadRequestExceptionWhenUnknownRepositories() {
+    SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
+
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    // Mock expressionBuilder to return an expression
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+
+    // Mock queryFactory to throw UnknownRepositoriesException
+    when(queryFactory.build(expressionGroup))
+        .thenThrow(new UnknownRepositoriesException(List.of("unknown-repo")));
+
+    // The search should throw BadRequestException
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> underTest.search(searchRequest));
+
+    assertThat(exception.getMessage(), equalTo("Unknown repository"));
+
+    // Verify log level is DEBUG, not ERROR or WARN
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(logs.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  /**
+   * Verifies that count throws ForbiddenException when SqlSearchPermissionException occurs.
+   */
+  @Test
+  void testCountThrowsForbiddenExceptionWhenPermissionDenied() {
+    SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
+
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    // Mock expressionBuilder to return an expression
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+
+    // Mock queryFactory to throw SqlSearchPermissionException
+    when(queryFactory.build(expressionGroup))
+        .thenThrow(new SqlSearchPermissionException("User does not have permissions to required repositories."));
+
+    // The count should throw ForbiddenException
+    ForbiddenException exception = assertThrows(ForbiddenException.class, () -> underTest.count(searchRequest));
+
+    assertThat(exception.getMessage(), equalTo("User lacks permission to specified repository"));
+
+    // Verify log level is DEBUG, not ERROR or WARN
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(logs.logs(), hasItem(logLevel(Level.DEBUG)));
+  }
+
+  /**
+   * Verifies that count throws BadRequestException when UnknownRepositoriesException occurs.
+   */
+  @Test
+  void testCountThrowsBadRequestExceptionWhenUnknownRepositories() {
+    SearchRequest searchRequest = SearchRequest.builder().limit(10).build();
+
+    when(requestModifier.modify(searchRequest)).thenReturn(searchRequest);
+
+    // Mock expressionBuilder to return an expression
+    Optional<ExpressionGroup> expression = Optional.of(expressionGroup);
+    when(expressionBuilder.from(any(SearchRequest.class))).thenReturn(expression);
+
+    // Mock queryFactory to throw UnknownRepositoriesException
+    when(queryFactory.build(expressionGroup))
+        .thenThrow(new UnknownRepositoriesException(List.of("unknown-repo")));
+
+    // The count should throw BadRequestException
+    BadRequestException exception = assertThrows(BadRequestException.class, () -> underTest.count(searchRequest));
+
+    assertThat(exception.getMessage(), equalTo("Unknown repository"));
+
+    // Verify log level is DEBUG, not ERROR or WARN
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.ERROR))));
+    assertThat(logs.logs(), not(hasItem(logLevel(Level.WARN))));
+    assertThat(logs.logs(), hasItem(logLevel(Level.DEBUG)));
   }
 }

@@ -12,12 +12,18 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -32,6 +38,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -39,7 +46,15 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyRepositoryConfiguration;
+import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.Status;
+import org.sonatype.nexus.repository.view.payloads.HeaderOnlyPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
+
+import org.apache.http.HttpResponse;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -50,11 +65,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -161,7 +178,7 @@ public class MavenContentGroupFacetImplTest
     removedMembers.add("maven-hosted");
     removedMembers.add("maven-proxy");
 
-    underTest.cleanupOrphanedGroupAssets(removedMembers);
+    underTest.doCleanupOrphanedGroupAssets(removedMembers);
 
     verify(orphanedAsset1).delete();
     verify(orphanedAsset2).delete();
@@ -198,7 +215,7 @@ public class MavenContentGroupFacetImplTest
     Set<String> removedMembers = new HashSet<>();
     removedMembers.add("maven-hosted");
 
-    underTest.cleanupOrphanedGroupAssets(removedMembers);
+    underTest.doCleanupOrphanedGroupAssets(removedMembers);
 
     verify(orphanedAsset).delete();
   }
@@ -239,10 +256,63 @@ public class MavenContentGroupFacetImplTest
     Set<String> removedMembers = new HashSet<>();
     removedMembers.add("maven-hosted");
 
-    underTest.cleanupOrphanedGroupAssets(removedMembers);
+    underTest.doCleanupOrphanedGroupAssets(removedMembers);
 
     verify(failingAsset).delete();
     verify(successAsset).delete();
+  }
+
+  /**
+   * NEXUS-50783: cleanupOrphanedGroupAssets must run the bulk delete on a background thread (not the
+   * repository-update thread), and only once the repository is STARTED again. This asserts the worker is invoked
+   * asynchronously and off the calling thread.
+   */
+  @Test
+  public void testCleanupOrphanedGroupAssets_runsAsynchronouslyWhenStarted() throws Exception {
+    Thread callingThread = Thread.currentThread();
+    AtomicReference<Thread> workerThread = new AtomicReference<>();
+
+    // STARTED so the guard passes
+    doReturn(true).when(underTest).isStarted();
+    // capture the thread the worker runs on; do not touch a real repository/facet
+    doAnswer(invocation -> {
+      workerThread.set(Thread.currentThread());
+      return null;
+    }).when(underTest).doCleanupOrphanedGroupAssets(any());
+
+    Set<String> removedMembers = new HashSet<>();
+    removedMembers.add("maven-hosted");
+
+    underTest.cleanupOrphanedGroupAssets(removedMembers);
+
+    // worker is invoked (asynchronously - allow time for the background task to run)
+    verify(underTest, timeout(5000)).doCleanupOrphanedGroupAssets(removedMembers);
+    assertThat(workerThread.get(), notNullValue());
+    assertThat("cleanup must not run on the calling (update) thread",
+        workerThread.get().equals(callingThread), equalTo(false));
+  }
+
+  /**
+   * NEXUS-50783: if the repository is not STARTED when the scheduled cleanup runs (e.g. another update or shutdown
+   * raced it), the worker must be skipped rather than touching a STOPPED facet.
+   * <p>
+   * This covers the guard short-circuiting when {@code isStarted()} is false. The narrower race where
+   * {@code isStarted()} returns true and the repository then stops mid-scan is handled by
+   * {@code doCleanupOrphanedGroupAssets()} swallowing the resulting failure (it is hard to assert deterministically
+   * here without real lifecycle wiring).
+   */
+  @Test
+  public void testCleanupOrphanedGroupAssets_skipsWorkerWhenNotStarted() throws Exception {
+    doReturn(false).when(underTest).isStarted();
+
+    Set<String> removedMembers = new HashSet<>();
+    removedMembers.add("maven-hosted");
+
+    underTest.cleanupOrphanedGroupAssets(removedMembers);
+
+    // Wait the full window before asserting the worker was never invoked. after(...).never() blocks for the duration;
+    // timeout(...).times(0) would pass immediately at zero invocations and never actually wait out the async task.
+    verify(underTest, after(2000).never()).doCleanupOrphanedGroupAssets(any());
   }
 
   /**
@@ -684,5 +754,166 @@ public class MavenContentGroupFacetImplTest
     MavenPath mainPath = pathParser.parsePath("archetype-catalog.xml");
     // cache miss returns null, but no exception from the merge-handled guard
     assertThat(underTest.getCached(mainPath), nullValue());
+  }
+
+  /**
+   * NEXUS-53780 (regression coverage): a member response whose payload is a
+   * {@link HeaderOnlyPayload} carries no body. It must not be fed to the maven-metadata merger,
+   * because merging an empty stream truncates the merged result and poisons the group cache.
+   * When mixed with a real body-bearing member, the merged output must reflect only the real
+   * member's content — no truncation from the body-less one.
+   */
+  @Test
+  public void merge_skipsHeaderOnlyPayloadMembers() throws Exception {
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
+
+    Repository groupRepo = mock(Repository.class);
+    when(groupRepo.getName()).thenReturn("maven-group");
+    when(groupRepo.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(groupRepo);
+
+    Repository memberA = mock(Repository.class);
+    when(memberA.getName()).thenReturn("member-a-head-only");
+    Repository memberB = mock(Repository.class);
+    when(memberB.getName()).thenReturn("member-b-real");
+
+    // memberA: body-less HEAD response (would have poisoned the merge)
+    Response headerOnlyResponse = okResponseWith(new Content(new HeaderOnlyPayload(mock(HttpResponse.class))));
+    // memberB: real maven-metadata payload with a single version
+    String memberBMetadata = ""
+        + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        + "<metadata>"
+        + "  <groupId>com.example</groupId>"
+        + "  <artifactId>nexus-test</artifactId>"
+        + "  <versioning>"
+        + "    <versions>"
+        + "      <version>2.0.1</version>"
+        + "    </versions>"
+        + "  </versioning>"
+        + "</metadata>";
+    Response realResponse = okResponseWith(new Content(new StringPayload(memberBMetadata, "text/xml")));
+
+    LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
+    responses.put(memberA, headerOnlyResponse);
+    responses.put(memberB, realResponse);
+
+    MavenPath mavenPath = new Maven2MavenPathParser()
+        .parsePath("/com/example/nexus-test/maven-metadata.xml");
+
+    Content merged = underTest.mergeWithoutCaching(mavenPath, responses);
+
+    assertThat("merger must produce output from the real member",
+        merged, notNullValue());
+    String mergedXml = new String(merged.openInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+    assertThat("merged output must include memberB's version",
+        mergedXml.contains("<version>2.0.1</version>"), equalTo(true));
+  }
+
+  /**
+   * NEXUS-53780 (regression coverage): when every 200-OK member response is body-less
+   * (all-HEAD scenario), the merger must return {@code null} rather than a corrupt merged blob.
+   * This is the safety net for the exact failure mode the customer hit: HEAD dispatched to
+   * every member on a stale group cache resulted in a poisoned cached blob.
+   */
+  @Test
+  public void merge_returnsNullWhenAllMembersAreHeaderOnly() throws Exception {
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
+
+    Repository groupRepo = mock(Repository.class);
+    when(groupRepo.getName()).thenReturn("maven-group");
+    when(groupRepo.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(groupRepo);
+
+    Repository memberA = mock(Repository.class);
+    when(memberA.getName()).thenReturn("member-a");
+    Repository memberB = mock(Repository.class);
+    when(memberB.getName()).thenReturn("member-b");
+
+    Response headOnlyA = okResponseWith(new Content(new HeaderOnlyPayload(mock(HttpResponse.class))));
+    Response headOnlyB = okResponseWith(new Content(new HeaderOnlyPayload(mock(HttpResponse.class))));
+
+    LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
+    responses.put(memberA, headOnlyA);
+    responses.put(memberB, headOnlyB);
+
+    MavenPath mavenPath = new Maven2MavenPathParser()
+        .parsePath("/com/example/nexus-test/maven-metadata.xml");
+
+    Content merged = underTest.mergeWithoutCaching(mavenPath, responses);
+
+    // No real content contributed to the merge — return null instead of a poisoned blob.
+    assertThat(merged, nullValue());
+  }
+
+  /**
+   * NEXUS-53858 (regression coverage): when every member returns unparseable maven-metadata
+   * (e.g. an HTML error page), the merger produces zero bytes. The resulting zero-size
+   * {@code TempBlob} must not be stored via {@code put()} — that would fail Maven metadata
+   * validation ({@code InvalidContentException}) and spam WARN logs on every request. The
+   * guard in {@code cache()} must detect the zero-size blob, skip {@code put()}, and serve
+   * an empty 200 body uncached so the group stays functional without log pollution.
+   */
+  @Test
+  public void mergeAndCache_emptyMergedBlob_skipsPutAndServesUncached() throws Exception {
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
+
+    // Mock the blobs chain so createTempBlob returns a zero-size TempBlob
+    FluentBlobs blobsMock = mock(FluentBlobs.class);
+    when(mavenContentFacet.blobs()).thenReturn(blobsMock);
+
+    TempBlob tempBlob = mock(TempBlob.class);
+    Blob blob = mock(Blob.class);
+    BlobMetrics metrics = mock(BlobMetrics.class);
+    when(metrics.getContentSize()).thenReturn(0L);
+    when(blob.getMetrics()).thenReturn(metrics);
+    when(tempBlob.getBlob()).thenReturn(blob);
+    when(tempBlob.get()).thenReturn(new ByteArrayInputStream(new byte[0]));
+    when(blobsMock.ingest(any(InputStream.class), any(), any())).thenReturn(tempBlob);
+
+    // Assets chain used by serveUncached to mark any existing cached asset as stale
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    when(assetBuilder.find()).thenReturn(Optional.empty());
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("maven-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+
+    // Both members return unparseable content (HTML instead of maven-metadata XML),
+    // so the merger writes nothing and the resulting TempBlob is empty.
+    Repository memberA = mock(Repository.class);
+    when(memberA.getName()).thenReturn("member-a");
+    Repository memberB = mock(Repository.class);
+    when(memberB.getName()).thenReturn("member-b");
+
+    Response responseA = okResponseWith(new Content(new StringPayload("<html>not metadata</html>", "text/html")));
+    Response responseB = okResponseWith(new Content(new StringPayload("<html>not metadata</html>", "text/html")));
+
+    LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
+    responses.put(memberA, responseA);
+    responses.put(memberB, responseB);
+
+    MavenPath mavenPath = new Maven2MavenPathParser().parsePath("/com/example/nexus-test/maven-metadata.xml");
+
+    Content result = underTest.mergeAndCache(mavenPath, responses);
+
+    assertThat(result, notNullValue());
+    assertThat(result.openInputStream().readAllBytes().length, equalTo(0));
+    // Key regression assertion: empty merged blob must never be put() — no InvalidContentException, no WARN spam
+    verify(mavenContentFacet, never()).put(any(), any());
+  }
+
+  private static Response okResponseWith(final Content payload) {
+    Response response = mock(Response.class);
+    when(response.getStatus()).thenReturn(Status.success(200));
+    when(response.getPayload()).thenReturn(payload);
+    return response;
   }
 }

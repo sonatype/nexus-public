@@ -16,16 +16,14 @@ import {
   Box,
   Button,
   Callout,
-  Card,
   DropdownMenu,
   Flex,
   IconButton,
-  Inset,
   Spinner,
   Table,
   Text,
 } from '@radix-ui/themes';
-import { ChevronRight, X, MoreHorizontal } from 'lucide-react';
+import { X, MoreHorizontal } from 'lucide-react';
 
 import { SortableTableHeader, type SortDirection } from '../../shared';
 import type { TagWithCount, TagSortField } from './hooks/useFilteredTags';
@@ -68,7 +66,7 @@ export interface TagsTableProps {
 }
 
 /**
- * Tags table matching RepositoryListTable structure: Card + Inset + Radix Table.
+ * Tags table using the IP Allow List reference pattern: Box > Table.Root variant="surface".
  */
 export function TagsTable({
   tags,
@@ -126,114 +124,114 @@ export function TagsTable({
   }
 
   return (
-    <Card size="1">
-      <Inset clip="padding-box" side="bottom">
-        <Box style={{ overflowX: 'auto' }}>
-          <Table.Root size="2">
-            <Table.Header>
-              <Table.Row>
-                <SortableTableHeader
-                  sortKey="name"
-                  currentSortKey={sortField}
-                  currentSortDirection={sortDirection}
-                  onSort={handleSort}
-                  align="left"
-                >
-                  {STRINGS.columns.name}
-                </SortableTableHeader>
-                <SortableTableHeader
-                  sortKey="componentCount"
-                  currentSortKey={sortField}
-                  currentSortDirection={sortDirection}
-                  onSort={handleSort}
-                  align="right"
-                >
-                  {STRINGS.columns.components}
-                </SortableTableHeader>
-                <SortableTableHeader
-                  sortKey="firstCreated"
-                  currentSortKey={sortField}
-                  currentSortDirection={sortDirection}
-                  onSort={handleSort}
-                  align="left"
-                >
-                  {STRINGS.columns.created}
-                </SortableTableHeader>
-                <SortableTableHeader
-                  sortKey="lastUpdated"
-                  currentSortKey={sortField}
-                  currentSortDirection={sortDirection}
-                  onSort={handleSort}
-                  align="left"
-                >
-                  {STRINGS.columns.lastUpdated}
-                </SortableTableHeader>
-                <Table.ColumnHeaderCell justify="end" aria-label="Row actions" pr="5" />
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {tags.length === 0 ? (
-                <Table.Row>
-                  <Table.Cell colSpan={5}>
-                    <Flex justify="center" p="6">
-                      <Text color="gray">
-                        {hasFilters ? STRINGS.emptyMessageFiltered : STRINGS.emptyMessage}
-                      </Text>
-                    </Flex>
-                  </Table.Cell>
-                </Table.Row>
-              ) : (
-                tags.map((tag) => (
-                  <Table.Row
-                    key={tag.name}
-                    onClick={() => handleRowClick(tag.name)}
-                    onKeyDown={handleRowKeyDown(tag.name)}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`View tag ${tag.name}`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <Table.Cell>
-                      <Text size="2" weight="medium" color="blue">
-                        {tag.name}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell style={{ textAlign: 'right' }}>
-                      <Text size="2">{tag.componentCount}</Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text size="2">{formatDate(tag.firstCreated)}</Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text size="2">{formatDate(tag.lastUpdated)}</Text>
-                    </Table.Cell>
-                    <Table.Cell justify="end" pr="5">
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger>
-                          <IconButton
-                            variant="ghost"
-                            color="gray"
-                            size="1"
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label="Row actions"
-                          >
-                            <MoreHorizontal size={16} />
-                          </IconButton>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Content align="end" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu.Item onClick={() => handleRowClick(tag.name)}>
-                            View Tag Details
-                          </DropdownMenu.Item>
-                        </DropdownMenu.Content>
-                      </DropdownMenu.Root>
-                    </Table.Cell>
-                  </Table.Row>
-                ))
-              )}
-            </Table.Body>
-          </Table.Root>
-        </Box>
-      </Inset>
-    </Card>
+    <Table.Root variant="surface" size="2">
+      <Table.Header>
+        <Table.Row>
+          <SortableTableHeader
+            sortKey="name"
+            currentSortKey={sortField}
+            currentSortDirection={sortDirection}
+            onSort={handleSort}
+            align="left"
+          >
+            {STRINGS.columns.name}
+          </SortableTableHeader>
+          <SortableTableHeader
+            sortKey="componentCount"
+            currentSortKey={sortField}
+            currentSortDirection={sortDirection}
+            onSort={handleSort}
+            align="right"
+          >
+            {STRINGS.columns.components}
+          </SortableTableHeader>
+          <SortableTableHeader
+            sortKey="firstCreated"
+            currentSortKey={sortField}
+            currentSortDirection={sortDirection}
+            onSort={handleSort}
+            align="left"
+          >
+            {STRINGS.columns.created}
+          </SortableTableHeader>
+          <SortableTableHeader
+            sortKey="lastUpdated"
+            currentSortKey={sortField}
+            currentSortDirection={sortDirection}
+            onSort={handleSort}
+            align="left"
+          >
+            {STRINGS.columns.lastUpdated}
+          </SortableTableHeader>
+          {/* paddingRight: 32 matches the Rapture-safe right gutter used across list tables (see EntityTable.scss). */}
+          <Table.ColumnHeaderCell
+            width="80px"
+            justify="end"
+            aria-label="Row actions"
+            style={{ paddingRight: 32 }}
+          />
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {tags.length === 0 ? (
+          <Table.Row>
+            <Table.Cell colSpan={5}>
+              <Flex justify="center" p="6">
+                <Text color="gray">
+                  {hasFilters ? STRINGS.emptyMessageFiltered : STRINGS.emptyMessage}
+                </Text>
+              </Flex>
+            </Table.Cell>
+          </Table.Row>
+        ) : (
+          tags.map((tag) => (
+            <Table.Row
+              key={tag.name}
+              onClick={() => handleRowClick(tag.name)}
+              onKeyDown={handleRowKeyDown(tag.name)}
+              tabIndex={0}
+              role="button"
+              aria-label={`View tag ${tag.name}`}
+              style={{ cursor: 'pointer' }}
+            >
+              <Table.Cell>
+                <Text size="2" weight="medium" color="blue">
+                  {tag.name}
+                </Text>
+              </Table.Cell>
+              <Table.Cell style={{ textAlign: 'right' }}>
+                <Text size="2">{tag.componentCount}</Text>
+              </Table.Cell>
+              <Table.Cell>
+                <Text size="2">{formatDate(tag.firstCreated)}</Text>
+              </Table.Cell>
+              <Table.Cell>
+                <Text size="2">{formatDate(tag.lastUpdated)}</Text>
+              </Table.Cell>
+              <Table.Cell justify="end" style={{ paddingRight: 32 }}>
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger>
+                    <IconButton
+                      variant="ghost"
+                      color="gray"
+                      size="1"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Actions for tag ${tag.name}`}
+                    >
+                      <MoreHorizontal size={16} />
+                    </IconButton>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu.Item onClick={() => handleRowClick(tag.name)}>
+                      View Tag Details
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Root>
+              </Table.Cell>
+            </Table.Row>
+          ))
+        )}
+      </Table.Body>
+    </Table.Root>
   );
 }

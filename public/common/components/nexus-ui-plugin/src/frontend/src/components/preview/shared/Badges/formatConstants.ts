@@ -11,8 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import ansibleGalaxyLogo from '../../../../art/logos/formats/ansible-galaxy.png';
-
 /**
  * Human-readable display names for repository formats.
  */
@@ -22,6 +20,7 @@ export const FORMAT_LABELS: Record<string, string> = {
   nuget: 'NuGet',
   pypi: 'PyPI',
   docker: 'Docker',
+  oci: 'OCI',
   helm: 'Helm',
   go: 'Go',
   yum: 'Yum',
@@ -35,7 +34,6 @@ export const FORMAT_LABELS: Record<string, string> = {
   gitlfs: 'Git LFS',
   p2: 'p2',
   terraform: 'Terraform',
-  terraformbackend: 'Terraform Backend',
   composer: 'Composer',
   cargo: 'Cargo (Rust)',
   huggingface: 'Hugging Face',
@@ -43,35 +41,4 @@ export const FORMAT_LABELS: Record<string, string> = {
   swift: 'Swift',
   pub: 'Pub (Dart)',
   ansiblegalaxy: 'Ansible Galaxy',
-};
-
-/**
- * Official logo URLs for various repository formats.
- */
-export const FORMAT_LOGOS: Record<string, string> = {
-  maven2: 'https://cdn.simpleicons.org/apachemaven',
-  npm: 'https://cdn.simpleicons.org/npm',
-  docker: 'https://cdn.simpleicons.org/docker',
-  nuget: 'https://cdn.simpleicons.org/nuget',
-  pypi: 'https://cdn.simpleicons.org/python',
-  rubygems: 'https://cdn.simpleicons.org/rubygems',
-  helm: 'https://cdn.simpleicons.org/kubernetes',
-  go: 'https://cdn.simpleicons.org/go',
-  terraform: 'https://cdn.simpleicons.org/terraform',
-  terraformbackend: 'https://cdn.simpleicons.org/terraform',
-  cocoapods: 'https://cdn.simpleicons.org/cocoapods',
-  r: 'https://cdn.simpleicons.org/r',
-  conan: 'https://cdn.simpleicons.org/conan',
-  conda: 'https://cdn.simpleicons.org/anaconda',
-  cargo: 'https://cdn.simpleicons.org/rust',
-  composer: 'https://cdn.simpleicons.org/composer',
-  huggingface: 'https://cdn.simpleicons.org/huggingface',
-  gitlfs: 'https://cdn.simpleicons.org/gitlfs',
-  p2: 'https://cdn.simpleicons.org/eclipseide',
-  alpine: 'https://cdn.simpleicons.org/alpinelinux',
-  apt: 'https://cdn.simpleicons.org/debian',
-  yum: 'https://cdn.simpleicons.org/redhat',
-  swift: 'https://cdn.simpleicons.org/swift',
-  pub: 'https://cdn.simpleicons.org/dart',
-  ansiblegalaxy: ansibleGalaxyLogo,
 };

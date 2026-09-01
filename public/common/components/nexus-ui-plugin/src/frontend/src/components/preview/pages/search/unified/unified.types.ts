@@ -42,6 +42,7 @@ export type SearchFormat =
   | 'maven'
   | 'npm'
   | 'nuget'
+  | 'oci'
   | 'p2'
   | 'pub'
   | 'pypi'
@@ -50,7 +51,6 @@ export type SearchFormat =
   | 'rubygems'
   | 'swift'
   | 'terraform'
-  | 'terraformbackend'
   | 'yum';
 
 /**
@@ -168,11 +168,29 @@ export type SortField = 'name' | 'version' | 'lastUpdated' | 'repository';
 export type SortDirection = 'asc' | 'desc';
 
 /**
- * Sort option for dropdown.
+ * A single selectable sort option, combining a field and a direction.
+ *
+ * The results-header dropdown renders this option list (see `sortOptions`),
+ * which is also the allowlist URL and stored sort values are validated against.
  */
 export interface SortOption {
+  /** Composite `field:direction` value used by the sort controls */
   value: string;
+  /**
+   * Full label naming field and direction, e.g. "Last updated — Newest first".
+   * Shown in the dropdown's closed state, where no group heading is present to
+   * supply the field name.
+   */
   label: string;
+  /** Field this option sorts by */
+  field: SortField;
+  /** Direction this option sorts in */
+  direction: SortDirection;
+  /**
+   * Direction-only label, e.g. "Newest first". Used where the field name is
+   * already shown as a group heading.
+   */
+  directionLabel: string;
 }
 
 /**

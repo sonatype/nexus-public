@@ -20,7 +20,18 @@
   }
 
   &__loading {
+    /*
+     * `width: 100%` + `min-height` make this block self-contained instead of
+     * relying on `flex: 1` sizing from whichever parent it's nested in: the
+     * top-level `loadingInitial` usage sits directly under `.ldap-page`
+     * (column-flex, main-axis = height), while the edit-mode usage sits
+     * inside `.ldap-page__content` (row-flex, main-axis = width) — `flex: 1`
+     * alone would grow along the wrong axis in the latter case, leaving
+     * `justify="center"` with no vertical room to center within.
+     */
     flex: 1;
+    width: 100%;
+    min-height: 240px;
     gap: var(--space-3);
     color: var(--gray-11);
   }
@@ -53,5 +64,4 @@
     transform: rotate(360deg);
   }
 }
-
 

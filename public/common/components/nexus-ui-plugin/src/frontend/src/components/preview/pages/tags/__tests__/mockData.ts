@@ -11,33 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import type { Tag, TagDetail } from '../tags.types';
-
-/**
- * Mock tags for testing.
- */
-export const mockTags: Tag[] = [
-  {
-    id: 'release-1.0',
-    firstCreatedTime: '2026-01-15T10:30:45Z',
-    lastUpdatedTime: '2026-01-18T14:15:22Z',
-  },
-  {
-    id: 'staging',
-    firstCreatedTime: '2026-01-10T09:00:00Z',
-    lastUpdatedTime: '2026-01-20T11:45:00Z',
-  },
-  {
-    id: 'beta-2.0',
-    firstCreatedTime: '2026-01-12T15:20:30Z',
-    lastUpdatedTime: '2026-01-19T08:30:15Z',
-  },
-  {
-    id: 'alpha-test',
-    firstCreatedTime: '2026-01-05T08:00:00Z',
-    lastUpdatedTime: '2026-01-06T09:00:00Z',
-  },
-];
+import type { TagDetail } from '../tags.types';
 
 /**
  * Mock tag detail for testing.
@@ -53,14 +27,4 @@ export const mockTagDetail: TagDetail = {
   },
 };
 
-/**
- * Generate a large list of mock tags for pagination testing.
- */
-export function generateManyTags(count: number): Tag[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `tag-${String(i + 1).padStart(3, '0')}`,
-    firstCreatedTime: new Date(2026, 0, 1 + i).toISOString(),
-    lastUpdatedTime: new Date(2026, 0, 15 + i).toISOString(),
-  }));
-}
 

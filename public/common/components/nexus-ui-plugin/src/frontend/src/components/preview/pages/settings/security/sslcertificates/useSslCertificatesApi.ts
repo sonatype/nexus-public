@@ -11,13 +11,24 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import Axios from 'axios';
+import { ExtAPIUtils } from '../../../../../../interface/ExtAPIUtils';
+import { APIConstants } from '../../../../../../constants/APIConstants';
 import { SslCertificate, CertificateSource, CERTIFICATE_SOURCES } from './types';
 
-// REST API URLs - no ExtDirect (Sprint 15)
-const SSL_CERTIFICATES_URL = '/service/rest/v1/security/ssl/truststore';
-const SSL_RETRIEVE_URL = '/service/rest/v1/security/ssl';
+const { EXT, REST } = APIConstants;
+
+// The trust store itself is managed over REST v1 (list / create / delete).
+const SSL_CERTIFICATES_URL = REST.PUBLIC.SSL_CERTIFICATES;
+
+// Inspecting a certificate BEFORE adding it goes over ExtDirect, matching Classic UI.
+// There is deliberately no REST equivalent: the only REST write path is POST
+// /v1/security/ssl/truststore, which imports the certificate as a side effect, so it
+// cannot be used to preview one. ssl_Certificate.details / .retrieveFromHost are
+// read-only (@RequiresPermissions nexus:ssl-truststore:read) and additionally return
+// `inTrustStore`, which the REST ApiCertificate DTO does not carry — that flag is what
+// drives duplicate detection in the add form (NEXUS-54265).
 
 /**
  * Parse remote host URL and extract hostname, port, and protocol
@@ -31,7 +42,7 @@ function parseRemoteHostUrl(url: string): [string, number | null, string | null]
     const portNumber = port ? parseInt(port, 10) : null;
     const protocolHint = hasProtocol ? protocol : null;
     return [hostname, portNumber, protocolHint];
-  } catch (error) {
+  } catch (_error) {
     // If URL parsing fails, try to extract hostname manually
     const hostname = url.replace(/^https?:\/\//, '').split(':')[0].split('/')[0];
     return [hostname, null, null];
@@ -44,16 +55,6 @@ function parseRemoteHostUrl(url: string): [string, number | null, string | null]
 export function useSslCertificatesApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
 
   /**
    * Fetch all certificates
@@ -69,8 +70,8 @@ export function useSslCertificatesApi() {
   }, []);
 
   /**
-   * Fetch certificate details from remote host using REST API
-   * GET /v1/security/ssl?host={host}&port={port}&protocolHint={protocol}
+   * Retrieve (without importing) the certificate presented by a remote host.
+   * Read-only: ssl_Certificate.retrieveFromHost.
    */
   const fetchCertificateFromHost = useCallback(async (
     host: string,
@@ -78,15 +79,11 @@ export function useSslCertificatesApi() {
     protocolHint: string | null = null
   ): Promise<SslCertificate> => {
     try {
-      const params = new URLSearchParams({ host });
-      if (port !== null) {
-        params.append('port', String(port));
-      }
-      if (protocolHint) {
-        params.append('protocolHint', protocolHint);
-      }
-      const response = await Axios.get(`${SSL_RETRIEVE_URL}?${params.toString()}`);
-      return response?.data;
+      const response = await ExtAPIUtils.extAPIRequest(EXT.SSL.ACTION, EXT.SSL.METHODS.RETRIEVE_FROM_HOST, {
+        data: [host, port, protocolHint],
+      });
+      ExtAPIUtils.checkForError(response);
+      return ExtAPIUtils.extractResult(response);
     } catch (err: any) {
       console.error('Failed to fetch certificate from host:', err);
       throw new Error(err?.response?.data?.message || err?.message || 'Failed to retrieve certificate from host');
@@ -94,29 +91,21 @@ export function useSslCertificatesApi() {
   }, []);
 
   /**
-   * Get certificate details from PEM content using REST API
-   * POST /v1/security/ssl/truststore with PEM content, then retrieve details
-   * Note: The REST API doesn't have a "parse PEM without saving" endpoint,
-   * so we parse the PEM client-side to extract basic certificate info for preview.
-   * The full details are available after the certificate is added to the trust store.
+   * Parse a PEM-encoded certificate so it can be previewed before being trusted.
+   *
+   * Read-only: ssl_Certificate.details. This MUST NOT go through
+   * POST /v1/security/ssl/truststore — that endpoint imports the certificate, so using
+   * it to "preview" silently added the certificate and made the subsequent add fail with
+   * a 409, reporting failure for a certificate that had in fact been trusted
+   * (NEXUS-54265).
    */
   const getCertificateDetails = useCallback(async (pemContent: string): Promise<SslCertificate> => {
     try {
-      // Use the retrieve endpoint with the PEM to get parsed details
-      // The REST API at /v1/security/ssl accepts PEM content for details
-      const response = await Axios.post(`${SSL_RETRIEVE_URL}/truststore`, pemContent, {
-        headers: { 'Content-Type': 'text/plain' },
-        // Don't actually save - we just want the parsed response
-        validateStatus: (status) => status < 500,
+      const response = await ExtAPIUtils.extAPIRequest(EXT.SSL.ACTION, EXT.SSL.METHODS.DETAILS, {
+        data: [pemContent],
       });
-
-      if (response.status === 200 || response.status === 201) {
-        // Certificate was added - return the details and we'll handle cleanup if needed
-        return response.data;
-      }
-
-      // If adding fails (e.g., already exists), try to parse basic info
-      throw new Error(response?.data?.message || 'Failed to parse certificate');
+      ExtAPIUtils.checkForError(response);
+      return ExtAPIUtils.extractResult(response);
     } catch (err: any) {
       console.error('Failed to get certificate details:', err);
       throw new Error(err?.response?.data?.message || err?.message || 'Failed to parse certificate');
@@ -205,5 +194,3 @@ export function useSslCertificatesApi() {
 }
 
 export default useSslCertificatesApi;
-
-

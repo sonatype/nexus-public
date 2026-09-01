@@ -35,7 +35,9 @@ import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.BAD_REQUEST;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_CREATED;
+import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
+import static org.sonatype.nexus.rest.ApiDocConstants.SUCCESS;
 
 /**
  * @since 3.24
@@ -78,6 +80,12 @@ public abstract class RawGroupRepositoriesApiResource
   @Path("/{repositoryName}")
   @Override
   @Operation(summary = "Get repository")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = SUCCESS),
+      @ApiResponse(responseCode = "401", description = AUTHENTICATION_REQUIRED),
+      @ApiResponse(responseCode = "403", description = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(responseCode = "404", description = REPOSITORY_NOT_FOUND)
+  })
   public AbstractApiRepository getRepository(
       @Parameter(hidden = true) @BeanParam final FormatAndType formatAndType,
       @PathParam("repositoryName") final String repositoryName)

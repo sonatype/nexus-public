@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-
 import jakarta.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -26,10 +25,13 @@ import org.sonatype.nexus.security.ErrorMessageUtil;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
+import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
+import org.sonatype.nexus.security.role.RoleContainsItselfException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
@@ -41,17 +43,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
-@ExtendWith(MockitoExtension.class)
-@ExtendWith(AuthenticationExtension.class)
+@ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
 @WithUser
 class RoleApiResourceTest
 {
@@ -61,14 +65,16 @@ class RoleApiResourceTest
   @Mock
   private AuthorizationManager authorizationManager;
 
+  @Mock
+  private RoleAssignabilityChecker roleAssignabilityChecker;
+
   private RoleApiResource underTest;
 
   @BeforeEach
   void setup() throws Exception {
     lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
-    lenient().when(securitySystem.listSources()).thenReturn(Arrays.asList("default", "LDAP"));
 
-    underTest = new RoleApiResource(securitySystem);
+    underTest = new RoleApiResource(securitySystem, roleAssignabilityChecker);
   }
 
   @Test
@@ -178,7 +184,7 @@ class RoleApiResourceTest
 
     when(authorizationManager.addRole(any())).thenReturn(createdRole);
 
-    RoleXOResponse result = underTest.create(roleXo);
+    RoleXOResponse result = underTest.create(DEFAULT_SOURCE, roleXo);
 
     assertApiRole(result, "default", "roleId", "roleName", "description", Collections.singleton("childRole"),
         Collections.singleton("priv"));
@@ -192,7 +198,7 @@ class RoleApiResourceTest
         Collections.emptySet());
 
     try {
-      underTest.create(roleXo);
+      underTest.create(DEFAULT_SOURCE, roleXo);
       fail("create should have failed as role exists.");
     }
     catch (WebApplicationMessageException e) {
@@ -204,8 +210,125 @@ class RoleApiResourceTest
   }
 
   @Test
+  void testCreateRole_withExternalSource() throws Exception {
+    RoleXORequest roleXo = createApiRole("ldap-role", "LDAP Role", "description", Collections.emptySet(),
+        Collections.emptySet());
+
+    AuthorizationManager ldapManager = mock(AuthorizationManager.class);
+    when(securitySystem.getAuthorizationManager("LDAP")).thenReturn(ldapManager);
+
+    Role createdRole = new Role();
+    createdRole.setRoleId("ldap-role");
+    createdRole.setSource("LDAP");
+    createdRole.setName("LDAP Role");
+    when(ldapManager.addRole(any())).thenReturn(createdRole);
+
+    RoleXOResponse result = underTest.create("LDAP", roleXo);
+
+    assertThat(result.getSource(), is("LDAP"));
+    verify(ldapManager).addRole(any());
+  }
+
+  @Test
+  void testCreateRole_defaultSource_usesInternalManager() throws Exception {
+    RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.emptySet(),
+        Collections.emptySet());
+
+    Role createdRole = new Role();
+    createdRole.setRoleId("roleId");
+    createdRole.setSource("default");
+    createdRole.setName("roleName");
+    when(authorizationManager.addRole(any())).thenReturn(createdRole);
+
+    RoleXOResponse result = underTest.create(DEFAULT_SOURCE, roleXo);
+
+    assertThat(result.getSource(), is("default"));
+    verify(authorizationManager).addRole(any());
+  }
+
+  @Test
+  void testCreateRole_withBadSource_returns400() throws Exception {
+    RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.emptySet(),
+        Collections.emptySet());
+
+    when(securitySystem.getAuthorizationManager("nonexistent"))
+        .thenThrow(new NoSuchAuthorizationManagerException("nonexistent"));
+
+    try {
+      underTest.create("nonexistent", roleXo);
+      fail("Should have thrown exception for bad source");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("Source 'nonexistent' not found"));
+    }
+  }
+
+  @Test
+  void testUpdateRole_withExternalSource() throws Exception {
+    AuthorizationManager ldapManager = mock(AuthorizationManager.class);
+    when(securitySystem.getAuthorizationManager("LDAP")).thenReturn(ldapManager);
+
+    Role existingRole = createRole("LDAP", "id1", "ldap-role", "LDAP Role", Collections.emptyList(),
+        Collections.emptyList());
+    when(ldapManager.getRole("id1")).thenReturn(existingRole);
+
+    RoleXORequest roleXo = createApiRole("id1", "updated-name", "updated-desc", Collections.emptySet(),
+        Collections.emptySet());
+
+    underTest.update("id1", "LDAP", roleXo);
+
+    ArgumentCaptor<Role> captor = ArgumentCaptor.forClass(Role.class);
+    verify(ldapManager).updateRole(captor.capture());
+    assertThat(captor.getValue().getSource(), is("LDAP"));
+    assertThat(captor.getValue().getRoleId(), is("id1"));
+  }
+
+  @Test
+  void testUpdateRole_withBadSource_returns400() throws Exception {
+    when(securitySystem.getAuthorizationManager("bad"))
+        .thenThrow(new NoSuchAuthorizationManagerException("bad"));
+
+    RoleXORequest roleXo = createApiRole("id1", "name", "desc", Collections.emptySet(), Collections.emptySet());
+
+    try {
+      underTest.update("id1", "bad", roleXo);
+      fail("Should have thrown exception for bad source");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("Source 'bad' not found"));
+    }
+  }
+
+  @Test
+  void testDelete_withExternalSource() throws Exception {
+    AuthorizationManager ldapManager = mock(AuthorizationManager.class);
+    when(securitySystem.getAuthorizationManager("LDAP")).thenReturn(ldapManager);
+
+    underTest.delete("ldap-role", "LDAP");
+
+    verify(ldapManager).deleteRole("ldap-role");
+  }
+
+  @Test
+  void testDelete_withBadSource_returns400() throws Exception {
+    when(securitySystem.getAuthorizationManager("bad"))
+        .thenThrow(new NoSuchAuthorizationManagerException("bad"));
+
+    try {
+      underTest.delete("roleId", "bad");
+      fail("Should have thrown exception for bad source");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("Source 'bad' not found"));
+    }
+  }
+
+  @Test
   void testDelete() throws Exception {
-    underTest.delete("roleId");
+    underTest.delete("roleId", DEFAULT_SOURCE);
 
     verify(authorizationManager).deleteRole("roleId");
   }
@@ -215,7 +338,7 @@ class RoleApiResourceTest
     doThrow(NoSuchRoleException.class).when(authorizationManager).deleteRole("roleId");
 
     try {
-      underTest.delete("roleId");
+      underTest.delete("roleId", DEFAULT_SOURCE);
       fail("exception should have been thrown for missing role");
     }
     catch (WebApplicationMessageException e) {
@@ -231,7 +354,7 @@ class RoleApiResourceTest
     doThrow(ReadonlyRoleException.class).when(authorizationManager).deleteRole("roleId");
 
     try {
-      underTest.delete("roleId");
+      underTest.delete("roleId", DEFAULT_SOURCE);
       fail("exception should have been thrown for internal role");
     }
     catch (WebApplicationMessageException e) {
@@ -252,7 +375,7 @@ class RoleApiResourceTest
     RoleXORequest roleXo = createApiRole("id1", "role2", "role2", Arrays.asList("role3", "role4"),
         Arrays.asList("priv3", "priv4"));
 
-    underTest.update("id1", roleXo);
+    underTest.update("id1", DEFAULT_SOURCE, roleXo);
 
     ArgumentCaptor<Role> argument = ArgumentCaptor.forClass(Role.class);
     verify(authorizationManager).updateRole(argument.capture());
@@ -267,7 +390,7 @@ class RoleApiResourceTest
         Arrays.asList("priv1", "priv2"));
 
     try {
-      underTest.update("id1", roleXo);
+      underTest.update("id1", DEFAULT_SOURCE, roleXo);
       fail("Should have failed update because of missing role.");
     }
     catch (WebApplicationMessageException e) {
@@ -290,7 +413,7 @@ class RoleApiResourceTest
         Collections.singleton("priv1"));
 
     try {
-      underTest.update("id", roleXo);
+      underTest.update("id", DEFAULT_SOURCE, roleXo);
       fail("exception should have been thrown for internal role");
     }
     catch (WebApplicationMessageException e) {
@@ -308,7 +431,7 @@ class RoleApiResourceTest
         Collections.singleton("priv1"));
 
     try {
-      underTest.update("bad", roleXo);
+      underTest.update("bad", DEFAULT_SOURCE, roleXo);
       fail("exception should have been thrown for mismatched ids");
     }
     catch (WebApplicationMessageException e) {
@@ -317,6 +440,227 @@ class RoleApiResourceTest
       assertThat(e.getResponse().getEntity().toString(),
           is(ErrorMessageUtil.getFormattedMessage(
               "\"The Role id 'id' does not match the id used in the path 'bad'.\"")));
+    }
+  }
+
+  @Test
+  void getAssignableRoles_doesNotReturnAdminRoleForSAAdmin() throws Exception {
+    Role nxAdminRole = createRole("default", "nx-admin", "Admin", "Admin Role",
+        Collections.emptySet(), Collections.singleton("nx-admin-priv"));
+    Role nxSaAdminRole = createRole("default", "nx-sa-admin", "SA Admin", "SA Admin Role",
+        Collections.emptySet(), Collections.singleton("nx-sa-admin-priv"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE))
+        .thenReturn(new LinkedHashSet<>(Arrays.asList(nxAdminRole, nxSaAdminRole)));
+    when(roleAssignabilityChecker.isRoleAssignable("nx-admin")).thenReturn(false);
+    when(roleAssignabilityChecker.isRoleAssignable("nx-sa-admin")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+    assertThat(assignable.get(0).getId(), is("nx-sa-admin"));
+  }
+
+  @Test
+  void getAssignableRoles_emptySource_returnsAllAssignable() throws Exception {
+    Role role = createRole("default", "role1", "Role 1", "Role 1 Description",
+        Collections.emptySet(), Collections.singleton("priv1"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("role1")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+  }
+
+  @Test
+  void getAssignableRoles_specificSource_returnsAllAssignable() throws Exception {
+    Role role = createRole("default", "role1", "Role 1", "Role 1 Description",
+        Collections.emptySet(), Collections.singleton("priv1"));
+
+    when(securitySystem.listRoles("default")).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("role1")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles("default");
+
+    assertThat(assignable.size(), is(1));
+  }
+
+  @Test
+  void getAssignableRoles_includesRoleWithNoPermissions() throws Exception {
+    Role role = createRole("default", "empty-role", "Empty Role", "Empty Role Description",
+        Collections.emptySet(), Collections.emptySet());
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("empty-role")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+    assertThat(assignable.get(0).getId(), is("empty-role"));
+  }
+
+  @Test
+  void getAssignableRoles_withMultiplePermissions_allMustBeCovered() throws Exception {
+    Role role = createRole("default", "single-perm-role", "Single Perm Role", "Single Perm Role Description",
+        Collections.emptySet(), Collections.singleton("single-perm"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("single-perm-role")).thenReturn(true);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(1));
+  }
+
+  @Test
+  void getAssignableRoles_notAssignableRole_isExcluded() throws Exception {
+    Role role = createRole("default", "restricted-role", "Restricted", "Restricted Role",
+        Collections.emptySet(), Collections.singleton("restricted-priv"));
+
+    when(securitySystem.listRoles(DEFAULT_SOURCE)).thenReturn(new LinkedHashSet<>(Arrays.asList(role)));
+    when(roleAssignabilityChecker.isRoleAssignable("restricted-role")).thenReturn(false);
+
+    List<RoleXOResponse> assignable = underTest.getAssignableRoles(DEFAULT_SOURCE);
+
+    assertThat(assignable.size(), is(0));
+  }
+
+  @Test
+  void getAssignableRoles_sourceNotFound_throwsException() throws Exception {
+    when(securitySystem.listRoles("nonexistent"))
+        .thenThrow(new NoSuchAuthorizationManagerException("nonexistent"));
+
+    try {
+      underTest.getAssignableRoles("nonexistent");
+      fail("Should have thrown exception for non-existent source");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("Source 'nonexistent' not found"));
+    }
+  }
+
+  @Test
+  void testGetRoles_badSource() throws Exception {
+    when(securitySystem.listRoles("bad")).thenThrow(new NoSuchAuthorizationManagerException("bad"));
+
+    try {
+      underTest.getRoles("bad");
+      fail("Should have thrown exception for bad source");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("Source 'bad' not found"));
+    }
+  }
+
+  @Test
+  void testCreateRole_containedRoleNotFound() throws Exception {
+    RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.singleton("missing-role"),
+        Collections.emptySet());
+
+    when(authorizationManager.addRole(any())).thenThrow(new NoSuchRoleException("missing-role"));
+
+    try {
+      underTest.create(DEFAULT_SOURCE, roleXo);
+      fail("Should have thrown exception for missing contained role");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("missing-role"));
+    }
+  }
+
+  @Test
+  void testCreateRole_containedPrivilegeNotFound() throws Exception {
+    RoleXORequest roleXo = createApiRole("roleId", "roleName", "description", Collections.emptySet(),
+        Collections.singleton("missing-priv"));
+
+    when(authorizationManager.addRole(any())).thenThrow(new NoSuchPrivilegeException("missing-priv"));
+
+    try {
+      underTest.create(DEFAULT_SOURCE, roleXo);
+      fail("Should have thrown exception for missing privilege");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("missing-priv"));
+    }
+  }
+
+  @Test
+  void testCreateRole_roleContainsItself() throws Exception {
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Collections.singleton("id1"),
+        Collections.emptySet());
+
+    when(authorizationManager.addRole(any())).thenThrow(new RoleContainsItselfException("id1"));
+
+    try {
+      underTest.create(DEFAULT_SOURCE, roleXo);
+      fail("Should have thrown exception for role containing itself");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("id1"));
+    }
+  }
+
+  @Test
+  void testUpdateRole_containedRoleNotFound() {
+    Role role = createRole("default", "id1", "role1", "role1", Collections.emptyList(), Collections.emptyList());
+    when(authorizationManager.getRole("id1")).thenReturn(role);
+    when(authorizationManager.updateRole(any())).thenThrow(new NoSuchRoleException("contained-role"));
+
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Collections.singleton("contained-role"),
+        Collections.emptySet());
+
+    try {
+      underTest.update("id1", DEFAULT_SOURCE, roleXo);
+      fail("Should have thrown exception for missing contained role in update");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("contained-role"));
+    }
+  }
+
+  @Test
+  void testUpdateRole_containedPrivilegeNotFound() {
+    Role role = createRole("default", "id1", "role1", "role1", Collections.emptyList(), Collections.emptyList());
+    when(authorizationManager.getRole("id1")).thenReturn(role);
+    when(authorizationManager.updateRole(any())).thenThrow(new NoSuchPrivilegeException("missing-priv"));
+
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Collections.emptySet(),
+        Collections.singleton("missing-priv"));
+
+    try {
+      underTest.update("id1", DEFAULT_SOURCE, roleXo);
+      fail("Should have thrown exception for missing privilege in update");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("missing-priv"));
+    }
+  }
+
+  @Test
+  void testUpdateRole_roleContainsItself() {
+    Role role = createRole("default", "id1", "role1", "role1", Collections.emptyList(), Collections.emptyList());
+    when(authorizationManager.getRole("id1")).thenReturn(role);
+    when(authorizationManager.updateRole(any())).thenThrow(new RoleContainsItselfException("id1"));
+
+    RoleXORequest roleXo = createApiRole("id1", "role1", "role1", Collections.singleton("id1"),
+        Collections.emptySet());
+
+    try {
+      underTest.update("id1", DEFAULT_SOURCE, roleXo);
+      fail("Should have thrown exception for role containing itself");
+    }
+    catch (WebApplicationMessageException e) {
+      assertThat(e.getResponse().getStatus(), is(400));
+      assertThat(e.getResponse().getEntity().toString(), containsString("id1"));
     }
   }
 

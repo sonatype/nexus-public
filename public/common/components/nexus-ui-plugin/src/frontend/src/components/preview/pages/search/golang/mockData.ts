@@ -165,7 +165,7 @@ export async function mockGolangSearchApi(filters: GolangSearchFilters): Promise
     const k = filters.keyword.toLowerCase();
     filtered = filtered.filter((r) =>
       r.module.toLowerCase().includes(k) ||
-      (r.description && r.description.toLowerCase().includes(k))
+      (r.description?.toLowerCase().includes(k))
     );
   }
 

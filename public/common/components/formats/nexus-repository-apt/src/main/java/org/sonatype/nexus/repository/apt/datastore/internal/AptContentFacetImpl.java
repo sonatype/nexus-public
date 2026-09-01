@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.apt.AptFormat;
@@ -30,6 +29,7 @@ import org.sonatype.nexus.repository.apt.internal.AptFacetHelper;
 import org.sonatype.nexus.repository.apt.internal.AptPackageParser;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.PackageInfo;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
@@ -44,7 +44,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.content.utils.FormatAttributesUtils;
-import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -53,8 +52,9 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -264,7 +264,6 @@ public class AptContentFacetImpl
     return components()
         .name(name)
         .version(version)
-        .normalizedVersion(versionNormalizerService().getNormalizedVersionByFormat(version, repository().getFormat()))
         .namespace(architecture)
         .getOrCreate();
   }

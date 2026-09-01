@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-metrics</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <metrics.version>4.2.30</metrics.version>
+    <metrics.version>4.2.39</metrics.version>
     <prometheus.version>0.16.0</prometheus.version>
   </properties>
 
@@ -47,10 +47,6 @@
         <artifactId>metrics-jetty12</artifactId>
         <version>${metrics.version}</version>
         <exclusions>
-          <exclusion>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-          </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

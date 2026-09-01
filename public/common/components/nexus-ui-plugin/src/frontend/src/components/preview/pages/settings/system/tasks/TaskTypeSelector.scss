@@ -247,7 +247,10 @@
     font-size: var(--font-size-2);
     font-family: inherit;
     color: var(--gray-12);
-    background: var(--color-background);
+    // Match enabled Preview fields (Radix TextField uses --color-surface): --color-background
+    // renders as the page/panel gray here, which made editable inputs look disabled. Truly
+    // disabled inputs are still dimmed via the &:disabled rule below.
+    background: var(--color-surface);
     border: 1px solid var(--gray-7);
     border-radius: var(--radius-2);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;

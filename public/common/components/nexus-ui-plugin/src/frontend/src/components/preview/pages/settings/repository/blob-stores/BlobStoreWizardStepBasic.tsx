@@ -27,6 +27,7 @@ import { shouldShowHaPathWarning, HA_PATH_WARNING } from './haPathWarning';
 import type { BlobStoreFormData, S3BlobStoreConfig } from './types';
 import { BLOB_STORE_TYPE_IDS } from './blobStoreFormMachine';
 import type { BlobStoreTypeId } from './BlobStoreTypeSelector';
+import './AzureBlobStoreSettings.scss';
 
 const FILL_POLICY_OPTIONS = [
   { value: '', label: 'Select a fill policy...' },
@@ -66,8 +67,7 @@ export function BlobStoreWizardStepBasic({
   const selectedOptions = members.map((s) => ({ value: s, label: s }));
 
   return (
-    <>
-      <SettingsFormSection title="Basic Configuration" description="Name and required settings for your blob store">
+    <SettingsFormSection title="Basic Configuration" description="Name and required settings for your blob store">
         <SettingsTextInput
           name="blobstore-name"
           label="Name"
@@ -139,7 +139,7 @@ export function BlobStoreWizardStepBasic({
                 name="s3-presigned"
                 label="Pre-Signed URL"
                 description="Redirect downloads to S3 for better performance"
-                checked={config.preSignedUrlEnabled || false}
+                checked={config.preSignedUrlEnabled}
                 onChange={(v) => onChange('bucketConfiguration.preSignedUrlEnabled', v)}
               />
             )}
@@ -168,6 +168,23 @@ export function BlobStoreWizardStepBasic({
               required
               error={validationErrors['bucketConfiguration.containerName']}
             />
+            {isProEdition && (
+              <div className="azure-blob-store-settings__sas-section">
+                <SettingsCheckbox
+                  name="azure-direct-download"
+                  label="Direct Download (SAS URLs)"
+                  description="Redirect downloads directly to Azure Blob Storage"
+                  checked={config.preSignedUrlEnabled || false}
+                  onChange={(v) => onChange('bucketConfiguration.preSignedUrlEnabled', v)}
+                />
+                {config.preSignedUrlEnabled && (
+                  <SettingsAlert type="info">
+                    {"The identity needs an Azure role that can generate a user delegation key — " +
+                      "any Storage Blob Data role, or Storage Blob Delegator. Verified on save."}
+                  </SettingsAlert>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -231,6 +248,5 @@ export function BlobStoreWizardStepBasic({
           </>
         )}
       </SettingsFormSection>
-    </>
   );
 }

@@ -14,7 +14,7 @@ import React from 'react';
 import {Card, Flex, Heading, Text, Progress, Box, Grid} from '@radix-ui/themes';
 import {AlertCircle, AlertTriangle, Info} from 'lucide-react';
 import { ExtJS } from '../../../../interface/ExtJS';
-import {replace} from 'ramda';
+import {Tooltip} from '../../shared/Tooltip';
 
 import UIStrings from '../../../../constants/UIStrings';
 import {helperFunctions} from '../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
@@ -28,10 +28,28 @@ const {
   getMetricData,
 } = helperFunctions;
 
+function InfoTooltipTrigger({title, content}) {
+  return (
+    <Tooltip content={content}>
+      <button type="button" aria-label={`${title} information`}
+              style={{
+                display: 'inline-flex',
+                cursor: 'help',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+              }}>
+        <Info size={16} aria-hidden style={{color: 'var(--gray-9)'}} />
+      </button>
+    </Tooltip>
+  );
+}
+
 const {
   WELCOME: {
     USAGE: {
       MENU,
+      HEADER,
       CARDS
     }}} = UIStrings;
 
@@ -50,10 +68,60 @@ const {
   CARD_SHARED_LABELS: {
     LAST_EXCEEDED_DATE_LABEL}} = CARDS;
 
+const {OVER_LIMITS, APPROACHING_LIMITS, UNDER_LIMITS} = HEADER;
+
+const STATUS_CONFIG = {
+  over:  {label: OVER_LIMITS.STATUS_INDICATOR,       color: 'var(--red-9)',    bg: 'var(--red-2)',    border: 'var(--red-6)'},
+  near:  {label: APPROACHING_LIMITS.STATUS_INDICATOR, color: 'var(--yellow-9)', bg: 'var(--yellow-2)', border: 'var(--yellow-6)'},
+  below: {label: UNDER_LIMITS.STATUS_INDICATOR,       color: 'var(--green-9)',  bg: 'var(--green-2)',  border: 'var(--green-6)'},
+};
+
+function computeCEStatus(usage) {
+  const metricsToCheck = [TOTAL_COMPONENTS.METRIC_NAME, REQUESTS_PER_DAY.METRIC_NAME];
+  let anyOver = false;
+  let anyNear = false;
+  for (const metricName of metricsToCheck) {
+    const {metricValue, thresholdValue} = getMetricData(usage, metricName);
+    if (thresholdValue > 0) {
+      if (metricValue >= thresholdValue) anyOver = true;
+      else if (metricValue >= thresholdValue * PERCENTAGE) anyNear = true;
+    }
+  }
+  return anyOver ? 'over' : anyNear ? 'near' : 'below';
+}
+
+function UsageStatusBadge({status}) {
+  const {label, color, bg, border} = STATUS_CONFIG[status];
+  return (
+    <Flex
+      align="center"
+      gap="2"
+      style={{
+        display: 'inline-flex',
+        padding: '2px 10px 2px 8px',
+        borderRadius: '999px',
+        border: `1px solid ${border}`,
+        background: bg,
+      }}
+    >
+      <Box
+        style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: color,
+          flexShrink: 0,
+        }}
+      />
+      <Text size="1" style={{color, fontWeight: 500}}>{label}</Text>
+    </Flex>
+  );
+}
+
 function StatCard({card, usage}) {
   const isPostgres = ExtJS.state().getValue('datastore.isPostgresql');
-  const {METRIC_NAME, METRIC_NAME_PRO_POSTGRESQL, SUB_TITLE_PRO_POSTGRESQL, TITLE, TITLE_PRO_POSTGRESQL} = card;
-  const {metricValue} = getMetricData(usage, isPostgres ? METRIC_NAME_PRO_POSTGRESQL : METRIC_NAME);
+  const {METRIC_NAME, METRIC_NAME_PRO_POSTGRESQL, SUB_TITLE_PRO_POSTGRESQL, TITLE, TITLE_PRO_POSTGRESQL, HIGHEST_RECORDED_COUNT} = card;
+  const {metricValue, highestRecordedCount} = getMetricData(usage, isPostgres ? METRIC_NAME_PRO_POSTGRESQL : METRIC_NAME);
 
   return (
     <Card style={{padding: 'var(--space-4)'}}>
@@ -67,40 +135,56 @@ function StatCard({card, usage}) {
             <Text size="2" color="gray">{SUB_TITLE_PRO_POSTGRESQL}</Text>
           )}
         </Flex>
+        {HIGHEST_RECORDED_COUNT && (
+          <Box style={{borderTop: '1px solid var(--gray-6)', paddingTop: 'var(--space-2)'}}>
+            <Flex direction="column" gap="1">
+              <Text size="5" weight="bold">{highestRecordedCount.toLocaleString()}</Text>
+              <Text size="2" color="gray">{HIGHEST_RECORDED_COUNT}</Text>
+            </Flex>
+          </Box>
+        )}
       </Flex>
     </Card>
   );
 }
 
+const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  hour12: true
+});
+
 function formatDate(timestamp) {
   if (!timestamp) return '';
   const date = new Date(timestamp);
-  return date.toLocaleDateString();
+  if (isNaN(date)) return '';
+  return DATE_FORMATTER.format(date);
 }
 
 function StatCardWithThreshold({card, usage, tooltip, edition, date}) {
   const {HIGHEST_RECORDED_COUNT, METRIC_NAME, SUB_TITLE, TITLE} = card;
   const {metricValue, thresholdValue, highestRecordedCount} = getMetricData(usage, METRIC_NAME);
   const thresholdLabel = edition === COMMUNITY ? USAGE_LIMIT : THRESHOLD;
-  const percentage = (metricValue / thresholdValue) * 100;
+  const percentage = thresholdValue > 0 ? Math.min((metricValue / thresholdValue) * 100, 100) : 0;
   const approachingThreshold = metricValue >= thresholdValue * PERCENTAGE;
   const exceedingThreshold = metricValue >= thresholdValue;
-  
+
   const showError = exceedingThreshold;
   const showWarning = approachingThreshold && !exceedingThreshold;
   
-  const tooltipText = typeof tooltip === 'function' 
-    ? tooltip(thresholdValue) 
-    : replace('{}', thresholdValue.toLocaleString(), tooltip || '');
+  const tooltipText = typeof tooltip === 'function'
+    ? tooltip(thresholdValue)
+    : (tooltip || '').replace('{}', thresholdValue.toLocaleString());
 
   return (
     <Card style={{padding: 'var(--space-4)'}}>
       <Flex direction="column" gap="4">
         <Flex align="center" gap="2">
           <Heading size="4" weight="medium">{TITLE}</Heading>
-          <Box title={tooltipText} style={{cursor: 'help'}}>
-            <Info size={16} style={{color: 'var(--gray-9)'}} />
-          </Box>
+          <InfoTooltipTrigger title={TITLE} content={tooltipText} />
         </Flex>
         
         <Box>
@@ -144,11 +228,11 @@ function StatCardWithThreshold({card, usage, tooltip, edition, date}) {
           marginTop: 'var(--space-2)'
         }}>
           <Flex direction="column" gap="2">
-            <Flex justify="between">
+            <Flex direction="column" gap="1">
+              <Text size="5" weight="bold">{highestRecordedCount.toLocaleString()}</Text>
               <Text size="2" color="gray">{HIGHEST_RECORDED_COUNT}</Text>
-              <Text size="2" weight="medium">{highestRecordedCount.toLocaleString()}</Text>
             </Flex>
-            
+
             {date && (
               <Flex justify="between">
                 <Text size="2" color="gray">{LAST_EXCEEDED_DATE_LABEL}</Text>
@@ -162,35 +246,35 @@ function StatCardWithThreshold({card, usage, tooltip, edition, date}) {
   );
 }
 
-function MonthlyMetricsCard({usage}) {
-  const {MONTHLY_METRICS, MONTHLY_METRICS_TITLE} = CARDS;
-  const {metricValue: monthlyDownloads} = getMetricData(usage, MONTHLY_METRICS.MONTHLY_DOWNLOADS);
-  const {metricValue: monthlySuccessfulDownloads} = getMetricData(usage, MONTHLY_METRICS.MONTHLY_SUCCESSFUL_DOWNLOADS);
-  const {metricValue: monthlyUniqueIps} = getMetricData(usage, MONTHLY_METRICS.MONTHLY_UNIQUE_IPS);
+// NEXUS-53863: replaces broken MonthlyMetricsCard (used non-existent CARDS.MONTHLY_METRICS);
+// shows the 3 standard sub-metrics from MONTHLY_REQUESTS for both Pro and CE editions
+function MonthlyRequestsCard({usage, tooltip}) {
+  const currentMonth = new Intl.DateTimeFormat('en-US', {month: 'long'}).format(new Date());
+  const {metricValue: totalValue} = getMetricData(usage, MONTHLY_REQUESTS.TOTAL.METRIC_NAME);
+  const {metricValue: averageValue} = getMetricData(usage, MONTHLY_REQUESTS.AVERAGE.METRIC_NAME);
+  const {metricValue: highestValue} = getMetricData(usage, MONTHLY_REQUESTS.HIGHEST.METRIC_NAME);
 
   return (
     <Card style={{padding: 'var(--space-4)'}}>
       <Flex direction="column" gap="4">
-        <Heading size="4" weight="medium">{MONTHLY_METRICS_TITLE}</Heading>
-        
+        <Flex align="center" gap="2">
+          <Heading size="4" weight="medium">{MONTHLY_REQUESTS.TITLE}</Heading>
+          {tooltip && <InfoTooltipTrigger title={MONTHLY_REQUESTS.TITLE} content={tooltip} />}
+        </Flex>
         <Flex direction="column" gap="3">
-          <Flex justify="between" align="center">
-            <Text size="2" color="gray">{MONTHLY_METRICS.MONTHLY_DOWNLOADS_LABEL}</Text>
-            <Text size="4" weight="bold">{monthlyDownloads.toLocaleString()}</Text>
+          <Flex direction="column" gap="1">
+            <Text size="5" weight="bold">{totalValue.toLocaleString()}</Text>
+            <Text size="2" color="gray">{MONTHLY_REQUESTS.TOTAL.SUB_TITLE(currentMonth)}</Text>
           </Flex>
-          
           <Box style={{height: '1px', background: 'var(--gray-5)'}} />
-          
-          <Flex justify="between" align="center">
-            <Text size="2" color="gray">{MONTHLY_METRICS.MONTHLY_SUCCESSFUL_DOWNLOADS_LABEL}</Text>
-            <Text size="4" weight="bold">{monthlySuccessfulDownloads.toLocaleString()}</Text>
+          <Flex direction="column" gap="1">
+            <Text size="5" weight="bold">{averageValue.toLocaleString()}</Text>
+            <Text size="2" color="gray">{MONTHLY_REQUESTS.AVERAGE.SUB_TITLE}</Text>
           </Flex>
-          
           <Box style={{height: '1px', background: 'var(--gray-5)'}} />
-          
-          <Flex justify="between" align="center">
-            <Text size="2" color="gray">{MONTHLY_METRICS.MONTHLY_UNIQUE_IPS_LABEL}</Text>
-            <Text size="4" weight="bold">{monthlyUniqueIps.toLocaleString()}</Text>
+          <Flex direction="column" gap="1">
+            <Text size="5" weight="bold">{highestValue.toLocaleString()}</Text>
+            <Text size="2" color="gray">{MONTHLY_REQUESTS.HIGHEST.SUB_TITLE}</Text>
           </Flex>
         </Flex>
       </Flex>
@@ -231,15 +315,17 @@ export default function UsageCenter() {
     return null;
   }
 
+  const badgeStatus = isCommunityEdition ? computeCEStatus(usage) : 'below';
+
   return (
     <Card size="3" style={{padding: 'var(--space-5)'}}>
-      {/* Header with subtitle like Default UI */}
       <Flex direction="column" gap="1" mb="4">
-        <Heading size="5">{MENU.TITLE}</Heading>
-        <Text size="2" color="gray">
-          Monitor this instance&apos;s usage to optimize your deployments.
-        </Text>
-        <Text size="2" weight="medium" mt="3">Usage Metrics Overview</Text>
+        <Flex align="center" gap="3">
+          <Heading size="5">{MENU.TITLE}</Heading>
+          <UsageStatusBadge status={badgeStatus} />
+        </Flex>
+        <Text size="2" color="gray">{HEADER.PRO_POSTGRES.TEXT}</Text>
+        <Text size="2" weight="medium" mt="3">{MENU.SUB_TITLE}</Text>
       </Flex>
       
       {/* Full-width metric cards */}
@@ -248,31 +334,30 @@ export default function UsageCenter() {
           <>
             <StatCard card={TOTAL_COMPONENTS} usage={usage} />
             <StatCard card={REQUESTS_PER_DAY} usage={usage} />
-            <StatCard card={MONTHLY_REQUESTS} usage={usage} />
+            <MonthlyRequestsCard usage={usage} />
           </>
         )}
-        
+
         {isCommunityEdition && (
           <>
-            <StatCardWithThreshold 
-              card={TOTAL_COMPONENTS} 
-              usage={usage} 
-              tooltip={TOTAL_COMPONENTS.TOOLTIP_CE} 
-              edition={COMMUNITY} 
+            <StatCardWithThreshold
+              card={TOTAL_COMPONENTS}
+              usage={usage}
+              tooltip={TOTAL_COMPONENTS.TOOLTIP_CE}
+              edition={COMMUNITY}
               date={componentFormattedDate}
             />
-            <StatCardWithThreshold 
-              card={REQUESTS_PER_DAY} 
-              usage={usage} 
-              tooltip={REQUESTS_PER_DAY.TOOLTIP_CE} 
-              edition={COMMUNITY} 
+            <StatCardWithThreshold
+              card={REQUESTS_PER_DAY}
+              usage={usage}
+              tooltip={REQUESTS_PER_DAY.TOOLTIP_CE}
+              edition={COMMUNITY}
               date={requestFormattedDate}
             />
-            <MonthlyMetricsCard usage={usage} />
+            <MonthlyRequestsCard usage={usage} tooltip={MONTHLY_REQUESTS.TOOLTIP_PREVIEW} />
           </>
         )}
       </Grid>
     </Card>
   );
 }
-

@@ -54,15 +54,6 @@ Ext.define('NX.coreui.controller.SearchComposer', {
         }
       },
       {
-        id: 'assets.attributes.composer.version',
-        group: NX.I18n.get('SearchComposer_Group'),
-        config: {
-          format: 'composer',
-          fieldLabel: NX.I18n.get('SearchComposer_Version_FieldLabel'),
-          width: 250
-        }
-      },
-      {
         id: 'composer.description',
         group: NX.I18n.get('SearchComposer_Group'),
         config: {
@@ -92,7 +83,9 @@ Ext.define('NX.coreui.controller.SearchComposer', {
         { id: 'format', value: 'composer', hidden: true },
         { id: 'assets.attributes.composer.vendor' },
         { id: 'assets.attributes.composer.package' },
-        { id: 'assets.attributes.composer.version' }
+        { id: 'version' },
+        { id: 'composer.description' },
+        { id: 'composer.keywords' }
       ]
     }, me);
   }

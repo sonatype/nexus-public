@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.94.2-01</version>
+  <version>3.96.0-09</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,11 +62,11 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.94.2-01</nexus.version>
+    <nexus.version>3.96.0-09</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
-    <spring-boot.version>3.5.15</spring-boot.version>
-    <spring.version>6.2.19</spring.version>
+    <spring-boot.version>4.1.0</spring-boot.version>
+    <spring.version>7.0.8</spring.version>
 
     <!-- Default empty argLine for JaCoCo agent, will be populated by jacoco:prepare-agent -->
     <argLine/>
@@ -134,10 +134,69 @@
     <docker.containerNamePattern>%n-%t-%i</docker.containerNamePattern>
 
     <!-- max heap memory for surefire-plugin -->
-    <surefire.maxHeap>-Xmx300M</surefire.maxHeap>
-    <mockito.version>5.21.0</mockito.version>
+    <surefire.maxHeap>-Xmx768M</surefire.maxHeap>
+    <mockito.version>5.23.0</mockito.version>
     <aspectjtools.version>1.9.25.1</aspectjtools.version>
+
+    <!--
+    Force httpcore5 above what OpenSAML transitively drags in and above the Spring Boot BOM pin
+    (5.4.2), both of which carry two Security-High CVEs. 5.4.3 patches both:
+      - CVE-2026-54399 (CVSS 8.7) HTTP/1.1 message parser uncontrolled resource consumption
+      - CVE-2026-54428 (CVSS 7.5) HTTP/2 HPACK decoder DoS before SETTINGS ACK
+    See NEXUS-53738. Remove this pin once Spring Boot BOM ships 5.4.3+.
+    -->
+    <httpcore5.version>5.4.3</httpcore5.version>
+
+    <!--
+    Force the log4j family above the 2.19.0 that PortEx (com.github.katjahahn:portex)
+    transitively drags in, which carries a Security-Medium CVE:
+      - CVE-2026-49844 (CVSS 6.3) improper encoding of non-finite floating-point
+        values during MapMessage JSON serialization (CWE-116)
+    2.25.5 is the first release with no policy violations for this component.
+    See NEXUS-53922. Remove this pin once the transitive dependencies ship 2.25.5+.
+    -->
+    <log4j.version>2.25.5</log4j.version>
+
+    <!--
+    Force jboss-logging above the 3.4.3.Final that the Spring Boot BOM pins, which lacks
+    the getMessageLogger(MethodHandles.Lookup, Class, String) method introduced in 3.5.0.
+    RESTEasy 7.0.0 (also on the classpath) was compiled against 3.5+ and calls this method
+    during static initialisation of LogMessages, crashing the Jetty thread before it can
+    bind to the HTTP port. 3.6.1.Final is the version already present in the local repository.
+    Remove this pin once the Spring Boot BOM ships jboss-logging 3.5.0+.
+    -->
+    <jboss.logging.version>3.6.1.Final</jboss.logging.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- NEXUS-53738: pin httpcore5 to a patched version (see property above). -->
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5</artifactId>
+        <version>${httpcore5.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents.core5</groupId>
+        <artifactId>httpcore5-h2</artifactId>
+        <version>${httpcore5.version}</version>
+      </dependency>
+      <!-- NEXUS-53922: pin the whole log4j family to a patched version (see property above). -->
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-bom</artifactId>
+        <version>${log4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Pin jboss-logging above 3.4.3.Final (Spring Boot BOM default) — see property above. -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>${jboss.logging.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <modules>
     <module>public</module>
@@ -192,7 +251,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.94.2-01</version>
+          <version>3.96.0-09</version>
           <executions>
             <execution>
               <goals>
@@ -388,9 +447,6 @@
 
                   <!-- Exclude developers local scripts folder-->
                   <exclude>myscripts/**</exclude>
-
-                  <!-- Exclude jetty modifications -->
-                  <exclude>public/common/components/thirdparty/jetty-modifications/**</exclude>
                 </excludes>
               </licenseSet>
 
@@ -611,7 +667,7 @@
           <!-- see private/developer-documentation/getting-started/formatting.md -->
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.8.0</version>
 
           <configuration>
             <ratchetFrom>origin/main</ratchetFrom>

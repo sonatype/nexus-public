@@ -17,11 +17,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.groups.Default;
-
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -29,6 +24,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
@@ -52,6 +48,10 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.groups.Default;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -173,7 +173,8 @@ public abstract class ContentFacetSupport
         formatStoreManager, config.dataStoreName);
 
     fluentBlobs = new FluentBlobsImpl(this, stores.blobStoreProvider);
-    fluentComponents = new FluentComponentsImpl(this, stores.componentStore);
+    fluentComponents = new FluentComponentsImpl(this, stores.componentStore,
+        version -> versionNormalizerService().getNormalizedVersionByFormat(version, getRepository().getFormat()));
     fluentAssets = new FluentAssetsImpl(this, stores.assetStore);
   }
 
@@ -317,10 +318,10 @@ public abstract class ContentFacetSupport
       WritePolicy policy = writePolicy(asset);
       if (!policy.checkUpdateAllowed()) {
         // Enhance error message when ALLOW_ONCE prevents update
-        String reason = (policy == WritePolicy.ALLOW_ONCE)
+        String reason = policy == WritePolicy.ALLOW_ONCE
             ? " cannot be updated as asset already exists and redeploy is not allowed"
             : " cannot be updated";
-        throwNotAllowed(asset, reason);
+        throw new RedeployDisabledException(getRepository(), asset.path(), reason);
       }
     }
   }

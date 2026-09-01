@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-outbound-request-context</artifactId>

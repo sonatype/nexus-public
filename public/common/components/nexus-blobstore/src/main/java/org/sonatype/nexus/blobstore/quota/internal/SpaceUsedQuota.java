@@ -19,16 +19,16 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.text.UnitFormatter.formatStorage;
-import static java.lang.String.format;
-import org.springframework.stereotype.Component;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static org.sonatype.nexus.common.text.UnitFormatter.formatStorage;
 
 /**
- * A {@link BlobStoreQuota} which checks that a blob store isn't using more space the limit.
- *
- * @since 3.14
+ * A {@link BlobStoreQuota} which checks that a blob store isn't using more space than the limit.
  */
 @Component
 @Qualifier(SpaceUsedQuota.ID)
@@ -53,12 +53,13 @@ public class SpaceUsedQuota
     long usedSpace = blobStore.getMetrics().getTotalSize();
     long limit = getLimit(blobStore.getBlobStoreConfiguration());
 
-    String name = blobStore.getBlobStoreConfiguration().getName();
-    String msg = format("Blob store %s is using %s space and has a limit of %s", name,
+    String rawName = blobStore.getBlobStoreConfiguration().getName();
+    String escapedName = StringEscapeUtils.escapeHtml4(rawName);
+    String msg = format("Blob store %s is using %s space and has a limit of %s", escapedName,
         formatStorage(usedSpace),
         formatStorage(limit));
 
-    return new BlobStoreQuotaResult(usedSpace > limit, name, msg);
+    return new BlobStoreQuotaResult(usedSpace > limit, rawName, msg);
   }
 
   @Override

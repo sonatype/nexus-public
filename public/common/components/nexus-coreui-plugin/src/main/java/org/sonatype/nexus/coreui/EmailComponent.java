@@ -23,6 +23,7 @@ import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.rapture.PasswordPlaceholder;
 import org.sonatype.nexus.validation.Validate;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -47,9 +48,12 @@ public class EmailComponent
 {
   private final EmailManager emailManager;
 
+  private final AntiSsrfService antiSsrfService;
+
   @Autowired
-  public EmailComponent(final EmailManager emailManager) {
+  public EmailComponent(final EmailManager emailManager, final AntiSsrfService antiSsrfService) {
     this.emailManager = checkNotNull(emailManager);
+    this.antiSsrfService = checkNotNull(antiSsrfService);
   }
 
   /**
@@ -86,6 +90,7 @@ public class EmailComponent
   @RequiresPermissions("nexus:settings:update")
   @Validate
   public EmailConfigurationXO update(@NotNull @Valid final EmailConfigurationXO configuration) {
+    antiSsrfService.validateHostWithoutCache(configuration.getHost());
     emailManager.setConfiguration(convert(configuration), configuration.getPassword());
     return read();
   }
@@ -117,6 +122,7 @@ public class EmailComponent
       @NotNull @Valid final EmailConfigurationXO configuration,
       @NotNull @Email final String address) throws EmailException
   {
+    antiSsrfService.validateHostWithoutCache(configuration.getHost());
     emailManager.sendVerification(convert(configuration), configuration.getPassword(), address);
   }
 }

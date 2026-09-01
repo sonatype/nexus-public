@@ -12,14 +12,13 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Flex, Text, TextField, IconButton, Tooltip } from '@radix-ui/themes';
-import { Search, Users, Plus, UserPlus, CheckCircle, XCircle, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Badge, Box, Flex, Text, TextField } from '@radix-ui/themes';
+import { Search, Users, Plus, UserPlus } from 'lucide-react';
 
 import {
   EntityTable,
   FilterSidebar,
   EmptyState,
-  StatusBadge,
   HelpSection,
   type TableColumn,
   type FilterSection,
@@ -32,8 +31,6 @@ import {
   UserSortField,
   DEFAULT_SOURCE,
   UsersListProps,
-  getFullName,
-  isExternalUser,
 } from './types';
 
 import './UsersList.scss';
@@ -51,15 +48,13 @@ const CLOUD_SOURCE = 'OAuth2';
 
 export function UsersList({
   onSelect,
-  onEdit,
-  onDelete,
+  getRowAriaLabel,
   onCreate,
-  canEdit = true,
-  canDelete = true,
   isCloud = false,
 }: UsersListProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [filter, setFilter] = useState('');
+  const [debouncedFilter, setDebouncedFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [sortField, setSortField] = useState<UserSortField>('userId');
@@ -70,22 +65,39 @@ export function UsersList({
 
   const activeSource = isCloud ? CLOUD_SOURCE : undefined;
 
-  // Load all users
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedFilter(filter), 300);
+    return () => clearTimeout(timer);
+  }, [filter]);
+
+  // The filter must be applied server-side; per-source result caps
+  // (100 for LDAP, 1000 for SAML) mean client-side filtering can only
+  // narrow the first page and would silently miss matches beyond it.
+  useEffect(() => {
+    let cancelled = false;
     const loadUsers = async () => {
       setLoadingUsers(true);
       try {
-        const data = await fetchUsers('', activeSource);
-        setUsers(data);
+        const data = await fetchUsers(debouncedFilter, activeSource);
+        if (!cancelled) {
+          setUsers(data);
+        }
       } catch (err: any) {
-        setError(err.message);
+        if (!cancelled) {
+          setError(err.message);
+        }
       } finally {
-        setLoadingUsers(false);
+        if (!cancelled) {
+          setLoadingUsers(false);
+        }
       }
     };
 
     loadUsers();
-  }, [fetchUsers, setError, activeSource]);
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchUsers, setError, activeSource, debouncedFilter]);
 
   // Get unique sources with counts for filter
   const sourceOptions = useMemo(() => {
@@ -93,7 +105,6 @@ export function UsersList({
 
     users.forEach((user) => {
       const source = user.source || DEFAULT_SOURCE;
-      const label = source === DEFAULT_SOURCE ? 'Local' : source;
       sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1);
     });
 
@@ -134,22 +145,11 @@ export function UsersList({
     ];
   }, [users]);
 
-  // Filter users
+  // Client-side facets applied on top of the server-filtered result set.
+  // The text filter itself is applied server-side (see the load effect above)
+  // so we only refine by source and status here.
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      // Text filter
-      if (filter) {
-        const searchLower = filter.toLowerCase();
-        const matchesUserId = user.userId?.toLowerCase().includes(searchLower);
-        const matchesFirstName = user.firstName?.toLowerCase().includes(searchLower);
-        const matchesLastName = user.lastName?.toLowerCase().includes(searchLower);
-        const matchesEmail = user.emailAddress?.toLowerCase().includes(searchLower);
-        if (!matchesUserId && !matchesFirstName && !matchesLastName && !matchesEmail) {
-          return false;
-        }
-      }
-
-      // Source filter
       if (sourceFilter.length > 0) {
         const userSource = user.source || DEFAULT_SOURCE;
         if (!sourceFilter.includes(userSource)) {
@@ -157,7 +157,6 @@ export function UsersList({
         }
       }
 
-      // Status filter
       if (statusFilter.length > 0) {
         const userStatus = user.status === 'active' ? 'active' : 'inactive';
         if (!statusFilter.includes(userStatus)) {
@@ -167,7 +166,7 @@ export function UsersList({
 
       return true;
     });
-  }, [users, filter, sourceFilter, statusFilter]);
+  }, [users, sourceFilter, statusFilter]);
 
   // Sort users
   const sortedUsers = useMemo(() => {
@@ -241,6 +240,9 @@ export function UsersList({
 
   const handleClearFilters = useCallback(() => {
     setFilter('');
+    // Sync the debounced filter so Clear is immediate rather than waiting
+    // 300ms for the debounce to fire — this is a discrete action, not typing.
+    setDebouncedFilter('');
     setSourceFilter([]);
     setStatusFilter([]);
   }, []);
@@ -249,14 +251,14 @@ export function UsersList({
     setError(null);
     setLoadingUsers(true);
     try {
-      const data = await fetchUsers('', activeSource);
+      const data = await fetchUsers(debouncedFilter, activeSource);
       setUsers(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoadingUsers(false);
     }
-  }, [fetchUsers, setError, activeSource]);
+  }, [fetchUsers, setError, activeSource, debouncedFilter]);
 
   // Filter sidebar sections
   const filterSections: FilterSection[] = useMemo(() => [
@@ -324,64 +326,15 @@ export function UsersList({
       accessor: (user) => {
         const isActive = user.status === 'active';
         return (
-          <Flex align="center" gap="2">
-            <StatusBadge status={isActive ? 'online' : 'offline'} size="small" />
-            <span>{isActive ? 'Active' : 'Inactive'}</span>
-          </Flex>
+          <Badge variant="soft" color={isActive ? 'green' : 'gray'} size="1">
+            {isActive ? 'Active' : 'Inactive'}
+          </Badge>
         );
       },
       sortable: true,
       width: '120px',
     },
-    {
-      id: 'actions',
-      header: '',
-      accessor: (user) => {
-        const source = user.source || DEFAULT_SOURCE;
-        const isLocal = !isExternalUser(source);
-        const canDeleteUser = canDelete && onDelete && isLocal && user.userId !== 'admin';
-        return (
-          <Flex gap="2" justify="end">
-            <Tooltip content="View">
-              <IconButton
-                variant="ghost"
-                size="1"
-                onClick={(e) => { e.stopPropagation(); onSelect(user.userId, source); }}
-                aria-label={`View ${getFullName(user)}`}
-              >
-                <Eye size={14} />
-              </IconButton>
-            </Tooltip>
-            {canEdit && onEdit && (
-              <Tooltip content="Edit">
-                <IconButton
-                  variant="ghost"
-                  size="1"
-                  onClick={(e) => { e.stopPropagation(); onEdit(user.userId, source); }}
-                  aria-label={`Edit ${getFullName(user)}`}
-                >
-                  <Pencil size={14} />
-                </IconButton>
-              </Tooltip>
-            )}
-            {canDeleteUser && (
-              <Tooltip content="Delete">
-                <IconButton
-                  variant="ghost"
-                  size="1"
-                  onClick={(e) => { e.stopPropagation(); onDelete(user.userId, getFullName(user)); }}
-                  aria-label={`Delete ${getFullName(user)}`}
-                >
-                  <Trash2 size={14} />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Flex>
-        );
-      },
-      width: '100px',
-    },
-  ], [onSelect, onEdit, onDelete, canEdit, canDelete]);
+  ], []);
 
   // Empty state
   const emptyState = useMemo(() => {
@@ -418,7 +371,7 @@ export function UsersList({
         tip="Users are assigned roles which grant them access to Nexus Repository features."
       />
     );
-  }, [filter, sourceFilter, statusFilter, handleClearFilters, onCreate]);
+  }, [filter, sourceFilter, statusFilter, handleClearFilters, onCreate, isCloud]);
 
   return (
     <Flex className="users-list" gap="4" data-testid="users-list">
@@ -436,12 +389,13 @@ export function UsersList({
         {/* Search Bar */}
         <Box className="users-list__search-container">
           <TextField.Root
-            placeholder="Search users by ID, name, or email..."
+            placeholder="Search by user ID..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="users-list__search-input"
             data-testid="users-search"
             data-analytics-id="nxrm-user-filter"
+            aria-label="Search users by user ID"
           >
             <TextField.Slot>
               <Search size={16} />
@@ -455,6 +409,7 @@ export function UsersList({
           columns={columns}
           getRowKey={(user) => `${user.userId}-${user.source || DEFAULT_SOURCE}`}
           onRowClick={handleRowClick}
+          getRowAriaLabel={getRowAriaLabel}
           loading={loadingUsers}
           loadingMessage="Loading users..."
           error={error || undefined}
@@ -473,7 +428,7 @@ export function UsersList({
         {!loadingUsers && !error && sortedUsers.length > 0 && (
           <Box className="users-list__summary">
             <Text size="2" color="gray">
-              Showing {sortedUsers.length} of {users.length} users
+              Showing {sortedUsers.length} users
             </Text>
           </Box>
         )}

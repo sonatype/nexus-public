@@ -36,6 +36,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.validation.Validate;
@@ -68,6 +69,8 @@ public class ComponentComponent
 
   private final ComponentHelper componentHelper;
 
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
   private final Map<String, AssetAttributeTransformer> formatTransformations;
 
   @Autowired
@@ -76,12 +79,14 @@ public class ComponentComponent
       final SelectorFactory selectorFactory,
       final JsonMapper jsonMapper,
       final ComponentHelper componentHelper,
+      final RepositoryPermissionChecker repositoryPermissionChecker,
       final List<AssetAttributeTransformer> formatTransformationsList)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.selectorFactory = checkNotNull(selectorFactory);
     this.jsonMapper = checkNotNull(jsonMapper);
     this.componentHelper = checkNotNull(componentHelper);
+    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.formatTransformations = QualifierUtil.buildQualifierBeanMap(checkNotNull(formatTransformationsList));
   }
 
@@ -116,6 +121,10 @@ public class ComponentComponent
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName);
     List<Repository> selectedRepositories = getPreviewRepositories(repositorySelector);
     if (selectedRepositories.isEmpty()) {
+      // Return null (not an empty PagedResponse) to match this DirectMethod's existing contract:
+      // the blank-input branch above and every historical caller in the classic ExtJS UI treats a
+      // null response as "no data." Diverging here would silently change classic-UI grid state.
+      // The REST endpoint (SelectorPreviewResource) intentionally returns PageResult(0, []) instead.
       return null;
     }
 
@@ -230,17 +239,20 @@ public class ComponentComponent
   }
 
   private List<Repository> getPreviewRepositories(final RepositorySelector repositorySelector) {
+    List<Repository> selected;
     if (!repositorySelector.isAllRepositories()) {
-      return Collections.singletonList(repositoryManager.get(repositorySelector.getName()));
+      Repository specific = repositoryManager.get(repositorySelector.getName());
+      selected = specific == null ? Collections.emptyList() : Collections.singletonList(specific);
     }
-
-    if (!repositorySelector.isAllFormats()) {
-      return stream(repositoryManager.browse())
+    else if (!repositorySelector.isAllFormats()) {
+      selected = stream(repositoryManager.browse())
           .filter(repository -> repository.getFormat().getValue().equals(repositorySelector.getFormat()))
           .collect(Collectors.toList()); // NOSONAR
     }
-
-    return stream(repositoryManager.browse()).collect(Collectors.toList()); // NOSONAR
+    else {
+      selected = stream(repositoryManager.browse()).collect(Collectors.toList()); // NOSONAR
+    }
+    return repositoryPermissionChecker.userCanBrowseRepositories(selected);
   }
 
   private ComponentXO readComponent(final String componentString) {

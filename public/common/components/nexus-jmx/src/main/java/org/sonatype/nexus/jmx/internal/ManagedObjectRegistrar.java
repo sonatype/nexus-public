@@ -178,7 +178,7 @@ public class ManagedObjectRegistrar
     if (name == null) {
       // try various annotations
       List<Function<Object, Optional<String>>> nameSources =
-          List.of(QualifierUtil::value, ManagedObjectRegistrar::getJakartaNamed, ManagedObjectRegistrar::getJavaxNamed);
+          List.of(QualifierUtil::value, ManagedObjectRegistrar::getJakartaNamed);
       for (Function<Object, Optional<String>> nameSource : nameSources) {
         name = nameSource.apply(managedObject)
             .filter(Strings2::notBlank)
@@ -197,14 +197,6 @@ public class ManagedObjectRegistrar
         .map(Object::getClass)
         .map(clazz -> clazz.getAnnotation(Named.class))
         .map(Named::value);
-  }
-
-  @Nullable
-  private static Optional<String> getJavaxNamed(final Object managedObject) {
-    return Optional.ofNullable(managedObject)
-        .map(Object::getClass)
-        .map(clazz -> clazz.getAnnotation(jakarta.inject.Named.class))
-        .map(jakarta.inject.Named::value);
   }
 
   /**

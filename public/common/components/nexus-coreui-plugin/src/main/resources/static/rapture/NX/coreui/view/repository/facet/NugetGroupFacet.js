@@ -42,30 +42,6 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
     var me = this;
 
     var form = me.up('form');
-    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true, sorters: undefined});
-    me.repositoryStore.filter([
-      {property: 'format', value: me.format}
-    ]);
-    me.repositoryStore.load(function(records, operation, success) {
-      if (form) {
-        var record = form.getRecord();
-        if (record) {
-          me.repositoryStore.filter([
-            {property: 'format', value: me.format},
-            {
-              filterFn: function(item) {
-                return item.get('name') !== record.get('name');
-              }
-            }
-          ]);
-          var memberNames = record.get('attributes').group.memberNames;
-          form.down('#groupMemberNames').setValue(memberNames);
-          // clears isDirty state after setting the value
-          form.down('#groupMemberNames').resetOriginalValue();
-        }
-      }
-    });
-
     var nugetRepositories = [];
     Ext.Ajax.request({
       url: NX.util.Url.relativePath + '/service/rest/beta/repositories',
@@ -106,98 +82,6 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
       return result;
     }
 
-    me.items = [
-      {
-        xtype: 'fieldset',
-        cls: 'nx-form-section',
-        title: NX.I18n.get('Repository_Facet_GroupFacet_Title'),
-
-        items: {
-          xtype: 'nx-itemselector',
-          name: 'attributes.group.memberNames',
-          itemId: 'groupMemberNames',
-          fieldLabel: NX.I18n.get('Repository_Facet_GroupFacet_Members_FieldLabel'),
-          helpText: NX.I18n.get('Repository_Facet_GroupFacet_Members_HelpText'),
-          buttons: ['up', 'add', 'remove', 'down'],
-          fromTitle: NX.I18n.get('Repository_Facet_GroupFacet_Members_FromTitle'),
-          toTitle: NX.I18n.get('Repository_Facet_GroupFacet_Members_ToTitle'),
-          store: me.repositoryStore,
-          valueField: 'id',
-          displayField: 'name',
-          allowBlank: false,
-          delimiter: null,
-          forceSelection: true,
-          queryMode: 'local',
-          triggerAction: 'all',
-          selectOnFocus: false,
-          itemCls: 'required-field',
-          listeners: {
-            change: function(field, newValues, oldValues, eOpts) {
-              var nugetGroupValidationField = form.down("#nugetGroupValidationLabel");
-
-              var isSaveButtonDisabled = false;
-              var isFirstRepositoryV3;
-              var firstRepositoryName;
-              Ext.each(newValues, function (repositoryName) {
-                var isV3Repository = isNugetV3Version(repositoryName);
-                if (isV3Repository === undefined) {
-                  return true;
-                }
-                if (isFirstRepositoryV3 === undefined) {
-                  firstRepositoryName = repositoryName;
-                  isFirstRepositoryV3 = isV3Repository;
-                }
-                else {
-                  var isNextSameAsFirst = !Boolean(isFirstRepositoryV3 ^ isV3Repository);
-                  if (!isNextSameAsFirst) {
-                    isSaveButtonDisabled = true;
-                    nugetGroupValidationField.setValue(
-                        NX.I18n.format('Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel', repositoryName,
-                            getNugetVersionString(isV3Repository),
-                            firstRepositoryName,
-                            getNugetVersionString(isFirstRepositoryV3)));
-                    return false;
-                  }
-                }
-              });
-
-              checkSaveButtonState(isSaveButtonDisabled, nugetGroupValidationField);
-              if (isSaveButtonDisabled) {
-                field.resetOriginalValue();
-              }
-            }
-          }
-        }
-      },
-      {
-        xtype: 'displayfield',
-        itemId: 'nugetGroupValidationLabel'
-      }
-    ];
-
-    function checkSaveButtonState (isSaveButtonDisabled, nugetGroupValidationField) {
-      var saveButton = Ext.ComponentQuery.query('button[action=save]')[0];
-      var addButton = Ext.ComponentQuery.query('button[action=add]')[1];
-      if (isSaveButtonDisabled) {
-        nugetGroupValidationField.setVisible(true);
-        if (saveButton) {
-          saveButton.setDisabled(true);
-        }
-        if (addButton) {
-          addButton.setDisabled(true);
-        }
-      }
-      else {
-        nugetGroupValidationField.setVisible(false);
-        if (saveButton) {
-          saveButton.setDisabled(false);
-        }
-        if (addButton) {
-          addButton.setDisabled(false);
-        }
-      }
-    }
-
     function getNugetVersionString(isV3Version) {
       return isV3Version ? 'v3' : 'v2';
     }
@@ -212,6 +96,105 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
             return repository.nugetVersion === 'V3';
           })[0];
     }
+
+    me.repositoryStore = Ext.create('NX.coreui.store.RepositoryReference', {remote: true, sorters: undefined});
+    me.repositoryStore.filter([
+      {property: 'format', value: me.format}
+    ]);
+    me.repositoryStore.load(function(records, operation, success) {
+      if (form) {
+        var record = form.getRecord();
+        if (record) {
+          me.repositoryStore.filter([
+            {property: 'format', value: me.format},
+            {
+              filterFn: function(item) {
+                return item.get('name') !== record.get('name');
+              }
+            }
+          ]);
+          var memberNames = record.get('attributes').group.memberNames;
+          form.down('#groupMemberNames').setValue(memberNames);
+          // clears isDirty state after setting the value
+          form.down('#groupMemberNames').resetOriginalValue();
+        }
+      }
+    });
+
+    me.items = [
+      {
+        xtype: 'fieldset',
+        cls: 'nx-form-section',
+        title: NX.I18n.get('Repository_Facet_GroupFacet_Title'),
+
+        items: [
+          {
+            xtype: 'nx-itemselector',
+            name: 'attributes.group.memberNames',
+            itemId: 'groupMemberNames',
+            fieldLabel: NX.I18n.get('Repository_Facet_GroupFacet_Members_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_GroupFacet_Members_HelpText'),
+            buttons: ['up', 'add', 'remove', 'down'],
+            fromTitle: NX.I18n.get('Repository_Facet_GroupFacet_Members_FromTitle'),
+            toTitle: NX.I18n.get('Repository_Facet_GroupFacet_Members_ToTitle'),
+            store: me.repositoryStore,
+            valueField: 'id',
+            displayField: 'name',
+            allowBlank: false,
+            delimiter: null,
+            forceSelection: true,
+            queryMode: 'local',
+            triggerAction: 'all',
+            selectOnFocus: false,
+            itemCls: 'required-field',
+            listeners: {
+              change: function(field, newValues) {
+                var nugetGroupValidationField = form.down('#nugetGroupValidationLabel');
+                var hasConflict = false;
+                var isFirstRepositoryV3;
+                var firstRepositoryName;
+                Ext.each(newValues, function(repositoryName) {
+                  var isV3Repository = isNugetV3Version(repositoryName);
+                  if (isV3Repository === undefined) {
+                    return true;
+                  }
+                  if (isFirstRepositoryV3 === undefined) {
+                    firstRepositoryName = repositoryName;
+                    isFirstRepositoryV3 = isV3Repository;
+                  }
+                  else {
+                    var isNextSameAsFirst = !Boolean(isFirstRepositoryV3 ^ isV3Repository);
+                    if (!isNextSameAsFirst) {
+                      hasConflict = true;
+                      nugetGroupValidationField.setValue(
+                          NX.I18n.format('Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel',
+                              repositoryName,
+                              getNugetVersionString(isV3Repository),
+                              firstRepositoryName,
+                              getNugetVersionString(isFirstRepositoryV3)));
+                      return false;
+                    }
+                  }
+                });
+                var chocolateyEnabled = NX.State.getValue('nugetChocolateyEnabled') === true;
+                if (hasConflict && !chocolateyEnabled) {
+                  nugetGroupValidationField.setVisible(true);
+                }
+                else {
+                  nugetGroupValidationField.setValue('');
+                  nugetGroupValidationField.setVisible(false);
+                }
+              }
+            }
+          },
+          {
+            xtype: 'displayfield',
+            itemId: 'nugetGroupValidationLabel',
+            hidden: true
+          }
+        ]
+      }
+    ];
 
     me.callParent();
   }

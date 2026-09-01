@@ -18,9 +18,14 @@ import { Theme } from '@radix-ui/themes';
 import { ContentSelectorsPage } from '../ContentSelectorsPage';
 import * as useContentSelectorsApiModule from '../useContentSelectorsApi';
 import { ToastProvider } from '../../../../../shared/Toast';
+import { ExtJS } from '../../../../../../../interface/ExtJS';
 
 // Mock the API hook
 jest.mock('../useContentSelectorsApi');
+
+// ContentSelectorsPage derives canCreate/canUpdate/canDelete from the relative
+// interface/ExtJS singleton; spy on it to drive gating per test (NEXUS-54212).
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
 
 const mockedUseContentSelectorsApi = useContentSelectorsApiModule.useContentSelectorsApi as jest.MockedFunction<
   typeof useContentSelectorsApiModule.useContentSelectorsApi
@@ -50,9 +55,15 @@ jest.mock('../ContentSelectorForm', () => ({
     isCreate,
     onCancel,
     onComplete,
+    canEdit,
+    canDelete,
   }: any) {
     return (
-      <div data-testid="content-selector-form">
+      <div
+        data-testid="content-selector-form"
+        data-can-edit={String(canEdit)}
+        data-can-delete={String(canDelete)}
+      >
         <span>{isCreate ? 'Create Selector' : `Edit ${selector?.name || 'Loading...'}`}</span>
         <button
           onClick={() => {
@@ -84,6 +95,7 @@ describe('ContentSelectorsPage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCheckPermission.mockReturnValue(true);
     // Set URL hash to list view for most tests
     window.location.hash = '#preview/admin/repository/selectors';
     
@@ -210,6 +222,65 @@ describe('ContentSelectorsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('content-selectors-list')).toBeInTheDocument();
+    });
+  });
+
+  // NEXUS-54212: write actions are disabled (not hidden) for read-only users, and the
+  // detail form receives canEdit/canDelete derived from the selectors permissions.
+  describe('permission gating (NEXUS-54212)', () => {
+    it('renders an enabled create button when the user has selectors:create', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      render(<ContentSelectorsPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selectors-list')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('create-selector-button')).toBeEnabled();
+    });
+
+    it('disables (not hides) the create button when the user lacks selectors:create', async () => {
+      mockCheckPermission.mockImplementation((permission) => permission !== 'nexus:selectors:create');
+      render(<ContentSelectorsPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selectors-list')).toBeInTheDocument();
+      });
+
+      const createButton = screen.getByTestId('create-selector-button');
+      expect(createButton).toBeInTheDocument();
+      expect(createButton).toBeDisabled();
+    });
+
+    it('passes canEdit=true to the detail form when the user has selectors:update', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      render(<ContentSelectorsPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selectors-list')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Select Selector'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selector-form')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('content-selector-form')).toHaveAttribute('data-can-edit', 'true');
+    });
+
+    it('passes canEdit=false to the detail form when the user lacks selectors:update', async () => {
+      mockCheckPermission.mockImplementation((permission) => permission !== 'nexus:selectors:update');
+      render(<ContentSelectorsPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selectors-list')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Select Selector'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('content-selector-form')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('content-selector-form')).toHaveAttribute('data-can-edit', 'false');
     });
   });
 });

@@ -17,6 +17,8 @@ import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.internal.rest.SecurityApiConstants;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,7 +32,10 @@ public class RoleApiResourceV1
   public static final String RESOURCE_URI = SecurityApiConstants.V1_RESOURCE_URI + "roles";
 
   @Autowired
-  public RoleApiResourceV1(final SecuritySystem securitySystem) {
-    super(securitySystem);
+  public RoleApiResourceV1(
+      final SecuritySystem securitySystem,
+      final RoleAssignabilityChecker roleAssignabilityChecker)
+  {
+    super(securitySystem, roleAssignabilityChecker);
   }
 }

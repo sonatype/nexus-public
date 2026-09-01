@@ -42,32 +42,8 @@
     max-width: 100%;
   }
 
-  // Prevent header text from wrapping; nth-child fixes column widths since this is a
-  // fixed-structure table (not a generic reusable component with dynamic columns).
-  .rt-TableHeaderCell {
-    white-space: nowrap;
-
-    &:nth-child(1) {
-      min-width: 90px;
-    }
-
-    // Last column gets slightly more right padding for visual breathing room
-    &:last-child {
-      padding-right: var(--space-5);
-    }
-  }
-
   .rt-TableCell {
     white-space: nowrap;
-
-    &:last-child {
-      padding-right: var(--space-5);
-    }
-  }
-
-  // Explicit BEM hook used by the TSX markup; intentionally mirrors the last-column spacing rule.
-  &__cell--last {
-    padding-right: var(--space-5);
   }
 
   .column-tooltip {

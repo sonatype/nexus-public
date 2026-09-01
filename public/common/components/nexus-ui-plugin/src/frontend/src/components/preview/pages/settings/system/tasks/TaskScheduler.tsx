@@ -22,7 +22,6 @@ import {
 
 import {
   ScheduleType,
-  ScheduleData,
   TaskSchedulerProps,
   SCHEDULE_OPTIONS,
   WEEKDAYS,
@@ -43,7 +42,7 @@ export function describeCron(expr: string): string {
   const parts = expr.trim().split(/\s+/);
   if (parts.length < 6) return '';
 
-  const [sec, min, hour, dom, , dow] = parts;
+  const [_sec, min, hour, dom, , dow] = parts;
 
   const formatTime = (h: string, m: string) => {
     const hh = parseInt(h, 10);
@@ -54,11 +53,14 @@ export function describeCron(expr: string): string {
   };
 
   try {
-    if (hour.startsWith('*/')) {
-      return `Every ${hour.slice(2)} hours`;
-    }
     if (min.startsWith('*/')) {
       return `Every ${min.slice(2)} minutes`;
+    }
+    if (hour === '*') {
+      return 'Every hour';
+    }
+    if (hour.startsWith('*/')) {
+      return `Every ${hour.slice(2)} hours`;
     }
 
     const isEveryDom = dom === '*' || dom === '?';
@@ -141,7 +143,15 @@ export function TaskScheduler({
 
   // Handle date change
   const handleDateChange = useCallback((dateStr: string) => {
-    const date = dateStr ? new Date(dateStr) : null;
+    // Parse as local midnight, not UTC midnight. new Date("YYYY-MM-DD") treats the
+    // string as UTC which shifts the calendar date in negative-offset timezones
+    // (e.g. CDT UTC-5: "2026-06-30" → June 29 local). The three-argument constructor
+    // always produces local midnight regardless of timezone.
+    let date: Date | null = null;
+    if (dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      date = new Date(y, m - 1, d);
+    }
     onChange({
       ...value,
       startDate: date,
@@ -185,7 +195,13 @@ export function TaskScheduler({
   const dateValue = useMemo(() => {
     if (!value.startDate) return '';
     const d = new Date(value.startDate);
-    return d.toISOString().split('T')[0];
+    // Use local date getters, not toISOString (which returns UTC). In UTC+ timezones
+    // a local midnight Date has a UTC date one day earlier, so toISOString().split('T')[0]
+    // would display the wrong calendar day.
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }, [value.startDate]);
 
   // Render schedule-specific fields based on type
@@ -498,6 +514,7 @@ export function TaskScheduler({
               onChange={handleCronChange}
               placeholder="0 0 * * * ?"
               helpText="Enter a Quartz cron expression. Format: [seconds] [minutes] [hours] [day-of-month] [month] [day-of-week] [year(optional)]"
+              monospace
               error={errors.cronExpression || (
                 value.cronExpression && !cronResult.valid ? cronResult.reason || 'Invalid cron expression' : ''
               )}

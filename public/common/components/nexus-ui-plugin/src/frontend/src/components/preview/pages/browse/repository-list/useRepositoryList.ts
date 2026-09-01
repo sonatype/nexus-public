@@ -14,7 +14,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { ExtJS } from '../../../../../interface/ExtJS';
 import { APIConstants } from '../../../../../constants/APIConstants';
-import { ExtAPIUtils } from '../../../../../interface/ExtAPIUtils';
+import Permissions from '../../../../../constants/Permissions';
 import { restClient, ENDPOINTS, parseApiError } from '../../../../../interface/api';
 import type {
   Repository,
@@ -44,7 +44,7 @@ export function isIqServerEnabled(): boolean {
  */
 export function canUpdateHealthCheck(): boolean {
   try {
-    return ExtJS.checkPermission('nexus:healthcheck:update');
+    return ExtJS.checkPermission(Permissions.HEALTHCHECK.UPDATE);
   } catch {
     return false;
   }
@@ -55,7 +55,7 @@ export function canUpdateHealthCheck(): boolean {
  */
 export function canReadFirewallStatus(): boolean {
   try {
-    return ExtJS.checkPermission('nexus:iq-violation-summary:read');
+    return ExtJS.checkPermission(Permissions.IQ_VIOLATION_SUMMARY.READ);
   } catch {
     return false;
   }

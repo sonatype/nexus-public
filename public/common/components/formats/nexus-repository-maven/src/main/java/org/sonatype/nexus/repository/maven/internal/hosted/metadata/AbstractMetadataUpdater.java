@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-abstract public class AbstractMetadataUpdater
+public abstract class AbstractMetadataUpdater
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -54,6 +54,8 @@ abstract public class AbstractMetadataUpdater
 
   private final RepositoryMetadataMerger repositoryMetadataMerger;
 
+  private final boolean rebuildChecksums;
+
   /**
    * @param update Determines whether existing content should be updated or replaced.
    * @param repository The {@link Repository} to update.
@@ -62,6 +64,23 @@ abstract public class AbstractMetadataUpdater
     this.update = update;
     this.repository = checkNotNull(repository);
     this.repositoryMetadataMerger = new RepositoryMetadataMerger();
+    this.rebuildChecksums = false;
+  }
+
+  /**
+   * @param update Determines whether existing content should be updated or replaced.
+   * @param repository The {@link Repository} to update.
+   * @param rebuildChecksums Whether to check for and regenerate missing checksums.
+   */
+  public AbstractMetadataUpdater(
+      final boolean update,
+      final Repository repository,
+      final boolean rebuildChecksums)
+  {
+    this.update = update;
+    this.repository = checkNotNull(repository);
+    this.repositoryMetadataMerger = new RepositoryMetadataMerger();
+    this.rebuildChecksums = rebuildChecksums;
   }
 
   /**
@@ -277,17 +296,34 @@ abstract public class AbstractMetadataUpdater
     return result;
   }
 
-  private void writeIfChanged(
+  @VisibleForTesting
+  void writeIfChanged(
       final MavenPath mavenPath,
       final Metadata oldMetadata,
       final Metadata newMetadata) throws IOException
   {
-    if (repositoryMetadataMerger.metadataEquals(oldMetadata, newMetadata)) {
-      log.info("Metadata for {} hasn't changed, skipping", mavenPath.getPath());
-    }
-    else {
+    boolean contentChanged = !repositoryMetadataMerger.metadataEquals(oldMetadata, newMetadata);
+    boolean checksumsMissing = rebuildChecksums && hasMissingChecksums(mavenPath);
+
+    if (contentChanged || checksumsMissing) {
+      if (checksumsMissing) {
+        log.debug("Metadata for {} has missing checksums, regenerating", mavenPath.getPath());
+      }
       write(mavenPath, newMetadata);
     }
+    else {
+      log.debug("Metadata for {} hasn't changed, skipping", mavenPath.getPath());
+    }
+  }
+
+  /**
+   * Checks if any checksum files are missing for the given metadata path.
+   *
+   * @param mavenPath the metadata path to check
+   * @return true if any checksum file is missing
+   */
+  protected boolean hasMissingChecksums(final MavenPath mavenPath) {
+    return false;
   }
 
   /**

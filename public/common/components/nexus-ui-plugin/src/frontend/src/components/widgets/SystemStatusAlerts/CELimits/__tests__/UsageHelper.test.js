@@ -16,7 +16,7 @@
  */
 import {helperFunctions} from '../UsageHelper';
 
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
+jest.mock('../../../../../interface/ExtJS', () => ({
   ExtJS: {
     state: jest.fn(() => ({getValue: jest.fn()})),
     useState: jest.fn(),
@@ -24,11 +24,14 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   },
 }));
 
-const {ExtJS} = jest.requireMock('@sonatype/nexus-ui-plugin');
+const {ExtJS} = jest.requireMock('../../../../../interface/ExtJS');
 
 const {
   getMetricData,
   useThrottlingStatus,
+  useThrottlingStatusValue,
+  useGracePeriodEndsDate,
+  buildLearnMoreUrl,
   OVER_LIMITS,
   NEAR_LIMITS,
   UNDER_LIMITS,
@@ -137,6 +140,148 @@ describe('useThrottlingStatus', () => {
   it('returns BELOW_LIMITS_GRACE_PERIOD_ENDED when under limits after grace as admin', () => {
     setup({throttlingStatus: UNDER_LIMITS, graceDaysFromNow: -5, isAdmin: true});
     expect(useThrottlingStatus()).toBe('BELOW_LIMITS_GRACE_PERIOD_ENDED');
+  });
+
+  it('treats diffInDays === 0 (grace ends today) as in-grace for OVER_LIMITS', () => {
+    // When today is exactly the grace period end date, it's still considered "in grace"
+    setup({throttlingStatus: OVER_LIMITS, graceDaysFromNow: 0, isAdmin: true});
+    expect(useThrottlingStatus()).toBe('OVER_LIMITS_IN_GRACE');
+  });
+
+  it('treats diffInDays === 0 (grace ends today) as in-grace for UNDER_LIMITS', () => {
+    // When today is exactly the grace period end date, it's still considered "in grace"
+    setup({throttlingStatus: UNDER_LIMITS, graceDaysFromNow: 0, isAdmin: true});
+    expect(useThrottlingStatus()).toBe('BELOW_LIMITS_IN_GRACE');
+  });
+});
+
+describe('buildLearnMoreUrl', () => {
+  beforeEach(() => {
+    ExtJS.state.mockReturnValue({
+      getValue: jest.fn((key) => {
+        if (key === 'nexus.node.id') return 'node-1';
+        if (key === 'nexus.malware.count') return {totalCount: 3};
+        return undefined;
+      }),
+    });
+  });
+
+  it('returns the limits-enforced learn-more URL when the grace period has ended', () => {
+    const url = buildLearnMoreUrl('OVER_LIMITS_GRACE_PERIOD_ENDED');
+    expect(url).toMatch(/^http:\/\/links\.sonatype\.com\/products\/nxrm3\/ce\/learn-more-limits-enforced\?/);
+    expect(url).toContain('nodeId=node-1');
+    expect(url).toContain('malwareCount=3');
+  });
+
+  it('returns the default learn-more URL for any other throttling status', () => {
+    const url = buildLearnMoreUrl('NEAR_LIMITS_NEVER_IN_GRACE');
+    expect(url).toMatch(/^http:\/\/links\.sonatype\.com\/products\/nxrm3\/ce\/learn-more\?/);
+  });
+
+  it('returns the default learn-more URL when throttlingStatus is undefined', () => {
+    const url = buildLearnMoreUrl(undefined);
+    expect(url).toMatch(/^http:\/\/links\.sonatype\.com\/products\/nxrm3\/ce\/learn-more\?/);
+  });
+});
+
+describe('localStorage test overrides', () => {
+  beforeEach(() => {
+    // Simulate an active TestHub session so UsageHelper reads localStorage
+    sessionStorage.setItem('SONATYPE_TEST_CE_SESSION', '1');
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  describe('getMetricData', () => {
+    it('overrides component_total_count when SONATYPE_TEST_CE_COMPONENTS is set', () => {
+      localStorage.setItem('SONATYPE_TEST_CE_COMPONENTS', '35000');
+      const result = getMetricData([], 'component_total_count');
+      expect(result.metricValue).toBe(35000);
+      expect(result.thresholdValue).toBe(40000);
+      expect(result.highestRecordedCount).toBe(35000);
+    });
+
+    it('overrides peak_requests_per_day when SONATYPE_TEST_CE_REQUESTS is set', () => {
+      localStorage.setItem('SONATYPE_TEST_CE_REQUESTS', '80000');
+      const result = getMetricData([], 'peak_requests_per_day');
+      expect(result.metricValue).toBe(80000);
+      expect(result.thresholdValue).toBe(100000);
+      expect(result.highestRecordedCount).toBe(80000);
+    });
+
+    it('does not override when no localStorage keys are set', () => {
+      const usage = [{metricName: 'component_total_count', metricValue: 100, thresholds: [], aggregates: []}];
+      expect(getMetricData(usage, 'component_total_count').metricValue).toBe(100);
+    });
+
+    it('does not override component metric when only requests key is set', () => {
+      localStorage.setItem('SONATYPE_TEST_CE_REQUESTS', '80000');
+      const usage = [{metricName: 'component_total_count', metricValue: 100, thresholds: [], aggregates: []}];
+      expect(getMetricData(usage, 'component_total_count').metricValue).toBe(100);
+    });
+
+    it('ignores localStorage overrides when SONATYPE_TEST_CE_SESSION is not set (fresh login)', () => {
+      sessionStorage.removeItem('SONATYPE_TEST_CE_SESSION');
+      localStorage.setItem('SONATYPE_TEST_CE_COMPONENTS', '35000');
+      const usage = [{metricName: 'component_total_count', metricValue: 100, thresholds: [], aggregates: []}];
+      expect(getMetricData(usage, 'component_total_count').metricValue).toBe(100);
+    });
+  });
+
+  describe('useThrottlingStatusValue', () => {
+    beforeEach(() => {
+      ExtJS.state.mockReturnValue({getValue: jest.fn()});
+    });
+
+    it('returns localStorage override when SONATYPE_TEST_CE_THROTTLING_STATUS is set', () => {
+      localStorage.setItem('SONATYPE_TEST_CE_THROTTLING_STATUS', '75% usage');
+      expect(useThrottlingStatusValue()).toBe('75% usage');
+    });
+
+    it('falls back to server state when no override is set', () => {
+      ExtJS.state.mockReturnValue({getValue: jest.fn().mockReturnValue('Over limits')});
+      expect(useThrottlingStatusValue()).toBe('Over limits');
+    });
+
+    it('ignores localStorage override when SONATYPE_TEST_CE_SESSION is not set (fresh login)', () => {
+      sessionStorage.removeItem('SONATYPE_TEST_CE_SESSION');
+      localStorage.setItem('SONATYPE_TEST_CE_THROTTLING_STATUS', '75% usage');
+      ExtJS.state.mockReturnValue({getValue: jest.fn().mockReturnValue('Under limits')});
+      expect(useThrottlingStatusValue()).toBe('Under limits');
+    });
+  });
+
+  describe('useGracePeriodEndsDate', () => {
+    beforeEach(() => {
+      ExtJS.state.mockReturnValue({getValue: jest.fn()});
+    });
+
+    it('returns parsed date from SONATYPE_TEST_CE_GRACE_PERIOD_ENDS when set', () => {
+      localStorage.setItem('SONATYPE_TEST_CE_GRACE_PERIOD_ENDS', '2025-12-31T00:00:00Z');
+      const result = useGracePeriodEndsDate();
+      expect(result).toBeInstanceOf(Date);
+      expect(result.getFullYear()).toBe(2025);
+      expect(result.getMonth()).toBe(11);
+    });
+
+    it('falls back to server state when no override is set', () => {
+      ExtJS.state.mockReturnValue({getValue: jest.fn().mockReturnValue('2026-06-01T00:00:00Z')});
+      const result = useGracePeriodEndsDate();
+      expect(result).toBeInstanceOf(Date);
+    });
+
+    it('ignores localStorage override when SONATYPE_TEST_CE_SESSION is not set (fresh login)', () => {
+      sessionStorage.removeItem('SONATYPE_TEST_CE_SESSION');
+      localStorage.setItem('SONATYPE_TEST_CE_GRACE_PERIOD_ENDS', '2025-12-31T00:00:00Z');
+      ExtJS.state.mockReturnValue({getValue: jest.fn().mockReturnValue(null)});
+      expect(useGracePeriodEndsDate()).toBeInstanceOf(Date);
+      // Should be the server's null-derived date, not 2025
+      const result = useGracePeriodEndsDate();
+      expect(result.getFullYear()).not.toBe(2025);
+    });
   });
 });
 

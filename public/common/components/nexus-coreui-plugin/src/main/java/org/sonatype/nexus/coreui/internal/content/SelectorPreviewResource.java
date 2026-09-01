@@ -26,11 +26,11 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.query.QueryOptions;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.selector.SelectorFactory;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.authz.annotation.Logical;
@@ -44,9 +44,6 @@ import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import org.springframework.stereotype.Component;
 
-/**
- * @since 3.29
- */
 @Component
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
@@ -64,22 +61,26 @@ public class SelectorPreviewResource
 
   private final SelectorFactory selectorFactory;
 
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
   @Autowired
   public SelectorPreviewResource(
       final ComponentHelper componentHelper,
       final RepositoryManager repositoryManager,
-      final SelectorFactory selectorFactory)
+      final SelectorFactory selectorFactory,
+      final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.componentHelper = checkNotNull(componentHelper);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.selectorFactory = checkNotNull(selectorFactory);
+    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
   }
 
   @POST
   @Path("/preview")
   @RequiresAuthentication
   @RequiresPermissions(value = {"nexus:selectors:create", "nexus:selectors:update"}, logical = Logical.OR)
-  public PageResult<AssetXO> previewContent(SelectorPreviewRequest request) {
+  public PageResult<SelectorPreviewAssetXO> previewContent(SelectorPreviewRequest request) {
     selectorFactory.validateSelector(request.getType().toLowerCase(), request.getExpression());
 
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(request.getRepository());
@@ -88,24 +89,33 @@ public class SelectorPreviewResource
       return new PageResult<>(0, emptyList());
     }
 
-    return componentHelper.previewAssets(
+    PageResult<AssetXO> result = componentHelper.previewAssets(
         repositorySelector,
         selectedRepositories,
         request.getExpression(),
         new QueryOptions(null, null, null, 0, 10));
+
+    List<SelectorPreviewAssetXO> slimResults = result.getResults()
+        .stream()
+        .map(asset -> new SelectorPreviewAssetXO(asset.getName(), asset.getRepositoryName()))
+        .collect(toList());
+    return new PageResult<>(result.getTotal(), slimResults);
   }
 
   private List<Repository> getPreviewRepositories(final RepositorySelector repositorySelector) {
+    List<Repository> selected;
     if (!repositorySelector.isAllRepositories()) {
-      return ImmutableList.of(repositoryManager.get(repositorySelector.getName()));
+      Repository specific = repositoryManager.get(repositorySelector.getName());
+      selected = specific == null ? emptyList() : List.of(specific);
     }
-
-    if (!repositorySelector.isAllFormats()) {
-      return stream(repositoryManager.browse())
+    else if (!repositorySelector.isAllFormats()) {
+      selected = stream(repositoryManager.browse())
           .filter(repository -> repository.getFormat().toString().equals(repositorySelector.getFormat()))
           .collect(toList());
     }
-
-    return stream(repositoryManager.browse()).collect(toList());
+    else {
+      selected = stream(repositoryManager.browse()).collect(toList());
+    }
+    return repositoryPermissionChecker.userCanBrowseRepositories(selected);
   }
 }

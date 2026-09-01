@@ -16,9 +16,8 @@ import { useBrowseTree } from '../useBrowseTree';
 import {
   mockRootNodes, mockFolder1Children, mockSubfolder1Children,
   getMockChildren, mockMixedWithErrorNodes, mockErrorNodes,
-  mockGoRootNodes, mockGoGithubChildren, mockGoDatadogChildren,
-  mockGoGostackparseChildren, mockGoAtVChildren,
-  mockPlusRootNodes, mockPlusChildren,
+  mockGoRootNodes, 
+  mockPlusRootNodes, 
 } from './mockData';
 import type { BrowseNode } from '../browse-tree.types';
 
@@ -510,7 +509,7 @@ describe('useBrowseTree', () => {
 
     it('expandToPath resolves ! chars (decoded path vs %21-encoded tree nodes)', async () => {
       setupGoApiMock();
-      const { result } = renderHook(() => useBrowseTree('go-proxy'));
+      renderHook(() => useBrowseTree('go-proxy'));
 
       // Override root load with Go root nodes
       ExtAPIUtils.extAPIRequest.mockImplementation(

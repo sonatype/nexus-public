@@ -18,6 +18,7 @@ import javax.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.failure.MultipleFailures;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
@@ -91,6 +92,21 @@ public abstract class RepositoryTaskSupport
       }
       catch (TaskInterruptedException e) { // NOSONAR
         throw e;
+      }
+      catch (MissingFacetException | InvalidStateException e) {
+        // Repository was deleted concurrently mid-iteration (NEXUS-53351); skip it rather than
+        // escalating to task failure. See NEXUS-50820 for the equivalent UI-path handling.
+        // Note the log-level divergence from NEXUS-50820: that UI-status path logs at DEBUG (low-signal
+        // per-request status queries), whereas these background task sweeps log at WARN because a skipped
+        // repository in a full-iteration task is worth surfacing. Do not "unify" the two levels.
+        // Trade-off: InvalidStateException is caught broadly here. It normally signals a @Guarded
+        // method invoked on a repository that was just stopped/deleted, but it can also fire for a
+        // non-deletion cause (e.g. a component that has not yet started, or a misconfiguration),
+        // which will now surface only as a WARN rather than a task failure. This is an accepted
+        // trade-off (per NEXUS-53351) to avoid noisy ERROR stack traces from the common
+        // concurrent-deletion race that would otherwise drown out genuine failures.
+        log.warn("Skipping repository '{}' for task '{}' as it appears to have been removed during execution: {}",
+            repository.getName(), getMessage(), e.getMessage());
       }
       catch (Exception e) {
         log.error("Failed to run task '{}' on repository '{}'", getMessage(), repository.getName(), e);

@@ -13,11 +13,13 @@
 
 import React from 'react';
 import { Cloud, CheckCircle, XCircle } from 'lucide-react';
+import { ExtJS } from '../../../../../../interface/ExtJS';
 import {
   SettingsFormSection,
   SettingsTextInput,
   SettingsPasswordInput,
   SettingsSelect,
+  SettingsCheckbox,
   SettingsButton,
   SettingsAlert
 } from '../../../../shared/form';
@@ -66,6 +68,12 @@ const STRINGS = {
       }
     }
   },
+  DIRECT_DOWNLOAD: {
+    label: 'Direct Download (SAS URLs)',
+    description: 'Redirect downloads directly to Azure Blob Storage. Reduces server bandwidth and improves download speed.',
+    rbacNote: 'The identity needs an Azure role that can generate a user delegation key — ' +
+      'any Storage Blob Data role, or Storage Blob Delegator. Verified on save.'
+  },
   TEST_CONNECTION: {
     button: 'Test Connection',
     testing: 'Testing connection...',
@@ -88,6 +96,8 @@ export default function AzureBlobStoreSettings({
   errors = {},
 }: AzureBlobStoreSettingsProps) {
   const { testing, result, testConnection, reset } = useAzureConnectionTest();
+
+  const isProEdition = ExtJS.isProEdition();
 
   const config: AzureBlobStoreConfig = (data.bucketConfiguration as AzureBlobStoreConfig) || {
     accountName: '',
@@ -116,6 +126,11 @@ export default function AzureBlobStoreSettings({
   };
 
   const showAccountKey = config.authentication?.authenticationMethod === 'ACCOUNTKEY';
+  const isTokenCredentialAuth =
+      config.authentication?.authenticationMethod === 'MANAGEDIDENTITY' ||
+      config.authentication?.authenticationMethod === 'ENVIRONMENTVARIABLE';
+  const showRbacNote =
+      isProEdition && !!config.preSignedUrlEnabled && isTokenCredentialAuth;
 
   return (
     <div className="azure-blob-store-settings">
@@ -169,6 +184,25 @@ export default function AzureBlobStoreSettings({
             disabled={disabled}
             autoComplete="new-password"
           />
+        )}
+
+        {isProEdition && (
+          <div className="azure-blob-store-settings__sas-section">
+            <SettingsCheckbox
+              name="azure-direct-download"
+              label={STRINGS.DIRECT_DOWNLOAD.label}
+              description={STRINGS.DIRECT_DOWNLOAD.description}
+              checked={config.preSignedUrlEnabled || false}
+              onChange={(checked) => onChange('bucketConfiguration.preSignedUrlEnabled', checked)}
+              disabled={disabled}
+            />
+
+            {showRbacNote && (
+              <SettingsAlert type="info">
+                {STRINGS.DIRECT_DOWNLOAD.rbacNote}
+              </SettingsAlert>
+            )}
+          </div>
         )}
 
         <div className="azure-blob-store-settings__test-section">

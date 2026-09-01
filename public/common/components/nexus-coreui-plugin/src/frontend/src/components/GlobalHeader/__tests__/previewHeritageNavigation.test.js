@@ -51,6 +51,23 @@ describe('getHeritageEquivalent', () => {
       expect(getHeritageEquivalent('preview/admin/iq')).toBe('admin/iq');
     });
 
+    it('maps IQ Server Connected page with slash (not colon)', () => {
+      // Regression: the generic prefix-match fallback joins suffixes with ":",
+      // producing `admin/iq:connected` which ExtJS/UIRouter don't recognize.
+      // The Classic IQ Connected route is registered as `/iq/connected` (slash).
+      expect(getHeritageEquivalent('preview/admin/iq/connected')).toBe('admin/iq/connected');
+    });
+
+    it('maps Hosted Repository Evaluation setup to the Classic sonatype-lifecycle route', () => {
+      expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval'))
+        .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval');
+    });
+
+    it('preserves query string when mapping Hosted Repository Evaluation', () => {
+      expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval?configured=true'))
+        .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true');
+    });
+
     it('maps metric health to Classic status', () => {
       expect(getHeritageEquivalent('preview/admin/support/metrichealth')).toBe('admin/support/status');
     });
@@ -141,6 +158,13 @@ describe('heritageToPreviewPath', () => {
     it('maps Classic status to Preview metrichealth', () => {
       expect(heritageToPreviewPath('admin/support/status'))
         .toBe('preview/admin/support/metrichealth');
+    });
+
+    it('maps Classic Hosted Repository Evaluation to Preview route', () => {
+      expect(heritageToPreviewPath('admin/iq/sonatype-lifecycle/hosted-repos-eval'))
+        .toBe('preview/admin/iq/hosted-repos-eval');
+      expect(heritageToPreviewPath('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true'))
+        .toBe('preview/admin/iq/hosted-repos-eval?configured=true');
     });
   });
 

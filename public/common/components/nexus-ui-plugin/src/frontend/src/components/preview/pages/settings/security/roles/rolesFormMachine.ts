@@ -21,8 +21,8 @@ import {
   RoleReference,
   PrivilegeReference,
   RoleSource,
-  NEXUS_SOURCE,
   DEFAULT_SOURCE,
+  isExternalRole,
 } from './types';
 
 /**
@@ -197,7 +197,13 @@ export function createRolesFormMachine(
         const allRoles = Array.from(rolesById.values());
         const allSources = Array.isArray(sources) ? sources : [];
 
-        // Build initial form data from loaded role or use defaults
+        // Build initial form data from loaded role or use defaults.
+        // In edit mode, derive roleType/externalSource from role.source so the
+        // Type step (step 0) can render a read-only view of the persisted type.
+        // Conditional-spread externalSource so the key is simply absent for
+        // Nexus roles — avoids `undefined`-vs-absent ambiguity if the context
+        // merge strategy ever changes.
+        const external = role ? isExternalRole(role.source) : false;
         const initialData: RoleFormData = role
           ? {
               id: role.id,
@@ -207,6 +213,8 @@ export function createRolesFormMachine(
               roles: role.roles,
               source: role.source,
               version: role.version,
+              roleType: external ? 'external' : 'nexus',
+              ...(external ? { externalSource: role.source } : {}),
             }
           : {
               id: '',

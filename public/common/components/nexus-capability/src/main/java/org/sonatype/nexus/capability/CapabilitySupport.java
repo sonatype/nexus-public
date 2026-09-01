@@ -13,6 +13,7 @@
 package org.sonatype.nexus.capability;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -25,8 +26,9 @@ import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.crypto.secrets.SecretsService;
+import org.sonatype.nexus.formfields.Encrypted;
+import org.sonatype.nexus.formfields.FormField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -295,8 +297,24 @@ public abstract class CapabilitySupport<ConfigT>
         .set("cause", new TemplateThrowableAdapter(cause)));
   }
 
+  /**
+   * Determines whether the named property should be masked in API responses by checking the type of the
+   * corresponding {@link FormField} declared by the capability's descriptor, rather than pattern-matching the
+   * property name. A property is considered a password if its form field implements {@link Encrypted} (e.g.
+   * {@link org.sonatype.nexus.formfields.PasswordFormField}). Fields not declared by the descriptor are treated
+   * as non-sensitive.
+   */
   @Override
   public boolean isPasswordProperty(final String propertyName) {
-    return Strings2.lower(propertyName).contains("password");
+    List<FormField> formFields = context().descriptor().formFields();
+    if (formFields == null) {
+      return false;
+    }
+    for (FormField field : formFields) {
+      if (field.getId().equals(propertyName)) {
+        return field instanceof Encrypted;
+      }
+    }
+    return false;
   }
 }

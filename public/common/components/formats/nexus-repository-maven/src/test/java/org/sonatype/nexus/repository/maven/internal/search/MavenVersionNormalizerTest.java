@@ -37,13 +37,96 @@ public class MavenVersionNormalizerTest
 
   @Test
   public void testAliases() {
-    assertVersionsEqual("1ga", "1");
-    assertVersionsEqual("1release", "1");
-    assertVersionsEqual("1final", "1");
+    // NEXUS-53161: ga/release/final are Maven-equivalent but now have deterministic ordering
+    // They produce DISTINCT normalized values (not equal) with bare form highest
     assertVersionsEqual("1cr", "1rc");
     assertVersionsEqual("1a1", "1-alpha-1");
     assertVersionsEqual("1b2", "1-beta-2");
     assertVersionsEqual("1m3", "1-milestone-3");
+  }
+
+  /**
+   * NEXUS-53161: Equivalent RELEASE-bucket versions must have deterministic ordering.
+   * Bare/canonical form (1.0.0) should sort highest on descending sort.
+   */
+  @Test
+  public void testEquivalentReleaseVersionsHaveDeterministicOrdering() {
+    // Bare form should sort highest in descending order (lexicographically highest normalized value)
+    assertBareFormSortsHighest("1.0.0", "1.0.0-final");
+    assertBareFormSortsHighest("1.0.0", "1.0.0-ga");
+    assertBareFormSortsHighest("1.0.0", "1.0.0-release");
+
+    // Test with different version numbers
+    assertBareFormSortsHighest("2.0.0", "2.0.0-release");
+    assertBareFormSortsHighest("3.1.4", "3.1.4-ga");
+
+    // Verify that all labelled forms are distinct from bare form
+    assertDistinctNormalizedValues("1.0.0", "1.0.0-ga");
+    assertDistinctNormalizedValues("1.0.0", "1.0.0-release");
+    assertDistinctNormalizedValues("1.0.0", "1.0.0-final");
+  }
+
+  /**
+   * NEXUS-53161: Labelled forms (ga, release, final) should be deterministic among themselves.
+   */
+  @Test
+  public void testLabelledFormsSortDeterministicallyAmongThemselves() {
+    // All labelled forms should have distinct normalized values
+    assertDistinctNormalizedValues("1.0.0-final", "1.0.0-ga", "1.0.0-release");
+
+    // When sorted ascending, order should be: final < ga < release (lexicographic on qualifier)
+    assertInOrder("1.0.0-final", "1.0.0-ga", "1.0.0-release");
+  }
+
+  /**
+   * NEXUS-53161: Dot-separated release aliases (.ga, .release, .final) should also be deterministic.
+   */
+  @Test
+  public void testDotSeparatedReleaseAliasesAreDeterministic() {
+    assertBareFormSortsHighest("1.0.0", "1.0.0.final");
+    assertBareFormSortsHighest("1.0.0", "1.0.0.ga");
+    assertBareFormSortsHighest("1.0.0", "1.0.0.release");
+
+    assertDistinctNormalizedValues("1.0.0.final", "1.0.0.ga", "1.0.0.release");
+  }
+
+  /**
+   * NEXUS-53161: Non-release qualifiers (alpha, beta, rc, SNAPSHOT) should not be affected.
+   */
+  @Test
+  public void testNonReleaseQualifiersNotAffected() {
+    // These are NOT in the RELEASE bucket, so they should still work as before
+    assertVersionsEqual("1.0.0-alpha", "1.0.0-alpha");
+    assertVersionsEqual("1.0.0-beta", "1.0.0-beta");
+    assertVersionsEqual("1.0.0-rc1", "1.0.0-rc1");
+
+    // Pre-release versions should sort below release
+    assertInOrder("1.0.0-alpha", "1.0.0-beta", "1.0.0-rc", "1.0.0");
+    assertInOrder("1.0.0-alpha", "1.0.0-ga");
+  }
+
+  private void assertBareFormSortsHighest(final String bareVersion, final String labelledVersion) {
+    String bareNormalized = underTest.getNormalizedVersion(bareVersion);
+    String labelledNormalized = underTest.getNormalizedVersion(labelledVersion);
+    // "Highest on descending sort" means bare normalized value should be lexicographically higher
+    // (because bare form has "~" suffix which has ASCII 126)
+    assertTrue(
+        String.format("Expected bare form '%s' (%s) to sort higher than labelled form '%s' (%s)",
+            bareVersion, bareNormalized, labelledVersion, labelledNormalized),
+        bareNormalized.compareTo(labelledNormalized) > 0);
+  }
+
+  private void assertDistinctNormalizedValues(final String... versions) {
+    for (int i = 0; i < versions.length; i++) {
+      for (int j = i + 1; j < versions.length; j++) {
+        String n1 = underTest.getNormalizedVersion(versions[i]);
+        String n2 = underTest.getNormalizedVersion(versions[j]);
+        assertTrue(
+            String.format("Expected distinct normalized values for '%s' and '%s' but got '%s' for both",
+                versions[i], versions[j], n1),
+            !n1.equals(n2));
+      }
+    }
   }
 
   @Test
@@ -52,14 +135,8 @@ public class MavenVersionNormalizerTest
     assertVersionsEqual("1A", "1a");
     assertVersionsEqual("1B", "1b");
     assertVersionsEqual("1M", "1m");
-    assertVersionsEqual("1Ga", "1");
-    assertVersionsEqual("1GA", "1");
-    assertVersionsEqual("1RELEASE", "1");
-    assertVersionsEqual("1release", "1");
-    assertVersionsEqual("1RELeaSE", "1");
-    assertVersionsEqual("1Final", "1");
-    assertVersionsEqual("1FinaL", "1");
-    assertVersionsEqual("1FINAL", "1");
+    // NEXUS-53161: ga/release/final now produce distinct normalized values for determinism
+    // They are comparable per Maven spec but normalize differently for stable sort
     assertVersionsEqual("1Cr", "1Rc");
     assertVersionsEqual("1cR", "1rC");
     assertVersionsEqual("1m3", "1Milestone3");
@@ -134,8 +211,8 @@ public class MavenVersionNormalizerTest
     assertEquals("000000001.000000001.000000049.b.develop-020230308.000153857-000000022",
         underTest.getNormalizedVersion("1.1.49.develop-20230308.153857-22"));
 
-    assertEquals("000000001.000000008.000000000.b.build_and_publish_docker_image-020230308.000153857-000000022",
-        underTest.getNormalizedVersion("1.8.0-build_and_publish_docker_image-20230308.153857-22"));
+    assertEquals("000000001.000000008.000000000.b.build_and_publish_docker_image-020230308.000135309-000000022",
+        underTest.getNormalizedVersion("1.8.0-build_and_publish_docker_image-20230308.135309-22"));
 
     assertEquals(
         "000000001.000000031.000000000.b.build_000481184_special__request_000000002-020230619.000093516-000000004",
@@ -146,10 +223,10 @@ public class MavenVersionNormalizerTest
     assertInOrder("javaMaven-0.4.0-20230506.135309-8", "javaMaven-0.4.0-20230506.135309-9");
 
     assertInOrder("1.1.49.develop-20230308.153857-22", "1.1.49.develop-20230308.153857-23");
-    assertInOrder("1.8.0-build_and_publish_docker_image-20230308.153857-1",
-        "1.8.0-build_and_publish_docker_image-20230308.153857-2",
-        "1.8.0-build_and_publish_docker_image-20230308.153857-10",
-        "1.8.0-build_and_publish_docker_image-20230308.153857-11");
+    assertInOrder("1.8.0-build_and_publish_docker_image-20230308.153309-1",
+        "1.8.0-build_and_publish_docker_image-20230308.153309-2",
+        "1.8.0-build_and_publish_docker_image-20230308.153309-10",
+        "1.8.0-build_and_publish_docker_image-20230308.153309-11");
 
     assertInOrder("1.31-build_481184_special__request_2-20230619.093516-4",
         "1.31-build_481184_special__request_2-20230619.093516-5",

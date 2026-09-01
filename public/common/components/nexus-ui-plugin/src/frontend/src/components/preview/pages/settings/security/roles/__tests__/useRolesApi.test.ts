@@ -324,7 +324,7 @@ describe('useRolesApi', () => {
             privileges: [],
             roles: [],
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });
@@ -378,7 +378,7 @@ describe('useRolesApi', () => {
             privileges: [],
             roles: [],
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });
@@ -408,7 +408,7 @@ describe('useRolesApi', () => {
       await act(async () => {
         try {
           await result.current.deleteRole('test-role');
-        } catch (e) {
+        } catch (_e) {
           // Expected error
         }
       });

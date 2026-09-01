@@ -13,64 +13,44 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  Badge,
   Box,
-  Card,
   DropdownMenu,
   Flex,
   Grid,
   Heading,
-  Inset,
-  Link,
   Spinner,
   Table,
   Text,
   TextField,
   Tooltip,
-  Button,
   IconButton,
   Select,
 } from '@radix-ui/themes';
 import {
   ArrowUpDown,
-  Ban,
-  CheckCircle,
   Copy,
   Database,
-  ExternalLink,
-  Eye,
-  Filter,
-  Pencil,
   Plus,
   Search,
-  Shield,
-  ShieldCheck,
-  Trash2,
   X,
   MoreHorizontal,
 } from 'lucide-react';
-import { ConfirmDialog } from '../../../../shared/form';
-import { DeleteConfirmationModal, PageHeader, TablePagination } from '../../../../shared';
+import { DeleteConfirmationModal, TablePagination } from '../../../../shared';
+import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { restClient, ENDPOINTS } from '../../../../../../interface/api';
-import { useRouter } from '@uirouter/react';
 
 import {
   EmptyState,
   ErrorState,
   HelpSection,
-  FormatBadge,
   SortableTableHeader,
   useToast,
 } from '../../../../shared';
-import { TypeBadge } from './TypeBadge';
 
-import { RepositoryListTable } from '../../../browse/repository-list/RepositoryListTable';
 import { BrowseFilterSidebar } from '../../../browse/repository-list/BrowseFilterSidebar';
-import { MobileFilterDrawer } from '../../../search/unified/MobileFilterDrawer';
 
 import { useRepositoriesApi } from './useRepositoriesApi';
-import { ensureTrailingSlash } from '../../../../../../utils/url';
 import {
   Repository,
   RepositoriesListProps,
@@ -80,7 +60,6 @@ import {
   TYPE_LABELS,
   HealthCheckStatus,
 } from './types';
-import { FormatIcon } from './components/FormatIcon';
 import { HealthCheckCell } from '../../../../shared/security/HealthCheckCell';
 import { FirewallCell } from '../../../../shared/security/FirewallCell';
 
@@ -103,6 +82,11 @@ function isIqServerEnabled(): boolean {
   catch { return false; }
 }
 
+function hasFirewall(): boolean {
+  try { return ExtJS.state().getValue('clm')?.hasFirewall ?? false; }
+  catch { return false; }
+}
+
 function canUpdateHealthCheck(): boolean {
   try { return ExtJS.checkPermission('nexus:healthcheck:update'); }
   catch { return false; }
@@ -111,6 +95,17 @@ function canUpdateHealthCheck(): boolean {
 function canReadFirewallStatus(): boolean {
   try { return ExtJS.checkPermission('nexus:iq-violation-summary:read'); }
   catch { return false; }
+}
+
+/**
+ * Health Check (RHC) is a lower-tier feature that is superseded by the IQ Server's Firewall product. When the
+ * customer already has Firewall configured (IQ Server is enabled AND the persisted {@code clm.hasFirewall} flag
+ * is {@code true}), the RHC column is redundant — the Firewall Report column shows richer data — so we hide it,
+ * matching the classic UI behaviour (NX.Conditions.hasNoFirewall in ExtJS). Requires the healthcheck:update
+ * permission on top of the tier gate (NEXUS-53278).
+ */
+function shouldShowHealthCheckColumn(): boolean {
+  return canUpdateHealthCheck() && !(isIqServerEnabled() && hasFirewall());
 }
 
 /**
@@ -129,11 +124,19 @@ function formatFileSize(bytes?: number): string {
 
 const DEFAULT_PAGE_SIZE = 40;
 
+// Pending confirmation state for operational row actions (rebuild index,
+// invalidate cache, toggle online). Mirrors the pattern in RepositoriesPage:
+// the menu item stages a pending action; ConfirmDialog renders the prompt
+// and triggers execution on confirm.
+type PendingRowAction =
+  | { kind: 'rebuild-index'; repository: Repository }
+  | { kind: 'invalidate-cache'; repository: Repository }
+  | { kind: 'toggle-online'; repository: Repository; nextOnline: boolean };
+
 /**
  * RepositoriesList - Displays repositories using shared components
  */
 export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesListProps) {
-  const router = useRouter();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [healthStatus, setHealthStatus] = useState<Record<string, HealthCheckStatus>>({});
   const [filter, setFilter] = useState('');
@@ -148,13 +151,24 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
   const [isDeleting, setIsDeleting] = useState(false);
   const [firewallStatus, setFirewallStatus] = useState<Record<string, FirewallStatusData>>({});
   const [firewallLoaded, setFirewallLoaded] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const { error, setError, fetchRepositories, deleteRepository } = useRepositoriesApi();
+  const {
+    error,
+    setError,
+    fetchRepositories,
+    fetchRepository,
+    deleteRepository,
+    invalidateCache,
+    rebuildIndex,
+    setRepositoryOnline,
+  } = useRepositoriesApi();
 
-  const [showHealthCheckColumn, setShowHealthCheckColumn] = useState(() => canUpdateHealthCheck());
+  const [pendingRowAction, setPendingRowAction] = useState<PendingRowAction | null>(null);
+  const [isExecutingRowAction, setIsExecutingRowAction] = useState(false);
+
+  const [showHealthCheckColumn, setShowHealthCheckColumn] = useState(() => shouldShowHealthCheckColumn());
   const [showFirewallColumn, setShowFirewallColumn] = useState(() => isIqServerEnabled() && canReadFirewallStatus());
 
   // Toast notifications
@@ -202,10 +216,11 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
         setLoadingRepos(false);
       }
 
-      // Re-check permissions after ExtJS state may have loaded
-      const healthEnabled = canUpdateHealthCheck();
+      // Re-check permissions and IQ/Firewall state after ExtJS state may have loaded. Health Check must be
+      // hidden when Firewall is configured (NEXUS-53278), so re-evaluate the full gate — do not just
+      // latch to true — otherwise a late-arriving clm state that flips hasFirewall on won't hide the column.
+      setShowHealthCheckColumn(shouldShowHealthCheckColumn());
       const firewallEnabled = isIqServerEnabled() && canReadFirewallStatus();
-      if (healthEnabled) setShowHealthCheckColumn(true);
       if (firewallEnabled) setShowFirewallColumn(true);
 
       const [health, firewall] = await Promise.all([
@@ -216,7 +231,11 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
       setFirewallStatus(firewall);
       setFirewallLoaded(true);
 
-      if (Object.keys(health).length > 0) setShowHealthCheckColumn(true);
+      // Only surface the Health Check column when the tier gate allows it; the presence of health data
+      // alone is not sufficient (a Firewall-licensed customer may still have leftover RHC records).
+      if (Object.keys(health).length > 0 && shouldShowHealthCheckColumn()) {
+        setShowHealthCheckColumn(true);
+      }
       if (Object.keys(firewall).length > 0) setShowFirewallColumn(true);
     };
 
@@ -317,10 +336,6 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     });
   }, [filteredRepositories, sortField, sortDirection]);
 
-  const handleViewProfile = useCallback((name: string) => {
-    router.stateService.go('preview.browse.repository-profile', { repositoryName: name });
-  }, [router]);
-
   const handleSort = useCallback((key: string, direction: SortDirection) => {
     setSortField(key as RepositorySortField);
     setSortDirection(direction);
@@ -354,6 +369,7 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
   const handleRetry = useCallback(async () => {
     setError(null);
     setLoadingRepos(true);
+    setFirewallLoaded(false);
     try {
       const repos = await fetchRepositories();
       setRepositories(repos);
@@ -363,9 +379,10 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     } finally {
       setLoadingRepos(false);
     }
-    const healthEnabled = canUpdateHealthCheck();
+    // Mirrors the mount-effect logic — re-evaluate the tier gate rather than latching, so retries pick up
+    // any change in the IQ/Firewall configuration since the last attempt (NEXUS-53278).
+    setShowHealthCheckColumn(shouldShowHealthCheckColumn());
     const firewallEnabled = isIqServerEnabled() && canReadFirewallStatus();
-    if (healthEnabled) setShowHealthCheckColumn(true);
     if (firewallEnabled) setShowFirewallColumn(true);
 
     const [health, firewall] = await Promise.all([
@@ -375,7 +392,9 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     setHealthStatus(health);
     setFirewallStatus(firewall);
     setFirewallLoaded(true);
-    if (Object.keys(health).length > 0) setShowHealthCheckColumn(true);
+    if (Object.keys(health).length > 0 && shouldShowHealthCheckColumn()) {
+      setShowHealthCheckColumn(true);
+    }
     if (Object.keys(firewall).length > 0) setShowFirewallColumn(true);
   }, [fetchRepositories, fetchHealthCheck, fetchFirewallStatus, setError]);
 
@@ -422,6 +441,95 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
     }
   }, [repoToDelete, onDelete, deleteRepository, toast]);
 
+  // Row-action stagers — clicking a menu item opens the ConfirmDialog; the
+  // actual REST call fires from handleConfirmRowAction.
+  const stageRebuildIndex = useCallback((repo: Repository) => {
+    setPendingRowAction({ kind: 'rebuild-index', repository: repo });
+  }, []);
+
+  const stageInvalidateCache = useCallback((repo: Repository) => {
+    setPendingRowAction({ kind: 'invalidate-cache', repository: repo });
+  }, []);
+
+  const stageToggleOnline = useCallback((repo: Repository) => {
+    const currentOnline = repo.status?.online ?? repo.online ?? true;
+    setPendingRowAction({ kind: 'toggle-online', repository: repo, nextOnline: !currentOnline });
+  }, []);
+
+  const cancelPendingRowAction = useCallback(() => {
+    if (isExecutingRowAction) return;
+    setPendingRowAction(null);
+  }, [isExecutingRowAction]);
+
+  const handleConfirmRowAction = useCallback(async () => {
+    if (!pendingRowAction) return;
+    const { repository: repo } = pendingRowAction;
+    const repoName = repo.name;
+    setIsExecutingRowAction(true);
+    try {
+      if (pendingRowAction.kind === 'rebuild-index') {
+        await rebuildIndex(repoName);
+        toast.success(`Repository index rebuild started for "${repoName}"`);
+      } else if (pendingRowAction.kind === 'invalidate-cache') {
+        await invalidateCache(repoName);
+        toast.success(`Repository caches invalidated for "${repoName}"`);
+      } else {
+        const nextOnline = pendingRowAction.nextOnline;
+        await setRepositoryOnline(repoName, repo.format, repo.type, nextOnline);
+        toast.success(
+          nextOnline
+            ? `Repository "${repoName}" is now online`
+            : `Repository "${repoName}" is now offline`
+        );
+        // Refetch just this repository so the Status column reflects the
+        // saved state. Failure to refetch would leave the row labelled with
+        // the previous state until the list is reloaded.
+        const refreshed = await fetchRepository(repoName);
+        if (refreshed) {
+          setRepositories((prev) => prev.map((r) => (r.name === repoName ? { ...r, ...refreshed } : r)));
+        }
+      }
+      setPendingRowAction(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error('Action failed', message);
+    } finally {
+      setIsExecutingRowAction(false);
+    }
+  }, [pendingRowAction, rebuildIndex, invalidateCache, setRepositoryOnline, fetchRepository, toast]);
+
+  const rowActionDialogProps = useMemo(() => {
+    if (!pendingRowAction) {
+      return { title: '', message: '', confirmLabel: 'Confirm', variant: 'warning' as const };
+    }
+    const name = pendingRowAction.repository.name;
+    if (pendingRowAction.kind === 'rebuild-index') {
+      return {
+        title: 'Rebuild Repository Index',
+        message: `Rebuild the search index for repository "${name}"? This may take some time depending on repository size.`,
+        confirmLabel: 'Rebuild Index',
+        variant: 'warning' as const,
+      };
+    }
+    if (pendingRowAction.kind === 'invalidate-cache') {
+      return {
+        title: 'Invalidate Repository Cache',
+        message: `Invalidate cached metadata and content for repository "${name}"? Subsequent requests will refetch from the upstream source.`,
+        confirmLabel: 'Invalidate Cache',
+        variant: 'warning' as const,
+      };
+    }
+    const isGoingOffline = !pendingRowAction.nextOnline;
+    return {
+      title: isGoingOffline ? 'Disable System Status' : 'Enable System Status',
+      message: isGoingOffline
+        ? `Take repository "${name}" offline? Clients will no longer be able to read from or write to this repository until it is brought back online.`
+        : `Bring repository "${name}" online? Clients will be able to access it again.`,
+      confirmLabel: isGoingOffline ? 'Take Offline' : 'Bring Online',
+      variant: 'warning' as const,
+    };
+  }, [pendingRowAction]);
+
   // Pagination
   const totalPages = Math.ceil(sortedRepositories.length / pageSize);
   const paginatedRepositories = useMemo(() => {
@@ -455,9 +563,15 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
   // Handle copy URL with toast
   const handleCopyUrlButton = (url: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success('URL copied to clipboard');
-    });
+    // Ensure URL has trailing slash (NEXUS-53999)
+    const urlWithSlash = url.endsWith('/') ? url : `${url}/`;
+    navigator.clipboard.writeText(urlWithSlash)
+      .then(() => {
+        toast.success('URL copied to clipboard');
+      })
+      .catch(() => {
+        toast.error('Failed to copy URL to clipboard');
+      });
   };
 
   // Calculate column count for empty state (Name, Size, Type, Format, BlobStore, Status, URL, Actions)
@@ -642,209 +756,236 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
                 ) : sortedRepositories.length === 0 ? (
                   emptyState
                 ) : (
-                  <Card size="1">
-                    <Inset clip="padding-box" side="bottom">
-                      <Box style={{ overflowX: 'auto' }}>
-                        <Table.Root className="repository-list-table" size="2">
-                          <Table.Header>
-                            <Table.Row>
-                              <SortableTableHeader
-                                sortKey="name"
-                                currentSortKey={sortField}
-                                currentSortDirection={sortDirection || 'asc'}
-                                onSort={handleSort}
-                                align="left"
-                              >
-                                Name
-                              </SortableTableHeader>
-                              <Table.ColumnHeaderCell>Size</Table.ColumnHeaderCell>
-                              <SortableTableHeader
-                                sortKey="type"
-                                currentSortKey={sortField}
-                                currentSortDirection={sortDirection || 'asc'}
-                                onSort={handleSort}
-                                align="left"
-                              >
-                                Type
-                              </SortableTableHeader>
-                              <SortableTableHeader
-                                sortKey="format"
-                                currentSortKey={sortField}
-                                currentSortDirection={sortDirection || 'asc'}
-                                onSort={handleSort}
-                                align="left"
-                              >
-                                Ecosystem
-                              </SortableTableHeader>
-                              <Table.ColumnHeaderCell>Blob Store</Table.ColumnHeaderCell>
-                              <SortableTableHeader
-                                sortKey="status"
-                                currentSortKey={sortField}
-                                currentSortDirection={sortDirection || 'asc'}
-                                onSort={handleSort}
-                                align="left"
-                              >
-                                Status
-                              </SortableTableHeader>
-                              <Table.ColumnHeaderCell>URL</Table.ColumnHeaderCell>
-                              {showHealthCheckColumn && (
-                                <Table.ColumnHeaderCell className="table-cell-centered">
-                                  Health Check
-                                </Table.ColumnHeaderCell>
-                              )}
-                              {showFirewallColumn && (
-                                <Table.ColumnHeaderCell className="table-cell-centered">
-                                  Firewall Report
-                                </Table.ColumnHeaderCell>
-                              )}
-                              <Table.ColumnHeaderCell justify="end" aria-label="Row actions" pr="5" />
-                            </Table.Row>
-                          </Table.Header>
-                          <Table.Body>
-                            {paginatedRepositories.length === 0 ? (
-                              <Table.Row>
-                                <Table.Cell colSpan={colCount}>
-                                  <Flex justify="center" p="6">
-                                    <Text color="gray">
-                                      {filter || typeFilter.length > 0 || formatFilter.length > 0
-                                        ? 'No repositories match the current filters'
-                                        : 'No repositories available'}
-                                    </Text>
-                                  </Flex>
-                                </Table.Cell>
-                              </Table.Row>
-                            ) : (
-                              paginatedRepositories.map((repo) => (
-                                <Table.Row
-                                  key={repo.name}
-                                  className="repository-list-table__row repository-list-table__row--clickable"
-                                  onClick={handleRowClick(repo.name)}
-                                  onKeyDown={handleRowKeyDown(repo.name)}
-                                  tabIndex={0}
-                                  aria-label={`View ${repo.name}`}
+                  <Table.Root className="repository-list-table" variant="surface" size="2">
+                    <Table.Header>
+                      <Table.Row>
+                        <SortableTableHeader
+                          sortKey="name"
+                          currentSortKey={sortField}
+                          currentSortDirection={sortDirection || 'asc'}
+                          onSort={handleSort}
+                          align="left"
+                        >
+                          Name
+                        </SortableTableHeader>
+                        <Table.ColumnHeaderCell>Size</Table.ColumnHeaderCell>
+                        <SortableTableHeader
+                          sortKey="type"
+                          currentSortKey={sortField}
+                          currentSortDirection={sortDirection || 'asc'}
+                          onSort={handleSort}
+                          align="left"
+                        >
+                          Type
+                        </SortableTableHeader>
+                        <SortableTableHeader
+                          sortKey="format"
+                          currentSortKey={sortField}
+                          currentSortDirection={sortDirection || 'asc'}
+                          onSort={handleSort}
+                          align="left"
+                        >
+                          Ecosystem
+                        </SortableTableHeader>
+                        <Table.ColumnHeaderCell>Blob Store</Table.ColumnHeaderCell>
+                        <SortableTableHeader
+                          sortKey="status"
+                          currentSortKey={sortField}
+                          currentSortDirection={sortDirection || 'asc'}
+                          onSort={handleSort}
+                          align="left"
+                        >
+                          Status
+                        </SortableTableHeader>
+                        <Table.ColumnHeaderCell>URL</Table.ColumnHeaderCell>
+                        {showHealthCheckColumn && (
+                          <Table.ColumnHeaderCell className="table-cell-centered">
+                            Health Check
+                          </Table.ColumnHeaderCell>
+                        )}
+                        {showFirewallColumn && (
+                          <Table.ColumnHeaderCell className="table-cell-centered">
+                            Firewall Report
+                          </Table.ColumnHeaderCell>
+                        )}
+                        {/* paddingRight: 32 matches the Rapture-safe right gutter used across list tables (see EntityTable.scss). */}
+                        <Table.ColumnHeaderCell
+                          width="80px"
+                          justify="end"
+                          aria-label="Row actions"
+                          style={{ paddingRight: 32 }}
+                        />
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {paginatedRepositories.length === 0 ? (
+                        <Table.Row>
+                          <Table.Cell colSpan={colCount}>
+                            <Flex justify="center" p="6">
+                              <Text color="gray">
+                                {filter || typeFilter.length > 0 || formatFilter.length > 0
+                                  ? 'No repositories match the current filters'
+                                  : 'No repositories available'}
+                              </Text>
+                            </Flex>
+                          </Table.Cell>
+                        </Table.Row>
+                      ) : (
+                        paginatedRepositories.map((repo) => (
+                          <Table.Row
+                            key={repo.name}
+                            className="repository-list-table__row repository-list-table__row--clickable"
+                            onClick={handleRowClick(repo.name)}
+                            onKeyDown={handleRowKeyDown(repo.name)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label={`View ${repo.name}`}
+                          >
+                            <Table.Cell>
+                              <Text size="2" weight="medium" color="blue">
+                                {repo.name}
+                              </Text>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Text size="2" color="gray">
+                                {formatFileSize(repo.size)}
+                              </Text>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Text size="2">{repo.type}</Text>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Text size="2">{FORMAT_LABELS[repo.format] || repo.format}</Text>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Text size="2" color="gray">
+                                {repo.blobStoreName || '—'}
+                              </Text>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Text size="2">{repo.status?.online ? 'Online' : 'Offline'}</Text>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Tooltip content="Copy URL to Clipboard">
+                                <IconButton
+                                  variant="ghost"
+                                  color="gray"
+                                  size="1"
+                                  onClick={handleCopyUrlButton(repo.url)}
+                                  aria-label="Copy URL to Clipboard"
                                 >
-                                  <Table.Cell>
-                                    <Text size="2" weight="medium" color="blue">
-                                      {repo.name}
-                                    </Text>
-                                  </Table.Cell>
-                                  <Table.Cell>
-                                    <Text size="2" color="gray">
-                                      {formatFileSize(repo.size)}
-                                    </Text>
-                                  </Table.Cell>
-                                  <Table.Cell>
-                                    <Text size="2">{repo.type}</Text>
-                                  </Table.Cell>
-                                  <Table.Cell>
-                                    <Text size="2">{FORMAT_LABELS[repo.format] || repo.format}</Text>
-                                  </Table.Cell>
-                                  <Table.Cell>
-                                    <Text size="2" color="gray">
-                                      {repo.blobStoreName || '—'}
-                                    </Text>
-                                  </Table.Cell>
-                                  <Table.Cell>
-                                    <Text size="2">{repo.status?.online ? 'Online' : 'Offline'}</Text>
-                                  </Table.Cell>
-                                  <Table.Cell>
-                                    <Tooltip content="Copy URL to Clipboard">
-                                      <IconButton
-                                        variant="ghost"
-                                        color="gray"
-                                        size="1"
-                                        onClick={handleCopyUrlButton(repo.url)}
-                                        aria-label="Copy URL to Clipboard"
-                                      >
-                                        <Copy size={16} />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Table.Cell>
-                                  {showHealthCheckColumn && (
-                                    <Table.Cell className="table-cell-centered">
-                                      <HealthCheckCell
-                                        repository={repo}
-                                        healthStatus={healthStatus[repo.name]}
-                                        onAnalyze={handleAnalyze}
-                                        analyzeLoading={analyzingRepos.has(repo.name)}
-                                        rhcSupportedByBackend={repo.type === 'proxy' && Object.keys(healthStatus).length > 0 ? repo.name in healthStatus : undefined}
-                                      />
-                                    </Table.Cell>
-                                  )}
-                                  {showFirewallColumn && (
-                                    <Table.Cell className="table-cell-centered">
-                                      <FirewallCell
-                                        repository={repo}
-                                        firewallStatus={firewallStatus[repo.name]}
-                                        firewallLoaded={true}
-                                        hasFirewallLicense={true}
-                                      />
-                                    </Table.Cell>
-                                  )}
-                                  <Table.Cell justify="end" pr="5">
-                                    <DropdownMenu.Root>
-                                      <DropdownMenu.Trigger>
-                                        <IconButton
-                                          variant="ghost"
-                                          color="gray"
-                                          size="1"
-                                          onClick={(e) => e.stopPropagation()}
-                                          aria-label={`Actions for ${repo.name}`}
-                                        >
-                                          <MoreHorizontal size={16} />
-                                        </IconButton>
-                                      </DropdownMenu.Trigger>
-                                      <DropdownMenu.Content align="end" onClick={(e) => e.stopPropagation()}>
-                                        <DropdownMenu.Item
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleViewProfile(repo.name);
-                                          }}
-                                          data-testid={`repo-action-view-${repo.name}`}
-                                        >
-                                          View Profile
-                                        </DropdownMenu.Item>
-                                        {canEdit && (
-                                          <DropdownMenu.Item
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onSelect(repo.name);
-                                            }}
-                                            data-testid={`repo-action-edit-${repo.name}`}
-                                          >
-                                            Edit
-                                          </DropdownMenu.Item>
-                                        )}
-                                        {canDelete && (
-                                          <DropdownMenu.Item
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setRepoToDelete(repo);
-                                              setDeleteModalOpen(true);
-                                            }}
-                                            color="red"
-                                            data-testid={`repo-action-delete-${repo.name}`}
-                                          >
-                                            Delete
-                                          </DropdownMenu.Item>
-                                        )}
-                                        <DropdownMenu.Item
-                                          onClick={handleCopyUrlButton(repo.url)}
-                                          data-testid={`repo-action-copy-url-${repo.name}`}
-                                        >
-                                          Copy URL
-                                        </DropdownMenu.Item>
-                                      </DropdownMenu.Content>
-                                    </DropdownMenu.Root>
-                                  </Table.Cell>
-                                </Table.Row>
-                              ))
+                                  <Copy size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            </Table.Cell>
+                            {showHealthCheckColumn && (
+                              <Table.Cell className="table-cell-centered">
+                                <HealthCheckCell
+                                  repository={repo}
+                                  healthStatus={healthStatus[repo.name]}
+                                  onAnalyze={handleAnalyze}
+                                  analyzeLoading={analyzingRepos.has(repo.name)}
+                                  rhcSupportedByBackend={repo.type === 'proxy' && Object.keys(healthStatus).length > 0 ? repo.name in healthStatus : undefined}
+                                />
+                              </Table.Cell>
                             )}
-                          </Table.Body>
-                        </Table.Root>
-                      </Box>
-                    </Inset>
-                  </Card>
+                            {showFirewallColumn && (
+                              <Table.Cell className="table-cell-centered">
+                                <FirewallCell
+                                  repository={repo}
+                                  firewallStatus={firewallStatus[repo.name]}
+                                  firewallLoaded={firewallLoaded}
+                                  hasFirewallLicense={true}
+                                />
+                              </Table.Cell>
+                            )}
+                            <Table.Cell justify="end" style={{ paddingRight: 32 }}>
+                              <DropdownMenu.Root>
+                                <DropdownMenu.Trigger>
+                                  <IconButton
+                                    variant="ghost"
+                                    color="gray"
+                                    size="1"
+                                    onClick={(e) => e.stopPropagation()}
+                                    aria-label={`Actions for ${repo.name}`}
+                                  >
+                                    <MoreHorizontal size={16} />
+                                  </IconButton>
+                                </DropdownMenu.Trigger>
+                                <DropdownMenu.Content align="end" onClick={(e) => e.stopPropagation()}>
+                                  {canEdit && (
+                                    <DropdownMenu.Item
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSelect(repo.name);
+                                      }}
+                                      data-testid={`repo-action-edit-${repo.name}`}
+                                    >
+                                      Edit
+                                    </DropdownMenu.Item>
+                                  )}
+                                  {canEdit && (repo.type === 'hosted' || repo.type === 'proxy') && (
+                                    <DropdownMenu.Item
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        stageRebuildIndex(repo);
+                                      }}
+                                      data-testid={`repo-action-rebuild-index-${repo.name}`}
+                                    >
+                                      Rebuild Index
+                                    </DropdownMenu.Item>
+                                  )}
+                                  {canEdit && (repo.type === 'proxy' || repo.type === 'group') && (
+                                    <DropdownMenu.Item
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        stageInvalidateCache(repo);
+                                      }}
+                                      data-testid={`repo-action-invalidate-cache-${repo.name}`}
+                                    >
+                                      Invalidate Cache
+                                    </DropdownMenu.Item>
+                                  )}
+                                  {canEdit && (
+                                    <DropdownMenu.Item
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        stageToggleOnline(repo);
+                                      }}
+                                      data-testid={`repo-action-toggle-online-${repo.name}`}
+                                    >
+                                      {(repo.status?.online ?? repo.online ?? true)
+                                        ? 'Disable System Status'
+                                        : 'Enable System Status'}
+                                    </DropdownMenu.Item>
+                                  )}
+                                  <DropdownMenu.Item
+                                    onClick={handleCopyUrlButton(repo.url)}
+                                    data-testid={`repo-action-copy-url-${repo.name}`}
+                                  >
+                                    Copy URL
+                                  </DropdownMenu.Item>
+                                  {canDelete && (
+                                    <DropdownMenu.Item
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRepoToDelete(repo);
+                                        setDeleteModalOpen(true);
+                                      }}
+                                      color="red"
+                                      data-testid={`repo-action-delete-${repo.name}`}
+                                    >
+                                      Delete
+                                    </DropdownMenu.Item>
+                                  )}
+                                </DropdownMenu.Content>
+                              </DropdownMenu.Root>
+                            </Table.Cell>
+                          </Table.Row>
+                        ))
+                      )}
+                    </Table.Body>
+                  </Table.Root>
                 )}
 
                 {/* Pagination */}
@@ -887,6 +1028,15 @@ export function RepositoriesList({ onSelect, onCreate, onDelete }: RepositoriesL
         entityType="repository"
         loading={isDeleting}
         storageSize={repoToDelete?.size != null ? formatFileSize(repoToDelete.size) : undefined}
+      />
+      <ConfirmDialog
+        open={pendingRowAction !== null}
+        onOpenChange={(open) => { if (!open) cancelPendingRowAction(); }}
+        title={rowActionDialogProps.title}
+        message={rowActionDialogProps.message}
+        confirmLabel={rowActionDialogProps.confirmLabel}
+        variant={rowActionDialogProps.variant}
+        onConfirm={handleConfirmRowAction}
       />
     </div>
   );

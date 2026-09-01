@@ -47,4 +47,9 @@ public interface BlobStoreMetricsStore
    * Initialize the metrics for the given blobstore.
    */
   void initializeMetrics(String blobStoreName);
+
+  /**
+   * Rename the metrics record for a blob store.
+   */
+  void rename(String oldName, String newName);
 }

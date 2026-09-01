@@ -17,7 +17,7 @@ import { Box, Flex, Text, Heading } from '@radix-ui/themes';
 import { X, Loader2 } from 'lucide-react';
 
 import { SettingsButton, SettingsTransferList } from '../../../../shared/form';
-import { RoleReference, RolesSelectionModalProps } from './types';
+import { RolesSelectionModalProps } from './types';
 
 import './RolesSelectionModal.scss';
 
@@ -82,7 +82,7 @@ export function RolesSelectionModal({
               <Heading size="5">Select Contained Roles</Heading>
             </Dialog.Title>
             <Dialog.Close asChild>
-              <button className="roles-modal__close" aria-label="Close">
+              <button type="button" className="roles-modal__close" aria-label="Close">
                 <X size={18} />
               </button>
             </Dialog.Close>

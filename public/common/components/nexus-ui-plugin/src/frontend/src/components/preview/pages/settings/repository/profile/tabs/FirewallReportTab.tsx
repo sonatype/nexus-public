@@ -19,6 +19,8 @@ import { useFirewallEnable } from '../../../../../shared/security/useFirewallEna
 import { FirewallNotSupportedEmptyState } from '../../../../../shared/FirewallNotSupportedEmptyState';
 import { isFirewallSupportedFormat } from '../../../../../../../utils/firewallFormats';
 import { useIqConnectionStatus } from '../../../../../shared/security/useIqConnectionStatus';
+import { ExtJS } from '../../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../../constants/Permissions';
 
 import './FirewallReportTab.scss';
 
@@ -53,6 +55,15 @@ export function FirewallReportTab({
 }: FirewallReportTabProps): JSX.Element {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { enableAudit, enableQuarantine, loading: enableLoading } = useFirewallEnable(repositoryName);
+
+  // Hide firewall enable actions for users without repository-admin edit (NEXUS-54212).
+  // coreui never mounts a <PermissionsProvider>, so context usePermission returns false for
+  // everyone; use the provider-independent ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
 
   // Connection status for IQ Server awareness
   const iqConnection = useIqConnectionStatus();
@@ -169,7 +180,7 @@ export function FirewallReportTab({
       className={`firewall-report-tab-container ${isFullscreen ? 'firewall-report-tab-container--fullscreen' : ''}`}
     >
       <Flex gap="3" align="center" className="firewall-report-tab-container__toolbar">
-        {showEnableButtons ? (
+        {showEnableButtons && canEditFirewall ? (
           <>
             <Button variant="soft" size="2" onClick={handleEnableAudit} disabled={enableLoading}>
               Enable Audit

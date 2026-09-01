@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import { TasksPage } from '../TasksPage';
@@ -39,14 +39,19 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
 import { ExtJS } from '../../../../../../../interface/ExtJS';
 const mockCheckPermission = ExtJS.checkPermission as jest.MockedFunction<typeof ExtJS.checkPermission>;
 
-// Mock TaskDetail and TaskForm to avoid their deep shared/form dependency cascades
+// Mock TaskDetail and TaskForm to avoid their deep shared/form dependency cascades.
+// The stub surfaces the live status it receives (data-testid="detail-live-status")
+// and exposes onRun/onStop so polling-orchestration tests can drive Run/Stop without
+// the real component's form machinery.
 jest.mock('../TaskDetail', () => ({
-  TaskDetail: ({ task, onBack }: any) => {
+  TaskDetail: ({ task, liveTask, onBack, onRun, onStop }: any) => {
     const React = require('react');
     const [activeTab, setActiveTab] = React.useState('details');
     if (!task) return React.createElement('div', { 'data-testid': 'task-detail-loading' }, 'Loading...');
     return React.createElement('div', { 'data-testid': 'task-detail' },
       React.createElement('h1', null, task.name),
+      React.createElement('span', { 'data-testid': 'detail-seed-status' }, task.status),
+      React.createElement('span', { 'data-testid': 'detail-live-status' }, liveTask ? liveTask.status : ''),
       React.createElement('div', { role: 'tablist' },
         React.createElement('button', {
           role: 'tab',
@@ -59,6 +64,8 @@ jest.mock('../TaskDetail', () => ({
           onClick: () => setActiveTab('history')
         }, 'History')
       ),
+      React.createElement('button', { 'data-testid': 'mock-run', onClick: onRun }, 'Run'),
+      React.createElement('button', { 'data-testid': 'mock-stop', onClick: onStop }, 'Stop'),
       React.createElement('button', { onClick: onBack }, 'Back')
     );
   },
@@ -98,7 +105,7 @@ jest.mock('../../../../../shared', () => ({
   PageHeader: jest.fn(({ title, breadcrumbs, actions }: { title: string; breadcrumbs?: Array<{ label: string; onClick?: () => void }>; actions?: React.ReactNode }) => {
     const React = require('react');
     return React.createElement('div', null,
-      breadcrumbs && breadcrumbs.map((b: { label: string; onClick?: () => void }, i: number) =>
+      breadcrumbs?.map((b: { label: string; onClick?: () => void }, i: number) =>
         b.onClick
           ? React.createElement('button', { key: i, onClick: b.onClick }, b.label)
           : React.createElement('span', { key: i, 'aria-current': 'page' }, b.label)
@@ -113,19 +120,15 @@ jest.mock('../../../../../shared', () => ({
     if (loading) return React.createElement('div', null, loadingMessage || 'Loading...');
     if (!data || data.length === 0) return emptyState || null;
     return React.createElement('div', { 'data-testid': 'entity-table' },
-      data.map(function(item: any) {
-        return React.createElement('div', {
+      data.map((item: any) => React.createElement('div', {
           key: getRowKey(item),
-          onClick: function() { if (onRowClick) onRowClick(item); },
+          onClick: () => { if (onRowClick) onRowClick(item); },
           style: { cursor: 'pointer' }
         },
-          columns.map(function(col: any) {
-            return React.createElement('span', { key: col.id },
+          columns.map((col: any) => React.createElement('span', { key: col.id },
               typeof col.accessor === 'function' ? col.accessor(item) : String((item)[col.accessor] || '')
-            );
-          })
-        );
-      })
+            ))
+        ))
     );
   }),
   FilterSidebar: jest.fn(function FilterSidebar({ children }: any) {
@@ -561,6 +564,197 @@ describe('TasksPage', () => {
       renderWithProviders(<TasksPage />);
       const createBtn = await screen.findByRole('button', {name: /create task/i});
       expect(createBtn).toHaveAttribute('data-analytics-id', 'nxrm-task-create');
+    });
+  });
+
+  // NEXUS-53525: live status polling on the detail route. These tests exercise the
+  // orchestration (fetch cadence, visibility gating, route-change/unmount cleanup,
+  // Run/Stop reconciliation, 404 degradation). The badge/Stop rendering and dirty-
+  // form protection are covered by TaskDetail.test.tsx.
+  describe('detail status polling', () => {
+    const runningTask = { ...mockTasks[0], status: 'RUNNING', stoppable: true, runnable: false };
+    const waitingTask = { ...mockTasks[0], status: 'WAITING', stoppable: false, runnable: true };
+
+    // Drain several microtask rounds so the chained mount fetches
+    // (fetchTaskTypes → fetchTask → setState) all settle inside act().
+    const flush = () => act(async () => {
+      for (let i = 0; i < 5; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.resolve();
+      }
+    });
+    // Advance fake timers across a tick, flushing the microtasks on either side so
+    // the in-flight guard from the previous poll clears before the next one fires.
+    const advance = async (ms: number) => {
+      await act(async () => {
+        await Promise.resolve();
+        jest.advanceTimersByTime(ms);
+        await Promise.resolve();
+      });
+    };
+    const setVisibility = (state: 'visible' | 'hidden') => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state });
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+      // Start directly on the detail route so we don't depend on row-click navigation
+      // (which itself uses async waitFor) under fake timers.
+      window.location.hash = '#preview/admin/system/tasks/task-1';
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('polls task status on an interval while the task is running', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(runningTask);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+      const afterMount = fetchTask.mock.calls.length;
+
+      await advance(5000);
+      expect(fetchTask.mock.calls.length).toBeGreaterThan(afterMount);
+      const afterFirstTick = fetchTask.mock.calls.length;
+
+      await advance(5000);
+      expect(fetchTask.mock.calls.length).toBeGreaterThan(afterFirstTick);
+    });
+
+    it('propagates the polled live status down to TaskDetail', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(runningTask);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+      await advance(5000);
+
+      expect(screen.getByTestId('detail-live-status')).toHaveTextContent('RUNNING');
+    });
+
+    it('stops polling once the task reaches a terminal status', async () => {
+      const fetchTask = jest.fn()
+        .mockResolvedValueOnce(runningTask) // initial load → RUNNING enables polling
+        .mockResolvedValue({ ...mockTasks[0], status: 'OK', lastRunResult: 'OK [2s]' });
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+      await advance(5000);
+      const settled = fetchTask.mock.calls.length;
+
+      await advance(5000 * 4);
+      expect(fetchTask.mock.calls.length).toBe(settled); // no further polls after terminal
+    });
+
+    it('pauses polling while the tab is hidden and resumes with one catch-up poll', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(runningTask);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+
+      setVisibility('hidden');
+      const beforeHidden = fetchTask.mock.calls.length;
+      await advance(5000 * 3);
+      expect(fetchTask.mock.calls.length).toBe(beforeHidden); // no polls while hidden
+
+      await act(async () => { setVisibility('visible'); await Promise.resolve(); });
+      expect(fetchTask.mock.calls.length).toBe(beforeHidden + 1); // single catch-up, not a burst
+    });
+
+    it('stops polling when navigating back to the list', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(runningTask);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+      await advance(5000);
+
+      act(() => {
+        window.location.hash = '#preview/admin/system/tasks';
+        window.dispatchEvent(new Event('hashchange'));
+      });
+      const afterNav = fetchTask.mock.calls.length;
+
+      await advance(5000 * 4);
+      expect(fetchTask.mock.calls.length).toBe(afterNav); // route change tore down the interval
+    });
+
+    it('stops polling after unmount', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(runningTask);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      const { unmount } = renderWithProviders(<TasksPage />);
+      await flush();
+      await advance(5000);
+
+      unmount();
+      const afterUnmount = fetchTask.mock.calls.length;
+      await advance(5000 * 4);
+      expect(fetchTask.mock.calls.length).toBe(afterUnmount);
+    });
+
+    it('issues exactly one immediate poll after Run and keeps polling through WAITING', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(waitingTask); // server lags at WAITING
+      const runTask = jest.fn().mockResolvedValue(undefined);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask, runTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+      // Idle WAITING task is not polled until the user acts.
+      const beforeRun = fetchTask.mock.calls.length;
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('mock-run'));
+        await Promise.resolve();
+      });
+
+      expect(runTask).toHaveBeenCalledTimes(1);
+      // Exactly one immediate poll (no duplicate one-shot + poll flicker).
+      expect(fetchTask.mock.calls.length).toBe(beforeRun + 1);
+
+      // The post-action window keeps polling even though the badge still reads WAITING.
+      const afterRun = fetchTask.mock.calls.length;
+      await advance(5000);
+      expect(fetchTask.mock.calls.length).toBeGreaterThan(afterRun);
+    });
+
+    it('renders the running seed immediately on initial load and enables polling (refresh while running)', async () => {
+      const fetchTask = jest.fn().mockResolvedValue(runningTask);
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+
+      // The seed loaded by the detail mount already reflects RUNNING — no poll
+      // needed for the badge to be correct after a refresh.
+      expect(screen.getByTestId('detail-seed-status')).toHaveTextContent('RUNNING');
+      const afterLoad = fetchTask.mock.calls.length;
+
+      // ...and because the seed is active, polling is enabled to keep it fresh.
+      await advance(5000);
+      expect(fetchTask.mock.calls.length).toBeGreaterThan(afterLoad);
+    });
+
+    it('degrades to a task-not-found state instead of looping on 404s', async () => {
+      const fetchTask = jest.fn()
+        .mockResolvedValueOnce(runningTask) // load succeeds, enables polling
+        .mockResolvedValue(null);           // subsequent polls 404 (task deleted)
+      mockUseTasksApi.mockReturnValue({ ...defaultApiMock, fetchTask });
+
+      renderWithProviders(<TasksPage />);
+      await flush();
+      await advance(5000);
+
+      expect(await screen.findByText(/no longer exists/i)).toBeInTheDocument();
+      const afterNotFound = fetchTask.mock.calls.length;
+      await advance(5000 * 4);
+      expect(fetchTask.mock.calls.length).toBe(afterNotFound); // no endless 404 loop
     });
   });
 });

@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.sonatype.nexus.common.event.EventManager;
@@ -22,12 +24,16 @@ import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentsPurgedAuditEvent;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
 import org.sonatype.nexus.repository.content.store.ComponentStoreTestSupport.ComponentStoreTestConfiguration;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
@@ -36,7 +42,7 @@ import org.sonatype.nexus.repository.content.store.example.TestBespokeStoreProvi
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 
 import jakarta.inject.Provider;
-import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
@@ -46,14 +52,18 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.DEFAULT_DATASTORE_NAME;
 
 @SpringBootTest(classes = {ComponentStoreTestConfiguration.class})
@@ -62,16 +72,16 @@ public abstract class ComponentStoreTestSupport
 {
   private final int componentCount = 201;
 
-  @Mock
+  @MockitoBean
   private Repository repository;
 
-  @Mock
+  @MockitoBean
   private ContentFacetFinder contentFacetFinder;
 
-  @Mock
+  @MockitoBean
   private ContentFacetSupport contentFacetSupport;
 
-  @Mock
+  @MockitoBean
   private EventManager eventManager;
 
   private ComponentStore<TestComponentDAO> underTest;
@@ -89,8 +99,6 @@ public abstract class ComponentStoreTestSupport
     this.entityVersioningEnabled = entityVersioningEnabled;
     testContext = new AnnotationConfigApplicationContext();
     testContext.setParent(context);
-    testContext.registerBean(ContentFacetFinder.class, () -> contentFacetFinder);
-    testContext.registerBean(EventManager.class, () -> eventManager);
     testContext.registerBean(DataSessionSupplier.class, () -> sessionRule);
     testContext.registerBean(GlobalRepositorySettings.class, GlobalRepositorySettings::new);
     new TestBespokeStoreProvider().postProcessBeanDefinitionRegistry(testContext);
@@ -125,6 +133,12 @@ public abstract class ComponentStoreTestSupport
     verifyNoMoreInteractions(eventManager);
   }
 
+  /**
+   * Purges without wiring the mocked content facet, so {@code ComponentStore.fetchAssetsFromComponents} short-circuits
+   * on its {@code repository() == null} guard and the purge runs with an empty asset list. That deliberately covers the
+   * empty-input guard in {@code ComponentStore.resolveAssetComponents}; keep the facet unwired here and see
+   * {@link #testPurge_byComponent_resolvesAssetComponents()} for the wired case.
+   */
   protected void testPurge_byComponent() {
     List<FluentComponent> componentIds = getComponents();
     assertThat("Sanity check", componentIds, hasSize(componentCount));
@@ -139,6 +153,94 @@ public abstract class ComponentStoreTestSupport
     verify(eventManager, times(3)).post(any(ComponentPrePurgeEvent.class));
     verify(eventManager, times(3)).post(any(ComponentPurgedEvent.class));
     verifyNoMoreInteractions(eventManager);
+  }
+
+  /**
+   * {@link ComponentPurgedEvent} is posted after the purge has been committed, and subscribers such as the IQ
+   * {@code RemovedAssetSender} are {@code EventAware.Asynchronous} so they read the event from another thread. By
+   * then the purged rows are gone, so any lazily-loaded association left unresolved can no longer be loaded. Assert
+   * the event hands subscribers assets whose component is already resolved.
+   */
+  protected void testPurge_byComponent_resolvesAssetComponents() throws Exception {
+    wireContentFacetForAssetLookup();
+
+    List<FluentComponent> components = getComponents();
+    assertThat("Sanity check", components, hasSize(componentCount));
+
+    int purged = underTest.purge(repositoryId, components);
+
+    assertThat("Purged should match requested amount", purged, is(componentCount));
+
+    List<FluentAsset> purgedAssets = capturePurgedAssets();
+    assertThat("Every purged component should contribute its asset", purgedAssets, hasSize(componentCount));
+
+    // resolve the associations off-thread, exactly as an asynchronous subscriber would
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      List<String> pathsMissingComponent = executor.submit(() -> purgedAssets.stream()
+          .filter(asset -> asset.component().isEmpty())
+          .map(FluentAsset::path)
+          .collect(Collectors.toList())).get();
+
+      assertThat("Purged assets should expose their component to asynchronous subscribers",
+          pathsMissingComponent, is(empty()));
+    }
+    finally {
+      executor.shutdown();
+    }
+  }
+
+  /**
+   * {@code ComponentStore.fetchAssetsFromComponents} pages through the assets of each purge batch with a limit of
+   * {@code ASSET_BROWSE_LIMIT} (1000). Give every component enough assets that a batch exceeds that limit, so the
+   * continuation loop has to run more than once, and assert no asset is dropped or handed to subscribers twice.
+   */
+  protected void testPurge_byComponent_browsesEveryAssetPage() {
+    wireContentFacetForAssetLookup();
+
+    // a purge batch holds up to 100 components (nexus.component.purge.size), so 11 assets each exceeds the 1000
+    // asset browse limit and forces a second page
+    int assetsPerComponent = 11;
+    createAdditionalAssets(assetsPerComponent - 1);
+
+    List<FluentComponent> components = getComponents();
+    assertThat("Sanity check", components, hasSize(componentCount));
+
+    // purge returns the row count of the asset delete rather than the component count, so assert on the components
+    // that are left instead
+    underTest.purge(repositoryId, components);
+
+    assertThat("No components remaining", getComponentIds().length, is(0));
+
+    List<String> purgedPaths = capturePurgedAssets().stream().map(FluentAsset::path).collect(Collectors.toList());
+    assertThat("Every asset page should be browsed", purgedPaths, hasSize(componentCount * assetsPerComponent));
+    assertThat("No asset should be browsed twice", Set.copyOf(purgedPaths),
+        hasSize(componentCount * assetsPerComponent));
+  }
+
+  /**
+   * Stubs the mocked content facet just enough for {@code ComponentStore.fetchAssetsFromComponents} to run against
+   * the real {@link AssetStore}; otherwise it short-circuits on its {@code repository() == null} guard and the purge
+   * event always carries an empty asset list.
+   */
+  private void wireContentFacetForAssetLookup() {
+    AssetStore<?> assetStore = testContext.getBean(FormatStoreManager.class).assetStore(DEFAULT_DATASTORE_NAME);
+    when(contentFacetSupport.repository()).thenReturn(repository);
+    when(contentFacetSupport.contentRepositoryId()).thenReturn(repositoryId);
+    when(contentFacetSupport.assets()).thenReturn(new FluentAssetsImpl(contentFacetSupport, assetStore));
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacetSupport);
+  }
+
+  private List<FluentAsset> capturePurgedAssets() {
+    ArgumentCaptor<Object> events = ArgumentCaptor.forClass(Object.class);
+    verify(eventManager, atLeastOnce()).post(events.capture());
+    return events.getAllValues()
+        .stream()
+        .filter(ComponentPurgedEvent.class::isInstance)
+        .map(ComponentPurgedEvent.class::cast)
+        .map(ComponentPurgedEvent::getAssets)
+        .flatMap(List::stream)
+        .collect(Collectors.toList());
   }
 
   private int[] getComponentIds() {
@@ -156,6 +258,25 @@ public abstract class ComponentStoreTestSupport
         .map(cd -> new FluentComponentImpl(contentFacetSupport, cd))
         .map(FluentComponent.class::cast)
         .collect(Collectors.toList());
+  }
+
+  private void createAdditionalAssets(final int assetsPerComponent) {
+    List<Component> components =
+        underTest.browseComponents(Collections.singleton(repositoryId), Integer.MAX_VALUE, null)
+            .stream()
+            .collect(Collectors.toList());
+
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      for (Component component : components) {
+        int componentId = InternalIds.internalComponentId(component);
+        for (int i = 0; i < assetsPerComponent; i++) {
+          TestAssetData asset = generateAsset(repositoryId, "/" + componentId + "/extra" + i);
+          asset.setComponent(component);
+          session.access(TestAssetDAO.class).createAsset(asset, entityVersioningEnabled);
+        }
+      }
+      session.getTransaction().commit();
+    }
   }
 
   private void createComponentWithAsset(final int num) {

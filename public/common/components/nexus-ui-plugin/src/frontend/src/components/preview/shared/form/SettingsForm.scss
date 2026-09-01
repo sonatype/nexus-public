@@ -24,6 +24,12 @@
   // The form must not create its own scroll context
   overflow: visible;
 
+  // Trap the sticky action-bar's positive z-index inside this stacking context
+  // so it can't paint over Radix dialog overlays (rendered via portal to <body>).
+  // Without this, confirmation modals show the button bar bleeding through the
+  // backdrop (NEXUS-52835).
+  isolation: isolate;
+
   &__header {
     padding: var(--space-6);
     flex-shrink: 0;
@@ -53,7 +59,7 @@
     flex-shrink: 0;
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 100;
     min-height: 52px;
     box-sizing: border-box;
   }
@@ -101,6 +107,11 @@
     color: var(--amber-9, #d97706);
     font-style: italic;
     font-size: 13px;
+
+    // Always reserve the layout slot — toggle visibility (not the DOM) so the action bar's button row doesn't reflow when the form goes pristine ↔ dirty.
+    &[data-pristine='true'] {
+      visibility: hidden;
+    }
   }
 
   // Error message in sticky action bar - always visible regardless of scroll

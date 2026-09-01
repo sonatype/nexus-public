@@ -96,9 +96,7 @@ export function useSystemInfoApi() {
         return data;
       }
       return [];
-    } catch (err: any) {
-      // If this endpoint fails, we're probably not in HA mode
-      console.debug('HA nodes endpoint not available:', parseApiError(err).message);
+    } catch (_err: any) {
       return [];
     }
   }, []);

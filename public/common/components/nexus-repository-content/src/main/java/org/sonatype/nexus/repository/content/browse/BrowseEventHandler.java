@@ -37,9 +37,11 @@ import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandler;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeEventHandlerSupport;
+import org.sonatype.nexus.repository.content.browse.store.BrowseNodeData;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPathChangedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
@@ -186,6 +188,14 @@ public class BrowseEventHandler
 
   @AllowConcurrentEvents
   @Subscribe
+  public void on(final AssetPathChangedEvent event) {
+    if (shouldHandle()) {
+      handleAssetPathChanged(event);
+    }
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
   public void on(final AssetDeletedEvent event) {
     if (shouldHandle()) {
       markRepositoryForTrimming(event);
@@ -263,6 +273,29 @@ public class BrowseEventHandler
     }
     // Otherwise, use the property value (default behavior)
     return noPurgeDelay;
+  }
+
+  /**
+   * Handles asset path changes by removing the stale browse-node leaf at the old path and
+   * scheduling re-creation of the tree at the new path.
+   */
+  private void handleAssetPathChanged(final AssetPathChangedEvent event) {
+    Optional<Repository> repository = event.getRepository();
+    if (!repository.isPresent()) {
+      log.debug("Missing repository for event {}", event);
+      return;
+    }
+
+    String oldPath = event.getOldPath();
+    if (oldPath != null) {
+      repository.get().optionalFacet(BrowseFacet.class).ifPresent(browseFacet -> {
+        browseFacet.getByRequestPath(oldPath)
+            .map(node -> ((BrowseNodeData) node).getNodeId())
+            .ifPresent(browseFacet::deleteByNodeId);
+      });
+    }
+
+    markAssetAsPending(event);
   }
 
   /**

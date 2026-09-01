@@ -76,6 +76,15 @@
         </New>
       </Arg>
     </Call>
+
+    <!-- STL-476: restore custom HTTP/1.1 reason phrases (e.g. Firewall quarantine status text)
+         via public Jetty API, replacing the jetty-modifications fork. Producers set the
+         NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER sentinel response header. -->
+    <Call name="addCustomizer">
+      <Arg>
+        <New class="org.sonatype.nexus.bootstrap.jetty.NexusReasonPhraseCustomizer"/>
+      </Arg>
+    </Call>
   </New>
 
   <Set name="defaultHandler">

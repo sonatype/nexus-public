@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Box, Flex, Text, Table, Badge, Spinner, Callout, Button } from '@radix-ui/themes';
+import { Box, Flex, Text, Table, Badge, Spinner, Callout, } from '@radix-ui/themes';
 import { AlertCircle, ChevronRight, ArrowUp, ArrowDown, Package } from 'lucide-react';
 import { FormatBadge } from '../../../shared';
 import type { GAResult } from '../core';

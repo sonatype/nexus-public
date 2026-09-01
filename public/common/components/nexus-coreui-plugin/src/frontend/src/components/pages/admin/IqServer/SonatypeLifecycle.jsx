@@ -88,7 +88,7 @@ export default function SonatypeLifecycle() {
       return UIStrings.SONATYPE_LIFECYCLE.GLOBAL_EVALUATION_SETTINGS.description;
     }
 
-    const {activityTimeFrame, artifactLatestVersions, versionDepth, policyEvaluationStage, monitoredRepoCount, totalRepoCount, numberOfCustomRepositories} = globalSettings;
+    const {activityTimeFrame, artifactLatestVersions, policyEvaluationStage, monitoredRepoCount, totalRepoCount, numberOfCustomRepositories} = globalSettings;
     const globalCount = (monitoredRepoCount !== null && monitoredRepoCount !== undefined && numberOfCustomRepositories !== null && numberOfCustomRepositories !== undefined)
       ? Math.max(0, monitoredRepoCount - numberOfCustomRepositories)
       : monitoredRepoCount;
@@ -102,10 +102,20 @@ export default function SonatypeLifecycle() {
     const stageLabel = policyEvaluationStage
       ? policyEvaluationStage.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
       : policyEvaluationStage;
-    const depthDescription = (versionDepth > 0)
-      ? `${artifactLatestVersions} Latest Deployed Versions`
-      : `Last ${activityTimeFrame} Days`;
-    return `${depthDescription} | ${stageLabel} | Global Evaluation: ${globalEvalText} | Custom Evaluation: ${customEvalText}`;
+    // Always show Activity Time Frame and Latest Deployed Versions together when
+    // both are configured (the form saves both since CLM-41306). Legacy data with
+    // only one set is still rendered correctly — the missing piece is skipped.
+    // When both are missing (corrupt/legacy data) the depth section is omitted
+    // entirely to avoid rendering a leading " | " separator.
+    const depthParts = [];
+    if (activityTimeFrame) {
+      depthParts.push(`Last ${activityTimeFrame} Days`);
+    }
+    if (artifactLatestVersions > 0) {
+      depthParts.push(`${artifactLatestVersions} Latest Deployed Versions`);
+    }
+    const depthSummary = depthParts.length > 0 ? `${depthParts.join(' | ')} | ` : '';
+    return `${depthSummary}${stageLabel} | Global Evaluation: ${globalEvalText} | Custom Evaluation: ${customEvalText}`;
   }, [loading, globalSettings]);
 
   return <Page>

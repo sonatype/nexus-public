@@ -62,7 +62,7 @@
     font-size: 1.75rem;
     font-weight: 600;
     color: var(--nx-color-text-dark, #333);
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
   }
 
   &__summary {
@@ -140,7 +140,7 @@
     padding: var(--nx-spacing-1x, 4px) 0;
     font-size: 0.875rem;
     color: var(--nx-color-text-dark, #555);
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
 
     &::before {
       content: '•';
@@ -167,7 +167,7 @@
   }
 
   &__version-cell {
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
     font-weight: 500;
   }
 
@@ -188,7 +188,7 @@
 
     pre {
       margin: 0;
-      font-family: var(--nx-font-family-monospace, monospace);
+      font-family: var(--font-family-mono);
       font-size: 0.875rem;
       white-space: pre-wrap;
       word-wrap: break-word;

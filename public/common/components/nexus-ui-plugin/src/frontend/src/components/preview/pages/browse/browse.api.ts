@@ -299,6 +299,67 @@ export async function fetchAsset(assetId: string, repositoryName: string): Promi
 }
 
 // =============================================================================
+// DELETE PERMISSION PREFLIGHT (ExtDirect)
+// =============================================================================
+
+/**
+ * Preflight: can the current user delete this asset?
+ *
+ * Calls coreui_Component.canDeleteAsset — the same @DirectMethod Classic UI's
+ * mixin/ComponentUtils.js uses. Server resolves against the concrete
+ * repository/format/asset (including content-selector grants), so users with
+ * specific-scope delete permissions are not falsely denied — unlike a
+ * client-side ExtJS.checkPermission wildcard check, which returns false against
+ * specific-scope grants (Shiro WildcardPermission asymmetry). See NEXUS-53861.
+ *
+ * Returns false on any error: hidden is the safe default.
+ */
+export async function canDeleteAsset(assetId: string, repositoryName: string): Promise<boolean> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'canDeleteAsset', {
+      data: [assetId, repositoryName],
+    });
+    return ExtAPIUtils.checkForErrorAndExtract(response) === true;
+  } catch (err: unknown) {
+    console.error('Failed to check asset delete permission:', err);
+    return false;
+  }
+}
+
+/**
+ * Preflight: can the current user delete this component?
+ *
+ * Server signature accepts a JSON-stringified ComponentXO (matches Classic UI's
+ * payload from NX.direct.coreui_Component.canDeleteComponent).
+ */
+export async function canDeleteComponent(component: ComponentXO): Promise<boolean> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'canDeleteComponent', {
+      data: [JSON.stringify(component)],
+    });
+    return ExtAPIUtils.checkForErrorAndExtract(response) === true;
+  } catch (err: unknown) {
+    console.error('Failed to check component delete permission:', err);
+    return false;
+  }
+}
+
+/**
+ * Preflight: can the current user delete this folder?
+ */
+export async function canDeleteFolder(path: string, repositoryName: string): Promise<boolean> {
+  try {
+    const response = await ExtAPIUtils.extAPIRequest('coreui_Component', 'canDeleteFolder', {
+      data: [path, repositoryName],
+    });
+    return ExtAPIUtils.checkForErrorAndExtract(response) === true;
+  } catch (err: unknown) {
+    console.error('Failed to check folder delete permission:', err);
+    return false;
+  }
+}
+
+// =============================================================================
 // DELETE API (REST for component/asset, ExtDirect for folder)
 // =============================================================================
 
@@ -310,9 +371,10 @@ export async function fetchAsset(assetId: string, repositoryName: string): Promi
  */
 export async function deleteComponent(componentData: ComponentXO): Promise<string[]> {
   try {
-    // REST API expects base64(repositoryName:rawId) format
-    const encodedId = encodeRepositoryItemId(componentData.repositoryName, componentData.id);
-    const url = urlBuilder.components.delete(encodedId);
+    // componentData.id is ALREADY the base64(repository:internalId) RepositoryItemIDXO form
+    // (it comes straight from the REST v1 fetchComponent response). Re-encoding it here would
+    // double-encode and the REST DELETE would 404, so use it as-is.
+    const url = urlBuilder.components.delete(componentData.id);
     await restClient.delete(url);
     return [componentData.id];
   } catch (err: unknown) {
@@ -328,13 +390,11 @@ export async function deleteComponent(componentData: ComponentXO): Promise<strin
  * @param assetId - Raw asset ID from browse tree
  * @param repositoryName - Repository name (required to encode ID for REST API)
  */
-export async function deleteAsset(
-  assetId: string,
-  repositoryName: string,
-  alreadyEncoded = false
-): Promise<void> {
+export async function deleteAsset(assetId: string, repositoryName: string): Promise<void> {
   try {
-    const encodedId = alreadyEncoded ? assetId : encodeRepositoryItemId(repositoryName, assetId);
+    // assetId is the RAW internal id (from ExtDirect readAsset); the REST API
+    // expects the base64(repository:internalId) RepositoryItemIDXO form.
+    const encodedId = encodeRepositoryItemId(repositoryName, assetId);
     const url = urlBuilder.assets.delete(encodedId);
     await restClient.delete(url);
   } catch (err: unknown) {

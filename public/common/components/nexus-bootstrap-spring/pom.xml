@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-bootstrap-spring</artifactId>
@@ -49,20 +49,6 @@
     <dependency>
       <groupId>org.eclipse.jetty.ee10</groupId>
       <artifactId>jetty-ee10-webapp</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.eclipse.jetty.ee10</groupId>
-          <artifactId>jetty-ee10-servlet</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-security</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-server</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>

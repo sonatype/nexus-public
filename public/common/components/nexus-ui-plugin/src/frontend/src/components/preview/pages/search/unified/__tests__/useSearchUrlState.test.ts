@@ -11,362 +11,494 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act } from '@testing-library/react';
-import { useSearchUrlState } from '../useSearchUrlState';
+import { renderHook } from '@testing-library/react';
+import { useSearchUrlState, type UrlSearchState } from '../useSearchUrlState';
+
+/**
+ * Set the browser hash to a given search query string (hash-based routing).
+ */
+function setHash(queryString: string): void {
+  const path = '#preview/browse/search';
+  window.location.hash = queryString ? `${path}?${queryString}` : path;
+}
 
 describe('useSearchUrlState', () => {
-  // Mock pushState
-  let pushStateSpy: jest.SpyInstance;
-
-  // Helper to set up window.location with custom properties
-  const setLocation = (props: Partial<Location>) => {
-    const location = {
-      ...window.location,
-      origin: 'http://localhost',
-      pathname: '/',
-      search: '',
-      hash: '',
-      ...props,
-    };
-    Object.defineProperty(window, 'location', {
-      value: location,
-      writable: true,
-      configurable: true,
-    });
-  };
-
   beforeEach(() => {
-    // Reset location
-    setLocation({ search: '', hash: '' });
-    pushStateSpy = jest.spyOn(window.history, 'pushState').mockImplementation(() => {});
+    // Reset to the root path, not window.location.pathname: the shareable-URL
+    // tests move the browser under a context path and must not leak it.
+    window.history.replaceState({}, '', '/');
+    setHash('');
   });
 
-  afterEach(() => {
-    pushStateSpy.mockRestore();
-  });
-
-  describe('URL Parsing', () => {
-    it('reads format from URL query params', () => {
-      setLocation({ search: '?format=maven&q=spring' });
-
+  describe('readFromUrl', () => {
+    it('parses query, format, and format-specific filters', () => {
+      setHash('q=spring&format=maven&maven.groupId=org.apache');
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('maven');
-      expect(result.current.state.query).toBe('spring');
+      const state = result.current.readFromUrl();
+      expect(state.query).toBe('spring');
+      expect(state.format).toBe('maven');
+      expect(state.filters.groupId).toBe('org.apache');
     });
 
-    it('defaults to "all" format when not specified', () => {
-      setLocation({ search: '?q=test' });
-
+    it('parses npm scope filter (group -> scope mapping)', () => {
+      setHash('q=react&format=npm&group=@types');
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('all');
-      expect(result.current.state.query).toBe('test');
+      const state = result.current.readFromUrl();
+      expect(state.format).toBe('npm');
+      expect(state.filters.scope).toBe('@types');
     });
 
-    it('reads format from hash-based URL', () => {
-      setLocation({
-        search: '',
-        hash: '#preview/browse/search?format=npm&q=lodash',
-      });
-
+    it('defaults invalid format to "all" (TC-009)', () => {
+      setHash('q=test&format=nonexistent');
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('npm');
-      expect(result.current.state.query).toBe('lodash');
+      expect(result.current.readFromUrl().format).toBe('all');
     });
 
-    it('parses Maven-specific filters from URL', () => {
-      setLocation({
-        search: '?format=maven&q=spring&maven.groupId=org.springframework&maven.artifactId=spring-core',
-      });
-
+    it('handles an empty URL gracefully', () => {
+      setHash('');
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('maven');
-      expect(result.current.state.query).toBe('spring');
-      expect(result.current.state.filters.groupId).toBe('org.springframework');
-      expect(result.current.state.filters.artifactId).toBe('spring-core');
+      const state = result.current.readFromUrl();
+      expect(state.format).toBe('all');
+      expect(state.query).toBe('');
+      expect(state.filters).toEqual({});
     });
 
-    it('parses npm-specific filters from URL', () => {
-      setLocation({ search: '?format=npm&q=react&group=@types' });
-
+    it('parses sort and direction when present', () => {
+      setHash('q=test&sort=name&direction=asc');
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('npm');
-      expect(result.current.state.query).toBe('react');
-      expect(result.current.state.filters.scope).toBe('@types');
+      const state = result.current.readFromUrl();
+      expect(state.sortField).toBe('name');
+      expect(state.sortDirection).toBe('asc');
     });
 
-    it('handles invalid format by defaulting to "all"', () => {
-      setLocation({ search: '?format=invalid-format&q=test' });
-
+    it('ignores invalid sort/direction values', () => {
+      setHash('q=test&sort=bogus&direction=sideways');
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('all');
-      expect(result.current.state.query).toBe('test');
+      const state = result.current.readFromUrl();
+      expect(state.sortField).toBeUndefined();
+      expect(state.sortDirection).toBeUndefined();
     });
 
-    it('handles empty URL gracefully', () => {
-      setLocation({ search: '', hash: '' });
-
+    it('decodes special characters (TC-014)', () => {
+      setHash(`q=${encodeURIComponent('node.js')}`);
       const { result } = renderHook(() => useSearchUrlState());
 
-      expect(result.current.state.format).toBe('all');
-      expect(result.current.state.query).toBe('');
-      expect(result.current.state.filters).toEqual({});
-    });
-
-    it('parses Docker-specific filters from URL', () => {
-      setLocation({
-        search: '?format=docker&docker.imageName=nginx&docker.imageTag=latest',
-      });
-
-      const { result } = renderHook(() => useSearchUrlState());
-
-      expect(result.current.state.format).toBe('docker');
-      expect(result.current.state.filters.imageName).toBe('nginx');
-      expect(result.current.state.filters.imageTag).toBe('latest');
+      expect(result.current.readFromUrl().query).toBe('node.js');
     });
   });
 
-  describe('State Updates', () => {
-    beforeEach(() => {
-      setLocation({ search: '', hash: '' });
+  describe('syncToUrl', () => {
+    it('writes query, format, and filters to the URL', () => {
+      const { result } = renderHook(() => useSearchUrlState());
+      const state: UrlSearchState = {
+        format: 'maven',
+        query: 'spring',
+        filters: { groupId: 'org.apache' },
+      };
+
+      result.current.syncToUrl(state);
+
+      expect(window.location.hash).toContain('q=spring');
+      expect(window.location.hash).toContain('format=maven');
+      expect(window.location.hash).toContain('maven.groupId=org.apache');
     });
 
-    it('setFormat updates format and clears filters', () => {
+    it('omits format when "all" and clears filters', () => {
       const { result } = renderHook(() => useSearchUrlState());
 
-      // Set some initial filters
-      act(() => {
-        result.current.setFilter('name', 'test');
-      });
+      result.current.syncToUrl({ format: 'all', query: 'react', filters: {} });
 
-      expect(result.current.state.filters.name).toBe('test');
-
-      // Change format - should clear filters
-      act(() => {
-        result.current.setFormat('docker');
-      });
-
-      expect(result.current.state.format).toBe('docker');
-      expect(result.current.state.filters).toEqual({});
+      expect(window.location.hash).toContain('q=react');
+      expect(window.location.hash).not.toContain('format=');
     });
 
-    it('setQuery updates the query', () => {
+    it('omits default sort (lastUpdated/desc) but writes non-defaults', () => {
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setQuery('spring-boot');
+      result.current.syncToUrl({
+        format: 'all',
+        query: 'x',
+        filters: {},
+        sortField: 'lastUpdated',
+        sortDirection: 'desc',
       });
+      expect(window.location.hash).not.toContain('sort=');
+      expect(window.location.hash).not.toContain('direction=');
 
-      expect(result.current.state.query).toBe('spring-boot');
+      result.current.syncToUrl({
+        format: 'all',
+        query: 'x',
+        filters: {},
+        sortField: 'name',
+        sortDirection: 'asc',
+      });
+      expect(window.location.hash).toContain('sort=name');
+      expect(window.location.hash).toContain('direction=asc');
     });
 
-    it('setFilter updates a single filter', () => {
+    it('writes a non-default direction on the default sort field', () => {
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setFormat('maven');
+      // lastUpdated is the default field, but asc is a non-default direction —
+      // direction must still be written independently of the field.
+      result.current.syncToUrl({
+        format: 'all',
+        query: 'x',
+        filters: {},
+        sortField: 'lastUpdated',
+        sortDirection: 'asc',
       });
-
-      act(() => {
-        result.current.setFilter('groupId', 'org.apache');
-      });
-
-      expect(result.current.state.filters.groupId).toBe('org.apache');
+      expect(window.location.hash).not.toContain('sort=');
+      expect(window.location.hash).toContain('direction=asc');
     });
 
-    it('setFilters updates multiple filters at once', () => {
+    it('uses pushState for commits and replaceState when replace=true', () => {
+      const pushSpy = jest.spyOn(window.history, 'pushState');
+      const replaceSpy = jest.spyOn(window.history, 'replaceState');
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setFormat('maven');
-      });
+      result.current.syncToUrl({ format: 'all', query: 'a', filters: {} });
+      expect(pushSpy).toHaveBeenCalled();
 
-      act(() => {
-        result.current.setFilters({
-          groupId: 'org.springframework',
-          artifactId: 'spring-core',
-        });
-      });
+      result.current.syncToUrl({ format: 'all', query: 'ab', filters: {} }, true);
+      expect(replaceSpy).toHaveBeenCalled();
 
-      expect(result.current.state.filters.groupId).toBe('org.springframework');
-      expect(result.current.state.filters.artifactId).toBe('spring-core');
-    });
-
-    it('reset clears all state', () => {
-      const { result } = renderHook(() => useSearchUrlState());
-
-      // Set some state
-      act(() => {
-        result.current.setFormat('maven');
-      });
-      act(() => {
-        result.current.setQuery('spring');
-      });
-      act(() => {
-        result.current.setFilter('groupId', 'org.springframework');
-      });
-
-      // Reset
-      act(() => {
-        result.current.reset();
-      });
-
-      expect(result.current.state.format).toBe('all');
-      expect(result.current.state.query).toBe('');
-      expect(result.current.state.filters).toEqual({});
-    });
-
-    it('preserves query when changing format', () => {
-      const { result } = renderHook(() => useSearchUrlState());
-
-      act(() => {
-        result.current.setQuery('spring');
-      });
-
-      act(() => {
-        result.current.setFormat('maven');
-      });
-
-      expect(result.current.state.query).toBe('spring');
-      expect(result.current.state.format).toBe('maven');
+      pushSpy.mockRestore();
+      replaceSpy.mockRestore();
     });
   });
 
-  describe('URL Updates', () => {
-    beforeEach(() => {
-      setLocation({ search: '', hash: '' });
-      pushStateSpy.mockClear();
+  describe('round-trip', () => {
+    it('read(write(state)) preserves query/format/filters/sort', () => {
+      const { result } = renderHook(() => useSearchUrlState());
+      const original: UrlSearchState = {
+        format: 'npm',
+        query: 'express',
+        filters: { author: 'tj' },
+        sortField: 'name',
+        sortDirection: 'asc',
+      };
+
+      result.current.syncToUrl(original);
+      const restored = result.current.readFromUrl();
+
+      expect(restored.format).toBe('npm');
+      expect(restored.query).toBe('express');
+      expect(restored.filters.author).toBe('tj');
+      expect(restored.sortField).toBe('name');
+      expect(restored.sortDirection).toBe('asc');
     });
 
-    it('updates URL when format changes', () => {
+    it('preserves a non-default direction on the default sort field', () => {
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setFormat('docker');
+      result.current.syncToUrl({
+        format: 'all',
+        query: 'x',
+        filters: {},
+        sortField: 'lastUpdated',
+        sortDirection: 'asc',
       });
+      const restored = result.current.readFromUrl();
 
-      expect(pushStateSpy).toHaveBeenCalled();
+      // The default field is not written to the URL (parses back as undefined),
+      // but the non-default direction survives the round-trip.
+      expect(restored.sortField).toBeUndefined();
+      expect(restored.sortDirection).toBe('asc');
     });
 
-    it('updates URL when query changes', () => {
+    it('preserves the nameOrVersion virtual filter across formats', () => {
+      // `nameOrVersion` is the results-page combined filter — it isn't declared
+      // in any format's filter defs, so it must round-trip via its own explicit
+      // URL param. Without this the filter would silently vanish on refresh,
+      // back-nav, or component-detail-return (see NEXUS-54333).
       const { result } = renderHook(() => useSearchUrlState());
-
-      act(() => {
-        result.current.setQuery('nginx');
+      result.current.syncToUrl({
+        format: 'all',
+        query: '',
+        filters: { nameOrVersion: 'commons' },
       });
-
-      expect(pushStateSpy).toHaveBeenCalled();
-    });
-
-    it('updates URL when filter changes', () => {
-      const { result } = renderHook(() => useSearchUrlState());
-
-      act(() => {
-        result.current.setFilter('name', 'test-package');
-      });
-
-      expect(pushStateSpy).toHaveBeenCalled();
+      expect(result.current.readFromUrl().filters.nameOrVersion).toBe('commons');
     });
   });
 
   describe('getShareableUrl', () => {
-    beforeEach(() => {
-      setLocation({ search: '', hash: '#preview/browse/search' });
-    });
+    beforeEach(() => setHash(''));
 
-    it('generates shareable URL with current state', () => {
+    it('produces an absolute URL carrying the state', () => {
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setFormat('maven');
-      });
-      act(() => {
-        result.current.setQuery('spring');
+      const url = result.current.getShareableUrl({
+        format: 'maven',
+        query: 'spring',
+        filters: { groupId: 'org.apache' },
       });
 
-      const url = result.current.getShareableUrl();
-
-      expect(url).toContain('format=maven');
+      expect(url).toContain('#preview/browse/search');
       expect(url).toContain('q=spring');
+      expect(url).toContain('format=maven');
+      expect(url).toContain('maven.groupId=org.apache');
     });
 
     it('omits format when it is "all"', () => {
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setQuery('test');
+      const url = result.current.getShareableUrl({
+        format: 'all',
+        query: 'test',
+        filters: {},
       });
-
-      const url = result.current.getShareableUrl();
 
       expect(url).not.toContain('format=');
       expect(url).toContain('q=test');
     });
 
-    it('includes filter values in shareable URL', () => {
+    it('keeps the context path so sub-path installs are shareable (AT-012)', () => {
+      // Nexus is routinely served under a context path. Composing only
+      // origin + hash produced a link that 404s for the recipient.
+      window.history.replaceState({}, '', '/nexus/#preview/browse/search');
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setFormat('maven');
-      });
-      act(() => {
-        result.current.setFilter('groupId', 'org.apache');
+      const url = result.current.getShareableUrl({
+        format: 'all',
+        query: 'spring',
+        filters: {},
       });
 
-      const url = result.current.getShareableUrl();
-
-      expect(url).toContain('maven.groupId=org.apache');
+      expect(url).toBe(`${window.location.origin}/nexus/#preview/browse/search?q=spring`);
     });
 
-    it('generates valid URL with hash routing', () => {
+    it('keeps the context path when there is no state to carry (AT-012)', () => {
+      window.history.replaceState({}, '', '/nexus/#preview/browse/search');
       const { result } = renderHook(() => useSearchUrlState());
 
-      act(() => {
-        result.current.setFormat('npm');
-      });
-      act(() => {
-        result.current.setQuery('lodash');
-      });
+      const url = result.current.getShareableUrl({ format: 'all', query: '', filters: {} });
 
-      const url = result.current.getShareableUrl();
-
-      expect(url).toContain('#preview/browse/search');
-      expect(url).toContain('format=npm');
-      expect(url).toContain('q=lodash');
+      expect(url).toBe(`${window.location.origin}/nexus/#preview/browse/search`);
     });
   });
 
-  describe('Browser Navigation', () => {
-    it('listens for popstate events', () => {
-      setLocation({ search: '?format=maven&q=initial' });
+  describe('write-side validation', () => {
+    // The length/control-character rules used to be enforced on read only, so a
+    // value could be written to the URL and then silently dropped on refresh,
+    // back-nav or breadcrumb return — widening the search without notice.
+    it('omits an over-long query rather than writing it (AT-009)', () => {
+      const { result } = renderHook(() => useSearchUrlState());
 
-      const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
+      result.current.syncToUrl({ format: 'maven', query: 'a'.repeat(257), filters: {} });
 
-      const { unmount } = renderHook(() => useSearchUrlState());
-
-      expect(addEventListenerSpy).toHaveBeenCalledWith('popstate', expect.any(Function));
-
-      unmount();
-
-      addEventListenerSpy.mockRestore();
+      expect(window.location.hash).not.toContain('q=');
+      expect(window.location.hash).toContain('format=maven');
     });
 
-    it('cleans up popstate listener on unmount', () => {
-      setLocation({ search: '' });
+    it('writes a query exactly at the length limit (AT-009)', () => {
+      const atLimit = 'a'.repeat(256);
+      const { result } = renderHook(() => useSearchUrlState());
 
-      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+      result.current.syncToUrl({ format: 'all', query: atLimit, filters: {} });
 
-      const { unmount } = renderHook(() => useSearchUrlState());
-      unmount();
+      expect(result.current.readFromUrl().query).toBe(atLimit);
+    });
 
-      expect(removeEventListenerSpy).toHaveBeenCalledWith('popstate', expect.any(Function));
+    it('omits an over-long format filter but keeps the query (AT-009)', () => {
+      const { result } = renderHook(() => useSearchUrlState());
 
-      removeEventListenerSpy.mockRestore();
+      result.current.syncToUrl({
+        format: 'maven',
+        query: 'spring',
+        filters: { groupId: 'g'.repeat(257) },
+      });
+
+      expect(window.location.hash).not.toContain('maven.groupId=');
+      expect(window.location.hash).toContain('q=spring');
+    });
+
+    it('omits an over-long nameOrVersion but keeps the query (AT-009)', () => {
+      const { result } = renderHook(() => useSearchUrlState());
+
+      result.current.syncToUrl({
+        format: 'all',
+        query: 'spring',
+        filters: { nameOrVersion: 'v'.repeat(300) },
+      });
+
+      expect(window.location.hash).not.toContain('nameOrVersion=');
+      expect(window.location.hash).toContain('q=spring');
+    });
+
+    it('omits values containing control characters (AT-010)', () => {
+      const { result } = renderHook(() => useSearchUrlState());
+
+      result.current.syncToUrl({
+        format: 'all',
+        query: 'spring\x00boot',
+        filters: { nameOrVersion: 'commons\x1b' },
+      });
+
+      expect(window.location.hash).not.toContain('q=');
+      expect(window.location.hash).not.toContain('nameOrVersion=');
+    });
+
+    it('never writes a value the read path would drop (AT-009)', () => {
+      const { result } = renderHook(() => useSearchUrlState());
+      const state = {
+        format: 'maven' as const,
+        query: 'q'.repeat(300),
+        filters: { groupId: 'org.apache', nameOrVersion: 'n'.repeat(300) },
+      };
+
+      result.current.syncToUrl(state);
+
+      // Round-trip: whatever reached the URL must read back unchanged.
+      const readBack = result.current.readFromUrl();
+      expect(readBack.query).toBe('');
+      expect(readBack.filters.nameOrVersion).toBeUndefined();
+      expect(readBack.filters.groupId).toBe('org.apache');
+      expect(readBack.format).toBe('maven');
+    });
+  });
+
+  describe('read-back validation', () => {
+    it('drops an over-long value but keeps valid siblings (AT-009)', () => {
+      setHash(`q=${'a'.repeat(257)}&format=maven`);
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const state = result.current.readFromUrl();
+      expect(state.query).toBe('');
+      expect(state.format).toBe('maven');
+    });
+
+    it('accepts a value exactly at the length limit (AT-009)', () => {
+      const atLimit = 'a'.repeat(256);
+      setHash(`q=${atLimit}`);
+      const { result } = renderHook(() => useSearchUrlState());
+
+      expect(result.current.readFromUrl().query).toBe(atLimit);
+    });
+
+    it('drops an over-long format filter but keeps the query (AT-009)', () => {
+      setHash(`format=maven&q=spring&maven.groupId=${'g'.repeat(257)}`);
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const state = result.current.readFromUrl();
+      expect(state.filters.groupId).toBeUndefined();
+      expect(state.query).toBe('spring');
+    });
+
+    it('drops values containing control characters (AT-010)', () => {
+      const q = encodeURIComponent('spring\x00boot');
+      const nameOrVersion = encodeURIComponent('commons\x1b');
+      setHash(`q=${q}&nameOrVersion=${nameOrVersion}`);
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const state = result.current.readFromUrl();
+      expect(state.query).toBe('');
+      expect(state.filters.nameOrVersion).toBeUndefined();
+    });
+
+    it('drops an over-long nameOrVersion but keeps the format (AT-009)', () => {
+      setHash(`format=npm&nameOrVersion=${'v'.repeat(300)}`);
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const state = result.current.readFromUrl();
+      expect(state.filters.nameOrVersion).toBeUndefined();
+      expect(state.format).toBe('npm');
+    });
+  });
+
+  describe('hostile-URL characterization pins', () => {
+    it('ignores unknown params and never pollutes Object.prototype (AT-006)', () => {
+      // parseUrlState assigns under filterDef.id (a searchFilters.ts identifier),
+      // never under a key taken from the URL, so `__proto__` is simply not read.
+      // This pin fails loudly if parsing is ever made key-driven.
+      setHash('q=spring&bogus=1&__proto__=polluted&constructor=x');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const state = result.current.readFromUrl();
+      expect(state.query).toBe('spring');
+      expect(Object.keys(state.filters)).toEqual([]);
+      expect(Object.prototype).not.toHaveProperty('polluted');
+      expect({}).not.toHaveProperty('polluted');
+    });
+
+    it('resolves a repeated param to its first occurrence (AT-019)', () => {
+      setHash('q=first&q=second');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      expect(result.current.readFromUrl().query).toBe('first');
+    });
+
+    it('never writes a duplicate key (AT-019)', () => {
+      const { result } = renderHook(() => useSearchUrlState());
+
+      result.current.syncToUrl({
+        format: 'maven',
+        query: 'spring',
+        filters: { groupId: 'org.apache', nameOrVersion: 'commons' },
+      });
+
+      const written = [...new URLSearchParams(window.location.hash.split('?')[1] ?? '').keys()];
+      expect(new Set(written).size).toBe(written.length);
+    });
+  });
+
+  describe('pre-hash query string', () => {
+    /** Put the browser at `<pathname>?debug#preview/browse/search[?<search state>]`. */
+    function setDebugUrl(searchState: string): void {
+      const hashPath = '#preview/browse/search';
+      const hash = searchState ? `${hashPath}?${searchState}` : hashPath;
+      window.history.replaceState({}, '', `${window.location.pathname}?debug${hash}`);
+    }
+
+    it('keeps ?debug when writing search state (AT-011)', () => {
+      setDebugUrl('');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      result.current.syncToUrl({ format: 'maven', query: 'spring', filters: {} });
+
+      expect(window.location.search).toBe('?debug');
+      expect(window.location.hash).toContain('q=spring');
+    });
+
+    it('keeps ?debug when the written state is empty (AT-011)', () => {
+      setDebugUrl('q=spring');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      result.current.syncToUrl({ format: 'all', query: '', filters: {} });
+
+      expect(window.location.search).toBe('?debug');
+      expect(window.location.hash).not.toContain('q=');
+    });
+
+    it('keeps ?debug on a replaceState write (AT-011)', () => {
+      setDebugUrl('');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      result.current.syncToUrl({ format: 'all', query: 'react', filters: {} }, true);
+
+      expect(window.location.search).toBe('?debug');
+      expect(window.location.hash).toContain('q=react');
+    });
+
+    it('omits ?debug from a shareable URL (AT-012)', () => {
+      // Deliberate asymmetry: a shared link must not carry a local dev flag.
+      setDebugUrl('');
+      const { result } = renderHook(() => useSearchUrlState());
+
+      const url = result.current.getShareableUrl({
+        format: 'all',
+        query: 'spring',
+        filters: {},
+      });
+
+      expect(url).not.toContain('debug');
+      expect(url).toContain('q=spring');
     });
   });
 });

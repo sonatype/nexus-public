@@ -13,12 +13,14 @@
 import React from 'react';
 import {useMachine, useActor} from '@xstate/react';
 
-import {FormUtils} from '@sonatype/nexus-ui-plugin';
+import {ExtJS, FormUtils} from '@sonatype/nexus-ui-plugin';
 import {
   NxButton,
+  NxCheckbox,
   NxErrorAlert,
   NxFieldset,
   NxFormGroup,
+  NxInfoAlert,
   NxLoadingSpinner,
   NxSuccessAlert,
   NxTextInput,
@@ -33,6 +35,9 @@ const AZURE = UIStrings.BLOB_STORES.AZURE;
 export default function AzureBlobStoreSettings({service}) {
   const [current, send] = useActor(service);
   const {bucketConfiguration = {}} = current.context.data;
+  const isProEdition = ExtJS.isProEdition();
+  const authMode = bucketConfiguration.authentication?.authenticationMethod;
+  const isTokenCredentialAuth = authMode === 'MANAGEDIDENTITY' || authMode === 'ENVIRONMENTVARIABLE';
 
   const [azureState, sendAzureEvent] = useMachine(AzureBlobStoreSettingsMachine, {
     context: {
@@ -151,6 +156,22 @@ export default function AzureBlobStoreSettings({service}) {
                        onChange={handleAccountKeyChange}/>
         </NxFormGroup>
         }
+
+        {isProEdition && (
+          <div className="nxrm-azure-presigned">
+            <NxFieldset label={AZURE.PRE_SIGNED_URL.LABEL}
+                        sublabel={AZURE.PRE_SIGNED_URL.SUBLABEL}>
+              <NxCheckbox
+                  {...FormUtils.checkboxProps('bucketConfiguration.preSignedUrlEnabled', current)}
+                  onChange={FormUtils.handleUpdate('bucketConfiguration.preSignedUrlEnabled', send)}>
+                {AZURE.PRE_SIGNED_URL.CHECKBOX_LABEL}
+              </NxCheckbox>
+              {bucketConfiguration.preSignedUrlEnabled && isTokenCredentialAuth && (
+                <NxInfoAlert>{AZURE.PRE_SIGNED_URL.RBAC_NOTE}</NxInfoAlert>
+              )}
+            </NxFieldset>
+          </div>
+        )}
 
         <div className="nx-form-row">
           <NxButton type="button" variant="tertiary" disabled={azureState.matches('testing')} onClick={testConnection}>

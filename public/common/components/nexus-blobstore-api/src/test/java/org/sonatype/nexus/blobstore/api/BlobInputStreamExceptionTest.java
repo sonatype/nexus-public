@@ -35,9 +35,7 @@ public class BlobInputStreamExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // super(cause) sets the detail message to cause.toString()
-    assertThat(exception.getMessage(),
-        is("BlobId: blob-123, java.io.IOException: disk error, Cause: disk error"));
+    assertThat(exception.getMessage(), is("BlobId: blob-123, java.io.IOException: disk error"));
   }
 
   @Test
@@ -47,7 +45,7 @@ public class BlobInputStreamExceptionTest
 
     assertThat(exception.getBlobId(), is(nullValue()));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    assertThat(exception.getMessage(), is("java.io.IOException: disk error, Cause: disk error"));
+    assertThat(exception.getMessage(), is("java.io.IOException: disk error"));
   }
 
   @Test
@@ -57,7 +55,6 @@ public class BlobInputStreamExceptionTest
 
     assertThat(exception.getBlobId(), is(nullValue()));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // cause has no message, so the "Cause:" segment is omitted
     assertThat(exception.getMessage(), is("java.lang.RuntimeException"));
   }
 
@@ -68,7 +65,6 @@ public class BlobInputStreamExceptionTest
 
     assertThat(exception.getBlobId(), is(sameInstance(BLOB_ID)));
     assertThat(exception.getCause(), is(sameInstance((Throwable) cause)));
-    // blobId is present but the cause has no message, so the "Cause:" segment is omitted
     assertThat(exception.getMessage(), is("BlobId: blob-123, java.lang.RuntimeException"));
   }
 

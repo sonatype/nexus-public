@@ -78,6 +78,7 @@ Ext.define('NX.coreui.controller.Outreach', {
       if (Ext.isObject(response) && response.success && response.data != null && welcomePage.rendered) {
         this.user = NX.State.getUser();
         var daysToExpiry = NX.State.getValue("license").daysToExpiry,
+            databaseType = NX.State.getValue('datastore.isPostgresql') ? 'postgres' : 'h2',
             usertype,
             url,
             height;
@@ -94,6 +95,7 @@ Ext.define('NX.coreui.controller.Outreach', {
             '&edition=' + NX.State.getEdition() +
             '&usertype=' + usertype +
             '&daysToExpiry=' + daysToExpiry +
+            '&databaseType=' + databaseType +
             proxyDownloadNumbers
         );
 

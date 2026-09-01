@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { TaskScheduler, describeCron } from '../TaskScheduler';
 import { ScheduleData } from '../types';
@@ -59,7 +59,7 @@ describe('TaskScheduler', () => {
   const onceSchedule: ScheduleData = {
     schedule: 'once',
     timeZoneOffset: '+00:00',
-    startDate: new Date('2026-01-22'),
+    startDate: new Date(2026, 0, 22),
     startTime: '10:00',
     recurringDays: [],
     cronExpression: undefined,
@@ -68,7 +68,7 @@ describe('TaskScheduler', () => {
   const dailySchedule: ScheduleData = {
     schedule: 'daily',
     timeZoneOffset: '+00:00',
-    startDate: new Date('2026-01-22'),
+    startDate: new Date(2026, 0, 22),
     startTime: '10:00',
     recurringDays: [],
     cronExpression: undefined,
@@ -77,7 +77,7 @@ describe('TaskScheduler', () => {
   const weeklySchedule: ScheduleData = {
     schedule: 'weekly',
     timeZoneOffset: '+00:00',
-    startDate: new Date('2026-01-22'),
+    startDate: new Date(2026, 0, 22),
     startTime: '10:00',
     recurringDays: [1], // Monday
     cronExpression: undefined,
@@ -158,6 +158,35 @@ describe('TaskScheduler', () => {
     });
   });
 
+  describe('advanced (cron) schedule', () => {
+    const advancedSchedule: ScheduleData = {
+      schedule: 'advanced',
+      timeZoneOffset: '+00:00',
+      startDate: null,
+      startTime: undefined,
+      recurringDays: [],
+      cronExpression: '0 0 3 * * ?',
+    };
+
+    it('renders the cron expression input', () => {
+      renderWithTheme(<TaskScheduler value={advancedSchedule} onChange={mockOnChange} />);
+
+      expect(screen.getByText('Cron Expression')).toBeInTheDocument();
+    });
+
+    // NEXUS-52338: a cron expression is positional, so it must render in the monospace
+    // stack rather than the Super UI default. The examples below the field already use it.
+    it('renders the cron expression input with monospace styling', () => {
+      const { container } = renderWithTheme(
+        <TaskScheduler value={advancedSchedule} onChange={mockOnChange} />,
+      );
+
+      const cronInput = container.querySelector('input[name="cronExpression"]');
+      expect(cronInput).not.toBeNull();
+      expect(cronInput!.closest('.settings-text-input__input--mono')).not.toBeNull();
+    });
+  });
+
   describe('cron preview', () => {
     it('shows human-readable preview for valid cron expression', () => {
       expect(describeCron('0 0 3 * * ?')).toBe('Every day at 3:00 AM');
@@ -169,6 +198,12 @@ describe('TaskScheduler', () => {
     it('returns empty string for invalid expression', () => {
       expect(describeCron('invalid')).toBe('');
       expect(describeCron('')).toBe('');
+    });
+
+    it('describes bare * in hour field as "Every hour" without NaN (NEXUS-53358)', () => {
+      // "0 0 * * * ?" means "every hour at :00" — bare * is not caught by the
+      // startsWith('*/') guard, causing parseInt('*') = NaN in the preview.
+      expect(describeCron('0 0 * * * ?')).toBe('Every hour');
     });
 
     it('describes specific day-of-week schedules', () => {
@@ -208,6 +243,62 @@ describe('TaskScheduler', () => {
     });
   });
 
+  /**
+   * NEXUS-53358 — start-date timezone bug.
+   *
+   * new Date("YYYY-MM-DD") parses as UTC midnight, which in negative-offset
+   * timezones (e.g. CDT UTC-5) produces the previous calendar day at local time.
+   * combineDateAndTime then sets local hours on that wrong local date, causing
+   * the backend to receive the wrong day (confirmed via curl: user picks 06/30,
+   * API stores 2026-06-29T05:00:00Z = midnight CDT June 29).
+   *
+   * Fix: parse date-only strings with the local-time constructor new Date(y, m-1, d)
+   * and format back with getFullYear/getMonth/getDate (not toISOString which is UTC).
+   *
+   * Note: these tests run in a UTC Jest environment where new Date("2026-06-30")
+   * and new Date(2026, 5, 30) both represent midnight June 30, so the original bug
+   * does not manifest here. The tests assert the POST-FIX invariant and protect
+   * against regression; the curl response above is the failing-test evidence.
+   */
+  describe('start-date round-trip does not shift the calendar date (NEXUS-53358)', () => {
+    it('onChange receives a Date whose local calendar date matches the typed date string', () => {
+      let capturedDate: Date | null = null;
+      const onChange = jest.fn().mockImplementation((data: ScheduleData) => {
+        capturedDate = data.startDate;
+      });
+
+      const { container } = renderWithTheme(
+        <TaskScheduler value={onceSchedule} onChange={onChange} />,
+      );
+
+      const dateInput = container.querySelector('input[type="date"]')!;
+      fireEvent.change(dateInput, { target: { value: '2026-06-30' } });
+
+      expect(capturedDate).not.toBeNull();
+      // Use local getters — if the Date were constructed as UTC midnight the local
+      // getDate() would differ in negative-offset timezones (CDT: 29, not 30).
+      expect(capturedDate!.getFullYear()).toBe(2026);
+      expect(capturedDate!.getMonth()).toBe(5); // 0-indexed June
+      expect(capturedDate!.getDate()).toBe(30);
+    });
+
+    it('date input displays the local calendar date stored in startDate', () => {
+      // Construct startDate as local midnight so getDate/Month/FullYear are unambiguous.
+      const localMidnightJune30 = new Date(2026, 5, 30);
+      const schedule: ScheduleData = { ...onceSchedule, startDate: localMidnightJune30 };
+
+      const { container } = renderWithTheme(
+        <TaskScheduler value={schedule} onChange={jest.fn()} />,
+      );
+
+      const dateInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+      // toISOString().split('T')[0] reads back the UTC date, which differs from the
+      // local date in UTC+ timezones (e.g. UTC+1: midnight local = 23:00 prev day UTC).
+      // getFullYear/getMonth/getDate always return the local calendar date.
+      expect(dateInput.value).toBe('2026-06-30');
+    });
+  });
+
   describe('allowedSchedules', () => {
     it('renders only the allowed options when allowedSchedules is provided', () => {
       renderWithTheme(
@@ -242,12 +333,3 @@ describe('TaskScheduler', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-

@@ -70,7 +70,7 @@ export default function CEHardLimitAlerts() {
         <NxTextLink className="ce-upload-license" href="#admin/system/licensing">upload it here</NxTextLink>.
         <NxButtonBar>
           <a
-            className="nx-btn nx-btn--primary usage-view-pricing-button"
+            className="nx-btn nx-btn--tertiary usage-view-pricing-button"
             target="_blank"
             href={useViewLearnMoreUrl()}>
             {HEADER.BUTTONS.LEARN_MORE}
@@ -86,7 +86,7 @@ export default function CEHardLimitAlerts() {
         <NxTextLink external className="usage-view-pricing-link" href={useViewPurchaseALicenseUrl()}>Purchase a license to remove limits</NxTextLink>, or if you have already purchased a license{' '}
         <NxTextLink className="ce-upload-license" href="#admin/system/licensing">upload it here</NxTextLink>.
         <NxButtonBar>
-          <a className="nx-btn ce-restore-usage" target="_blank" href={useViewLearnMoreUrl()}>{HEADER.BUTTONS.LEARN_MORE}</a>
+          <a className="nx-btn nx-btn--tertiary ce-restore-usage" target="_blank" href={useViewLearnMoreUrl()}>{HEADER.BUTTONS.LEARN_MORE}</a>
           <a
             className="nx-btn nx-btn--primary usage-view-pricing-button"
             target="_blank"
@@ -101,7 +101,11 @@ export default function CEHardLimitAlerts() {
     send({type: 'DISMISS', banner: banner});
   }
 
-  return (!isHa && <div className='ce-alerts'>
+  // Anonymous (not-logged-in) users have no user object; without this guard a
+  // null user reads as a non-admin and renders the non-admin CE alerts on the
+  // public welcome/dashboard route. CE limit alerts are only meaningful for a
+  // logged-in user.
+  return (!isHa && user && <div className='ce-alerts'>
     {isCommunityEdition && isAdmin &&
       <>
         {throttlingStatus === 'NEAR_LIMITS_NEVER_IN_GRACE' && !dismissedBanners.includes('near_limits') && <>
@@ -115,13 +119,13 @@ export default function CEHardLimitAlerts() {
           </>
         }
         {throttlingStatus === 'OVER_LIMITS_IN_GRACE' && !dismissedBanners.includes('over_limits_in_grace') && <>
-            <NxErrorAlert className="ce-alert-over-limit-in-grace-period" onClose={() => dismiss('over_limits_in_grace')}>
+            <NxWarningAlert className="ce-alert-over-limit-in-grace-period" onClose={() => dismiss('over_limits_in_grace')}>
               <NxH3>{HEADER.GRACE_PERIOD.TITLE(gracePeriodEndDate)}</NxH3>
               <div>
                 {HEADER.GRACE_PERIOD.OVER_WARNING(gracePeriodEndDate)}{' '}
                 <PurchaseOrUploadHeaderLinks />
               </div>
-            </NxErrorAlert>
+            </NxWarningAlert>
           </>
         }
         {throttlingStatus === 'BELOW_LIMITS_IN_GRACE' && !dismissedBanners.includes('below_limits_in_grace') && <>
@@ -151,6 +155,26 @@ export default function CEHardLimitAlerts() {
                 <PurchaseOrUploadHeaderLinks />
               </div>
             </NxWarningAlert>
+          </>
+        }
+      </>
+    }
+    {isCommunityEdition && user && !isAdmin &&
+      <>
+        {throttlingStatus === 'NEAR_LIMITS_NON_ADMIN' && <>
+            <NxWarningAlert className="ce-alert-near-limit-non-admin">
+              <div>
+                {HEADER.NEARING_NON_ADMIN}
+              </div>
+            </NxWarningAlert>
+          </>
+        }
+        {throttlingStatus === 'NON_ADMIN_OVER_LIMITS_GRACE_PERIOD_ENDED' && <>
+            <NxErrorAlert className="ce-alert-over-limit-non-admin">
+              <div>
+                {HEADER.THROTTLING_NON_ADMIN}
+              </div>
+            </NxErrorAlert>
           </>
         }
       </>

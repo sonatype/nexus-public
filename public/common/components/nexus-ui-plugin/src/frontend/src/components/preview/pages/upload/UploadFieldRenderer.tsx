@@ -14,7 +14,6 @@
 import React, { useMemo } from 'react';
 import { Box } from '@radix-ui/themes';
 
-import { UploadField } from './UploadField';
 import type {
   UploadFieldRendererProps,
   UploadComponentField,

@@ -155,7 +155,7 @@ export function useRepositoryListServer(
   // Initial fetch
   useEffect(() => {
     fetchRepositories(filterParams);
-  }, []); // Only on mount
+  }, [fetchRepositories, filterParams]); // Only on mount
 
   // Update filter params with debounce for name filter
   const setFilterParams = useCallback((newParams: Partial<RepositoryFilterParams>) => {

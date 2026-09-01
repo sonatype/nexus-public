@@ -141,7 +141,7 @@ function CheckboxFilterList({
               onCheckedChange={(checked) => handleChange(option.value, checked === true)}
               disabled={disabled}
             />
-            <Flex align="center" gap="2" style={{ flex: 1 }}>
+            <Flex align="center" gap="2" className="checkbox-filter__row">
               {option.icon && <span className="checkbox-filter__icon">{option.icon}</span>}
               <span className="checkbox-filter__label">{option.label}</span>
             </Flex>
@@ -215,7 +215,7 @@ function SelectFilter({
       disabled={disabled}
       size="2"
     >
-      <Select.Trigger style={{ width: '100%' }} />
+      <Select.Trigger className="select-filter__trigger" />
       <Select.Content position="popper" side="bottom" avoidCollisions={false} sideOffset={4}>
         {options.map((opt, idx) => {
           const itemValue =

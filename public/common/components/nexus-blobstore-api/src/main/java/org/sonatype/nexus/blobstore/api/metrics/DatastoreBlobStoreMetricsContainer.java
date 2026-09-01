@@ -19,6 +19,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * Class to hold and manage the metrics for a blobstore.
  */
@@ -55,11 +57,13 @@ public class DatastoreBlobStoreMetricsContainer
   }
 
   public void recordAddition(final long size) {
+    checkArgument(size >= 0, "size must be non-negative");
     blobstoreUsageDelta.getAndAdd(size);
     blobCountDelta.incrementAndGet();
   }
 
   public void recordDeletion(final long size) {
+    checkArgument(size >= 0, "size must be non-negative");
     blobstoreUsageDelta.getAndAdd(-size);
     blobCountDelta.decrementAndGet();
   }

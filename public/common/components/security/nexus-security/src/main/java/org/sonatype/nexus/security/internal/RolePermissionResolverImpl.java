@@ -23,8 +23,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -38,6 +38,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import org.sonatype.nexus.security.authz.BatchRolePermissionResolver;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.permission.RolePermissionResolver;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,7 +57,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Qualifier("default")
 public class RolePermissionResolverImpl
-    implements RolePermissionResolver
+    implements BatchRolePermissionResolver, EventAware
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -84,13 +85,11 @@ public class RolePermissionResolverImpl
   public RolePermissionResolverImpl(
       final SecurityConfigurationManager configuration,
       final List<PrivilegeDescriptor> privilegeDescriptors,
-      final EventManager eventManager,
       @Value("${security.roleNotFoundCacheSize:100000}") final int roleNotFoundCacheSize)
   {
     this.configuration = checkNotNull(configuration);
     this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
     this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
-    eventManager.register(this);
   }
 
   /**
@@ -191,6 +190,7 @@ public class RolePermissionResolverImpl
    * previously drove the 20-second cold-login path become a single readRoles() batch call
    * (NEXUS-52583).
    */
+  @Override
   public Collection<Permission> resolvePermissionsForRoles(final Collection<String> roleIds) {
     if (roleIds == null || roleIds.isEmpty()) {
       return Collections.emptySet();

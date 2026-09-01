@@ -42,7 +42,6 @@ function NodeIcon({
       );
     case 'component':
       return <Package {...iconProps} data-testid="icon-component" />;
-    case 'asset':
     default:
       return <File {...iconProps} data-testid="icon-asset" />;
   }

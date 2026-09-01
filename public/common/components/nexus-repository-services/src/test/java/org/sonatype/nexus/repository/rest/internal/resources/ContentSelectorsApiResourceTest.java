@@ -98,6 +98,8 @@ public class ContentSelectorsApiResourceTest
 
   private DefaultSecurityManager securityManager;
 
+  private DelegatingSubject subject;
+
   private TestRealm realm;
 
   private ValidatorFactory validatorFactory;
@@ -125,7 +127,7 @@ public class ContentSelectorsApiResourceTest
     // Create an authenticated subject
     SimplePrincipalCollection principals = new SimplePrincipalCollection("testuser", realm.getName());
     Session session = new SimpleSession();
-    DelegatingSubject subject = new DelegatingSubject(principals, true, "localhost", session, securityManager);
+    subject = new DelegatingSubject(principals, true, "localhost", session, securityManager);
     ThreadContext.bind(subject);
   }
 
@@ -198,7 +200,10 @@ public class ContentSelectorsApiResourceTest
     // Submit concurrent requests
     for (int i = 0; i < threadCount * iterationsPerThread; i++) {
       final int requestId = i;
-      executor.submit(() -> {
+      // Shiro 2.x ThreadContext is no longer an InheritableThreadLocal, so worker threads do not
+      // inherit the authenticated Subject. Associate each task with it explicitly so the
+      // @RequiresAuthentication check on the resource sees an authenticated Subject.
+      executor.submit(subject.associateWith(() -> {
         try {
           // Wait for all threads to be ready
           startLatch.await();
@@ -217,7 +222,7 @@ public class ContentSelectorsApiResourceTest
         finally {
           doneLatch.countDown();
         }
-      });
+      }));
     }
 
     // Start all threads simultaneously

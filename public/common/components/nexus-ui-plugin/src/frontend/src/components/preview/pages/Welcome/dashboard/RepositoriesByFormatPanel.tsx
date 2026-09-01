@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { Table, Text, Flex, Box, Heading, Button, Inset, Skeleton, Badge, Tooltip } from '@radix-ui/themes';
-import { AlertTriangle, Check, RefreshCw, Skull } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Skull } from 'lucide-react';
 
 // Import types from simplified.types.ts - REAL DATA ONLY
 import type { RepositoriesByFormatPanelProps, RepositoryFormatSummary } from './simplified.types';

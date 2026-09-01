@@ -17,9 +17,7 @@
 /*global Ext, NX*/
 
 /**
- * Task model.
- *
- * @since 3.0
+ * Reconciliation plan summary store.
  */
 
 Ext.define('NX.coreui.store.ReconcilePlans', {
@@ -28,12 +26,9 @@ Ext.define('NX.coreui.store.ReconcilePlans', {
   proxy: {
     $configStrict: false,
     type: 'rest',
-    url: 'service/rest/v1/plan',
+    url: 'service/rest/v1/plan/summary',
     actionMethods: {
       read: 'GET'
-    },
-    buildUrl: function(request) {
-      return this.url;
     }
   }
 });

@@ -21,8 +21,9 @@ import java.util.List;
 import java.util.TimeZone;
 
 import org.sonatype.nexus.audit.InitiatorProvider;
-import org.sonatype.nexus.bootstrap.entrypoint.event.EventExecutor;
-import org.sonatype.nexus.bootstrap.entrypoint.event.EventManagerImpl;
+import org.sonatype.nexus.internal.event.EventExecutor;
+import org.sonatype.nexus.internal.event.EventManagerImpl;
+import org.sonatype.nexus.internal.event.NexusEventAwareRegistrar;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
@@ -220,12 +221,11 @@ public class WebhookServiceImplTest
     assertThrows(InvalidStateException.class, () -> underTest.send(request));
   }
 
-  // Note: Event bus registration is handled automatically by EventAware (via
-  // EventManagerImpl's List<EventAware> injection and EventAwareBeanPostProcessor, both of
-  // which key on `bean instanceof EventAware`). EventAware.Asynchronous is a separate marker
-  // that routes registration to the async bus — it does NOT extend EventAware, so both
-  // interfaces must be declared explicitly for auto-registration to happen. That trap is
-  // exactly what NEXUS-52911 tripped over and NEXUS-53667 fixed; see
+  // Note: Event bus registration is handled automatically for EventAware beans by
+  // NexusEventAwareRegistrar (subscribers are discovered by type and registered with the EventManager at
+  // the appropriate lifecycle phase). EventAware.Asynchronous now EXTENDS EventAware and simply routes
+  // registration to the async bus, so declaring Asynchronous is sufficient — the NEXUS-52911 "dropped
+  // EventAware marker" trap (fixed under NEXUS-53667) can no longer occur; see
   // {@link #implementsBothEventAwareMarkers()} and
   // {@link #webhookRequestSendEventTriggersHttpPostViaEventBus()} below.
   // The @Guarded(by = STARTED) annotation on queue() ensures events received after
@@ -244,26 +244,24 @@ public class WebhookServiceImplTest
   }
 
   /**
-   * Regression test for NEXUS-53667: {@link WebhookServiceImpl} must implement {@link EventAware}
-   * (in addition to {@link EventAware.Asynchronous}) so that the framework's
-   * {@code List<EventAware>} injection picks it up and
-   * {@code EventManagerImpl} auto-registers it as a subscriber for {@code WebhookRequestSendEvent}.
+   * Regression test for NEXUS-53667: {@link WebhookServiceImpl} must be an async {@link EventAware}
+   * subscriber so that {@code NexusEventAwareRegistrar} discovers it and registers it with the
+   * {@code EventManager} for {@code WebhookRequestSendEvent}, on the async bus.
    * <p>
    * Regression window: NEXUS-52911 (Jun 2026) refactored the class to extend
    * {@code StateGuardLifecycleSupport} and accidentally dropped {@code EventAware} from the
-   * {@code implements} clause, leaving only {@code EventAware.Asynchronous}. Because the
-   * {@code Asynchronous} nested interface does NOT extend {@code EventAware}, Spring stopped
-   * collecting {@code WebhookServiceImpl} into the {@code List<EventAware>} passed to
-   * {@code EventManagerImpl}; its {@code @Subscribe void on(WebhookRequestSendEvent)} was never
+   * {@code implements} clause, leaving only {@code EventAware.Asynchronous}. At the time
+   * {@code Asynchronous} did NOT extend {@code EventAware}, so the framework stopped collecting
+   * {@code WebhookServiceImpl}; its {@code @Subscribe void on(WebhookRequestSendEvent)} was never
    * registered on the async bus, and every webhook silently stopped firing.
    * <p>
-   * Pinning both interfaces here prevents a future refactor from re-introducing the same
-   * regression by dropping either marker.
+   * {@code Asynchronous} now extends {@code EventAware}, so that exact drop can no longer happen.
+   * This still pins that {@code WebhookServiceImpl} remains an async event subscriber.
    */
   @Test
   public void implementsBothEventAwareMarkers() {
     assertThat("WebhookServiceImpl must implement EventAware so it is picked up by "
-        + "EventManagerImpl's List<EventAware> auto-registration",
+        + "NexusEventAwareRegistrar's type-based auto-registration",
         underTest, is(instanceOf(EventAware.class)));
     assertThat("WebhookServiceImpl must implement EventAware.Asynchronous so it registers on "
         + "the async bus (avoiding blocking Jetty threads on webhook dispatch)",
@@ -281,21 +279,23 @@ public class WebhookServiceImplTest
    * <ul>
    * <li>removing or renaming {@code @Subscribe void on(WebhookRequestSendEvent)},</li>
    * <li>renaming {@link WebhookRequestSendEvent} or altering its wire shape,</li>
-   * <li>changing {@link EventManagerImpl}'s injection mechanism so {@link EventAware}
-   * beans are no longer collected on construction.</li>
+   * <li>changing the registration mechanism so {@link EventAware} beans are no longer
+   * registered with the {@link EventManager}.</li>
    * </ul>
    * Each of those would leave the marker-interface test green while dispatch silently breaks,
    * which is exactly the failure mode that shipped dark for ~3 weeks pre-NEXUS-53667. Wiring
-   * a real {@link EventManagerImpl} with {@code List.of(underTest)}, posting the event, and
-   * verifying the mocked {@code httpClient.execute(...)} is invoked exercises the whole chain.
+   * a real {@link EventManagerImpl}, registering {@code underTest} exactly as
+   * {@link NexusEventAwareRegistrar} does at runtime, posting the event, and verifying the
+   * mocked {@code httpClient.execute(...)} is invoked exercises the whole chain.
    */
   @Test
   public void webhookRequestSendEventTriggersHttpPostViaEventBus() throws Exception {
-    // Real EventManagerImpl with underTest in the EventAware collection. If EventAware is
-    // removed from WebhookServiceImpl's implements clause (NEXUS-52911's regression), the
-    // constructor's registration loop skips underTest and this test fails.
+    // Real EventManagerImpl; register underTest exactly as NexusEventAwareRegistrar would at
+    // runtime (it collects EventAware beans via getBeansOfType and calls eventManager.register).
     EventExecutor executor = new EventExecutor(false, 0, Duration.ofSeconds(0), false, false);
-    EventManagerImpl eventManager = new EventManagerImpl(executor, List.of(underTest));
+    EventManagerImpl eventManager = new EventManagerImpl(executor);
+    eventManager.start(); // EventManager only posts once started (EVENTS phase); mirror that here
+    eventManager.register(underTest);
 
     underTest.start();
 

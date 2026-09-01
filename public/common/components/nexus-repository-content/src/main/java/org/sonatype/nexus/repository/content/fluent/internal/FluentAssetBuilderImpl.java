@@ -27,6 +27,8 @@ import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.time.UTC;
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
@@ -166,7 +168,13 @@ public class FluentAssetBuilderImpl
       assetData.setLastDownloaded(now);
     }
 
-    assetStore.createAsset(assetData);
+    try {
+      assetStore.createAsset(assetData);
+    }
+    catch (ForeignKeyViolationException e) {
+      throw new ConcurrentOperationException(
+          "Upload failed: component was concurrently deleted. Please retry.", e);
+    }
 
     return assetData;
   }

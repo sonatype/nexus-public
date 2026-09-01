@@ -187,6 +187,66 @@ public class QuartzTaskJobTest
     assertThat("Different task types should not block even with same blob store", blockedTasks.size(), is(0));
   }
 
+  @Test
+  public void testIsTrulyBlocking_sameRepository_shouldBlock() throws Exception {
+    when(currentTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(otherTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(currentTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(otherTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(currentTaskConfig.getString("repositoryName")).thenReturn("maven-central");
+    when(otherTaskConfig.getString("repositoryName")).thenReturn("maven-central");
+    when(quartzSchedulerSPI.listsTasks()).thenReturn(Collections.singletonList(otherTask));
+
+    List<TaskInfo> blockedTasks = invokeBlockedBy();
+
+    assertThat("Same repository should block execution", blockedTasks.size(), is(1));
+  }
+
+  @Test
+  public void testIsTrulyBlocking_differentRepositories_shouldNotBlock() throws Exception {
+    when(currentTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(otherTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(currentTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(otherTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(currentTaskConfig.getString("repositoryName")).thenReturn("maven-central");
+    when(otherTaskConfig.getString("repositoryName")).thenReturn("npm-proxy");
+    when(quartzSchedulerSPI.listsTasks()).thenReturn(Collections.singletonList(otherTask));
+
+    List<TaskInfo> blockedTasks = invokeBlockedBy();
+
+    assertThat("Different repositories should NOT block execution", blockedTasks.size(), is(0));
+  }
+
+  @Test
+  public void testIsTrulyBlocking_currentTaskNoRepository_shouldBlock() throws Exception {
+    when(currentTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(otherTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(currentTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(otherTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(currentTaskConfig.getString("repositoryName")).thenReturn(null);
+    when(otherTaskConfig.getString("repositoryName")).thenReturn("maven-central");
+    when(quartzSchedulerSPI.listsTasks()).thenReturn(Collections.singletonList(otherTask));
+
+    List<TaskInfo> blockedTasks = invokeBlockedBy();
+
+    assertThat("Task without repository should block all same-type tasks", blockedTasks.size(), is(1));
+  }
+
+  @Test
+  public void testIsTrulyBlocking_otherTaskNoRepository_shouldNotBlock() throws Exception {
+    when(currentTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(otherTaskConfig.getTypeId()).thenReturn("healthcheck");
+    when(currentTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(otherTaskConfig.getString("blobstoreName")).thenReturn(null);
+    when(currentTaskConfig.getString("repositoryName")).thenReturn("maven-central");
+    when(otherTaskConfig.getString("repositoryName")).thenReturn(null);
+    when(quartzSchedulerSPI.listsTasks()).thenReturn(Collections.singletonList(otherTask));
+
+    List<TaskInfo> blockedTasks = invokeBlockedBy();
+
+    assertThat("Task with repository should not block task without repository", blockedTasks.size(), is(0));
+  }
+
   private List<TaskInfo> invokeBlockedBy() throws Exception {
     Method blockedByMethod = QuartzTaskJob.class.getDeclaredMethod("blockedBy");
     blockedByMethod.setAccessible(true);

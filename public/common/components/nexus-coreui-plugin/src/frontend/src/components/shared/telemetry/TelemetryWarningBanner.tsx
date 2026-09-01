@@ -11,16 +11,68 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, {useState, useEffect} from 'react';
-import { NxTextLink } from '@sonatype/react-shared-components';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import {Link} from '@radix-ui/themes';
+import { ExternalLink } from 'lucide-react';
+import { ExtJS, SystemAlert } from '@sonatype/nexus-ui-plugin';
 import { restClient, urlBuilder } from '@/utils/api';
 import UIStrings from '../../../constants/UIStrings';
-import SystemNotice from '../../widgets/SystemStatusAlerts/SystemNotice';
-
-import './TelemetryWarningBanner.scss';
 
 const TASKS_PATH = '#admin/system/tasks';
 const TELEMETRY_TASK_TYPE = 'telemetry.upload.retry';
+
+/**
+ * Renders text with markdown-style bold (**text**) as React elements.
+ */
+function renderBoldText(text: string): React.ReactNode {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, index) =>
+    index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+  );
+}
+
+interface HelperLink {
+  TEXT: string;
+  HREF: string;
+}
+
+/**
+ * Replaces all occurrences of the helper link text within the message with a
+ * clickable external Link. Falls back to plain (bold-rendered) text when no
+ * helper link is configured or the link text is not present in the message.
+ * Note: split() is intentionally used to replace ALL occurrences, not just the first.
+ */
+function messageWithLink(messageText: string, helperLink: HelperLink | undefined): React.ReactNode {
+  if (!helperLink) {
+    return renderBoldText(messageText);
+  }
+
+  const linkText = helperLink.TEXT;
+  if (!messageText.includes(linkText)) {
+    return renderBoldText(messageText);
+  }
+
+  const parts = messageText.split(linkText);
+  return parts.reduce((acc: React.ReactNode[], part, index) => {
+    if (index > 0) {
+      acc.push(
+        <Link
+          key={`link-${index}`}
+          href={helperLink.HREF}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-analytics-id="nxrm-telemetry-message-link"
+        >
+          {linkText}
+          <ExternalLink size={12} aria-hidden="true" />
+        </Link>
+      );
+    }
+    if (part) {
+      acc.push(<React.Fragment key={`text-${index}`}>{renderBoldText(part)}</React.Fragment>);
+    }
+    return acc;
+  }, []);
+}
 
 /**
  * REST API Task shape (matches server response)
@@ -38,33 +90,23 @@ interface RestTasksResponse {
 }
 
 /**
- * Telemetry health state from backend.
- * An empty object (all fields undefined) indicates opt-out mode - banner should be hidden.
+ * Telemetry health state from backend. Empty object indicates opt-out mode (banner hidden).
  */
 interface TelemetryHealth {
   showWarning?: boolean;
-  failedReportsThreshold?: number;
+  failedReportDays?: number;
+  remainingGracePeriodDays?: number;
   readOnly?: boolean;
   introducedWarning?: boolean;
 }
 
 /**
- * TelemetryWarningBanner - Warning banner shown when telemetry submissions
- * have failed beyond the threshold, or read-only banner when in read-only mode.
- * <p>
- * Uses ExtJS state to determine visibility. The state is provided by
- * TelemetryHealthStateContributor on the backend.
- * <p>
- * Mode mutual exclusivity (enforced by backend):
- * - Mandatory mode (telemetryMandatoryEnabled=true): Sets readOnly and showWarning
- * - Warning-only mode (telemetryMandatoryEnabled=false): Sets introducedWarning only
- * - Opt-out mode: Returns empty object (banner hidden)
- * <p>
- * Shows multiple banner types based on state:
- * - Read-only mode banner (highest priority): when readOnly is true
- * - Mandatory warning banner: when showWarning is true (mandatory mode, not read-only)
- * - introducedWarning banner: when introducedWarning is true (warning-only mode)
- * <p>
+ * Displays warning banner when telemetry uploads fail persistently.
+ *
+ * Three mutually exclusive modes (determined by backend):
+ * - Read-only mode: System is locked due to prolonged failures (readOnly=true) - red/error
+ * - Mandatory warning: Grace period active, failures above threshold (showWarning=true) - yellow/warning
+ * - Early warning: Failures detected but grace period not active (introducedWarning=true) - yellow/warning
  */
 export default function TelemetryWarningBanner(): React.ReactElement | null {
   const user = ExtJS.useUser();
@@ -121,26 +163,37 @@ export default function TelemetryWarningBanner(): React.ReactElement | null {
       : UIStrings.TELEMETRY.WARNING_BANNER;
 
   const title = content.TITLE;
-  const message = content.MESSAGE.replace('{count}', String(telemetryHealth?.failedReportsThreshold ?? 3));
-  const description = content.DESCRIPTION;
-  const viewTasksLabel = content.VIEW_TASKS;
+  const messageText = content.MESSAGE
+    .replace('{failedReportDays}', String(telemetryHealth?.failedReportDays ?? 0))
+    .replace('{remainingGracePeriodDays}', String(telemetryHealth?.remainingGracePeriodDays ?? 0));
+  const generalRecommendation = content.GENERAL_RECOMMENDATION;
+  const retryRecommendation = content.RETRY_RECOMMENDATION;
+  const retryLink = content.RETRY_LINK;
+  const helperLink = content.HELPER_LINK;
 
-  const noticeLevel = isReadOnly ? 'error' : 'warning';
+  // Red for read-only mode, yellow/warning for both warning modes
+  const tier = isReadOnly ? 'error' : 'warning';
+
+  const message = (
+    <>
+      {messageWithLink(messageText, helperLink)}{' '}
+      {generalRecommendation}{' '}
+      {retryRecommendation}{' '}
+      <Link
+        data-analytics-id="nxrm-telemetry-view-tasks-link"
+        href={getTaskUrl()}
+      >
+        {retryLink}
+      </Link>
+    </>
+  );
 
   return (
-    <SystemNotice
+    <SystemAlert
+      tier={tier}
       title={title}
-      noticeLevel={noticeLevel}
-      additionalAlertClassNames="nxrm-telemetry-warning-banner"
-      nonDismissable
-    >
-      {message} {description}{' '}
-      <NxTextLink
-        href={getTaskUrl()}
-        className="nxrm-telemetry-view-tasks-link"
-      >
-        {viewTasksLabel}
-      </NxTextLink>
-    </SystemNotice>
+      message={message}
+      dismissable={!isReadOnly}
+    />
   );
 }

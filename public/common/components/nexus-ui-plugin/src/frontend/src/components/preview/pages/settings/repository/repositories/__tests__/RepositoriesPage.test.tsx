@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
@@ -21,10 +21,15 @@ import { useRepositoriesApi } from '../useRepositoriesApi';
 import { ToastProvider } from '../../../../../shared/Toast';
 
 // Mock @uirouter/react to avoid UIRouter context requirement in RepositoryListTable
+// and useRepositoryForm (which reads ?tab= via useCurrentStateAndParams).
 jest.mock('@uirouter/react', () => ({
   useRouter: () => ({
-    stateService: { go: jest.fn() },
+    stateService: {
+      go: jest.fn(),
+      href: jest.fn(() => '#preview/admin/iq/hosted-repos-eval'),
+    },
   }),
+  useCurrentStateAndParams: () => ({ state: null, params: {} }),
 }));
 
 // Mock the API hook
@@ -37,6 +42,13 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
     checkPermission: jest.fn().mockReturnValue(true),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn().mockReturnValue(false),
+    }),
+    // RepositoryForm reads permissions through the provider-independent ExtJS.usePermission
+    // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
   },
 }));
 
@@ -93,7 +105,9 @@ const mockApiHook = {
   fetchRoutingRules: jest.fn().mockResolvedValue([]),
   fetchCleanupPolicies: jest.fn().mockResolvedValue([]),
   fetchHealthCheckStatus: jest.fn().mockResolvedValue({}),
+  fetchHealthCheckCapabilityEnabled: jest.fn().mockResolvedValue(true),
   enableHealthCheck: jest.fn().mockResolvedValue(undefined),
+  disableHealthCheck: jest.fn().mockResolvedValue(undefined),
 };
 
 const renderWithTheme = (component: React.ReactElement) => {
@@ -239,7 +253,9 @@ describe('RepositoriesPage', () => {
 
       // Clear and type correct name
       await userEvent.clear(confirmInput);
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is now the literal word "Delete" (case-insensitive) for every
+      // entity (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      await userEvent.type(confirmInput, 'Delete');
       expect(confirmDeleteButton).not.toBeDisabled();
     });
 
@@ -257,7 +273,9 @@ describe('RepositoriesPage', () => {
 
       // Type repository name
       const confirmInput = await screen.findByRole('textbox', { name: /acknowledgement/i });
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is now the literal word "Delete" (case-insensitive) for every
+      // entity (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      await userEvent.type(confirmInput, 'Delete');
 
       // Click delete
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
@@ -320,7 +338,9 @@ describe('RepositoriesPage', () => {
 
       // Type repository name and confirm
       const confirmInput = await screen.findByRole('textbox', { name: /acknowledgement/i });
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is now the literal word "Delete" (case-insensitive) for every
+      // entity (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      await userEvent.type(confirmInput, 'Delete');
       const confirmDeleteButton = screen.getByRole('button', { name: /^delete$/i });
       await userEvent.click(confirmDeleteButton);
 

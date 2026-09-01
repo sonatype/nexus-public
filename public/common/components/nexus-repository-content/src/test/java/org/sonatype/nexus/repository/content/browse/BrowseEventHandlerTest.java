@@ -25,8 +25,10 @@ import org.sonatype.nexus.common.scheduling.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.browse.capability.BrowseTrimService;
+import org.sonatype.nexus.repository.content.browse.store.BrowseNodeData;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPathChangedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
@@ -227,6 +229,107 @@ public class BrowseEventHandlerTest
 
     underTest.flushAssets();
     verify(browseFacet).addPathsToAssets(any());
+  }
+
+  // --- AssetPathChangedEvent tests ---
+
+  @Test
+  public void testAssetPathChangedEvent_deletesOldLeafAndMarksAsPending() throws Exception {
+    String oldPath = "/vendor/package/version/package-1.0.0.zip";
+    String newPath = "/vendor/package/version/package-1.0.0";
+    Long oldNodeId = 42L;
+    BrowseNodeData oldLeaf = new BrowseNodeData();
+    oldLeaf.setNodeId(oldNodeId);
+    when(browseFacet.getByRequestPath(oldPath)).thenReturn(Optional.of(oldLeaf));
+
+    AssetPathChangedEvent event = createAssetPathChangedEvent(1, repository, oldPath, newPath);
+
+    underTest.on(event);
+
+    // Should look up the stale leaf by request_path and drop it by node_id (both un-dialected).
+    verify(browseFacet).getByRequestPath(oldPath);
+    verify(browseFacet).deleteByNodeId(oldNodeId);
+
+    // Should mark asset for creation at new path
+    underTest.flushAssets();
+    verify(browseFacet).addPathsToAssets(any());
+  }
+
+  @Test
+  public void testAssetPathChangedEvent_missingRepository_doesNotDeleteOrMarkPending() throws Exception {
+    String oldPath = "/vendor/package/version/package-1.0.0.zip";
+    String newPath = "/vendor/package/version/package-1.0.0";
+    AssetPathChangedEvent event = createAssetPathChangedEvent(1, null, oldPath, newPath);
+
+    underTest.on(event);
+
+    // Should not interact with browse facet
+    verify(browseFacet, never()).getByRequestPath(any());
+    verify(browseFacet, never()).deleteByNodeId(any());
+    underTest.flushAssets();
+    verify(browseFacet, never()).addPathsToAssets(any());
+  }
+
+  @Test
+  public void testAssetPathChangedEvent_nullOldPath_skipsDeleteButMarksPending() throws Exception {
+    String newPath = "/vendor/package/version/package-1.0.0";
+    AssetPathChangedEvent event = createAssetPathChangedEvent(1, repository, null, newPath);
+
+    underTest.on(event);
+
+    // Should not look up or delete since oldPath is null
+    verify(browseFacet, never()).getByRequestPath(any());
+    verify(browseFacet, never()).deleteByNodeId(any());
+
+    // Should still mark for creation at new path
+    underTest.flushAssets();
+    verify(browseFacet).addPathsToAssets(any());
+  }
+
+  @Test
+  public void testAssetPathChangedEvent_repositoryWithoutBrowseFacet_doesNotThrow() throws Exception {
+    Repository repoNoBrowse = mock(Repository.class);
+    Format format = mock(Format.class);
+    when(format.getValue()).thenReturn(FORMAT_NAME);
+    when(repoNoBrowse.getFormat()).thenReturn(format);
+    when(repoNoBrowse.getName()).thenReturn("no-browse-repo");
+    when(repoNoBrowse.optionalFacet(BrowseFacet.class)).thenReturn(Optional.empty());
+
+    String oldPath = "/vendor/package/version/package-1.0.0.zip";
+    String newPath = "/vendor/package/version/package-1.0.0";
+    AssetPathChangedEvent event = createAssetPathChangedEvent(1, repoNoBrowse, oldPath, newPath);
+
+    underTest.on(event);
+
+    // No exception, and browseFacet not called since repo doesn't have it
+    verify(browseFacet, never()).getByRequestPath(any());
+    verify(browseFacet, never()).deleteByNodeId(any());
+  }
+
+  @Test
+  public void testAssetPathChangedEvent_oldLeafAlreadyGone_skipsDeleteButMarksPending() throws Exception {
+    String oldPath = "/vendor/package/version/package-1.0.0.zip";
+    String newPath = "/vendor/package/version/package-1.0.0";
+    // Leaf has already vanished — getByRequestPath returns empty.
+    when(browseFacet.getByRequestPath(oldPath)).thenReturn(Optional.empty());
+
+    AssetPathChangedEvent event = createAssetPathChangedEvent(1, repository, oldPath, newPath);
+
+    underTest.on(event);
+
+    verify(browseFacet).getByRequestPath(oldPath);
+    verify(browseFacet, never()).deleteByNodeId(any());
+
+    underTest.flushAssets();
+    verify(browseFacet).addPathsToAssets(any());
+  }
+
+  @Test
+  public void testAssetPathChangedEvent_notProcessedWhenPaused() {
+    underTest.pauseEventProcessing();
+    AssetPathChangedEvent event = mock(AssetPathChangedEvent.class);
+    underTest.on(event);
+    verifyNoInteractions(event);
   }
 
   @Test
@@ -846,6 +949,18 @@ public class BrowseEventHandlerTest
 
   private AssetPurgedEvent createAssetPurgedEvent(final Repository repo) throws Exception {
     AssetPurgedEvent event = new AssetPurgedEvent(1, new int[]{1, 2, 3});
+    setRepositorySupplier(event, repo);
+    return event;
+  }
+
+  private AssetPathChangedEvent createAssetPathChangedEvent(
+      final int assetId,
+      final Repository repo,
+      final String oldPath,
+      final String newPath) throws Exception
+  {
+    AssetData asset = createAssetData(assetId);
+    AssetPathChangedEvent event = new AssetPathChangedEvent(asset, oldPath, newPath);
     setRepositorySupplier(event, repo);
     return event;
   }

@@ -109,7 +109,10 @@
   </select>
 
   <select id="countUnnormalized" resultType="int">
-    SELECT COUNT(component_id) FROM ${format}_component WHERE normalized_version IS NULL;
+    SELECT COUNT(component_id)
+      FROM ${format}_component
+     WHERE normalized_version IS NULL
+        OR normalized_version = '';
   </select>
 
   <select id="browseComponents" resultType="ComponentData">
@@ -137,9 +140,11 @@
   </select>
 
   <select id="browseUnnormalized" resultType="ComponentData">
-    SELECT * FROM ${format}_component WHERE normalized_version IS NULL
+    SELECT * FROM ${format}_component
+     WHERE (normalized_version IS NULL 
+            OR normalized_version = '')
     <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
-    ORDER BY component_id LIMIT #{limit};
+     ORDER BY component_id LIMIT #{limit};
   </select>
 
   <select id="selectAssetBlobById"
@@ -300,6 +305,8 @@
     <if test="limit > 0"> LIMIT #{limit}</if>
   </select>
 
+  <!-- H2 has no FOR SHARE support; the race is handled by catching ForeignKeyViolationException
+       (SQLState 23503) in FluentComponentBuilderImpl. -->
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId">
     MERGE INTO ${format}_component (repository_id, namespace, name, kind, version, normalized_version, attributes
     <if test="entityVersionEnabled">, entity_version</if>
@@ -313,14 +320,24 @@
 
   <!-- Note that the ON CONFLICT requires a DO UPDATE so that the entityId is returned, so that's why only single
        field is set, figure thats less work than setting the other coordinates as well -->
+  <!-- The lock_repo CTE acquires FOR SHARE on the content_repository row before the INSERT.
+       This prevents a concurrent repository DELETE from committing while the INSERT is in-flight.
+       WHERE EXISTS forces the CTE to execute. If the row is already gone (0 rows), the INSERT
+       produces 0 rows and componentId stays null — detected in FluentComponentBuilderImpl. -->
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="component.componentId" databaseId="PostgreSQL">
+    WITH lock_repo AS (
+      SELECT repository_id FROM ${format}_content_repository
+      WHERE repository_id = #{component.repositoryId}
+      FOR SHARE
+    )
     INSERT INTO ${format}_component (repository_id, namespace, name, kind, version, normalized_version, attributes
     <if test="entityVersionEnabled">, entity_version</if>
-    ) VALUES (#{component.repositoryId}, #{component.namespace}, #{component.name},
-    #{component.kind}, #{component.version}, #{component.normalizedVersion}, #{component.attributes}
-    <if test="entityVersionEnabled">, 1</if>
     )
-    ON CONFLICT(repository_id, namespace, name, version) DO UPDATE SET repository_id = #{component.repositoryId};
+    SELECT #{component.repositoryId}, #{component.namespace}, #{component.name},
+           #{component.kind}, #{component.version}, #{component.normalizedVersion}, #{component.attributes}
+           <if test="entityVersionEnabled">, 1</if>
+    WHERE EXISTS (SELECT 1 FROM lock_repo)
+    ON CONFLICT(repository_id, namespace, name, version) DO UPDATE SET repository_id = #{component.repositoryId}
   </insert>
 
   <select id="readComponent" resultType="ComponentData">

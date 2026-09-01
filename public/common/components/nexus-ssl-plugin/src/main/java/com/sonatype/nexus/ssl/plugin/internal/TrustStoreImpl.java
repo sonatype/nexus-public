@@ -73,6 +73,9 @@ import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertifica
  *
  * @since ssl 1.0
  */
+// Lazy: the constructor reads from GlobalKeyValueStore (STORAGE phase). As an EventAware bean it is force-instantiated
+// by NexusEventAwareRegistrar during the EVENTS phase (after STORAGE has started), so it must NOT be eagerly created
+// during context refresh, when the datastore is not yet started. See STL-471.
 @Lazy
 @Component
 public class TrustStoreImpl

@@ -57,7 +57,7 @@ export function useCapabilitiesForm({
   deleteCapability,
 }: UseCapabilitiesFormOptions): UseCapabilitiesFormReturn {
   const toast = useToast();
-  const isCreate = !capabilityId && !capability;
+  const isCreate = !(capabilityId || capability);
   // Use onSaveComplete for post-save navigation, fallback to onCancel
   const handleSaveComplete = onSaveComplete || onCancel;
 

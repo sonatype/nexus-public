@@ -60,7 +60,7 @@ export default function MaliciousRiskOnDisk({ toggle, onSizeChanged, className }
   const malwareCount = testOverride || (malwareData?.totalCount ?? 0);
   const user = ExtJS.useUser();
   const userIsLogged = user ?? false;
-  const showMaliciousRiskOnDisk = userIsLogged && (isRiskOnDiskEnabled || malwareCount > 0);
+  const showMaliciousRiskOnDisk = userIsLogged && isRiskOnDiskEnabled;
 
   const isRiskOnDiskNoneAdminOverrideEnabled = ExtJS.state().getValue(MALWARE_RISK_ON_DISK_NONADMIN_OVERRIDE_ENABLED);
   const isAdmin = user && user.administrator;
@@ -131,7 +131,7 @@ function MaliciousRiskOnDiskContent({ toggle, onSizeChanged, className }) {
         <button
             type="button"
             className="nx-collapsible-items__trigger"
-            onClick={onToggleCollapse || undefined}
+            onClick={onToggleCollapse}
             aria-expanded={isExpanded}
         >
           <div className="risk-on-disk-alert-title">

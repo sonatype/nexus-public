@@ -370,6 +370,37 @@ describe('SettingsSidebar', () => {
         });
       });
 
+      describe('service account tokens link', () => {
+        it('should render if serviceAccountEnabled flag is true', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:service-accounts:read': true });
+          givenStateValues({
+            ...getDefaultStateValues(),
+            serviceAccountEnabled: true,
+          });
+          renderComponent();
+          await assertLinkVisible('Service Account Tokens', '/#admin/security/satokens', 'Security');
+        });
+
+        it('should not render if serviceAccountEnabled flag is false', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:service-accounts:read': true });
+          givenStateValues({
+            ...getDefaultStateValues(),
+            serviceAccountEnabled: false,
+          });
+          renderComponent();
+          await assertLinkNotVisible('Service Account Tokens', 'Security');
+        });
+
+        it('should not render if serviceAccountEnabled flag is not set', async () => {
+          givenUserLoggedIn();
+          givenPermissions({ 'nexus:service-accounts:read': true });
+          renderComponent();
+          await assertLinkNotVisible('Service Account Tokens', 'Security');
+        });
+      });
+
       describe('atlassian crowd link', () => {
         it('should render if user has permission, valid bundle and valid license', async () => {
           givenUserLoggedIn();
@@ -758,32 +789,6 @@ describe('SettingsSidebar', () => {
         });
       });
 
-      describe('upgrade link', () => {
-        it('should render if user is admin and has read permissions', async () => {
-          givenUserLoggedIn();
-          givenPermissions({ 'nexus:migration:read': true });
-          givenExtJSState({
-            ...getDefaultStateValues(),
-            capabilityActiveTypes: ['migration'],
-            capabilityCreatedTypes: ['migration']
-          });
-
-          renderComponent();
-
-          await assertLinkVisible('Upgrade', '/#admin/system/upgrade', 'System');
-        });
-
-        it('should not render if user is admin but does not have read permissions', async () => {
-          givenUserLoggedIn();
-          givenExtJSState({
-            ...getDefaultStateValues(),
-            capabilityActiveTypes: ['migration'],
-            capabilityCreatedTypes: ['migration']
-          });
-          renderComponent();
-          await assertLinkNotVisible('Upgrade', 'System');
-        });
-      });
     });
 
     describe('IQ link', () => {

@@ -17,7 +17,7 @@
   height: 100%;
   padding: var(--space-4, 16px);
   background: var(--color-background, #fff);
-  color: var(--color-text-primary, #1a1a1a);
+  color: var(--gray-12, #1a1a1a);
 
   // Dark mode
   [data-theme='dark'] & {
@@ -70,5 +70,4 @@
     // Parent layout (settings-layout-radix__content) handles scrolling
   }
 }
-
 

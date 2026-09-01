@@ -12,97 +12,22 @@
  */
 
 /**
- * Tags API
+ * Tags API (Preview UI)
  *
- * Migration Status (AgentDev3):
- * - fetchTags: ✅ REST (GET /v1/tags)
- * - fetchFilteredTags: ✅ REST (GET /internal/ui/tags/filtered)
- * - fetchTagDetail: ✅ REST (GET /v1/tags/{name})
- *
- * All methods migrated to REST API using restClient.
+ * REST-backed tag operations used by the XState machines and pages:
+ * - fetchTagsFiltered: GET /service/rest/internal/ui/tags/filtered
+ * - fetchTagDetail:    GET /service/rest/v1/tags/{name}
+ * - createTag:         POST /service/rest/v1/tags
  */
 
 import { restClient, parseApiError, urlBuilder } from '../../../../interface/api';
 
 import type {
-  Tag,
   TagDetail,
-  TagPageResponse,
   TagsFilters,
   TagSortField,
   SortDirection,
 } from './tags.types';
-
-/**
- * Fetch all tags from the server using REST API.
- *
- * Uses REST API: GET /service/rest/v1/tags
- *
- * @returns Promise resolving to array of tags
- */
-export async function fetchTags(): Promise<Tag[]> {
-  try {
-    const url = urlBuilder.tags.list();
-    const response = await restClient.get<Tag[]>(url);
-    return Array.isArray(response) ? response : [];
-  } catch (err: unknown) {
-    const apiError = parseApiError(err);
-    console.error('Failed to fetch tags:', err);
-    throw new Error(apiError.message || 'Failed to load tags');
-  }
-}
-
-/**
- * Fetch filtered tags with component counts using REST API.
- *
- * Uses REST API: GET /service/rest/internal/ui/tags/filtered
- *
- * @param filters - Filter criteria
- * @param sortField - Field to sort by
- * @param sortDirection - Sort direction
- * @param page - Page number (0-indexed)
- * @param pageSize - Items per page
- * @returns Promise resolving to paginated tag response
- */
-export async function fetchFilteredTags(
-  filters: TagsFilters,
-  sortField: TagSortField,
-  sortDirection: SortDirection,
-  page: number,
-  pageSize: number
-): Promise<TagPageResponse> {
-  try {
-    const params: Record<string, string> = {
-      sortField,
-      sortDirection,
-      page: String(page),
-      pageSize: String(pageSize),
-    };
-
-    if (filters.nameFilter) {
-      params.nameFilter = filters.nameFilter;
-    }
-
-    if (filters.componentCounts.length > 0) {
-      params.componentCounts = filters.componentCounts.join(',');
-    }
-
-    if (filters.activityDays.length > 0) {
-      params.activityDays = filters.activityDays.join(',');
-    }
-
-    const baseUrl = urlBuilder.tags.filtered();
-    const queryString = new URLSearchParams(params).toString();
-    const url = `${baseUrl}?${queryString}`;
-
-    const response = await restClient.get<TagPageResponse>(url);
-    return response;
-  } catch (err: unknown) {
-    const apiError = parseApiError(err);
-    console.error('Failed to fetch filtered tags:', err);
-    throw new Error(apiError.message || 'Failed to load filtered tags');
-  }
-}
 
 /**
  * Fetch details for a specific tag using REST API.
@@ -149,20 +74,69 @@ export async function createTag(
 }
 
 /**
- * Delete a tag using REST API.
- *
- * Uses REST API: DELETE /service/rest/v1/tags/{tagName}
- *
- * @param tagName - Name of the tag to delete
- * @returns Promise resolving when tag is deleted
+ * Parameters for fetching filtered tags.
  */
-export async function deleteTag(tagName: string): Promise<void> {
-  try {
-    const url = urlBuilder.tags.delete(tagName);
-    await restClient.delete(url);
-  } catch (err: unknown) {
-    const apiError = parseApiError(err);
-    console.error('Failed to delete tag:', err);
-    throw new Error(apiError.message || 'Failed to delete tag');
+export interface FetchTagsFilteredParams {
+  filters: TagsFilters;
+  sortField: TagSortField;
+  sortDirection: SortDirection;
+  page: number;
+  pageSize: number;
+}
+
+/**
+ * Response from fetching filtered tags.
+ */
+export interface FetchTagsFilteredResponse {
+  items: Array<{
+    name: string;
+    attributes: Record<string, unknown> | null;
+    firstCreated: string | null;
+    lastUpdated: string | null;
+    componentCount: number;
+  }>;
+  totalCount: number;
+}
+
+/**
+ * Fetch filtered tags with pagination (used by XState machine).
+ *
+ * Uses REST API: GET /service/rest/internal/ui/tags/filtered
+ *
+ * @param params - Query parameters for filtering
+ * @returns Promise resolving to filtered tags and total count
+ */
+export async function fetchTagsFiltered(
+  params: FetchTagsFilteredParams
+): Promise<FetchTagsFilteredResponse> {
+  const { filters, sortField, sortDirection, page, pageSize } = params;
+
+  const searchParams = new URLSearchParams();
+
+  if (filters.nameFilter) {
+    searchParams.append('nameFilter', filters.nameFilter);
   }
+
+  filters.componentCountRanges.forEach((range) => {
+    searchParams.append('componentCountRanges', range);
+  });
+
+  filters.activityDays.forEach((days) => {
+    searchParams.append('activityDays', String(days));
+  });
+
+  searchParams.append('sortField', sortField);
+  searchParams.append('sortDirection', sortDirection);
+  searchParams.append('page', String(page));
+  searchParams.append('pageSize', String(pageSize));
+
+  const data = await restClient.get<{
+    items: FetchTagsFilteredResponse['items'];
+    totalCount: number;
+  }>(`/service/rest/internal/ui/tags/filtered?${searchParams.toString()}`);
+
+  return {
+    items: data.items,
+    totalCount: data.totalCount,
+  };
 }

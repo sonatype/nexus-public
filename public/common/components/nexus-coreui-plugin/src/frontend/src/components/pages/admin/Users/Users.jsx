@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {useState} from 'react';
 
 import {Detail, Master, MasterDetail} from '@sonatype/nexus-ui-plugin';
 
@@ -18,9 +18,11 @@ import UsersList from './UsersList';
 import UsersDetails from './UsersDetails';
 
 export default function Users() {
+  const [sourceFilter, setSourceFilter] = useState('default');
+
   return <MasterDetail path="admin/security/users">
     <Master>
-      <UsersList/>
+      <UsersList initialSourceFilter={sourceFilter} onSourceFilterChange={setSourceFilter}/>
     </Master>
     <Detail>
       <UsersDetails/>

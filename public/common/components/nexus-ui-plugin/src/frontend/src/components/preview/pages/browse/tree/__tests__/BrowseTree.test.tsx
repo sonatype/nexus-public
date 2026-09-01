@@ -12,8 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, fireEvent, } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import { BrowseTree } from '../BrowseTree';

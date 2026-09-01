@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.ws.rs.Path;
 
 import org.sonatype.nexus.email.EmailManager;
+import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
 import io.swagger.v3.oas.annotations.Hidden;
 
@@ -39,7 +40,7 @@ public class EmailConfigurationApiResourceBeta
   static final String RESOURCE_URI = BETA_API_PREFIX + "/email";
 
   @Autowired
-  public EmailConfigurationApiResourceBeta(final EmailManager emailManager) {
-    super(emailManager);
+  public EmailConfigurationApiResourceBeta(final EmailManager emailManager, final AntiSsrfService antiSsrfService) {
+    super(emailManager, antiSsrfService);
   }
 }

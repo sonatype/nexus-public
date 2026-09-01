@@ -89,7 +89,7 @@ export function PrivilegesList({ onSelect, onEdit, onDelete, onCreate, canEdit =
   // Reset to page 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [filters.filter, filters.typeFilter, filters.readOnlyFilter]);
+  }, []);
 
   // Read-only filter options (Locked = system/read-only, Unlocked = editable)
   const readOnlyOptions = useMemo(
@@ -295,7 +295,7 @@ export function PrivilegesList({ onSelect, onEdit, onDelete, onCreate, canEdit =
         />
 
         {/* Pagination & Summary */}
-        {!loading && !error && privileges.length > 0 && (
+        {!(loading || error ) && privileges.length > 0 && (
           <Flex justify="between" align="center" className="privileges-list__footer">
             <Text size="2" color="gray">
               Showing {startIndex + 1}-{Math.min(endIndex, privileges.length)} of {privileges.length} privileges

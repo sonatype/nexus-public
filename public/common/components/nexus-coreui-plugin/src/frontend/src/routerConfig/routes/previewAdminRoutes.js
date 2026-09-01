@@ -66,10 +66,12 @@ import {
   SamlPage as SamlPageRaw,
   SslCertificatesPage as SslCertificatesPageRaw,
   UserTokensPage as UserTokensPageRaw,
+  ServiceAccountTokensPage,
   LogsPage as LogsPageRaw,
   LoggingConfigPage as LoggingConfigPageRaw,
   SystemInfoPage as SystemInfoPageRaw,
   MetricHealthPage as MetricHealthPageRaw,
+  RecoveryModePage as RecoveryModePageRaw,
   SupportRequestPage as SupportRequestPageRaw,
   SupportZipPage as SupportZipPageRaw,
   TasksPage as TasksPageRaw,
@@ -82,11 +84,18 @@ import {
   UpgradePage as UpgradePageRaw,
   UsagePage,
   UserAccountPage as UserAccountPageRaw,
-  IqServerPage as IqServerPageRaw,
+  IqServerOverviewPage,
+  IqServerConnectedPage as IqServerConnectedPageImpl,
+  HostedRepoEvaluationSetupPage,
 } from '@sonatype/nexus-ui-plugin';
 import {lazyLoad} from './lazyLoad';
 
 const IpAllowListPage = lazyLoad(() => import('@sonatype/nexus-ui-plugin').then(m => ({ default: m.IpAllowList })));
+// ui-plugin already exports these as React.lazy(); wrapping with lazyLoad() would double-wrap them.
+// Two distinct wrapper functions force React to unmount→remount when transitioning
+// between iqConnected and iqConnection (same underlying component, different element type).
+const IqServerConnectedPage = (props) => React.createElement(IqServerConnectedPageImpl, props);
+const IqServerConnectionPage = (props) => React.createElement(IqServerConnectedPageImpl, props);
 
 // Sonatype-internal scenario route wraps MalwareDashboardScenarioPage with
 // a transition-param unwrapper. The named export from ui-plugin is the
@@ -180,6 +189,7 @@ const LoggingConfigPage = withCloudExcluded(
 );
 const SystemInfoPage = withFeatureGate(SystemInfoPageRaw, 'support.systeminfo', 'System Information');
 const MetricHealthPage = withFeatureGate(MetricHealthPageRaw, 'support.metrics', 'Metric Health');
+const RecoveryModePage = RecoveryModePageRaw;
 const SupportRequestPage = withFeatureGate(SupportRequestPageRaw, 'support.supportrequest', 'Support Request');
 const SupportZipPage = withFeatureGate(SupportZipPageRaw, 'support.supportzip', 'Support ZIP');
 
@@ -198,9 +208,8 @@ const LicensingPage = withCloudExcluded(
 const NodesPage = withFeatureGate(NodesPageRaw, 'system.nodes', 'Nodes');
 const UpgradePage = withFeatureGate(UpgradePageRaw, 'system.upgrade', 'Upgrade');
 
-// User Account, IQ Server - Gated
+// User Account
 const UserAccountPage = withFeatureGate(UserAccountPageRaw, 'useraccount', 'User Account');
-const IqServerPage = withFeatureGate(IqServerPageRaw, 'iqserver', 'IQ Server');
 
 // =============================================================================
 // ROUTE DEFINITIONS
@@ -314,8 +323,12 @@ export const previewAdminRoutes = [
     component: UIView,
     data: {
       title: 'Repositories',
+      // NEXUS-54048: match Classic/Default UI (adminRoutes.js REPOSITORIES.ROOT), which uses a
+      // repository-admin prefix so a user with admin on any single repo can see the menu. A specific
+      // requiresPermission: 'nexus:repository-admin:*:*:read' would NOT be satisfied by a narrower
+      // per-repo grant, hiding the menu from users the Default UI shows it to.
       visibilityRequirements: {
-        requiresPermission: Permissions.REPOSITORY_ADMIN.READ,
+        permissionPrefix: 'nexus:repository-admin',
       },
     },
   },
@@ -339,8 +352,11 @@ export const previewAdminRoutes = [
   },
   {
     name: 'preview.admin.repository.repositories.detail',
-    url: '/:repositoryName',
+    url: '/:repositoryName?tab',
     component: RepositoriesPage,
+    params: {
+      tab: { value: null, type: 'string', dynamic: true },
+    },
     data: { title: 'Repository Details' },
   },
   {
@@ -430,8 +446,11 @@ export const previewAdminRoutes = [
     component: UIView,
     data: {
       title: 'Cleanup Policies',
+      // NEXUS-54048: match Classic/Default UI (adminRoutes.js CLEANUPPOLICIES.ROOT), which gates on
+      // nexus:* — the write endpoints require admin, and the menu must not surface to a
+      // settings:read-only user who would then hit a 403.
       visibilityRequirements: {
-        requiresPermission: Permissions.SETTINGS.READ,
+        requiresPermission: Permissions.ADMIN,
       },
     },
   },
@@ -461,8 +480,11 @@ export const previewAdminRoutes = [
     component: UIView,
     data: {
       title: 'Routing Rules',
+      // NEXUS-54048: match Classic/Default UI (adminRoutes.js ROUTINGRULES.ROOT). RoutingRulesResource
+      // requires nexus:* on every endpoint, including the GET/list — so settings:read here would show
+      // the menu but 403 on load.
       visibilityRequirements: {
-        requiresPermission: Permissions.SETTINGS.READ,
+        requiresPermission: Permissions.ADMIN,
       },
     },
   },
@@ -497,7 +519,13 @@ export const previewAdminRoutes = [
     data: {
       title: 'Data Store',
       visibilityRequirements: {
-        requiresPermission: Permissions.SETTINGS.READ,
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js DATASTORE.ROOT). The Data Store
+        // screen is admin-only (nexus:*) AND only available with the pro-datastore bundle on
+        // PRO/COMMUNITY editions — without the bundle+editions gates the tile shows where the
+        // feature does not exist and then dead-ends.
+        bundle: 'nexus-pro-datastore-plugin',
+        requiresPermission: Permissions.ADMIN,
+        editions: ['PRO', 'COMMUNITY'],
       },
     },
   },
@@ -558,9 +586,15 @@ export const previewAdminRoutes = [
     data: { title: 'Create Privilege' },
   },
   {
+    // NEXUS-52167: `?tab` keeps the active profile tab in the URL so it survives
+    // browser Back. `dynamic` avoids a remount on tab switch. Mirrors
+    // repositories.profile above.
     name: 'preview.admin.security.privileges.profile',
-    url: '/:privilegeId/profile',
+    url: '/:privilegeId/profile?tab',
     component: PrivilegesPage,
+    params: {
+      tab: { value: null, type: 'string', dynamic: true },
+    },
     data: { title: 'Privilege Profile' },
   },
   {
@@ -576,8 +610,10 @@ export const previewAdminRoutes = [
     component: UIView,
     data: {
       title: 'Roles',
+      // NEXUS-54048: match Classic/Default UI (adminRoutes.js ROLES.ROOT), which requires BOTH
+      // roles:read and privileges:read (permissions[] is AND).
       visibilityRequirements: {
-        requiresPermission: 'nexus:roles:read',
+        permissions: [Permissions.ROLES.READ, Permissions.PRIVILEGES.READ],
       },
     },
   },
@@ -615,8 +651,10 @@ export const previewAdminRoutes = [
     component: UIView,
     data: {
       title: 'Users',
+      // NEXUS-54048: match Classic/Default UI (adminRoutes.js USERS.ROOT), which requires BOTH
+      // users:read and roles:read (permissions[] is AND).
       visibilityRequirements: {
-        requiresPermission: 'nexus:users:read',
+        permissions: [Permissions.USERS.READ, Permissions.ROLES.READ],
       },
     },
   },
@@ -676,6 +714,9 @@ export const previewAdminRoutes = [
     component: UIView,
     data: {
       title: 'LDAP',
+      // NEXUS-54019: match Classic/Default UI (adminRoutes.js LDAP.ROOT) — gated on ldap:read only,
+      // with NO edition restriction. Preview previously added editions[PRO,COMMUNITY], which hid
+      // LDAP on editions where Classic still shows it.
       visibilityRequirements: {
         requiresPermission: Permissions.LDAP.READ,
       },
@@ -734,8 +775,26 @@ export const previewAdminRoutes = [
     component: UserTokensPage,
     data: {
       title: 'User Tokens',
+      // NEXUS-54019: match Classic/Default UI (adminRoutes.js USERTOKEN.ROOT) — usertoken-settings:read
+      // gated to PRO edition AND a valid usertoken license. Without the licenseValid gate the tile
+      // shows on PRO installs whose license does not include user tokens and then dead-ends.
       visibilityRequirements: {
         requiresPermission: Permissions.USER_TOKENS_SETTINGS.READ,
+        editions: ['PRO'],
+        licenseValid: [{ key: 'usertoken', defaultValue: false }],
+      },
+    },
+  },
+  {
+    name: 'preview.admin.security.serviceaccounttokens',
+    url: '/service-account-tokens',
+    component: ServiceAccountTokensPage,
+    data: {
+      title: 'Service Account Tokens',
+      visibilityRequirements: {
+        requiresPermission: Permissions.SERVICE_ACCOUNTS.READ,
+        editions: ['PRO'],
+        statesEnabled: [{ key: 'serviceAccountEnabled', defaultValue: false }],
       },
     },
   },
@@ -746,7 +805,12 @@ export const previewAdminRoutes = [
     data: {
       title: 'SAML',
       visibilityRequirements: {
-        requiresPermission: Permissions.SETTINGS.READ,
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js SAML.ROOT). SAML is admin-only
+        // (nexus:*) AND only available with the saml bundle on PRO — without the bundle+editions
+        // gates the tile shows where the feature does not exist and then dead-ends.
+        bundle: 'nexus-saml-plugin',
+        requiresPermission: Permissions.ADMIN,
+        editions: ['PRO'],
       },
     },
   },
@@ -757,7 +821,14 @@ export const previewAdminRoutes = [
     data: {
       title: 'OAuth 2.0',
       visibilityRequirements: {
-        requiresPermission: Permissions.SETTINGS.READ,
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js OAUTH2.ROOT). OAuth 2.0 is
+        // admin-only (nexus:*) AND only available with the oauth2 bundle on PRO when the
+        // oauth2Available state is set — without the bundle+editions+state gates the tile shows
+        // where the feature does not exist and then dead-ends.
+        bundle: 'nexus-oauth2-plugin',
+        requiresPermission: Permissions.ADMIN,
+        editions: ['PRO'],
+        statesEnabled: [{ key: 'oauth2Available', defaultValue: false }],
       },
     },
   },
@@ -768,6 +839,11 @@ export const previewAdminRoutes = [
     data: {
       title: 'Atlassian Crowd',
       visibilityRequirements: {
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js ATLASSIANCROWD.ROOT). Crowd is
+        // only available with the crowd bundle and a valid crowd license — without the
+        // bundle+licenseValid gates the tile shows where the feature does not exist and dead-ends.
+        bundle: 'nexus-crowd-plugin',
+        licenseValid: [{ key: 'crowd', defaultValue: false }],
         permissions: ['nexus:crowd:read'],
       },
     },
@@ -778,8 +854,11 @@ export const previewAdminRoutes = [
     component: IpAllowListPage,
     data: {
       title: 'IP Allow List',
+      // NEXUS-54048: gate on nexus:* to match the backend. IpAllowListResource requires
+      // @RequiresPermissions("nexus:*") on every endpoint (admin-only by design, NEXUS-45598).
+      // A settings:read gate let non-admins open the page and then hit a 403.
       visibilityRequirements: {
-        requiresPermission: 'nexus:settings:read',
+        requiresPermission: Permissions.ADMIN,
         editions: ['PRO'],
       },
     },
@@ -897,13 +976,28 @@ export const previewAdminRoutes = [
     },
   },
   {
+    name: 'preview.admin.support.recoverymode',
+    url: '/recoverymode',
+    component: RecoveryModePage,
+    data: {
+      title: 'Recovery Mode',
+      visibilityRequirements: {
+        permissions: [Permissions.ADMIN],
+      },
+    },
+  },
+  {
     name: 'preview.admin.support.supportrequest',
     url: '/supportrequest',
     component: SupportRequestPage,
     data: {
       title: 'Support Request',
+      // NEXUS-54019: match Classic/Default UI (adminRoutes.js SUPPORTREQUEST.ROOT) — atlas:create
+      // gated to PRO. Preview previously gated on atlas:read, which showed the tile to users who
+      // lack the create permission the page actually requires.
       visibilityRequirements: {
-        requiresPermission: 'nexus:atlas:read',
+        requiresPermission: Permissions.ATLAS.CREATE,
+        editions: ['PRO'],
       },
     },
   },
@@ -913,8 +1007,10 @@ export const previewAdminRoutes = [
     component: SupportZipPage,
     data: {
       title: 'Support ZIP',
+      // NEXUS-54019: match Classic/Default UI (adminRoutes.js SUPPORTZIP.ROOT) — atlas:read.
+      // Preview previously gated on the non-existent nexus:supportzip:read privilege.
       visibilityRequirements: {
-        requiresPermission: 'nexus:supportzip:read',
+        requiresPermission: Permissions.ATLAS.READ,
       },
     },
   },
@@ -1055,7 +1151,9 @@ export const previewAdminRoutes = [
     data: {
       title: 'Nodes',
       visibilityRequirements: {
-        requiresPermission: Permissions.SETTINGS.READ,
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js NODES.ROOT), which gates on
+        // nexus:* — the Nodes screen is an admin-only screen.
+        requiresPermission: Permissions.ADMIN,
       },
     },
   },
@@ -1065,6 +1163,12 @@ export const previewAdminRoutes = [
     component: UpgradePage,
     data: {
       title: 'Upgrade',
+      // NEXUS-54237: this page is informational only — current version, edition badge, license
+      // validity, and documentation links. It has no relationship to the Nexus 2→3 migration
+      // wizard. NEXUS-54019 aligned it to migration:read + the 'migration' capability to mirror
+      // that wizard, but the wizard and its capability descriptor are being removed, which makes
+      // the capability gate permanently unsatisfiable and the page unreachable. Back to the
+      // baseline Settings gate, which is what this route used before the alignment.
       visibilityRequirements: {
         requiresPermission: Permissions.SETTINGS.READ,
       },
@@ -1076,6 +1180,13 @@ export const previewAdminRoutes = [
     component: UsagePage,
     data: {
       title: 'Usage',
+      // NEXUS-54048: Usage is a cloud-oriented feature — its Settings Hub card is cloudOnly, so
+      // this route is NOT surfaced in the self-hosted Settings menu (the card is filtered out).
+      // The gate here is therefore dormant on self-hosted. The value differs from the cloud route
+      // (settings:read) and the shared card (settings:read); note the underlying monthly-/daily-
+      // metrics APIs actually require nexus:*, so none of these frontend gates is backend-exact.
+      // Left as METRICS.READ (no behaviour change) since the route is not user-reachable here;
+      // realigning the metrics gates to nexus:* is tracked separately, out of this ticket's scope.
       visibilityRequirements: {
         permissions: [Permissions.METRICS.READ],
       },
@@ -1085,14 +1196,60 @@ export const previewAdminRoutes = [
   // =============================================================================
   // IQ SERVER (top-level admin route, not nested under system)
   // =============================================================================
+  // Root /iq entry — disconnected entry point (overview).
+  // Fetches current IQ config; redirects to iqConnected when already enabled.
   {
     name: 'preview.admin.iq',
-    url: '/iq',
-    component: IqServerPage,
+    url: '/iq-overview',
+    component: IqServerOverviewPage,
     data: {
       title: 'IQ Server',
       visibilityRequirements: {
         requiresPermission: 'nexus:settings:read',
+      },
+    },
+  },
+
+  // IQ Server connected view with Lifecycle + Firewall cards.
+  // Redirects to iqOverview if IQ is disabled after load.
+  {
+    name: 'preview.admin.iqConnected',
+    url: '/iq/connected',
+    component: IqServerConnectedPage,
+    data: {
+      title: 'IQ Server',
+      visibilityRequirements: {
+        requiresPermission: 'nexus:settings:read',
+      },
+    },
+  },
+
+  // Connection settings route — distinct lazy-load wrapper so
+  // React unmounts/remounts on every transition, keeping loadData() fresh.
+  {
+    name: 'preview.admin.iqConnection',
+    url: '/iq/connection',
+    component: IqServerConnectionPage,
+    data: {
+      title: 'IQ Server Connection Settings',
+      visibilityRequirements: {
+        requiresPermission: 'nexus:settings:read',
+      },
+    },
+  },
+
+  // Screen 3 — Hosted Repository Evaluation workflow (Repositories + Settings tabs).
+  {
+    name: 'preview.admin.iqHostedReposEval',
+    url: '/iq/hosted-repos-eval?tab',
+    component: HostedRepoEvaluationSetupPage,
+    data: {
+      title: 'Hosted Repository Evaluation',
+      visibilityRequirements: {
+        requiresPermission: 'nexus:settings:read',
+        statesEnabled: [
+          { key: 'hostedRepositoryEvaluationEnabled', defaultValue: false },
+        ],
       },
     },
   },

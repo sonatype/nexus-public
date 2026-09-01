@@ -11,47 +11,6 @@
  */
 
 .cert-view-dialog {
-  &__overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 50;
-  }
-
-  &__content {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 51;
-    background: var(--color-background);
-    border-radius: var(--radius-4);
-    border: 1px solid var(--gray-a6);
-    padding: var(--space-5);
-    width: min(520px, calc(100vw - 2rem));
-    max-height: calc(100vh - 4rem);
-    overflow-y: auto;
-    box-shadow: var(--shadow-5);
-  }
-
-  &__close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: none;
-    background: transparent;
-    color: var(--gray-11);
-    cursor: pointer;
-    border-radius: var(--radius-2);
-    flex-shrink: 0;
-
-    &:hover {
-      background: var(--gray-a3);
-    }
-  }
-
   &__details {
     border: 1px solid var(--gray-a5);
     border-radius: var(--radius-3);
@@ -76,10 +35,5 @@
   &__value {
     text-align: right;
     word-break: break-all;
-  }
-
-  &__footer {
-    border-top: 1px solid var(--gray-a4);
-    padding-top: var(--space-4);
   }
 }

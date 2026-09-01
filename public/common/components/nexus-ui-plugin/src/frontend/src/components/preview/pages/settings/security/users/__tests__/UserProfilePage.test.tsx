@@ -18,7 +18,7 @@ import '@testing-library/jest-dom';
 
 import { UserProfilePage } from '../UserProfilePage';
 
-const mockUser = {
+const _mockUser = {
   userId: 'deployer',
   realm: 'default',
   source: 'default',

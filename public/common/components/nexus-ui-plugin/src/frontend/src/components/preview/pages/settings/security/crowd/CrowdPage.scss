@@ -58,6 +58,20 @@
   &__unsaved {
     color: var(--orange-9);
   }
+
+  // Visually-hidden live region (NEXUS-54024). Present in the DOM so screen
+  // readers announce status changes, but removed from the visual layout.
+  &__sr-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }
 
 @keyframes spin {

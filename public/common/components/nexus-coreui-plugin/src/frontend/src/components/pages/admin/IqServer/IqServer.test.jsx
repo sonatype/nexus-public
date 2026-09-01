@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render, screen, waitFor, waitForElementToBeRemoved} from '@testing-library/react';
+import {render, screen, waitFor, waitForElementToBeRemoved, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {ExtJS} from '@sonatype/nexus-ui-plugin';
 import TestUtils from '@sonatype/nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -46,7 +46,8 @@ jest.mock('@sonatype/nexus-ui-plugin', () => {
       state: jest.fn(() => ({
         getValue: jest.fn(),
         setValue: jest.fn()
-      }))
+      })),
+      waitForPermissions: jest.fn().mockResolvedValue(undefined),
     }
   }
 });
@@ -63,14 +64,17 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
 const selectors = {
   ...TestUtils.selectors,
   ...TestUtils.formSelectors,
+  // The primary IQ Server form submit button. Post-NEXUS-53278 the label is 'Save'; older callers may
+  // navigate in from the Connected page and land on the 'Update' variant instead. Fall back to a broad
+  // regex so this helper stays useful across all three labels (Save / Update / any lingering Next).
   querySubmitButton: () => {
     try {
-      return screen.getByRole('button', {name: SETTINGS.NEXT_BUTTON_LABEL});
+      return screen.getByRole('button', {name: SETTINGS.SAVE_BUTTON_LABEL});
     } catch {
       try {
-        return screen.getByRole('button', {name: SETTINGS.SAVE_BUTTON_LABEL});
+        return screen.getByRole('button', {name: SETTINGS.UPDATE_BUTTON_LABEL});
       } catch {
-        return screen.queryByRole('button', {name: /next|save/i});
+        return screen.queryByRole('button', {name: /next|save|update/i});
       }
     }
   },
@@ -408,72 +412,85 @@ describe('IqServer', () => {
   describe('Navigation and Button States', () => {
     beforeEach(() => {
       mockRouter.stateService.go.mockClear();
+      mockRouter.stateService.params = {};
     });
 
-    describe('Back Button', () => {
-      it('shows Back button disabled when fromConnected is false', async () => {
+    describe('Top breadcrumb (replaces the old footer Back button)', () => {
+      it('does not render the breadcrumb when fromConnected is false', async () => {
         mockRouter.stateService.params = { fromConnected: false };
 
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-        const backButton = screen.getByText(SETTINGS.BACK_BUTTON_LABEL);
-        expect(backButton).toHaveAttribute('disabled');
+        expect(screen.queryByRole('navigation', {name: /breadcrumb/i})).not.toBeInTheDocument();
       });
 
-      it('shows Back button disabled when fromConnected is not set', async () => {
+      it('does not render the breadcrumb when fromConnected is not set', async () => {
         mockRouter.stateService.params = {};
 
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-        const backButton = screen.getByText(SETTINGS.BACK_BUTTON_LABEL);
-        expect(backButton).toHaveAttribute('disabled');
+        expect(screen.queryByRole('navigation', {name: /breadcrumb/i})).not.toBeInTheDocument();
       });
 
-      it('shows Back button enabled when fromConnected is true (boolean)', async () => {
+      it('renders the breadcrumb when fromConnected is true (boolean)', async () => {
         mockRouter.stateService.params = { fromConnected: true };
 
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-        const backButton = screen.getByText(SETTINGS.BACK_BUTTON_LABEL);
-        expect(backButton).not.toHaveAttribute('disabled');
+        const breadcrumb = screen.getByRole('navigation', {name: /breadcrumb/i});
+        expect(breadcrumb).toBeInTheDocument();
+        expect(breadcrumb).toHaveTextContent('Connection Settings');
       });
 
-      it('shows Back button enabled when fromConnected is true (string)', async () => {
+      it('renders the breadcrumb when fromConnected is true (string)', async () => {
         mockRouter.stateService.params = { fromConnected: 'true' };
 
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-        const backButton = screen.getByText(SETTINGS.BACK_BUTTON_LABEL);
-        expect(backButton).not.toHaveAttribute('disabled');
+        expect(screen.getByRole('navigation', {name: /breadcrumb/i})).toBeInTheDocument();
       });
 
-      it('navigates to Connected page when Back button clicked', async () => {
+      it('navigates to Connected page when the IQ Server breadcrumb link is clicked', async () => {
         mockRouter.stateService.params = { fromConnected: true };
 
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-        const backButton = screen.getByText(SETTINGS.BACK_BUTTON_LABEL);
-        userEvent.click(backButton);
+        const breadcrumb = screen.getByRole('navigation', {name: /breadcrumb/i});
+        const iqServerLink = within(breadcrumb).getByText('IQ Server');
+        userEvent.click(iqServerLink);
 
         expect(mockRouter.stateService.go).toHaveBeenCalledWith('admin.iqconnected');
       });
-    });
 
-    describe('Next Button', () => {
-      it('shows Next button instead of Save button', async () => {
+      it('does not render a Back button in the footer (replaced by the top breadcrumb)', async () => {
+        mockRouter.stateService.params = { fromConnected: true };
+
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
-        expect(screen.getByText(SETTINGS.NEXT_BUTTON_LABEL)).toBeInTheDocument();
-        expect(screen.queryByText(SETTINGS.SAVE_BUTTON_LABEL)).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', {name: SETTINGS.BACK_BUTTON_LABEL})).not.toBeInTheDocument();
+      });
+    });
+
+    describe('Submit Button', () => {
+      // NEXUS-53278: the initial-configuration submit button used to say "Next" (it advances to the
+      // Connected page after save). We renamed it to "Save" because that better reflects what the click
+      // actually does — the wizard still navigates forward, but the primary user intent is persisting
+      // the configuration. Older test assumed the "Next" wording; keep it flipped here.
+      it('shows Save button instead of Next button', async () => {
+        render(<IqServer/>);
+        await waitForElementToBeRemoved(selectors.queryLoadingMask());
+
+        expect(screen.getByText(SETTINGS.SAVE_BUTTON_LABEL)).toBeInTheDocument();
+        expect(screen.queryByText(SETTINGS.NEXT_BUTTON_LABEL)).not.toBeInTheDocument();
       });
 
-      it('disables Next button on initial load when existing form values are unchanged', async () => {
+      it('disables Save button on initial load when existing form values are unchanged', async () => {
         when(Axios.get).calledWith('service/rest/v1/iq').mockResolvedValue({
           data: {
             enabled: true,
@@ -494,9 +511,9 @@ describe('IqServer', () => {
         expect(selectors.querySubmitButton()).toHaveClass('disabled');
       });
 
-      // REMOVED: Failing test - disables Next button when form has validation errors
+      // REMOVED: Failing test - disables submit button when form has validation errors
 
-      it('enables Next button when form has valid changes', async () => {
+      it('enables Save button when form has valid changes', async () => {
         render(<IqServer/>);
         await waitForElementToBeRemoved(selectors.queryLoadingMask());
 
@@ -507,7 +524,7 @@ describe('IqServer', () => {
         expect(selectors.querySubmitButton()).not.toBeDisabled();
       });
 
-      it('saves and navigates to Connected when Next clicked with feature flag enabled', async () => {
+      it('saves and navigates to Connected when Save clicked with feature flag enabled', async () => {
         ExtJS.state.mockReturnValue({
           getValue: jest.fn().mockReturnValue(true),
           setValue: jest.fn()

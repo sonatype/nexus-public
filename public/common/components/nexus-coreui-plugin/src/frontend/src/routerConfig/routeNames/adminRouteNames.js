@@ -123,6 +123,10 @@ export default {
       ROOT: 'admin.security.usertoken',
       TITLE: 'User Tokens',
     },
+    SERVICE_ACCOUNT_TOKENS: {
+      ROOT: 'admin.security.serviceaccounttokens',
+      TITLE: 'Service Account Tokens',
+    },
   },
   SYSTEM: {
     DIRECTORY: 'admin.system',
@@ -150,10 +154,6 @@ export default {
     NODES: {
       ROOT: 'admin.system.nodes',
       TITLE: 'Nodes',
-    },
-    UPGRADE: {
-      ROOT: 'admin.system.upgrade',
-      TITLE: 'Upgrade',
     },
     PREVIEWUI: {
       ROOT: 'admin.system.previewui',

@@ -148,11 +148,17 @@ export default function SearchRadix({ isPreviewUI = false, routes }) {
     setShowSuggestions(false);
 
     if (isPreviewUI) {
-      if (query) {
-        router.stateService.go(routes.previewSearchUnified, { q: query });
-      } else {
-        router.stateService.go(routes.previewSearchUnified);
-      }
+      // inherit: false / reload — see the note in the nexus-coreui-plugin copy
+      // of this component. `go` would otherwise inherit the router's cached
+      // params, which go stale because the search page writes its URL with raw
+      // pushState; and without the scoped reload, re-submitting an already-cached
+      // term is rejected by UI-Router as a same-state/same-params transition, so
+      // the search page never re-syncs.
+      router.stateService.go(
+        routes.previewSearchUnified,
+        query ? { q: query } : {},
+        { inherit: false, reload: routes.previewSearchUnified },
+      );
     } else {
       const menuCtrl =
         window.Ext && Ext.getApplication && Ext.getApplication().getController

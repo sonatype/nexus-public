@@ -1,9 +1,9 @@
 # Detail Views - Agent 2 Workspace
 
 **Owner**: Agent 2  
-**Status**: 🟢 READY TO START
+**Status**: :green_circle: READY TO START
 
-## ⚠️ FIRST: Verify You're in the Right Place
+## :warning: FIRST: Verify You're in the Right Place
 
 **This file should be at:**
 ```
@@ -54,17 +54,16 @@ When user clicks a search result, they see this detail page with 5 tabs:
 
 ```
 /search/details/
-  index.ts                  ← Export all public components
-  GADetailPage.tsx          ← Main container with tab navigation
-  GAOverviewTab.tsx         ← Overview: description, license, URLs
-  GAVersionsTab.tsx         ← Version list with status badges
-  GARepositoriesTab.tsx     ← Repositories containing this GA
-  GAFilesTab.tsx            ← Files for selected version
-  GASecurityTab.tsx         ← Vulnerabilities for selected version
-  VersionStatusBadge.tsx    ← Colored status badge
-  useGADetail.ts            ← React hook for detail state
-  mockData.ts               ← Mock GADetail for development
-  __tests__/                ← Jest tests
+  index.ts                  <- Export all public components
+  GADetailPage.tsx          <- Main container with tab navigation
+  GAOverviewTab.tsx         <- Overview: description, license, URLs
+  GAVersionsTab.tsx         <- Version list table
+  GARepositoriesTab.tsx     <- Repositories containing this GA
+  GAFilesTab.tsx            <- Files for selected version
+  GASecurityTab.tsx         <- Vulnerabilities for selected version
+  useGADetail.ts            <- React hook for detail state
+  mockData.ts               <- Mock GADetail for development
+  __tests__/                <- Jest tests
 ```
 
 ---
@@ -79,7 +78,6 @@ import type {
   GARepository,
   GAAsset,
   GADetailTab,
-  VersionStatus,
 } from '../core';
 
 // Utilities
@@ -117,26 +115,10 @@ Table of versions:
 | Column | Source |
 |--------|--------|
 | Version | `version.version` |
-| Status | `<VersionStatusBadge status={version.status} />` |
-| Published | `version.published` |
-| Repository | `version.repository` |
+| Repositories | `version.repositories` |
+| Last Updated | `version.lastUpdated` |
 
-Click version → updates selected version for Files/Security tabs
-
-### VersionStatusBadge.tsx
-
-```typescript
-interface VersionStatusBadgeProps {
-  status: VersionStatus;
-}
-
-// Colors:
-// 'recommended' → green
-// 'quarantined' → yellow  
-// 'malware' → red
-// 'not-recommended' → gray
-// 'unknown' → gray outline
-```
+Click version -> updates selected version for Files/Security tabs
 
 ### GAFilesTab.tsx & GASecurityTab.tsx
 
@@ -169,15 +151,13 @@ export const mockDetail: GADetail = {
   versions: [
     {
       version: '3.14.0',
-      status: 'recommended',
-      published: '2024-01-15T10:30:00Z',
-      repository: 'maven-central',
+      lastUpdated: '2024-01-15T10:30:00Z',
+      repositories: ['maven-central'],
     },
     {
       version: '3.13.0',
-      status: 'not-recommended',
-      published: '2023-07-01T08:00:00Z',
-      repository: 'maven-central',
+      lastUpdated: '2023-07-01T08:00:00Z',
+      repositories: ['maven-central'],
     },
     // ... more
   ],
@@ -206,10 +186,10 @@ router.stateService.go(GA_SEARCH_ROUTE_NAMES.MAVEN_DETAIL_VERSIONS, { gaId });
 
 ## DO NOT
 
-- ❌ Modify files in `/search/core/`
-- ❌ Modify files in `/search/results/`
-- ❌ Modify route files (Agent 0 owns those)
-- ❌ Create duplicate type definitions
+- :x: Modify files in `/search/core/`
+- :x: Modify files in `/search/results/`
+- :x: Modify route files (Agent 0 owns those)
+- :x: Create duplicate type definitions
 
 ---
 
@@ -222,7 +202,6 @@ router.stateService.go(GA_SEARCH_ROUTE_NAMES.MAVEN_DETAIL_VERSIONS, { gaId });
 2. Ensure `index.ts` exports:
    ```typescript
    export { GADetailPage } from './GADetailPage';
-   export { VersionStatusBadge } from './VersionStatusBadge';
    // ... other public exports
    ```
 

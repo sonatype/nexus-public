@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.selfhosted.assemblies</groupId>
     <artifactId>nexus-selfhosted-assemblies-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-repository-core</artifactId>
@@ -90,11 +90,6 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-jmx</artifactId>
     </dependency>
-    <!-- NEXUS-46395: the upstream org.eclipse.jetty.ee10:jetty-ee10-servlet is intentionally
-         NOT declared here. The Nexus-modified jetty-ee10-servlet arrives transitively via
-         nexus-spring (which depends on it directly). Other transitives that drag in the
-         upstream jar (e.g. jetty-ee10-webapp) exclude it via the pattern in
-         nexus-bootstrap-spring/pom.xml. -->
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna-platform</artifactId>

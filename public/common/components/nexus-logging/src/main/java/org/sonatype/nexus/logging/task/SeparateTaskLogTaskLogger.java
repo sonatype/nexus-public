@@ -13,8 +13,10 @@
 package org.sonatype.nexus.logging.task;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.sift.SiftingAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import java.io.File;
 import java.time.LocalDateTime;
@@ -100,6 +102,61 @@ public class SeparateTaskLogTaskLogger
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
     MDC.remove(TASK_LOG_ONLY_MDC);
     MDC.remove(TASK_LOG_WITH_PROGRESS_MDC);
+    stopNestedFileAppender();
+  }
+
+  /**
+   * Stops the nested FileAppender created by the SiftingAppender for this task.
+   * This releases the file handle that would otherwise remain open, preventing file handle leaks.
+   *
+   * <p>
+   * Note: The AppenderTracker may still hold a reference to this appender after stopping it,
+   * but Logback's UnsynchronizedAppenderBase checks the 'started' flag before appending,
+   * so late-arriving log events are safely ignored. The tracker will eventually evict the
+   * stopped appender during its normal stale-component cleanup cycle (default: 30 minutes
+   * when no {@code <timeout>} is configured in the SiftingAppender's sift block).
+   *
+   * @see <a href="https://sonatype.atlassian.net/browse/NEXUS-29099">NEXUS-29099</a>
+   */
+  void stopNestedFileAppender() {
+    SiftingAppender siftingAppender = getTaskLogFileSiftingAppender();
+    if (siftingAppender == null) {
+      return;
+    }
+
+    Appender<ILoggingEvent> nestedAppender = siftingAppender.getAppenderTracker().find(taskLogIdentifier);
+
+    if (nestedAppender instanceof FileAppender<ILoggingEvent> fileAppender) {
+      fileAppender.stop();
+      log.debug("Stopped nested FileAppender for task log: {}", taskLogIdentifier);
+    }
+    else if (nestedAppender != null) {
+      log.debug("Nested appender for task {} is not a FileAppender (type: {}), skipping stop",
+          taskLogIdentifier, nestedAppender.getClass().getSimpleName());
+    }
+    else {
+      log.debug("No nested appender found for task: {}", taskLogIdentifier);
+    }
+  }
+
+  /**
+   * Returns the SiftingAppender used for task log files, or null if not configured.
+   * This method is package-private for testability.
+   */
+  SiftingAppender getTaskLogFileSiftingAppender() {
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    Appender<ILoggingEvent> appender = loggerContext.getLogger(ROOT_LOGGER_NAME).getAppender("tasklogfile");
+
+    if (appender instanceof SiftingAppender siftingAppender) {
+      return siftingAppender;
+    }
+
+    if (appender != null) {
+      log.debug("Task log appender is not a SiftingAppender (type: {}), skipping nested appender stop",
+          appender.getClass().getSimpleName());
+    }
+
+    return null;
   }
 
   @Override

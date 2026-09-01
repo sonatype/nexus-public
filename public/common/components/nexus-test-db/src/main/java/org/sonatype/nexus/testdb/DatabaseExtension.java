@@ -89,6 +89,11 @@ public class DatabaseExtension
   }
 
   @Override
+  public boolean mayReturnZeroTestTemplateInvocationContexts(final ExtensionContext context) {
+    return true;
+  }
+
+  @Override
   public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(
       final ExtensionContext extensionContext)
   {

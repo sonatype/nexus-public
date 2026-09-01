@@ -18,6 +18,7 @@ import {assign} from 'xstate';
 import {
   FormUtils,
   ExtAPIUtils,
+  ExtJS,
   APIConstants,
   ValidationUtils,
 } from '@sonatype/nexus-ui-plugin';
@@ -307,6 +308,7 @@ export default FormUtils.buildFormMachine({
   },
   services: {
     fetchData: async () => {
+      await ExtJS.waitForPermissions();
       const response = await ExtAPIUtils.extAPIRequest(ACTION, METHODS.READ);
       return ExtAPIUtils.checkForError(response) || response;
     },

@@ -103,23 +103,21 @@ public class SelectorComboFormFieldTest
     assertThat(field.getLabel(), equalTo(LABEL));
     assertThat(field.getHelpText(), equalTo(HELP_TEXT));
     assertFalse(field.isRequired());
-    // Combobox's 5-arg constructor maps the 5th argument to initialValue, not regexValidation (see NEXUS-53405)
-    assertThat(field.getRegexValidation(), nullValue());
-    assertThat(field.getInitialValue(), equalTo(REGEX));
+    assertThat(field.getRegexValidation(), equalTo(REGEX));
+    assertThat(field.getInitialValue(), nullValue());
   }
 
   @Test
-  public void when_CreatingNew_With5Args_AndArbitraryInitialValue_Expect_5thArgIsInitialValueNotRegex() {
-    // make the trap explicit with a value that is clearly NOT a regex: it must still land in initialValue
-    String initial = "preselected-selector";
-    SelectorComboFormField field = new SelectorComboFormField(ID, LABEL, HELP_TEXT, true, initial);
+  public void when_CreatingNew_With5Args_Expect_5thArgIsRegexValidation() {
+    String regex = "preselected-selector";
+    SelectorComboFormField field = new SelectorComboFormField(ID, LABEL, HELP_TEXT, true, regex);
     assertTrue(field.isRequired());
-    assertThat(field.getInitialValue(), equalTo(initial));
-    assertThat(field.getRegexValidation(), nullValue());
+    assertThat(field.getRegexValidation(), equalTo(regex));
+    assertThat(field.getInitialValue(), nullValue());
   }
 
   @Test
-  public void when_CreatingNew_With5Args_AndNullInitialValue_Expect_RegexAndInitialValueNull() {
+  public void when_CreatingNew_With5Args_AndNullRegexValidation_Expect_RegexAndInitialValueNull() {
     SelectorComboFormField field = new SelectorComboFormField(ID, LABEL, HELP_TEXT, true, null);
     assertThat(field.getId(), equalTo(ID));
     assertThat(field.getLabel(), equalTo(LABEL));

@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { Box, Text } from '@radix-ui/themes';
-import { ExternalLink } from 'lucide-react';
 
 import {
   SettingsFormSection,

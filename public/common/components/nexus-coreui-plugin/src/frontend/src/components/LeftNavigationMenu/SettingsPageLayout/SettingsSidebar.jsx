@@ -151,6 +151,13 @@ export default function SettingsSidebar() {
           text={UIStrings.USER_TOKEN_CONFIGURATION.MENU.text}
           data-analytics-id="nxrm-global-secondary-navbar-security-usertoken"
         />
+        {ExtJS.state().getValue('serviceAccountEnabled', false) &&
+          <LeftNavigationMenuCollapsibleChildItem
+            name={ADMIN.SECURITY.SERVICE_ACCOUNT_TOKENS.ROOT}
+            text={UIStrings.SERVICE_ACCOUNT_TOKENS.MENU.text}
+            data-analytics-id="nxrm-global-secondary-navbar-security-serviceaccounttokens"
+          />
+        }
       </LeftNavigationMenuCollapsibleItem>
 
       {/* === Support -- Collapsible Menu === */}
@@ -260,11 +267,6 @@ export default function SettingsSidebar() {
           text={UIStrings.TASKS.MENU.text}
           params={{ taskId: null }}
           data-analytics-id="nxrm-global-secondary-navbar-system-tasks"
-        />
-        <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SYSTEM.UPGRADE.ROOT}
-          text={UIStrings.UPGRADE.MENU.text}
-          data-analytics-id="nxrm-global-secondary-navbar-system-upgrade"
         />
       </LeftNavigationMenuCollapsibleItem>
 

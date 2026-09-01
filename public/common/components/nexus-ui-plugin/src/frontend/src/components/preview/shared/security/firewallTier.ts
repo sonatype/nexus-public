@@ -39,7 +39,7 @@ export interface FirewallTierInfo {
  */
 export function isIqServerConnected(): boolean {
   const clm = ExtJS.state()?.getValue?.('clm');
-  return !!(clm?.enabled);
+  return Boolean((clm?.enabled));
 }
 
 /**
@@ -47,7 +47,7 @@ export function isIqServerConnected(): boolean {
  */
 export function hasIqFirewallCapability(): boolean {
   const clm = ExtJS.state()?.getValue?.('clm');
-  return !!(clm?.hasFirewall);
+  return Boolean((clm?.hasFirewall));
 }
 
 /**
@@ -109,8 +109,8 @@ export function useFirewallTier(): FirewallTierInfo {
     clm = ExtJS.state?.()?.getValue?.('clm');
   }
 
-  const iqConnected = !!(clm?.enabled);
-  const hasIqFirewall = !!(clm?.hasFirewall);
+  const iqConnected = Boolean((clm?.enabled));
+  const hasIqFirewall = Boolean((clm?.hasFirewall));
 
   const tier: FirewallTier = (iqConnected && hasIqFirewall) ? 'enterprise' : 'none';
 

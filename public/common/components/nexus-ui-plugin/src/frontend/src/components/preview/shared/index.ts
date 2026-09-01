@@ -107,6 +107,18 @@ export {
   hasUnsavedChanges,
   useIsCloud,
   useHasFirewallLicense,
+  useUnreadStatusFailure,
+  resetUnreadStatusFailure,
+  STATUS_BELL_ACK_STORAGE_KEY,
+  useBlobStoreInfo,
+  useRepositoryMetrics,
+} from './hooks';
+export type {
+  UseUnreadStatusFailureReturn,
+  BlobStoreInfo,
+  UseBlobStoreInfoResult,
+  RepositoryMetrics,
+  UseRepositoryMetricsResult,
 } from './hooks';
 
 // Toast - Viewport-fixed notification system (available but not yet in use)
@@ -135,7 +147,12 @@ export {
   FormatIcon,
   type FormatIconProps,
   FORMAT_LABELS,
-  FORMAT_LOGOS,
+  FORMAT_SVGS,
+  FORMAT_IMAGES,
+  FORMAT_ICONS,
+  TYPE_ICONS,
+  DEFAULT_FORMAT_ICON,
+  type IconComponent,
 } from './Badges';
 
 // ConfirmDialog - Modal confirmation dialog
@@ -159,10 +176,14 @@ export {
   SettingsAlert,
   SettingsButton,
   SettingsTransferList,
+  RequiredMark,
 } from './form';
 
 // SearchRadix - Global header search with autocomplete
 export { SearchRadix } from './SearchRadix';
+
+// SystemStatusBell - Global header status bell shared by coreui and cloud
+export { default as SystemStatusBell } from './SystemStatusBell/SystemStatusBell';
 
 // Navigation Primitives - Reusable navigation components
 export {
@@ -222,3 +243,14 @@ export {
 
 // exportToCsv - Trigger a browser CSV file download from tabular data
 export { exportToCsv } from './utils/exportToCsv';
+
+// SystemAlerts - Application-scoped banner host (Preview UI only)
+export {
+  SystemAlerts,
+  type SystemAlertsProps,
+  SystemAlert,
+  type SystemAlertProps,
+  type SystemAlertTier,
+  type SystemAlertAction,
+  CELimitsAlert,
+} from './SystemAlerts';

@@ -28,7 +28,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.rest.Resource;
@@ -41,6 +40,7 @@ import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
 import org.sonatype.nexus.security.role.Role;
+import org.sonatype.nexus.security.role.RoleAssignabilityChecker;
 import org.sonatype.nexus.security.role.RoleContainsItselfException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -84,9 +84,38 @@ public class RoleApiResource
 
   private final SecuritySystem securitySystem;
 
+  private final RoleAssignabilityChecker roleAssignabilityChecker;
+
   @Autowired
-  public RoleApiResource(final SecuritySystem securitySystem) {
+  public RoleApiResource(
+      final SecuritySystem securitySystem,
+      final RoleAssignabilityChecker roleAssignabilityChecker)
+  {
     this.securitySystem = checkNotNull(securitySystem);
+    this.roleAssignabilityChecker = checkNotNull(roleAssignabilityChecker);
+  }
+
+  @Override
+  @GET
+  @Path("/assignable")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:roles:read")
+  public List<RoleXOResponse> getAssignableRoles(
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source)
+  {
+    log.debug("Getting assignable roles for current user");
+
+    try {
+      return securitySystem.listRoles(source)
+          .stream()
+          .filter(role -> roleAssignabilityChecker.isRoleAssignable(role.getRoleId()))
+          .map(RoleXOResponse::fromRole)
+          .sorted(Comparator.comparing(RoleXOResponse::getId))
+          .toList();
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
+    }
   }
 
   @Override
@@ -119,11 +148,17 @@ public class RoleApiResource
   @POST
   @RequiresAuthentication
   @RequiresPermissions("nexus:roles:create")
-  public RoleXOResponse create(@NotNull @Valid final RoleXORequest roleXO) {
+  public RoleXOResponse create(
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source,
+      @NotNull @Valid final RoleXORequest roleXO)
+  {
     try {
-      Role role = getDefaultAuthorizationManager().addRole(fromXO(roleXO));
-
+      AuthorizationManager manager = securitySystem.getAuthorizationManager(source);
+      Role role = manager.addRole(fromXO(roleXO, source));
       return RoleXOResponse.fromRole(role);
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
     }
     catch (DuplicateRoleException e) {
       throw buildDuplicateRoleException(roleXO.getId());
@@ -133,6 +168,9 @@ public class RoleApiResource
     }
     catch (NoSuchPrivilegeException e) {
       throw buildContainedPrivilegeNotFoundException(e.getPrivilegeId(), roleXO.getId());
+    }
+    catch (RoleContainsItselfException e) {
+      throw buildRoleContainsItselfException(e.getRoleId());
     }
   }
 
@@ -161,19 +199,26 @@ public class RoleApiResource
   @Path("/{id}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:roles:update")
-  public void update(@PathParam("id") @NotEmpty final String id, @NotNull @Valid final RoleXORequest roleXO) {
+  public void update(
+      @PathParam("id") @NotEmpty final String id,
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source,
+      @NotNull @Valid final RoleXORequest roleXO)
+  {
     try {
       if (!roleXO.getId().equals(id)) {
         throw buildRoleConflictException(roleXO.getId(), id);
       }
 
-      AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
+      AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(source);
       int latestVersion = authorizationManager.getRole(id).getVersion();
-      Role role = fromXO(roleXO);
+      Role role = fromXO(roleXO, source);
       role.setRoleId(id);
       role.setVersion(latestVersion);
 
       authorizationManager.updateRole(role);
+    }
+    catch (NoSuchAuthorizationManagerException e) {
+      throw buildBadSourceException(source);
     }
     catch (ReadonlyRoleException e) {
       throw buildReadonlyRoleException(id);
@@ -197,10 +242,16 @@ public class RoleApiResource
   @Path("/{id}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:roles:delete")
-  public void delete(@PathParam("id") @NotEmpty final String id) {
-    AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
+  public void delete(
+      @PathParam("id") @NotEmpty final String id,
+      @DefaultValue(DEFAULT_SOURCE) @QueryParam("source") final String source)
+  {
     try {
+      AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(source);
       authorizationManager.deleteRole(id);
+    }
+    catch (NoSuchAuthorizationManagerException e) { // NOSONAR
+      throw buildBadSourceException(source);
     }
     catch (NoSuchRoleException e) { // NOSONAR
       throw buildRoleNotFoundException(id);
@@ -224,7 +275,7 @@ public class RoleApiResource
   private WebApplicationMessageException buildReadonlyRoleException(final String id) {
     log.debug("attempt to modify/delete readonly role {}", id);
     return new WebApplicationMessageException(Status.BAD_REQUEST, String.format(ROLE_INTERNAL, id),
-        MediaType.APPLICATION_JSON);
+        APPLICATION_JSON);
   }
 
   private WebApplicationMessageException buildRoleNotFoundException(final String id) {
@@ -253,28 +304,17 @@ public class RoleApiResource
   private WebApplicationMessageException buildRoleConflictException(final String xoId, final String pathId) {
     log.debug("XO id {} and path id {} do not match", xoId, pathId);
     return new WebApplicationMessageException(Status.CONFLICT, String.format(ROLE_CONFLICT, xoId, pathId),
-        MediaType.APPLICATION_JSON);
+        APPLICATION_JSON);
   }
 
   private WebApplicationMessageException buildRoleContainsItselfException(final String roleId) {
     log.debug("Role {} cannot contain itself either directly or indirectly.", roleId);
     return new WebApplicationMessageException(Status.BAD_REQUEST, String.format(ROLE_CONTAINS_ITSELF, roleId),
-        MediaType.APPLICATION_JSON);
+        APPLICATION_JSON);
   }
 
-  private Role fromXO(final RoleXORequest roleXO) {
-    return new Role(roleXO.getId(), roleXO.getName(), roleXO.getDescription(), DEFAULT_SOURCE, false,
+  private Role fromXO(final RoleXORequest roleXO, final String source) {
+    return new Role(roleXO.getId(), roleXO.getName(), roleXO.getDescription(), source, false,
         roleXO.getRoles(), roleXO.getPrivileges());
-  }
-
-  private AuthorizationManager getDefaultAuthorizationManager() {
-    try {
-      return securitySystem.getAuthorizationManager(DEFAULT_SOURCE);
-    }
-    // this should never happen, the default source is always available
-    catch (NoSuchAuthorizationManagerException e) {
-      log.error("Unable to retrieve the default authorization manager", e);
-      return null;
-    }
   }
 }

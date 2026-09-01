@@ -18,6 +18,12 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -41,6 +47,8 @@ import org.sonatype.nexus.repository.manager.RepositoryAttributeService;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.HeaderOnlyPayload;
 import org.sonatype.nexus.transaction.RetryDeniedException;
 import org.sonatype.nexus.validation.ssrf.AntiSsrfService;
 
@@ -79,11 +87,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -96,8 +106,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.OUTBOUND_REQUESTS_LOG_ONLY;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.MISSING_BLOB_SKIP_NEGATIVE_CACHE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.PROXY_THROTTLED_ANALYTICS_MARKED;
+import static org.sonatype.nexus.repository.replication.PullReplicationSupport.IS_REPLICATION_REQUEST;
+
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -107,6 +120,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class ProxyFacetSupportTest
 {
+  private static final String SHARED_PATH = "/com/example/artifact/1.0/artifact-1.0.pom";
+
   @Mock
   ThrottlerInterceptor contentUsageThrottlerInterceptor;
 
@@ -1080,5 +1095,315 @@ public class ProxyFacetSupportTest
     // normalizeUri must be disabled and the client's timeout preserved
     assertThat(request.getConfig().isNormalizeUri(), is(false));
     assertThat(request.getConfig().getSocketTimeout(), is(clientSocketTimeout));
+  }
+
+  // NEXUS-54133: FilteredHttpClientSupport (base of BlockingHttpClient / MonitoredHttpClient) now
+  // implements Configurable. This verifies that when a REAL decorator (rather than a mock with
+  // extraInterfaces) wraps a Configurable delegate, ProxyFacetSupport.execute() reaches through the
+  // decorator via getConfig() and preserves the delegate's timeouts on the outbound request instead
+  // of silently overwriting them with RequestConfig.DEFAULT (all -1) on the NEXUS-52769 code path.
+  @Test
+  public void execute_preservesTimeouts_whenClientIsFilteredHttpClientSupportDecorator() throws Exception {
+    setField(underTest, "encodingHelper", new EncodingHelper(new EscapeHelper()));
+
+    HttpGet request = new HttpGet("http://example.com/path");
+    int clientSocketTimeout = 77_000;
+    RequestConfig delegateConfig = RequestConfig.custom()
+        .setSocketTimeout(clientSocketTimeout)
+        .build();
+
+    // Delegate implements Configurable, mirroring org.apache.http.impl.client.InternalHttpClient.
+    org.apache.http.impl.client.CloseableHttpClient delegate = mock(
+        org.apache.http.impl.client.CloseableHttpClient.class,
+        withSettings().extraInterfaces(Configurable.class));
+    when(((Configurable) delegate).getConfig()).thenReturn(delegateConfig);
+    org.apache.http.client.methods.CloseableHttpResponse stubResponse =
+        mock(org.apache.http.client.methods.CloseableHttpResponse.class);
+    when(delegate.execute(any(org.apache.http.HttpHost.class), any(HttpRequestBase.class), any(HttpContext.class)))
+        .thenReturn(stubResponse);
+
+    // Real FilteredHttpClientSupport subclass — the actual decorator shape used in production
+    // (BlockingHttpClient / MonitoredHttpClient extend this class). No Mockito extraInterfaces trick.
+    HttpClient decorator =
+        new org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport(delegate)
+        {
+          @Override
+          protected org.apache.http.client.methods.CloseableHttpResponse filter(
+              final org.apache.http.HttpHost target,
+              final org.sonatype.nexus.repository.httpclient.FilteredHttpClientSupport.Filterable filterable) throws IOException
+        {
+            return filterable.call();
+          }
+        };
+
+    underTest.execute(cachedContext, decorator, request);
+
+    // The decorator itself must be recognised as Configurable (NEXUS-54133 fix)…
+    assertThat(decorator instanceof Configurable, is(true));
+    // …ProxyFacetSupport must set normalizeUri=false for the SigV4/NEXUS-52769 path…
+    assertThat(request.getConfig().isNormalizeUri(), is(false));
+    // …and must propagate the delegate's timeouts instead of falling back to RequestConfig.DEFAULT (-1).
+    assertThat(request.getConfig().getSocketTimeout(), is(clientSocketTimeout));
+  }
+
+  // NEXUS-53338: replication requests must bypass the staleness short-circuit so
+  // modified assets are re-fetched regardless of the proxy content max-age setting.
+  @Test
+  public void testGet_replicationRequest_bypassesStalenessCheckAndFetchesFromRemote() throws IOException {
+    // Content is in cache and NOT stale (max-age not yet exceeded)
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    // Flag this context as a replication pull request
+    when(cachedContextAttributesMap.get(eq(IS_REPLICATION_REQUEST), eq(Boolean.class), eq(false)))
+        .thenReturn(Boolean.TRUE);
+
+    // When the staleness check is properly bypassed, fetch + store are invoked
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, content);
+    doReturn(storedContent).when(underTest).store(cachedContext, reFetchedContent);
+
+    Content result = underTest.get(cachedContext);
+
+    // Replication must not return the stale cached copy; it must re-fetch from the source
+    verify(underTest).fetch(cachedContext, content);
+    assertThat(result, is(storedContent));
+  }
+
+  @Test
+  public void testGet_nonReplicationRequest_returnsCachedContentWhenNotStale() throws IOException {
+    // Confirm that regular (non-replication) requests continue to honour the cache
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    // IS_REPLICATION_REQUEST is not set → isReplicationRequest() returns false by default
+
+    Content result = underTest.get(cachedContext);
+
+    verify(underTest, never()).fetch(any(), any(), any());
+    assertThat(result, is(content));
+  }
+
+  // ---------- hasContentFor (NEXUS-54130 read-through HA divergence check) ----------
+
+  /**
+   * Happy path: getCachedContent returns non-null content → hasContentFor returns true and the context is
+   * not mutated. This is the branch used by NegativeCacheHandler in an HA cluster to detect that a peer has
+   * populated the shared local store since this node cached its 404.
+   */
+  @Test
+  public void hasContentFor_returnsTrueWhenCachedContentPresent() throws IOException {
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+
+    boolean result = underTest.hasContentFor(cachedContext);
+
+    assertThat(result, is(true));
+    verify(cachedContextAttributesMap, never()).set(eq(MISSING_BLOB_SKIP_NEGATIVE_CACHE), any());
+  }
+
+  /**
+   * MissingBlobException path: metadata says the asset exists but the underlying blob is missing.
+   * hasContentFor must return false AND must NOT set {@link ProxyFacetSupport#MISSING_BLOB_SKIP_NEGATIVE_CACHE}
+   * on the context — the private maybeGetCachedContent sets that flag on the fetch path, and it must never
+   * fire from a read-only probe (setting it would permanently defeat NFC upstream-shielding for that path).
+   */
+  @Test
+  public void hasContentFor_missingBlobException_returnsFalseAndDoesNotMutateContext() throws IOException {
+    doThrow(new MissingBlobException(null)).when(underTest).getCachedContent(cachedContext);
+
+    boolean result = underTest.hasContentFor(cachedContext);
+
+    assertThat(result, is(false));
+    verify(cachedContextAttributesMap, never()).set(eq(MISSING_BLOB_SKIP_NEGATIVE_CACHE), any());
+  }
+
+  /**
+   * Generic exception path: any other IOException / RuntimeException from getCachedContent is swallowed and
+   * the caller sees "no local content". The failure is logged at WARN so operators can detect a real storage
+   * regression, but must never propagate to the request path.
+   */
+  @Test
+  public void hasContentFor_unexpectedException_returnsFalseAndSwallowsSilently() throws IOException {
+    Request request = mock(Request.class);
+    when(request.getPath()).thenReturn("/some/path.txt");
+    when(cachedContext.getRequest()).thenReturn(request);
+    doThrow(new IOException("simulated storage failure")).when(underTest).getCachedContent(cachedContext);
+
+    boolean result = underTest.hasContentFor(cachedContext);
+
+    assertThat(result, is(false));
+    verify(cachedContextAttributesMap, never()).set(eq(MISSING_BLOB_SKIP_NEGATIVE_CACHE), any());
+  }
+
+  // ---------- NEXUS-54507 concurrent HEAD/GET cooperation ----------
+
+  /**
+   * <p>
+   * The cooperation key is method-insensitive, so a HEAD and a GET for the same uncached path share
+   * one fetch. A HEAD leader returns a {@link HeaderOnlyPayload}, which reports the upstream
+   * Content-Length but opens an empty stream. Handing that to a GET makes the view declare
+   * {@code Content-Length: N} and then write 0 bytes, which Jetty rejects with
+   * {@code IOException: written 0 < N content-length} - surfacing to the client as a 500.
+   */
+  @Test
+  public void testGet_concurrentHeadAndGet_getDoesNotInheritHeaderOnlyPayload() throws Exception {
+    // cooperation must be ON for the GET to join the HEAD's in-flight fetch
+    underTest.configureCooperation(new DefaultCooperation2Factory(), true, Duration.ofSeconds(0),
+        Duration.ofSeconds(60), 10);
+    underTest.buildCooperation();
+
+    Request headRequest = mock(Request.class);
+    when(headRequest.getAction()).thenReturn(HttpMethods.HEAD);
+    when(headRequest.getPath()).thenReturn(SHARED_PATH);
+    Context headContext = proxyContext(headRequest);
+
+    Request getRequest = mock(Request.class);
+    when(getRequest.getAction()).thenReturn(HttpMethods.GET);
+    when(getRequest.getPath()).thenReturn(SHARED_PATH);
+    Context getContext = proxyContext(getRequest);
+
+    // nothing cached: both requests must go to the remote
+    doReturn(null).when(underTest).getCachedContent(any());
+
+    // the HEAD leader's remote response - headers only, no body (as built by createContent())
+    HttpResponse headResponse = mock(HttpResponse.class);
+    when(headResponse.getEntity()).thenReturn(null);
+    when(headResponse.getFirstHeader(HttpHeaders.CONTENT_LENGTH))
+        .thenReturn(new BasicHeader(HttpHeaders.CONTENT_LENGTH, "4148"));
+    Content headerOnlyContent = new Content(new HeaderOnlyPayload(headResponse));
+
+    // a real GET fetch would return a body-bearing payload
+    Content bodyContent = new Content(new BytesPayload(new byte[4148], "application/octet-stream"));
+
+    CountDownLatch headIsFetching = new CountDownLatch(1);
+    CountDownLatch getHasJoined = new CountDownLatch(1);
+
+    doAnswer(invocation -> {
+      Context ctx = invocation.getArgument(0);
+      if (HttpMethods.HEAD.equals(ctx.getRequest().getAction())) {
+        // hold the cooperation key open so the GET arrives while this fetch is in flight
+        headIsFetching.countDown();
+        getHasJoined.await(5, TimeUnit.SECONDS);
+        return headerOnlyContent;
+      }
+      return bodyContent;
+    }).when(underTest).fetch(any(Context.class), any());
+
+    doAnswer(invocation -> invocation.getArgument(1)).when(underTest).store(any(), any());
+
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    try {
+      Future<Content> headResult = executor.submit(() -> underTest.get(headContext));
+      assertTrue("HEAD did not start fetching", headIsFetching.await(5, TimeUnit.SECONDS));
+
+      Future<Content> getResult = executor.submit(() -> underTest.get(getContext));
+      // wait for the GET to actually block on the HEAD's cooperation future before releasing the
+      // leader, rather than sleeping a guessed interval that a loaded CI host could outrun
+      awaitCooperatingThreads(2);
+      getHasJoined.countDown();
+
+      Content headContent = headResult.get(10, TimeUnit.SECONDS);
+      Content getContent = getResult.get(10, TimeUnit.SECONDS);
+
+      // the HEAD is entitled to the header-only payload
+      assertThat(headContent.getPayload(), is(org.hamcrest.Matchers.instanceOf(HeaderOnlyPayload.class)));
+
+      // the GET must not be: a declared Content-Length with an empty stream is unwritable
+      assertThat("GET inherited the HEAD's body-less payload (NEXUS-54507)",
+          getContent.getPayload(), is(not(org.hamcrest.Matchers.instanceOf(HeaderOnlyPayload.class))));
+      assertThat(getContent.getSize(), is(4148L));
+    }
+    finally {
+      executor.shutdownNow();
+    }
+  }
+
+  /**
+   * The fix must not
+   * disable cooperation for GETs - that de-duplication is what shields the remote from a
+   * thundering herd.
+   */
+  @Test
+  public void testGet_concurrentGets_stillCooperateOnASingleFetch() throws Exception {
+    underTest.configureCooperation(new DefaultCooperation2Factory(), true, Duration.ofSeconds(0),
+        Duration.ofSeconds(60), 10);
+    underTest.buildCooperation();
+
+    Request firstRequest = mock(Request.class);
+    when(firstRequest.getAction()).thenReturn(HttpMethods.GET);
+    when(firstRequest.getPath()).thenReturn(SHARED_PATH);
+    Context firstContext = proxyContext(firstRequest);
+
+    Request secondRequest = mock(Request.class);
+    when(secondRequest.getAction()).thenReturn(HttpMethods.GET);
+    when(secondRequest.getPath()).thenReturn(SHARED_PATH);
+    Context secondContext = proxyContext(secondRequest);
+
+    doReturn(null).when(underTest).getCachedContent(any());
+
+    Content bodyContent = new Content(new BytesPayload(new byte[4148], "application/octet-stream"));
+
+    AtomicInteger fetchCount = new AtomicInteger();
+    CountDownLatch leaderIsFetching = new CountDownLatch(1);
+    CountDownLatch followerHasJoined = new CountDownLatch(1);
+
+    doAnswer(invocation -> {
+      fetchCount.incrementAndGet();
+      leaderIsFetching.countDown();
+      followerHasJoined.await(5, TimeUnit.SECONDS);
+      return bodyContent;
+    }).when(underTest).fetch(any(Context.class), any());
+
+    doAnswer(invocation -> invocation.getArgument(1)).when(underTest).store(any(), any());
+
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    try {
+      Future<Content> leader = executor.submit(() -> underTest.get(firstContext));
+      assertTrue("leader did not start fetching", leaderIsFetching.await(5, TimeUnit.SECONDS));
+
+      Future<Content> follower = executor.submit(() -> underTest.get(secondContext));
+      awaitCooperatingThreads(2);
+      followerHasJoined.countDown();
+
+      leader.get(10, TimeUnit.SECONDS);
+      follower.get(10, TimeUnit.SECONDS);
+
+      assertThat("concurrent GETs must share one upstream fetch", fetchCount.get(), is(1));
+    }
+    finally {
+      executor.shutdownNow();
+    }
+  }
+
+  /**
+   * Blocks until {@code expected} threads are cooperating under a single request key, so the
+   * concurrent tests can release the lead thread at a known state instead of sleeping a fixed
+   * interval. Fails the test rather than hanging if the follower never joins.
+   */
+  private void awaitCooperatingThreads(final int expected) throws InterruptedException {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+    while (System.nanoTime() < deadline) {
+      if (underTest.getThreadCooperationPerRequest()
+          .values()
+          .stream()
+          .anyMatch(count -> count >= expected)) {
+        return;
+      }
+      Thread.sleep(10);
+    }
+    fail("timed out waiting for " + expected + " threads to cooperate; saw "
+        + underTest.getThreadCooperationPerRequest());
+  }
+
+  /**
+   * Builds a context that shares the mocked repository/cache wiring but carries its own request,
+   * so HEAD and GET can be driven concurrently through {@link ProxyFacetSupport#get(Context)}.
+   */
+  private Context proxyContext(final Request request) {
+    Context context = mock(Context.class);
+    when(context.getRepository()).thenReturn(repository);
+    when(context.getRequest()).thenReturn(request);
+    AttributesMap attributes = new AttributesMap();
+    when(context.getAttributes()).thenReturn(attributes);
+    return context;
   }
 }

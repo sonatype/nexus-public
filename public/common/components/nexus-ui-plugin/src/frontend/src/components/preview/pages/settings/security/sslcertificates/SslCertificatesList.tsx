@@ -113,23 +113,25 @@ export function SslCertificatesList({ onSelect, onCreate }: SslCertificatesListP
 
   const handleSort = useCallback((field: CertificateSortField) => {
     if (sortField === field) {
-      // Cycle: asc -> desc -> null -> asc
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortDirection(null);
-      } else {
-        setSortDirection('asc');
-      }
+      // Two-state toggle, matching Classic UI. An additional "unsorted" state would leave the
+      // list in backend order with no visible indicator of why (NEXUS-54265).
+      setSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
-  }, [sortField, sortDirection]);
+  }, [sortField]);
 
   const handleRowClick = useCallback((certificate: SslCertificate) => {
     onSelect(certificate.id);
   }, [onSelect]);
+
+  // Screen readers announce sort state from aria-sort on the header cell; the icon alone is
+  // not perceivable (NEXUS-54265).
+  const ariaSortFor = (field: CertificateSortField): 'ascending' | 'descending' | 'none' => {
+    if (sortField !== field || !sortDirection) return 'none';
+    return sortDirection === 'asc' ? 'ascending' : 'descending';
+  };
 
   const renderSortIcon = (field: CertificateSortField) => {
     if (sortField !== field || !sortDirection) {
@@ -158,7 +160,7 @@ export function SslCertificatesList({ onSelect, onCreate }: SslCertificatesListP
 
       {/* Error State */}
       {error && (
-        <Flex align="center" gap="2" className="ssl-certificates-list__error">
+        <Flex role="alert" align="center" gap="2" className="ssl-certificates-list__error">
           <AlertCircle size={16} />
           <Text size="2">{error}</Text>
         </Flex>
@@ -166,48 +168,56 @@ export function SslCertificatesList({ onSelect, onCreate }: SslCertificatesListP
 
       {/* Loading State */}
       {loading && (
-        <Flex align="center" justify="center" className="ssl-certificates-list__loading">
+        <Flex role="status" align="center" justify="center" className="ssl-certificates-list__loading">
           <Loader2 size={24} className="ssl-certificates-list__spinner" />
           <Text size="2">Loading certificates...</Text>
         </Flex>
       )}
 
       {/* Empty State */}
-      {!loading && !error && sortedCertificates.length === 0 && (
+      {!(loading || error ) && sortedCertificates.length === 0 && (
         <Box className="ssl-certificates-list__empty">
-          <Text size="2">There are no SSL certificates available</Text>
+          <Text size="2">There are no SSL Certificates available</Text>
         </Box>
       )}
 
       {/* Table */}
-      {!loading && !error && sortedCertificates.length > 0 && (
+      {!(loading || error ) && sortedCertificates.length > 0 && (
         <Box className="ssl-certificates-list__table-wrapper">
           <table className="ssl-certificates-list__table">
             <thead>
               <tr>
-                <th onClick={() => handleSort('subjectCommonName')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
-                  <Flex align="center" gap="1">
-                    Name
-                    {renderSortIcon('subjectCommonName')}
-                  </Flex>
+                <th aria-sort={ariaSortFor('subjectCommonName')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
+                  <button type="button" onClick={() => handleSort('subjectCommonName')} className="ssl-certificates-list__sort-button">
+                    <Flex align="center" gap="1">
+                      Name
+                      {renderSortIcon('subjectCommonName')}
+                    </Flex>
+                  </button>
                 </th>
-                <th onClick={() => handleSort('subjectOrganization')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
-                  <Flex align="center" gap="1">
-                    Issued To
-                    {renderSortIcon('subjectOrganization')}
-                  </Flex>
+                <th aria-sort={ariaSortFor('subjectOrganization')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
+                  <button type="button" onClick={() => handleSort('subjectOrganization')} className="ssl-certificates-list__sort-button">
+                    <Flex align="center" gap="1">
+                      Issued To
+                      {renderSortIcon('subjectOrganization')}
+                    </Flex>
+                  </button>
                 </th>
-                <th onClick={() => handleSort('issuerOrganization')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
-                  <Flex align="center" gap="1">
-                    Issued By
-                    {renderSortIcon('issuerOrganization')}
-                  </Flex>
+                <th aria-sort={ariaSortFor('issuerOrganization')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
+                  <button type="button" onClick={() => handleSort('issuerOrganization')} className="ssl-certificates-list__sort-button">
+                    <Flex align="center" gap="1">
+                      Issued By
+                      {renderSortIcon('issuerOrganization')}
+                    </Flex>
+                  </button>
                 </th>
-                <th onClick={() => handleSort('fingerprint')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
-                  <Flex align="center" gap="1">
-                    Fingerprint
-                    {renderSortIcon('fingerprint')}
-                  </Flex>
+                <th aria-sort={ariaSortFor('fingerprint')} className="ssl-certificates-list__th ssl-certificates-list__th--sortable">
+                  <button type="button" onClick={() => handleSort('fingerprint')} className="ssl-certificates-list__sort-button">
+                    <Flex align="center" gap="1">
+                      Fingerprint
+                      {renderSortIcon('fingerprint')}
+                    </Flex>
+                  </button>
                 </th>
                 <th className="ssl-certificates-list__th ssl-certificates-list__th--action"></th>
               </tr>
@@ -238,7 +248,19 @@ export function SslCertificatesList({ onSelect, onCreate }: SslCertificatesListP
                       </Text>
                     </td>
                     <td className="ssl-certificates-list__td ssl-certificates-list__td--action">
-                      <Pencil size={16} className="ssl-certificates-list__row-edit-icon" />
+                      {/* The row itself is only mouse-operable; this button is the keyboard and
+                          screen-reader path to the certificate (NEXUS-54265). */}
+                      <button
+                        type="button"
+                        className="ssl-certificates-list__row-edit-button"
+                        aria-label={`View certificate ${certificate.subjectCommonName}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRowClick(certificate);
+                        }}
+                      >
+                        <Pencil size={16} className="ssl-certificates-list__row-edit-icon" />
+                      </button>
                     </td>
                   </tr>
                 );
@@ -277,5 +299,3 @@ export function SslCertificatesList({ onSelect, onCreate }: SslCertificatesListP
 }
 
 export default SslCertificatesList;
-
-

@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.repository.rest.internal.api;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -24,6 +28,7 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.purge.PurgeUnusedFacet;
 import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoryMetricsService;
@@ -31,6 +36,7 @@ import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
@@ -39,11 +45,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -79,6 +87,9 @@ class RepositoryInternalResourceTest
   @Mock
   private RepositoryMetricsService repositoryMetricsService;
 
+  @Mock
+  private GlobalComponentLookupHelper componentLookupHelper;
+
   private final ProxyType proxyType = new ProxyType();
 
   private final GroupType groupType = new GroupType();
@@ -99,7 +110,8 @@ class RepositoryInternalResourceTest
         authorizingRepositoryManager,
         convertersByFormat,
         defaultAdapter,
-        repositoryMetricsService);
+        repositoryMetricsService,
+        componentLookupHelper);
   }
 
   @Test
@@ -252,6 +264,78 @@ class RepositoryInternalResourceTest
   }
 
   @Test
+  void getRepositoriesResolvesFacetViaComponentLookupHelper() {
+    // The facet class name is resolved via GlobalComponentLookupHelper (the same resolver the
+    // Classic RepositoryUiService uses), so facet classes from any plugin resolve identically.
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository withFacet = mockRepository("with-facet", maven2, hostedType,
+        "http://localhost:8081/repository/with-facet/", true,
+        Map.of(PurgeUnusedFacet.class, mock(PurgeUnusedFacet.class)));
+    Repository withoutFacet = mockRepository("without-facet", maven2, hostedType,
+        "http://localhost:8081/repository/without-facet/", true, Map.of());
+    // Build the exception before stubbing: constructing it touches the mock, which would trip
+    // Mockito's "unfinished stubbing" check if done inside thenThrow(...).
+    MissingFacetException missing = new MissingFacetException(withoutFacet, PurgeUnusedFacet.class);
+    when(withoutFacet.facet(PurgeUnusedFacet.class)).thenThrow(missing);
+
+    List<Repository> repositories = List.of(withFacet, withoutFacet);
+    when(repositoryManager.browse()).thenReturn(repositories);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
+    Mockito.<Class<?>>when(componentLookupHelper.type("org.sonatype.nexus.repository.purge.PurgeUnusedFacet"))
+        .thenReturn(PurgeUnusedFacet.class);
+
+    List<RepositoryXO> response = underTest.getRepositories(
+        null, false, false, null, "org.sonatype.nexus.repository.purge.PurgeUnusedFacet", null);
+
+    assertThat(response.size(), is(1));
+    assertThat(response.get(0).getName(), is("with-facet"));
+  }
+
+  @Test
+  void getRepositoriesUnresolvedFacetReturnsNoRepos() {
+    // A non-blank facet filter that resolves to nothing must exclude every repository (Classic:
+    // an unknown facet type matches no repo), NOT fall through to "all repos".
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository repo = mockRepository("maven-releases", maven2, hostedType,
+        "http://localhost:8081/repository/maven-releases/", true, Map.of());
+
+    List<Repository> repositories = List.of(repo);
+    when(repositoryManager.browse()).thenReturn(repositories);
+    when(repositoryPermissionChecker.userCanBrowseRepositories(repositories)).thenReturn(repositories);
+    // Allowed package, but the class cannot be resolved -> the filter must exclude everything.
+    when(componentLookupHelper.type("org.sonatype.nexus.repository.NonexistentFacet")).thenReturn(null);
+
+    List<RepositoryXO> response =
+        underTest.getRepositories(null, false, false, null, "org.sonatype.nexus.repository.NonexistentFacet", null);
+
+    assertThat(response.isEmpty(), is(true));
+  }
+
+  @Test
+  void getRepositoryReturnsNotFoundWhenRepositoryUnknown() {
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("unknown-repo")).thenReturn(Optional.empty());
+
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.getRepository("unknown-repo"));
+
+    assertThat(exception.getResponse().getStatus(), is(404));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsNotFoundWhenRepositoryUnknown() {
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("unknown-repo")).thenReturn(Optional.empty());
+
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.getSigningPassphrase("unknown-repo"));
+
+    assertThat(exception.getResponse().getStatus(), is(404));
+  }
+
+  @Test
   void testGetDetails() {
     Format maven2 = new Format("maven2")
     {
@@ -337,6 +421,66 @@ class RepositoryInternalResourceTest
     assertThat(details.get(6).getStatus().getDescription(), is("Remote Auto Blocked and Unavailable"));
     assertThat(details.get(6).getStatus().getReason(),
         is("java.net.UnknownHostException: api.example.org: nodename nor servname provided, or not known"));
+  }
+
+  @Test
+  void shouldReturnEmptyDetailsWhenNoRepositoriesExist() {
+    when(repositoryManager.browse()).thenReturn(Collections.emptyList());
+
+    List<RepositoryDetailXO> details = underTest.getRepositoryDetails();
+
+    assertThat(details.isEmpty(), is(true));
+  }
+
+  @Test
+  void shouldLeaveSizeAndCountsNullWhenMetricsServiceHasNoEntryForRepository() {
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository mavenHosted = mockRepository("maven-releases", maven2, hostedType,
+        "http://localhost:8081/repository/maven-releases/", true, Map.of());
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(mavenHosted, READ)).thenReturn(true);
+    when(repositoryManager.browse()).thenReturn(List.of(mavenHosted));
+    // repositoryMetricsService.list() returns empty (see @BeforeEach), so the lookup
+    // for "maven-releases" yields null and the DTO setters are never invoked.
+
+    List<RepositoryDetailXO> details = underTest.getRepositoryDetails();
+
+    assertThat(details.size(), is(1));
+    assertThat(details.get(0).getSize(), is(nullValue()));
+    assertThat(details.get(0).getComponentCount(), is(nullValue()));
+    assertThat(details.get(0).getAssetCount(), is(nullValue()));
+  }
+
+  @Test
+  void shouldLeaveSizeAndCountsNullWhenMetricsServiceAbsent() {
+    // OSS distributions inject null for the optional RepositoryMetricsService; the resource
+    // must still return details with size/count fields left unset rather than NPE.
+    RepositoryInternalResource resourceWithoutMetrics = new RepositoryInternalResource(
+        formats,
+        repositoryManager,
+        repositoryPermissionChecker,
+        proxyType,
+        recipes,
+        authorizingRepositoryManager,
+        convertersByFormat,
+        defaultAdapter,
+        null,
+        componentLookupHelper);
+    Format maven2 = new Format("maven2")
+    {
+    };
+    Repository mavenHosted = mockRepository("maven-releases", maven2, hostedType,
+        "http://localhost:8081/repository/maven-releases/", true, Map.of());
+    when(repositoryPermissionChecker.userHasRepositoryAdminPermission(mavenHosted, READ)).thenReturn(true);
+    when(repositoryManager.browse()).thenReturn(List.of(mavenHosted));
+
+    List<RepositoryDetailXO> details = resourceWithoutMetrics.getRepositoryDetails();
+
+    assertThat(details.size(), is(1));
+    assertThat(details.get(0).getSize(), is(nullValue()));
+    assertThat(details.get(0).getComponentCount(), is(nullValue()));
+    assertThat(details.get(0).getAssetCount(), is(nullValue()));
   }
 
   private static Repository mockRepository(

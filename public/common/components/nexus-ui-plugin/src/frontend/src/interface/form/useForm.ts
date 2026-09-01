@@ -82,7 +82,7 @@ export function useForm<TData>(
     if (state.matches('saved') || state.matches('deleted')) {
       clearDirtyState(formId);
     }
-  }, [state.value, formId]);
+  }, [formId, state.matches]);
 
   // Cleanup on unmount - only if pristine (router handles dirty case)
   useEffect(() => {

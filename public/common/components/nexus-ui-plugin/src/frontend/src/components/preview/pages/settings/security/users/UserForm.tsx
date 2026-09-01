@@ -11,511 +11,304 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useMemo, useCallback, useEffect, useState } from 'react';
-import { Box, Flex, Text, ScrollArea, Button as RadixButton } from '@radix-ui/themes';
-import { Trash2, Loader2, Key, RefreshCw } from 'lucide-react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+import React, { useCallback, useMemo } from 'react';
+import { Box, Flex, Text } from '@radix-ui/themes';
+import { Loader2, Key, Info } from 'lucide-react';
 
 import {
-  SettingsForm,
   SettingsFormSection,
   SettingsTextInput,
   SettingsPasswordInput,
-  SettingsCheckbox,
-  SettingsTransferList,
   SettingsButton,
-  ConfirmDialog,
+  SettingsTransferList,
 } from '../../../../shared/form';
-import { useToast } from '../../../../shared';
-import { useUsersApi } from './useUsersApi';
-import { useUsersForm } from './useUsersForm';
-import {
-  UserFormData,
-  UserFormProps,
-  DEFAULT_SOURCE,
-  isExternalUser,
-  getFullName,
-} from './types';
-import { useCombinedRoleTree } from '../roles/useRoleTree';
 import { RoleExplorerTree } from '../roles/RoleExplorerTree';
+import type { UseUsersFormResult } from './useUsersForm';
+import { useUserTreePreview } from './useUserTreePreview';
+import { getSourceLabel } from './types';
 
 import './UserForm.scss';
 
-const UNIFIED_INSPECTOR_EMPTY =
-  'Select roles from Available or Granted to see combined permissions.';
+export interface UserFormProps {
+  vm: UseUsersFormResult;
+}
 
 /**
- * UserForm - Form for creating and editing users
- * Uses XState form machine for state management
+ * Body of the Edit/Create User form. Renders Details, Roles, and the live
+ * Privileges/Security Tree preview. Meant to be embedded inside a parent
+ * SettingsForm; the parent owns title, actions, and the sticky action bar.
  */
-export function UserForm({
-  user,
-  userId: userIdProp,
-  userSource: userSourceProp,
-  isCreate: propIsCreate,
-  onSave,
-  onCancel,
-  onDelete,
-  loading = false,
-  error,
-  wizardStep = 0,
-  hideActions = false,
-  onValidationChange,
-  onDirtyChange,
-  onSubmitRef,
-}: UserFormProps) {
-  const { createUser, updateUser, changePassword, resetUserToken } = useUsersApi();
-  const [showPasswordChange, setShowChangePassword] = useState(false);
-  const [resetTokenDialogOpen, setResetTokenDialogOpen] = useState(false);
-  const [isResettingToken, setIsResettingToken] = useState(false);
-  const [hasAttemptedRolesSubmit, setHasAttemptedRolesSubmit] = useState(false);
-
-  const toast = useToast();
-  const isPro = ExtJS.isProEdition();
-  const state = ExtJS.state();
-  const isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
-  const isCurrentUser = user?.userId === state?.getUser?.()?.id;
-  const isAdminUser = user?.userId === 'admin';
-  const activeCapabilities = state?.getValue?.('capabilityActiveTypes') || [];
-  const isUserTokenCapabilityActive = activeCapabilities.includes('usertoken');
-  const canResetUserToken = ExtJS.checkPermission('nexus:usertoken-user:delete');
-
-  // Use XState form hook - use route params when user not yet loaded so machine can fetch
-  const { form, user: formUser, isCreate } = useUsersForm({
-    userId: propIsCreate ? undefined : (user?.userId ?? userIdProp ?? undefined),
-    userSource: user?.source ?? userSourceProp ?? DEFAULT_SOURCE,
-    user: user || undefined,
-    onSave: onSave ? async (data: UserFormData) => { await onSave(data); } : undefined,
-    onCancel,
-    createUser,
-    updateUser,
-    changePassword,
-  });
-
-  // Expose submit to parent via ref; track attempt on roles step for validation display
-  if (onSubmitRef) {
-    onSubmitRef.current = () => {
-      if (wizardStep === 1) setHasAttemptedRolesSubmit(true);
-      form.submit();
-    };
-  }
-
-  const handleCancelPasswordChange = () => {
-    form.send({ type: 'UPDATE', name: 'password', value: '' } as any);
-    form.send({ type: 'UPDATE', name: 'passwordConfirm', value: '' } as any);
-    setShowChangePassword(false);
-  };
-
-  // Reset attempt flag when leaving roles step
-  useEffect(() => {
-    if (wizardStep === 0) setHasAttemptedRolesSubmit(false);
-  }, [wizardStep]);
-
-  // Notify parent of dirty state changes
-  useEffect(() => {
-    if (onDirtyChange) {
-      onDirtyChange(!form.isPristine);
-    }
-  }, [form.isPristine, onDirtyChange]);
-
-  // Use the user from props if provided, otherwise from form state
-  const currentUser = user || formUser;
-
-  // Access form state and reference data from machine context
-  const isLoading = form.isLoading;
-  const isSaving = form.isSaving;
-  const context = form.state.context as any;
-  const formData = form.data as UserFormData;
-  const allRoles = context.allRoles || [];
-  const isExternal = currentUser ? isExternalUser(currentUser.source) : isExternalUser(formData.source);
-
-  // Notify parent of validation status
-  useEffect(() => {
-    if (onValidationChange) {
-      if (wizardStep === 0) {
-        // Step 1: Setup validation
-        const hasBasicInfo = !!formData.userId?.trim() && 
-                            (isExternal || (!!formData.firstName?.trim() && !!formData.lastName?.trim() && !!formData.emailAddress?.trim()));
-        
-        const isEmailValid = isExternal || !formData.emailAddress || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailAddress);
-        
-        const isPasswordValid = isExternal || !isCreate ||
-                                (!!formData.password && formData.password.length >= 8 &&
-                                 !!formData.passwordConfirm && formData.password === formData.passwordConfirm);
-
-        // If editing and change password is open, validate it
-        const isEditPasswordValid = !isCreate && (!showPasswordChange ||
-                                    (!!formData.password && formData.password.length >= 8 &&
-                                     !!formData.passwordConfirm && formData.password === formData.passwordConfirm));
-
-        const isValid = hasBasicInfo && isEmailValid && (isCreate ? isPasswordValid : isEditPasswordValid);
-        onValidationChange(isValid);
-      } else {
-        // Step 2: Roles validation (at least one role required)
-        onValidationChange(formData.roles.length > 0);
-      }
-    }
-  }, [formData, isExternal, isCreate, onValidationChange, wizardStep, showPasswordChange]);
-
-  // Convert roles to transfer list format
-  const availableRoles = useMemo(() => {
-    return allRoles.map((role: { id: string; name: string }) => ({
-      id: role.id,
-      name: role.name,
-    }));
-  }, [allRoles]);
-
-  const selectedRoles = useMemo(() => {
-    return allRoles
-      .filter((role: { id: string; name: string }) => formData.roles.includes(role.id))
-      .map((role: { id: string; name: string }) => ({
-        id: role.id,
-        name: role.name,
-      }));
-  }, [allRoles, formData.roles]);
-
-  const handleRolesChange = useCallback((newSelectedRoles: Array<{ id: string; name: string }>) => {
-    form.send({ type: 'UPDATE', name: 'roles', value: newSelectedRoles.map((r) => r.id) } as any);
-  }, [form]);
-
-  // Role Inspector: show all granted roles (or single preview from Available when none granted)
-  const [inspectedRoleId, setInspectedRoleId] = useState<string | null>(null);
-  const [inspectorSearchTerm, setInspectorSearchTerm] = useState('');
-  const handleRoleSelect = useCallback((item: { id: string; name: string }, _isSelected: boolean) => {
-    setInspectedRoleId(item.id);
-  }, []);
-
-  // Roles to display in inspector: all granted roles, or single preview (from Available) when no roles granted
-  const rolesToInspect = useMemo(() => {
-    if (selectedRoles.length > 0) {
-      return selectedRoles.map((r) => ({ id: r.id, name: r.name }));
-    }
-    if (inspectedRoleId) {
-      const role = allRoles.find((r: { id: string; name: string }) => r.id === inspectedRoleId);
-      return role ? [{ id: role.id, name: role.name }] : [];
-    }
-    return [];
-  }, [selectedRoles, inspectedRoleId, allRoles]);
-
-  const roleIdsToInspect = useMemo(() => rolesToInspect.map((r) => r.id), [rolesToInspect]);
+export function UserForm({ vm }: UserFormProps) {
+  const {
+    form,
+    formData,
+    isCreate,
+    isExternal,
+    isLoading,
+    showPasswordChange,
+    currentUser,
+    externalRoles,
+    allRoles,
+    rolesDirty,
+    setRoles,
+    showPasswordChangeSection,
+    resetPasswordFields,
+  } = vm;
 
   const {
-    tree: combinedTree,
-    loading: inspectorLoading,
-    toggleExpand: inspectorToggleExpand,
-    expandAll: inspectorExpandAll,
-    collapseAll: inspectorCollapseAll,
-  } = useCombinedRoleTree(roleIdsToInspect, { searchTerm: inspectorSearchTerm });
+    tree: previewTree,
+    loading: previewLoading,
+    toggleExpand: previewToggleExpand,
+    expandAll: previewExpandAll,
+    collapseAll: previewCollapseAll,
+    setSearchTerm: setPreviewSearchTerm,
+  } = useUserTreePreview(formData.roles ?? [], currentUser);
 
-  // Show loading state while data loads
+  const availableRoles = useMemo(
+    () => allRoles.map((r) => ({ id: r.id, name: r.name })),
+    [allRoles],
+  );
+
+  const selectedRoles = useMemo(
+    () =>
+      allRoles
+        .filter((r) => (formData.roles ?? []).includes(r.id))
+        .map((r) => ({ id: r.id, name: r.name })),
+    [allRoles, formData.roles],
+  );
+
+  const handleRolesChange = useCallback(
+    (next: Array<{ id: string; name: string }>) => {
+      setRoles(next.map((r) => r.id));
+    },
+    [setRoles],
+  );
+
   if (isLoading) {
     return (
-      <Flex align="center" justify="center" className="user-form__loading">
-        <Loader2 size={24} className="user-form__spinner" />
+      <Flex
+        align="center"
+        justify="center"
+        className="user-form__loading"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Loader2 size={24} className="user-form__spinner" aria-hidden="true" />
         <Text size="2">Loading form...</Text>
       </Flex>
     );
   }
 
-  const handleResetTokenConfirm = async () => {
-    if (!currentUser) return;
-    setResetTokenDialogOpen(false);
-    setIsResettingToken(true);
-    try {
-      await resetUserToken(currentUser.userId, currentUser.realm || currentUser.source);
-      toast.success(`User token has been reset for ${getFullName(currentUser)}`);
-    } catch (err) {
-      // Error is set by the API hook
-    } finally {
-      setIsResettingToken(false);
-    }
-  };
+  const externalLabel = currentUser
+    ? getSourceLabel(currentUser.source)
+    : undefined;
 
-  const setupContent = (
-    <SettingsFormSection title="User Setup" defaultOpen>
-      <SettingsTextInput
-        {...form.field('userId')}
-        label="ID"
-        placeholder="jsmith"
-        helpText="This will be used as the username"
-        required
-        disabled={!isCreate || isExternal}
-      />
-
-      <SettingsTextInput
-        {...form.field('firstName')}
-        label="First Name"
-        placeholder="John"
-        helpText="User's first name for display purposes"
-        required={!isExternal}
-        disabled={isExternal}
-      />
-
-      <SettingsTextInput
-        {...form.field('lastName')}
-        label="Last Name"
-        placeholder="Smith"
-        helpText="User's last name for display purposes"
-        required={!isExternal}
-        disabled={isExternal}
-      />
-
-      <SettingsTextInput
-        {...form.field('emailAddress')}
-        label="Email"
-        placeholder="jsmith@example.com"
-        type="email"
-        helpText="Used for notifications"
-        required={!isExternal}
-        disabled={isExternal}
-      />
-
-      {isCreate && !isExternal && (
-        <>
-          <SettingsPasswordInput
-            {...form.field('password')}
-            label="Password"
-            helpText="Set the initial password. User can change it later."
-            required
-            autoComplete="new-password"
-          />
-
-          <SettingsPasswordInput
-            {...form.field('passwordConfirm')}
-            label="Confirm Password"
-            helpText="Re-enter the password to confirm"
-            required
-            autoComplete="new-password"
-          />
-        </>
-      )}
-
-      {!isCreate && !isExternal && (
-        <Box mt="4" mb="4">
-          {!showPasswordChange ? (
-            <SettingsButton
-              variant="secondary"
-              icon={Key}
-              onClick={() => setShowChangePassword(true)}
-              testId="change-password-btn"
-              data-analytics-id="nxrm-user-change-password"
-            >
-              Change Password
-            </SettingsButton>
-          ) : (
-            <Box className="user-form__password-change">
-              <Flex align="center" justify="between" mb="2">
-                <Text size="2" weight="medium">Change Password</Text>
-                <RadixButton variant="ghost" size="1" onClick={handleCancelPasswordChange}>
-                  Cancel
-                </RadixButton>
-              </Flex>
-              <SettingsPasswordInput
-                {...form.field('password')}
-                label="New Password"
-                required
-                autoComplete="new-password"
-              />
-              <SettingsPasswordInput
-                {...form.field('passwordConfirm')}
-                label="Confirm New Password"
-                required
-                autoComplete="new-password"
-              />
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {!isCreate && !isExternal && isPro && isUserTokenCapabilityActive && canResetUserToken && (
-        <Box mt="4" mb="4">
-          <Flex align="center" justify="between">
-            <Box>
-              <Text size="2" weight="medium">User Token</Text>
-              <Text as="p" size="1" color="gray">Invalidate current token and force regeneration</Text>
-            </Box>
-            <SettingsButton
-              variant="secondary"
-              icon={RefreshCw}
-              onClick={() => setResetTokenDialogOpen(true)}
-              loading={isResettingToken}
-              testId="reset-token-btn"
-            >
-              Reset Token
-            </SettingsButton>
-          </Flex>
-        </Box>
-      )}
-
-      <SettingsCheckbox
-        {...form.checkbox('status')}
-        label="Active"
-        description="User account is enabled"
-        disabled={isExternal}
-        data-analytics-id="nxrm-user-toggle-status"
-      />
-    </SettingsFormSection>
-  );
-
-  const showRoleInspector = wizardStep === 1;
-
-  const rolesContent = (
-    <SettingsFormSection title="Roles" defaultOpen>
-      <Flex
-        className="user-form__roles-step"
-        gap="4"
-        direction={showRoleInspector ? 'row' : 'column'}
-        style={showRoleInspector ? { minHeight: 320 } : undefined}
-      >
-        {/* 45% (or full width): Transfer List */}
+  return (
+    <Box className="user-form">
+      {isExternal && (
         <Box
-          className="user-form__roles-transfer"
-          style={showRoleInspector ? { flex: '0 0 45%' } : undefined}
+          className="user-form__external-indicator"
+          role="note"
+          data-testid="user-form-external-indicator"
         >
-          <SettingsTransferList
-            name="roles"
-            testId="user-form-roles"
-            availableItems={availableRoles}
-            selectedItems={selectedRoles}
-            onChange={handleRolesChange}
-            availableLabel="Available"
-            selectedLabel="Granted"
-            getItemId={(item) => item.id}
-            getItemLabel={(item) => item.name}
-            helpText={formData.roles.length > 0 ? `${formData.roles.length} role${formData.roles.length === 1 ? '' : 's'} granted` : undefined}
-            onItemSelect={showRoleInspector ? handleRoleSelect : undefined}
-          />
-          {hasAttemptedRolesSubmit && form.validationErrors?.roles && (
-            <Text size="1" className="user-form__error">{form.validationErrors.roles}</Text>
-          )}
-
-          {/* External Roles (read-only, clickable for Inspector) */}
-          {isExternal && currentUser?.externalRoles && currentUser.externalRoles.length > 0 && (
-            <Box mt="4">
-              <Text size="2" weight="medium" mb="2" style={{ display: 'block' }}>External Roles</Text>
-              <Box className="user-form__external-roles">
-                <Flex wrap="wrap" gap="1">
-                  {currentUser.externalRoles.map((roleId) => {
-                    const role = allRoles.find((r: { id: string }) => r.id === roleId);
-                    const label = role?.name ?? roleId;
-                    return (
-                      <Box
-                        key={roleId}
-                        as="button"
-                        type="button"
-                        className="user-form__external-role-chip"
-                        onClick={() => showRoleInspector && setInspectedRoleId(roleId)}
-                        data-testid={`external-role-${roleId}`}
-                        title="Click to view role contents in Inspector"
-                      >
-                        {label}
-                      </Box>
-                    );
-                  })}
-                </Flex>
-              </Box>
-            </Box>
-          )}
+          <Info size={16} aria-hidden="true" />
+          <Text size="2">
+            {externalLabel
+              ? `This user is externally managed via ${externalLabel}. Profile fields are read-only.`
+              : 'This user is externally managed. Profile fields are read-only.'}
+          </Text>
         </Box>
+      )}
 
-        {/* 55%: Unified Role Inspector (wizard step 2 only) - formatted like Available/Granted panels */}
-        {showRoleInspector && (
-          <Box className="user-form__role-inspector" style={{ flex: '1 1 55%', minWidth: 320 }}>
-            <Flex className="user-form__role-inspector-header">
-              <Text size="2" weight="medium">Role Inspector</Text>
-              {rolesToInspect.length > 0 && (
-                <Text size="1" color="gray">
-                  {rolesToInspect.length} role{rolesToInspect.length !== 1 ? 's' : ''} granted
-                </Text>
-              )}
-            </Flex>
-            {rolesToInspect.length > 0 ? (
-              <Box className="user-form__role-inspector-pane">
-                <RoleExplorerTree
-                  tree={combinedTree}
-                  loading={inspectorLoading}
-                  onToggleExpand={inspectorToggleExpand}
-                  onExpandAll={inspectorExpandAll}
-                  onCollapseAll={inspectorCollapseAll}
-                  onSearchChange={setInspectorSearchTerm}
-                />
-              </Box>
+      <SettingsFormSection title="Details" defaultOpen>
+        <SettingsTextInput
+          {...form.field('userId')}
+          label="ID"
+          placeholder="jsmith"
+          helpText="This will be used as the username"
+          required
+          disabled={!isCreate || isExternal}
+        />
+
+        <SettingsTextInput
+          {...form.field('firstName')}
+          label="First Name"
+          placeholder="John"
+          helpText="User's first name for display purposes"
+          required={!isExternal}
+          disabled={isExternal}
+        />
+
+        <SettingsTextInput
+          {...form.field('lastName')}
+          label="Last Name"
+          placeholder="Smith"
+          helpText="User's last name for display purposes"
+          required={!isExternal}
+          disabled={isExternal}
+        />
+
+        <SettingsTextInput
+          {...form.field('emailAddress')}
+          label="Email"
+          placeholder="jsmith@example.com"
+          type="email"
+          helpText="Used for notifications"
+          required={!isExternal}
+          disabled={isExternal}
+        />
+
+        {isCreate && !isExternal && (
+          <>
+            <SettingsPasswordInput
+              {...form.field('password')}
+              label="Password"
+              helpText="Set the initial password. User can change it later."
+              required
+              autoComplete="new-password"
+            />
+            <SettingsPasswordInput
+              {...form.field('passwordConfirm')}
+              label="Confirm Password"
+              helpText="Re-enter the password to confirm"
+              required
+              autoComplete="new-password"
+            />
+          </>
+        )}
+
+        {!isCreate && !isExternal && (
+          <Box mt="4" mb="4">
+            {!showPasswordChange ? (
+              <SettingsButton
+                variant="secondary"
+                icon={Key}
+                onClick={showPasswordChangeSection}
+                testId="change-password-btn"
+                data-analytics-id="nxrm-user-change-password"
+              >
+                Change Password
+              </SettingsButton>
             ) : (
-              <Box className="user-form__role-inspector-placeholder">
-                <Text size="2" color="gray">
-                  {UNIFIED_INSPECTOR_EMPTY}
-                </Text>
+              <Box className="user-form__password-change">
+                <Flex align="center" justify="between" mb="2">
+                  <Text size="2" weight="medium">
+                    Change Password
+                  </Text>
+                  <SettingsButton
+                    variant="ghost"
+                    size="small"
+                    onClick={resetPasswordFields}
+                  >
+                    Cancel
+                  </SettingsButton>
+                </Flex>
+                <SettingsPasswordInput
+                  {...form.field('password')}
+                  label="New Password"
+                  required
+                  autoComplete="new-password"
+                />
+                <SettingsPasswordInput
+                  {...form.field('passwordConfirm')}
+                  label="Confirm New Password"
+                  required
+                  autoComplete="new-password"
+                />
               </Box>
             )}
           </Box>
         )}
-      </Flex>
-    </SettingsFormSection>
-  );
+      </SettingsFormSection>
 
-  if (hideActions) {
-    return (
-      <Box className="user-form">
-        {wizardStep === 0 && setupContent}
-        {wizardStep === 1 && rolesContent}
-
-        {/* Reset Token Confirmation Dialog */}
-        <ConfirmDialog
-          open={resetTokenDialogOpen}
-          testId="reset-user-token-dialog"
-          onOpenChange={setResetTokenDialogOpen}
-          title="Reset User Token"
-          message={`Are you sure you want to reset the token for "${currentUser ? getFullName(currentUser) : ''}"? This will invalidate their current token.`}
-          confirmLabel="Reset"
-          cancelLabel="Cancel"
-          variant="danger"
-          onConfirm={handleResetTokenConfirm}
+      <SettingsFormSection title="Roles" defaultOpen>
+        <SettingsTransferList
+          name="roles"
+          testId="user-form-roles"
+          availableItems={availableRoles}
+          selectedItems={selectedRoles}
+          onChange={handleRolesChange}
+          availableLabel="Available"
+          selectedLabel="Granted"
+          getItemId={(item) => item.id}
+          getItemLabel={(item) => item.name}
+          helpText={
+            (formData.roles ?? []).length > 0
+              ? `${(formData.roles ?? []).length} role${(formData.roles ?? []).length === 1 ? '' : 's'} granted`
+              : undefined
+          }
         />
-      </Box>
-    );
-  }
+        {form.validationErrors?.roles && (
+          <Text size="1" className="user-form__error">
+            {form.validationErrors.roles}
+          </Text>
+        )}
 
-  return (
-    <Box className="user-form">
-      <SettingsForm
-        testId="user-form"
-        onSubmit={() => form.submit()}
-        onCancel={onCancel}
-        loading={isSaving || loading}
-        pristine={form.isPristine}
-        noDirtyTracking={hideActions}
-        error={error || form.saveError || undefined}
-        submitLabel={isCreate ? 'Create' : 'Save'}
-        footerExtra={
-          !isCreate && onDelete && !isAdminUser ? (
-            <SettingsButton
-              testId="form-delete"
-              variant="danger"
-              onClick={onDelete}
-              disabled={isSaving || loading}
-              icon={Trash2}
+        {isExternal && externalRoles.length > 0 && (
+          <Box mt="4">
+            <Text
+              size="2"
+              weight="medium"
+              mb="2"
+              style={{ display: 'block' }}
             >
-              Delete User
-            </SettingsButton>
-          ) : undefined
-        }
-      >
-        {setupContent}
-        {rolesContent}
+              Externally Assigned Roles
+            </Text>
+            <Box className="user-form__external-roles">
+              <Flex wrap="wrap" gap="1">
+                {externalRoles.map((roleId) => {
+                  const role = allRoles.find((r) => r.id === roleId);
+                  const label = role?.name ?? roleId;
+                  return (
+                    <Box
+                      key={roleId}
+                      className="user-form__external-role-chip"
+                      data-testid={`external-role-${roleId}`}
+                    >
+                      {label}
+                    </Box>
+                  );
+                })}
+              </Flex>
+            </Box>
+          </Box>
+        )}
+      </SettingsFormSection>
 
-        {/* Reset Token Confirmation Dialog */}
-        <ConfirmDialog
-          open={resetTokenDialogOpen}
-          testId="reset-user-token-dialog"
-          onOpenChange={setResetTokenDialogOpen}
-          title="Reset User Token"
-          message={`Are you sure you want to reset the token for "${currentUser ? getFullName(currentUser) : ''}"? This will invalidate their current token.`}
-          confirmLabel="Reset"
-          cancelLabel="Cancel"
-          variant="danger"
-          onConfirm={handleResetTokenConfirm}
-        />
-      </SettingsForm>
+      <SettingsFormSection
+        title="Privileges / Security Tree"
+        defaultOpen
+      >
+        {rolesDirty && (
+          <Box
+            className="user-form__preview-hint"
+            data-testid="tree-preview-unsaved"
+          >
+            <Text size="1" color="gray">
+              Preview reflects unsaved role changes. Save to persist.
+            </Text>
+          </Box>
+        )}
+        {(formData.roles ?? []).length > 0 ? (
+          <Box className="user-form__preview-pane">
+            <RoleExplorerTree
+              tree={previewTree}
+              loading={previewLoading}
+              onToggleExpand={previewToggleExpand}
+              onExpandAll={previewExpandAll}
+              onCollapseAll={previewCollapseAll}
+              onSearchChange={setPreviewSearchTerm}
+            />
+          </Box>
+        ) : (
+          <Box className="user-form__preview-placeholder">
+            <Text size="2" color="gray">
+              Grant at least one role to preview effective permissions.
+            </Text>
+          </Box>
+        )}
+      </SettingsFormSection>
     </Box>
   );
 }

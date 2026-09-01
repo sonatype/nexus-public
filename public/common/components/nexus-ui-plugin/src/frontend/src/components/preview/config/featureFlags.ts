@@ -43,13 +43,7 @@ export function isDevelopmentMode(): boolean {
   const hostname = window.location.hostname;
   const search = window.location.search;
   
-  // Development indicators:
-  // 1. localhost / 127.0.0.1
-  // 2. ?debug in URL (standard Nexus dev mode)
-  // NOTE: ?debug is a known Nexus URL convention used by QA and ops teams on production
-  // instances. Anyone who knows to append it gains access to WIP preview links. This is
-  // an intentional trade-off — WIP pages themselves are not harmful to view, only
-  // incomplete. If stricter gating is needed in future, consider a build-time env flag.
+  // localhost or ?debug param (Nexus QA/ops convention) — intentional trade-off, WIP pages are not harmful to view.
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
   const hasDebugParam = new URLSearchParams(search).has('debug');
   
@@ -71,67 +65,74 @@ export function isMockMode(): boolean {
 
 export const PREVIEW_FEATURE_FLAGS = {
   // =============================================================================
-  // REPOSITORY SECTION - ALL Coming Soon (per customer release spec)
+  // REPOSITORY SECTION
   // =============================================================================
-  'repository.repositories': true,   // Enabled - NEXUS-52792
-  'repository.blobstores': true,     // Enabled - NEXUS-52793
-  'repository.selectors': true,      // Enabled - NEXUS-52782
-  'repository.cleanuppolicies': true, // Enabled — NEXUS-52569
-  'repository.routingrules': true,  // NEXUS-51919
-  'repository.datastore': true,      // Enabled — NEXUS-52795
-  'repository.proprietary': true,    // Enabled — NEXUS-52796
+  'repository.repositories': true,
+  'repository.blobstores': true,
+  'repository.selectors': true,
+  'repository.cleanuppolicies': true,
+  'repository.routingrules': true,
+  'repository.datastore': true,
+  'repository.proprietary': true,
 
   // =============================================================================
-  // SECURITY SECTION - Mixed (per customer release spec)
+  // SECURITY SECTION
   // =============================================================================
-  'security.privileges': true,       // Enabled — NEXUS-52808
-  'security.roles': true,            // Sprint 14 - ENABLED
-  'security.users': true,            // Enabled — NEXUS-52807
-  'security.anonymous': true,        // Enabled — NEXUS-51085
-  'security.ldap': false,            // Coming Soon
-  'security.saml': true,            // Enabled — NEXUS-52595
-  'security.oauth2': false,          // Coming Soon
-  'security.crowd': false,           // Coming Soon
-  'security.realms': true,           // Enabled — NEXUS-51085
-  'security.sslcertificates': false, // Coming Soon
-  'security.usertokens': false,      // Coming Soon
+  'security.privileges': true,
+  'security.roles': true,
+  'security.users': true,
+  'security.anonymous': true,
+  'security.ldap': true,
+  'security.saml': true,
+  'security.oauth2': true,           // Enabled — NEXUS-54266
+  'security.crowd': true,
+  'security.realms': true,
+  'security.sslcertificates': true,  // Enabled — NEXUS-54265
+  'security.usertokens': true,
 
   // =============================================================================
-  // SUPPORT SECTION - ALL ENABLED (read-only pages, ready for release)
+  // SUPPORT SECTION - ALL ENABLED (read-only pages)
   // =============================================================================
-  'support.logs': true,           // Sprint 11 - ENABLED
-  'support.logging': true,        // Sprint 11 - ENABLED
-  'support.systeminfo': true,     // Sprint 11 - ENABLED
-  'support.supportrequest': true, // Sprint 11 - ENABLED
-  'support.supportzip': true,     // Sprint 11 - ENABLED
-  'support.metrics': true,        // Sprint 11 - ENABLED
+  'support.logs': true,
+  'support.logging': true,
+  'support.systeminfo': true,
+  'support.supportrequest': true,
+  'support.supportzip': true,
+  'support.metrics': true,
 
   // =============================================================================
-  // SYSTEM SECTION - Mixed (per customer release spec)
+  // SYSTEM SECTION
   // =============================================================================
-  'system.tasks': true,            // Sprint 16 - ENABLED
-  'system.capabilities': true,     // Sprint 16 - ENABLED
-  'system.emailserver': true,      // NEXUS-52591 - ENABLED
-  'system.http': true,            // Enabled — NEXUS-52594
-  'system.licensing': true,        // Enabled — NEXUS-52900
-  'system.nodes': true,          // Sprint 15 - ENABLED (node list)
+  'system.tasks': true,
+  'system.capabilities': true,
+  'system.emailserver': true,
+  'system.http': true,
+  'system.licensing': true,
+  'system.nodes': true,
   'system.upgrade': false,       // Coming Soon
-  'system.api': true,             // Sprint 12 - ENABLED
+  'system.api': true,
 
   // =============================================================================
-  // IQ SERVER - Coming Soon
+  // IQ SERVER - ENABLED
   // =============================================================================
-  'iqserver': false,              // Coming Soon
+  'iqserver-connected': true,         
 
   // =============================================================================
-  // USER ACCOUNT - ENABLED
+  // USER ACCOUNT
   // =============================================================================
-  'useraccount': true,            // Sprint 15 - ENABLED (account info + read-only)
+  'useraccount': true,
 
   // =============================================================================
   // WELCOME PAGE - Tab visibility
   // =============================================================================
-  'welcome.usageMetrics': false,  // Hidden: data misalignment with classic UI; see NEXUS-52112
+  'welcome.usageMetrics': true,   // Enabled — NEXUS-54200
+
+  // =============================================================================
+  // REPOSITORY SETTINGS - Tab visibility
+  // =============================================================================
+  // Coming Soon — NEXUS-53941 shipped the Usage tab, but member-list, where-used,
+  // and H2 metrics gaps remain. Flip to true when the follow-up ticket lands.
+  'repository.settings.usageTab': false,
 };
 
 /**

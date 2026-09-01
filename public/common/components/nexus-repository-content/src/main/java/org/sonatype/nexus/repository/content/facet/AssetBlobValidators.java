@@ -66,7 +66,7 @@ public class AssetBlobValidators
             declaredContentType);
       }
       catch (IOException e) {
-        throw new InvalidContentException(e);
+        throw new InvalidContentException("Content type could not be determined", e);
       }
     };
   }

@@ -44,8 +44,8 @@ export function useViewAsUserAccess(
 
   const needsServer =
     enabled &&
-    !!viewAsUserId &&
-    !!currentUserId &&
+    Boolean(viewAsUserId) &&
+    Boolean(currentUserId) &&
     viewAsUserId !== currentUserId;
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export function useViewAsUserAccess(
     return () => {
       cancelled = true;
     };
-  }, [needsServer, viewAsUserId, currentUserId, endpoints]);
+  }, [needsServer, viewAsUserId, endpoints]);
 
   return { accessById: needsServer ? accessById : null, loading: needsServer && loading, error };
 }

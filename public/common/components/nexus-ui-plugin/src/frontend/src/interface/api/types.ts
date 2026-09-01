@@ -124,4 +124,7 @@ export interface RequestConfig {
 
   /** Skip error handling (for custom handling) */
   skipErrorHandling?: boolean;
+
+  /** AbortSignal to cancel the in-flight request. */
+  signal?: AbortSignal;
 }

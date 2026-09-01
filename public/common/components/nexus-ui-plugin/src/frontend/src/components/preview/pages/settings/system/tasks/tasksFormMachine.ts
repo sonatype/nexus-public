@@ -15,7 +15,7 @@ import { assign } from 'xstate';
 import { ENDPOINTS, restClient } from '../../../../../../interface/api';
 import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
 
-import { restTemplateToTaskType, type RestTaskTemplate } from './taskTransformers';
+import { mapRestStateToStatus, restTemplateToTaskType, deriveExecutePlanProperties, type RestTaskTemplate } from './taskTransformers';
 import {
   Task,
   TaskType,
@@ -27,7 +27,37 @@ import {
   isValidCronExpression,
   isValidEmail,
 } from './types';
-import { TASK_FIELD_UI } from './taskFieldMetadata';
+import {
+  TASK_TYPE_FIELD_OVERRIDES,
+  resolveTaskFieldMeta,
+  resolveDefaultScope,
+  mdyToIso,
+  EXECUTE_RECONCILE_PLAN_TYPE_ID,
+  PLAN_RECONCILE_TYPE_ID,
+} from './taskFieldMetadata';
+
+// =============================================================================
+// PER-TASK-TYPE QUIRKS
+// =============================================================================
+
+/**
+ * Cloud-only task that the backend auto-creates when a repository is deleted; it
+ * runs once, three days later, to actually remove the blob store. The form needs
+ * two special-cases for this task type — confined here so the rest of the form
+ * code stays generic:
+ *
+ *  1. `properties.blobstoreName` is set to the (now-deleted) blob store name,
+ *     which doesn't exist in `/v1/blobstores` anymore — the picker would render
+ *     an orphan value. Clear the displayed value and treat the field as not
+ *     required so Run/Save aren't blocked by the empty display. The persisted
+ *     value remains in the backend so the manual Run still operates on the
+ *     correct blob store.
+ *  2. The auto-scheduled "once" trigger sometimes lands back without a
+ *     `startDate` in the REST response even though `nextRun` is set. Fall back
+ *     to `nextRun` so the Schedule tab shows the same date/time as the History
+ *     tab's "Next Scheduled Run".
+ */
+export const CLOUD_BLOBSTORE_REMOVAL_TYPE_ID = 'nexus.cloud.blobstore.removal';
 
 // =============================================================================
 // CHECKBOX NORMALIZATION
@@ -43,13 +73,37 @@ import { TASK_FIELD_UI } from './taskFieldMetadata';
  */
 function normalizeCheckboxProperties(
   properties: Record<string, string>,
-  formFields: FormField[] | null | undefined
+  formFields: FormField[] | null | undefined,
+  taskTypeId: string | undefined
 ): Record<string, string> {
   if (!formFields) return properties;
   const normalized = { ...properties };
   for (const field of formFields) {
-    if (TASK_FIELD_UI[field.id]?.type === 'checkbox' && !(field.id in normalized)) {
+    if (resolveTaskFieldMeta(taskTypeId, field.id)?.type === 'checkbox' && !(field.id in normalized)) {
       normalized[field.id] = 'false';
+    }
+  }
+  return normalized;
+}
+
+/**
+ * Inverse of the serializeEmptyAs serialization. A loaded task carries a field's serializeEmptyAs
+ * sentinel for empty values (e.g. the literal "null" Classic writes for an empty duration field);
+ * map it back to '' so the form treats it as genuinely empty (empty input, no number-validation
+ * error). serializeProperties converts it back to the sentinel on save, so the wire value
+ * round-trips unchanged. Scoped via metadata — only fields that declare serializeEmptyAs.
+ */
+function normalizeSerializedEmpties(
+  properties: Record<string, string>,
+  formFields: FormField[] | null | undefined,
+  taskTypeId: string | undefined
+): Record<string, string> {
+  if (!formFields) return properties;
+  const normalized = { ...properties };
+  for (const field of formFields) {
+    const sentinel = resolveTaskFieldMeta(taskTypeId, field.id)?.serializeEmptyAs;
+    if (sentinel !== undefined && normalized[field.id] === sentinel) {
+      normalized[field.id] = '';
     }
   }
   return normalized;
@@ -67,6 +121,19 @@ function normalizeCheckboxProperties(
 export interface TaskMachineFormData extends TaskFormData {
   /** Start time (HH:mm format) - tracked separately from startDate */
   startTime?: string;
+}
+
+/**
+ * Full machine context — the standard FormContext fields plus the task-specific
+ * reference data populated by the load service. Use this on assign() callbacks so
+ * accesses to `selectedTaskType`, `taskTypes`, etc. retain type safety instead of
+ * being widened to `any`.
+ */
+export interface TaskMachineContext extends FormContext<TaskMachineFormData> {
+  task: Task | null;
+  taskTypes: TaskType[];
+  selectedTaskType: TaskType | null;
+  prefetchedPlanTaskProps: Record<string, string> | null;
 }
 
 // =============================================================================
@@ -91,11 +158,14 @@ const isScheduleGuard = (targetSchedule: ScheduleType) =>
  * Validate task form data.
  * Returns an object with field names as keys and error messages as values.
  *
- * Required dynamic descriptor fields (e.g. RepositoryCombobox on most repo tasks)
- * are validated by the per-property loop below — TASK_FIELD_UI metadata is the
- * single source of truth for the required flag, type, min/max and custom validate.
+ * When `selectedTaskType` is provided, every required form field on that task
+ * type is also validated; missing values are surfaced under `errors.properties`
+ * keyed by field id (consumed by `DynamicFormFields` in TaskTypeSelector).
  */
-function validateTask(data: TaskMachineFormData): ValidationErrors {
+export function validateTask(
+  data: TaskMachineFormData,
+  selectedTaskType?: TaskType | null,
+): ValidationErrors {
   const errors: ValidationErrors = {};
 
   // Name is always required
@@ -112,6 +182,30 @@ function validateTask(data: TaskMachineFormData): ValidationErrors {
   if (data.alertEmail && !isValidEmail(data.alertEmail)) {
     errors.alertEmail = 'Invalid email address format';
   }
+
+  // Per-property errors are written in two passes: (1) backend-supplied formFields metadata
+  // for required-field enforcement, then (2) TASK_FIELD_UI metadata for type/range/cross-field
+  // checks. Share one map so neither pass discards the other's errors.
+  const properties = data.properties || {};
+  const propertyErrors: Record<string, string> = {};
+
+  // Per-type required-field validation (NEXUS-53357). A TASK_FIELD_UI override of
+  // `required: false` vetoes the backend `required: true` flag — Block 2 below would
+  // not be able to clear an error written here (it writes but never deletes), so guard
+  // the write up-front to mirror Block 2's `meta.required !== false` semantic.
+  //
+  // Note: the generic 'Required' message below is overwritten by Block 2's richer
+  // `${meta.label} is required` for any field that also has a TASK_FIELD_UI entry and
+  // a key in data.properties (initialized by changeTaskType). This fallback covers
+  // fields that have no TASK_FIELD_UI entry or are absent from properties.
+  const requiredFields = selectedTaskType?.formFields?.filter((f) => f.required) ?? [];
+  requiredFields.forEach((field) => {
+    if (resolveTaskFieldMeta(data.typeId, field.id)?.required === false) return;
+    const value = properties[field.id];
+    if (value === undefined || value === null || String(value).trim() === '') {
+      propertyErrors[field.id] = 'Required';
+    }
+  });
 
   // Schedule-specific validation
   if (!data.schedule) {
@@ -145,15 +239,20 @@ function validateTask(data: TaskMachineFormData): ValidationErrors {
   }
 
   // Per-property validation driven by TASK_FIELD_UI metadata.
-  // Collected into a nested map so TaskForm can read validationErrors.properties[key].
-  const properties = data.properties || {};
-  const propertyErrors: Record<string, string> = {};
+  // Collected into the same propertyErrors map so TaskForm can read validationErrors.properties[key]
+  // and the formFields-required errors above are not overwritten.
   for (const [key, value] of Object.entries(properties)) {
-    const meta = TASK_FIELD_UI[key];
+    const meta = resolveTaskFieldMeta(data.typeId, key);
     if (!meta) continue;
 
     const isRequired = meta.required !== false && meta.type !== 'checkbox' && !meta.hidden;
-    const isEmpty = value === '' || value === null || value === undefined;
+    // A field whose empty value serializes to a sentinel (e.g. the Data Repair Plan duration
+    // fields, which serialize empty as the literal "null" for Classic parity) is "empty" when it
+    // holds that sentinel — so a loaded "null" must not be flagged as a non-numeric value.
+    const isEmpty = value === '' || value === null || value === undefined
+      || (meta.serializeEmptyAs !== undefined && value === meta.serializeEmptyAs);
+    // Prevent saving with empty blobstoreName for cloud blob-store removal task
+    // to avoid corrupting backend state (the original blobstore name must be preserved).
     if (isRequired && isEmpty) {
       propertyErrors[key] = `${meta.label} is required`;
       continue;
@@ -178,6 +277,21 @@ function validateTask(data: TaskMachineFormData): ValidationErrors {
       }
     }
   }
+
+  // Date-range cross-field check: scoped to the two reconcile task types to prevent any
+  // coincidental taskScope === 'dates' on unrelated tasks from triggering reconcile-field
+  // validation. Use resolveDefaultScope so a new Execute task whose taskScope is still ''
+  // (unset) but whose descriptor defaults to 'dates' is also validated.
+  const effectiveScope = properties.taskScope || resolveDefaultScope(data.typeId);
+  const isReconcileTask = data.typeId === PLAN_RECONCILE_TYPE_ID || data.typeId === EXECUTE_RECONCILE_PLAN_TYPE_ID;
+  if (isReconcileTask && effectiveScope === 'dates') {
+    const start = mdyToIso(properties.reconcileStartDate);
+    const end = mdyToIso(properties.reconcileEndDate);
+    if (start && end && end < start) {
+      propertyErrors.reconcileEndDate = 'End date must be on or after start date';
+    }
+  }
+
   if (Object.keys(propertyErrors).length > 0) {
     // hasValidationErrors() treats any non-null value as an error, so a nested object
     // here disables Save without widening the shared ValidationErrors type alias.
@@ -194,17 +308,17 @@ function validateTask(data: TaskMachineFormData): ValidationErrors {
 const TASKS_TEMPLATES_URL = `${ENDPOINTS.TASKS}/templates`;
 
 /**
- * Fetch task types from REST API. Reuses the same `restTemplateToTaskType`
- * transformer the API hook uses on CREATE so the EDIT flow gets identical
- * `formFields` enrichment (TASK_FIELD_UI labels/types/required, etc.). A
- * second, bare-bones implementation was the source of the edit-flow drift
- * fixed under NEXUS-53044.
+ * Fetch task types from REST API.
+ *
+ * Delegates the per-template mapping to the shared `restTemplateToTaskType`
+ * (taskTransformers.ts), which preserves NEXUS-53044's TASK_FIELD_UI enrichment
+ * for backends that don't yet publish the NEXUS-53357 `template.formFields`
+ * metadata — so EDIT and CREATE see the same FormField shape for every task type.
  */
 async function fetchTaskTypes(): Promise<TaskType[]> {
   try {
-    const data = await restClient.get(TASKS_TEMPLATES_URL);
-    if (!Array.isArray(data)) return [];
-    return data.map((template) => restTemplateToTaskType(template as RestTaskTemplate));
+    const data = await restClient.get<RestTaskTemplate[]>(TASKS_TEMPLATES_URL);
+    return Array.isArray(data) ? data.map(restTemplateToTaskType) : [];
   } catch (err) {
     console.error('Failed to load task types:', err);
     return [];
@@ -222,19 +336,26 @@ async function fetchTask(taskId: string): Promise<Task | null> {
     if (!data) return null;
     const rest = data as any;
     const schedule = (rest.schedule || 'manual') === 'cron' ? 'advanced' : (rest.schedule || 'manual');
+    // Normalize status through the SAME shared mapper as useTasksApi.fetchTask so a
+    // page load (this path, when the task is fetched here) and a poll never disagree
+    // about whether the task is running. Derive runnable/stoppable from the running
+    // group rather than a literal `=== 'RUNNING'`, which missed progress suffixes and
+    // sub-states (e.g. "RUNNING: 7 of 9", RUNNING_STARTING). (NEXUS-53525)
+    const status = mapRestStateToStatus(rest.currentState);
+    const isRunning = status === 'RUNNING';
     return {
       id: rest.id,
       enabled: rest.enabled,
       name: rest.name,
       typeId: rest.type,
       typeName: rest.type,
-      status: rest.currentState || 'WAITING',
+      status,
       statusDescription: rest.message || '',
       nextRun: rest.nextRun ? new Date(rest.nextRun) : null,
       lastRun: rest.lastRun ? new Date(rest.lastRun) : null,
       lastRunResult: rest.lastRunResult || null,
-      runnable: rest.currentState !== 'RUNNING',
-      stoppable: rest.currentState === 'RUNNING',
+      runnable: !isRunning,
+      stoppable: isRunning,
       properties: rest.properties || {},
       alertEmail: rest.alertEmail || '',
       notificationCondition: rest.notificationCondition || 'FAILURE',
@@ -247,6 +368,40 @@ async function fetchTask(taskId: string): Promise<Task | null> {
   } catch (err) {
     console.error('Failed to load task:', err);
     throw err;
+  }
+}
+
+// =============================================================================
+// PLAN TASK HELPER
+// =============================================================================
+
+/**
+ * Paginate through `/v1/tasks` to find the sibling Data Repair Plan task and
+ * return its derived display properties (blob store, repository, scope, date
+ * range). Returns null if no Plan task exists or the fetch fails.
+ *
+ * MAX_TASK_PAGES bounds the loop — worst case 100 sequential GET /v1/tasks
+ * calls, but a typical install with one Plan task resolves on page 1.
+ */
+async function fetchPlanTaskProps(): Promise<Record<string, string> | null> {
+  try {
+    type TaskPage = { items?: Array<{ type?: string; properties?: Record<string, string> }>; continuationToken?: string | null };
+    let planTask: { type?: string; properties?: Record<string, string> } | undefined;
+    let token: string | null | undefined;
+    const MAX_TASK_PAGES = 100;
+    let pages = 0;
+    do {
+      const url = token ? `${ENDPOINTS.TASKS}?continuationToken=${encodeURIComponent(token)}` : ENDPOINTS.TASKS;
+      const page = await restClient.get<TaskPage>(url);
+      planTask = page?.items?.find((t) => t.type === PLAN_RECONCILE_TYPE_ID);
+      token = page?.continuationToken;
+      pages += 1;
+    } while (!planTask && token && pages < MAX_TASK_PAGES);
+    return planTask?.properties ? deriveExecutePlanProperties(planTask.properties, new Date()) : null;
+  }
+  catch (err) {
+    console.warn('Failed to pre-fetch Data Repair Plan task properties:', err);
+    return null;
   }
 }
 
@@ -280,27 +435,57 @@ export function createTaskFormMachine(
       task: preloadedTask ?? (null as Task | null),
       taskTypes: [] as TaskType[],
       selectedTaskType: null as TaskType | null,
+      // Plan task derived props pre-fetched during create-mode load (null in edit mode).
+      // Stored in context (not a closure variable) so changeTaskType always reads a
+      // consistent snapshot of machine state.
+      prefetchedPlanTaskProps: null as Record<string, string> | null,
     },
     actions: {
-      validate: assign((ctx: FormContext<TaskMachineFormData>) => ({
-        validationErrors: validateTask(ctx.data),
+      validate: assign((ctx: TaskMachineContext) => ({
+        validationErrors: validateTask(ctx.data, ctx.selectedTaskType),
       })),
       // Custom action: update task type, reset dynamic properties, and select type metadata
       changeTaskType: assign((context: any, event: any) => {
         const typeId = event.value;
         const taskType = (context.taskTypes as TaskType[]).find((t) => t.id === typeId) ?? null;
 
-        // Initialize properties with defaults from the selected task type's form fields
+        // Initialize properties with defaults from the selected task type's form fields.
+        // Hidden fields (e.g. isNameTemplate `name` on Data Repair Plan) default the task NAME,
+        // not a persisted property, and must be skipped here so they don't leak into properties.
         const properties: Record<string, string> = {};
         taskType?.formFields?.forEach((field: FormField) => {
+          if (resolveTaskFieldMeta(typeId, field.id)?.hidden) return;
           if (field.initialValue !== null && field.initialValue !== undefined) {
             properties[field.id] = String(field.initialValue);
           }
         });
         // Absent checkbox fields default to 'false' — matches Classic/ExtJS parity
-        const normalizedProperties = normalizeCheckboxProperties(properties, taskType?.formFields);
+        const normalizedProperties = normalizeCheckboxProperties(properties, taskType?.formFields, typeId);
 
-        const newData = { ...context.data, typeId, properties: normalizedProperties };
+        // In create mode the load() service pre-fetches the Plan task so the read-only
+        // Blob store / Repository / date fields are populated immediately on type selection,
+        // mirroring the edit flow's deriveExecutePlanProperties call (mirrors Classic behaviour).
+        const cachedPlanProps = (context as any).prefetchedPlanTaskProps as Record<string, string> | null;
+        const effectiveProperties =
+          typeId === EXECUTE_RECONCILE_PLAN_TYPE_ID && cachedPlanProps
+            ? { ...normalizedProperties, ...cachedPlanProps }
+            : normalizedProperties;
+
+        // Some descriptors (e.g. Data Repair Plan) declare a hidden `name` TemplateFormField that
+        // defaults the task NAME, not a property. The field is filtered out of formFields (hidden),
+        // and the template's display name equals that default, so when such a task is selected and
+        // the user hasn't named the task yet, prefill the name from the template name.
+        const hasNameTemplate = !!(
+          typeId &&
+          TASK_TYPE_FIELD_OVERRIDES[typeId] &&
+          Object.values(TASK_TYPE_FIELD_OVERRIDES[typeId]).some((m) => m.isNameTemplate)
+        );
+        const resolvedName =
+          hasNameTemplate && !context.data.name?.trim() && taskType?.name
+            ? taskType.name
+            : context.data.name;
+
+        const newData = { ...context.data, typeId, name: resolvedName, properties: effectiveProperties };
         return {
           data: newData,
           // Reset pristine baseline so type selection is NOT treated as a user edit
@@ -355,6 +540,8 @@ export function createTaskFormMachine(
     },
     services: {
       load: async () => {
+        let prefetchedPlanTaskProps: Record<string, string> | null = null;
+
         // Load task and task types in parallel
         const [task, taskTypes] = await Promise.all([
           preloadedTask
@@ -385,6 +572,49 @@ export function createTaskFormMachine(
           ? { ...task, typeName: selectedTaskType.name }
           : task;
 
+        // Per-task quirks for the cloud blob-store removal task (see header note).
+        const isCloudBlobstoreRemoval =
+          enrichedTask?.typeId === CLOUD_BLOBSTORE_REMOVAL_TYPE_ID;
+
+        // Quirk 1: the persisted blobstoreName points at a now-deleted blob store,
+        // so clear it for display. The backend keeps the original value, which is
+        // what the manual Run consumes.
+        let baseProperties: Record<string, string> = enrichedTask
+          ? (isCloudBlobstoreRemoval
+              ? { ...enrichedTask.properties, blobstoreName: '' }
+              : { ...enrichedTask.properties })
+          : {};
+
+        // Quirk 2: the once-trigger that the backend created at repo-delete time
+        // sometimes lands back without `startDate` while `nextRun` is correct, so
+        // surface nextRun in the Schedule tab so it matches the History tab.
+        const effectiveStartDate = enrichedTask
+          ? (enrichedTask.startDate
+              ?? (isCloudBlobstoreRemoval ? enrichedTask.nextRun : null))
+          : null;
+
+        // The Execute Data Repair Plan task stores only `planIds`; its displayed blob store /
+        // repository / scope / dates are sourced from the sibling Data Repair Plan task (mirrors the
+        // backend TaskComponent.replaceDataRepairProperties, which the REST `/v1/tasks` contract does
+        // not perform — so without this the read-only fields would render empty).
+        if (enrichedTask?.typeId === EXECUTE_RECONCILE_PLAN_TYPE_ID) {
+          // Edit mode: apply derived Plan task properties to the loaded baseProperties.
+          const derived = await fetchPlanTaskProps();
+          if (derived) {
+            baseProperties = { ...baseProperties, ...derived };
+          }
+        }
+        else if (!enrichedTask) {
+          // Create mode: pre-fetch Plan task properties now (before the user selects a type)
+          // so changeTaskType can apply them synchronously when EXECUTE_RECONCILE_PLAN_TYPE_ID
+          // is selected. The editing state only activates after load() completes, so this data
+          // is always available by the time the user can make a type selection.
+          // Note: this fires for ALL new-task loads, not just Execute task creation. On most
+          // installs the Plan task is on page 1 — cost is 1 extra GET /v1/tasks call at
+          // create-form open time. If the Execute type is not selected, the result is discarded.
+          prefetchedPlanTaskProps = await fetchPlanTaskProps();
+        }
+
         // Build initial form data
         const initialData: TaskMachineFormData = enrichedTask
           ? {
@@ -394,12 +624,20 @@ export function createTaskFormMachine(
               typeId: enrichedTask.typeId,
               alertEmail: enrichedTask.alertEmail || '',
               notificationCondition: enrichedTask.notificationCondition || 'FAILURE',
-              properties: normalizeCheckboxProperties({ ...enrichedTask.properties }, selectedTaskType?.formFields),
+              properties: normalizeSerializedEmpties(
+                normalizeCheckboxProperties(
+                  baseProperties,
+                  selectedTaskType?.formFields,
+                  selectedTaskType?.id
+                ),
+                selectedTaskType?.formFields,
+                selectedTaskType?.id
+              ),
               schedule: enrichedTask.schedule || 'manual',
-              startDate: enrichedTask.startDate ? new Date(enrichedTask.startDate as string | number) : null,
-              startTime: enrichedTask.startDate
+              startDate: effectiveStartDate ?? null,
+              startTime: effectiveStartDate
                 ? (() => {
-                    const d = new Date(enrichedTask.startDate as string | number);
+                    const d = new Date(typeof effectiveStartDate === 'string' ? effectiveStartDate : effectiveStartDate.getTime());
                     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
                   })()
                 : '00:00',
@@ -417,6 +655,7 @@ export function createTaskFormMachine(
           task: enrichedTask,
           taskTypes,
           selectedTaskType,
+          prefetchedPlanTaskProps,
         };
       },
       // save and delete services are provided via useForm options

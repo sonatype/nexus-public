@@ -41,7 +41,7 @@ type ManagementType = 'user' | 'system';
 /**
  * RolesList - Displays roles using SUPER UI/UX standard
  */
-export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: RolesListProps) {
+export function RolesList({ onSelect, onDelete, onCreate, canUpdate = true, canDelete = true }: RolesListProps) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [filter, setFilter] = useState('');
   const [managementFilter, setManagementFilter] = useState<ManagementType[]>([]);
@@ -96,7 +96,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
         const matchesName = role.name?.toLowerCase().includes(searchLower);
         const matchesId = role.id?.toLowerCase().includes(searchLower);
         const matchesDescription = role.description?.toLowerCase().includes(searchLower);
-        if (!matchesName && !matchesId && !matchesDescription) {
+        if (!((matchesName || matchesId ) || matchesDescription)) {
           return false;
         }
       }
@@ -186,7 +186,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, managementFilter]);
+  }, []);
 
   // Calculate paginated data
   const totalPages = Math.ceil(sortedRoles.length / ROLES_PAGE_SIZE);
@@ -268,16 +268,18 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
           {/* Edit and Delete only for non-read-only roles */}
           {!isReadOnlyRole(role) && (
             <>
-              <Tooltip content="Edit Role">
-                <IconButton
-                  variant="ghost"
-                  size="1"
-                  onClick={(e) => { e.stopPropagation(); onSelect(role.id, 'edit'); }}
-                  aria-label={`Edit ${role.name}`}
-                >
-                  <Pencil size={14} />
-                </IconButton>
-              </Tooltip>
+              {canUpdate && (
+                <Tooltip content="Edit Role">
+                  <IconButton
+                    variant="ghost"
+                    size="1"
+                    onClick={(e) => { e.stopPropagation(); onSelect(role.id, 'edit'); }}
+                    aria-label={`Edit ${role.name}`}
+                  >
+                    <Pencil size={14} />
+                  </IconButton>
+                </Tooltip>
+              )}
               {canDelete && onDelete && (
                 <Tooltip content="Delete Role">
                   <IconButton
@@ -296,7 +298,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
       ),
       width: '120px',
     },
-  ], [onSelect, onDelete, canDelete]);
+  ], [onSelect, onDelete, canUpdate, canDelete]);
 
   // Empty state
   const emptyState = useMemo(() => {
@@ -384,7 +386,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
         />
 
         {/* Pagination & Summary */}
-        {!loadingRoles && !error && sortedRoles.length > 0 && (
+        {!(loadingRoles || error ) && sortedRoles.length > 0 && (
           <Flex justify="between" align="center" className="roles-list__footer">
             <Text size="2" color="gray">
               Showing {startIndex + 1}-{Math.min(endIndex, sortedRoles.length)} of {sortedRoles.length} roles

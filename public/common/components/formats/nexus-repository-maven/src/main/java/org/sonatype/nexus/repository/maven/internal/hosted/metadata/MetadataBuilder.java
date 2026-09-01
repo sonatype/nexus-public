@@ -13,14 +13,15 @@
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeSet;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -30,8 +31,6 @@ import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Plugin;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Snapshot;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
@@ -66,7 +65,17 @@ public class MetadataBuilder
 
   // A level
 
-  private final NavigableSet<Version> baseVersions;
+  /**
+   * NEXUS-53161: Preserves original version strings to avoid silent drops when
+   * ComparableVersion-equivalent versions exist (e.g., "1.0.0" vs "1.0.0-release").
+   * LinkedHashSet maintains insertion order while ensuring uniqueness.
+   */
+  private final Set<String> originalBaseVersions;
+
+  /**
+   * NEXUS-53161: Cached parsed versions to avoid O(log N) re-parsing during comparator calls.
+   */
+  private final Map<String, Version> parsedVersions;
 
   // V level
 
@@ -79,7 +88,8 @@ public class MetadataBuilder
     // G
     this.plugins = new ArrayList<>();
     // A
-    this.baseVersions = new TreeSet<>();
+    this.originalBaseVersions = new LinkedHashSet<>();
+    this.parsedVersions = new HashMap<>();
     // V
     this.latestVersionCoordinatesMap = new HashMap<>();
   }
@@ -140,7 +150,8 @@ public class MetadataBuilder
     }
     this.artifactId = artifactId;
     this.baseVersion = null;
-    baseVersions.clear();
+    originalBaseVersions.clear();
+    parsedVersions.clear();
     log.debug("-> GA: {}:{}", groupId, artifactId);
     return true;
   }
@@ -149,45 +160,131 @@ public class MetadataBuilder
   public Maven2Metadata onExitArtifactId() {
     checkState(artifactId != null);
     log.debug("<- GA: {}:{}", groupId, artifactId);
-    if (baseVersions.isEmpty()) {
+    if (originalBaseVersions.isEmpty()) {
       log.debug("Nothing to generate: {}:{}", groupId, artifactId);
       return null;
     }
-    Iterator<Version> vi = baseVersions.descendingIterator();
-    String latest = vi.next().toString();
+
+    // NEXUS-53161: Sort original version strings using a comparator that:
+    // 1. Compares using Maven's ComparableVersion first
+    // 2. Applies canonical/bare-form tiebreaker second (bare form wins over labelled forms)
+    List<String> sortedVersions = new ArrayList<>(originalBaseVersions);
+    sortedVersions.sort(createVersionComparator());
+
+    // Latest is the highest version (last in descending order)
+    String latest = sortedVersions.get(sortedVersions.size() - 1);
     String release = latest;
-    while (release.endsWith(Constants.SNAPSHOT_VERSION_SUFFIX) && vi.hasNext()) {
-      release = vi.next().toString();
+
+    // Find the latest non-snapshot version for <release>
+    for (int i = sortedVersions.size() - 1; i >= 0; i--) {
+      String version = sortedVersions.get(i);
+      if (!version.endsWith(Constants.SNAPSHOT_VERSION_SUFFIX)) {
+        release = version;
+        break;
+      }
     }
+
+    // If latest is a snapshot and we found no release, set release to null
     if (release.endsWith(Constants.SNAPSHOT_VERSION_SUFFIX)) {
       release = null;
     }
+
     return Maven2Metadata.newArtifactLevel(
         DateTime.now(),
         groupId,
         artifactId,
         latest,
         release,
-        Iterables.transform(baseVersions, new Function<Version, String>()
-        {
-          @Override
-          public String apply(final Version input) {
-            return input.toString();
-          }
-        }));
+        sortedVersions);
+  }
+
+  /**
+   * NEXUS-53161: Creates a comparator that sorts versions using Maven's ComparableVersion
+   * first, then applies a canonical/bare-form tiebreaker for equivalent versions.
+   * The bare form (e.g., "1.0.0") sorts higher than labelled forms (e.g., "1.0.0-release").
+   *
+   * <p>
+   * Uses pre-parsed versions from {@link #parsedVersions} cache to avoid O(log N) re-parsing.
+   */
+  private Comparator<String> createVersionComparator() {
+    return (v1, v2) -> {
+      Version version1 = parsedVersions.get(v1);
+      Version version2 = parsedVersions.get(v2);
+
+      // If either version is not in the cache (shouldn't happen), parse on demand as fallback
+      if (version1 == null) {
+        version1 = parseVersion(v1);
+      }
+      if (version2 == null) {
+        version2 = parseVersion(v2);
+      }
+
+      // If either is null after parsing, fall back to lexicographic comparison
+      if (version1 == null || version2 == null) {
+        return v1.compareTo(v2);
+      }
+
+      int comparison = version1.compareTo(version2);
+      if (comparison != 0) {
+        return comparison;
+      }
+      // Versions are Maven-equivalent - apply tiebreaker
+      // Bare/canonical form (no qualifier) should sort higher (i.e., appear later)
+      return compareTiebreaker(v1, v2);
+    };
+  }
+
+  /**
+   * NEXUS-53161: Tiebreaker for Maven-equivalent versions.
+   * Returns negative if v1 should sort before v2, positive if v1 should sort after v2.
+   * Bare/canonical form (no qualifier suffix) sorts highest (i.e., last in ascending order).
+   */
+  private int compareTiebreaker(final String v1, final String v2) {
+    boolean v1IsAlias = isReleaseAlias(v1);
+    boolean v2IsAlias = isReleaseAlias(v2);
+
+    // Bare form (NOT an alias) sorts higher than labelled forms (aliases)
+    if (!v1IsAlias && v2IsAlias) {
+      return 1; // v1 is bare, should sort higher (after)
+    }
+    if (v1IsAlias && !v2IsAlias) {
+      return -1; // v2 is bare, should sort higher (after)
+    }
+    // Both are bare or both are aliases - use lexicographic order for determinism
+    return v1.compareTo(v2);
+  }
+
+  /**
+   * NEXUS-53161: Checks if a version string is a release alias (has -ga, -release, or -final qualifier).
+   * Returns {@code true} for versions like "1.0.0-ga", "1.0.0-release", "1.0.0-final".
+   * Returns {@code false} for bare/canonical versions like "1.0.0", and for snapshots, alphas, etc.
+   */
+  private boolean isReleaseAlias(final String version) {
+    if (version == null || version.isEmpty()) {
+      return false;
+    }
+    String lower = version.toLowerCase();
+    // Only return true for release-bucket aliases (ga, release, final)
+    // NOT for snapshots, alphas, betas, milestones, etc.
+    return lower.endsWith("-ga") ||
+        lower.endsWith("-release") ||
+        lower.endsWith("-final") ||
+        lower.endsWith(".ga") ||
+        lower.endsWith(".release") ||
+        lower.endsWith(".final");
   }
 
   public void addBaseVersion(final String baseVersion) {
     checkNotNull(baseVersion);
-    try {
-      if (baseVersions.add(versionScheme.parseVersion(baseVersion))) {
-        log.debug("Added base version {}:{}:{}", groupId, artifactId, baseVersion);
+    // NEXUS-53161: Always store the original version string to preserve all distinct entries
+    boolean isNew = originalBaseVersions.add(baseVersion);
+    if (isNew) {
+      // Parse and cache the version for use in comparator
+      Version parsed = parseVersion(baseVersion);
+      if (parsed != null) {
+        parsedVersions.put(baseVersion, parsed);
       }
-    }
-    catch (InvalidVersionSpecificationException e) {
-      // According to versionScheme implementation we use, this exception will never happen
-      // log + ignore
-      log.info("Invalid baseVersion discovered: " + baseVersion, e);
+      log.debug("Added base version {}:{}:{}", groupId, artifactId, baseVersion);
     }
   }
 

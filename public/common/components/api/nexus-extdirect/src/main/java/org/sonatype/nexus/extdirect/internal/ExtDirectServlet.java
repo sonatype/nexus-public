@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.HashSet;
@@ -24,7 +25,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
+import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.lifecycle.Lifecycle;
+import org.sonatype.nexus.extdirect.DirectComponent;
+import org.sonatype.nexus.security.authc.AntiCsrfHelper;
+
+import com.google.common.collect.Maps;
+import com.google.common.net.HttpHeaders;
+import com.softwarementors.extjs.djn.EncodingUtils;
+import com.softwarementors.extjs.djn.api.RegisteredMethod;
+import com.softwarementors.extjs.djn.api.RegisteredPollMethod;
+import com.softwarementors.extjs.djn.api.Registry;
+import com.softwarementors.extjs.djn.config.ApiConfiguration;
+import com.softwarementors.extjs.djn.config.GlobalConfiguration;
+import com.softwarementors.extjs.djn.router.RequestRouter;
+import com.softwarementors.extjs.djn.router.dispatcher.Dispatcher;
+import com.softwarementors.extjs.djn.router.processor.RequestException;
+import com.softwarementors.extjs.djn.router.processor.poll.PollRequestProcessor;
+import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet;
+import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet.GlobalParameters;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.annotation.WebInitParam;
@@ -32,25 +52,11 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.sonatype.nexus.common.lifecycle.Lifecycle;
-import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
-import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.extdirect.DirectComponent;
-import org.sonatype.nexus.security.authc.AntiCsrfHelper;
-
-import com.google.common.collect.Maps;
-import com.google.common.collect.Maps.EntryTransformer;
-import com.softwarementors.extjs.djn.EncodingUtils;
-import com.softwarementors.extjs.djn.api.Registry;
-import com.softwarementors.extjs.djn.config.ApiConfiguration;
-import com.softwarementors.extjs.djn.config.GlobalConfiguration;
-import com.softwarementors.extjs.djn.router.RequestRouter;
-import com.softwarementors.extjs.djn.router.dispatcher.Dispatcher;
-import com.softwarementors.extjs.djn.router.processor.poll.PollRequestProcessor;
-import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet;
-import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet.GlobalParameters;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.entity.ContentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,6 +89,8 @@ public class ExtDirectServlet
     extends DirectJNgineServlet
     implements Lifecycle, ApplicationContextAware
 {
+  private static final Logger log = LoggerFactory.getLogger(ExtDirectServlet.class);
+
   public static final String PREFIXED_MOUNT_POINT = "/service/extdirect/*";
 
   public static final String MOUNT_POINT = "service/extdirect";
@@ -108,17 +116,32 @@ public class ExtDirectServlet
 
   @Override
   public void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-    HttpServletRequest wrappedRequest = wrapRequest(request);
+    try {
+      HttpServletRequest wrappedRequest = wrapRequest(request);
 
-    // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
-    // note that we don't apply this logic for FORM_UPLOAD_POST as extjs means of uploading files uses a hidden iframe
-    // which a value of DENY will not be allowed to load
-    if (StringUtils.isBlank(response.getHeader(X_FRAME_OPTIONS))
-        && !FORM_UPLOAD_POST.equals(getFromRequestContentType(wrappedRequest))) {
-      response.setHeader(X_FRAME_OPTIONS, DENY);
+      // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
+      // note that we don't apply this logic for FORM_UPLOAD_POST as extjs means of uploading files uses a hidden iframe
+      // which a value of DENY will not be allowed to load
+      if (StringUtils.isBlank(response.getHeader(X_FRAME_OPTIONS))
+          && !FORM_UPLOAD_POST.equals(getFromRequestContentType(wrappedRequest))) {
+        response.setHeader(X_FRAME_OPTIONS, DENY);
+      }
+
+      super.doPost(wrappedRequest, response);
     }
-
-    super.doPost(wrappedRequest, response);
+    catch (RequestException e) {
+      if (response.isCommitted()) {
+        log.warn("An exception occurred after the response was committed", e);
+      }
+      else {
+        log.debug("Request failed", e);
+        response.setStatus(Status.BAD_REQUEST.getStatusCode());
+        response.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.TEXT_PLAIN.getMimeType());
+        try (PrintWriter writer = response.getWriter()) {
+          writer.print(e.getMessage());
+        }
+      }
+    }
   }
 
   /**
@@ -218,17 +241,22 @@ public class ExtDirectServlet
               Map<String, String[]> parameterMap = request.getParameterMap();
               Map<String, String> parameters = Maps.newHashMap();
               if (parameterMap != null) {
-                parameters = Maps.transformEntries(parameterMap, new EntryTransformer<String, String[], String>()
-                {
-                  @Override
-                  public String transformEntry(@Nullable final String key, @Nullable final String[] values) {
-                    return values == null || values.length == 0 ? null : values[0];
-                  }
-                });
+                parameters = Maps.transformEntries(parameterMap,
+                    (key, values) -> values == null || values.length == 0 ? null : values[0]);
               }
               return new Object[]{parameters};
             }
             return super.getParameters();
+          }
+
+          @Override
+          protected RegisteredMethod getMethod() {
+            String eventName = pathInfo.replace(PATHINFO_POLL_PREFIX, "");
+            RegisteredPollMethod method = getRegistry().getPollMethod(eventName);
+            if (method == null) {
+              throw RequestException.forPollEventNotFound(eventName);
+            }
+            return method;
           }
         }.process(reader, writer, pathInfo);
       }

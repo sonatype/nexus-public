@@ -13,6 +13,3 @@
 
 export { DataStorePage, default } from './DataStorePage';
 export * from './types';
-export { useDataStoreApi } from './useDataStoreApi';
-
-

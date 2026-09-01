@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -86,7 +87,7 @@ public class FluentComponentsImplTest
     when(facet.repository()).thenReturn(repository);
     when(facet.contentRepositoryId()).thenReturn(1);
 
-    underTest = new FluentComponentsImpl(facet, componentStore);
+    underTest = new FluentComponentsImpl(facet, componentStore, Function.identity());
   }
 
   @Test

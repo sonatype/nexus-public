@@ -67,6 +67,18 @@ function getDetailServerName(hash: string): string | null {
 }
 
 /**
+ * Shared loading indicator for LdapPage's list-loading and edit-loading states.
+ */
+function LdapPageLoading({ text }: { text: string }) {
+  return (
+    <Flex align="center" justify="center" className="ldap-page__loading">
+      <Loader2 size={24} className="ldap-page__spinner" />
+      <Text size="2">{text}</Text>
+    </Flex>
+  );
+}
+
+/**
  * LdapPage - Main LDAP server management page for Preview UI
  */
 export function LdapPage({ className }: LdapPageProps) {
@@ -75,9 +87,15 @@ export function LdapPage({ className }: LdapPageProps) {
     error,
     setError,
     fetchServers,
+    fetchTemplates,
+    createServer,
+    updateServer,
     deleteServer,
     changeOrder,
     clearCache,
+    verifyConnection,
+    verifyUserMapping,
+    verifyLogin,
   } = useLdapApi();
 
   const [viewMode, setViewMode] = useState<LdapViewMode>('list');
@@ -90,6 +108,7 @@ export function LdapPage({ className }: LdapPageProps) {
   const toast = useToast();
 
   const canCreate = ExtJS.checkPermission('nexus:ldap:create');
+  const canDelete = ExtJS.checkPermission('nexus:ldap:delete');
 
   // Load servers on mount and when refreshKey changes
   const loadServers = useCallback(async () => {
@@ -98,7 +117,7 @@ export function LdapPage({ className }: LdapPageProps) {
       const data = await fetchServers();
       setServers(data);
       return data;
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the hook
       return [];
     } finally {
@@ -110,46 +129,95 @@ export function LdapPage({ className }: LdapPageProps) {
     loadServers();
   }, [loadServers, refreshKey]);
 
+  // Bounce back to the list view with an error toast. Used by the edit-mode
+  // re-fetch effect below when the server can't be resolved, and by
+  // syncViewWithHash below when a user without nexus:ldap:create lands
+  // directly on the create URL (the Create button is already hidden via
+  // `canCreate`, but a direct URL/back-button visit bypasses that). Sets
+  // `viewMode` (and clears `selectedServer`/`error`) directly rather than
+  // relying on the `window.location.hash` assignment to trigger a
+  // `hashchange` event that then calls `syncViewWithHash` — that indirection
+  // would otherwise leave `viewMode` stuck on the unauthorized view (with the
+  // URL and view out of sync) for however long it takes the hashchange
+  // listener to fire, and wouldn't update the view at all in contexts where
+  // hash assignment doesn't dispatch that event (e.g. tests with a mocked
+  // `window.location`).
+  const redirectToListWithError = useCallback((message: string) => {
+    toast.error(message);
+    setViewMode('list');
+    setSelectedServer(null);
+    setError(null);
+    if (!isListRoute(window.location.hash)) {
+      window.location.hash = BASE_PATH;
+    }
+  }, [toast.error, setError]);
+
   // Handle hash changes for routing
   const syncViewWithHash = useCallback((hash: string) => {
-    const cleanHash = hash.replace(/^#/, '').replace(/\?.*$/, '');
     if (isListRoute(hash)) {
       setViewMode('list');
       setSelectedServer(null);
       setError(null);
     } else if (isCreateRoute(hash)) {
+      if (!canCreate) {
+        redirectToListWithError('You do not have permission to create LDAP servers');
+        return;
+      }
       setViewMode('create');
       setSelectedServer(null);
       setError(null);
     } else {
       const serverName = getDetailServerName(hash);
       if (serverName) {
+        // selectedServer is populated by the edit-mode re-fetch effect below,
+        // not here — it needs the freshly-fetched server object, not just the
+        // name from the URL.
         setViewMode('edit');
         setError(null);
       } else {
         setViewMode('list');
       }
     }
-  }, [setError]);
+  }, [setError, canCreate, redirectToListWithError]);
 
   // Load server details when in edit mode
   useEffect(() => {
     if (viewMode === 'edit') {
       const serverName = getDetailServerName(window.location.hash);
       if (serverName) {
+        let cancelled = false;
         fetchServers().then(freshServers => {
+          if (cancelled) return;
           const server = freshServers.find(s => s.name === serverName);
           if (server) {
             setSelectedServer(server);
             setServers(freshServers);
           } else {
-            toast.error(`LDAP server "${serverName}" not found`);
-            window.location.hash = BASE_PATH;
+            redirectToListWithError(`LDAP server "${serverName}" not found`);
           }
+        }).catch(() => {
+          if (cancelled) return;
+          // fetchServers() already surfaces the error via the hook's `error`
+          // state, but that banner is only rendered in list view (see the
+          // `error && viewMode === 'list'` gate below). Without this catch, a
+          // rejected re-fetch here would leave selectedServer unresolved
+          // forever, and the render-gating below would show an infinite
+          // "Loading LDAP server..." spinner with no way out except the
+          // breadcrumb. Bounce back to the list, where the error is visible.
+          redirectToListWithError(`Failed to load LDAP server "${serverName}"`);
         });
+        // If the user navigates away (e.g. back to the list) while this
+        // re-fetch is in flight, the promise still resolves/rejects after
+        // viewMode has already changed. Without this guard, the .then would
+        // still call setSelectedServer, and the .catch would still fire a
+        // spurious error toast and redirect — both stale actions targeting a
+        // view the user already left.
+        return () => {
+          cancelled = true;
+        };
       }
     }
-  }, [viewMode, fetchServers, toast]);
+  }, [viewMode, fetchServers, redirectToListWithError]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -168,6 +236,7 @@ export function LdapPage({ className }: LdapPageProps) {
   }, []);
 
   const handleEdit = useCallback((server: LdapServer) => {
+    setSelectedServer(server);
     window.location.hash = `${DETAIL_PATH_PREFIX}${encodeURIComponent(server.name)}`;
   }, []);
 
@@ -177,7 +246,7 @@ export function LdapPage({ className }: LdapPageProps) {
     setSelectedServer(null);
     setError(null);
     setRefreshKey((k) => k + 1);
-    
+
     // Also update URL hash to the list path
     if (!isListRoute(window.location.hash)) {
       window.location.hash = BASE_PATH;
@@ -198,25 +267,37 @@ export function LdapPage({ className }: LdapPageProps) {
       if (navigateAfter) {
         handleBack();
       }
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the hook
     }
   }, [deleteServer, toast, handleBack]);
 
-  const handleReorder = useCallback(async (serverIds: string[]) => {
+  const handleReorder = useCallback(async (serverNames: string[]) => {
+    // Let changeOrder reject so LdapList can roll back optimistic UI state.
+    // Error is set on the hook's `error` state and shown in the page banner.
+    await changeOrder(serverNames);
+    toast.success('Server order updated');
+    // Re-fetch directly (rather than bumping refreshKey) so the Order
+    // column reflects the new positions without remounting LdapList and
+    // flashing the full-page loading spinner — reorder fires far more
+    // often (every drag-drop) than the create/edit/delete flows that use
+    // refreshKey to also reset LdapList's local UI state.
+    // A fetch failure here does not roll back the reorder — the order was
+    // already saved; a stale Order column is preferable to reverting a
+    // valid change.
     try {
-      await changeOrder(serverIds);
-      toast.success('Server order updated');
-    } catch (err) {
-      // Error is set by the hook
+      const data = await fetchServers();
+      setServers(data);
+    } catch {
+      // Ignore; reorder succeeded
     }
-  }, [changeOrder, toast]);
+  }, [changeOrder, toast, fetchServers]);
 
   const handleClearCache = useCallback(async () => {
     try {
       await clearCache();
       toast.success('LDAP cache cleared successfully');
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the hook
     }
   }, [clearCache, toast]);
@@ -233,7 +314,7 @@ export function LdapPage({ className }: LdapPageProps) {
             { label: 'LDAP' }
           ]}
           actions={canCreate && (
-            <SettingsButton variant="primary" onClick={handleCreate} icon={Plus}>
+            <SettingsButton variant="primary" onClick={handleCreate} icon={Plus} data-analytics-id="nxrm-ldap-create">
               Create LDAP Server
             </SettingsButton>
           )}
@@ -276,10 +357,7 @@ export function LdapPage({ className }: LdapPageProps) {
         data-view="list"
         data-loading="true"
       >
-        <Flex align="center" justify="center" className="ldap-page__loading">
-          <Loader2 size={24} className="ldap-page__spinner" />
-          <Text size="2">Loading LDAP servers...</Text>
-        </Flex>
+        <LdapPageLoading text="Loading LDAP servers..." />
       </Box>
     );
   }
@@ -335,16 +413,55 @@ export function LdapPage({ className }: LdapPageProps) {
           </>
         )}
 
-        {(viewMode === 'create' || viewMode === 'edit') && (
+        {viewMode === 'create' && (
           <LdapForm
-            server={selectedServer}
-            isCreate={viewMode === 'create'}
+            server={null}
+            isCreate={true}
+            existingNames={servers.map((s) => s.name)} // snapshot of loaded servers; concurrent additions by other users will not be reflected until LdapPage re-fetches
             onSave={handleSave}
             onCancel={handleBack}
-            onDelete={selectedServer ? () => handleDelete(selectedServer, true) : undefined}
             loading={loading}
             error={error || undefined}
+            fetchTemplates={fetchTemplates}
+            createServer={createServer}
+            updateServer={updateServer}
+            verifyConnection={verifyConnection}
+            verifyUserMapping={verifyUserMapping}
+            verifyLogin={verifyLogin}
           />
+        )}
+
+        {/*
+         * NEXUS-53672: Only mount LdapForm in edit mode once selectedServer
+         * has actually resolved. `viewMode` can flip to 'edit' synchronously
+         * (e.g. landing directly on an edit URL via page load/refresh) before
+         * the async re-fetch effect above populates selectedServer. XState's
+         * useMachine only binds to the machine on the form's first render and
+         * ignores later machine changes, so mounting with a null server here
+         * would leave the form permanently blank even after the real data
+         * arrives. Show a loading state instead until selectedServer is set.
+         */}
+        {viewMode === 'edit' && (
+          selectedServer ? (
+            <LdapForm
+              server={selectedServer}
+              isCreate={false}
+              existingNames={servers.filter((s) => s.id !== selectedServer.id).map((s) => s.name)}
+              onSave={handleSave}
+              onCancel={handleBack}
+              onDelete={canDelete ? () => handleDelete(selectedServer, true) : undefined}
+              loading={loading}
+              error={error || undefined}
+              fetchTemplates={fetchTemplates}
+              createServer={createServer}
+              updateServer={updateServer}
+              verifyConnection={verifyConnection}
+              verifyUserMapping={verifyUserMapping}
+              verifyLogin={verifyLogin}
+            />
+          ) : (
+            <LdapPageLoading text="Loading LDAP server..." />
+          )
         )}
       </Box>
     </Box>
@@ -352,5 +469,3 @@ export function LdapPage({ className }: LdapPageProps) {
 }
 
 export default LdapPage;
-
-

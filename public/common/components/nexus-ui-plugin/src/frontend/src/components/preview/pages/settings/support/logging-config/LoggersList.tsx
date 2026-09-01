@@ -11,26 +11,21 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React from 'react';
 import { Box, Flex, Text, Table, Badge } from '@radix-ui/themes';
 import { Search, Pencil, ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
 import { SettingsTextInput, SettingsAlert } from '../../../../shared/form';
-import { FilterSidebar, type FilterSection } from '../../../../shared';
-import { useLoggingConfigApi } from './useLoggingConfigApi';
-import { Logger, LoggerSortField, SortDirection, LogLevel } from './types';
+import { FilterSidebar } from '../../../../shared';
+import { useLoggersList } from './useLoggersList';
+import { LoggerSortField, LogLevel } from './types';
 
 import './LoggersList.scss';
 
 interface LoggersListProps {
   onSelect: (name: string) => void;
-  refreshKey?: number;
 }
 
-/**
- * Get badge color for log level
- * Colors per spec: OFF=gray, ERROR=red, WARN=amber/orange, INFO=blue, DEBUG=green, TRACE=purple
- */
 function getLevelColor(level: LogLevel): 'red' | 'orange' | 'blue' | 'green' | 'purple' | 'gray' {
   switch (level) {
     case 'ERROR':
@@ -53,116 +48,22 @@ function getLevelColor(level: LogLevel): 'red' | 'orange' | 'blue' | 'green' | '
 /**
  * LoggersList - Displays a searchable, sortable list of loggers
  */
-export function LoggersList({ onSelect, refreshKey = 0 }: LoggersListProps) {
-  const [loggers, setLoggers] = useState<Logger[]>([]);
-  const [filter, setFilter] = useState('');
-  const [levelFilter, setLevelFilter] = useState<string[]>([]);
-  const [sortField, setSortField] = useState<LoggerSortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [isLoading, setIsLoading] = useState(true);
+export function LoggersList({ onSelect }: LoggersListProps) {
+  const {
+    filteredLoggers,
+    loggers,
+    filter,
+    sortField,
+    sortDirection,
+    error,
+    isLoading,
+    filterSections,
+    setFilter,
+    handleSort,
+    handleFilterChange,
+    handleClearFilters,
+  } = useLoggersList();
 
-  const { fetchLoggers, error, setError } = useLoggingConfigApi();
-
-  // Load loggers on mount and when refreshKey changes
-  useEffect(() => {
-    let mounted = true;
-
-    const loadLoggers = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchLoggers();
-        if (mounted) {
-          setLoggers(data);
-        }
-      } catch (err) {
-        // Error is handled by the hook
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadLoggers();
-
-    return () => {
-      mounted = false;
-    };
-  }, [fetchLoggers, refreshKey]);
-
-  // Filter and sort loggers
-  const filteredLoggers = useMemo(() => {
-    let result = [...loggers];
-
-    if (filter) {
-      const lowerFilter = filter.toLowerCase();
-      result = result.filter((logger) =>
-        logger.name.toLowerCase().includes(lowerFilter)
-      );
-    }
-
-    if (levelFilter.length > 0) {
-      result = result.filter((logger) => levelFilter.includes(logger.level));
-    }
-
-    result.sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'level':
-          comparison = a.level.localeCompare(b.level);
-          break;
-      }
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-
-    return result;
-  }, [loggers, filter, levelFilter, sortField, sortDirection]);
-
-  // Handle column header click for sorting
-  const handleSort = useCallback((field: LoggerSortField) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField]);
-
-  // Build FilterSidebar sections with per-level counts
-  const LOG_LEVELS: LogLevel[] = ['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
-
-  const filterSections: FilterSection[] = useMemo(() => {
-    const levelCounts: Record<string, number> = {};
-    loggers.forEach((l) => { levelCounts[l.level] = (levelCounts[l.level] || 0) + 1; });
-
-    return [{
-      id: 'level',
-      label: 'Log Level',
-      type: 'checkbox' as const,
-      options: LOG_LEVELS.map((level) => ({
-        value: level,
-        label: level,
-        count: levelCounts[level] || 0,
-      })),
-      value: levelFilter,
-      defaultExpanded: true,
-    }];
-  }, [loggers, levelFilter]);
-
-  const handleFilterChange = useCallback((sectionId: string, value: string | string[]) => {
-    if (sectionId === 'level') {
-      setLevelFilter(value as string[]);
-    }
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setLevelFilter([]);
-  }, []);
-
-  // Render sort icon
   const renderSortIcon = (field: LoggerSortField) => {
     if (sortField !== field) return null;
     return sortDirection === 'asc' ? (
@@ -183,7 +84,7 @@ export function LoggersList({ onSelect, refreshKey = 0 }: LoggersListProps) {
     );
   }
 
-  const hasActiveFilters = filter.trim() !== '' || levelFilter.length > 0;
+  const hasActiveFilters = filter.trim() !== '' || filterSections[0]?.value?.length > 0;
 
   return (
     <Flex className="loggers-list loggers-list__layout" gap="4">
@@ -219,76 +120,72 @@ export function LoggersList({ onSelect, refreshKey = 0 }: LoggersListProps) {
         {/* Error alert */}
         {error && (
           <Box mb="3">
-            <SettingsAlert type="error" onClose={() => setError(null)}>
-              {error}
-            </SettingsAlert>
+            <SettingsAlert type="error">{error}</SettingsAlert>
           </Box>
         )}
 
         {/* Table */}
         <Table.Root className="loggers-list__table">
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeaderCell
-              className="loggers-list__header-cell loggers-list__header-cell--sortable"
-              onClick={() => handleSort('name')}
-            >
-              <Flex align="center" gap="1">
-                Logger Name
-                {renderSortIcon('name')}
-              </Flex>
-            </Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell
-              className="loggers-list__header-cell loggers-list__header-cell--sortable loggers-list__header-cell--level"
-              onClick={() => handleSort('level')}
-            >
-              <Flex align="center" gap="1">
-                Logger Level
-                {renderSortIcon('level')}
-              </Flex>
-            </Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell className="loggers-list__header-cell loggers-list__header-cell--action" />
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {filteredLoggers.length === 0 ? (
+          <Table.Header>
             <Table.Row>
-              <Table.Cell colSpan={3} className="loggers-list__empty-cell">
-                <Flex align="center" justify="center" py="6">
-                  <Text size="2" color="gray">
-                    {hasActiveFilters ? 'No loggers match your filters' : 'No loggers found'}
-                  </Text>
-                </Flex>
-              </Table.Cell>
-            </Table.Row>
-          ) : (
-            filteredLoggers.map((logger) => (
-              <Table.Row
-                key={logger.name}
-                className="loggers-list__row"
-                onClick={() => onSelect(logger.name)}
+              <Table.ColumnHeaderCell
+                className="loggers-list__header-cell loggers-list__header-cell--sortable"
+                onClick={() => handleSort('name')}
               >
-                <Table.Cell className="loggers-list__cell">
-                  <Text>{logger.name}</Text>
-                </Table.Cell>
-                <Table.Cell className="loggers-list__cell loggers-list__cell--level">
-                  <Badge color={getLevelColor(logger.level)} variant="soft">
-                    {logger.level}
-                  </Badge>
-                </Table.Cell>
-                <Table.Cell className="loggers-list__cell loggers-list__cell--action">
-                  <Pencil size={16} className="loggers-list__edit-icon" />
+                <Flex align="center" gap="1">
+                  Logger Name
+                  {renderSortIcon('name')}
+                </Flex>
+              </Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell
+                className="loggers-list__header-cell loggers-list__header-cell--sortable loggers-list__header-cell--level"
+                onClick={() => handleSort('level')}
+              >
+                <Flex align="center" gap="1">
+                  Logger Level
+                  {renderSortIcon('level')}
+                </Flex>
+              </Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell className="loggers-list__header-cell loggers-list__header-cell--action" />
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {filteredLoggers.length === 0 ? (
+              <Table.Row>
+                <Table.Cell colSpan={3} className="loggers-list__empty-cell">
+                  <Flex align="center" justify="center" py="6">
+                    <Text size="2" color="gray">
+                      {hasActiveFilters ? 'No loggers match your filters' : 'No loggers found'}
+                    </Text>
+                  </Flex>
                 </Table.Cell>
               </Table.Row>
-            ))
-          )}
-        </Table.Body>
-      </Table.Root>
+            ) : (
+              filteredLoggers.map((logger) => (
+                <Table.Row
+                  key={logger.name}
+                  className="loggers-list__row"
+                  onClick={() => onSelect(logger.name)}
+                >
+                  <Table.Cell className="loggers-list__cell">
+                    <Text>{logger.name}</Text>
+                  </Table.Cell>
+                  <Table.Cell className="loggers-list__cell loggers-list__cell--level">
+                    <Badge color={getLevelColor(logger.level)} variant="soft">
+                      {logger.level}
+                    </Badge>
+                  </Table.Cell>
+                  <Table.Cell className="loggers-list__cell loggers-list__cell--action">
+                    <Pencil size={16} className="loggers-list__edit-icon" />
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            )}
+          </Table.Body>
+        </Table.Root>
       </Box>
     </Flex>
   );
 }
 
 export default LoggersList;
-
-

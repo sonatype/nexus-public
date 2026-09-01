@@ -209,6 +209,8 @@ export interface PypiConfig {
 export interface NugetProxyConfig {
   queryCacheItemMaxAge?: number;
   nugetVersion: 'V2' | 'V3';
+  symbolServerUrl?: string;
+  allowAnonymousSymbolAccess?: boolean;
 }
 
 /**
@@ -573,6 +575,11 @@ export interface RepositoryFormProps {
    */
   onToggleOnline?: (nextOnline: boolean) => void;
   /**
+   * Navigates to the in-app browse tree for the repository being edited
+   * (post-Repository-Profile migration entry point). Absent for create mode.
+   */
+  onBrowseRepository?: () => void;
+  /**
    * True while the parent is executing one of the action callbacks
    * (rebuild/invalidate/toggle). When true, all action buttons should render
    * disabled so the user cannot fire a second action concurrently.
@@ -586,6 +593,13 @@ export interface RepositoryFormProps {
   advanceOnly?: boolean;
   /** Callback when form validity changes (for wizard Next button enable/disable) */
   onCanAdvanceChange?: (canAdvance: boolean) => void;
+  /**
+   * Callback when the embedded form's dirty state changes. Lets the wizard
+   * suppress the unsaved-changes dialog while the config step is untouched
+   * (NEXUS-54349). Fires with true once any field is edited and with false
+   * again if the form is reset back to its pristine values.
+   */
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 /**
@@ -643,7 +657,6 @@ export const FORMAT_LABELS: Record<string, string> = {
   gitlfs: 'Git LFS',
   p2: 'p2',
   terraform: 'Terraform',
-  terraformbackend: 'Terraform Backend',
   composer: 'Composer',
   cargo: 'Cargo (Rust)',
   huggingface: 'Hugging Face',
@@ -872,9 +885,9 @@ export function validateEcrAccessKeyId(value: string | undefined): string | unde
  */
 export function hasFormErrors(errors: RepositoryFormErrors): boolean {
   return Object.values(errors).some((value) => {
-    if (typeof value === 'string') return !!value;
+    if (typeof value === 'string') return Boolean(value);
     if (typeof value === 'object' && value !== null) {
-      return Object.values(value).some((v) => !!v);
+      return Object.values(value).some((v) => Boolean(v));
     }
     return false;
   });

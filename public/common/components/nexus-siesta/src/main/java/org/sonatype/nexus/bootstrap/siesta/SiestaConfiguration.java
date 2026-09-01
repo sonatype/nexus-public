@@ -47,6 +47,15 @@ public class SiestaConfiguration
     return deployment;
   }
 
+  // No-auth health probe: skip bcrypt realm cost on every liveness/readiness check.
+  // Intentionally unconditional — probe must bypass auth in all auth modes (session and JWT).
+  @Bean
+  public FilterChain statusWritableFilterChain() {
+    return new FilterChain("/service/rest/v1/status/writable",
+        AnonymousFilter.NAME,
+        AntiCsrfFilter.NAME);
+  }
+
   @ConditionalOnProperty(value = SESSION_ENABLED, havingValue = "true", matchIfMissing = true)
   @Bean
   public FilterChain siestaFilterChain() {

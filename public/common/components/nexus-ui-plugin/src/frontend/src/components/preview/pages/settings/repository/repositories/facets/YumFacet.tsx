@@ -95,7 +95,7 @@ export function YumFacet({
             value={formData.yum?.repodataDepth?.toString() || '0'}
             onChange={(value) => {
               const parsed = parseInt(value, 10);
-              const clamped = isNaN(parsed) ? 0 : Math.max(0, Math.min(5, parsed));
+              const clamped = Number.isNaN(parsed) ? 0 : Math.max(0, Math.min(5, parsed));
               onNestedChange('yum', { repodataDepth: clamped });
             }}
             helpText={UIStrings.YUM.HOSTED.REPODATA_DEPTH.helpText}

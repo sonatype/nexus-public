@@ -205,7 +205,9 @@ export function SettingsCombobox({
         blurTimeoutRef.current = null;
       }
       toggleOption(option.value);
-      setInputValue('');
+      // Preserve inputValue on toggle so the filtered list stays the same
+      // reference — React reuses the DOM nodes and the browser keeps its
+      // scroll offset, letting the user pick multiple matches in one search.
       setHighlightedIndex(-1);
       // Keep dropdown open and refocus
       setIsOpen(true);

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Button,
@@ -28,24 +28,9 @@ import {
   Tooltip,
 } from '@radix-ui/themes';
 import { Check, Copy, Package } from 'lucide-react';
-import Axios from 'axios';
 import { ExtJS } from '../../../../interface/ExtJS';
-import { useToast } from '../../shared';
 import { ConfirmDialog } from '../../shared/form';
-
-// ---------------------------------------------------------------------------
-// API helpers
-// ---------------------------------------------------------------------------
-
-const NUGET_API_KEY_BASE = '/service/rest/internal/nuget-api-key';
-
-function nugetApiKeyUrl(authToken: string): string {
-  return `${NUGET_API_KEY_BASE}?authToken=${btoa(authToken)}`;
-}
-
-// ---------------------------------------------------------------------------
-// CopyField — inline copy helper (matches UserTokenPage.tsx)
-// ---------------------------------------------------------------------------
+import { useNuGetApiToken } from './useNuGetApiToken';
 
 function CopyField({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -86,10 +71,6 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// NuGetRevealDialog
-// ---------------------------------------------------------------------------
-
 interface NuGetRevealDialogProps {
   apiKey: string;
   userId: string;
@@ -97,7 +78,7 @@ interface NuGetRevealDialogProps {
 }
 
 function NuGetRevealDialog({ apiKey, userId, onClose }: NuGetRevealDialogProps) {
-  const repoUrl = `${window.location.origin}/repository/nuget-hosted/index.json`;
+  const repoUrl = `${window.location.origin}/repository/{your-nuget-repo}/index.json`;
   const dotnetCmd = `dotnet nuget add source "Nexus" \\\n  --source ${repoUrl} \\\n  --username ${userId} \\\n  --password ${apiKey}`;
 
   return (
@@ -150,65 +131,38 @@ function NuGetRevealDialog({ apiKey, userId, onClose }: NuGetRevealDialogProps) 
   );
 }
 
-// ---------------------------------------------------------------------------
-// NuGetApiTokenPage
-// ---------------------------------------------------------------------------
-
 const API_KEY_PLACEHOLDER = '{API_KEY}';
 
 export function NuGetApiTokenPage() {
-  const toast = useToast();
   const user = ExtJS.useUser();
   const userId = user?.id ?? user?.userId ?? '{userId}';
 
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [showReveal, setShowReveal] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [accessLoading, setAccessLoading] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
+  const {
+    apiKey,
+    showReveal,
+    accessLoading,
+    resetLoading,
+    handleAccess,
+    handleReset,
+    handleCloseReveal,
+  } = useNuGetApiToken();
 
-  const repoUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/repository/nuget-hosted/index.json`;
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const repoUrl = `${window.location.origin}/repository/{your-nuget-repo}/index.json`;
   const displayKey = apiKey ?? API_KEY_PLACEHOLDER;
 
   const dotnetCmdPreview = `dotnet nuget add source "Nexus" \\\n  --source ${repoUrl} \\\n  --username ${userId} \\\n  --password ${displayKey}`;
   const nugetCmdPreview = `nuget.exe setapikey ${displayKey} \\\n  -Source ${repoUrl}`;
+  const chocoCmdPreview = `choco source add --name="Nexus" \\\n  --source="${repoUrl}" \\\n  --user="${userId}" \\\n  --password="${displayKey}"`;
 
-  const handleAccess = useCallback(async () => {
-    setAccessLoading(true);
-    try {
-      const authToken = await ExtJS.requestAuthenticationToken(
-        'Please authenticate to access your NuGet API key.'
-      );
-      const res = await Axios.get(nugetApiKeyUrl(authToken));
-      setApiKey(res.data?.apiKey ?? res.data);
-      setShowReveal(true);
-    } catch {
-      toast.error('Failed to retrieve NuGet API key. Please check your credentials.');
-    } finally {
-      setAccessLoading(false);
-    }
-  }, [toast]);
-
-  const handleResetConfirm = useCallback(async () => {
+  const handleResetConfirm = () => {
     setShowResetConfirm(false);
-    setResetLoading(true);
-    try {
-      const authToken = await ExtJS.requestAuthenticationToken(
-        'Please authenticate to reset your NuGet API key.'
-      );
-      await Axios.delete(nugetApiKeyUrl(authToken));
-      setApiKey(null);
-      toast.success('API key reset. Generate a new one.');
-    } catch {
-      toast.error('Failed to reset NuGet API key. Please check your credentials.');
-    } finally {
-      setResetLoading(false);
-    }
-  }, [toast]);
+    handleReset();
+  };
 
   return (
     <Box style={{ maxWidth: 640, margin: '0 auto', padding: 'var(--space-5)' }} data-testid="nuget-api-token-page">
-      {/* Page header */}
       <Flex align="center" gap="3" mb="4">
         <Package size={24} color="var(--accent-9)" />
         <Box>
@@ -217,7 +171,6 @@ export function NuGetApiTokenPage() {
         </Box>
       </Flex>
 
-      {/* Your API Key card */}
       <Card mb="4" data-testid="nuget-key-card">
         <Heading size="3" mb="2">Your API Key</Heading>
         <Text size="2" color="gray" mb="3" style={{ display: 'block' }}>
@@ -248,7 +201,6 @@ export function NuGetApiTokenPage() {
         </Flex>
       </Card>
 
-      {/* Usage Instructions card */}
       <Card data-testid="usage-instructions-card">
         <Heading size="3" mb="3">Usage Instructions</Heading>
 
@@ -300,22 +252,41 @@ export function NuGetApiTokenPage() {
               <CopyField label="nuget.exe command" value={nugetCmdPreview} />
             </Flex>
           </Box>
+
+          <Box>
+            <Text size="2" weight="medium" mb="1" style={{ display: 'block' }}>
+              Chocolatey CLI
+            </Text>
+            <Separator size="4" mb="2" />
+            <Box
+              style={{
+                background: 'var(--gray-2)',
+                borderRadius: 'var(--radius-2)',
+                padding: 'var(--space-3)',
+                fontFamily: 'var(--font-mono, monospace)',
+                fontSize: '13px',
+                whiteSpace: 'pre',
+                overflowX: 'auto',
+              }}
+              data-testid="choco-cmd-preview"
+            >
+              {chocoCmdPreview}
+            </Box>
+            <Flex justify="end" mt="1">
+              <CopyField label="choco command" value={chocoCmdPreview} />
+            </Flex>
+          </Box>
         </Flex>
       </Card>
 
-      {/* Reveal modal */}
       {showReveal && apiKey && (
         <NuGetRevealDialog
           apiKey={apiKey}
           userId={userId}
-          onClose={() => {
-            setShowReveal(false);
-            setApiKey(null);
-          }}
+          onClose={handleCloseReveal}
         />
       )}
 
-      {/* Reset Confirmation */}
       <ConfirmDialog
         open={showResetConfirm}
         onOpenChange={setShowResetConfirm}

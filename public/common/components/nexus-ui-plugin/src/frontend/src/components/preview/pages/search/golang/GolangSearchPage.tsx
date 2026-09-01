@@ -72,7 +72,7 @@ export function GolangSearchPage({
         version: initialVersion,
       });
     }
-  }, []); // Only on mount
+  }, [initialModule, initialVersion, search]); // Only on mount
 
   /**
    * Handle search submission.

@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Box, Flex, Text, Tabs, Card, Button, Separator, Heading, Spinner, ScrollArea, Grid, Badge, Callout, Tooltip } from '@radix-ui/themes';
+import { Box, Flex, Text, Tabs, Button, Separator, Heading, Spinner, ScrollArea, Grid, Badge, Callout, Tooltip } from '@radix-ui/themes';
 import { useRouter, useCurrentStateAndParams } from '@uirouter/react';
 import {
   RefreshCw,
@@ -26,8 +26,6 @@ import {
 } from 'lucide-react';
 
 import {
-  PageHeader,
-  ErrorState,
   DeleteConfirmationModal,
 } from '../../../../shared';
 import { useRepositoriesApi } from '../repositories/useRepositoriesApi';
@@ -49,6 +47,8 @@ import { useToast } from '../../../../shared/Toast';
 import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
 import { useRepositoryProfileMachine } from './useRepositoryProfileMachine';
 import { TABS, type TabId } from './types';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 
 // =============================================================================
 // Types
@@ -77,7 +77,7 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
   const { params } = useCurrentStateAndParams();
   const initialTab = (params?.tab as TabId) || 'repository';
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
-  const firewallTier = useFirewallTier();
+  const _firewallTier = useFirewallTier();
   const toast = useToast();
 
   // Delete-modal state. We use the list page's DeleteConfirmationModal directly
@@ -129,9 +129,23 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
     dialogVariant,
   } = useRepositoryProfileMachine(repositoryName);
 
+  // Hide mutating actions for users without the matching repository-admin
+  // permission (NEXUS-54212). Edit gates cache/index/online; delete gates removal.
+  // coreui never mounts a <PermissionsProvider>, so context usePermission returns false for
+  // everyone; use the provider-independent ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canEditRepository = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
+  const canDeleteRepository = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.DELETE),
+    [hasUser],
+  );
+
   // Context-aware back navigation
   const isBrowseContext = context === 'browse';
-  const backLabel = isBrowseContext ? 'Back to Browse' : 'Back to Repositories';
+  const _backLabel = isBrowseContext ? 'Back to Browse' : 'Back to Repositories';
 
   // Navigation handlers — defined before any useEffect that references them to avoid TDZ errors
   const handleBack = useCallback(() => {
@@ -307,7 +321,7 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
                   <FolderTree size={16} />
                   Browse Repository
                 </Button>
-                {isProxy && (
+                {canEditRepository && isProxy && (
                   <Button
                     variant="soft"
                     size="2"
@@ -319,33 +333,37 @@ export function RepositoryProfilePage({ repositoryName, context = 'settings' }: 
                     Invalidate Cache
                   </Button>
                 )}
-                <Button
-                  variant="soft"
-                  size="2"
-                  onClick={handleRebuildIndex}
-                  disabled={isExecuting || isDeleting}
-                  title="Rebuild Index"
-                >
-                  <Database size={16} />
-                  Rebuild Index
-                </Button>
-                <Button
-                  variant="soft"
-                  size="2"
-                  onClick={handleToggleOnline}
-                  disabled={isExecuting || isDeleting}
-                  color={isOnline ? 'green' : 'red'}
-                  title={isOnline ? 'Take Offline' : 'Bring Online'}
-                >
-                  <Power size={16} />
-                  {isOnline ? 'Online' : 'Offline'}
-                </Button>
+                {canEditRepository && (
+                  <Button
+                    variant="soft"
+                    size="2"
+                    onClick={handleRebuildIndex}
+                    disabled={isExecuting || isDeleting}
+                    title="Rebuild Index"
+                  >
+                    <Database size={16} />
+                    Rebuild Index
+                  </Button>
+                )}
+                {canEditRepository && (
+                  <Button
+                    variant="soft"
+                    size="2"
+                    onClick={handleToggleOnline}
+                    disabled={isExecuting || isDeleting}
+                    color={isOnline ? 'green' : 'red'}
+                    title={isOnline ? 'Take Offline' : 'Bring Online'}
+                  >
+                    <Power size={16} />
+                    {isOnline ? 'Online' : 'Offline'}
+                  </Button>
+                )}
                 <Button
                   variant="soft"
                   size="2"
                   color="red"
                   onClick={handleOpenDeleteModal}
-                  disabled={isExecuting || isDeleting}
+                  disabled={!canDeleteRepository || isExecuting || isDeleting}
                   title="Delete Repository"
                   data-testid="repository-profile-delete-button"
                 >

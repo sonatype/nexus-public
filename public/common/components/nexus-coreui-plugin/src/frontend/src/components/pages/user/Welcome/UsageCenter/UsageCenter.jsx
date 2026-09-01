@@ -61,15 +61,27 @@ const {
   CARD_SHARED_LABELS: {
     LAST_EXCEEDED_DATE_LABEL}} = CARDS;
 
+// Module-level date formatter for CE limit exceeded dates (performance optimization)
+const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  hour12: true
+});
+
 function Card({card, usage}) {
   const isPostgres = ExtJS.state().getValue('datastore.isPostgresql');
   const {METRIC_NAME, METRIC_NAME_PRO_POSTGRESQL, SUB_TITLE_PRO_POSTGRESQL, TITLE, TITLE_PRO_POSTGRESQL} = card;
   const {metricValue} = getMetricData(usage, isPostgres ? METRIC_NAME_PRO_POSTGRESQL : METRIC_NAME);
 
+  const displayTitle = isPostgres ? (TITLE_PRO_POSTGRESQL ?? TITLE) : TITLE;
+
   return (
-    <NxCard aria-label={TITLE_PRO_POSTGRESQL ?? TITLE}>
+    <NxCard aria-label={displayTitle}>
       <NxCard.Header>
-        <NxH3>{TITLE_PRO_POSTGRESQL ?? TITLE}</NxH3>
+        <NxH3>{displayTitle}</NxH3>
       </NxCard.Header>
       <NxCard.Content>
         <NxCard.Text>
@@ -158,7 +170,10 @@ function MonthlyMetricsCard({usage}) {
   const {metricValue: averageMetricValue} = getMetricData(usage, MONTHLY_REQUESTS.AVERAGE.METRIC_NAME);
   const {metricValue: highestMetricValue} = getMetricData(usage, MONTHLY_REQUESTS.HIGHEST.METRIC_NAME);
 
-  const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
+  const currentMonth = React.useMemo(
+    () => new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date()),
+    []
+  );
 
   return (
     <NxCard aria-label={MONTHLY_REQUESTS.TITLE}>
@@ -191,11 +206,7 @@ function MonthlyMetricsCard({usage}) {
 function UsageCenterHeader() {
   const isProEdition = ExtJS.isProEdition();
   const isCommunityEdition = useCommunityEdition();
-  // Use helper function which checks for test overrides
-  const throttlingStatus = ExtJS.useState(() => {
-    const testOverride = localStorage.getItem('SONATYPE_TEST_CE_THROTTLING_STATUS');
-    return testOverride || ExtJS.state().getValue('nexus.community.throttlingStatus');
-  });
+  const throttlingStatus = ExtJS.useState(helperFunctions.useThrottlingStatusValue);
 
   const utmParams = {
     utm_medium: 'product',
@@ -264,14 +275,7 @@ export default function UsageCenter() {
     if (isNaN(date)) {
       return '';
     }
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    }).format(date);
+    return DATE_FORMATTER.format(date);
   };
 
   const componentFormattedDate = componentCountLimitDateLastExceeded

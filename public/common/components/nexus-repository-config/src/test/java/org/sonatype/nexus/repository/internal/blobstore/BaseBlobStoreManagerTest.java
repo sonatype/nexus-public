@@ -134,6 +134,10 @@ class BaseBlobStoreManagerTest
   public void setup() throws Exception {
     lenient().when(provider.get()).thenReturn(blobStore);
 
+    // The startup sweep passes null to encryptMaven directly (Shiro isn't bound at doStart), so
+    // this stub is not exercised by encryptExistingPlaintextAttributes. It remains in place for
+    // tests that exercise encryptSensitiveAttributes (create/update paths at BaseBlobStoreManager
+    // lines 950-951), which run in request-scope where UserIdHelper.get() is valid.
     userIdHelperMockedStatic = mockStatic(UserIdHelper.class);
     qualifierUtilMockedStatic = mockStatic(QualifierUtil.class);
     userIdHelperMockedStatic.when(UserIdHelper::get).thenReturn(TEST_USER);
@@ -748,8 +752,8 @@ class BaseBlobStoreManagerTest
     updatedBlobStoreAttributes.put("test", newBlobConfigMap);
     updatedBlobStoreAttributes.put("file", Map.of("path", "foo"));
     BlobStoreConfiguration newBlobStoreConfig = createConfig("test", updatedBlobStoreAttributes);
-    when(secretsService.encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
-        TEST_USER)).thenReturn(newSecret);
+    when(secretsService.encryptMaven(eq(BaseBlobStoreManager.BLOBSTORE_CONFIG),
+        eq(SECRET_FIELD_VALUE.toCharArray()), any())).thenReturn(newSecret);
 
     doThrow(new BlobStoreException("Cannot start blobstore with new config", blobId)).when(blobStore).start();
 
@@ -759,9 +763,14 @@ class BaseBlobStoreManagerTest
     assertThrows(BlobStoreException.class, () -> underTest.update(newBlobStoreConfig));
 
     verify(store).update(newBlobStoreConfig);
-    verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG, SECRET_FIELD_VALUE.toCharArray(),
-        TEST_USER);
+    // The update() path uses TEST_USER (Shiro is bound when a REST/UI request drives update()).
+    verify(secretsService).encryptMaven(BaseBlobStoreManager.BLOBSTORE_CONFIG,
+        SECRET_FIELD_VALUE.toCharArray(), TEST_USER);
   }
+
+  // NEXUS-54061: The startup encrypt-in-place sweep was moved to a database migration step
+  // (BlobStoreCredentialEncryptionMigrationStep_2_154). Tests for that behavior are now in
+  // BlobStoreCredentialEncryptionMigrationStep_2_154Test.
 
   // Tests for moveBlob retry logic on temp file race condition
 

@@ -100,12 +100,6 @@ export default function AdminSystemDirectoryPage() {
               params={{ taskId: null }}
           />
 
-          <DirectoryList.DirectoryListItem
-              data-analytics-id="nxrm-admin-system-directory-upgrade-lnk"
-              text={UIStrings.UPGRADE.MENU.text}
-              description={UIStrings.UPGRADE.MENU.description}
-              routeName={ADMIN.SYSTEM.UPGRADE.ROOT}
-          />
         </DirectoryList>
       </DirectoryPage>);
 }

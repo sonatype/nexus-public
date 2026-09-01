@@ -33,7 +33,7 @@ import './SettingsButton.scss';
  *   Delete
  * </SettingsButton>
  */
-export function SettingsButton({
+export const SettingsButton = React.forwardRef(function SettingsButton({
   children,
   variant = 'secondary',
   type = 'button',
@@ -47,7 +47,7 @@ export function SettingsButton({
   className = '',
   testId,
   ...rest
-}) {
+}, ref) {
   const isDisabled = disabled || loading;
 
   // Auto-generate testId from type if not provided
@@ -70,6 +70,7 @@ export function SettingsButton({
 
   return (
     <button
+      ref={ref}
       type={type}
       onClick={onClick}
       disabled={isDisabled}
@@ -91,7 +92,9 @@ export function SettingsButton({
       )}
     </button>
   );
-}
+});
+
+SettingsButton.displayName = 'SettingsButton';
 
 SettingsButton.propTypes = {
   /** Button label (text only - icons should use icon prop) */

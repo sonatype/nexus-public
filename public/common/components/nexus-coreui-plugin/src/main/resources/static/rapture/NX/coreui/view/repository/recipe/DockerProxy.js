@@ -37,6 +37,11 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
     'NX.coreui.view.repository.facet.FirewallFacet'
   ],
 
+  // Matches an AWS ECR remote URL: <12-digit-accountId>.dkr.ecr.<region>.amazonaws.com
+  // (including GovCloud / ISO / China partitions). Kept in sync with the backend EcrUrlParser
+  // detection and the React ECR_URL_PATTERN gate.
+  ecrUrlPattern: /^https?:\/\/\d{12}\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com(\.cn)?\/?/i,
+
   /**
    * @override
    */
@@ -59,6 +64,74 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
 
     me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Docker_Remote_HelpText'));
     me.down('#proxyFieldSet').add(1, {xtype: 'nx-coreui-repository-docker-proxy-facet'});
+
+    me.insertEcrSessionTokenField();
+  },
+
+  /**
+   * Inserts the optional AWS ECR session token field into the shared HTTP authentication
+   * fieldset, directly below the Password field, so all three AWS credential parts live
+   * together: Access Key ID (username), Secret Access Key (password) and this session token.
+   *
+   * The field is only visible for AWS ECR remote URLs when the "username" auth type is
+   * selected. Visibility tracks the remote URL and auth type changes.
+   */
+  insertEcrSessionTokenField: function() {
+    var me = this,
+        passwordField = me.down('#attributes_httpclient_authentication_password');
+
+    if (!passwordField) {
+      return;
+    }
+
+    var authFieldset = passwordField.up('nx-optionalfieldset[checkboxName=authEnabled]');
+    if (!authFieldset) {
+      return;
+    }
+
+    var passwordIdx = authFieldset.items.indexOf(passwordField);
+    authFieldset.insert(passwordIdx + 1, {
+      xtype: 'nx-password',
+      itemId: 'ecrSessionToken',
+      name: 'attributes.dockerProxy.ecrAuth.sessionToken',
+      fieldLabel: NX.I18n.get('Repository_Facet_DockerProxyFacet_EcrSessionToken_FieldLabel'),
+      helpText: NX.I18n.get('Repository_Facet_DockerProxyFacet_EcrSessionToken_HelpText'),
+      allowBlank: true,
+      hidden: true
+    });
+
+    var remoteUrlField = me.down('#remoteUrl'),
+        authTypeCombo = me.down('[name=attributes.httpclient.authentication.type]');
+
+    if (remoteUrlField) {
+      remoteUrlField.on('change', me.updateEcrSessionTokenVisibility, me);
+    }
+    if (authTypeCombo) {
+      authTypeCombo.on('change', me.updateEcrSessionTokenVisibility, me);
+    }
+
+    me.on('afterrender', me.updateEcrSessionTokenVisibility, me);
+    me.on('boxready', me.updateEcrSessionTokenVisibility, me);
+  },
+
+  /**
+   * Shows the ECR session token field only for ECR remote URLs with "username" auth type.
+   */
+  updateEcrSessionTokenVisibility: function() {
+    var me = this,
+        field = me.down('#ecrSessionToken');
+
+    if (!field) {
+      return;
+    }
+
+    var remoteUrlField = me.down('#remoteUrl'),
+        authTypeCombo = me.down('[name=attributes.httpclient.authentication.type]'),
+        remoteUrl = remoteUrlField ? remoteUrlField.getValue() : '',
+        authType = authTypeCombo ? authTypeCombo.getValue() : 'username',
+        isEcr = me.ecrUrlPattern.test(remoteUrl || '') && authType === 'username';
+
+    field.setVisible(isEcr);
   },
 
   loadRecord: function(record) {

@@ -49,7 +49,7 @@ export const DOCKER_FOREIGN_LAYER_WHITELIST_ERROR_KEY = 'dockerProxy.foreignLaye
 // Internal UI endpoints for reference data
 const RECIPES_URL = `${API_INTERNAL_UI}/repositories/recipes`;
 const REPOSITORIES_LIST_URL = `${API_INTERNAL_UI}/repositories`;
-const CLEANUP_POLICIES_URL = '/service/rest/v1/cleanup-policies';
+const CLEANUP_POLICIES_URL = '/service/rest/internal/cleanup-policies';
 
 // =============================================================================
 // Guards
@@ -373,6 +373,8 @@ function buildDefaultFormData(format: string, type: RepositoryType): RepositoryF
     baseValues.nugetProxy = {
       queryCacheItemMaxAge: 3600,
       nugetVersion: 'V3',
+      symbolServerUrl: '',
+      allowAnonymousSymbolAccess: true,
     };
   }
 
@@ -504,7 +506,12 @@ export function createRepositoryFormMachine(options: RepositoryFormMachineOption
         // it sensibly on save.
         const formatDefaults: Partial<RepositoryFormData> = {};
         if (currentData.format === 'nuget' && newType === 'proxy') {
-          formatDefaults.nugetProxy = { queryCacheItemMaxAge: 3600, nugetVersion: 'V3' };
+          formatDefaults.nugetProxy = {
+            queryCacheItemMaxAge: 3600,
+            nugetVersion: 'V3',
+            symbolServerUrl: '',
+            allowAnonymousSymbolAccess: true,
+          };
         }
         if (currentData.format === 'pypi' && newType === 'proxy') {
           // `removeQuarantinedVersions` removed post-migration STL-381 — see PypiConfig in types.ts.

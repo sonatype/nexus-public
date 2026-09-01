@@ -31,13 +31,19 @@ import './ContentSelectorsList.scss';
 interface ContentSelectorsListProps {
   onSelect: (name: string) => void;
   onCreate: () => void;
+  /**
+   * When false, hides the empty-state Create button so a user without
+   * nexus:selectors:create cannot start a create flow (NEXUS-54212). The header
+   * Create button is gated separately in ContentSelectorsPage. Defaults to true.
+   */
+  canCreate?: boolean;
 }
 
 /**
  * ContentSelectorsList - Sortable, filterable table of content selectors
  * Uses shared EntityTable component for consistent UX
  */
-export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsListProps) {
+export function ContentSelectorsList({ onSelect, onCreate, canCreate = true }: ContentSelectorsListProps) {
   const [selectors, setSelectors] = useState<ContentSelector[]>([]);
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState<string>('name');
@@ -113,8 +119,8 @@ export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsLis
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(lowerFilter) ||
-          (s.description && s.description.toLowerCase().includes(lowerFilter)) ||
-          (s.expression && s.expression.toLowerCase().includes(lowerFilter))
+          (s.description?.toLowerCase().includes(lowerFilter)) ||
+          (s.expression?.toLowerCase().includes(lowerFilter))
       );
     }
 
@@ -183,11 +189,11 @@ export function ContentSelectorsList({ onSelect, onCreate }: ContentSelectorsLis
         icon={Layers}
         title="No Content Selectors"
         description="Create your first content selector to define what content users can access."
-        action={{
+        action={canCreate ? {
           label: 'Create Selector',
           onClick: onCreate,
           icon: Plus,
-        }}
+        } : undefined}
         secondaryAction={{
           label: 'Learn more about Content Selectors',
           href: 'http://links.sonatype.com/products/nxrm3/docs/content-selector',

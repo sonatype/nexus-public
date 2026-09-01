@@ -173,6 +173,43 @@ public class JexlSelectorTest
     selector.evaluate(source);
   }
 
+  @Test
+  public void testMapPropertyReadAllowed() {
+    // Map property access via dot notation should still work
+    Selector selector = buildSelector("someMap.a == 'alfa'");
+    assertTrue(selector.evaluate(source));
+  }
+
+  @Test(expected = JexlException.class)
+  public void testMapValuePropertyReadBlocked() {
+    // After legitimate Map access, property reads on non-Map values should be blocked
+    Selector selector = buildSelector("someMap.a.class");
+
+    selector.evaluate(source);
+  }
+
+  @Test(expected = JexlException.class)
+  public void testPropertyReadBlockedOnNonMapObjects() {
+    Selector selector = buildSelector("writeableObj.class");
+
+    selector.evaluate(source);
+  }
+
+  @Test(expected = JexlException.class)
+  public void testPropertyReadBlockedOnString() {
+    Selector selector = buildSelector("someString.class");
+
+    selector.evaluate(source);
+  }
+
+  @Test(expected = JexlException.class)
+  public void testComponentFormatClassBlocked() {
+    // Replicates the actual vulnerability: component.format.class
+    Selector selector = buildSelector("component.format.class");
+
+    selector.evaluate(source);
+  }
+
   private JexlSelector buildSelector(final String expression) {
     return new JexlSelector(engine.buildExpression(expression, true));
   }

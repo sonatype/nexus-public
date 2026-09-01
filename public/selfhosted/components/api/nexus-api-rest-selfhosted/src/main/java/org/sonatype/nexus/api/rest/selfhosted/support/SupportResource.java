@@ -25,6 +25,8 @@ import org.sonatype.nexus.supportzip.SupportZipGenerator;
 import org.sonatype.nexus.common.log.SupportZipGeneratorRequest;
 import org.sonatype.nexus.supportzip.SupportZipGenerator.Result;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -87,7 +89,8 @@ public class SupportResource
   @RequiresPermissions("nexus:atlas:create")
   @Operation(summary = "Creates a support zip and returns the path")
   @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "successful operation"),
+      @ApiResponse(responseCode = "200", description = "successful operation",
+          content = @Content(schema = @Schema(implementation = SupportZipXO.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to generate support zip")
   })
   @Consumes(APPLICATION_JSON)

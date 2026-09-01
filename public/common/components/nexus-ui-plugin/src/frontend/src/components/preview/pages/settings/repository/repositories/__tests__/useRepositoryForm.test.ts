@@ -102,6 +102,13 @@ jest.mock('../../../../../shared', () => ({
   useHasFirewallLicense: () => mockUseHasFirewallLicense(),
 }));
 
+// useRepositoryForm uses UIRouter's useCurrentStateAndParams to read the
+// `?tab=` query param from the URL. The renderHook test harness doesn't mount a
+// <UIRouter> wrapper, so stub the hook to return empty params.
+jest.mock('@uirouter/react', () => ({
+  useCurrentStateAndParams: () => ({ state: null, params: {} }),
+}));
+
 const DEFAULT_OPTIONS = {
   format: 'maven2',
   repositoryType: 'proxy' as const,
@@ -430,6 +437,38 @@ describe('useRepositoryForm', () => {
     });
 
     it('shouldNotCallOnCanAdvanceChangeWhenNotProvided', () => {
+      const { result } = renderHook(() => useRepositoryForm(DEFAULT_OPTIONS));
+
+      expect(result.current).toBeDefined();
+    });
+  });
+
+  describe('onDirtyChange effect (NEXUS-54349)', () => {
+    it('shouldReportFalseWhenFormIsPristine', () => {
+      const onDirtyChange = jest.fn();
+      mockFormReturn.isPristine = true;
+
+      renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, onDirtyChange })
+      );
+
+      expect(onDirtyChange).toHaveBeenCalledWith(false);
+    });
+
+    it('shouldReportTrueWhenFormIsDirty', () => {
+      const onDirtyChange = jest.fn();
+      mockFormReturn.isPristine = false;
+
+      renderHook(() =>
+        useRepositoryForm({ ...DEFAULT_OPTIONS, onDirtyChange })
+      );
+
+      expect(onDirtyChange).toHaveBeenCalledWith(true);
+
+      mockFormReturn.isPristine = true;
+    });
+
+    it('shouldNotCallOnDirtyChangeWhenNotProvided', () => {
       const { result } = renderHook(() => useRepositoryForm(DEFAULT_OPTIONS));
 
       expect(result.current).toBeDefined();

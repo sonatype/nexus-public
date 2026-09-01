@@ -26,6 +26,7 @@ export default class ExtJS {
   static urlOf = jest.fn((path) => `https://testurl${path}`);
   static absolutePath = jest.fn((path) => `/absolute${path}`);
   static proLicenseUrl = jest.fn(() => 'https://testurl/PRO-LICENSE.html');
+  static ceLicenseUrl = jest.fn(() => 'https://testurl/CE-LICENSE.html');
 
   static setDirtyStatus = jest.fn((key, isDirty) => {
     window.dirty = window.dirty || [];
@@ -87,10 +88,16 @@ export default class ExtJS {
   static usePermission = jest.fn((getValue) => getValue());
 
   static hasUser = jest.fn(() => true);
+  static isAuthStateResolved = jest.fn(() => true);
+  static whenAuthStateResolved = jest.fn(() => Promise.resolve());
+  static onStateChange = jest.fn(() => () => {});
+  static onPermissionsChange = jest.fn(() => () => {});
   static signOut = jest.fn();
   static showAbout = jest.fn();
   static refresh = jest.fn();
   static search = jest.fn();
   static isExtJsRendered = jest.fn(() => true);
   static waitForExtJs = jest.fn((callback) => callback());
+  static arePermissionsReady = jest.fn(() => true);
+  static waitForPermissions = jest.fn().mockResolvedValue(undefined);
 }

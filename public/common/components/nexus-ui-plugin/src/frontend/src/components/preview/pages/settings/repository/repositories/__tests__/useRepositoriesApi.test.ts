@@ -85,6 +85,62 @@ describe('useRepositoriesApi', () => {
     });
   });
 
+  describe('fetchRepository', () => {
+    // NEXUS-54019: the edit form must read repository config through the internal admin-gated
+    // endpoint (repository-admin READ) FIRST — the SAME permission the list uses. The public v1
+    // GET /v1/repositories/{name} (which gates on repository-view read/browse) is now only a
+    // best-effort enrichment for UI-only fields. Reading v1 first let an admin-read-only user
+    // see the list but 403 opening a repo.
+    it('reads detail from the internal admin-gated endpoint first, then enriches from v1', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', online: true })
+        .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', status: { online: true } });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('repo1');
+      });
+
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(
+        1,
+        '/service/rest/internal/ui/repositories/repository/repo1',
+      );
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(2, '/service/rest/v1/repositories/repo1');
+      expect(repo.name).toBe('repo1');
+      expect(repo.status).toEqual({ online: true });
+    });
+
+    it('returns the admin config when the v1 enrichment call 403s (admin-read-only user)', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', online: true })
+        .mockRejectedValueOnce({ response: { status: 403 }, message: 'Forbidden' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('repo1');
+      });
+
+      expect(repo).toEqual({ name: 'repo1', format: 'npm', type: 'hosted', online: true });
+    });
+
+    it('returns null when the repository is not found (404)', async () => {
+      mockRestClient.get.mockRejectedValueOnce({ response: { status: 404 }, message: 'Not Found' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('missing');
+      });
+
+      expect(repo).toBeNull();
+    });
+  });
+
   describe('createRepository', () => {
     it('creates repository successfully', async () => {
       mockRestClient.post.mockResolvedValueOnce({});
@@ -129,7 +185,7 @@ describe('useRepositoriesApi', () => {
               strictContentTypeValidation: true,
             },
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected to throw
         }
       });
@@ -289,6 +345,173 @@ describe('useRepositoriesApi', () => {
     });
   });
 
+  describe('buildRepositoryConfig - nuget proxy', () => {
+    // The symbol-server fields (symbolServerUrl, allowAnonymousSymbolAccess) are gated on
+    // the nexus.nuget.symbol.server.enabled feature flag — matching the Classic UI (see
+    // NugetProxy.js) and the backend routing (see NugetProxyRecipe.addSymSrvRoute) which
+    // are both flag-gated on the same key. Emitting these fields when the flag is off
+    // would silently persist inert config values that survive across flag toggles and
+    // diverge from Classic UI's payload.
+    const setFeatureFlag = (enabled: boolean): (() => void) => {
+      const state = (window as unknown as { NX: { State: { getValue: jest.Mock } } }).NX.State;
+      const original = state.getValue;
+      state.getValue = jest.fn((key: string) => {
+        if (key === 'nexus.nuget.symbol.server.enabled') return enabled;
+        return undefined;
+      }) as jest.Mock;
+      return () => { state.getValue = original; };
+    };
+
+    it('does NOT emit symbolServerUrl or allowAnonymousSymbolAccess when flag is off', async () => {
+      // Even if the form data somehow carries these fields (e.g., a stale form state or
+      // an operator manipulating them via devtools), the flag-off code path must strip
+      // them. This is the parity-with-Classic-UI contract when the feature is disabled.
+      const restore = setFeatureFlag(false);
+      try {
+        mockRestClient.post.mockResolvedValueOnce({});
+
+        const { result } = renderHook(() => useRepositoriesApi());
+
+        await act(async () => {
+          await result.current.createRepository({
+            name: 'nuget-proxy',
+            type: 'proxy',
+            format: 'nuget',
+            recipe: 'nuget-proxy',
+            online: true,
+            storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+            proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json', contentMaxAge: 1440, metadataMaxAge: 1440 },
+            nugetProxy: {
+              queryCacheItemMaxAge: 3600,
+              nugetVersion: 'V3',
+              symbolServerUrl: 'https://symbols.nuget.org/download/symbols',
+              allowAnonymousSymbolAccess: false,
+            },
+          });
+        });
+
+        const postedBody = mockRestClient.post.mock.calls[0][1];
+        expect(postedBody.nugetProxy).toEqual({
+          queryCacheItemMaxAge: 3600,
+          nugetVersion: 'V3',
+        });
+        expect(postedBody.nugetProxy).not.toHaveProperty('symbolServerUrl');
+        expect(postedBody.nugetProxy).not.toHaveProperty('allowAnonymousSymbolAccess');
+      } finally {
+        restore();
+      }
+    });
+
+    it('emits symbolServerUrl and allowAnonymousSymbolAccess when flag is on and user provides them', async () => {
+      const restore = setFeatureFlag(true);
+      try {
+        mockRestClient.post.mockResolvedValueOnce({});
+
+        const { result } = renderHook(() => useRepositoriesApi());
+
+        await act(async () => {
+          await result.current.createRepository({
+            name: 'nuget-proxy',
+            type: 'proxy',
+            format: 'nuget',
+            recipe: 'nuget-proxy',
+            online: true,
+            storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+            proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json', contentMaxAge: 1440, metadataMaxAge: 1440 },
+            nugetProxy: {
+              queryCacheItemMaxAge: 3600,
+              nugetVersion: 'V3',
+              symbolServerUrl: 'https://symbols.nuget.org/download/symbols',
+              allowAnonymousSymbolAccess: false,
+            },
+          });
+        });
+
+        const postedBody = mockRestClient.post.mock.calls[0][1];
+        expect(postedBody.nugetProxy).toEqual({
+          queryCacheItemMaxAge: 3600,
+          nugetVersion: 'V3',
+          symbolServerUrl: 'https://symbols.nuget.org/download/symbols',
+          allowAnonymousSymbolAccess: false,
+        });
+      } finally {
+        restore();
+      }
+    });
+
+    it('omits symbolServerUrl when empty (flag on) — backend stores null instead of ""', async () => {
+      // Empty-string round-trip contract: an empty text field means "not configured",
+      // not "an empty URL". Sending "" would persist an empty-string attribute that the
+      // getSymbolServerBaseUrl helper on the backend treats the same as unset, but on
+      // API GET it round-trips as "", not null — leaving the operator with a subtly
+      // different config file. Omitting the key keeps the persisted attribute null.
+      const restore = setFeatureFlag(true);
+      try {
+        mockRestClient.post.mockResolvedValueOnce({});
+
+        const { result } = renderHook(() => useRepositoriesApi());
+
+        await act(async () => {
+          await result.current.createRepository({
+            name: 'nuget-proxy',
+            type: 'proxy',
+            format: 'nuget',
+            recipe: 'nuget-proxy',
+            online: true,
+            storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+            proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json', contentMaxAge: 1440, metadataMaxAge: 1440 },
+            nugetProxy: {
+              queryCacheItemMaxAge: 3600,
+              nugetVersion: 'V3',
+              symbolServerUrl: '',
+              allowAnonymousSymbolAccess: true,
+            },
+          });
+        });
+
+        const postedBody = mockRestClient.post.mock.calls[0][1];
+        expect(postedBody.nugetProxy).not.toHaveProperty('symbolServerUrl');
+        expect(postedBody.nugetProxy.allowAnonymousSymbolAccess).toBe(true);
+      } finally {
+        restore();
+      }
+    });
+
+    it('defaults allowAnonymousSymbolAccess to true (flag on, user did not toggle)', async () => {
+      // Mirrors Classic UI's NugetProxy.js which seeds the checkbox `value: true`, and
+      // the backend NugetAttributes.allowAnonymousSymbolAccess default. Preview UI
+      // should not silently invert this default just because the user hasn't touched
+      // the checkbox during a create flow that doesn't scroll past the field.
+      const restore = setFeatureFlag(true);
+      try {
+        mockRestClient.post.mockResolvedValueOnce({});
+
+        const { result } = renderHook(() => useRepositoriesApi());
+
+        await act(async () => {
+          await result.current.createRepository({
+            name: 'nuget-proxy',
+            type: 'proxy',
+            format: 'nuget',
+            recipe: 'nuget-proxy',
+            online: true,
+            storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+            proxy: { remoteUrl: 'https://api.nuget.org/v3/index.json', contentMaxAge: 1440, metadataMaxAge: 1440 },
+            nugetProxy: {
+              queryCacheItemMaxAge: 3600,
+              nugetVersion: 'V3',
+            },
+          });
+        });
+
+        const postedBody = mockRestClient.post.mock.calls[0][1];
+        expect(postedBody.nugetProxy.allowAnonymousSymbolAccess).toBe(true);
+      } finally {
+        restore();
+      }
+    });
+  });
+
   describe('buildRepositoryConfig - npm proxy', () => {
     // Post-migration STL-381: the npm block is no longer emitted at all for
     // npm-proxy. Its only field was the legacy `removeQuarantinedVersions` flag,
@@ -385,7 +608,7 @@ describe('useRepositoriesApi', () => {
       await act(async () => {
         try {
           await result.current.deleteRepository('repo1');
-        } catch (e) {
+        } catch (_e) {
           // Expected to throw
         }
       });
@@ -439,6 +662,105 @@ describe('useRepositoriesApi', () => {
 
       expect(rules).toHaveLength(1);
       expect(rules[0].name).toBe('block-snapshots');
+    });
+  });
+
+  describe('fetchCleanupPolicies', () => {
+    it('calls the internal cleanup-policies endpoint so CE returns 200, not 404', async () => {
+      mockRestClient.get.mockResolvedValueOnce([]);
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      await act(async () => {
+        await result.current.fetchCleanupPolicies();
+      });
+
+      expect(mockRestClient.get).toHaveBeenCalledWith('/service/rest/internal/cleanup-policies');
+    });
+
+    it('returns all policies when no format filter is supplied', async () => {
+      const policies = [
+        { name: 'p1', format: 'maven2' },
+        { name: 'p2', format: 'npm' },
+      ];
+      mockRestClient.get.mockResolvedValueOnce(policies);
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let fetched: any;
+      await act(async () => {
+        fetched = await result.current.fetchCleanupPolicies();
+      });
+
+      expect(fetched).toEqual(policies);
+    });
+
+    it('filters policies by format client-side when format is provided', async () => {
+      mockRestClient.get.mockResolvedValueOnce([
+        { name: 'p1', format: 'maven2' },
+        { name: 'p2', format: 'npm' },
+        { name: 'p3', format: 'maven2' },
+      ]);
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let fetched: any;
+      await act(async () => {
+        fetched = await result.current.fetchCleanupPolicies('maven2');
+      });
+
+      expect(fetched).toEqual([
+        { name: 'p1', format: 'maven2' },
+        { name: 'p3', format: 'maven2' },
+      ]);
+    });
+
+    it('includes the all-formats sentinel "*" alongside format-matching policies when format filter is applied', async () => {
+      mockRestClient.get.mockResolvedValueOnce([
+        { name: 'maven-only', format: 'maven2' },
+        { name: 'all-formats', format: '*' },
+        { name: 'npm-only', format: 'npm' },
+      ]);
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let fetched: any;
+      await act(async () => {
+        fetched = await result.current.fetchCleanupPolicies('maven2');
+      });
+
+      expect(fetched).toEqual([
+        { name: 'maven-only', format: 'maven2' },
+        { name: 'all-formats', format: '*' },
+      ]);
+    });
+
+    it('returns empty array when the response is not an array', async () => {
+      mockRestClient.get.mockResolvedValueOnce(null);
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let fetched: any;
+      await act(async () => {
+        fetched = await result.current.fetchCleanupPolicies();
+      });
+
+      expect(fetched).toEqual([]);
+    });
+
+    it('returns empty array and swallows the error when the request fails', async () => {
+      mockRestClient.get.mockRejectedValueOnce(new Error('boom'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let fetched: any;
+      await act(async () => {
+        fetched = await result.current.fetchCleanupPolicies();
+      });
+
+      expect(fetched).toEqual([]);
+      consoleErrorSpy.mockRestore();
     });
   });
 

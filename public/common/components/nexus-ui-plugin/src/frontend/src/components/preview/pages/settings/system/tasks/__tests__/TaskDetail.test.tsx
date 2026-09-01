@@ -214,6 +214,108 @@ describe('TaskDetail', () => {
     expect(screen.getByText(/Stop "Cleanup Task"/)).toBeInTheDocument();
   });
 
+  // NEXUS-53525: polling feeds a `liveTask` prop carrying the latest server
+  // status. TaskDetail overlays ONLY the live-derived fields onto the displayed
+  // task, leaving form-bound fields untouched so an in-flight edit survives a poll.
+  describe('live status overlay (polling)', () => {
+    it('renders the live status on the badge, overriding the seed task status', () => {
+      const runningLive: Task = { ...mockTask, status: 'RUNNING', stoppable: true, runnable: false };
+      // Seed task is WAITING; the polled snapshot is RUNNING.
+      renderWithTheme(<TaskDetail {...defaultProps} task={mockTask} liveTask={runningLive} />);
+      expect(screen.getByTestId('task-status-badge')).toHaveTextContent('RUNNING');
+    });
+
+    it('shows the Stop button while live status is RUNNING and hides it once terminal', () => {
+      const runningLive: Task = { ...mockTask, status: 'RUNNING', stoppable: true, runnable: false };
+      const { rerender } = renderWithTheme(
+        <TaskDetail {...defaultProps} task={mockTask} liveTask={runningLive} />,
+      );
+      expect(screen.getByTestId('task-stop')).toBeInTheDocument();
+      expect(screen.queryByTestId('task-run')).not.toBeInTheDocument();
+
+      const doneLive: Task = { ...mockTask, status: 'OK', lastRunResult: 'OK [2s]', stoppable: false, runnable: true };
+      rerender(<Theme><TaskDetail {...defaultProps} task={mockTask} liveTask={doneLive} /></Theme>);
+      expect(screen.queryByTestId('task-stop')).not.toBeInTheDocument();
+      expect(screen.getByTestId('task-status-badge')).toHaveTextContent('OK');
+    });
+
+    it('reflects a live Last Result in the Summary tab', () => {
+      const doneLive: Task = { ...mockTask, status: 'OK', lastRunResult: 'OK [2s]' };
+      renderWithTheme(<TaskDetail {...defaultProps} task={mockTask} liveTask={doneLive} />);
+      expect(screen.getByText('OK [2s]')).toBeInTheDocument();
+    });
+
+    it('does not overwrite an unsaved form edit when a poll arrives', async () => {
+      const { rerender } = renderWithTheme(<TaskDetail {...defaultProps} task={mockTask} />);
+
+      // User edits the notification email on the Settings tab (form-bound field).
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('task-edit-button'));
+      });
+      const emailInput = await screen.findByLabelText(/notification email/i);
+      await act(async () => {
+        fireEvent.change(emailInput, { target: { value: 'changed@example.com' } });
+      });
+
+      // A poll lands carrying a DIFFERENT server alertEmail and a RUNNING status.
+      const polled: Task = {
+        ...mockTask,
+        alertEmail: 'server-side@example.com',
+        status: 'RUNNING',
+        stoppable: true,
+        runnable: false,
+      };
+      rerender(<Theme><TaskDetail {...defaultProps} task={mockTask} liveTask={polled} /></Theme>);
+
+      // The unsaved edit is preserved (form not clobbered)...
+      expect(await screen.findByLabelText(/notification email/i)).toHaveValue('changed@example.com');
+      // ...while the live status still flows through to the badge.
+      expect(screen.getByTestId('task-status-badge')).toHaveTextContent('RUNNING');
+    });
+
+    // Regression (refresh while running): the seed task already carries RUNNING,
+    // so the badge and Stop button must render immediately — no poll required.
+    it('renders RUNNING and the Stop button immediately from the seed on initial load', () => {
+      const runningSeed: Task = { ...mockTask, status: 'RUNNING', stoppable: true, runnable: false };
+      renderWithTheme(<TaskDetail {...defaultProps} task={runningSeed} />);
+      expect(screen.getByTestId('task-status-badge')).toHaveTextContent('RUNNING');
+      expect(screen.getByTestId('task-stop')).toBeInTheDocument();
+      expect(screen.queryByTestId('task-run')).not.toBeInTheDocument();
+    });
+
+    // Regression (refresh while running): when the detail page mounts with only a
+    // taskId (no preloaded task — the TasksPage seed has not arrived yet), the form
+    // machine fetches the task itself. That fetch must use the SAME normalization as
+    // polling, so a progress-style "RUNNING: <n>" maps to RUNNING (not a literal,
+    // not WAITING) and the Stop button appears.
+    it('shows RUNNING from the form-machine fetch when the server reports a progress state', async () => {
+      mockInternalApi.restClient.get.mockImplementation((url: string) => {
+        if (typeof url === 'string' && url.includes('/templates')) {
+          return Promise.resolve([]);
+        }
+        return Promise.resolve({
+          id: 'task-1',
+          enabled: true,
+          name: 'Cleanup Task',
+          type: 'repository.cleanup',
+          currentState: 'RUNNING: 7 of 9 repositories',
+          message: 'Running',
+          schedule: 'manual',
+          properties: {},
+        });
+      });
+
+      renderWithTheme(<TaskDetail {...defaultProps} task={null} taskId="task-1" />);
+
+      // Stop button is gated on status === 'RUNNING', so its presence proves the
+      // progress suffix was normalized (a raw "RUNNING: 7 of 9…" would hide it).
+      expect(await screen.findByTestId('task-stop')).toBeInTheDocument();
+      const badge = screen.getByTestId('task-status-badge');
+      expect(badge).toHaveTextContent('RUNNING');
+      expect(badge).not.toHaveTextContent('7 of 9');
+    });
+  });
+
   it('has only one set of confirmation dialogs (no duplicates)', () => {
     renderWithTheme(<TaskDetail {...defaultProps} />);
     fireEvent.click(screen.getByTestId('form-delete'));
@@ -235,6 +337,41 @@ describe('TaskDetail', () => {
     expect(scheduleTab).not.toBeDisabled();
   });
 
+  // NEXUS-53485: manual-only tasks (Data Repair Plan) must not expose any schedule editing in the
+  // edit/detail flow — the Schedule tab is hidden entirely.
+  describe('manual-only task (blobstore.planReconciliation)', () => {
+    const planTask: Task = {
+      ...mockTask,
+      id: 'plan-1',
+      name: 'Repair - Data Repair Plan',
+      typeId: 'blobstore.planReconciliation',
+      typeName: 'Repair - Data Repair Plan',
+      schedule: 'manual',
+    };
+
+    it('hides the Schedule tab and renders only Summary/Settings/History', () => {
+      renderWithTheme(<TaskDetail {...defaultProps} task={planTask} />);
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.map((t) => t.textContent)).toEqual(
+        expect.arrayContaining([expect.stringContaining('Summary'), expect.stringContaining('Settings'), expect.stringContaining('History')])
+      );
+      expect(screen.queryByRole('tab', { name: /schedule/i })).not.toBeInTheDocument();
+      expect(tabs).toHaveLength(3);
+    });
+
+    it('does not render the schedule selector for this task', () => {
+      renderWithTheme(<TaskDetail {...defaultProps} task={planTask} />);
+      // The "Choose when this task should run" schedule control must be absent.
+      expect(screen.queryByText('Choose when this task should run')).not.toBeInTheDocument();
+    });
+
+    it('still shows the Schedule tab for unrelated (schedulable) task types', () => {
+      // Scope guard: a normal task keeps its Schedule tab.
+      renderWithTheme(<TaskDetail {...defaultProps} task={mockTask} />);
+      expect(screen.getByRole('tab', { name: /schedule/i })).toBeInTheDocument();
+    });
+  });
+
   it('hides Run/Stop when user lacks permission', () => {
     renderWithTheme(<TaskDetail {...defaultProps} canRun={false} canStop={false} />);
     expect(screen.queryByTestId('task-run')).not.toBeInTheDocument();
@@ -246,7 +383,7 @@ describe('TaskDetail', () => {
     expect(screen.queryByText('Save')).not.toBeInTheDocument();
   });
 
-  it('calls onDelete after typing task name and confirming delete', async () => {
+  it('calls onDelete after typing "DELETE" and confirming delete', async () => {
     await act(async () => {
       renderWithTheme(<TaskDetail {...defaultProps} />);
     });
@@ -257,7 +394,7 @@ describe('TaskDetail', () => {
     // Type the task name in the confirmation input
     const confirmInput = await screen.findByRole('textbox');
     await act(async () => {
-      fireEvent.change(confirmInput, { target: { value: 'Cleanup Task' } });
+      fireEvent.change(confirmInput, { target: { value: 'Delete' } });
     });
 
     const dialog = screen.getByRole('alertdialog');
@@ -293,7 +430,7 @@ describe('TaskDetail', () => {
   });
 
   describe('task deletion', () => {
-    it('requires typing task name to enable delete', async () => {
+    it('requires typing "DELETE" to enable delete', async () => {
       renderWithTheme(<TaskDetail {...defaultProps} />);
 
       // Click delete
@@ -314,7 +451,7 @@ describe('TaskDetail', () => {
 
       // Type correct task name
       await act(async () => {
-        fireEvent.change(confirmInput, { target: { value: 'Cleanup Task' } });
+        fireEvent.change(confirmInput, { target: { value: 'Delete' } });
       });
       expect(confirmButton).not.toBeDisabled();
     });
@@ -357,7 +494,7 @@ describe('TaskDetail', () => {
       // Type task name
       const confirmInput = await screen.findByRole('textbox');
       await act(async () => {
-        fireEvent.change(confirmInput, { target: { value: 'Cleanup Task' } });
+        fireEvent.change(confirmInput, { target: { value: 'Delete' } });
       });
 
       // Click delete
@@ -523,7 +660,7 @@ describe('TaskDetail', () => {
       // Type the task name to enable the destructive confirm button.
       const confirmInput = await screen.findByRole('textbox');
       await act(async () => {
-        fireEvent.change(confirmInput, { target: { value: 'Cleanup Task' } });
+        fireEvent.change(confirmInput, { target: { value: 'Delete' } });
       });
       const dialog = screen.getByRole('alertdialog');
       const confirmButton = within(dialog).getByRole('button', { name: /^Delete$/i });

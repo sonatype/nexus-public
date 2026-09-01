@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -33,6 +34,8 @@ import org.mockito.Mock;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -182,7 +185,7 @@ public class SearchStoreTest
   }
 
   @Test
-  public void testSaveAssets_EmptyCollection_NoDAOCalls() {
+  public void testSaveAssets_EmptyCollection_SingleDAOCall() {
     underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
     List<SearchAssetRecord> assets = new ArrayList<>();
 
@@ -264,12 +267,245 @@ public class SearchStoreTest
     assertThat(batches.get(2).size(), is(500));
   }
 
-  /**
-   * Helper method to create mock SearchAssetRecord instances for testing.
-   *
-   * @param count number of mock assets to create
-   * @return list of mock SearchAssetRecord instances
-   */
+  @Test
+  public void testDeleteAllForRepository_NothingToDelete_ReturnsFalse() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteAllForRepository(42, "maven2", 1000)).thenReturn(false);
+
+    boolean result = underTest.deleteAllForRepository(42, "maven2");
+
+    assertFalse(result);
+    verify(dao).deleteAllForRepository(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testDeleteAllForRepository_MultipleBatches_ReturnsTrue() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteAllForRepository(42, "maven2", 1000))
+        .thenReturn(true)
+        .thenReturn(false);
+
+    boolean result = underTest.deleteAllForRepository(42, "maven2");
+
+    assertTrue(result);
+    verify(dao, times(2)).deleteAllForRepository(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testDeleteAllSearchAssets_NothingToDelete_ReturnsFalse() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteAllSearchAssets(42, "maven2", 1000)).thenReturn(false);
+
+    boolean result = underTest.deleteAllSearchAssets(42, "maven2");
+
+    assertFalse(result);
+    verify(dao).deleteAllSearchAssets(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testDeleteAllSearchAssets_MultipleBatches_ReturnsTrue() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteAllSearchAssets(42, "maven2", 1000))
+        .thenReturn(true)
+        .thenReturn(false);
+
+    boolean result = underTest.deleteAllSearchAssets(42, "maven2");
+
+    assertTrue(result);
+    verify(dao, times(2)).deleteAllSearchAssets(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testRepositoryNeedsReindex_NoEntries_ReturnsTrue() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.hasRepositoryEntries("my-repo")).thenReturn(false);
+
+    assertTrue(underTest.repositoryNeedsReindex("my-repo"));
+  }
+
+  @Test
+  public void testRepositoryNeedsReindex_HasEntries_ReturnsFalse() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.hasRepositoryEntries("my-repo")).thenReturn(true);
+
+    assertFalse(underTest.repositoryNeedsReindex("my-repo"));
+  }
+
+  @Test
+  public void testGetSearchRepositories_ReturnsDaoResult() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    List<SearchRepositoryData> expected = List.of(mock(SearchRepositoryData.class));
+    when(dao.getSearchRepositories()).thenReturn(expected);
+
+    assertThat(underTest.getSearchRepositories(), is(expected));
+  }
+
+  @Test
+  public void testSave_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    SearchRecordData data = mock(SearchRecordData.class);
+
+    underTest.save(data);
+
+    verify(dao).save(data);
+  }
+
+  @Test
+  public void testSaveBatch_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    List<SearchRecordData> batch = List.of(mock(SearchRecordData.class));
+
+    underTest.saveBatch(batch);
+
+    verify(dao).saveBatch(batch);
+  }
+
+  @Test
+  public void testDelete_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+
+    underTest.delete(42, 100, "maven2");
+
+    verify(dao).delete(42, 100, "maven2");
+  }
+
+  @Test
+  public void testDeleteComponentIds_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    Set<Integer> ids = Set.of(1, 2, 3);
+
+    underTest.deleteComponentIds(42, ids, "maven2");
+
+    verify(dao).deleteComponentIds(42, ids, "maven2");
+  }
+
+  @Test
+  public void testDeleteSearchAssets_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    Set<Integer> ids = Set.of(1, 2, 3);
+
+    underTest.deleteSearchAssets(42, ids, "maven2");
+
+    verify(dao).deleteSearchAssets(42, ids, "maven2");
+  }
+
+  @Test
+  public void testSaveAsset_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    SearchAssetRecord asset = mock(SearchAssetRecord.class);
+
+    underTest.saveAsset(asset);
+
+    verify(dao).saveAsset(asset);
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testDelete_DaoThrows_PropagatesException() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    org.mockito.Mockito.doThrow(new RuntimeException("db error")).when(dao).delete(42, 100, "maven2");
+
+    underTest.delete(42, 100, "maven2");
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testDeleteComponentIds_DaoThrows_PropagatesException() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    org.mockito.Mockito.doThrow(new RuntimeException("db error")).when(dao).deleteComponentIds(any(), any(), any());
+
+    underTest.deleteComponentIds(42, Set.of(1), "maven2");
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testDeleteSearchAssets_DaoThrows_PropagatesException() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    org.mockito.Mockito.doThrow(new RuntimeException("db error")).when(dao).deleteSearchAssets(any(), any(), any());
+
+    underTest.deleteSearchAssets(42, Set.of(1), "maven2");
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testSaveBatch_DaoThrows_PropagatesException() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    org.mockito.Mockito.doThrow(new RuntimeException("db error")).when(dao).saveBatch(any());
+
+    underTest.saveBatch(java.util.Collections.emptyList());
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testSaveAsset_DaoThrows_PropagatesException() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    org.mockito.Mockito.doThrow(new RuntimeException("db error")).when(dao).saveAsset(any());
+
+    underTest.saveAsset(mock(SearchAssetRecord.class));
+  }
+
+  @Test(expected = RuntimeException.class)
+  public void testGetSearchRepositories_DaoThrows_PropagatesException() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.getSearchRepositories()).thenThrow(new RuntimeException("db error"));
+
+    underTest.getSearchRepositories();
+  }
+
+  @Test
+  public void testSearchComponents_WithSortColumn_PassesSortToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.searchComponents(any())).thenReturn(java.util.Collections.emptyList());
+
+    underTest.searchComponents(10, 0, null, "version", org.sonatype.nexus.repository.search.SortDirection.ASC, false);
+
+    verify(dao).searchComponents(any());
+  }
+
+  @Test
+  public void testDeleteOrphanedComponents_SingleBatch() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteOrphanedComponents(42, "maven2", 1000)).thenReturn(false);
+
+    underTest.deleteOrphanedComponents(42, "maven2");
+
+    verify(dao).deleteOrphanedComponents(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testDeleteOrphanedComponents_MultipleBatches() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteOrphanedComponents(42, "maven2", 1000))
+        .thenReturn(true)
+        .thenReturn(true)
+        .thenReturn(false);
+
+    underTest.deleteOrphanedComponents(42, "maven2");
+
+    // DAO called 3 times: two batches returning true (triggering commitChangesSoFar),
+    // then a termination check returning false to exit the loop.
+    verify(dao, times(3)).deleteOrphanedComponents(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testDeleteOrphanedAssets_SingleBatch() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteOrphanedAssets(42, "maven2", 1000)).thenReturn(false);
+
+    underTest.deleteOrphanedAssets(42, "maven2");
+
+    verify(dao).deleteOrphanedAssets(42, "maven2", 1000);
+  }
+
+  @Test
+  public void testDeleteOrphanedAssets_MultipleBatches() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    when(dao.deleteOrphanedAssets(42, "maven2", 1000))
+        .thenReturn(true)
+        .thenReturn(false);
+
+    underTest.deleteOrphanedAssets(42, "maven2");
+
+    // DAO called 2 times: one batch returning true (triggering commitChangesSoFar),
+    // then a termination check returning false to exit the loop.
+    verify(dao, times(2)).deleteOrphanedAssets(42, "maven2", 1000);
+  }
+
   private List<SearchAssetRecord> createMockAssets(int count) {
     List<SearchAssetRecord> assets = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
@@ -278,5 +514,28 @@ public class SearchStoreTest
       assets.add(asset);
     }
     return assets;
+  }
+
+  @Test
+  public void browseComponentVersions_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    ComponentVersionSearchRequest request = ComponentVersionSearchRequest.builder()
+        .filter("cs.format = #{filterParams.format}")
+        .filterParams(Map.of("format", "maven2"))
+        .build();
+    ComponentVersionData row = new ComponentVersionData();
+    row.setVersion("1.0.0");
+    when(dao.browseComponentVersions(request)).thenReturn(List.of(row));
+
+    assertThat(underTest.browseComponentVersions(request), is(List.of(row)));
+  }
+
+  @Test
+  public void countComponentVersions_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    ComponentVersionSearchRequest request = ComponentVersionSearchRequest.builder().build();
+    when(dao.countComponentVersions(request)).thenReturn(7L);
+
+    assertThat(underTest.countComponentVersions(request), is(7L));
   }
 }

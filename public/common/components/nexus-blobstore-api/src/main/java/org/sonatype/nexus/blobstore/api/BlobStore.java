@@ -197,6 +197,14 @@ public interface BlobStore
   Blob copy(BlobId blobId, Map<String, String> headers);
 
   /**
+   * Returns true if this blob store supports server-side copy (e.g. Azure server-side copy),
+   * avoiding client-side re-download and re-upload.
+   */
+  default boolean supportsServerSideCopy() {
+    return false;
+  }
+
+  /**
    * Returns true if the internal blob move is supported for a source and target blobstore of the same type.
    *
    * @since 3.8

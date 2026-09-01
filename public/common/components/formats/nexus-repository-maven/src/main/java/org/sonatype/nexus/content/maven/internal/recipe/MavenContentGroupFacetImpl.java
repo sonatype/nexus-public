@@ -70,6 +70,7 @@ import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.HeaderOnlyPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
@@ -87,6 +88,7 @@ import static java.lang.String.valueOf;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
+import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -140,8 +142,50 @@ public class MavenContentGroupFacetImpl
     minProxyMetadataMaxAgeSeconds = UNINITIALIZED;
   }
 
+  /**
+   * Schedules removal of orphaned group metadata for the removed members.
+   * <p>
+   * NEXUS-50783: this runs on a background thread (mirroring {@link #scheduleBrowseNodeCleanup()}) rather than
+   * synchronously on the repository-update thread. The update path holds the repository in the {@code STOPPED} state
+   * (stop -> update -> start), so doing the bulk delete inline kept the repository {@code STOPPED} for the entire scan
+   * and made concurrent requests fail with {@code InvalidStateException}. Scheduling it lets update()/start() return
+   * promptly and the bulk delete proceeds against a {@code STARTED} repository. The orphaned assets are regenerable
+   * merged metadata, so eventual deletion is functionally equivalent.
+   * <p>
+   * Runs on the common {@link java.util.concurrent.ForkJoinPool}, like {@link #scheduleBrowseNodeCleanup()}. Member
+   * removal is infrequent and the delete loop yields on every paged DB call, so common-pool starvation is not a
+   * practical concern here; a dedicated executor can be introduced later (NEXUS-50783) if that changes.
+   */
   @Override
   protected void cleanupOrphanedGroupAssets(final Set<String> removedMemberNames) {
+    CompletableFuture.runAsync(() -> {
+      // The repository was STOPPED during the triggering update and started again afterwards; only proceed once it is
+      // STARTED so the content facet is usable. This check is intentionally not atomic with the cleanup below: the repo
+      // could still transition to STOPPED mid-scan (another update or shutdown racing us). That is safe — the delete
+      // loop in doCleanupOrphanedGroupAssets() catches and logs any failure (including a mid-scan stop) and the stale
+      // metadata is regenerable: it will be cleaned on the next member change or rebuilt on access. The guard simply
+      // avoids the common case of touching a still/again-STOPPED facet right after the update.
+      if (!isStarted()) {
+        log.warn("Skipping orphaned Maven asset cleanup for removed members {}: repository not STARTED. "
+            + "Stale group metadata will be removed on the next member change or rebuilt on access.",
+            removedMemberNames);
+        return;
+      }
+      doCleanupOrphanedGroupAssets(removedMemberNames);
+    });
+  }
+
+  @VisibleForTesting
+  boolean isStarted() {
+    return states.is(STARTED);
+  }
+
+  /**
+   * Performs the actual scan-and-delete of orphaned (component-less) group metadata assets. Package-private for
+   * testing; production callers go through {@link #cleanupOrphanedGroupAssets(Set)} so the work runs in the background.
+   */
+  @VisibleForTesting
+  void doCleanupOrphanedGroupAssets(final Set<String> removedMemberNames) {
     log.info("Deleting ALL orphaned Maven assets for removed members : {}", removedMemberNames);
 
     try {
@@ -295,6 +339,16 @@ public class MavenContentGroupFacetImpl
       final TempBlob tempBlob,
       final String contentType) throws IOException
   {
+    // NEXUS-53858: When every member returns unparseable maven-metadata.xml, the merge produces no
+    // output and the resulting TempBlob is empty (0 bytes). Caching it via put() would fail metadata
+    // validation with InvalidContentException and spam WARN logs on every request. Skip caching and
+    // serve the (empty) merged content uncached, forcing a re-merge on the next request.
+    if (tempBlob.getBlob().getMetrics().getContentSize() == 0L) {
+      log.debug("Merged metadata is empty for {} : {}; skipping cache and serving uncached content",
+          getRepository().getName(), mavenPath.getPath());
+      return serveUncached(mavenPath, tempBlob, contentType);
+    }
+
     try {
       Content content = new Content(getRepository().facet(MavenContentFacet.class)
           .put(mavenPath, new BlobPayload(tempBlob.getBlob(), contentType)));
@@ -320,7 +374,15 @@ public class MavenContentGroupFacetImpl
           getRepository().getName(), mavenPath.getPath(), e);
     }
 
-    // Handle exception by forcing re-merge on next request and retrieving content from TempBlob
+    return serveUncached(mavenPath, tempBlob, contentType);
+  }
+
+  private Content serveUncached(
+      final MavenPath mavenPath,
+      final TempBlob tempBlob,
+      final String contentType) throws IOException
+  {
+    // force re-merge on next request and retrieve content from TempBlob
     getRepository().facet(ContentFacet.class)
         .assets()
         .path(prependIfMissing(mavenPath.getPath(), "/"))
@@ -395,7 +457,15 @@ public class MavenContentGroupFacetImpl
       if (entry.getValue().getStatus().getCode() == HttpStatus.OK) {
         Response response = entry.getValue();
         if (response.getPayload() instanceof Content) {
-          contents.put(entry.getKey(), (Content) response.getPayload());
+          Content payload = (Content) response.getPayload();
+          // Skip body-less HEAD responses (NEXUS-53780): a HeaderOnlyPayload has no body and
+          // merging it would truncate the merged metadata and poison the group cache.
+          if (payload.getPayload() instanceof HeaderOnlyPayload) {
+            log.debug("Skipping body-less HEAD response from member {} during merge of {}",
+                entry.getKey().getName(), mavenPath.getPath());
+            continue;
+          }
+          contents.put(entry.getKey(), payload);
         }
       }
     }

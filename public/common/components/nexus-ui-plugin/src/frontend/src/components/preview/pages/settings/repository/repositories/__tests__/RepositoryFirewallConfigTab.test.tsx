@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
@@ -30,12 +31,23 @@ jest.mock('../../../../../../../interface/api', () => {
   };
 });
 
+const mockEnableHealthCheck = jest.fn().mockResolvedValue(undefined);
+const mockDisableHealthCheck = jest.fn().mockResolvedValue(undefined);
 jest.mock('../useRepositoriesApi', () => ({
   useRepositoriesApi: () => ({
-    enableHealthCheck: jest.fn(),
-    disableHealthCheck: jest.fn(),
+    enableHealthCheck: mockEnableHealthCheck,
+    disableHealthCheck: mockDisableHealthCheck,
   }),
 }));
+
+// RepositoryFirewallConfigTab gates the Health Check enable/disable actions via the
+// provider-independent ExtJS.usePermission (reads window.NX.Permissions.check directly),
+// not the context-based usePermission — coreui never mounts a <PermissionsProvider>, so the
+// context hook returns false for everyone (NEXUS-54212). Spy on the real ExtJS singleton and
+// drive the healthcheck:update check per test; ExtJS.usePermission evaluates its getter
+// synchronously at render.
+import { ExtJS } from '../../../../../../../interface/ExtJS';
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
 
 import { RepositoryFirewallConfigTab } from '../RepositoryFirewallConfigTab';
 import { __resetPccsFormatsCacheForTests } from '../../../../../shared/security/useFirewallEnable';
@@ -86,6 +98,8 @@ describe('RepositoryFirewallConfigTab', () => {
     jest.clearAllMocks();
     __resetPccsFormatsCacheForTests();
     mockTypedRepoLookup('maven2');
+    // Default: user can update health check so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
   });
 
   it('renders audit trail placeholder in Firewall card', async () => {
@@ -269,5 +283,85 @@ describe('RepositoryFirewallConfigTab', () => {
     );
     const pccsBtn = await waitFor(() => screen.getByRole('button', { name: 'PCCS' }));
     expect(pccsBtn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows Enabled (green) immediately after clicking Enable, not Analyzing', async () => {
+    // Render with HC disabled initially
+    renderWithTheme(
+      <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+    );
+
+    await waitFor(() => expect(screen.getByText('Enable Health Check')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enable Health Check' }));
+
+    // Optimistic update must show "Enabled" (green), never "Analyzing…"
+    await waitFor(() => expect(screen.getByText('Enabled')).toBeInTheDocument());
+    expect(screen.queryByText('Analyzing…')).not.toBeInTheDocument();
+  });
+
+  // -------- Health-check write gating (NEXUS-54212) --------
+
+  describe('health-check gating (NEXUS-54212)', () => {
+    it('shows Enable Health Check with healthcheck:update', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      expect(await screen.findByRole('button', { name: /enable health check/i })).toBeInTheDocument();
+    });
+
+    it('hides Enable Health Check without healthcheck:update', async () => {
+      mockCheckPermission.mockImplementation((p) => p !== 'nexus:healthcheck:update');
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      // Wait for the Health Check card to settle (Disabled status renders regardless of permission).
+      await waitFor(() => expect(screen.getByText('Disabled')).toBeInTheDocument());
+      expect(screen.queryByRole('button', { name: /enable health check/i })).not.toBeInTheDocument();
+    });
+
+    it('hides Disable Health Check without healthcheck:update when enabled', async () => {
+      mockCheckPermission.mockImplementation((p) => p !== 'nexus:healthcheck:update');
+      mockRestGet.mockImplementation((url: string) => {
+        if (typeof url === 'string' && url.includes('/healthcheck')) {
+          return Promise.resolve([{ repositoryName: 'maven-proxy', enabled: true, analyzing: false }]);
+        }
+        if (typeof url === 'string' && url.includes('iq/audit')) {
+          return Promise.resolve({ repositoryName: 'maven-proxy', enabled: false, enabledQuarantine: false });
+        }
+        return Promise.resolve(null);
+      });
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      await waitFor(() => expect(screen.getByText('Enabled')).toBeInTheDocument());
+      expect(screen.queryByRole('button', { name: /disable health check/i })).not.toBeInTheDocument();
+    });
+  });
+
+  // -------- Protection-level write gating (NEXUS-54212) --------
+
+  describe('protection-level gating (NEXUS-54212)', () => {
+    it('shows the Protection level selector with repository-admin:edit', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      // The protection selector renders its mode buttons (Audit/Quarantine) once status settles.
+      expect(await screen.findByRole('button', { name: 'Audit' })).toBeInTheDocument();
+      expect(screen.getByText('Protection level')).toBeInTheDocument();
+    });
+
+    it('hides the Protection level selector without repository-admin:edit', async () => {
+      mockCheckPermission.mockImplementation((p) => p !== 'nexus:repository-admin:*:*:edit');
+      renderWithTheme(
+        <RepositoryFirewallConfigTab repositoryName="maven-proxy" hasFirewallLicense={true} />
+      );
+      // Wait for the Health Check card to settle so the Firewall card has finished rendering too.
+      await waitFor(() => expect(screen.getByText('Disabled')).toBeInTheDocument());
+      expect(screen.queryByText('Protection level')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Audit' })).not.toBeInTheDocument();
+    });
   });
 });

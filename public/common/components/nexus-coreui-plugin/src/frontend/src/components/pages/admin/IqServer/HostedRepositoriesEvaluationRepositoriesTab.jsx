@@ -21,6 +21,7 @@ import {
   NxFormSelect,
   NxLoadWrapper,
   NxModal,
+  NxSubmitMask,
   NxH3,
   NxP,
   NxPagination,
@@ -45,24 +46,6 @@ import './HostedRepositoriesEvaluationRepositoriesTab.scss';
 const {HOSTED_REPOSITORIES_EVALUATION} = UIStrings.SONATYPE_LIFECYCLE;
 
 /**
- * Compare versionDepth values, normalizing both to numbers.
- * Returns true if both values are different (and both are valid numbers).
- * Used to detect if versionDepth has changed between settingsData and existingSettings.
- * @param {*} a - First value (may be string, number, null, or undefined)
- * @param {*} b - Second value (may be string, number, null, or undefined)
- * @returns {boolean} - true if both are valid numbers and NOT equal (i.e., changed)
- */
-function versionDepthChanged(a, b) {
-  const numA = Number(a);
-  const numB = Number(b);
-  // If either is NaN, consider them equal (no change) to avoid false positives
-  if (isNaN(numA) || isNaN(numB)) {
-    return false;
-  }
-  return numA !== numB;
-}
-
-/**
  * Repository selection tab for hosted repositories evaluation configuration.
  *
  * State Machine Contract:
@@ -73,15 +56,26 @@ function versionDepthChanged(a, b) {
  * - context.formats: Array of available format filters
  * - context.saveError: Error object with optional response.data.message or message property
  * - context.loadError: Error string for data fetch failures
- * - States: 'loading', 'loaded', 'saving'
+ * - States: 'loading', 'loaded', 'patching', 'patchingSettings', 'patchingRepositories'
  * - Events: FILTER, FILTER_FORMAT, CHANGE_PAGE, SORT, UPDATE, SAVE, RETRY
+ *
+ * Props:
+ * - initialSelectedRepositories: Array of repository ids to pre-select. ONLY honored
+ *   during the first-time onboarding flow (`!hasSelections`, i.e. no existing
+ *   evaluation config yet). For returning users on the Monitored Repositories tab
+ *   (`hasSelections=true`) the prop is ignored — selection represents bulk-action
+ *   intent and always starts empty so the action buttons only appear after explicit
+ *   row clicks. The parent always passes its own `selectedRepositories` state which
+ *   starts at `[]`, so no real caller hits the silent-drop case in practice.
  */
 export default function HostedRepositoriesEvaluationRepositoriesTab({
   settingsData,
   initialSelectedRepositories = [],
   onSelectionChange,
   globalConfigAvailable = false,
-  onBack
+  onBack,
+  onDirtyChange,
+  onCancelEdit
 }) {
   const router = useRouter();
   // Child machine instance - independent from parent's machine instance.
@@ -100,14 +94,35 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
   const hasInitializedSelection = useRef(false);
   const [selectedRepositories, setSelectedRepositories] = useState([]);
   const [pendingMonitoringChanges, setPendingMonitoringChanges] = useState({});
+
+  // Report dirty state upward whenever pendingMonitoringChanges changes
+  useEffect(() => {
+    if (onDirtyChange) {
+      onDirtyChange(Object.keys(pendingMonitoringChanges).length > 0);
+    }
+  }, [pendingMonitoringChanges, onDirtyChange]);
   // Tracks the baseline monitoring status (isSelected) for every repo we've seen,
   // across all filters/pages. Updated whenever repositories loads new data.
   const [repoStatusMap, setRepoStatusMap] = useState({});
 
+  // Compute net effective changes — enable/disable same repo = zero net change
+  const {netRepositoriesToAdd, netRepositoriesToRemove} = useMemo(() => ({
+    netRepositoriesToAdd: Object.entries(pendingMonitoringChanges)
+      .filter(([id, enabled]) => enabled && !(repoStatusMap[id] || false))
+      .map(([id]) => id),
+    netRepositoriesToRemove: Object.entries(pendingMonitoringChanges)
+      .filter(([id, enabled]) => !enabled && (repoStatusMap[id] || false))
+      .map(([id]) => id),
+  }), [pendingMonitoringChanges, repoStatusMap]);
+  const hasNetMonitoringChanges = netRepositoriesToAdd.length > 0 || netRepositoriesToRemove.length > 0;
+
   const {repositories, loadError, formatFilter, monitoringFilter, offsetPage, sortField, sortDirection, numberOfMonitoredRepositories, hasSelections: hasSelectionsContext, existingSettings} = current.context;
   const hasSelections = globalConfigAvailable || hasSelectionsContext || false;
   const isLoading = current.matches('loading');
-  const isSaving = current.matches('saving') || current.matches('patching');
+  const isSaving = current.matches('patching')
+      || current.matches('patchingSettings')
+      || current.matches('patchingRepositories')
+      || current.matches('saving');
   const isLoaded = current.matches('loaded');
   const wasSavingRef = useRef(false);
 
@@ -116,8 +131,11 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
       return;
     }
     if (hasSelections && repositories && repositories.length > 0) {
-      const preSelectedIds = repositories.filter(repo => repo.isSelected).map(repo => repo.id);
-      setSelectedRepositories(preSelectedIds);
+      // Bulk-action selection is independent of existing monitoring state
+      // (shown in the Monitoring column). Start empty so the Enable/Disable
+      // Monitoring and Clear Selection buttons only appear after the user
+      // explicitly selects rows.
+      setSelectedRepositories([]);
       hasInitializedSelection.current = true;
     } else if (!hasSelections) {
       setSelectedRepositories(initialSelectedRepositories);
@@ -190,58 +208,24 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
 
   const handleSubmit = useCallback(async () => {
     if (hasSelections) {
-      // Update button (returning users) → PATCH
+      // Update button (returning users) → PATCH_REPOSITORIES
       // Monitoring changes come only from explicit Enable/Disable Monitoring button clicks,
       // not from checkbox selection (checkboxes are used for batch selection only).
       // Filter out net-zero changes (e.g. disable then re-enable same repo = no actual change)
-      const repositoriesToAdd = Object.entries(pendingMonitoringChanges)
-        .filter(([id, enabled]) => enabled && !(repoStatusMap[id] || false))
-        .map(([id]) => id);
-      const repositoriesToRemove = Object.entries(pendingMonitoringChanges)
-        .filter(([id, enabled]) => !enabled && (repoStatusMap[id] || false))
-        .map(([id]) => id);
-
-      const changedSettings = {};
-      if (existingSettings) {
-        if (settingsData.activityTimeFrame !== null && settingsData.activityTimeFrame !== undefined &&
-            settingsData.activityTimeFrame !== existingSettings.activityTimeFrame) {
-          changedSettings.activityTimeFrame = settingsData.activityTimeFrame;
-        }
-        if (settingsData.artifactLatestVersions !== null && settingsData.artifactLatestVersions !== undefined &&
-            settingsData.artifactLatestVersions !== existingSettings.artifactLatestVersions) {
-          changedSettings.artifactLatestVersions = settingsData.artifactLatestVersions;
-        }
-        // Both settingsData.policyEvaluationStage (normalized in SettingsTab) and
-        // existingSettings.policyEvaluationStage (from backend) are uppercase+underscore (e.g. RELEASE)
-        if (settingsData.policyEvaluationStage !== null && settingsData.policyEvaluationStage !== undefined &&
-            settingsData.policyEvaluationStage !== existingSettings.policyEvaluationStage) {
-          changedSettings.policyEvaluationStage = settingsData.policyEvaluationStage;
-        }
-        if (settingsData.applyToNewRepos !== existingSettings.autoEnrollNewRepos) {
-          changedSettings.applyToNewRepos = settingsData.applyToNewRepos;
-        }
-        if (versionDepthChanged(settingsData.versionDepth, existingSettings.versionDepth)) {
-          changedSettings.versionDepth = Number(settingsData.versionDepth);
-        }
-      }
-
-      const hasChanges = Object.keys(changedSettings).length > 0 || repositoriesToAdd.length > 0 || repositoriesToRemove.length > 0;
-
-      if (!hasChanges) {
+      if (!hasNetMonitoringChanges) {
         setShowErrorModal(true);
-        setErrorMessage('No changes to save');
+        setErrorMessage('No monitoring changes to save');
         return;
       }
 
       send({
         type: 'UPDATE',
         data: {
-          settings: changedSettings,
-          repositoriesToAdd,
-          repositoriesToRemove
+          repositoriesToAdd: netRepositoriesToAdd,
+          repositoriesToRemove: netRepositoriesToRemove
         }
       });
-      send('PATCH');
+      send('PATCH_REPOSITORIES');
     } else {
       // Save button (first-time users) → PUT
       // Require at least one repository for first-time setup
@@ -253,7 +237,7 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
       send({type: 'UPDATE', data: {selectedRepositories, settings: settingsData}});
       send('SAVE');
     }
-  }, [settingsData, selectedRepositories, send, hasSelections, repoStatusMap, existingSettings, pendingMonitoringChanges]);
+  }, [settingsData, selectedRepositories, send, hasSelections, hasNetMonitoringChanges, netRepositoriesToAdd, netRepositoriesToRemove]);
 
   const handleCloseErrorModal = useCallback(() => {
     setShowErrorModal(false);
@@ -322,30 +306,17 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
     const href = e.currentTarget.getAttribute('href');
     const targetHash = href.substring(1);
 
-    // Clear dirty state to prevent "unsaved changes" warning during navigation
     ExtJS.setDirtyStatus('HostedRepositoriesEvaluationMachine', false);
 
-    const baseRoute = 'admin/repository/repositories';
-    const returnUrl = router.stateService.href(ROUTE_NAMES.ADMIN.IQ.HOSTED_REPOS_EVAL.ROOT, {activeTab: '1'});
-    const returnHash = returnUrl.substring(1);
-
-    if (window.Ext?.History) {
-      window.Ext.History.add(returnHash);
-      window.Ext.History.add(baseRoute);
-    } else {
-      window.location.hash = returnHash;
-      window.location.hash = baseRoute;
+    // Reset ExtJS Drilldown currentIndex — stays stuck at 1 when navigating from React,
+    // causing selectModel to skip loadView and silently no-op (CLM-40943 defect 9)
+    const repoCtrl = window.NX?.getApplication?.()?.getController?.('NX.coreui.controller.Repositories');
+    if (repoCtrl) {
+      repoCtrl.currentIndex = 0;
     }
 
-    // Two-step navigation required for React → ExtJS Drilldown boundary.
-    // ExtJS Drilldown's navigateTo() returns early if feature view isn't mounted.
-    // 100ms delay allows ExtJS History to initialize before navigating to detail page.
-    // Timing determined through testing - shorter delays cause navigation failures.
-    setTimeout(() => {
-      const currentUrl = window.location.href.split('#')[0];
-      window.location.replace(`${currentUrl}#${targetHash}`);
-    }, 100);
-  }, [router]);
+    window.location.hash = targetHash;
+  }, []);
 
   const handleEnableMonitoring = useCallback(() => {
     setPendingMonitoringChanges(prev => {
@@ -377,25 +348,9 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
     setSelectedRepositories([]);
   }, []);
 
-  // Check if any settings have changed from existing settings
-  const hasSettingsChanges = useMemo(() => {
-    if (!existingSettings || !settingsData) return false;
-
-    if (settingsData.activityTimeFrame !== existingSettings.activityTimeFrame) return true;
-    if (settingsData.artifactLatestVersions !== existingSettings.artifactLatestVersions) return true;
-    if (settingsData.policyEvaluationStage !== existingSettings.policyEvaluationStage) return true;
-    if (settingsData.applyToNewRepos !== existingSettings.autoEnrollNewRepos) return true;
-    if (versionDepthChanged(settingsData.versionDepth, existingSettings.versionDepth)) return true;
-
-    return false;
-  }, [existingSettings, settingsData]);
-
   const getEffectiveMonitoringStatus = useCallback((repo) => {
     const pending = pendingMonitoringChanges[repo.id];
     const isEnabled = pending !== undefined ? pending : repo.isSelected;
-    if (isEnabled && repo.hasCustomConfig && (pending === undefined || (pending === true && repo.isSelected))) {
-      return 'Custom';
-    }
     return isEnabled ? 'Enabled' : 'Disabled';
   }, [pendingMonitoringChanges]);
 
@@ -465,10 +420,10 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
             {hasSelections && selectedRepositories.length > 0 && (
               <div className="nx-btn-bar">
                 {allSelectedEnabled
-                  ? <NxButton onClick={handleDisableMonitoring}>{HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring}</NxButton>
-                  : <NxButton onClick={handleEnableMonitoring}>{HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring}</NxButton>
+                  ? <NxButton disabled={isSaving} onClick={handleDisableMonitoring}>{HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring}</NxButton>
+                  : <NxButton disabled={isSaving} onClick={handleEnableMonitoring}>{HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring}</NxButton>
                 }
-                <NxButton onClick={handleClearSelection}>{HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection}</NxButton>
+                <NxButton disabled={isSaving} onClick={handleClearSelection}>{HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection}</NxButton>
               </div>
             )}
           </div>
@@ -575,16 +530,28 @@ export default function HostedRepositoriesEvaluationRepositoriesTab({
             {!globalConfigAvailable && onBack && (
               <NxButton onClick={onBack}>{HOSTED_REPOSITORIES_EVALUATION.buttons.back}</NxButton>
             )}
+            {globalConfigAvailable && hasNetMonitoringChanges && (
+              <NxButton
+                variant="tertiary"
+                onClick={() => {
+                  setPendingMonitoringChanges({});
+                  if (onCancelEdit) onCancelEdit();
+                }}
+              >
+                {HOSTED_REPOSITORIES_EVALUATION.buttons.cancel}
+              </NxButton>
+            )}
             <NxButton
               variant="primary"
               onClick={handleSubmit}
-              disabled={hasSelections && Object.keys(pendingMonitoringChanges).length === 0 && !hasSettingsChanges}
+              disabled={isSaving || (hasSelections && !hasNetMonitoringChanges)}
             >
               {hasSelections ? HOSTED_REPOSITORIES_EVALUATION.buttons.update : HOSTED_REPOSITORIES_EVALUATION.buttons.save}
             </NxButton>
           </div>
         </div>
       </NxLoadWrapper>
+      {isSaving && <NxSubmitMask message={HOSTED_REPOSITORIES_EVALUATION.savingMask} />}
 
       {showErrorModal && (
         <NxModal onCancel={handleCloseErrorModal} variant="narrow">

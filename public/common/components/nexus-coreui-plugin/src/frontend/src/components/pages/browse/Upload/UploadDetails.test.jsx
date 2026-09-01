@@ -1865,6 +1865,92 @@ describe('UploadDetails', function() {
       expect(retryBtn).toBeInTheDocument();
     });
 
+    // NEXUS-53344: UploadResource now returns HTTP 400 with the legacy ExtJS-RPC envelope body
+    // when the deployment policy denies the upload (e.g. read-only repository). The form machine
+    // must extract the envelope message instead of falling back to the raw axios error.
+    it('shows the envelope message when the form POST is rejected with HTTP 400', async function() {
+      when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
+          .mockRejectedValue({
+            message: 'Request failed with status code 400',
+            response: {
+              status: 400,
+              data: [{
+                success: false,
+                tid: 1,
+                action: 'upload',
+                method: 'upload',
+                type: 'rpc',
+                message: 'Repository is read only: simple-repo'
+              }]
+            }
+          });
+
+      render();
+
+      const form = await selectors.form('find'),
+          uploadBtn = selectors.uploadBtn(),
+          fileUpload = selectors.fileUploadByGroup(form),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+
+      await userEvent.type(field1, 'foo');
+      await userEvent.type(field2, 'bar');
+      await userEvent.type(field3, 'baz');
+      await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'qwerty');
+      await userEvent.type(field7, 'qwerty');
+      setFileUploadValue(fileUpload, file);
+
+      await userEvent.click(uploadBtn);
+
+      const submitAlert = await selectors.errorAlert('find');
+      expect(submitAlert).toBeInTheDocument();
+      expect(submitAlert).toHaveTextContent('Repository is read only: simple-repo');
+      // The raw axios "Request failed with status code 400" must not leak through.
+      expect(submitAlert).not.toHaveTextContent('Request failed with status code 400');
+    });
+
+    // NEXUS-53344: a non-2xx response with no envelope body (e.g. network failure, 5xx without a
+    // JSON body) should fall through to axios' own error message and not crash on data?.[0].
+    it('falls back to the raw axios error when a non-2xx response has no envelope body', async function() {
+      when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())
+          .mockRejectedValue({
+            message: 'Network Error'
+          });
+
+      render();
+
+      const form = await selectors.form('find'),
+          uploadBtn = selectors.uploadBtn(),
+          fileUpload = selectors.fileUploadByGroup(form),
+          field1 = selectors.fieldByNumAndGroup(1),
+          field2 = selectors.fieldByNumAndGroup(2),
+          field3 = selectors.fieldByNumAndGroup(3),
+          field4 = selectors.fieldByNumAndGroup(4),
+          field6 = selectors.fieldByNumAndGroup(6),
+          field7 = selectors.fieldByNumAndGroup(7),
+          file = new File(['test'], 'test.txt', { type: 'text-plain' });
+
+      await userEvent.type(field1, 'foo');
+      await userEvent.type(field2, 'bar');
+      await userEvent.type(field3, 'baz');
+      await userEvent.type(field4, 'qwerty');
+      await userEvent.type(field6, 'qwerty');
+      await userEvent.type(field7, 'qwerty');
+      setFileUploadValue(fileUpload, file);
+
+      await userEvent.click(uploadBtn);
+
+      const submitAlert = await selectors.errorAlert('find');
+      expect(submitAlert).toBeInTheDocument();
+      expect(submitAlert).toHaveTextContent('Network Error');
+    });
+
     it('retries the POST if the submit retry button is clicked', async function() {
       const hashSpy = jest.spyOn(window.location, 'hash', 'set');
       when(axios.post).calledWith('service/rest/internal/ui/upload/simple-repo', expect.anything())

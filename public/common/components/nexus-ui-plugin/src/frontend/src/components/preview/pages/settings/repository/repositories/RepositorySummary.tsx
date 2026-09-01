@@ -17,6 +17,8 @@ import { ExternalLink, Globe, HardDrive, FolderSync } from 'lucide-react';
 import { StatusBadge, FormatBadge } from '../../../../shared';
 import { TypeBadge } from './TypeBadge';
 import { Repository, RepositoryFormData } from './types';
+import { BlobStoreStorageCard } from './BlobStoreStorageCard';
+import { RepositoryMetricsCard } from './RepositoryMetricsCard';
 
 import './RepositoryForm.scss';
 
@@ -117,8 +119,8 @@ export function RepositorySummary({ repository, formData, onNavigateToTab, isClo
 
         {/* Cleanup Policies */}
         {formData.cleanup?.policyNames && formData.cleanup.policyNames.length > 0 && (
-          <SummaryItem 
-            label="Cleanup Policies" 
+          <SummaryItem
+            label="Cleanup Policies"
             value={
               <Flex gap="1" wrap="wrap">
                 {formData.cleanup.policyNames.map(policy => (
@@ -130,6 +132,14 @@ export function RepositorySummary({ repository, formData, onNavigateToTab, isClo
           />
         )}
       </Box>
+
+      {/* Blob Store Storage Card - hidden in Cloud distribution */}
+      {!isCloud && blobStoreName && blobStoreName !== '-' && (
+        <BlobStoreStorageCard blobStoreName={blobStoreName} />
+      )}
+
+      {/* Repository Metrics Card */}
+      <RepositoryMetricsCard repositoryName={repository.name} />
     </Box>
   );
 }

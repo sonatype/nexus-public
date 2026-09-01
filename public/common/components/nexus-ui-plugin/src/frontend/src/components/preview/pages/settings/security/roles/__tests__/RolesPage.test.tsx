@@ -24,13 +24,22 @@ jest.mock('../useRolesApi');
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     checkPermission: jest.fn(),
+    // RolesPage reads permissions through the provider-independent ExtJS.usePermission
+    // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
   },
 }));
 
 // Mock child components
 jest.mock('../RolesList', () => ({
-  RolesList: ({ onSelect }: any) => (
-    <div data-testid="roles-list">
+  RolesList: ({ onSelect, onDelete, canUpdate, canDelete }: any) => (
+    <div
+      data-testid="roles-list"
+      data-can-update={String(!!canUpdate)}
+      data-can-delete={String(!!canDelete)}
+      data-has-delete-handler={String(!!onDelete)}
+    >
       <button onClick={() => onSelect('test-role')}>Select Role</button>
     </div>
   ),
@@ -63,7 +72,7 @@ jest.mock('../RoleForm', () => {
 });
 
 jest.mock('../RoleProfilePage', () => {
-  const React = jest.requireActual('react');
+  const _React = jest.requireActual('react');
   return {
     RoleProfilePage: () => <div data-testid="role-profile-page">Role Profile Page</div>,
   };
@@ -134,18 +143,41 @@ describe('RolesPage', () => {
     expect(btn).toHaveAttribute('data-accent-color', 'blue');
   });
 
-  it('should hide Create Role button when user lacks permission', () => {
+  it('should disable Create Role button when user lacks permission', () => {
     mockCheckPermission.mockImplementation((perm: string) => perm !== 'nexus:roles:create');
     (global as any).NX.Permissions.check.mockImplementation((perm: string) => perm !== 'nexus:roles:create');
     renderWithTheme(<RolesPage />);
-    
-    expect(screen.queryByRole('button', { name: 'Create Role' })).not.toBeInTheDocument();
+
+    // Large create button is shown but disabled (NEXUS-54212), not hidden.
+    expect(screen.getByRole('button', { name: 'Create Role' })).toBeDisabled();
   });
 
   it('should show RolesList by default', () => {
     renderWithTheme(<RolesPage />);
-    
+
     expect(screen.getByTestId('roles-list')).toBeInTheDocument();
+  });
+
+  it('passes update/delete permissions to RolesList when the user has them', () => {
+    mockCheckPermission.mockReturnValue(true);
+    renderWithTheme(<RolesPage />);
+
+    const list = screen.getByTestId('roles-list');
+    expect(list).toHaveAttribute('data-can-update', 'true');
+    expect(list).toHaveAttribute('data-can-delete', 'true');
+    expect(list).toHaveAttribute('data-has-delete-handler', 'true');
+  });
+
+  it('gates update/delete on RolesList when the user lacks those permissions (NEXUS-54212)', () => {
+    // Read-only user: only nexus:roles:read granted.
+    mockCheckPermission.mockImplementation((perm: string) => perm === 'nexus:roles:read');
+    renderWithTheme(<RolesPage />);
+
+    const list = screen.getByTestId('roles-list');
+    expect(list).toHaveAttribute('data-can-update', 'false');
+    expect(list).toHaveAttribute('data-can-delete', 'false');
+    // onDelete is only wired when the user can delete, so no delete handler reaches the list.
+    expect(list).toHaveAttribute('data-has-delete-handler', 'false');
   });
 
   it('should navigate to wizard when Create Role is clicked', async () => {
@@ -251,11 +283,26 @@ describe('RolesPage', () => {
   it('should render edit wizard when hash has role ID', async () => {
     window.location.hash = '#preview/admin/security/roles/test-role';
     renderWithTheme(<RolesPage />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('wizard-form')).toBeInTheDocument();
     });
     expect(screen.getByText(/Edit Test Role/)).toBeInTheDocument();
+  });
+
+  // NEXUS-54267 AC (c): edit wizard skips the immutable Type step and starts on Setup.
+  it('edit wizard skips step 0 (Type) and starts on Setup', async () => {
+    window.location.hash = '#preview/admin/security/roles/test-role';
+    renderWithTheme(<RolesPage />);
+
+    // Mock RoleForm renders `wizard-step-<N>` from the logical step it receives.
+    // In edit mode the boundary shifts by +1, so internal step 0 → logical step 1 (Setup).
+    await waitFor(() => {
+      expect(screen.getByTestId('wizard-step-1')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('wizard-step-0')).not.toBeInTheDocument();
+    // Description reflects the 3-step edit flow, not the 4-step create flow.
+    expect(screen.getByText(/Step 1: Setup/)).toBeInTheDocument();
   });
 
   it('should show error alert when there is an error', () => {

@@ -25,8 +25,8 @@ import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.testdb.DatabaseTest;
 
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 class QuartzJobKeyUnificationTaskTimeoutTest
     extends QuartzJobKeyUnificationTaskTestSupport
 {
-  @MockBean
+  @MockitoBean
   private NodeHeartbeatManager heartbeatManager;
 
   @DatabaseTest

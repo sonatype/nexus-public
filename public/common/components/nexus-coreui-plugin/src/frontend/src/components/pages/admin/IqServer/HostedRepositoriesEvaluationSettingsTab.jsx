@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   NxH3,
   NxP,
@@ -18,8 +18,15 @@ import {
   NxFormGroup,
   NxFormSelect,
   NxCheckbox,
-  NxButton
+  NxButton,
+  NxModal,
+  NxErrorAlert,
+  NxCloseButton
 } from '@sonatype/react-shared-components';
+import {useRouter} from '@uirouter/react';
+import {ExtJS} from '@sonatype/nexus-ui-plugin';
+
+import {ROUTE_NAMES} from '../../../../routerConfig/routeNames/routeNames';
 
 import UIStrings from '../../../../constants/UIStrings';
 import './HostedRepositoriesEvaluationSettingsTab.scss';
@@ -33,13 +40,23 @@ const normalizeStageForDisplay = v => v ? v.toLowerCase().replace(/_/g, '-') : '
  * Form with Activity Time Frame, Artifact Latest Versions, Policy Evaluation Stage,
  * and New Hosted Repositories checkbox
  */
-export default function HostedRepositoriesEvaluationSettingsTab({initialData, onNext, onCancel, onFormChange, globalConfigAvailable = false}) {
-  const isLatestDeployedVersions = initialData?.versionDepth != null && initialData.versionDepth > 0;
-  const [evaluationDepthMethod, setEvaluationDepthMethod] = useState(
-    isLatestDeployedVersions ? 'latestDeployedVersions' : 'activityTimeFrame'
-  );
+export default function HostedRepositoriesEvaluationSettingsTab({
+  initialData,
+  onNext,
+  onCancel,
+  onFormChange,
+  globalConfigAvailable = false,
+  onUpdateSuccess,
+  onCancelEdit,
+  current,
+  send
+}) {
+  const router = useRouter();
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const wasSavingRef = useRef(false);
   const [activityTimeFrame, setActivityTimeFrame] = useState(initialData?.activityTimeFrame || '30');
-  const [artifactLatestVersions, setArtifactLatestVersions] = useState(initialData?.artifactLatestVersions || '');
+  const [artifactLatestVersions, setArtifactLatestVersions] = useState(initialData?.artifactLatestVersions || '5');
   const [policyEvaluationStage, setPolicyEvaluationStage] = useState(
     normalizeStageForDisplay(initialData?.policyEvaluationStage) || 'release'
   );
@@ -52,9 +69,6 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
     if (initialData?.artifactLatestVersions) {
       setArtifactLatestVersions(initialData.artifactLatestVersions);
     }
-    if (initialData?.versionDepth != null) {
-      setEvaluationDepthMethod(initialData.versionDepth > 0 ? 'latestDeployedVersions' : 'activityTimeFrame');
-    }
     if (initialData?.policyEvaluationStage) {
       setPolicyEvaluationStage(normalizeStageForDisplay(initialData.policyEvaluationStage));
     }
@@ -62,6 +76,62 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
       setApplyToNewRepos(initialData.applyToNewRepos);
     }
   }, [initialData]);
+
+  const isSaving = current.matches('patchingSettings');
+  const isLoaded = current.matches('loaded');
+
+  useEffect(() => {
+    const currentSaveError = current.context.saveError;
+
+    if (wasSavingRef.current && !isSaving && isLoaded && !currentSaveError) {
+      ExtJS.setDirtyStatus('HostedRepositoriesEvaluationMachine', false);
+      if (onUpdateSuccess) {
+        onUpdateSuccess();
+      } else {
+        router.stateService.go(ROUTE_NAMES.ADMIN.IQ.SONATYPE_LIFECYCLE.ROOT);
+      }
+    }
+    wasSavingRef.current = isSaving;
+  }, [isSaving, isLoaded, current.context.saveError, router, onUpdateSuccess]);
+
+  useEffect(() => {
+    const error = current.context.saveError;
+    if (error) {
+      const message = (typeof error?.response?.data?.message === 'string' && error.response.data.message) ||
+                      (typeof error?.message === 'string' && error.message) ||
+                      'Failed to update settings';
+      setErrorMessage(message);
+      setShowErrorModal(true);
+    }
+  }, [current.context.saveError]);
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setErrorMessage('');
+  };
+
+  const handleCancelEdit = () => {
+    // Reset all form fields back to saved initialData
+    setActivityTimeFrame(initialData?.activityTimeFrame || '30');
+    setArtifactLatestVersions(initialData?.artifactLatestVersions || '5');
+    setPolicyEvaluationStage(normalizeStageForDisplay(initialData?.policyEvaluationStage) || 'release');
+    setApplyToNewRepos(initialData?.applyToNewRepos || false);
+    if (onCancelEdit) onCancelEdit();
+  };
+
+  const handleUpdate = () => {
+    const normalizedStage = policyEvaluationStage
+      ? policyEvaluationStage.toUpperCase().replace(/-/g, '_')
+      : policyEvaluationStage;
+    const settingsData = {
+      activityTimeFrame,
+      artifactLatestVersions,
+      policyEvaluationStage: normalizedStage,
+      applyToNewRepos
+    };
+    send({type: 'UPDATE', data: {settings: settingsData}});
+    send('PATCH_SETTINGS');
+  };
 
   const handleFieldChange = (setter, value) => {
     setter(value);
@@ -71,7 +141,6 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
   };
 
   const handleNext = () => {
-    const isVersionDepth = evaluationDepthMethod === 'latestDeployedVersions';
     // Normalize policyEvaluationStage to uppercase+underscore before sending to backend
     // (e.g. 'stage-release' → 'STAGE_RELEASE') to match backend @Pattern and DB CHECK constraint
     const normalizedStage = policyEvaluationStage
@@ -80,69 +149,55 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
     const formData = {
       activityTimeFrame,
       artifactLatestVersions,
-      // versionDepth and artifactLatestVersions are intentionally the same value when in
-      // latestDeployedVersions mode: versionDepth drives OR-logic expansion, artifactLatestVersions
-      // is the final per-component cap — both set to the user's chosen depth.
-      versionDepth: isVersionDepth ? artifactLatestVersions : '0',
       policyEvaluationStage: normalizedStage,
       applyToNewRepos
     };
     onNext(formData);
   };
 
-  const isVersionDepthMethod = evaluationDepthMethod === 'latestDeployedVersions';
-  const isValid = policyEvaluationStage !== '' &&
-      (!isVersionDepthMethod ? activityTimeFrame !== '' : artifactLatestVersions !== '');
+  const isValid = policyEvaluationStage !== '' && activityTimeFrame !== '' && artifactLatestVersions !== '';
+
+  const isDirty = globalConfigAvailable && (
+    String(activityTimeFrame) !== String(initialData?.activityTimeFrame || '30') ||
+    String(artifactLatestVersions) !== String(initialData?.artifactLatestVersions || '5') ||
+    policyEvaluationStage !== (normalizeStageForDisplay(initialData?.policyEvaluationStage) || 'release') ||
+    applyToNewRepos !== (initialData?.applyToNewRepos || false)
+  );
 
   const STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.monitoringSettings;
+  const ERROR_MODAL_STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.SETTINGS_ERROR_MODAL;
   const PACKAGE_STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.packageFilePatterns;
   const BUTTON_STRINGS = UIStrings.SONATYPE_LIFECYCLE.HOSTED_REPOSITORIES_EVALUATION.buttons;
 
   return (
     <div className="nxrm-monitoring-settings-form">
-      <NxH3>{STRINGS.title}</NxH3>
+      {!globalConfigAvailable && (
+        <NxInfoAlert>
+          <NxP>{STRINGS.evaluationContextDescription}</NxP>
+        </NxInfoAlert>
+      )}
 
-      <NxFormGroup label={STRINGS.evaluationDepthMethodLabel} sublabel={STRINGS.evaluationDepthMethodHelpText} isRequired>
+      <NxFormGroup label={STRINGS.activityTimeFrameLabel} sublabel={STRINGS.activityTimeFrameHelpText} isRequired>
         <NxFormSelect
-          value={evaluationDepthMethod}
-          onChange={(value) => handleFieldChange(setEvaluationDepthMethod, value)}
+          value={activityTimeFrame}
+          onChange={(value) => handleFieldChange(setActivityTimeFrame, value)}
         >
-          {STRINGS.evaluationDepthMethodOptions.map(option => (
+          {STRINGS.activityTimeFrameOptions.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </NxFormSelect>
       </NxFormGroup>
 
-      {!isVersionDepthMethod && (
-        <NxFormGroup label={STRINGS.activityTimeFrameLabel} sublabel={STRINGS.activityTimeFrameHelpText} isRequired>
-          <NxFormSelect
-            value={activityTimeFrame}
-            onChange={(value) => handleFieldChange(setActivityTimeFrame, value)}
-          >
-            <option value="">{STRINGS.activityTimeFramePlaceholder}</option>
-            {STRINGS.activityTimeFrameOptions.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </NxFormSelect>
-        </NxFormGroup>
-      )}
-
-      {isVersionDepthMethod && (
-        <>
-          <NxFormGroup label={STRINGS.artifactLatestVersionsLabel} sublabel={STRINGS.artifactLatestVersionsHelpText} isRequired>
-            <NxFormSelect
-              value={artifactLatestVersions}
-              onChange={(value) => handleFieldChange(setArtifactLatestVersions, value)}
-            >
-              <option value="">{STRINGS.artifactLatestVersionsPlaceholder}</option>
-              {STRINGS.artifactLatestVersionsOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </NxFormSelect>
-          </NxFormGroup>
-          <NxP className="nxrm-version-depth-hint">{STRINGS.artifactLatestVersionsWarning}</NxP>
-        </>
-      )}
+      <NxFormGroup label={STRINGS.artifactLatestVersionsLabel} sublabel={STRINGS.artifactLatestVersionsHelpText} isRequired>
+        <NxFormSelect
+          value={artifactLatestVersions}
+          onChange={(value) => handleFieldChange(setArtifactLatestVersions, value)}
+        >
+          {STRINGS.artifactLatestVersionsOptions.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </NxFormSelect>
+      </NxFormGroup>
 
       <NxFormGroup label={STRINGS.policyEvaluationStageLabel} sublabel={STRINGS.policyEvaluationStageHelpText} isRequired>
         <NxFormSelect
@@ -172,37 +227,55 @@ export default function HostedRepositoriesEvaluationSettingsTab({initialData, on
       <NxH3>{PACKAGE_STRINGS.title}</NxH3>
       <NxInfoAlert>
         <NxP>{PACKAGE_STRINGS.description}</NxP>
+        <ul className="package-patterns-list">
+          <li>
+            <strong>{PACKAGE_STRINGS.mavenLabel}</strong> {PACKAGE_STRINGS.maven}
+          </li>
+          <li>
+            <strong>{PACKAGE_STRINGS.npmLabel}</strong> {PACKAGE_STRINGS.npm}
+          </li>
+          <li>
+            <strong>{PACKAGE_STRINGS.pythonLabel}</strong> {PACKAGE_STRINGS.python}
+          </li>
+        </ul>
       </NxInfoAlert>
-      <div className="package-patterns-list">
-        <NxP>
-          <strong>{PACKAGE_STRINGS.mavenLabel}</strong> {PACKAGE_STRINGS.maven}
-        </NxP>
-        <NxP>
-          <strong>{PACKAGE_STRINGS.npmLabel}</strong> {PACKAGE_STRINGS.npm}
-        </NxP>
-        <NxP>
-          <strong>{PACKAGE_STRINGS.pythonLabel}</strong> {PACKAGE_STRINGS.python}
-        </NxP>
-        <NxP>
-          <strong>{PACKAGE_STRINGS.dockerLabel}</strong> {PACKAGE_STRINGS.docker}
-        </NxP>
-      </div>
 
       <div className="nx-btn-bar">
         <NxButton
           variant="tertiary"
-          onClick={onCancel}
+          onClick={globalConfigAvailable ? handleCancelEdit : onCancel}
         >
           {BUTTON_STRINGS.cancel}
         </NxButton>
         <NxButton
           variant="primary"
-          onClick={handleNext}
-          disabled={!isValid}
+          onClick={globalConfigAvailable ? handleUpdate : handleNext}
+          disabled={!isValid || (globalConfigAvailable && (!isDirty || isSaving))}
         >
           {globalConfigAvailable ? BUTTON_STRINGS.update : BUTTON_STRINGS.next}
         </NxButton>
       </div>
+
+      {showErrorModal && (
+        <NxModal onCancel={handleCloseErrorModal} variant="narrow">
+          <header className="nx-modal-header">
+            <NxH3>{ERROR_MODAL_STRINGS.TITLE}</NxH3>
+            <NxCloseButton onClick={handleCloseErrorModal} />
+          </header>
+          <div className="nx-modal-content">
+            <NxErrorAlert>
+              {errorMessage}
+            </NxErrorAlert>
+          </div>
+          <footer className="nx-footer">
+            <div className="nx-btn-bar">
+              <NxButton variant="primary" onClick={handleCloseErrorModal}>
+                {ERROR_MODAL_STRINGS.CLOSE}
+              </NxButton>
+            </div>
+          </footer>
+        </NxModal>
+      )}
     </div>
   );
 }

@@ -159,6 +159,69 @@ public class ProxyHandlerTest
     assertStatusCode(underTest.handle(context), HttpStatus.BAD_GATEWAY);
   }
 
+  /**
+   * Format facets sometimes wrap RemoteBlockedIOException in UncheckedIOException so it can
+   * escape a call site that cannot declare `throws IOException` (e.g. PyPI's
+   * cachePackageRootMetadataAndRetrieveLink invoked from getUrl during logging). Without
+   * unwrapping, the block message is lost and the client sees a generic 502. The handler must
+   * return 404 with the "Remote Auto Blocked until …" message even through the wrapper.
+   */
+  @Test
+  public void testUncheckedIOExceptionWrappingRemoteBlockedIOException_Returns404WithBlockMessage() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    doThrow(new UncheckedIOException(new RemoteBlockedIOException("Remote Auto Blocked until 2030-01-01")))
+        .when(proxyFacet)
+        .get(context);
+    Response response = underTest.handle(context);
+    assertStatusCode(response, HttpStatus.NOT_FOUND);
+    assertStatusMessage(response, "Remote Auto Blocked until 2030-01-01");
+  }
+
+  /**
+   * Other format facets wrap the block signal in a plain RuntimeException (Yum's fetchMetadata
+   * uses Throwables.throwIfUnchecked + new RuntimeException(e)). The generic Exception catch
+   * must walk the cause chain and still return 404 with the block message rather than a 500.
+   */
+  @Test
+  public void testRuntimeExceptionWrappingRemoteBlockedIOException_Returns404WithBlockMessage() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    doThrow(new RuntimeException(new RemoteBlockedIOException("Remote Auto Blocked until 2030-01-01")))
+        .when(proxyFacet)
+        .get(context);
+    Response response = underTest.handle(context);
+    assertStatusCode(response, HttpStatus.NOT_FOUND);
+    assertStatusMessage(response, "Remote Auto Blocked until 2030-01-01");
+  }
+
+  /**
+   * A plain IOException wrapped in an unchecked exception should still map to 502 rather than
+   * escape as 500 — same defensive contract, non-block branch.
+   */
+  @Test
+  public void testRuntimeExceptionWrappingIOException_Returns502() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    doThrow(new RuntimeException(new IOException("connection refused")))
+        .when(proxyFacet)
+        .get(context);
+    assertStatusCode(underTest.handle(context), HttpStatus.BAD_GATEWAY);
+  }
+
+  /**
+   * Multi-level wrapping — RuntimeException(RuntimeException(RemoteBlockedIOException)) — must
+   * still find the block signal via the full cause-chain walk.
+   */
+  @Test
+  public void testMultiLevelWrappingOfRemoteBlockedIOException_Returns404WithBlockMessage() throws Exception {
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    RemoteBlockedIOException blocked = new RemoteBlockedIOException("Remote Auto Blocked until 2030-01-01");
+    doThrow(new RuntimeException("outer", new RuntimeException("middle", blocked)))
+        .when(proxyFacet)
+        .get(context);
+    Response response = underTest.handle(context);
+    assertStatusCode(response, HttpStatus.NOT_FOUND);
+    assertStatusMessage(response, "Remote Auto Blocked until 2030-01-01");
+  }
+
   @Test
   public void testBypassHttpErrorExceptionPropagatesCodeWithMessageWithHeader() throws Exception {
     final int httpStatus = HttpStatus.FORBIDDEN;

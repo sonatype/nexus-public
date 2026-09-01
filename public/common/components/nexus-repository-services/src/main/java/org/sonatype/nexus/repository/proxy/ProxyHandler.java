@@ -60,10 +60,8 @@ import static org.sonatype.nexus.repository.proxy.ThrottlerInterceptor.PAYMENT_R
 public class ProxyHandler
     implements Handler
 {
-  private static final String TELEMETRY_BLOCKING_MESSAGE =
-      "TELEMETRY REQUIRED: This instance has failed to submit required telemetry data. " +
-          "Please check network configuration or contact support. " +
-          "See https://links.sonatype.com/telemetry-troubleshooting. INSTANCE ID: ";
+  private static final String TELEMETRY_READONLY_MODE =
+      "Nexus Repository is now in read-only mode because Baseline Telemetry data could not be uploaded within the grace period. Check your network configuration and verify that the server can reach the telemetry service. If the problem persists, contact Sonatype Support. To retry the upload now, run the Upload Retry task.";
 
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -122,10 +120,22 @@ public class ProxyHandler
       throw e; // Propagate as 500 error
     }
     catch (IOException | UncheckedIOException e) {
+      // Some format facets wrap RemoteBlockedIOException in UncheckedIOException (e.g.
+      // when the block signal has to escape a method that cannot declare throws IOException,
+      // as PyPI does in cachePackageRootMetadataAndRetrieveLink). Unwrap once so those callers
+      // still get the "Remote Auto Blocked until …" 404 that a raw RemoteBlockedIOException
+      // produces, instead of a generic 502 that drops the block message.
+      if (e instanceof UncheckedIOException && e.getCause() instanceof RemoteBlockedIOException) {
+        return HttpResponses.notFound(e.getCause().getMessage());
+      }
       return HttpResponses.badGateway();
     }
     catch (Exception e) {
-      // Walk the cause chain to find wrapped BlobStoreWarmingUpException (handles multi-level wrapping)
+      // Walk the cause chain looking for signal exceptions. Format facets often wrap
+      // RemoteBlockedIOException (or IOException in general) in a plain RuntimeException so it
+      // can escape a call site that can't declare throws IOException (see YumProxyFacet's
+      // fetchMetadata for a canonical example). Without unwrapping, the block signal is lost
+      // and the client sees a generic 500.
       Throwable cause = e.getCause();
       while (cause != null) {
         if (cause instanceof BlobStoreWarmingUpException) {
@@ -133,6 +143,12 @@ public class ProxyHandler
               ((BlobStoreWarmingUpException) cause).getBlobStoreName(),
               context.getRequest().getPath());
           return HttpResponses.serviceUnavailable("Blob store warming up, please retry in a moment");
+        }
+        if (cause instanceof RemoteBlockedIOException) {
+          return HttpResponses.notFound(cause.getMessage());
+        }
+        if (cause instanceof IOException) {
+          return HttpResponses.badGateway();
         }
         cause = cause.getCause();
       }
@@ -170,12 +186,12 @@ public class ProxyHandler
   }
 
   private Response buildTelemetryBlockingResponse(final Context context) {
-    String message = TELEMETRY_BLOCKING_MESSAGE + nodeAccess.getId();
+    log.warn(TELEMETRY_READONLY_MODE);
     if ("nuget".equals(context.getRepository().getFormat().getValue())) {
-      return HttpResponses.conflict(message);
+      return HttpResponses.conflict(TELEMETRY_READONLY_MODE);
     }
     else {
-      return HttpResponses.forbidden(message);
+      return HttpResponses.forbidden(TELEMETRY_READONLY_MODE);
     }
   }
 

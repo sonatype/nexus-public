@@ -110,6 +110,7 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/admin/support/logging', heritage: 'admin/support/logging' },
   { preview: 'preview/admin/support/systeminformation', heritage: 'admin/support/systeminformation' },
   { preview: 'preview/admin/support/metrichealth', heritage: 'admin/support/status' },
+  { preview: 'preview/admin/support/recoverymode', heritage: 'admin/support/recovery' },
   { preview: 'preview/admin/support/supportrequest', heritage: 'admin/support/supportrequest' },
   { preview: 'preview/admin/support/supportzip', heritage: 'admin/support/supportzip' },
   { preview: 'preview/admin/system/tasks', heritage: 'admin/system/tasks' },
@@ -119,8 +120,11 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/admin/system/licensing', heritage: 'admin/system/licensing' },
   { preview: 'preview/admin/system/nodes', heritage: 'admin/system/nodes' },
   { preview: 'preview/admin/system/api', heritage: 'admin/system/api' },
-  { preview: 'preview/admin/system/upgrade', heritage: 'admin/system/upgrade' },
   { preview: 'preview/admin/system/previewui', heritage: 'admin/system/previewui' },
+  // Specific Classic routes — must come before the generic `preview/admin/iq` entry.
+  { preview: 'preview/admin/iq/connection', heritage: 'admin/iq/connected' },
+  { preview: 'preview/admin/iq/connected', heritage: 'admin/iq/connected' },
+  { preview: 'preview/admin/iq/hosted-repos-eval', heritage: 'admin/iq/sonatype-lifecycle/hosted-repos-eval' },
   { preview: 'preview/admin/iq', heritage: 'admin/iq' },
   { preview: 'preview/user/account', heritage: 'user/account' },
   { preview: 'preview/user/nugetapitoken', heritage: 'user/NuGetApiToken' },
@@ -182,6 +186,8 @@ export function heritageToPreviewPath(currentPath) {
     newPath = 'preview/browse/malicious-packages';
   } else if (cleanPath === 'admin/hub' || cleanPath === 'admin' || cleanPath === 'admin/') {
     newPath = 'preview/settings';
+  } else if (cleanPath === 'admin/iq/sonatype-lifecycle/hosted-repos-eval' || cleanPath.startsWith('admin/iq/sonatype-lifecycle/hosted-repos-eval/')) {
+    newPath = cleanPath.replace('admin/iq/sonatype-lifecycle/hosted-repos-eval', 'preview/admin/iq/hosted-repos-eval');
   } else if (cleanPath === 'admin/security/atlassiancrowd' || cleanPath.startsWith('admin/security/atlassiancrowd/')) {
     newPath = 'preview/admin/security/crowd';
   } else if (cleanPath === 'user/account' || cleanPath.startsWith('user/account/')) {
@@ -200,6 +206,8 @@ export function heritageToPreviewPath(currentPath) {
     newPath = cleanPath.replace('admin/security/usertoken', 'preview/admin/security/user-tokens');
   } else if (cleanPath === 'admin/support/status' || cleanPath.startsWith('admin/support/status/')) {
     newPath = cleanPath.replace('admin/support/status', 'preview/admin/support/metrichealth');
+  } else if (cleanPath === 'admin/support/recovery' || cleanPath.startsWith('admin/support/recovery/')) {
+    newPath = cleanPath.replace('admin/support/recovery', 'preview/admin/support/recoverymode');
   } else {
     newPath = 'preview/' + cleanPath;
   }

@@ -14,6 +14,17 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useMonthlyMetrics, formatBytesToGB } from '../useMonthlyMetrics';
 
+jest.mock('../../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    state: jest.fn(() => ({
+      getValue: jest.fn((key: string, defaultValue?: unknown) => {
+        if (key === 'isCloud') return true;
+        return defaultValue ?? undefined;
+      }),
+    })),
+  },
+}));
+
 const mockGet = jest.fn();
 
 jest.mock('../../../../../../interface/api', () => {

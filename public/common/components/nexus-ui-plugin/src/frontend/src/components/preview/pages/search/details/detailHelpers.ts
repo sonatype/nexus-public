@@ -12,6 +12,24 @@
  */
 
 /**
+ * Parse a gaId into its `format`, `group`, and `name` segments.
+ *
+ * A gaId is `format:group:name`, `format:name`, or a bare token. Any colons beyond the
+ * group separator stay part of the name, so ids whose name legitimately contains a colon
+ * are preserved rather than truncated.
+ */
+export function parseGaCoordinates(gaId: string): { format: string; group: string; name: string } {
+  const parts = gaId.split(':');
+  if (parts.length >= 3) {
+    return { format: parts[0], group: parts[1], name: parts.slice(2).join(':') };
+  }
+  if (parts.length === 2) {
+    return { format: parts[0], group: '', name: parts[1] };
+  }
+  return { format: '', group: '', name: gaId };
+}
+
+/**
  * Build a Package URL (purl) from gaId and version.
  * Format: pkg:{format}/{pkgName}@{version}
  * Example: pkg:maven/org.apache.commons:commons-lang3@3.14.0
@@ -112,7 +130,8 @@ export function buildComponentPath(gaId: string, version: string): string | null
  */
 export function getMavenCentralUrl(gaId: string): string | null {
   const parts = gaId.split(':');
-  if (parts.length < 3 || parts[0]?.toLowerCase() !== 'maven') return null;
+  const format = parts[0]?.toLowerCase();
+  if (parts.length < 3 || (format !== 'maven' && format !== 'maven2')) return null;
   const groupId = parts[1];
   const artifactId = parts[2];
   return `https://central.sonatype.com/artifact/${encodeURIComponent(groupId)}/${encodeURIComponent(artifactId)}`;

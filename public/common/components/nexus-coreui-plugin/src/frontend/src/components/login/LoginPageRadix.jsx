@@ -177,9 +177,9 @@ export default function LoginPageRadix() {
               {/* Divider between SSO and local login */}
               {showSsoLogin && (
                 <Flex align="center" gap="3" className="nxrm-login-sso-divider">
-                  <Box className="nxrm-login-divider" style={{flex: 1}} />
+                  <Box className="nxrm-login-divider" />
                   <Text size="2" color="gray">{SSO_DIVIDER_LABEL}</Text>
-                  <Box className="nxrm-login-divider" style={{flex: 1}} />
+                  <Box className="nxrm-login-divider" />
                 </Flex>
               )}
 

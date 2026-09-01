@@ -34,7 +34,7 @@ import {
 const ALL_FORMATS = [
   'all', 'alpine','ansiblegalaxy', 'apt', 'cargo', 'cocoapods', 'composer', 'conan', 'conda',
   'docker', 'gitlfs', 'go', 'helm', 'huggingface', 'maven', 'npm',
-  'nuget', 'p2', 'pub', 'pypi', 'r', 'raw', 'rubygems', 'swift', 'terraform', 'terraformbackend', 'yum'
+  'nuget', 'oci', 'p2', 'pub', 'pypi', 'r', 'raw', 'rubygems', 'swift', 'terraform', 'yum'
 ] as const;
 
 // Expected API format mappings
@@ -56,6 +56,7 @@ const API_FORMAT_MAPPINGS: Record<string, string> = {
   maven: 'maven2', // Special case: maven -> maven2
   npm: 'npm',
   nuget: 'nuget',
+  oci: 'oci',
   p2: 'p2',
   pub: 'pub',
   pypi: 'pypi',
@@ -64,7 +65,6 @@ const API_FORMAT_MAPPINGS: Record<string, string> = {
   rubygems: 'rubygems',
   swift: 'swift',
   terraform: 'terraform',
-  terraformbackend: 'terraformbackend',
   yum: 'yum',
 };
 
@@ -87,6 +87,7 @@ const PLACEHOLDER_PATTERNS: Record<string, RegExp> = {
   maven: /group.*id|artifact/i,
   npm: /name|scope/i,
   nuget: /id|tags|package/i,
+  oci: /image/i,
   p2: /plugin/i,
   pub: /package/i,
   pypi: /package/i,
@@ -95,7 +96,6 @@ const PLACEHOLDER_PATTERNS: Record<string, RegExp> = {
   rubygems: /gem/i,
   swift: /package/i,
   terraform: /module/i,
-  terraformbackend: /state|path/i,
   yum: /package/i,
 };
 
@@ -119,19 +119,19 @@ const EXPECTED_FILTERS: Record<string, string[]> = {
   raw: ['repository'],
 
   // Formats with custom filters
-  composer: ['repository', 'vendor', 'package'],
+  composer: ['repository', 'vendor', 'package', 'description', 'keywords'],
   conan: ['repository', 'baseVersion', 'channel', 'revision', 'packageId', 'packageRevision'],
   docker: ['repository', 'imageName', 'imageTag', 'layerId', 'contentDigest'],
   gitlfs: ['repository', 'sha256'],
   maven: ['repository', 'groupId', 'artifactId', 'baseVersion', 'classifier', 'extension'],
   npm: ['repository', 'scope', 'author', 'description', 'keywords', 'license'],
   nuget: ['repository', 'nugetId', 'tags', 'title', 'authors', 'description', 'summary'],
+  oci: ['repository', 'imageName', 'imageTag', 'contentDigest'],
   p2: ['repository', 'pluginName'],
   pypi: ['repository', 'classifiers', 'description', 'keywords', 'summary'],
   rubygems: ['repository', 'description', 'platform', 'summary'],
   swift: ['repository', 'scope'],
   terraform: ['repository', 'provider', 'namespace'],
-  terraformbackend: ['repository'],
   yum: ['repository', 'yumName', 'architecture'],
 };
 
@@ -145,6 +145,8 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
   composer: {
     vendor: 'composer.vendor',
     package: 'composer.package',
+    description: 'composer.description',
+    keywords: 'composer.keywords',
   },
   conan: {
     baseVersion: 'conan.baseVersion',
@@ -183,6 +185,11 @@ const FORMAT_SPECIFIC_API_PARAMS: Record<string, Record<string, string>> = {
     authors: 'nuget.authors',
     description: 'nuget.description',
     summary: 'nuget.summary',
+  },
+  oci: {
+    imageName: 'oci.imageName',
+    imageTag: 'oci.imageTag',
+    contentDigest: 'oci.contentDigest',
   },
   p2: {
     pluginName: 'p2.pluginName',
@@ -335,7 +342,7 @@ describe('searchFilters', () => {
 
     // Test that formats with no custom filters only have repository
     describe('Formats with no custom filters', () => {
-      const formatsWithOnlyRepository = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw', 'terraformbackend'];
+      const formatsWithOnlyRepository = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
 
       formatsWithOnlyRepository.forEach(format => {
         it(`${format} only has repository filter (no redundant name/version)`, () => {

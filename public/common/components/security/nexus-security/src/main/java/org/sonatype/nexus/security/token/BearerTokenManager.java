@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.token;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.security.SecurityHelper;
@@ -40,6 +42,9 @@ public abstract class BearerTokenManager
 
   private final String format;
 
+  @Autowired(required = false)
+  protected BearerTokenEchoResolver echoResolver;
+
   @Autowired
   public BearerTokenManager(
       final ApiKeyService apiKeyService,
@@ -53,9 +58,17 @@ public abstract class BearerTokenManager
 
   /**
    * Creates (if not already exists) a bearer token mapped to given principal and returns the newly created token.
+   * If an {@link BearerTokenEchoResolver} is present and the current request carries a service-account credential,
+   * that credential is echoed back instead of minting a new token.
    */
   protected String createToken(final PrincipalCollection principals) {
     checkNotNull(principals);
+    if (echoResolver != null) {
+      Optional<String> echoed = echoResolver.presentedToken(principals);
+      if (echoed.isPresent()) {
+        return echoed.get();
+      }
+    }
     char[] apiKey = apiKeyService.getApiKey(format, principals).map(ApiKey::getApiKey).orElse(null);
     if (apiKey != null) {
       return format + "." + new String(apiKey);

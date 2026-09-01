@@ -29,6 +29,14 @@ export interface VisibilityRequirements {
   permissionPrefixes?: string[];
   editions?: string[];
   requiresUser?: boolean;
+  /** Required active bundle/plugin (matches isVisible bundle check). */
+  bundle?: string;
+  /** All listed licenses must be present and valid. */
+  licenseValid?: Array<{ key: string; defaultValue?: boolean }>;
+  /** All listed NX.State keys must resolve truthy. */
+  statesEnabled?: Array<{ key: string; defaultValue?: boolean }>;
+  /** Required capability type must be created and active. */
+  capability?: string;
 }
 
 export interface SettingCard {
@@ -48,6 +56,8 @@ export interface SettingCard {
   searchTerms?: string[];
   /** If true, this card is hidden on Cloud deployments */
   cloudExcluded?: boolean;
+  /** If true, this card is shown ONLY on Cloud deployments (hidden on self-hosted) */
+  cloudOnly?: boolean;
   /** If true, this card is hidden on CE/OSS self-hosted (requires PRO or Cloud edition) */
   proOnly?: boolean;
   /** If true, this card is hidden from non-admin users */
@@ -92,7 +102,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Manage Maven, npm, Docker, and other repositories',
         searchTerms: ['maven', 'npm', 'docker', 'pypi', 'nuget'],
         featureKey: 'repository.repositories',
-        visibilityRequirements: { requiresPermission: 'nexus:repository-admin:*:*:read' },
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js REPOSITORIES.ROOT), which uses a
+        // repository-admin prefix so a user with admin on any single repo can see the menu.
+        visibilityRequirements: { permissionPrefix: 'nexus:repository-admin' },
       },
       {
         id: 'blob-stores',
@@ -111,7 +123,10 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure automated component cleanup',
         searchTerms: ['retention', 'delete', 'purge'],
         featureKey: 'repository.cleanuppolicies',
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js CLEANUPPOLICIES.ROOT), which gates
+        // on nexus:* — the RoutingRules/CleanupPolicy write endpoints require admin, and the menu
+        // must not surface to a settings:read-only user who would then hit a 403.
+        visibilityRequirements: { requiresPermission: 'nexus:*' },
       },
       {
         id: 'routing-rules',
@@ -120,7 +135,10 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Control component access by path patterns',
         searchTerms: ['block', 'allow', 'filter'],
         featureKey: 'repository.routingrules',
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js ROUTINGRULES.ROOT). RoutingRulesResource
+        // requires nexus:* on every endpoint, including the GET/list — so settings:read here would show
+        // the menu but 403 on load.
+        visibilityRequirements: { requiresPermission: 'nexus:*' },
       },
       {
         id: 'content-selectors',
@@ -139,7 +157,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['database', 'postgresql', 'h2', 'jdbc'],
         cloudExcluded: true,
         featureKey: 'repository.datastore',
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js DATASTORE.ROOT) — gates on nexus:*
+        // (admin-only screen) AND requires the pro-datastore bundle, restricted to PRO/COMMUNITY.
+        // Without the bundle+editions gates the tile shows on editions where the screen is absent.
+        visibilityRequirements: {
+          requiresPermission: 'nexus:*',
+          bundle: 'nexus-pro-datastore-plugin',
+          editions: ['PRO', 'COMMUNITY'],
+        },
       },
       {
         id: 'proprietary',
@@ -161,7 +186,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         label: 'Users',
         description: 'Manage user accounts and access',
         featureKey: 'security.users',
-        visibilityRequirements: { requiresPermission: 'nexus:users:read' },
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js USERS.ROOT), which requires BOTH
+        // users:read and roles:read (permissions[] is AND).
+        visibilityRequirements: { permissions: ['nexus:users:read', 'nexus:roles:read'] },
       },
       {
         id: 'roles',
@@ -169,7 +196,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         label: 'Roles',
         description: 'Define user permissions and access control',
         featureKey: 'security.roles',
-        visibilityRequirements: { requiresPermission: 'nexus:roles:read' },
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js ROLES.ROOT), which requires BOTH
+        // roles:read and privileges:read (permissions[] is AND).
+        visibilityRequirements: { permissions: ['nexus:roles:read', 'nexus:privileges:read'] },
       },
       {
         id: 'privileges',
@@ -196,6 +225,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['active directory', 'ad', 'directory service'],
         cloudExcluded: true,
         featureKey: 'security.ldap',
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js LDAP.ROOT) — gated on ldap:read
+        // only, with NO edition restriction. Preview previously added editions[PRO,COMMUNITY],
+        // which hid LDAP on editions where Classic still shows it.
         visibilityRequirements: { requiresPermission: 'nexus:ldap:read' },
       },
       {
@@ -206,7 +238,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['sso', 'single sign-on'],
         cloudExcluded: true,
         featureKey: 'security.saml',
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js SAML.ROOT) — gates on nexus:*
+        // (admin-only screen) AND requires the saml bundle, restricted to PRO. Without the
+        // bundle+editions gates the tile shows on editions/installs where SAML is unavailable.
+        visibilityRequirements: {
+          requiresPermission: 'nexus:*',
+          bundle: 'nexus-saml-plugin',
+          editions: ['PRO'],
+        },
       },
       {
         id: 'oauth2',
@@ -215,7 +254,15 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure OAuth 2.0 authentication',
         cloudExcluded: true,
         featureKey: 'security.oauth2',
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js OAUTH2.ROOT) — gates on nexus:*
+        // (admin-only screen) AND requires the oauth2 bundle + PRO edition + the oauth2Available
+        // state. Without these gates the tile shows on installs where OAuth 2.0 is unavailable.
+        visibilityRequirements: {
+          requiresPermission: 'nexus:*',
+          bundle: 'nexus-oauth2-plugin',
+          editions: ['PRO'],
+          statesEnabled: [{ key: 'oauth2Available', defaultValue: false }],
+        },
       },
       {
         id: 'crowd',
@@ -224,7 +271,14 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure Atlassian Crowd integration',
         cloudExcluded: true,
         featureKey: 'security.crowd',
-        visibilityRequirements: { requiresPermission: 'nexus:crowd:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js CROWD.ROOT) — crowd:read AND the
+        // crowd bundle + a valid crowd license. Without the bundle+license gates the tile shows on
+        // installs where Crowd is unavailable and then dead-ends.
+        visibilityRequirements: {
+          requiresPermission: 'nexus:crowd:read',
+          bundle: 'nexus-crowd-plugin',
+          licenseValid: [{ key: 'crowd', defaultValue: false }],
+        },
       },
       {
         id: 'anonymous',
@@ -252,7 +306,29 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Manage API access tokens',
         searchTerms: ['api', 'token', 'authentication'],
         featureKey: 'security.usertokens',
-        visibilityRequirements: { requiresPermission: 'nexus:usertoken-settings:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js USERTOKEN.ROOT) — usertoken-settings:read
+        // gated to PRO edition AND a valid usertoken license. Without the licenseValid gate the tile
+        // shows on PRO installs whose license does not include user tokens and then dead-ends.
+        visibilityRequirements: {
+          requiresPermission: 'nexus:usertoken-settings:read',
+          editions: ['PRO'],
+          licenseValid: [{ key: 'usertoken', defaultValue: false }],
+        },
+      },
+      {
+        id: 'service-account-tokens',
+        path: 'security/service-account-tokens',
+        label: 'Service Account Tokens',
+        description: 'Manage tokens for automated service access',
+        searchTerms: ['service account', 'sat', 'ci', 'cd', 'automation', 'token', 'bearer'],
+        proOnly: true,
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js SERVICEACCOUNTTOKENS.ROOT) —
+        // service-accounts:read + PRO edition + the serviceAccountEnabled state.
+        visibilityRequirements: {
+          requiresPermission: 'nexus:service-accounts:read',
+          editions: ['PRO'],
+          statesEnabled: [{ key: 'serviceAccountEnabled', defaultValue: false }],
+        },
       },
       {
         id: 'ip-allowlist',
@@ -261,8 +337,16 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Manage IP address allow list for access control',
         searchTerms: ['ip', 'allowlist', 'cidr', 'firewall', 'access control'],
         proOnly: true,
+        // NEXUS-54048: keep adminOnly as the fast, fail-closed early guard. SettingsHubPage filters
+        // adminOnly (user.administrator) BEFORE isVisible(); on a cold load isVisible() takes the
+        // NXSESSIONID cookie fast-path and returns true for any authenticated session, so a
+        // nexus:*-only gate would let the tile flash to non-admins until ExtJS permissions load.
         adminOnly: true,
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // Gate on nexus:* to match the backend. IpAllowListResource requires
+        // @RequiresPermissions("nexus:*") on every endpoint — IP Allow List is an admin-only
+        // network control by design (NEXUS-45598). A settings:read gate showed the tile to
+        // non-admins who then hit a 403 opening the page.
+        visibilityRequirements: { requiresPermission: 'nexus:*' },
       },
     ],
   },
@@ -308,13 +392,25 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         visibilityRequirements: { requiresPermission: 'nexus:metrics:read' },
       },
       {
+        id: 'recovery-mode',
+        path: 'support/recoverymode',
+        label: 'Recovery Mode',
+        description: 'View status and toggle recovery mode for system maintenance and data repairs',
+        searchTerms: ['recovery', 'repair', 'reconcile', 'maintenance'],
+        adminOnly: true,
+        // 'nexus:*' === Permissions.ADMIN — array form mirrors the route's visibilityRequirements shape.
+        visibilityRequirements: { permissions: ['nexus:*'] },
+      },
+      {
         id: 'support-zip',
         path: 'support/supportzip',
         label: 'Support Zip',
         description: 'Generate support diagnostics bundle',
         searchTerms: ['diagnostic', 'troubleshoot', 'bundle'],
         featureKey: 'support.supportzip',
-        visibilityRequirements: { requiresPermission: 'nexus:supportzip:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js SUPPORTZIP.ROOT) — atlas:read.
+        // Preview previously gated on the non-existent nexus:supportzip:read privilege.
+        visibilityRequirements: { requiresPermission: 'nexus:atlas:read' },
       },
       {
         id: 'support-request',
@@ -323,7 +419,10 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Submit a support request',
         searchTerms: ['help', 'ticket', 'contact'],
         featureKey: 'support.supportrequest',
-        visibilityRequirements: { requiresPermission: 'nexus:atlas:read' },
+        // NEXUS-54019: match Classic/Default UI (adminRoutes.js SUPPORTREQUEST.ROOT) — atlas:create
+        // gated to PRO. Preview previously gated on atlas:read, which showed the tile to users who
+        // lack the create permission the page actually requires.
+        visibilityRequirements: { requiresPermission: 'nexus:atlas:create', editions: ['PRO'] },
       },
     ],
   },
@@ -368,6 +467,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         description: 'Configure REST API settings',
         searchTerms: ['rest', 'endpoint'],
         featureKey: 'system.api',
+        // NEXUS-54048: API has no dedicated privilege; the Default UI and Classic UI
+        // gate it on nexus:settings:read (matches the preview.browse.api route).
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
         id: 'capabilities',
@@ -395,15 +497,28 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['cluster', 'ha', 'high availability'],
         cloudExcluded: true,
         featureKey: 'system.nodes',
-        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+        // NEXUS-54048: match Classic/Default UI (adminRoutes.js NODES.ROOT), which gates on nexus:* —
+        // the Nodes screen is admin-only. A settings:read gate surfaced the tile to read-only users
+        // who would then hit a 403 opening the page.
+        visibilityRequirements: { requiresPermission: 'nexus:*' },
       },
       {
         id: 'iq-server',
-        path: 'iq',
+        path: 'iq/connected',
         label: 'IQ Server',
         description: 'Configure Sonatype IQ Server integration',
         searchTerms: ['lifecycle', 'policy'],
-        featureKey: 'iqserver',
+        featureKey: 'iqserver-connected',
+        visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
+      },
+      {
+        id: 'usage',
+        path: 'system/usage',
+        label: 'Usage',
+        description: 'Monitor historical usage metrics and trends',
+        searchTerms: ['metrics', 'egress', 'storage', 'usage insights'],
+        cloudOnly: true,
+        // NEXUS-54048: match cloud Classic (cloud adminRoutes.js HISTORICAL_USAGE), gated on settings:read.
         visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
       {
@@ -423,6 +538,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         searchTerms: ['update', 'version'],
         cloudExcluded: true,
         featureKey: 'system.upgrade',
+        // NEXUS-54237: informational page only (see previewAdminRoutes.js). The NEXUS-54019
+        // migration:read + 'migration' capability gate mirrored the Nexus 2→3 wizard being removed,
+        // and becomes permanently unsatisfiable once its capability descriptor is gone.
         visibilityRequirements: { requiresPermission: 'nexus:settings:read' },
       },
     ],

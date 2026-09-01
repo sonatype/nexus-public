@@ -36,7 +36,10 @@
 
   &__content {
     flex: 1;
-    padding: var(--space-4);
+    // Horizontal + bottom gutters come from the outer page Box (px/py), matching
+    // the shared page layout (see TagsPageRadix). Only keep a top gap so the first
+    // card is separated from the PageHeader.
+    padding-top: var(--space-4);
   }
 
   &__info-card {
@@ -68,11 +71,28 @@
   }
 
   &__component-row {
-    cursor: pointer;
     transition: background-color 0.15s ease;
 
-    &:hover {
-      background: var(--gray-a2);
+    &--clickable {
+      cursor: pointer;
+
+      &:hover {
+        background: var(--gray-a2);
+      }
+
+      &:focus {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -2px;
+      }
+
+      &:focus:not(:focus-visible) {
+        outline: none;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -2px;
+      }
     }
   }
 }
@@ -85,5 +105,3 @@
     }
   }
 }
-
-

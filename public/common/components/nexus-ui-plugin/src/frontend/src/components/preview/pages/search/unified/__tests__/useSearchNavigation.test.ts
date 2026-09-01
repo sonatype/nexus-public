@@ -12,8 +12,11 @@
  */
 
 import { renderHook, act } from '@testing-library/react';
-import { useSearchNavigation } from '../useSearchNavigation';
-import { SearchResult } from '../unified.types';
+import {
+  consumeSearchReturnUrl,
+  SEARCH_RETURN_URL_KEY,
+  useSearchNavigation,
+} from '../useSearchNavigation';
 
 // Mock @uirouter/react to avoid UIRouter context requirement
 const mockGo = jest.fn();
@@ -60,7 +63,7 @@ describe('useSearchNavigation', () => {
         'preview.browse.search.component',
         expect.objectContaining({
           keyword: 'commons-lang3',
-          gaId: encodeURIComponent('maven2:org.apache.commons:commons-lang3'),
+          gaId: 'maven2:org.apache.commons:commons-lang3',
           version: '3.12.0',
         })
       );
@@ -84,7 +87,7 @@ describe('useSearchNavigation', () => {
         'preview.browse.search.component',
         expect.objectContaining({
           keyword: 'react',
-          gaId: encodeURIComponent('npm:@types:react'),
+          gaId: 'npm:@types:react',
           version: '18.0.0',
         })
       );
@@ -107,7 +110,7 @@ describe('useSearchNavigation', () => {
         'preview.browse.search.component',
         expect.objectContaining({
           keyword: 'Newtonsoft.Json',
-          gaId: encodeURIComponent('nuget:Newtonsoft.Json'),
+          gaId: 'nuget:Newtonsoft.Json',
           version: '13.0.3',
         })
       );
@@ -148,7 +151,7 @@ describe('useSearchNavigation', () => {
       expect(mockGo).toHaveBeenCalledWith(
         'preview.browse.search.component',
         expect.objectContaining({
-          gaId: encodeURIComponent('raw:package'),
+          gaId: 'raw:package',
           keyword: 'package',
           version: '1.0.0',
         })
@@ -228,6 +231,147 @@ describe('useSearchNavigation', () => {
 
         expect(route.isPreviewBrowse).toBe(false);
       });
+    });
+  });
+
+  describe('search return URL', () => {
+    const RESULT = {
+      id: '1',
+      name: 'commons-lang3',
+      format: 'maven2',
+      group: 'org.apache.commons',
+      version: '3.12.0',
+      repository: 'maven-central',
+    };
+
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('stores the current search hash before navigating (AT-015)', () => {
+      window.location.hash = '#preview/browse/search?q=spring&format=maven';
+      const { result } = renderHook(() => useSearchNavigation());
+
+      act(() => {
+        result.current.navigateToDetail(RESULT);
+      });
+
+      expect(sessionStorage.getItem(SEARCH_RETURN_URL_KEY)).toBe(
+        '#preview/browse/search?q=spring&format=maven',
+      );
+    });
+
+    it('stores nothing when navigating from a non-search page (AT-015)', () => {
+      window.location.hash = '#preview/browse/welcome?tab=overview';
+      const { result } = renderHook(() => useSearchNavigation());
+
+      act(() => {
+        result.current.navigateToDetail(RESULT);
+      });
+
+      expect(sessionStorage.getItem(SEARCH_RETURN_URL_KEY)).toBeNull();
+    });
+
+    it('consumeSearchReturnUrl returns and clears a search hash (AT-015)', () => {
+      sessionStorage.setItem(SEARCH_RETURN_URL_KEY, '#preview/browse/search?q=a');
+
+      expect(consumeSearchReturnUrl()).toBe('#preview/browse/search?q=a');
+      expect(sessionStorage.getItem(SEARCH_RETURN_URL_KEY)).toBeNull();
+    });
+
+    it('consumeSearchReturnUrl rejects and clears a foreign value (AT-015)', () => {
+      // A tampered value must not be able to send the breadcrumb elsewhere.
+      sessionStorage.setItem(SEARCH_RETURN_URL_KEY, '#preview/browse/welcome');
+
+      expect(consumeSearchReturnUrl()).toBeUndefined();
+      expect(sessionStorage.getItem(SEARCH_RETURN_URL_KEY)).toBeNull();
+    });
+
+    it('consumeSearchReturnUrl returns undefined when nothing is stored (AT-015)', () => {
+      expect(consumeSearchReturnUrl()).toBeUndefined();
+    });
+
+    it('stores nothing when navigating from a component-detail page (AT-015)', () => {
+      // '#preview/browse/search' also prefixes every detail hash. Accepting the
+      // bare prefix let a detail -> detail hop overwrite the stored search URL
+      // with a detail URL, after which the breadcrumb assigned the hash it was
+      // already on and did nothing.
+      window.location.hash =
+        '#preview/browse/search/maven/commons-lang3/ga/maven2%3Aorg.apache.commons%3Acommons-lang3';
+      const { result } = renderHook(() => useSearchNavigation());
+
+      act(() => {
+        result.current.navigateToDetail(RESULT);
+      });
+
+      expect(sessionStorage.getItem(SEARCH_RETURN_URL_KEY)).toBeNull();
+    });
+
+    it('consumeSearchReturnUrl rejects and clears a component-detail hash (AT-015)', () => {
+      sessionStorage.setItem(
+        SEARCH_RETURN_URL_KEY,
+        '#preview/browse/search/maven/lodash/ga/npm%3Alodash',
+      );
+
+      expect(consumeSearchReturnUrl()).toBeUndefined();
+      expect(sessionStorage.getItem(SEARCH_RETURN_URL_KEY)).toBeNull();
+    });
+
+    it('accepts the bare search hash with no query string (AT-015)', () => {
+      sessionStorage.setItem(SEARCH_RETURN_URL_KEY, '#preview/browse/search');
+
+      expect(consumeSearchReturnUrl()).toBe('#preview/browse/search');
+    });
+  });
+
+  describe('unavailable sessionStorage', () => {
+    // Safari private mode and storage-blocked embeds throw on every access. An
+    // unguarded call aborted the click before stateService.go ever ran.
+    const RESULT = {
+      id: '1',
+      name: 'lodash',
+      format: 'npm',
+      group: undefined,
+      version: '4.17.21',
+      repository: 'npm-proxy',
+    };
+
+    function breakStorage(): jest.SpyInstance[] {
+      const boom = () => {
+        throw new DOMException('denied', 'SecurityError');
+      };
+      return [
+        jest.spyOn(Storage.prototype, 'getItem').mockImplementation(boom),
+        jest.spyOn(Storage.prototype, 'setItem').mockImplementation(boom),
+        jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(boom),
+      ];
+    }
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('still navigates when setItem throws (AT-015)', () => {
+      breakStorage();
+      window.location.hash = '#preview/browse/search?q=spring';
+      const { result } = renderHook(() => useSearchNavigation());
+
+      act(() => {
+        result.current.navigateToDetail(RESULT);
+      });
+
+      expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
+        keyword: 'lodash',
+        gaId: 'npm:lodash',
+        version: '4.17.21',
+      });
+    });
+
+    it('consumeSearchReturnUrl returns undefined when storage throws (AT-015)', () => {
+      breakStorage();
+
+      expect(() => consumeSearchReturnUrl()).not.toThrow();
+      expect(consumeSearchReturnUrl()).toBeUndefined();
     });
   });
 });

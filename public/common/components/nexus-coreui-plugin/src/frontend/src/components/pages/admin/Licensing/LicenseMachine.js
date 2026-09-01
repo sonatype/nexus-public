@@ -79,7 +79,10 @@ export default FormUtils.buildFormMachine({
     }),
   },
   services: {
-    fetchData: () => Axios.get(licenseUrl),
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.get(licenseUrl);
+    },
     saveData: async ({data}) => {
       const file = await readFile(data.files.item(0));
       return Axios.post(licenseUrl, file, {

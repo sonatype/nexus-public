@@ -12,633 +12,283 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 
 import { UserForm } from '../UserForm';
-import { User } from '../types';
-import * as useUsersApiModule from '../useUsersApi';
-import * as useUsersFormModule from '../useUsersForm';
+import type { UseUsersFormResult } from '../useUsersForm';
+import { User, UserFormData } from '../types';
 
-// Mock the API hook and form hook
-jest.mock('../useUsersApi');
-jest.mock('../useUsersForm');
-jest.mock('../../roles/useRoleTree', () => ({
-  useRoleTree: jest.fn(() => ({
+jest.mock('../useUserTreePreview', () => ({
+  useUserTreePreview: () => ({
     tree: [],
     loading: false,
+    error: null,
     toggleExpand: jest.fn(),
     expandAll: jest.fn(),
     collapseAll: jest.fn(),
-  })),
-  useCombinedRoleTree: jest.fn(() => ({
-    tree: [],
-    loading: false,
-    toggleExpand: jest.fn(),
-    expandAll: jest.fn(),
-    collapseAll: jest.fn(),
-  })),
-}));
-jest.mock('@sonatype/nexus-ui-plugin', () => ({
-  ExtJS: {
-    isProEdition: jest.fn().mockReturnValue(true),
-    checkPermission: jest.fn().mockReturnValue(true),
-    state: jest.fn().mockReturnValue({
-      getValue: jest.fn().mockImplementation((key) => {
-        if (key === 'anonymousUsername') return 'anonymous';
-        if (key === 'capabilityActiveTypes') return ['usertoken'];
-        return null;
-      }),
-      getUser: jest.fn().mockReturnValue({ id: 'admin' }),
-    }),
-  },
+    setSearchTerm: jest.fn(),
+  }),
 }));
 
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
+jest.mock('../../roles/RoleExplorerTree', () => ({
+  RoleExplorerTree: () => <div data-testid="role-explorer-tree" />,
+}));
 
-const mockedUseUsersApi = useUsersApiModule.useUsersApi as jest.MockedFunction<typeof useUsersApiModule.useUsersApi>;
-const mockedUseUsersForm = useUsersFormModule.useUsersForm as jest.MockedFunction<typeof useUsersFormModule.useUsersForm>;
-
-/**
- * Creates a mock form object that mimics the useForm return shape.
- * The field() and checkbox() helpers return props that map to rendered inputs.
- */
-function createMockForm(data: Record<string, any>, context: Record<string, any> = {}) {
-  return {
-    field: jest.fn((name: string) => ({
-      name,
-      value: data[name] != null ? String(data[name]) : '',
-      error: undefined,
-      onChange: jest.fn(),
-      onBlur: jest.fn(),
-    })),
-    checkbox: jest.fn((name: string) => ({
-      name,
-      checked: Boolean(data[name]),
-      error: undefined,
-      onChange: jest.fn(),
-    })),
-    submit: jest.fn(),
-    reset: jest.fn(),
-    isPristine: true,
-    isSaving: false,
-    isLoading: false,
-    hasLoadError: false,
-    hasValidationErrors: false,
-    data,
-    touched: {} as Record<string, boolean>,
-    validationErrors: {} as Record<string, string>,
-    saveError: null as string | null,
-    loadError: null as string | null,
-    state: { context: { allRoles: [], userSources: [], user: null, ...context }, matches: jest.fn(() => false) },
-    send: jest.fn(),
-  };
-}
-
-// Wrapper component for Radix Theme
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return <Theme>{children}</Theme>;
 }
 
-const mockRoles = [
-  { id: 'nx-admin', name: 'Admin' },
-  { id: 'nx-anonymous', name: 'Anonymous' },
-];
+const baseFormData: UserFormData = {
+  userId: 'jsmith',
+  firstName: 'John',
+  lastName: 'Smith',
+  emailAddress: 'jsmith@example.com',
+  status: true,
+  roles: ['nx-admin'],
+  source: 'default',
+};
+
+const baseUser: User = {
+  userId: 'jsmith',
+  realm: 'default',
+  source: 'default',
+  firstName: 'John',
+  lastName: 'Smith',
+  emailAddress: 'jsmith@example.com',
+  status: 'active',
+  roles: ['nx-admin'],
+};
+
+function makeMockForm(formData: UserFormData) {
+  const field = jest.fn((name: string) => ({
+    name,
+    value: (formData as any)[name] ?? '',
+    onChange: jest.fn(),
+    onBlur: jest.fn(),
+  }));
+  const checkbox = jest.fn((name: string) => ({
+    name,
+    checked: !!(formData as any)[name],
+    onChange: jest.fn(),
+  }));
+  return {
+    data: formData,
+    field,
+    checkbox,
+    submit: jest.fn(),
+    send: jest.fn(),
+    reset: jest.fn(),
+    state: { context: {}, matches: jest.fn(() => false) },
+    isPristine: true,
+    isSaving: false,
+    isLoading: false,
+    isDeleting: false,
+    saveError: null,
+    validationErrors: {},
+    touched: {},
+    hasValidationErrors: false,
+  };
+}
+
+function makeVm(overrides: Partial<UseUsersFormResult> = {}): UseUsersFormResult {
+  const formData = overrides.formData ?? baseFormData;
+  const form = overrides.form ?? (makeMockForm(formData) as any);
+  return {
+    form,
+    user: overrides.user ?? baseUser,
+    isCreate: false,
+    currentUser: overrides.currentUser ?? baseUser,
+    formData,
+    allRoles: [
+      { id: 'nx-admin', name: 'Admin' },
+      { id: 'nx-anonymous', name: 'Anonymous' },
+    ],
+    sources: [{ id: 'default', name: 'Local' }],
+    externalRoles: [],
+    isExternal: false,
+    isDirty: false,
+    rolesDirty: false,
+    isPro: true,
+    isUserTokenCapabilityActive: true,
+    canResetUserToken: true,
+    showsUserTokenReset: true,
+    isLoading: false,
+    isSaving: false,
+    saveError: undefined,
+    validationErrors: {},
+    showPasswordChange: false,
+    resetTokenDialogOpen: false,
+    isResettingToken: false,
+    isTogglingStatus: false,
+    submit: jest.fn(),
+    cancel: jest.fn(),
+    setRoles: jest.fn(),
+    showPasswordChangeSection: jest.fn(),
+    hidePasswordChangeSection: jest.fn(),
+    resetPasswordFields: jest.fn(),
+    openResetTokenDialog: jest.fn(),
+    closeResetTokenDialog: jest.fn(),
+    confirmResetToken: jest.fn(),
+    toggleStatus: jest.fn(),
+    ...overrides,
+  };
+}
 
 describe('UserForm', () => {
-  const mockOnSave = jest.fn();
-  const mockOnCancel = jest.fn();
-  const mockOnDelete = jest.fn();
-  const mockFetchRoles = jest.fn();
-  const mockFetchSources = jest.fn();
-
-  const mockUserSources = [
-    { id: 'LDAP', name: 'LDAP Server' },
-    { id: 'SAML', name: 'SAML Provider' },
-  ];
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockFetchRoles.mockResolvedValue(mockRoles);
-    mockFetchSources.mockResolvedValue(mockUserSources);
-    mockedUseUsersApi.mockReturnValue({
-      loading: false,
-      error: null,
-      setError: jest.fn(),
-      fetchUser: jest.fn(),
-      fetchUsers: jest.fn(),
-      fetchSources: mockFetchSources,
-      fetchRoles: mockFetchRoles,
-      createUser: jest.fn(),
-      updateUser: jest.fn(),
-      deleteUser: jest.fn(),
-      changePassword: jest.fn(),
-      resetUserToken: jest.fn(),
-    });
-    // Smart mock for useUsersForm - returns create or edit mode based on args
-    mockedUseUsersForm.mockImplementation(({ user, userId } = {} as any) => {
-      const isCreate = !userId && !user;
-      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }, ...mockUserSources] };
-      if (isCreate) {
-        return {
-          form: createMockForm(
-            { userId: '', firstName: '', lastName: '', emailAddress: '', password: '', passwordConfirm: '', status: true, roles: [] as string[], source: 'default' },
-            { ...contextData, user: null }
-          ) as any,
-          user: null,
-          isCreate: true,
-        };
-      }
-      // Edit mode - use the provided user data
-      const u = user;
-      return {
-        form: createMockForm(
-          {
-            userId: u?.userId || '',
-            firstName: u?.firstName || '',
-            lastName: u?.lastName || '',
-            emailAddress: u?.emailAddress || u?.email || '',
-            password: '',
-            passwordConfirm: '',
-            status: u?.status === 'active',
-            roles: u?.roles || [],
-            source: u?.source || 'default',
-          },
-          { ...contextData, user: u }
-        ) as any,
-        user: u,
-        isCreate: false,
-      };
-    });
+  it('renders a loading placeholder while the ViewModel is loading', () => {
+    const vm = makeVm({ isLoading: true });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText(/loading form/i)).toBeInTheDocument();
   });
 
-  it('renders Step 1 (Setup) content by default', async () => {
-    render(
-      <UserForm isCreate={true} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-    
-    await waitFor(() => {
-      expect(screen.getByText('User Setup')).toBeInTheDocument();
-    });
-    
-    expect(screen.getByTestId('input-userId')).toBeInTheDocument();
-    expect(screen.getByTestId('input-firstName')).toBeInTheDocument();
+  it('renders the Details, Roles, and Privileges sections in edit mode', () => {
+    render(<UserForm vm={makeVm()} />, { wrapper: TestWrapper });
+    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(screen.getByText('Roles')).toBeInTheDocument();
+    expect(screen.getByText(/Privileges/i)).toBeInTheDocument();
   });
 
-  it('renders Step 2 (Roles) content when wizardStep is 1', async () => {
-    render(
-      <UserForm isCreate={true} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={1} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-    
-    await waitFor(() => {
-      expect(screen.getByText('Roles')).toBeInTheDocument();
-    });
-    
-    expect(screen.getByText('Available')).toBeInTheDocument();
-    expect(screen.getByText('Granted')).toBeInTheDocument();
-    expect(screen.getByText('Role Inspector')).toBeInTheDocument();
-    expect(screen.getByText(/Select roles from Available or Granted to see combined permissions/)).toBeInTheDocument();
-  });
-
-  it('shows password change button in edit mode', async () => {
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
+  it('shows the externally-managed indicator when isExternal is true', () => {
+    const externalUser: User = {
+      ...baseUser,
+      source: 'LDAP',
+      realm: 'LDAP',
     };
-
-    render(
-      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-    
-    await waitFor(() => {
-      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
+    const vm = makeVm({
+      isExternal: true,
+      currentUser: externalUser,
+      user: externalUser,
+      externalRoles: ['ldap-role'],
     });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(screen.getByTestId('user-form-external-indicator')).toBeInTheDocument();
   });
 
-  it('expands change password panel when button is clicked', async () => {
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
+  it('does not show the externally-managed indicator for local users', () => {
+    render(<UserForm vm={makeVm()} />, { wrapper: TestWrapper });
+    expect(screen.queryByTestId('user-form-external-indicator')).not.toBeInTheDocument();
+  });
+
+  it('renders the Externally Assigned Roles list when external users have external roles', () => {
+    const externalUser: User = {
+      ...baseUser,
+      source: 'LDAP',
+      realm: 'LDAP',
     };
-
-    render(
-      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
+    const vm = makeVm({
+      isExternal: true,
+      currentUser: externalUser,
+      user: externalUser,
+      externalRoles: ['ldap-admins'],
+      allRoles: [{ id: 'ldap-admins', name: 'LDAP Admins' }],
     });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(screen.getByText('Externally Assigned Roles')).toBeInTheDocument();
+    const chip = screen.getByTestId('external-role-ldap-admins');
+    expect(chip).toBeInTheDocument();
+    expect(chip).toHaveTextContent('LDAP Admins');
+  });
 
+  it('renders a Change Password button in edit mode for local users when the section is closed', () => {
+    render(<UserForm vm={makeVm()} />, { wrapper: TestWrapper });
+    expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
+  });
+
+  it('shows password inputs when showPasswordChange is true and cancel triggers resetPasswordFields', () => {
+    const resetPasswordFields = jest.fn();
+    const vm = makeVm({ showPasswordChange: true, resetPasswordFields });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+    expect(resetPasswordFields).toHaveBeenCalled();
+  });
+
+  it('invokes showPasswordChangeSection when the Change Password button is clicked', () => {
+    const showPasswordChangeSection = jest.fn();
+    const vm = makeVm({ showPasswordChangeSection });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
     fireEvent.click(screen.getByTestId('change-password-btn'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Change Password')).toBeInTheDocument();
-      expect(screen.getByTestId('password-password')).toBeInTheDocument();
-      expect(screen.getByTestId('password-passwordConfirm')).toBeInTheDocument();
-    });
+    expect(showPasswordChangeSection).toHaveBeenCalled();
   });
 
-  it('collapses change password panel and clears fields on cancel', async () => {
-    const stableSend = jest.fn();
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
+  it('shows the unsaved-changes hint on the tree preview when rolesDirty is true', () => {
+    const vm = makeVm({ rolesDirty: true });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(screen.getByTestId('tree-preview-unsaved')).toBeInTheDocument();
+  });
+
+  it('hides the unsaved-changes hint on the tree preview when rolesDirty is false', () => {
+    render(<UserForm vm={makeVm({ rolesDirty: false })} />, { wrapper: TestWrapper });
+    expect(screen.queryByTestId('tree-preview-unsaved')).not.toBeInTheDocument();
+  });
+
+  it('shows a placeholder in the tree preview when no roles are selected', () => {
+    const emptyRolesFormData: UserFormData = { ...baseFormData, roles: [] };
+    const vm = makeVm({ formData: emptyRolesFormData });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(screen.getByText(/grant at least one role/i)).toBeInTheDocument();
+  });
+
+  it('renders password confirm and password fields on create mode', () => {
+    const createFormData: UserFormData = {
+      userId: '',
+      firstName: '',
+      lastName: '',
+      emailAddress: '',
+      status: true,
+      roles: [],
       source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
     };
-
-    // Override mock to return a stable send function across re-renders
-    mockedUseUsersForm.mockImplementation(() => {
-      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
-      return {
-        form: {
-          ...createMockForm(
-            {
-              userId: user.userId,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              emailAddress: user.emailAddress,
-              password: '',
-              passwordConfirm: '',
-              status: true,
-              roles: user.roles,
-              source: user.source,
-            },
-            { ...contextData, user }
-          ),
-          send: stableSend,
-        } as any,
-        user,
-        isCreate: false,
-      };
+    const vm = makeVm({
+      isCreate: true,
+      currentUser: null,
+      user: null,
+      formData: createFormData,
     });
-
-    render(
-      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId('change-password-btn'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('password-password')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText('Cancel'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
-      expect(screen.queryByTestId('password-password')).not.toBeInTheDocument();
-    });
-
-    // Verify form fields were cleared via machine events
-    expect(stableSend).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'UPDATE', name: 'password', value: '' })
-    );
-    expect(stableSend).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'UPDATE', name: 'passwordConfirm', value: '' })
-    );
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(vm.form.field).toHaveBeenCalledWith('password');
+    expect(vm.form.field).toHaveBeenCalledWith('passwordConfirm');
   });
 
-  it('reports invalid via onValidationChange when password panel is open with empty fields', async () => {
-    const mockValidationChange = jest.fn();
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
+  it('does not render password fields for external users on create', () => {
+    const externalUser: User = {
+      ...baseUser,
+      userId: '',
+      source: 'LDAP',
+      realm: 'LDAP',
     };
-
-    render(
-      <UserForm
-        isCreate={false}
-        user={user}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        wizardStep={0}
-        hideActions={true}
-        onValidationChange={mockValidationChange}
-      />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId('change-password-btn'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('password-password')).toBeInTheDocument();
-    });
-
-    // With password panel open and empty fields, validation should report invalid
-    expect(mockValidationChange).toHaveBeenCalledWith(false);
-  });
-
-  it('shows reset token button in edit mode for non-external users', async () => {
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
+    const createFormData: UserFormData = {
+      userId: '',
+      firstName: '',
+      lastName: '',
+      emailAddress: '',
+      status: true,
+      roles: [],
+      source: 'LDAP',
     };
-
-    render(
-      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('reset-token-btn')).toBeInTheDocument();
+    const vm = makeVm({
+      isCreate: true,
+      isExternal: true,
+      currentUser: null,
+      user: null,
+      formData: createFormData,
     });
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(vm.form.field).not.toHaveBeenCalledWith('password');
+    expect(vm.form.field).not.toHaveBeenCalledWith('passwordConfirm');
   });
 
-  it('hides reset token button in UserForm when usertoken capability is not active', async () => {
-    // Override the mock to return empty capabilities
-    const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
-    ExtJS.state.mockReturnValue({
-      getValue: jest.fn().mockImplementation((key) => {
-        if (key === 'anonymousUsername') return 'anonymous';
-        if (key === 'capabilityActiveTypes') return []; // No usertoken capability
-        return null;
-      }),
-      getUser: jest.fn().mockReturnValue({ id: 'admin' }),
+  it('surfaces validation errors on the roles field when validationErrors.roles is present', () => {
+    const form = makeMockForm(baseFormData);
+    (form as any).validationErrors = { roles: 'At least one role must be assigned' };
+    const vm = makeVm({
+      form: form as any,
+      validationErrors: { roles: 'At least one role must be assigned' },
     });
-
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
-    };
-
-    render(
-      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('User Setup')).toBeInTheDocument();
-    });
-
-    // Reset Token button should NOT be visible
-    expect(screen.queryByTestId('reset-token-btn')).not.toBeInTheDocument();
+    render(<UserForm vm={vm} />, { wrapper: TestWrapper });
+    expect(screen.getByText('At least one role must be assigned')).toBeInTheDocument();
   });
 
-  it('hides reset token button in UserForm when user lacks nexus:usertoken-user:delete permission', async () => {
-    // Override the mock to return false for usertoken permission
-    const { ExtJS } = jest.requireMock('@sonatype/nexus-ui-plugin');
-    ExtJS.checkPermission.mockImplementation((permission: string) => {
-      if (permission === 'nexus:usertoken-user:delete') {
-        return false;
-      }
-      return true;
-    });
-
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
-    };
-
-    render(
-      <UserForm isCreate={false} user={user} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('User Setup')).toBeInTheDocument();
-    });
-
-    // Reset Token button should NOT be visible
-    expect(screen.queryByTestId('reset-token-btn')).not.toBeInTheDocument();
-  });
-
-  it('should not render source selector in create mode', async () => {
-    render(
-      <UserForm isCreate={true} onSave={mockOnSave} onCancel={mockOnCancel} wizardStep={0} hideActions={true} />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('User Setup')).toBeInTheDocument();
-    });
-
-    expect(screen.queryByLabelText('Source')).not.toBeInTheDocument();
-    expect(screen.queryByText('Select the authentication source for this user')).not.toBeInTheDocument();
-  });
-
-  it('should report invalid via onValidationChange when password is shorter than 8 characters', async () => {
-    const mockValidationChange = jest.fn();
-
-    mockedUseUsersForm.mockImplementation(() => {
-      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
-      return {
-        form: createMockForm(
-          { userId: 'newuser', firstName: 'Test', lastName: 'User', emailAddress: 'test@example.com',
-            password: 'short', passwordConfirm: 'short', status: true, roles: [] as string[], source: 'default' },
-          { ...contextData, user: null }
-        ) as any,
-        user: null,
-        isCreate: true,
-      };
-    });
-
-    render(
-      <UserForm
-        isCreate={true}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        wizardStep={0}
-        hideActions={true}
-        onValidationChange={mockValidationChange}
-      />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(mockValidationChange).toHaveBeenCalledWith(false);
-    });
-  });
-
-  it('should report valid via onValidationChange when password meets minimum length', async () => {
-    const mockValidationChange = jest.fn();
-
-    mockedUseUsersForm.mockImplementation(() => {
-      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
-      return {
-        form: createMockForm(
-          { userId: 'newuser', firstName: 'Test', lastName: 'User', emailAddress: 'test@example.com',
-            password: 'validpass', passwordConfirm: 'validpass', status: true, roles: [] as string[], source: 'default' },
-          { ...contextData, user: null }
-        ) as any,
-        user: null,
-        isCreate: true,
-      };
-    });
-
-    render(
-      <UserForm
-        isCreate={true}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        wizardStep={0}
-        hideActions={true}
-        onValidationChange={mockValidationChange}
-      />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(mockValidationChange).toHaveBeenCalledWith(true);
-    });
-  });
-
-  it('should report invalid via onValidationChange when edit-mode password is shorter than 8 characters', async () => {
-    const mockValidationChange = jest.fn();
-    const user: User = {
-      userId: 'testuser',
-      realm: 'default',
-      firstName: 'Test',
-      lastName: 'User',
-      emailAddress: 'test@example.com',
-      source: 'default',
-      status: 'active',
-      roles: ['nx-admin'],
-    };
-
-    mockedUseUsersForm.mockImplementation(() => {
-      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
-      return {
-        form: createMockForm(
-          { userId: 'testuser', firstName: 'Test', lastName: 'User', emailAddress: 'test@example.com',
-            password: 'short', passwordConfirm: 'short', status: true, roles: ['nx-admin'], source: 'default' },
-          { ...contextData, user }
-        ) as any,
-        user,
-        isCreate: false,
-      };
-    });
-
-    const { rerender } = render(
-      <UserForm
-        isCreate={false}
-        user={user}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        wizardStep={0}
-        hideActions={true}
-        onValidationChange={mockValidationChange}
-      />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('change-password-btn')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId('change-password-btn'));
-
-    await waitFor(() => {
-      expect(mockValidationChange).toHaveBeenCalledWith(false);
-    });
-  });
-
-  it('should call onDirtyChange when form becomes dirty', async () => {
-    const mockDirtyChange = jest.fn();
-
-    mockedUseUsersForm.mockImplementation(() => {
-      const contextData = { allRoles: mockRoles, userSources: [{ id: 'default', name: 'Local' }] };
-      return {
-        form: {
-          ...createMockForm(
-            { userId: 'modified', firstName: '', lastName: '', emailAddress: '', password: '', passwordConfirm: '', status: true, roles: [] as string[], source: 'default' },
-            { ...contextData, user: null }
-          ),
-          isPristine: false,
-        } as any,
-        user: null,
-        isCreate: true,
-      };
-    });
-
-    render(
-      <UserForm
-        isCreate={true}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        wizardStep={0}
-        hideActions={true}
-        onDirtyChange={mockDirtyChange}
-      />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(mockDirtyChange).toHaveBeenCalledWith(true);
-    });
-  });
-
-  it('should call onDirtyChange with false when form is pristine', async () => {
-    const mockDirtyChange = jest.fn();
-
-    render(
-      <UserForm
-        isCreate={true}
-        onSave={mockOnSave}
-        onCancel={mockOnCancel}
-        wizardStep={0}
-        hideActions={true}
-        onDirtyChange={mockDirtyChange}
-      />,
-      { wrapper: TestWrapper }
-    );
-
-    await waitFor(() => {
-      expect(mockDirtyChange).toHaveBeenCalledWith(false);
-    });
-  });
 });

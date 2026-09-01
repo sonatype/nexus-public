@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { isKnownAttribute, isValidOperator, isOperatorValidForAttribute, CSEL_CONFIG } from './cselConfig';
+import { isKnownAttribute, isOperatorValidForAttribute, } from './cselConfig';
 
 /**
  * Validation result types
@@ -330,7 +330,7 @@ export function getCursorContext(expression: string, cursorPos: number): CursorC
   }
 
   // Check cursor position relative to last token
-  const isAtEndOfToken = cursorPos === lastToken.end;
+  const _isAtEndOfToken = cursorPos === lastToken.end;
   const isAfterToken = cursorPos > lastToken.end;
   const hasSpaceAfterToken = isAfterToken && /\s$/.test(beforeCursor);
 

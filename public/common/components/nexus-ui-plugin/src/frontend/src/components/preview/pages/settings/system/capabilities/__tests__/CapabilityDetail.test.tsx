@@ -18,6 +18,7 @@ import { Theme } from '@radix-ui/themes';
 import { CapabilityDetail } from '../CapabilityDetail';
 import { Capability, CapabilityType } from '../types';
 import { useCapabilitiesApi } from '../useCapabilitiesApi';
+import { ExtJS } from '../../../../../../../interface/ExtJS';
 
 jest.mock('../useCapabilitiesApi', () => ({
   useCapabilitiesApi: jest.fn(),
@@ -28,6 +29,10 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     checkPermission: jest.fn().mockReturnValue(true),
   },
 }));
+
+// CapabilityDetail reads permissions via the relative interface/ExtJS singleton (not the
+// package mock above), so spy on that to drive canUpdate/canDelete per test (NEXUS-54212).
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
 
 const renderWithTheme = (component: React.ReactElement) => {
   return render(<Theme>{component}</Theme>);
@@ -71,6 +76,7 @@ describe('CapabilityDetail', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockCheckPermission.mockReturnValue(true);
     mockFetchCapabilityTypes.mockResolvedValue([capabilityType]);
     (useCapabilitiesApi as jest.Mock).mockReturnValue({
       fetchCapabilityTypes: mockFetchCapabilityTypes,
@@ -242,5 +248,53 @@ describe('CapabilityDetail', () => {
 
     await userEvent.click(screen.getByRole('tab', { name: /about/i }));
     expect(await screen.findByText('About outreach capability')).toBeInTheDocument();
+  });
+
+  // NEXUS-54212: write actions are disabled (not hidden) for read-only users so the
+  // control stays discoverable but inert, matching the Classic UI.
+  describe('delete permission gating (NEXUS-54212)', () => {
+    const renderDetail = (capability: Capability) =>
+      renderWithTheme(
+        <CapabilityDetail
+          capability={capability}
+          onSave={mockOnSave}
+          onDelete={mockOnDelete}
+          onEnable={mockOnEnable}
+          onDisable={mockOnDisable}
+          onBack={mockOnBack}
+        />
+      );
+
+    it('renders an enabled Delete button when the user has capabilities:delete', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderDetail(baseCapability);
+
+      const deleteButton = await screen.findByTestId('capability-delete-button');
+      expect(deleteButton).toBeInTheDocument();
+      expect(deleteButton).toBeEnabled();
+    });
+
+    it('disables (not hides) the Delete button when the user lacks capabilities:delete', async () => {
+      mockCheckPermission.mockImplementation((permission) => permission !== 'nexus:capabilities:delete');
+      renderDetail(baseCapability);
+
+      const deleteButton = await screen.findByTestId('capability-delete-button');
+      expect(deleteButton).toBeInTheDocument();
+      expect(deleteButton).toBeDisabled();
+
+      await userEvent.click(deleteButton);
+      expect(mockOnDelete).not.toHaveBeenCalled();
+    });
+
+    it('hides the Delete button entirely for system capabilities', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderDetail({ ...baseCapability, isSystem: true });
+
+      await waitFor(() => {
+        const headings = screen.getAllByText('Outreach: Management');
+        expect(headings.length).toBeGreaterThan(0);
+      });
+      expect(screen.queryByTestId('capability-delete-button')).not.toBeInTheDocument();
+    });
   });
 });

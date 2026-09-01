@@ -15,6 +15,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Card, Flex, Text, Badge, Button, Switch, Tooltip, Grid, Separator } from '@radix-ui/themes';
 import { ShieldCheck, ShieldAlert, Info, ExternalLink, Shield, CheckCircle2, Skull } from 'lucide-react';
 import type { HealthCheckData, CapabilityInfo } from './types';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 
 const REPORT_NOT_AVAILABLE =
   'Health Check report not yet available. Reports are generated periodically after enabling Health Check.';
@@ -77,6 +79,15 @@ export function HealthCheckCard({
 }: HealthCheckCardProps): JSX.Element {
   const [reportOpenError, setReportOpenError] = useState<string | null>(null);
 
+  // Hide health-check enable/disable controls for users without healthcheck:update (NEXUS-54212).
+  // coreui never mounts a <PermissionsProvider>, so context usePermission returns false for
+  // everyone; use the provider-independent ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canUpdateHealthCheck = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.HEALTHCHECK.UPDATE),
+    [hasUser],
+  );
+
   const healthCheckCapability = capabilities.find(c => c.type === 'healthcheck');
   const isInstanceEnabled = healthCheckCapability?.enabled ?? false;
   const isRepoEnabled = healthCheck?.enabled ?? false;
@@ -90,7 +101,7 @@ export function HealthCheckCard({
 
   useEffect(() => {
     setReportOpenError(null);
-  }, [healthCheck?.detailUrl]);
+  }, []);
 
   const openFullReport = useCallback(async () => {
     const url = healthCheck?.detailUrl;
@@ -152,14 +163,16 @@ export function HealthCheckCard({
             <Badge color="yellow" variant="soft">Instance Disabled</Badge>
           </Flex>
           <Text size="2" color="gray">Health Check is disabled for this Nexus instance.</Text>
-          <Button
-            size="1"
-            variant="soft"
-            color="gray"
-            onClick={() => onToggleInstance(true, false)}
-          >
-            Enable Instance-wide
-          </Button>
+          {canUpdateHealthCheck && (
+            <Button
+              size="1"
+              variant="soft"
+              color="gray"
+              onClick={() => onToggleInstance(true, false)}
+            >
+              Enable Instance-wide
+            </Button>
+          )}
         </Flex>
       </Card>
     );
@@ -180,7 +193,7 @@ export function HealthCheckCard({
           </Badge>
         </Flex>
 
-        {isInstanceEnabled && !isRepoEnabled && (
+        {canUpdateHealthCheck && isInstanceEnabled && !isRepoEnabled && (
           <Flex direction="column" gap="2">
             <Text size="2" color="gray">Enable Health Check to scan for malware.</Text>
             <Button
@@ -274,19 +287,23 @@ export function HealthCheckCard({
           </>
         )}
 
-        <Separator size="4" />
+        {canUpdateHealthCheck && (
+          <>
+            <Separator size="4" />
 
-        {/* ---- On/Off toggle at the bottom ---- */}
-        <Flex justify="between" align="center">
-          <Flex align="center" gap="2">
-            <Switch
-              size="1"
-              checked={isRepoEnabled}
-              onCheckedChange={(checked) => onToggleRepo(checked)}
-            />
-            <Text size="1" color="gray">{isRepoEnabled ? 'Active' : 'Off'}</Text>
-          </Flex>
-        </Flex>
+            {/* ---- On/Off toggle at the bottom ---- */}
+            <Flex justify="between" align="center">
+              <Flex align="center" gap="2">
+                <Switch
+                  size="1"
+                  checked={isRepoEnabled}
+                  onCheckedChange={(checked) => onToggleRepo(checked)}
+                />
+                <Text size="1" color="gray">{isRepoEnabled ? 'Active' : 'Off'}</Text>
+              </Flex>
+            </Flex>
+          </>
+        )}
       </Flex>
     </Card>
   );

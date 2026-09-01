@@ -319,6 +319,61 @@ describe('CrowdSettings', () => {
     expect(timeoutField()).toHaveValue('4');
   });
 
+  it('shows the backend diagnostic message when verify-connection fails', async () => {
+    const service = interpret(CrowdSettingsMachine.withConfig({
+      services: {
+        fetchData: DEFAULT_RESPONSE,
+        verifyConnection: () => Promise.reject({
+          response: {
+            data: {id: '*', message: 'Unknown host <bogus-host.invalid>'}
+          }
+        })
+      }
+    })).start();
+
+    const {verifyButton, urlField, applicationNameField, applicationPasswordField} =
+      renderView(<CrowdSettingsForm service={service}/>);
+
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+
+    await changeFieldAndAssertValue(urlField, 'http://bogus-host.invalid:8095/crowd');
+    await changeFieldAndAssertValue(applicationNameField, 'test-app');
+    await changeFieldAndAssertValue(applicationPasswordField, 'test-pass');
+
+    userEvent.click(verifyButton());
+
+    await waitFor(() =>
+      expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(
+        `${UIStrings.CROWD_SETTINGS.MESSAGES.VERIFY_CONNECTION_ERROR} Unknown host <bogus-host.invalid>`
+      )
+    );
+  });
+
+  it('shows the backend diagnostic message when clear-cache fails', async () => {
+    const service = interpret(CrowdSettingsMachine.withConfig({
+      services: {
+        fetchData: DEFAULT_RESPONSE,
+        clearCache: () => Promise.reject({
+          response: {
+            data: {id: '*', message: 'Cache clear failed'}
+          }
+        })
+      }
+    })).start();
+
+    const {clearButton} = renderView(<CrowdSettingsForm service={service}/>);
+
+    await waitFor(() => expect(service.state.value).toBe('loaded'));
+
+    userEvent.click(clearButton());
+
+    await waitFor(() =>
+      expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(
+        `${UIStrings.CROWD_SETTINGS.MESSAGES.CLEAR_CACHE_ERROR} Cache clear failed`
+      )
+    );
+  });
+
   it('shows a save error if the save failed', async () => {
     const service = interpret(CrowdSettingsMachine.withConfig({
       services: {

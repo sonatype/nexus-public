@@ -10,20 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { Box, Flex } from '@radix-ui/themes';
 import { Plus, RotateCcw } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsButton, SettingsAlert, ConfirmDialog } from '../../../../shared/form';
-import { HelpSection, useToast, PageHeader } from '../../../../shared';
+import { HelpSection, PageHeader } from '../../../../shared';
 import { LoggersList } from './LoggersList';
 import { LoggerForm } from './LoggerForm';
-import { useLoggingConfigApi } from './useLoggingConfigApi';
+import { useLoggingConfig } from './useLoggingConfig';
 
 import './LoggingConfigPage.scss';
-
-type ViewMode = 'list' | 'create' | 'detail';
 
 /**
  * LoggingConfigPage - Main Logging Configuration page for Preview UI
@@ -31,82 +29,34 @@ type ViewMode = 'list' | 'create' | 'detail';
  * Displays logger list with search/filter, and allows creating, editing, and resetting loggers.
  */
 export function LoggingConfigPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [selectedLogger, setSelectedLogger] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [resetAllDialogOpen, setResetAllDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const { resetLogger, resetAllLoggers, loading, error, setError } = useLoggingConfigApi();
-  const toast = useToast();
+  const {
+    viewMode,
+    selectedLogger,
+    deleteDialogOpen,
+    resetAllDialogOpen,
+    isDeleting,
+    isResettingAll,
+    error,
+    refreshKey,
+    handleSelectLogger,
+    handleCreate,
+    handleBack,
+    handleSave,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    handleCancelDelete,
+    handleResetAll,
+    handleResetAllConfirm,
+    handleCancelResetAll,
+    clearError,
+  } = useLoggingConfig();
 
   const canUpdate = ExtJS.checkPermission('nexus:logging:update');
 
-  const handleSelectLogger = useCallback((name: string) => {
-    setSelectedLogger(name);
-    setError(null);
-    setViewMode('detail');
-  }, [setError]);
-
-  const handleCreate = useCallback(() => {
-    setSelectedLogger(null);
-    setError(null);
-    setViewMode('create');
-  }, [setError]);
-
-  const handleBack = useCallback(() => {
-    setSelectedLogger(null);
-    setError(null);
-    setViewMode('list');
-  }, [setError]);
-
-  const handleSave = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-    handleBack();
-  }, [handleBack]);
-
-  const handleDeleteClick = useCallback(() => {
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    if (!selectedLogger) return;
-
-    setIsDeleting(true);
-    try {
-      await resetLogger(selectedLogger);
-      toast.success(`Logger override removed for "${selectedLogger}"`);
-      setDeleteDialogOpen(false);
-      handleSave();
-    } catch (err) {
-      // Error is handled by the hook
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [selectedLogger, resetLogger, toast, handleSave]);
-
-  const handleResetAll = useCallback(() => {
-    setResetAllDialogOpen(true);
-  }, []);
-
-  const handleResetAllConfirm = useCallback(async () => {
-    setResetAllDialogOpen(false);
-    try {
-      await resetAllLoggers();
-      toast.success('All loggers reset to default levels');
-      setRefreshKey((k) => k + 1);
-    } catch (err) {
-      // Error is handled by the hook
-    }
-  }, [resetAllLoggers, toast]);
-
-  // Navigation helper for Settings breadcrumb
   const navigateToSettings = () => {
     window.location.hash = '#preview/admin/settings';
   };
 
-  // Render header based on view mode
   const renderHeader = () => {
     if (viewMode === 'list') {
       const breadcrumbs = [
@@ -115,7 +65,7 @@ export function LoggingConfigPage() {
       ];
       const actions = canUpdate ? (
         <Flex gap="2">
-          <SettingsButton variant="secondary" onClick={handleResetAll} disabled={loading} icon={RotateCcw}>
+          <SettingsButton variant="secondary" onClick={handleResetAll} disabled={isResettingAll} icon={RotateCcw}>
             Reset to Default Levels
           </SettingsButton>
           <SettingsButton variant="primary" onClick={handleCreate} icon={Plus}>
@@ -138,7 +88,7 @@ export function LoggingConfigPage() {
     const breadcrumbs = [
       { label: 'Settings', onClick: navigateToSettings },
       { label: 'Logging', onClick: handleBack },
-      { label: viewMode === 'create' ? 'Create' : (selectedLogger || 'Logger') },
+      { label: viewMode === 'create' ? 'Create' : selectedLogger || 'Logger' },
     ];
 
     return (
@@ -158,7 +108,7 @@ export function LoggingConfigPage() {
       {/* Alerts */}
       {error && (
         <Box className="logging-config-page__alerts">
-          <SettingsAlert type="error" onClose={() => setError(null)}>
+          <SettingsAlert type="error" onClose={clearError}>
             {error}
           </SettingsAlert>
         </Box>
@@ -166,12 +116,7 @@ export function LoggingConfigPage() {
 
       {/* Content */}
       <Box className="logging-config-page__content">
-        {viewMode === 'list' && (
-          <LoggersList
-            key={refreshKey}
-            onSelect={handleSelectLogger}
-          />
-        )}
+        {viewMode === 'list' && <LoggersList key={refreshKey} onSelect={handleSelectLogger} />}
 
         {viewMode === 'create' && (
           <LoggerForm isCreate={true} onSave={handleSave} onCancel={handleBack} />
@@ -203,7 +148,7 @@ export function LoggingConfigPage() {
       <ConfirmDialog
         open={deleteDialogOpen}
         testId="delete-logger-override-dialog"
-        onOpenChange={setDeleteDialogOpen}
+        onOpenChange={(open) => !open && handleCancelDelete()}
         title="Delete Logger Override"
         message={`Remove the custom log level for "${selectedLogger}"? The logger will inherit its level from the parent logger configuration. This effectively removes it from the custom loggers list.`}
         confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}
@@ -216,7 +161,7 @@ export function LoggingConfigPage() {
       <ConfirmDialog
         open={resetAllDialogOpen}
         testId="reset-all-loggers-dialog"
-        onOpenChange={setResetAllDialogOpen}
+        onOpenChange={(open) => !open && handleCancelResetAll()}
         title="Reset All Loggers"
         message="Are you sure you want to reset all loggers to their default levels? This action cannot be undone."
         confirmLabel="Reset All"
@@ -229,5 +174,3 @@ export function LoggingConfigPage() {
 }
 
 export default LoggingConfigPage;
-
-

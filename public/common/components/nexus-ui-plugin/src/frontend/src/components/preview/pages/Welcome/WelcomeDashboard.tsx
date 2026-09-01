@@ -55,7 +55,7 @@ export interface WelcomeDashboardProps {
 }
 
 function formatCompact(n: number | undefined | null): string {
-  if (n == null || isNaN(n)) return '\u2014';
+  if (n == null || Number.isNaN(n)) return '\u2014';
   if (n === 0) return '0';
   return new Intl.NumberFormat('en-US', {
     notation: 'compact',
@@ -323,6 +323,7 @@ export function WelcomeDashboard({
                 Failed to load usage trends
               </Text>
               <button
+                type="button"
                 className="nxrm-dashboard__retry-btn"
                 onClick={usageHistory.refresh}
               >

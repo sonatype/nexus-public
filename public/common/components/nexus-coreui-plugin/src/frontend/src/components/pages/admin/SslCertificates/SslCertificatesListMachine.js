@@ -17,7 +17,7 @@
 import Axios from 'axios';
 import {assign} from 'xstate';
 
-import {ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {ListMachineUtils, ExtJS} from '@sonatype/nexus-ui-plugin';
 
 import {URLS} from './SslCertificatesHelper';
 
@@ -38,6 +38,9 @@ export default ListMachineUtils.buildListMachine({
       )})
   },
   services: {
-    fetchData: () => Axios.get(URLS.sslCertificatesUrl)
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
+      return Axios.get(URLS.sslCertificatesUrl);
+    }
   }
 });

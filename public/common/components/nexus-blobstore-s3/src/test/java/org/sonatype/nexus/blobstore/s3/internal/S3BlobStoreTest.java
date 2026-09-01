@@ -36,6 +36,7 @@ import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.VolumeChapterLocationStrategy;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -50,10 +51,15 @@ import org.sonatype.nexus.blobstore.s3.internal.datastore.DatastoreS3BlobStoreMe
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.awscore.exception.AwsErrorDetails;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
@@ -745,6 +751,57 @@ public class S3BlobStoreTest
 
     // Source and destination keys differ, so the copier is invoked.
     verify(copier).copy(any(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  public void testGetBlobAttributesWithException_returnsNullWhenObjectNotFound() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    Logger logger = (Logger) LoggerFactory.getLogger(S3BlobStore.class);
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender.start();
+    logger.addAppender(listAppender);
+    try {
+      BlobId blobId = new BlobId(UUID.randomUUID().toString());
+      NoSuchKeyException noSuchKeyException = (NoSuchKeyException) NoSuchKeyException.builder()
+          .message("The specified key does not exist")
+          .build();
+      when(s3.getObject(anyString(), contains(".properties"))).thenThrow(noSuchKeyException);
+
+      BlobAttributes result = blobStore.getBlobAttributesWithException(blobId);
+
+      assertThat(result, is(nullValue()));
+      assertThat(listAppender.list.stream().anyMatch(e -> e.getLevel() == Level.ERROR), is(false));
+    }
+    finally {
+      logger.detachAppender(listAppender);
+    }
+  }
+
+  @Test
+  public void testGetBlobAttributesWithException_throwsBlobStoreExceptionOnOtherS3Error() throws Exception {
+    blobStore.init(config);
+    blobStore.start();
+
+    Logger logger = (Logger) LoggerFactory.getLogger(S3BlobStore.class);
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender.start();
+    logger.addAppender(listAppender);
+    try {
+      BlobId blobId = new BlobId(UUID.randomUUID().toString());
+      S3Exception s3Exception = (S3Exception) S3Exception.builder()
+          .message("Internal Server Error")
+          .statusCode(500)
+          .build();
+      when(s3.getObject(anyString(), contains(".properties"))).thenThrow(s3Exception);
+
+      assertThrows(BlobStoreException.class, () -> blobStore.getBlobAttributesWithException(blobId));
+      assertThat(listAppender.list.stream().anyMatch(e -> e.getLevel() == Level.ERROR), is(true));
+    }
+    finally {
+      logger.detachAppender(listAppender);
+    }
   }
 
   private S3BlobStore createBlobStore() {

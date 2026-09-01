@@ -61,8 +61,8 @@ public class NexusSessionInvalidatorImpl
   }
 
   @Override
-  public int invalidateSessionsForUser(final String username, final String userSource) {
-    log.info("Invalidating sessions for user '{}' (source '{}') due to password change", username, userSource);
+  public int invalidateSessionsForUser(final String username, final String userSource, final String reason) {
+    log.info("Invalidating sessions for user '{}' (source '{}') due to {}", username, userSource, reason);
 
     try {
       SessionDAO sessionDAO = sessionManager.getSessionDAO();
@@ -92,7 +92,7 @@ public class NexusSessionInvalidatorImpl
       log.info("Invalidated {} session(s) for user '{}'", count, username);
 
       if (count > 0) {
-        recordAuditEvent(username, count);
+        recordAuditEvent(username, count, reason);
       }
 
       return count;
@@ -119,11 +119,11 @@ public class NexusSessionInvalidatorImpl
     return null;
   }
 
-  private void recordAuditEvent(final String username, final int sessionCount) {
+  private void recordAuditEvent(final String username, final int sessionCount, final String reason) {
     if (auditRecorder.isEnabled()) {
       AuditData data = new AuditData();
       data.setDomain("security.session");
-      data.setType("password-change-invalidation");
+      data.setType("user-session-invalidation");
       data.setContext(username);
       data.setTimestamp(new Date());
       data.setInitiator(username);
@@ -131,6 +131,7 @@ public class NexusSessionInvalidatorImpl
       data.getAttributes().put("username", username);
       data.getAttributes().put("sessionCount", String.valueOf(sessionCount));
       data.getAttributes().put("sessionType", "session");
+      data.getAttributes().put("reason", reason);
 
       auditRecorder.record(data);
     }

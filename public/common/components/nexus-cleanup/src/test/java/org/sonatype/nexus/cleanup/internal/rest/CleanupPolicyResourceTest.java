@@ -1332,4 +1332,20 @@ class CleanupPolicyResourceTest
     assertThat(criteria.get(RETAIN_KEY), is("3"));
     assertThat(criteria.get(RETAIN_SORT_BY_KEY), is("version"));
   }
+
+  /**
+   * The {@code /internal/cleanup-policies} endpoint must NOT appear in the generated OpenAPI
+   * document. {@code SwaggerModel.scan} filters out any resource without a class-level
+   * {@code @Tag}, so guard against a class-level {@code @Tag} being re-added on this
+   * internal resource.
+   */
+  @Test
+  void classMustNotBeAnnotatedTag() {
+    assertThat(
+        "CleanupPolicyResource must not carry a class-level @Tag; doing so surfaces "
+            + "/internal/cleanup-policies in the published OpenAPI document.",
+        CleanupPolicyResource.class
+            .isAnnotationPresent(io.swagger.v3.oas.annotations.tags.Tag.class),
+        is(false));
+  }
 }

@@ -17,15 +17,16 @@
 /*global Ext, NX*/
 
 /**
- * Task model.
- *
- * @since 3.0
+ * Reconciliation plan summary model.
  */
 
 Ext.define('NX.coreui.model.ReconcilePlans', {
   extend: 'Ext.data.Model',
   fields: [
-    {name: 'continuationToken', type: 'string'},
-    {name: 'items', type: 'auto'},
+    {name: 'planCount', type: 'int'},
+    {name: 'blobStoreCount', type: 'int'},
+    {name: 'repositoryCount', type: 'int'},
+    {name: 'minStartDate', type: 'date', dateFormat: 'c'},
+    {name: 'maxEndDate', type: 'date', dateFormat: 'c'},
   ]
 });

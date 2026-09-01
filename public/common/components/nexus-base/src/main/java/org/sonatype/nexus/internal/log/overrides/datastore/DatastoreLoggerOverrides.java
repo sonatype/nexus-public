@@ -24,9 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LoggerLevel;
-import org.sonatype.nexus.common.log.LoggerOverridesReloadEvent;
 import org.sonatype.nexus.internal.log.overrides.LogbackLoggerOverridesSupport;
 import org.sonatype.nexus.internal.log.LoggerOverrides;
 
@@ -53,8 +51,6 @@ public class DatastoreLoggerOverrides
 {
   private final LoggingOverridesStore loggingLevelsStore;
 
-  private final EventManager eventManager;
-
   private final Map<String, LoggerLevel> loggerLevels = new ConcurrentHashMap<>();
 
   private final ReentrantReadWriteLock loggerLevelsLock = new ReentrantReadWriteLock();
@@ -62,12 +58,10 @@ public class DatastoreLoggerOverrides
   @Autowired
   public DatastoreLoggerOverrides(
       final ApplicationDirectories appDirectories,
-      final LoggingOverridesStore loggingLevelsStore,
-      final EventManager eventManager)
+      final LoggingOverridesStore loggingLevelsStore)
   {
     super(appDirectories);
     this.loggingLevelsStore = checkNotNull(loggingLevelsStore);
-    this.eventManager = checkNotNull(eventManager);
   }
 
   @Override
@@ -87,6 +81,7 @@ public class DatastoreLoggerOverrides
   @Override
   protected void doStart() throws Exception {
     log.debug("Load overrides from datastore");
+    load();
     syncWithDBAndGet();
 
     // if override level is loaded from xml file but not presented in db - migrate it
@@ -97,8 +92,10 @@ public class DatastoreLoggerOverrides
         .map(entry -> new LoggingOverridesData(entry.getKey(), entry.getValue().toString()))
         .collect(Collectors.toList());
 
-    // notify overrides were reloaded
-    eventManager.post(new LoggerOverridesReloadEvent());
+    // Apply the freshly-synced overrides to logback directly, at this (STORAGE) phase. The store owns
+    // both loading and applying its overrides; it does not depend on LogbackLogManager or the EventManager
+    // (which is not available until EVENTS).
+    applyToLogback(loggerLevels);
 
     levelsMigrateToDb.forEach(loggingLevelsStore::create);
   }
@@ -106,10 +103,14 @@ public class DatastoreLoggerOverrides
   @Override
   public Map<String, LoggerLevel> syncWithDBAndGet() {
     loggerLevelsLock.writeLock().lock();
-    Continuation<LoggingOverridesData> levels = loggingLevelsStore.readRecords();
-    levels.forEach(data -> loggerLevels.put(data.getName(), LoggerLevel.valueOf(data.getLevel())));
-    loggerLevelsLock.writeLock().unlock();
-    return loggerLevels;
+    try {
+      Continuation<LoggingOverridesData> levels = loggingLevelsStore.readRecords();
+      levels.forEach(data -> loggerLevels.put(data.getName(), LoggerLevel.valueOf(data.getLevel())));
+      return loggerLevels;
+    }
+    finally {
+      loggerLevelsLock.writeLock().unlock();
+    }
   }
 
   @Override

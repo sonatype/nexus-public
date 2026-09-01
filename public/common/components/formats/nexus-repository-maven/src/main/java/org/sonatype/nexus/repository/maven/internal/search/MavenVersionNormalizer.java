@@ -243,6 +243,19 @@ public class MavenVersionNormalizer
     if (type != QualifierType.RELEASE) {
       v += "." + qualifier;
     }
+    else {
+      // NEXUS-53161: Apply deterministic tiebreaker for RELEASE-bucket qualifiers
+      // so that bare/canonical form (blank qualifier) sorts highest on descending sort,
+      // and labelled forms (ga, final, release) sort deterministically among themselves.
+      // Use "~" (ASCII 126, highest printable character) for bare form.
+      // For labelled forms, append the qualifier for determinism.
+      if (isBlank(qualifier)) {
+        v += ".~"; // Bare form sorts highest
+      }
+      else {
+        v += "." + qualifier; // Labelled forms sort below bare, deterministically
+      }
+    }
 
     return VersionNumberExpander.expand(v);
   }

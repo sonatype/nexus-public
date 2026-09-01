@@ -144,9 +144,9 @@ public class MemoryMonitor
     // i.e. the real-world duration the heap has been elevated, not just since the log fired.
     long sustainedMs = System.currentTimeMillis() - thresholdExceededSinceMs;
 
-    if (critical && lastLoggedLevel < LEVEL_ERROR && log.isErrorEnabled()) {
+    if (critical && lastLoggedLevel < LEVEL_ERROR && log.isWarnEnabled()) {
       Map<String, String> poolInfo = getMemoryPoolInfo();
-      log.error("{} [jvm monitor] [memory] CRITICAL heap usage: {}% ({}/{}), sustained={}ms, pools={}",
+      log.warn("{} [jvm monitor] [memory] Very high heap usage: {}% ({}/{}), sustained={}ms, pools={}",
           SYSTEM_MARKER,
           usagePercent,
           formatBytes(used),

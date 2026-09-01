@@ -168,6 +168,48 @@ public class MavenAttributesHelperTest
     assertThat(map, hasEntry(P_PACKAGING, "jar"));
   }
 
+  @Test
+  public void shouldTruncatePomNameAndDescriptionWhenExceedingMaxLength() {
+    String oversizedName = "a".repeat(10_001);
+    String oversizedDescription = "b".repeat(10_001);
+
+    mockComponent();
+    when(model.getPackaging()).thenReturn(PACKAGING);
+    when(model.getName()).thenReturn(oversizedName);
+    when(model.getDescription()).thenReturn(oversizedDescription);
+    when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
+
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
+
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
+    Map<String, String> map = attributesValueCaptor.getValue();
+    assertThat(map.get(P_POM_NAME).length(), is(10_000));
+    assertThat(map.get(P_POM_DESCRIPTION).length(), is(10_000));
+    assertThat(map.get(P_POM_NAME), is("a".repeat(10_000)));
+    assertThat(map.get(P_POM_DESCRIPTION), is("b".repeat(10_000)));
+  }
+
+  @Test
+  public void shouldNotTruncatePomNameAndDescriptionWhenAtMaxLength() {
+    String exactLengthName = "a".repeat(10_000);
+    String exactLengthDescription = "b".repeat(10_000);
+
+    mockComponent();
+    when(model.getPackaging()).thenReturn(PACKAGING);
+    when(model.getName()).thenReturn(exactLengthName);
+    when(model.getDescription()).thenReturn(exactLengthDescription);
+    when(fluentComponent.attributes(NAME)).thenReturn(aNestedAttributesMap());
+
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, Optional.of(model), 1);
+
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
+    Map<String, String> map = attributesValueCaptor.getValue();
+    assertThat(map.get(P_POM_NAME).length(), is(10_000));
+    assertThat(map.get(P_POM_DESCRIPTION).length(), is(10_000));
+    assertThat(map.get(P_POM_NAME), is(exactLengthName));
+    assertThat(map.get(P_POM_DESCRIPTION), is(exactLengthDescription));
+  }
+
   private void assertGroupArtifactVersionSet(final int mapSize, final Map<String, String> map) {
     assertThat(map.size(), is(mapSize));
     assertThat(map, hasEntry(P_GROUP_ID, coordinates.getGroupId()));

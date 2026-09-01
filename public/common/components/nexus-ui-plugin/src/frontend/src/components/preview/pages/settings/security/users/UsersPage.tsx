@@ -11,32 +11,36 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading } from '@radix-ui/themes';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Box } from '@radix-ui/themes';
 import { Users, Plus, UserPlus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { useToast, PageHeader } from '../../../../shared';
-import { SettingsButton, SettingsAlert, ConfirmDialog, WizardForm } from '../../../../shared/form';
+import { SettingsButton, SettingsAlert } from '../../../../shared/form';
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { UsersList } from './UsersList';
 import { UserDetail } from './UserDetail';
-import { UserForm } from './UserForm';
 import { UserProfilePage } from './UserProfilePage';
 import { InviteUserForm } from './InviteUserForm';
+import { EditUserView } from './EditUserView';
 import { useUsersApi } from './useUsersApi';
-import { User, UserFormData, DEFAULT_SOURCE, getFullName } from './types';
+import {
+  User,
+  DEFAULT_SOURCE,
+  getFullName,
+  getUserProtectionReason,
+} from './types';
 
 import './UsersPage.scss';
 
-// Base path for user URLs
 const BASE_PATH = 'preview/admin/security/users';
 
 /**
  * URL-based routing patterns:
  * - /users                    → List page
- * - /users/create             → Create form (Step 1)
- * - /users/{id}/{source}      → Edit form (Step 1)
+ * - /users/create             → Create form
+ * - /users/{id}/{source}      → Edit form
  * - /users/{id}/{source}/profile → Profile page (read-only)
  */
 type ViewMode = 'list' | 'create' | 'detail' | 'profile' | 'invite';
@@ -79,25 +83,13 @@ function navigateTo(path: string) {
   window.location.hash = path;
 }
 
-/**
- * UsersPage - Main Users management page for Preview UI
- * 
- * Displays user list with search/filter, and allows creating, editing, and deleting users.
- * Now uses a 2-step wizard for both creation and editing.
- */
 export function UsersPage() {
   const [routeState, setRouteState] = useState<RouteState>(() => parseRoute(window.location.hash));
   const [user, setUser] = useState<User | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [listDeleteUserId, setListDeleteUserId] = useState<string | null>(null);
-  const [listDeleteUserName, setListDeleteUserName] = useState<string | null>(null);
-  const [wizardStep, setWizardStep] = useState(0);
-  const [isStep1Valid, setIsStep1Valid] = useState(false);
-  const [formDirty, setFormDirty] = useState(false);
 
-  // Toast notifications (app-level provider)
   const toast = useToast();
 
   const {
@@ -111,22 +103,26 @@ export function UsersPage() {
   const canCreate = ExtJS.checkPermission('nexus:users:create');
   const canUpdate = ExtJS.checkPermission('nexus:users:update');
   const canDelete = ExtJS.checkPermission('nexus:users:delete');
-  const isCloud = ExtJS.state?.().getValue?.('isCloud', false) ?? false;
+  const state = ExtJS.state?.();
+  const isCloud = state?.getValue?.('isCloud', false) ?? false;
 
-  // Handle hash changes for routing
+  const protectionReason = user
+    ? getUserProtectionReason(user, {
+        anonymousUsername: state?.getValue?.('anonymousUsername'),
+        currentUserId: state?.getUser?.()?.id,
+      })
+    : null;
+
   useEffect(() => {
     const handleHashChange = () => {
       const newState = parseRoute(window.location.hash);
       setRouteState(newState);
       setError(null);
-      setWizardStep(0);
-      setFormDirty(false);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [setError]);
 
-  // Load user details when selected (detail or profile)
   useEffect(() => {
     if ((routeState.viewMode === 'detail' || routeState.viewMode === 'profile') && routeState.userId) {
       fetchUser(routeState.userId, routeState.source || DEFAULT_SOURCE)
@@ -145,7 +141,7 @@ export function UsersPage() {
     } else {
       setUser(null);
     }
-  }, [routeState.viewMode, routeState.userId, routeState.source, fetchUser, setError]);
+  }, [routeState.viewMode, routeState.userId, routeState.source, fetchUser, setError, refreshKey]);
 
   const handleViewUser = useCallback((userId: string, realm: string) => {
     navigateTo(`${BASE_PATH}/${encodeURIComponent(userId)}/${encodeURIComponent(realm)}/profile`);
@@ -154,6 +150,14 @@ export function UsersPage() {
   const handleEditUser = useCallback((userId: string, realm: string) => {
     navigateTo(`${BASE_PATH}/${encodeURIComponent(userId)}/${encodeURIComponent(realm)}`);
   }, []);
+
+  const handleRowClick = useCallback((userId: string, realm: string) => {
+    if (canUpdate) {
+      handleEditUser(userId, realm);
+    } else {
+      handleViewUser(userId, realm);
+    }
+  }, [canUpdate, handleEditUser, handleViewUser]);
 
   const handleCreate = useCallback(() => {
     navigateTo(`${BASE_PATH}/create`);
@@ -167,18 +171,13 @@ export function UsersPage() {
     navigateTo(BASE_PATH);
   }, []);
 
-  const userFormSubmitRef = React.useRef<(() => void) | null>(null);
-
-  const handleFinalSubmit = useCallback(() => {
-    if (userFormSubmitRef.current) {
-      userFormSubmitRef.current();
-    }
+  const bumpRefresh = useCallback(() => {
+    setRefreshKey((k) => k + 1);
   }, []);
 
-  const handleSave = useCallback(async (_data: UserFormData) => {
-    setRefreshKey((k) => k + 1);
-    handleBack();
-  }, [handleBack]);
+  const handleSaveSuccess = useCallback(async () => {
+    bumpRefresh();
+  }, [bumpRefresh]);
 
   const handleDelete = useCallback(() => {
     if (!user) return;
@@ -186,108 +185,91 @@ export function UsersPage() {
   }, [user]);
 
   const handleDeleteConfirm = useCallback(async () => {
-    const userIdToDelete = listDeleteUserId || user?.userId;
-    if (!userIdToDelete) return;
+    if (!user?.userId) return;
 
+    setError(null);
     setIsDeleting(true);
     try {
-      await deleteUser(userIdToDelete);
-      toast.success(`User "${listDeleteUserName || userIdToDelete}" deleted successfully`);
-      setRefreshKey((k) => k + 1);
+      await deleteUser(user.userId);
+      toast.success(`User "${getFullName(user) || user.userId}" deleted successfully`);
+      bumpRefresh();
       setDeleteDialogOpen(false);
-      setListDeleteUserId(null);
-      setListDeleteUserName(null);
-      if (user && user.userId === userIdToDelete) handleBack();
+      handleBack();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsDeleting(false);
     }
-  }, [user, listDeleteUserId, deleteUser, handleBack, toast, setError]);
+  }, [user, deleteUser, handleBack, toast, setError, bumpRefresh]);
 
-  const handleListDelete = useCallback((userId: string, userName?: string) => {
-    setListDeleteUserId(userId);
-    setListDeleteUserName(userName || null);
-    setDeleteDialogOpen(true);
-  }, []);
+  const isEditOrCreate =
+    routeState.viewMode === 'create' ||
+    (routeState.viewMode === 'detail' && canUpdate);
 
-  // Header configuration
-  const headerProps = useMemo(() => {
-    switch (routeState.viewMode) {
-      case 'list':
-        return {
-          icon: Users,
-          title: 'Users',
-          description: 'Manage users and their role assignments',
-          actions: canCreate ? (
-            isCloud ? (
-              <SettingsButton testId="invite-user-button" variant="primary" onClick={handleInvite} icon={UserPlus}>
-                Invite User
-              </SettingsButton>
-            ) : (
-              <SettingsButton testId="create-user-button" variant="primary" onClick={handleCreate} icon={Plus}>
-                Create Local User
-              </SettingsButton>
-            )
-          ) : undefined
-        };
-      case 'create':
-        return {
-          icon: Users,
-          title: 'Create User',
-          description: wizardStep === 0 ? 'Step 1: Setup user details' : 'Step 2: Assign roles',
-        };
-      case 'detail':
-        return {
-          icon: Users,
-          title: user ? `Edit ${getFullName(user)}` : 'User Details',
-          description: wizardStep === 0 ? 'Step 1: Edit user details' : 'Step 2: Manage roles',
-        };
-      case 'invite':
-        return {
-          icon: Users,
-          title: 'Invite User',
-          description: 'Send an invitation to a new user',
-        };
-      default:
-        return {
-          icon: Users,
-          title: 'Users',
-          description: 'Manage users'
-        };
-    }
-  }, [routeState.viewMode, user, canCreate, isCloud, handleCreate, handleInvite, wizardStep]);
+  const listHeaderProps = useMemo(() => ({
+    icon: Users,
+    title: 'Users',
+    description: 'Manage users and their role assignments',
+    actions: canCreate ? (
+      isCloud ? (
+        <SettingsButton testId="invite-user-button" variant="primary" onClick={handleInvite} icon={UserPlus}>
+          Invite User
+        </SettingsButton>
+      ) : (
+        <SettingsButton testId="create-user-button" variant="primary" onClick={handleCreate} icon={Plus}>
+          Create Local User
+        </SettingsButton>
+      )
+    ) : undefined,
+  }), [canCreate, isCloud, handleCreate, handleInvite]);
 
   return (
-    <Box 
+    <Box
       className="users-page"
       data-testid="users-page"
       data-view={routeState.viewMode}
       data-loading={loading ? 'true' : 'false'}
+      aria-busy={loading}
     >
-      {routeState.viewMode !== 'profile' && (
+      {routeState.viewMode === 'list' && (
         <PageHeader
-          icon={headerProps.icon}
-          title={headerProps.title}
-          description={headerProps.description}
-          actions={routeState.viewMode === 'list' ? headerProps.actions : undefined}
-          breadcrumbs={routeState.viewMode === 'list'
-            ? [
-                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-                { label: 'Users' }
-              ]
-            : [
-                { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-                { label: 'Users', onClick: handleBack },
-                { label: routeState.viewMode === 'create' ? 'Create'
-                  : routeState.viewMode === 'invite' ? 'Invite'
-                  : user?.userId || 'Loading...' }
-              ]
-          }
+          icon={listHeaderProps.icon}
+          title={listHeaderProps.title}
+          description={listHeaderProps.description}
+          actions={listHeaderProps.actions}
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Users' },
+          ]}
         />
       )}
 
-      {/* Alerts */}
+      {routeState.viewMode === 'invite' && (
+        <PageHeader
+          icon={Users}
+          title="Invite User"
+          description="Send an invitation to a new user"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Users', onClick: handleBack },
+            { label: 'Invite' },
+          ]}
+        />
+      )}
+
+      {routeState.viewMode === 'detail' && !canUpdate && (
+        <PageHeader
+          icon={Users}
+          title={user ? getFullName(user) || user.userId : 'User Details'}
+          description="Read-only view."
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'Users', onClick: handleBack },
+            { label: user?.userId || 'Loading...' },
+          ]}
+        />
+      )}
+
       {error && (
         <Box className="users-page__alerts">
           <SettingsAlert type="error" onClose={() => setError(null)}>
@@ -296,54 +278,31 @@ export function UsersPage() {
         </Box>
       )}
 
-      {/* Content */}
       <Box className="users-page__content">
         {routeState.viewMode === 'list' && (
           <UsersList
             key={refreshKey}
-            onSelect={handleViewUser}
-            onEdit={handleEditUser}
-            onDelete={canDelete ? handleListDelete : undefined}
+            onSelect={handleRowClick}
+            getRowAriaLabel={(u) => `${canUpdate ? 'Edit' : 'View'} ${getFullName(u) || u.userId}`}
             onCreate={isCloud ? handleInvite : handleCreate}
-            canEdit={canUpdate}
-            canDelete={canDelete}
             isCloud={isCloud}
           />
         )}
 
-        {(routeState.viewMode === 'create' || (routeState.viewMode === 'detail' && canUpdate)) && (
-          <WizardForm
-            steps={[
-              { id: 'setup', label: 'Setup' },
-              { id: 'roles', label: 'Roles' },
-            ]}
-            currentStep={wizardStep}
-            onStepChange={setWizardStep}
-            onComplete={handleFinalSubmit}
+        {isEditOrCreate && (
+          <EditUserView
+            key={refreshKey}
+            isCreate={routeState.viewMode === 'create'}
+            userId={routeState.viewMode === 'detail' ? routeState.userId : undefined}
+            userSource={routeState.viewMode === 'detail' ? (routeState.source || DEFAULT_SOURCE) : undefined}
+            user={routeState.viewMode === 'detail' ? user : null}
+            canDelete={canDelete}
+            protectionReason={protectionReason}
+            onDeleteRequest={handleDelete}
+            onSuccess={handleSaveSuccess}
             onCancel={handleBack}
-            completeLabel={routeState.viewMode === 'create' ? 'Create User' : 'Save'}
-            submitAnalyticsId={routeState.viewMode === 'create' ? 'nxrm-user-create' : 'nxrm-user-save'}
-            dirty={formDirty}
-            canAdvance={wizardStep === 0 ? isStep1Valid : true}
-            loading={loading && wizardStep === 1}
-          >
-            <UserForm
-              user={user}
-              userId={routeState.viewMode === 'detail' ? routeState.userId : undefined}
-              userSource={routeState.viewMode === 'detail' ? (routeState.source || DEFAULT_SOURCE) : undefined}
-              isCreate={routeState.viewMode === 'create'}
-              onSave={handleSave}
-              onCancel={handleBack}
-              onDelete={canDelete && user?.userId !== 'admin' ? handleDelete : undefined}
-              loading={loading}
-              error={error || undefined}
-              wizardStep={wizardStep}
-              hideActions={true}
-              onValidationChange={setIsStep1Valid}
-              onDirtyChange={setFormDirty}
-              onSubmitRef={userFormSubmitRef}
-            />
-          </WizardForm>
+            isDeleting={isDeleting}
+          />
         )}
 
         {routeState.viewMode === 'profile' && (
@@ -353,7 +312,7 @@ export function UsersPage() {
             onBack={handleBack}
             onEdit={() =>
               navigateTo(
-                `${BASE_PATH}/${encodeURIComponent(routeState.userId!)}/${encodeURIComponent(routeState.source || DEFAULT_SOURCE)}`
+                `${BASE_PATH}/${encodeURIComponent(routeState.userId!)}/${encodeURIComponent(routeState.source || DEFAULT_SOURCE)}`,
               )
             }
             canEdit={canUpdate}
@@ -365,20 +324,19 @@ export function UsersPage() {
             user={user}
             loading={loading && !user}
             canEdit={false}
-            canDelete={canDelete}
-            onSave={handleSave}
-            onDelete={handleDelete}
             onCancel={handleBack}
-            error={error || undefined}
           />
         )}
 
         {routeState.viewMode === 'invite' && (
           <InviteUserForm
             onSuccess={(email) => {
-              toast.success('Invitation email sent', `An invitation email has been sent to ${email}. New users will appear in the user list once they log in for the first time.`);
+              toast.success(
+                'Invitation email sent',
+                `An invitation email has been sent to ${email}. New users will appear in the user list once they log in for the first time.`,
+              );
               handleBack();
-              setRefreshKey((k) => k + 1);
+              bumpRefresh();
             }}
             onCancel={handleBack}
             loading={loading}
@@ -387,18 +345,13 @@ export function UsersPage() {
         )}
       </Box>
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         open={deleteDialogOpen}
         testId="delete-user-dialog"
         data-analytics-id="nxrm-user-delete"
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setListDeleteUserId(null);
-          setListDeleteUserName(null);
-        }}
+        onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleDeleteConfirm}
-        entityName={listDeleteUserName || listDeleteUserId || user?.userId || ''}
+        entityName={user ? (getFullName(user) || user.userId) : ''}
         entityType="user"
         loading={isDeleting}
       />
@@ -407,5 +360,3 @@ export function UsersPage() {
 }
 
 export default UsersPage;
-
-

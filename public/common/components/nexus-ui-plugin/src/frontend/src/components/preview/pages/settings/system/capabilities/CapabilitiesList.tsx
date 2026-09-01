@@ -12,13 +12,13 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Flex, Text, Table, Badge, ScrollArea, Tooltip } from '@radix-ui/themes';
+import { Box, Flex, Text, Badge, Tooltip } from '@radix-ui/themes';
 import {
   Search, CheckCircle, XCircle, AlertCircle, Circle, Loader2, Pencil, PuzzleIcon,
 } from 'lucide-react';
 import { TYPE_ICONS, DEFAULT_TYPE_ICON } from './capabilityConstants';
 import { ActionIcons } from '../../../../shared/icons/action-icons';
-import { Capability, CapabilityType, getStateColor, getStateName } from './types';
+import { Capability, getStateColor, getStateName } from './types';
 import { useCapabilitiesApi } from './useCapabilitiesApi';
 import {
   EntityTable,
@@ -126,7 +126,7 @@ export function CapabilitiesList({ onSelect, refreshKey = 0 }: CapabilitiesListP
 
   useEffect(() => {
     loadData();
-  }, [loadData, refreshKey]);
+  }, [loadData]);
 
   // Calculate counts for filters
   const { statusCounts, categoryCounts } = useMemo(() => {

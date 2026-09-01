@@ -20,6 +20,7 @@ import {
   SettingsTextInput,
   SettingsTextArea,
   SettingsAlert,
+  ConfirmDialog,
 } from '../../../../shared/form';
 import { useSslForm } from './useSslForm';
 import { useSslCertificatesApi } from './useSslCertificatesApi';
@@ -42,6 +43,7 @@ export function SslCertificatesAddForm({
   onCancel,
   loading: externalLoading = false,
   error: externalError,
+  onViewExisting,
 }: SslCertificatesAddFormProps) {
   const { loading: apiLoading, error: apiError, setError, loadCertificateDetails } = useSslCertificatesApi();
 
@@ -51,6 +53,9 @@ export function SslCertificatesAddForm({
   // Local state for the two-step preview flow
   const [certificateDetails, setCertificateDetails] = useState<SslCertificate | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  // Raised as soon as the loaded certificate turns out to be trusted already, so the user is
+  // offered the existing certificate instead of a dead-end error (Classic UI parity).
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
 
   const loading = externalLoading || apiLoading || sslForm.isSaving;
   const error = externalError || apiError || sslForm.saveError || undefined;
@@ -72,8 +77,9 @@ export function SslCertificatesAddForm({
       );
       setCertificateDetails(details);
       setShowPreview(true);
+      setDuplicateDialogOpen(Boolean(details?.inTrustStore));
       setError(null);
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   }, [sslForm, loadCertificateDetails, setError]);
@@ -84,8 +90,10 @@ export function SslCertificatesAddForm({
       return;
     }
 
-    // If certificate already exists, show error
+    // Already trusted: re-offer the existing certificate rather than attempting an add that
+    // the backend would reject with a 409.
     if (certificateDetails.inTrustStore) {
+      setDuplicateDialogOpen(true);
       setError('This certificate already exists in the trust store and cannot be added again.');
       return;
     }
@@ -106,10 +114,17 @@ export function SslCertificatesAddForm({
     });
   }, [certificateDetails, sslForm.formData, onSave, handleLoadDetails, setError]);
 
+  const handleViewExisting = useCallback(() => {
+    if (certificateDetails?.id) {
+      onViewExisting?.(certificateDetails.id);
+    }
+  }, [certificateDetails, onViewExisting]);
+
   const handleCancel = useCallback(() => {
     if (showPreview) {
       setShowPreview(false);
       setCertificateDetails(null);
+      setDuplicateDialogOpen(false);
     } else {
       onCancel();
     }
@@ -119,6 +134,7 @@ export function SslCertificatesAddForm({
     sslForm.handleSourceChange(source);
     setCertificateDetails(null);
     setShowPreview(false);
+    setDuplicateDialogOpen(false);
     setError(null);
   }, [sslForm, setError]);
 
@@ -127,6 +143,7 @@ export function SslCertificatesAddForm({
     setError(null);
     setCertificateDetails(null);
     setShowPreview(false);
+    setDuplicateDialogOpen(false);
   }, [sslForm, setError]);
 
   return (
@@ -232,18 +249,36 @@ export function SslCertificatesAddForm({
                     </SettingsAlert>
                   </Box>
                 )}
+                {/* The embedded detail keeps its own action bar, so its cancel has to step back
+                    through this form's two-step flow — preview -> form, then form -> list. Wiring it
+                    to a no-op rendered a live but inert button (SettingsForm only omits the button
+                    when onCancel is absent entirely). onDelete stays a no-op: canDelete is false,
+                    so no delete button is rendered to reach it. */}
                 <SslCertificatesDetail
                   certificate={certificateDetails}
                   loading={false}
                   canDelete={false}
                   onDelete={() => {}}
-                  onCancel={() => {}}
+                  onCancel={handleCancel}
+                  showTrustWarning
                 />
               </>
             )}
           </>
         )}
       </SettingsForm>
+
+      {/* Already-trusted certificate: offer the existing one instead of a dead-end error */}
+      <ConfirmDialog
+        open={duplicateDialogOpen}
+        testId="certificate-already-exists-dialog"
+        onOpenChange={setDuplicateDialogOpen}
+        title="Certificate Already Exists"
+        message="This certificate already exists and cannot be added again. Would you like to view the existing certificate?"
+        confirmLabel="View Certificate"
+        variant="warning"
+        onConfirm={handleViewExisting}
+      />
     </Box>
   );
 }

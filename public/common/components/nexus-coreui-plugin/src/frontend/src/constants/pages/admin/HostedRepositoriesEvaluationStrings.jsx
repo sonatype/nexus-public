@@ -25,6 +25,7 @@ export default {
     },
     monitoringSettings: {
       title: 'Global Monitoring Settings',
+      evaluationContextDescription: 'Components are evaluated when they match either setting: recent activity within the selected time frame, or the latest deployed versions.',
       evaluationDepthMethodLabel: 'Evaluation Depth Method',
       evaluationDepthMethodHelpText: 'Select how evaluation depth is determined for hosted repositories.',
       evaluationDepthMethodOptions: [
@@ -46,9 +47,9 @@ export default {
         { value: '1', label: '1' },
         { value: '2', label: '2' },
         { value: '3', label: '3' },
+        { value: '4', label: '4' },
         { value: '5', label: '5' }
       ],
-      artifactLatestVersionsWarning: 'Evaluating the latest deployed versions across all components can take longer for large repositories.',
       policyEvaluationStageLabel: 'Policy Evaluation Stage',
       policyEvaluationStageHelpText: 'Select the policy evaluation stage used for the initial audit and ongoing monitoring.',
       policyEvaluationStagePlaceholder: 'Select Policy Evaluation Stage',
@@ -63,15 +64,13 @@ export default {
     },
     packageFilePatterns: {
       title: 'Package File Patterns',
-      description: 'We\'ll focus on the files that matter most, based on known file patterns for each package format. This helps reduce noise by avoiding unnecessary scans of metadata or source files',
-      maven: 'Evaluations target .jar, .war, and .ear files — the main deployable outputs of Java builds.',
+      description: 'We\'ll scan the files that matter most, based on known file patterns for each package format. Examples for some of the most common formats:',
+      maven: '.jar, .war, and .ear files — the main deployable outputs of Java builds.',
       mavenLabel: 'Maven:',
-      npm: 'Evaluate .tgz package files that follow versioned naming conventions',
+      npm: '.tgz package files that follow versioned naming conventions.',
       npmLabel: 'npm:',
-      python: 'We match .whl and .tar.gz files, which are the primary distribution formats for Python packages.',
-      pythonLabel: 'PyPI (Python):',
-      docker: 'Evaluations target Docker image layers stored in the hosted repository.',
-      dockerLabel: 'Docker:'
+      python: '.whl and .tar.gz files, which are the primary distribution formats for Python.',
+      pythonLabel: 'PyPI:'
     },
     buttons: {
       back: 'Back',
@@ -83,6 +82,7 @@ export default {
       disableMonitoring: 'Disable Monitoring',
       clearSelection: 'Clear Selection'
     },
+    savingMask: 'Saving…',
     repositoriesTable: {
       searchPlaceholder: 'Search repositories...',
       formatFilterLabel: 'All',
@@ -116,6 +116,10 @@ export default {
     ERROR_MODAL: {
       TITLE: 'Save Failed',
       MESSAGE: 'An error occurred while saving the settings. Please try again.',
+      CLOSE: 'Close'
+    },
+    SETTINGS_ERROR_MODAL: {
+      TITLE: 'Error',
       CLOSE: 'Close'
     }
   }

@@ -20,16 +20,12 @@ import {
   Grid,
   Heading,
   IconButton,
-  ScrollArea,
-  Select,
-  Separator,
   Text,
   TextField,
   Tooltip,
 } from '@radix-ui/themes';
-import { ArrowUpDown, Copy, Filter, FolderTree, Search, X } from 'lucide-react';
+import { Copy, FolderTree, Search, X } from 'lucide-react';
 import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
-import { ExtJS } from '../../../../interface/ExtJS';
 
 import { RepositoryListTable } from './repository-list/RepositoryListTable';
 import { useRepositoryList, isIqServerEnabled } from './repository-list/useRepositoryList';
@@ -50,7 +46,6 @@ import { ResizablePanel } from './ResizablePanel';
 
 // Import shared components
 import {
-  PageHeader,
   TablePagination,
   useToast,
 } from '../../shared';
@@ -59,6 +54,7 @@ import { BrowseFilterSidebar } from './repository-list/BrowseFilterSidebar';
 import { MobileFilterDrawer } from '../search/unified/MobileFilterDrawer';
 import { Breadcrumbs } from '../search/details/Breadcrumbs';
 import { useBrowseBreadcrumbs } from './useBrowseBreadcrumbs';
+import { useCanDelete } from './useCanDelete';
 import { InRepositorySearch } from './InRepositorySearch';
 
 import './BrowsePage.scss';
@@ -101,14 +97,6 @@ const STRINGS = {
   showTree: 'Show tree',
 };
 
-/** Sort options for Browse repository list (matches RepositoryListTable columns). */
-const BROWSE_SORT_OPTIONS = [
-  { value: 'name', label: 'Name' },
-  { value: 'type', label: 'Type' },
-  { value: 'format', label: 'Format' },
-  { value: 'status', label: 'Status' },
-];
-
 /** Default page size for Browse repository list (matches Search-like behavior). */
 const BROWSE_DEFAULT_PAGE_SIZE = 40;
 
@@ -143,7 +131,7 @@ export function BrowsePage(): JSX.Element {
 
   const browseMachine = useMemo(
     () => createBrowseMachine(params.repoName || undefined),
-    [], // eslint-disable-line react-hooks/exhaustive-deps
+    []
   );
 
   const [machineState, send] = useMachine(browseMachine, {
@@ -230,16 +218,26 @@ export function BrowsePage(): JSX.Element {
   // ---------------------------------------------------------------------------
   const selectedRepository = machineState.context.selectedRepository;
   const selectedNode = machineState.context.selectedNode;
-  const repositoryUrl = machineState.context.repositoryUrl;
   const assetData = machineState.context.detailData.asset;
   const componentData = machineState.context.detailData.component;
   const detailLoading = machineState.context.detailData.loading;
   const detailError = machineState.context.detailData.error;
-  const filters: BrowseFilters = {
-    formats: machineState.context.filters.formats,
-    types: machineState.context.filters.types,
-    statuses: machineState.context.filters.statuses,
-  };
+
+  // Server-side preflight — see useCanDelete for why this must not become a
+  // client-side ExtJS.checkPermission wildcard check (NEXUS-53861).
+  const canDelete = useCanDelete(selectedNode, selectedRepository, componentData);
+  const filters: BrowseFilters = useMemo(
+    () => ({
+      formats: machineState.context.filters.formats,
+      types: machineState.context.filters.types,
+      statuses: machineState.context.filters.statuses,
+    }),
+    [
+      machineState.context.filters.formats,
+      machineState.context.filters.types,
+      machineState.context.filters.statuses,
+    ],
+  );
   const nameFilter = machineState.context.filters.nameFilter;
 
   // Measure the sticky header so table column headers stick below it
@@ -257,7 +255,7 @@ export function BrowsePage(): JSX.Element {
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [selectedRepository]);
+  }, []);
 
   // =========================================================================
   // URL Params Sync
@@ -278,7 +276,7 @@ export function BrowsePage(): JSX.Element {
       // (mirrors handleBackToList breadcrumb behavior)
       send({ type: 'BACK' });
     }
-  }, [params.repoName]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.repoName]);
 
   // Decode path from URL if present
   const initialPath = params.path ? decodeURIComponent(params.path) : undefined;
@@ -338,7 +336,7 @@ export function BrowsePage(): JSX.Element {
 
   // Fetch ALL repositories for filter options (using server-side API with large page size)
   const [allReposForFilters, setAllReposForFilters] = useState<RepositoryReference[]>([]);
-  const [filterOptionsLoading, setFilterOptionsLoading] = useState(true);
+  const [_filterOptionsLoading, setFilterOptionsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -532,9 +530,8 @@ export function BrowsePage(): JSX.Element {
   // =========================================================================
 
   /**
-   * Handle repository selection from the list (row click, chevron).
+   * Handle repository selection from the list (row click).
    * Navigate to Browse Contents (folder tree) in same tab.
-   * Eye icon uses handleViewProfile in RepositoryListTable to go to repository-profile.
    */
   const handleSelectRepository = useCallback(
     (repoName: string) => {
@@ -644,7 +641,7 @@ export function BrowsePage(): JSX.Element {
               componentId: rawId || searchResult.id,
             };
             send({ type: 'SELECT_NODE', node });
-          } catch (err) {
+          } catch (_err) {
             // Fallback: select node without component ID
             const node: BrowseNode = {
               id: path,
@@ -750,12 +747,11 @@ export function BrowsePage(): JSX.Element {
         });
       }
     }
-  }, [params.format]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params.format]);
 
   // Health check filter options (computed from repos)
   const healthCheckOptions = useMemo(() => {
     if (!showHealthCheckColumn) return [];
-    const hcFormats = new Set(['maven2','npm','nuget','pypi','rubygems','cocoapods','conan','conda','go','r','apt']);
     const allRepos = allReposForFilters.length > 0 ? allReposForFilters : serverRepositories;
     let activeCount = 0, analyzeCount = 0, unsupportedCount = 0;
     for (const repo of allRepos) {
@@ -807,31 +803,6 @@ export function BrowsePage(): JSX.Element {
     const sortDirection = (filterParams.sortDirection ?? 'asc') as 'asc' | 'desc';
 
     const displayTotal = totalCount.toLocaleString();
-
-    const renderSortDropdown = (triggerStyle?: React.CSSProperties) => (
-      <Select.Root
-        value={sortField}
-        onValueChange={(field) => handleSort(field, sortDirection)}
-        size="2"
-      >
-        <Select.Trigger style={{ width: 180, flexShrink: 0, ...triggerStyle }}>
-          <Flex align="center" gap="2">
-            <ArrowUpDown size={14} aria-hidden />
-            <Text size="2">sort:</Text>
-            <Text size="2">
-              {BROWSE_SORT_OPTIONS.find((o) => o.value === sortField)?.label ?? 'Name'}
-            </Text>
-          </Flex>
-        </Select.Trigger>
-        <Select.Content position="popper" side="bottom" avoidCollisions={false} sideOffset={4}>
-          {BROWSE_SORT_OPTIONS.map((opt) => (
-            <Select.Item key={opt.value} value={opt.value}>
-              {opt.label}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select.Root>
-    );
 
     const filterBarContent = (
       <BrowseFilterSidebar
@@ -1093,7 +1064,7 @@ export function BrowsePage(): JSX.Element {
                 loading={detailLoading}
                 error={detailError}
                 onDeleted={handleDeleted}
-                canDelete={true}
+                canDelete={canDelete}
                 activeTab={params.tab || 'summary'}
                 onTabChange={handleTabChange}
               />

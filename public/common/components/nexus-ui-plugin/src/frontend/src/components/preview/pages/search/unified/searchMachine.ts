@@ -30,7 +30,7 @@
 
 import { createMachine, assign } from 'xstate';
 import type { SearchFormat, FilterValues, SearchResult, FilterDefinition } from './unified.types';
-import { FORMAT_FILTERS, FORMATS, buildQueryParams, getPlaceholderForFormat } from './searchFilters';
+import { FORMAT_FILTERS, FORMATS, buildQueryParams, } from './searchFilters';
 import { parseApiError } from '../../../../../interface/api/error-handler';
 
 // =============================================================================

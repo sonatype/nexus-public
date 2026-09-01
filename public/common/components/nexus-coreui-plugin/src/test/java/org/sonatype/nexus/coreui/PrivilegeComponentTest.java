@@ -16,19 +16,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Sort;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
+import org.sonatype.nexus.security.privilege.WildcardPrivilegeDescriptor;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
+import org.sonatype.nexus.testcommon.validation.ValidationExtension;
 
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.Permission;
+import org.apache.shiro.authz.permission.WildcardPermission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,15 +51,28 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(AuthenticationExtension.class)
+@ExtendWith(ValidationExtension.class)
 @WithUser
 class PrivilegeComponentTest
 {
   @Mock
   private SecuritySystem securitySystem;
+
+  @Mock
+  private SecurityHelper securityHelper;
+
+  @Mock
+  private AuthorizationManager authorizationManager;
 
   private List<PrivilegeDescriptor> privilegeDescriptors = new ArrayList<>();
 
@@ -58,7 +80,7 @@ class PrivilegeComponentTest
 
   @BeforeEach
   void setup() {
-    underTest = new PrivilegeComponent(securitySystem, privilegeDescriptors);
+    underTest = new PrivilegeComponent(securitySystem, securityHelper, privilegeDescriptors);
   }
 
   @Test
@@ -153,6 +175,46 @@ class PrivilegeComponentTest
   }
 
   @Test
+  void testConvertPrivilegeWithNullPermission() {
+    // Simulate an orphaned privilege whose type has no registered PrivilegeDescriptor.
+    // AuthorizationManagerImpl.convert() only sets permission when a descriptor is found,
+    // so getPermission() returns null for unknown types.
+    Privilege privilege = new Privilege("id", "name", "description", "unknown-type", Collections.emptyMap(), false);
+
+    PrivilegeXO xo = underTest.convert(privilege);
+
+    assertThat(xo.getPermission(), is("<unknown>"));
+  }
+
+  @Test
+  void testExtractPageFilterWithNullPermissionPrivilege() {
+    List<PrivilegeXO> privileges = new ArrayList<>(Arrays.asList(
+        new PrivilegeXO().withName("normal").withDescription("desc").withPermission("some:perm").withType("wildcard"),
+        new PrivilegeXO().withName("orphan")
+            .withDescription("desc")
+            .withPermission("<unknown>")
+            .withType("unknown-type"),
+        // raw-null permission exercises the null guard in extractPage() directly
+        new PrivilegeXO().withName("raw-null").withDescription("desc").withPermission(null).withType("unknown-type")));
+
+    // filtering should not NPE when a privilege has an unknown permission
+    PagedResponse<PrivilegeXO> page =
+        underTest.extractPage(parameters(0, 100, sort(), filter("normal")), privileges);
+    assertThat(page.getTotal(), is(1L));
+    assertThat(page.getData(), contains(privileges.get(0)));
+
+    // the orphaned privilege should be included when the filter matches another field
+    page = underTest.extractPage(parameters(0, 100, sort(), filter("orphan")), privileges);
+    assertThat(page.getTotal(), is(1L));
+    assertThat(page.getData(), contains(privileges.get(1)));
+
+    // the raw-null privilege should be included when the filter matches another field, and must not NPE
+    page = underTest.extractPage(parameters(0, 100, sort(), filter("raw-null")), privileges);
+    assertThat(page.getTotal(), is(1L));
+    assertThat(page.getData(), contains(privileges.get(2)));
+  }
+
+  @Test
   void testCanLoadListOfPrivilegeReferences() {
     Set<Privilege> privileges = Set.of(privilege("a"), privilege("b"), privilege("c"));
 
@@ -163,6 +225,91 @@ class PrivilegeComponentTest
         new ReferenceXO("a", "a"),
         new ReferenceXO("b", "b"),
         new ReferenceXO("c", "c")));
+  }
+
+  @Test
+  void testUpdate_forbiddenWhenCallerCannotGrantTheNewPattern() throws Exception {
+    privilegeDescriptors.add(new WildcardPrivilegeDescriptor());
+    underTest = new PrivilegeComponent(securitySystem, securityHelper, privilegeDescriptors);
+
+    when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    doThrow(new AuthorizationException("not permitted"))
+        .when(securityHelper)
+        .ensurePermitted(any(Permission.class));
+
+    PrivilegeXO xo = wildcardPrivilegeXO("priv", "nexus:*");
+
+    assertThrows(AuthorizationException.class, () -> underTest.update(xo));
+    verify(authorizationManager, never()).updatePrivilege(any(Privilege.class));
+  }
+
+  @Test
+  void testCreate_forbiddenWhenCallerCannotGrantTheNewPattern() throws Exception {
+    privilegeDescriptors.add(new WildcardPrivilegeDescriptor());
+    underTest = new PrivilegeComponent(securitySystem, securityHelper, privilegeDescriptors);
+
+    when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    doThrow(new AuthorizationException("not permitted"))
+        .when(securityHelper)
+        .ensurePermitted(any(Permission.class));
+
+    PrivilegeXO xo = wildcardPrivilegeXO("priv", "nexus:*");
+
+    assertThrows(AuthorizationException.class, () -> underTest.create(xo));
+    verify(authorizationManager, never()).addPrivilege(any(Privilege.class));
+  }
+
+  @Test
+  void testUpdate_allowedWhenCallerHoldsThePattern() throws Exception {
+    privilegeDescriptors.add(new WildcardPrivilegeDescriptor());
+    underTest = new PrivilegeComponent(securitySystem, securityHelper, privilegeDescriptors);
+
+    lenient().when(securitySystem.getAuthorizationManager("default")).thenReturn(authorizationManager);
+    when(authorizationManager.updatePrivilege(any(Privilege.class)))
+        .thenAnswer(invocation -> {
+          Privilege returned = invocation.getArgument(0);
+          returned.setPermission(new WildcardPermission("nexus:health:read"));
+          return returned;
+        });
+
+    PrivilegeXO xo = wildcardPrivilegeXO("priv", "nexus:health:read");
+
+    underTest.update(xo);
+
+    verify(securityHelper).ensurePermitted(any(Permission.class));
+    verify(authorizationManager).updatePrivilege(any(Privilege.class));
+  }
+
+  @Test
+  void testUpdate_unknownTypeIsRejectedRatherThanBypassingCheck() throws Exception {
+    privilegeDescriptors.add(new WildcardPrivilegeDescriptor());
+    underTest = new PrivilegeComponent(securitySystem, securityHelper, privilegeDescriptors);
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put(WildcardPrivilegeDescriptor.P_PATTERN, "nexus:*");
+    PrivilegeXO xo = new PrivilegeXO()
+        .withId("priv")
+        .withVersion("0")
+        .withName("priv")
+        .withDescription("priv")
+        .withType("nonexistent-type")
+        .withProperties(properties);
+
+    assertThrows(AuthorizationException.class, () -> underTest.update(xo));
+    verify(authorizationManager, never()).updatePrivilege(any(Privilege.class));
+    verify(securityHelper, never()).ensurePermitted(any(Permission.class));
+  }
+
+  private static PrivilegeXO wildcardPrivilegeXO(final String name, final String pattern) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put(WildcardPrivilegeDescriptor.P_PATTERN, pattern);
+    return new PrivilegeXO()
+        .withId(name)
+        .withVersion("0")
+        .withName(name)
+        .withDescription(name)
+        .withType(WildcardPrivilegeDescriptor.TYPE)
+        .withProperties(properties);
   }
 
   private static Privilege privilege(final String text) {

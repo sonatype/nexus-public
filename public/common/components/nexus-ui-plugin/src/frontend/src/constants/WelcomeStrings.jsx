@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
- import { faHome } from '@fortawesome/free-solid-svg-icons';
+import { faHome } from '@fortawesome/free-solid-svg-icons';
 
 export default {
   WELCOME: {
@@ -61,6 +61,7 @@ export default {
     USAGE: {
       BANNERS: {
         NEAR_LIMITS: 'This instance of Nexus Repository Community Edition is trending toward its usage limit. Once limits are reached, new components cannot be added.',
+        NEAR_LIMITS_TITLE: 'Approaching Usage Limits',
         OVER_LIMIT_IN_GRACE: (endDate) => `This instance of Nexus Repository Community Edition has exceeded its usage limit. Limits will be enforced starting ${endDate}, when new components can no longer be added.`,
         OVER_LIMIT_IN_GRACE_TITLE: (daysLeft) => `${daysLeft} Days Remaining`,
         OVER_LIMIT_END_GRACE: 'This instance of Nexus Repository Community Edition has exceeded its usage limit. New components can no longer be added.',
@@ -165,6 +166,17 @@ export default {
                 <li>Highest recorded count: Highest monthly requests in the last 12 months.</li>
               </ul>
               *Calculations are based on UTC time.
+            </>,
+          // Radix Themes' Tooltip always wraps its content in <Text as="p">, so a nested
+          // <ul> (as in TOOLTIP above, used by Classic UI's NxTooltip) is invalid HTML and
+          // triggers a hydration warning. This variant uses <br/> instead of a list for the
+          // Preview UI Tooltip; the copy matches TOOLTIP.
+          TOOLTIP_PREVIEW: <>
+              Requests Per Month Metrics:<br />
+              Total Requests: Total requests for the current month.<br />
+              Average requests: Average monthly requests for the last 12 months.<br />
+              Highest recorded count: Highest monthly requests in the last 12 months.<br />
+              *Calculations are based on UTC time.
             </>
         },
         CARD_PRO_LABELS: {
@@ -174,6 +186,18 @@ export default {
         },
         CARD_CE_LABELS: {
           USAGE_LIMIT: 'Usage Limit',
+        },
+        CLOUD_TILE_LABELS: {
+          CURRENT_MONTH: 'Current Month',
+          MONTHLY_AVERAGE: 'Monthly Average',
+          PEAK: (title) => `Peak ${title}`,
+          EGRESS: 'Egress',
+          STORAGE: 'Storage',
+          EGRESS_TOOLTIP: 'Total data transferred out of this instance, including downloads from any client, automation, or integration.',
+          STORAGE_TOOLTIP: 'Total amount of storage currently used in this instance, including binaries and metadata.',
+          HISTORICAL_USAGE_TITLE: 'Historical Usage',
+          HISTORICAL_USAGE_TEXT: "Monitor how your repository's usage has changed month by month.",
+          HISTORICAL_USAGE_LINK: 'See historical usage data.',
         },
         CARD_SHARED_LABELS: {
           PERIOD: 'period',

@@ -29,7 +29,6 @@ import { Box, Flex, Text, Card, Badge, Button, Table, Callout, Separator } from 
 import {
   Shield,
   ShieldCheck,
-  ShieldAlert,
   ShieldOff,
   AlertTriangle,
   ExternalLink,
@@ -82,7 +81,7 @@ function getYellowfinMetrics(repositoryName: string): YellowfinMetrics {
     if (!configStr) return defaultMetrics;
 
     const config = JSON.parse(configStr);
-    if (!config.enabled || !config.url) return defaultMetrics;
+    if (!(config.enabled && config.url)) return defaultMetrics;
 
     // Check if this repo is configured to use Yellowfin
     const repoConfig = config.repositories?.[repositoryName];

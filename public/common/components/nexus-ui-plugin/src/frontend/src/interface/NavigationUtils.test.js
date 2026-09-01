@@ -325,4 +325,61 @@ describe('NavigationUtils', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('requiresUser with anonymous permissions (NEXUS-47114)', () => {
+    // NX.Permissions.permissions is the flat map populated by NX.controller.Permissions from
+    // rapture_Security.getPermissions. Anonymous subjects with an elevated role should be allowed
+    // through requiresUser gates once that map is non-empty; empty map means no elevation and the
+    // gate should still hide the route.
+    it('should hide requiresUser route for anonymous subject with no permissions', () => {
+      mockNX.Security.hasUser = jest.fn(() => false);
+      mockNX.Permissions.permissions = {};
+
+      const result = isVisible({
+        requiresUser: true,
+      });
+
+      expect(result).toBe(false);
+    });
+
+    it('should show requiresUser route for anonymous subject with non-empty permissions', () => {
+      mockNX.Security.hasUser = jest.fn(() => false);
+      mockNX.Permissions.permissions = {
+        'nexus:*': true,
+        'nexus:settings:read': true,
+      };
+
+      const result = isVisible({
+        requiresUser: true,
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should show requiresUser route for a logged-in user (regression check)', () => {
+      mockNX.Security.hasUser = jest.fn(() => true);
+      mockNX.Permissions.permissions = {};
+
+      const result = isVisible({
+        requiresUser: true,
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should hide route when anonymous has permissions but per-route permission check fails', () => {
+      mockNX.Security.hasUser = jest.fn(() => false);
+      mockNX.Permissions.permissions = {
+        'nexus:browse:read': true,
+        'nexus:settings:read': false,
+      };
+
+      const result = isVisible({
+        requiresUser: true,
+        permissions: ['nexus:settings:read'],
+      });
+
+      expect(result).toBe(false);
+    });
+  });
 });

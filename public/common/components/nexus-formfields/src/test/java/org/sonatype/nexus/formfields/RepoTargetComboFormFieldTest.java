@@ -42,19 +42,16 @@ public class RepoTargetComboFormFieldTest
     assertThat(field.getLabel(), equalTo(LABEL));
     assertThat(field.getHelpText(), equalTo(HELP_TEXT));
     assertTrue(field.isRequired());
-    // TRAP (see NEXUS-53405): Combobox's 5-arg constructor maps the 5th argument to initialValue (V),
-    // not regexValidation, and forces regexValidation to null. So the value passed as "regexValidation"
-    // actually lands in initialValue and getRegexValidation() must remain null.
-    assertThat(field.getRegexValidation(), nullValue());
-    assertThat(field.getInitialValue(), equalTo(REGEX));
+    assertThat(field.getRegexValidation(), equalTo(REGEX));
+    assertThat(field.getInitialValue(), nullValue());
   }
 
   @Test
   public void when_CreatingNew_WithAllArgs_NotRequired_Expect_RequiredFalse() {
     RepoTargetComboFormField field = new RepoTargetComboFormField(ID, LABEL, HELP_TEXT, false, REGEX);
     assertFalse(field.isRequired());
-    assertThat(field.getRegexValidation(), nullValue());
-    assertThat(field.getInitialValue(), equalTo(REGEX));
+    assertThat(field.getRegexValidation(), equalTo(REGEX));
+    assertThat(field.getInitialValue(), nullValue());
   }
 
   @Test

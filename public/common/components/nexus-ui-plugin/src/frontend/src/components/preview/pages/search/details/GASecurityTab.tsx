@@ -27,8 +27,14 @@ import {
   Tooltip,
 } from '@radix-ui/themes';
 import { AlertCircle, ExternalLink, Shield } from 'lucide-react';
+import { useRouter } from '@uirouter/react';
 import { SettingsFormSection } from '../../../shared/form';
-import { useComponentSecurity, type ComponentSecurityData, type PolicyViolation } from './useComponentSecurity';
+import {
+  useComponentSecurity,
+  type ComponentSecurityData,
+  type ComponentSecurityStatus,
+  type PolicyViolation,
+} from './useComponentSecurity';
 
 interface GASecurityTabProps {
   gaId: string;
@@ -37,12 +43,40 @@ interface GASecurityTabProps {
   securityData?: ComponentSecurityData | null;
   securityLoading?: boolean;
   securityError?: string | null;
+  securityStatus?: ComponentSecurityStatus;
   iqConnected?: boolean | null;
   onRefetch?: () => void;
 }
 
 /** Maximum rows shown in the violations table before truncation. */
 const MAX_VIOLATIONS_SHOWN = 20;
+
+/**
+ * State that owns the IQ Server settings entry point. Navigation goes through the router by
+ * state name, never by an assembled hash: `preview.admin.iq` is declared with `url:
+ * '/iq-overview'`, so the `#preview/admin/iq` this used to assign matched no route and landed
+ * the user on a 404.
+ */
+const IQ_SETTINGS_STATE = 'preview.admin.iq';
+
+/**
+ * Open a report URL in a new tab, but only when it is an absolute `http:`/`https:` URL.
+ *
+ * `reportUrl` arrives with the security payload, so it is server-supplied data rather than
+ * something this component controls. Anything else — `javascript:`, `data:`, a relative path,
+ * or an unparseable string — is discarded rather than handed to `window.open`.
+ */
+function openReportUrl(reportUrl: string | undefined): void {
+  if (!reportUrl) return;
+  let parsed: URL;
+  try {
+    parsed = new URL(reportUrl);
+  } catch {
+    return;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+  window.open(reportUrl, '_blank', 'noopener,noreferrer');
+}
 
 /**
  * Map a threat level (1–10) to a Radix badge color.
@@ -227,7 +261,7 @@ function ViolationSummaryCard({ data }: { data: ComponentSecurityData }) {
           <Button
             variant="outline"
             size="2"
-            onClick={() => window.open(data.reportUrl, '_blank')}
+            onClick={() => openReportUrl(data.reportUrl)}
           >
             <ExternalLink size={14} />
             View Full Report in Lifecycle
@@ -242,11 +276,48 @@ function ViolationSummaryCard({ data }: { data: ComponentSecurityData }) {
 // Main component
 // ---------------------------------------------------------------------------
 
+/**
+ * Centred icon + heading + body + optional action, used by every non-data state so the tab
+ * always renders something recognisable rather than falling through to a blank panel.
+ */
+function SecurityEmptyState({
+  heading,
+  body,
+  action,
+  testId,
+}: {
+  heading: string;
+  body: string;
+  action?: React.ReactNode;
+  testId: string;
+}) {
+  return (
+    <Flex
+      direction="column"
+      align="center"
+      justify="center"
+      gap="4"
+      style={{ minHeight: '200px', padding: 'var(--space-8)' }}
+      data-testid={testId}
+    >
+      <Shield size={48} color="var(--gray-8)" />
+      <Heading size="4" color="gray">
+        {heading}
+      </Heading>
+      <Text size="2" color="gray" align="center">
+        {body}
+      </Text>
+      {action}
+    </Flex>
+  );
+}
+
 interface GASecurityTabContentProps {
   selectedVersion: string | null;
   data: ComponentSecurityData | null;
   loading: boolean;
   error: string | null;
+  status: ComponentSecurityStatus;
   iqConnected: boolean | null;
   refetch: () => void;
 }
@@ -256,11 +327,19 @@ function GASecurityTabContent({
   data,
   loading,
   error,
+  status,
   iqConnected,
   refetch,
 }: GASecurityTabContentProps) {
-  // State 0: No version selected
-  if (!selectedVersion) {
+  const router = useRouter();
+
+  const goToIqSettings = () => {
+    router.stateService.go(IQ_SETTINGS_STATE);
+  };
+
+  // State 0: No version selected. === null, not truthiness: '' is the valid selected version
+  // for versionless formats (raw), handled by State 0b.
+  if (selectedVersion === null) {
     return (
       <Callout.Root color="amber">
         <Callout.Icon>
@@ -274,8 +353,31 @@ function GASecurityTabContent({
     );
   }
 
-  // State 1: Loading
-  if (loading) {
+  /*
+   * State 0b: versionless format (raw). useComponentSecurity makes no request for these, because
+   * IQ identifies a component by coordinates that include a version, so the hook stays `idle`.
+   * Stated explicitly rather than left to fall through: State 1 below treats `idle` as loading,
+   * so without this branch a versionless component would spin forever on a check that is never
+   * going to run.
+   */
+  if (selectedVersion === '') {
+    return (
+      <Callout.Root color="gray">
+        <Callout.Icon>
+          <Shield size={16} />
+        </Callout.Icon>
+        <Callout.Text>
+          Security evaluation is not available for components without a version.
+        </Callout.Text>
+      </Callout.Root>
+    );
+  }
+
+  // State 1: Loading. `idle` counts as loading here: States 0 and 0b already handled the two
+  // versions that produce no request, so reaching this with `idle` means a real version is
+  // selected but the capabilities check has not resolved yet. Falling through would render a
+  // resolved state — including the words "IQ Server is connected" — before anything was checked.
+  if (loading || status === 'idle') {
     return (
       <Flex
         direction="column"
@@ -292,49 +394,20 @@ function GASecurityTabContent({
     );
   }
 
-  // State 4: IQ Server not connected
-  if (iqConnected === false) {
-    return (
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        gap="4"
-        style={{ minHeight: '200px', padding: 'var(--space-8)' }}
-      >
-        <Shield size={48} color="var(--gray-8)" />
-        <Heading size="4" color="gray">
-          IQ Server Not Connected
-        </Heading>
-        <Text size="2" color="gray" align="center">
-          Connect IQ Server to see policy violations and security analysis for
-          this component.
-        </Text>
-        <Button
-          variant="soft"
-          size="2"
-          onClick={() => {
-            window.location.hash = '#preview/admin/iq';
-          }}
-        >
-          Configure IQ Server
-        </Button>
-      </Flex>
-    );
-  }
-
-  // State 5: Error
+  // State 5: Recoverable failure. `error` is always one of useComponentSecurity's own fixed
+  // strings — never an API body, exception message, or IQ Server URL. Checked ahead of the
+  // connectivity states: a failed capabilities call means the IQ state is unknown, and
+  // claiming "not connected" there would send the user to reconfigure a working connection.
   if (error) {
     return (
-      <Callout.Root color="red">
+      <Callout.Root color="red" data-testid="security-error">
         <Callout.Icon>
           <AlertCircle size={16} />
         </Callout.Icon>
         {/* Callout.Text is always a <p> in Radix Themes (asChild ignored); use Box for block layout. */}
         <Box className="rt-CalloutText">
           <Flex direction="column" gap="2">
-            <Text>Failed to load security data.</Text>
-            <Text size="2">{error}</Text>
+            <Text>{error}</Text>
             <Box>
               <Button variant="ghost" size="1" onClick={refetch}>
                 Try again
@@ -346,9 +419,65 @@ function GASecurityTabContent({
     );
   }
 
-  // Still waiting for initial connection check (iqConnected === null, not yet loading)
-  if (iqConnected === null) {
-    return null;
+  // State 7: the capabilities endpoint is not part of this deployment (404). Every `/v1/iq`
+  // resource lives in a `private/` module, so Nexus Repository Core ships this tab without the
+  // endpoint. No CTA: there is no IQ settings page to send the user to, and no retry, because
+  // the condition is permanent for the deployment.
+  if (status === 'unsupported') {
+    return (
+      <SecurityEmptyState
+        testId="security-unsupported"
+        heading="Security Analysis Not Available"
+        body="This deployment does not include IQ Server integration, so policy violation data cannot be shown for this component."
+      />
+    );
+  }
+
+  // State 8: the user lacks `nexus:settings:read`, which the IQ resource requires on every
+  // method (403). Permanent for this user, so no retry — and no CTA, since they cannot reach
+  // the IQ settings page either.
+  if (status === 'forbidden') {
+    return (
+      <SecurityEmptyState
+        testId="security-forbidden"
+        heading="Security Analysis Not Available"
+        body="Your account does not have permission to view the IQ Server connection status. Contact your administrator if you need security analysis for this component."
+      />
+    );
+  }
+
+  // State 4: IQ Server not configured, unreachable, or reporting connected: false.
+  // `iqConnected === false` is honoured too, for callers still passing only the boolean.
+  if (status === 'not-connected' || iqConnected === false) {
+    return (
+      <SecurityEmptyState
+        testId="security-not-connected"
+        heading="IQ Server Not Connected"
+        body="Connect IQ Server to see policy violations and security analysis for this component."
+        action={
+          <Button variant="soft" size="2" onClick={goToIqSettings}>
+            Connect IQ Server
+          </Button>
+        }
+      />
+    );
+  }
+
+  // State 4b: connected, but the instance has neither Lifecycle nor Firewall, so IQ can
+  // return no policy data for this component however it is configured.
+  if (status === 'not-entitled') {
+    return (
+      <SecurityEmptyState
+        testId="security-not-entitled"
+        heading="Security Analysis Not Available"
+        body="The connected IQ Server does not include Sonatype Lifecycle or Sonatype Repository Firewall, which provide policy violation data for components."
+        action={
+          <Button variant="soft" size="2" onClick={goToIqSettings}>
+            Connect IQ Server
+          </Button>
+        }
+      />
+    );
   }
 
   const hasViolations =
@@ -371,9 +500,25 @@ function GASecurityTabContent({
     );
   }
 
-  // State 3: Connected, no violations (clean component)
+  // State 6: no evaluation data. Covers the expected `no-evaluation-data` status — IQ is
+  // connected and entitled, but no per-component evaluation results can be retrieved — and
+  // doubles as the terminal guard for any unforeseen state combination that produced no data.
+  // Deliberately NOT rendered as a clean result: reporting zero violations for a component
+  // that was never evaluated would be a false security assurance. Also the reason the tab can
+  // never render blank: every path with no data ends here.
+  if (!data) {
+    return (
+      <SecurityEmptyState
+        testId="security-no-evaluation-data"
+        heading="Evaluation Data Not Available"
+        body="IQ Server is connected, but policy evaluation results for this component version could not be retrieved. View this component in IQ Server for its full security report."
+      />
+    );
+  }
+
+  // State 3: Connected, evaluated, no violations (clean component)
   return (
-    <Callout.Root color="green">
+    <Callout.Root color="green" data-testid="security-clean">
       <Callout.Icon>
         <Shield size={16} />
       </Callout.Icon>
@@ -393,7 +538,7 @@ function GASecurityTabContent({
               <Button
                 variant="ghost"
                 size="1"
-                onClick={() => window.open(data.reportUrl, '_blank')}
+                onClick={() => openReportUrl(data.reportUrl)}
               >
                 <ExternalLink size={12} />
                 View in Lifecycle
@@ -418,6 +563,7 @@ export function GASecurityTab({
   securityData,
   securityLoading,
   securityError,
+  securityStatus,
   iqConnected: iqConnectedProp,
   onRefetch,
 }: GASecurityTabProps) {
@@ -428,6 +574,15 @@ export function GASecurityTab({
     iqConnectedProp !== undefined &&
     onRefetch !== undefined;
 
+  // Called unconditionally — an early return above a hook call breaks React's rules of hooks
+  // and would crash on any render where `hasParentData` flipped. `enabled` suppresses the
+  // duplicate request instead.
+  const hookResult = useComponentSecurity({
+    gaId,
+    version: selectedVersion,
+    enabled: !hasParentData,
+  });
+
   if (hasParentData) {
     return (
       <GASecurityTabContent
@@ -435,19 +590,26 @@ export function GASecurityTab({
         data={securityData ?? null}
         loading={securityLoading}
         error={securityError ?? null}
+        // `idle` now renders as loading, so a parent that supplies the legacy props without a
+        // status must not fall back to it — that would spin forever. Derive a resolved status
+        // from the data it did supply instead.
+        status={
+          securityStatus ??
+          (securityLoading ? 'checking' : securityData ? 'evaluated' : 'no-evaluation-data')
+        }
         iqConnected={iqConnectedProp}
         refetch={onRefetch}
       />
     );
   }
 
-  const hookResult = useComponentSecurity({ gaId, version: selectedVersion });
   return (
     <GASecurityTabContent
       selectedVersion={selectedVersion}
       data={hookResult.data}
       loading={hookResult.loading}
       error={hookResult.error}
+      status={hookResult.status}
       iqConnected={hookResult.iqConnected}
       refetch={hookResult.refetch}
     />

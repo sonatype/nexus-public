@@ -194,6 +194,7 @@ public class HttpClientManagerImpl
       this.configuration = model;
     }
 
+    evictConnectionPool();
     eventManager.post(new HttpClientConfigurationChangedEvent(model));
   }
 
@@ -205,8 +206,14 @@ public class HttpClientManagerImpl
       synchronized (lock) {
         configuration = model = loadConfiguration();
       }
+      evictConnectionPool();
       eventManager.post(new HttpClientConfigurationChangedEvent(model));
     }
+  }
+
+  private void evictConnectionPool() {
+    sharedConnectionManager.closeExpiredConnections();
+    sharedConnectionManager.closeIdleConnections(0, TimeUnit.MILLISECONDS);
   }
 
   //

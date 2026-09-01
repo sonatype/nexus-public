@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
+import org.sonatype.nexus.common.time.Time;
 import org.sonatype.nexus.internal.template.TemplateHelperImpl;
 import org.sonatype.nexus.internal.webresources.DevModeResources;
 import org.sonatype.nexus.internal.webresources.WebResourceServiceImpl;
@@ -83,7 +83,7 @@ class ErrorPageServletTest
       public String getEdition() {
         return "Test";
       }
-    }, new VelocityEngine());
+    }, new VelocityEngine(), false);
 
     XFrameOptions xFrameOptions = new XFrameOptions(true);
 
@@ -130,7 +130,8 @@ class ErrorPageServletTest
   }
 
   @Test
-  void testAttachCause() throws Exception {
+  void testAttachCause_QuietExceptionsLoggedAtTrace() throws Exception {
+    // QuietException covers EofException, BadMessageException, and other client-disconnect scenarios
     ErrorPageServlet.attachCause(mock(), new EofException());
     ErrorPageServlet.attachCause(mock(), new IllegalStateException(new EofException()));
 
@@ -138,22 +139,30 @@ class ErrorPageServletTest
     exceptionToThrow.addSuppressed(new EofException());
     ErrorPageServlet.attachCause(mock(), exceptionToThrow);
 
+    // BadMessageException is also a QuietException
+    ErrorPageServlet.attachCause(mock(), new BadMessageException(400, "Unable to parse form content"));
+    ErrorPageServlet.attachCause(mock(), new RuntimeException(new BadMessageException(400, "wrapped")));
+
     List<String> logs = log.logs()
         .stream()
         .filter(log -> log.getLevel() == ch.qos.logback.classic.Level.TRACE)
         .map(ILoggingEvent::getMessage)
         .toList();
 
+    // All QuietExceptions should be logged at trace with the unified message
     assertThat(logs,
-        contains("Client terminated connection", "Client terminated connection", "Client terminated connection"));
+        contains("Caught Jetty QuietException ignoring", "Caught Jetty QuietException ignoring",
+            "Caught Jetty QuietException ignoring", "Caught Jetty QuietException ignoring",
+            "Caught Jetty QuietException ignoring"));
   }
 
   @Test
-  void attachCauseLogsBadMessageExceptionAtTraceNotWarn() {
+  void attachCauseLogsQuietExceptionAtTraceNotWarn() {
+    // QuietException (including EofException and BadMessageException) should not produce WARN/ERROR
+    ErrorPageServlet.attachCause(mock(), new EofException());
     ErrorPageServlet.attachCause(mock(), new BadMessageException(400, "Unable to parse form content"));
-    ErrorPageServlet.attachCause(mock(), new RuntimeException(new BadMessageException(400, "wrapped")));
 
-    // BadMessageException is a client error — must not produce WARN or ERROR log noise
+    // QuietExceptions are client errors — must not produce WARN or ERROR log noise
     assertThat(log.logs(), not(hasItem(logLevel(Level.WARN))));
     assertThat(log.logs(), not(hasItem(logLevel(Level.ERROR))));
     // Should log at trace level to avoid stack traces in cloud environments where debug is enabled

@@ -15,6 +15,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { FirewallReportTab } from '../FirewallReportTab';
+import Permissions from '../../../../../../../../constants/Permissions';
+import { ExtJS } from '../../../../../../../../interface/ExtJS';
+// FirewallReportTab reads permissions through the provider-independent ExtJS.usePermission
+// (NEXUS-54212); spy on checkPermission so tests keep driving behavior via permission strings.
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
 
 jest.mock('../../../../../../shared/security/SecurityReportPage', () => ({
   SecurityReportPage: ({ repositoryName }: { repositoryName: string }) => (
@@ -35,6 +40,12 @@ function renderWithTheme(ui: React.ReactElement) {
 }
 
 describe('FirewallReportTab', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Default: user has all permissions so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
+  });
+
   describe('supported formats', () => {
     it('renders the SecurityReportPage for supported format', () => {
       renderWithTheme(
@@ -115,6 +126,38 @@ describe('FirewallReportTab', () => {
       );
       const link = screen.getByRole('link', { name: /learn about supported formats/i });
       expect(link).toBeInTheDocument();
+    });
+  });
+
+  describe('enable-action permission gating (NEXUS-54212)', () => {
+    it('shows Enable Audit/Quarantine with repository-admin edit', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderWithTheme(
+        <FirewallReportTab
+          repositoryName="maven-central"
+          repositoryFormat="maven2"
+          firewallEnabled={false}
+          hasFirewallLicense={true}
+        />
+      );
+      expect(screen.getByRole('button', { name: /enable audit/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /enable quarantine/i })).toBeInTheDocument();
+    });
+
+    it('hides Enable Audit/Quarantine without repository-admin edit', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderWithTheme(
+        <FirewallReportTab
+          repositoryName="maven-central"
+          repositoryFormat="maven2"
+          firewallEnabled={false}
+          hasFirewallLicense={true}
+        />
+      );
+      expect(screen.queryByRole('button', { name: /enable audit/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /enable quarantine/i })).not.toBeInTheDocument();
+      // The report itself still renders for read-only users.
+      expect(screen.getByTestId('security-report-page')).toBeInTheDocument();
     });
   });
 });

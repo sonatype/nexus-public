@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.search.sql.query.h2;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -123,12 +124,21 @@ public class H2FulltextSearchConditionBuilder
       return createPrefixLikeExpression(column, value);
     }
 
-    String query = terms.stream()
+    List<String> likeExpressions = terms.stream()
         .map(term -> createLikeExpression(column, term))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .map(CharSequence::toString)
-        .collect(Collectors.joining(operator, BRACKET_OPEN, BRACKET_CLOSE));
+        .collect(Collectors.toList());
+
+    // NEXUS-54104: when every term is dropped as blank, do not emit "()" — an empty bracket pair
+    // renders as invalid SQL "WHERE ()". The allMatch guard above covers all-blank StringTerms; materialising
+    // to a list and checking emptiness makes the "()" case structurally impossible for any future term type.
+    if (likeExpressions.isEmpty()) {
+      return Optional.empty();
+    }
+
+    String query = BRACKET_OPEN + String.join(operator, likeExpressions) + BRACKET_CLOSE;
 
     return Optional.of(query);
   }

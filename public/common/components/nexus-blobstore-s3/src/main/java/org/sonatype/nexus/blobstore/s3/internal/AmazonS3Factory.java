@@ -140,6 +140,9 @@ public class AmazonS3Factory
     String endpoint = s3Configuration.get(ENDPOINT_KEY, String.class);
     if (!isNullOrEmpty(endpoint)) {
       builder = builder.endpointOverride(URI.create(endpoint));
+      if (isNullOrEmptyOrDefault(region)) {
+        builder = builder.region(Region.of(defaultRegion()));
+      }
     }
 
     if (!isNullOrEmptyOrDefault(region)) {

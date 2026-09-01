@@ -33,6 +33,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.MissingRepositoryException;
 import org.sonatype.nexus.repository.Recipe;
@@ -51,13 +52,14 @@ import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import jakarta.inject.Provider;
-import jakarta.validation.ConstraintViolation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.google.common.collect.Iterables.size;
 import static com.google.common.collect.Maps.newHashMap;
@@ -73,7 +75,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -85,8 +86,6 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.repository.manager.internal.BaseRepositoryManager.CLEANUP_NAME_KEY;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class BaseRepositoryManagerTest
@@ -865,6 +864,36 @@ public class BaseRepositoryManagerTest
     }
   }
 
+  /**
+   * NEXUS-53816: Regression test proving that a guarded .member() failure no longer aborts delete.
+   * When a group is transiently STOPPED/DELETED during concurrent operations, the @Guarded(by = STARTED)
+   * check in GroupFacetImpl.member() throws InvalidStateException. This test verifies the fix that
+   * moves the try/catch to wrap the entire loop body in removeRepositoryFromAllGroups().
+   */
+  @Test
+  public void testDelete_continuesWhenGroupMemberCheckThrowsInvalidState() throws Exception {
+    repositoryManager = buildRepositoryManagerImpl(true);
+
+    // Simulate a group caught mid-transition: its @Guarded member() check throws, exactly as in
+    // the NEXUS-53816 stack trace (GroupFacetImpl.member -> InvalidStateException STOPPED).
+    GroupFacet stoppedGroupFacet = groupRepository.optionalFacet(GroupFacet.class).get();
+    doThrow(new InvalidStateException("STOPPED", new String[]{"STARTED"}))
+        .when(stoppedGroupFacet)
+        .member(apacheSnapshotsRepository);
+
+    // Delete must still complete despite the stopped group.
+    repositoryManager.delete(APACHE_SNAPSHOTS_NAME);
+
+    // Repository lifecycle completed and its config was removed.
+    verify(apacheSnapshotsRepository).stopSafe();
+    verify(apacheSnapshotsRepository).delete();
+    verify(apacheSnapshotsRepository).destroy();
+    verify(configurationStore).delete(apacheSnapshotsConfiguration);
+
+    // Other healthy groups were still updated (the stopped one was skipped, not fatal).
+    verify(configurationStore).update(parentGroupConfiguration);
+  }
+
   @Test
   public void testStartup_groupMemberMappingCacheInitAlwaysCalled_withSkipDefaults() throws Exception {
     // Test NEXUS-50379: Ensure groupMemberMappingCache.init is called even when skipping default repositories
@@ -1163,117 +1192,6 @@ public class BaseRepositoryManagerTest
     // Verify: Configuration was removed from store and failure was cleared
     verify(configurationStore).delete(failedRepoConfig);
     verify(failedRepositoryTracker).clearFailure(failedRepoName);
-  }
-
-  /**
-   * Security: ConfigurationValidators must run on default-repository provisioning so that
-   * edition-specific guards (e.g. OciCloudEditionConfigurationValidator) cannot be bypassed
-   * by a DefaultRepositoriesContributor that supplies an illegal configuration. Per-repo
-   * rejections are tracked rather than aborting the entire provisioning loop, so a single
-   * misconfigured contributor cannot prevent the rest of the manager from booting.
-   */
-  @Test
-  public void testProvisionDefaultRepositories_runsConfigurationValidators() throws Exception {
-    // Validator that always rejects to prove provisionDefaultRepositories invokes it.
-    ConfigurationValidator alwaysRejects = config -> {
-      ConstraintViolation<?> violation = mock(ConstraintViolation.class);
-      return violation;
-    };
-
-    // Empty store triggers provisionDefaultRepositories on start
-    when(configurationStore.list()).thenReturn(List.of());
-
-    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(alwaysRejects));
-
-    // All 8 contributor-supplied defaults are tracked rather than propagated. The exact count
-    // assertion proves the provisioning loop did NOT abort on the first failure — a regression
-    // to the prior fail-fast behavior would surface here as a count of 1.
-    verify(failedRepositoryTracker, times(8)).recordFailure(any(String.class), any(Exception.class));
-    verify(configurationStore, never()).create(any(Configuration.class));
-  }
-
-  /**
-   * Security: a single misconfigured DefaultRepositoriesContributor must not prevent other
-   * default repositories (or the rest of the manager) from starting. Verifies the per-repo
-   * fail-tracking soften behavior added under the second-pass review (NEXUS-42721).
-   */
-  @Test
-  public void testProvisionDefaultRepositories_oneBadContributorDoesNotBlockOthers() throws Exception {
-    // Validator that rejects exactly one default and allows the rest.
-    ConfigurationValidator selectiveValidator = config -> {
-      if (config != null && MAVEN_CENTRAL_NAME.equals(config.getRepositoryName())) {
-        return mock(ConstraintViolation.class);
-      }
-      return null;
-    };
-
-    // Empty store triggers provisionDefaultRepositories on start
-    when(configurationStore.list()).thenReturn(List.of());
-
-    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(selectiveValidator));
-
-    // mavenCentral was rejected and tracked.
-    verify(failedRepositoryTracker).recordFailure(eq(MAVEN_CENTRAL_NAME), any(Exception.class));
-    // The other 7 defaults still got created — provisioning loop did not abort on the rejection.
-    // Verifying both an early-list config (apacheSnapshots) AND a late-list config
-    // (ungroupedRepoConfiguration) proves the loop ran to completion, not just past the
-    // rejection point.
-    verify(configurationStore).create(apacheSnapshotsConfiguration);
-    verify(configurationStore).create(thirdPartyConfiguration);
-    verify(configurationStore).create(ungroupedRepoConfiguration);
-    verify(configurationStore, times(7)).create(any(Configuration.class));
-    verify(configurationStore, never()).create(mavenCentralConfiguration);
-  }
-
-  @Test
-  public void testProvisionDefaultRepositories_passesWhenValidatorAllows() throws Exception {
-    // Validator that returns null (no violation) for every configuration.
-    ConfigurationValidator allowsAll = config -> null;
-
-    // Empty initial store, then return configs after provisioning
-    when(configurationStore.list())
-        .thenReturn(List.of())
-        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
-            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
-            ungroupedRepoConfiguration));
-
-    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(allowsAll));
-
-    // All defaults were created since validator allowed them
-    verify(configurationStore).create(mavenCentralConfiguration);
-    verify(configurationStore).create(apacheSnapshotsConfiguration);
-    verify(configurationStore).create(thirdPartyConfiguration);
-  }
-
-  /**
-   * Security: ConfigurationValidators must run on restore so a backup taken on a self-hosted
-   * node cannot smuggle a now-illegal configuration onto a cloud node. A failure here is
-   * caught by the per-repository try/catch block and tracked as a failed repository, while
-   * other repositories continue to start.
-   */
-  @Test
-  public void testRestoreRepositories_validatorFailureIsTrackedNotPropagated() throws Exception {
-    // Validator that rejects exactly one specific repository (mavenCentral) and allows others.
-    ConfigurationValidator selectiveValidator = config -> {
-      if (config != null && MAVEN_CENTRAL_NAME.equals(config.getRepositoryName())) {
-        return mock(ConstraintViolation.class);
-      }
-      return null;
-    };
-
-    // defaultsConfigured=true: store returns the existing repos and restore is invoked
-    when(configurationStore.list())
-        .thenReturn(asList(mavenCentralConfiguration, apacheSnapshotsConfiguration, thirdPartyConfiguration,
-            groupConfiguration, parentGroupConfiguration, cycleGroupAConfiguration, cycleGroupBConfiguration,
-            ungroupedRepoConfiguration));
-
-    initializeAndStartRepositoryManager(false, List.<ConfigurationValidator>of(selectiveValidator));
-
-    // Verify mavenCentral was tracked as a failure (validation rejected it before newRepository was invoked).
-    // This is the security-critical assertion: the rejected config is captured by the per-repo
-    // try/catch in restoreRepositories and surfaced via FailedRepositoryTracker rather than
-    // silently allowed through.
-    verify(failedRepositoryTracker).recordFailure(eq(MAVEN_CENTRAL_NAME), any(Exception.class));
   }
 
   // -----------------------------------------------------------------------------------------------

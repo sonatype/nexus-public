@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
@@ -32,7 +31,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,15 +54,12 @@ public class RolePermissionResolverImplTest
 
   private SecurityConfigurationManager securityConfigurationManager;
 
-  @Mock
-  private EventManager eventManager;
-
   @Before
   public void setUp() throws Exception {
     securityConfigurationManager = mock(SecurityConfigurationManager.class);
     when(securityConfigurationManager.readRole(any())).thenThrow(new NoSuchRoleException("Role not found"));
     underTest = new RolePermissionResolverImpl(securityConfigurationManager, Collections.emptyList(),
-        eventManager, 10);
+        10);
   }
 
   // ---------------------------------------------------------------------------
@@ -218,7 +213,7 @@ public class RolePermissionResolverImplTest
 
     // Rebuild underTest with a real descriptor so privileges can be resolved
     RolePermissionResolverImpl resolver = new RolePermissionResolverImpl(
-        securityConfigurationManager, List.of(descriptor), eventManager, 10);
+        securityConfigurationManager, List.of(descriptor), 10);
 
     MemoryCRole role = new MemoryCRole().withId("roleA").withPrivileges("priv1", "priv2");
     when(securityConfigurationManager.readRoles(any())).thenReturn(List.of(role));
@@ -245,7 +240,7 @@ public class RolePermissionResolverImplTest
     CPrivilege priv2 = new MemoryCPrivilege.MemoryCPrivilegeBuilder("priv2").name("priv2").type("testType").build();
 
     RolePermissionResolverImpl resolver = new RolePermissionResolverImpl(
-        securityConfigurationManager, List.of(descriptor), eventManager, 10);
+        securityConfigurationManager, List.of(descriptor), 10);
 
     MemoryCRole role = new MemoryCRole().withId("roleA").withPrivileges("priv1", "priv2");
     when(securityConfigurationManager.readRoles(any())).thenReturn(List.of(role));

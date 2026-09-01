@@ -12,11 +12,13 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import java.io.FileNotFoundException;
 import java.util.Collections;
 
 import org.sonatype.nexus.common.io.InputStreamSupplier;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
@@ -29,7 +31,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -98,5 +103,24 @@ public class AssetBlobValidatorsTest
     // This test verifies the fallback behavior when no format-specific validators exist.
     AssetBlobValidator validator = underTest.selectValidator(repository);
     assertThat(validator, is(notNullValue()));
+  }
+
+  @Test
+  public void testSelectedValidatorWrapsIOExceptionWithSafeMessage() throws Exception {
+    // The cause's message may contain a filesystem path (e.g. FileNotFoundException); the wrapping
+    // InvalidContentException must not expose that path to callers that surface getMessage() to clients.
+    FileNotFoundException cause = new FileNotFoundException("/opt/sonatype-work/nexus3/blobs/default/content/secret");
+    when(defaultContentValidator.determineContentType(
+        anyBoolean(), any(InputStreamSupplier.class), any(MimeRulesSource.class), anyString(), anyString()))
+            .thenThrow(cause);
+
+    AssetBlobValidator validator = underTest.selectValidator(repository);
+
+    InvalidContentException thrown = assertThrows(InvalidContentException.class,
+        () -> validator.determineContentType(true, contentSupplier, "/path/to/file.bin", "application/zip"));
+
+    assertThat(thrown.getMessage(), is(equalTo("Content type could not be determined")));
+    assertThat(thrown.getMessage(), is(not(equalTo(cause.toString()))));
+    assertThat(thrown.getCause(), is(sameInstance(cause)));
   }
 }

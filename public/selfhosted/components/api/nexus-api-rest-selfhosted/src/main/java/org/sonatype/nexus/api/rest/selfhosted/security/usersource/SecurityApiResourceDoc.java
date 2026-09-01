@@ -19,6 +19,9 @@ import org.sonatype.nexus.security.internal.rest.NexusSecurityApiConstants;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
@@ -32,6 +35,8 @@ public interface SecurityApiResourceDoc
 {
   @Operation(summary = "Retrieve a list of the available user sources.")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "User sources returned",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = ApiUserSource.class)))),
       @ApiResponse(responseCode = "403", description = NexusSecurityApiConstants.INVALID_PERMISSIONS)
   })
   List<ApiUserSource> getUserSources();

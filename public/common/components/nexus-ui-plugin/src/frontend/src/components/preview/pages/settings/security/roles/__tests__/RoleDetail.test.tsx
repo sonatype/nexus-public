@@ -16,7 +16,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { RoleDetail } from '../RoleDetail';
 import { useRolesApi } from '../useRolesApi';
-import { Role, NEXUS_SOURCE } from '../types';
+import { Role, } from '../types';
 
 // Mock useRolesApi
 jest.mock('../useRolesApi');

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within, fireEvent, act } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
@@ -115,9 +115,16 @@ const mockApiHook = {
   error: null,
   setError: jest.fn(),
   fetchRepositories: jest.fn().mockResolvedValue(mockRepositories),
+  fetchRepository: jest.fn().mockImplementation((name: string) => {
+    const repo = mockRepositories.find((r) => r.name === name);
+    return Promise.resolve(repo ? { ...repo, status: { online: false } } : null);
+  }),
   fetchHealthCheckStatus: jest.fn().mockResolvedValue({}),
   enableHealthCheck: jest.fn().mockResolvedValue(undefined),
   deleteRepository: jest.fn().mockResolvedValue(undefined),
+  invalidateCache: jest.fn().mockResolvedValue(undefined),
+  rebuildIndex: jest.fn().mockResolvedValue(undefined),
+  setRepositoryOnline: jest.fn().mockResolvedValue(undefined),
 };
 
 const renderWithTheme = (component: React.ReactElement) => {
@@ -289,6 +296,165 @@ describe('RepositoriesList', () => {
     expect(mockOnSelect).toHaveBeenCalledWith('maven-central');
   });
 
+  describe('URL copy functionality', () => {
+    it('adds trailing slash to URL when copying from URL column button', async () => {
+      // Mock repository without trailing slash
+      const mockRepoWithoutSlash = [
+        {
+          name: 'test-repo',
+          type: 'proxy',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/test-repo',
+          online: true,
+          status: { online: true },
+        },
+      ];
+
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(mockRepoWithoutSlash),
+      } as any);
+
+      // Mock clipboard API
+      const mockWriteText = jest.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: mockWriteText,
+        },
+      });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('test-repo')).toBeInTheDocument();
+      });
+
+      // Find the copy button by aria-label (there's only one repo)
+      const copyButtons = screen.getAllByLabelText('Copy URL to Clipboard');
+      await userEvent.click(copyButtons[0]);
+
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith('http://localhost:8081/repository/test-repo/');
+      });
+    });
+
+    it('preserves existing trailing slash when copying URL', async () => {
+      // Mock clipboard API
+      const mockWriteText = jest.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: mockWriteText,
+        },
+      });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      // Find the copy button for maven-central (first row)
+      const copyButtons = screen.getAllByLabelText('Copy URL to Clipboard');
+      await userEvent.click(copyButtons[0]);
+
+      await waitFor(() => {
+        // URL already has trailing slash in mock data
+        expect(mockWriteText).toHaveBeenCalledWith('http://localhost:8081/repository/maven-central/');
+      });
+    });
+
+    it('adds trailing slash when copying URL from dropdown menu', async () => {
+      // Mock repository without trailing slash
+      const mockRepoWithoutSlash = [
+        {
+          name: 'test-repo-2',
+          type: 'proxy',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/test-repo-2',
+          online: true,
+          status: { online: true },
+        },
+      ];
+
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(mockRepoWithoutSlash),
+      } as any);
+
+      // Mock clipboard API
+      const mockWriteText = jest.fn().mockResolvedValue(undefined);
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: mockWriteText,
+        },
+      });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('test-repo-2')).toBeInTheDocument();
+      });
+
+      // Find and click the Copy URL menu item (mocked dropdown renders inline)
+      const copyUrlMenuItem = screen.getByTestId('repo-action-copy-url-test-repo-2');
+      await userEvent.click(copyUrlMenuItem);
+
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith('http://localhost:8081/repository/test-repo-2/');
+      });
+    });
+
+    it('handles clipboard write failure gracefully', async () => {
+      // Mock repository without trailing slash
+      const mockRepoWithoutSlash = [
+        {
+          name: 'test-repo-3',
+          type: 'proxy',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/test-repo-3',
+          online: true,
+          status: { online: true },
+        },
+      ];
+
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(mockRepoWithoutSlash),
+      } as any);
+
+      // Mock clipboard API to reject
+      const mockWriteText = jest.fn().mockRejectedValue(new Error('Clipboard not available'));
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: mockWriteText,
+        },
+      });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('test-repo-3')).toBeInTheDocument();
+      });
+
+      // Find the copy button
+      const copyButtons = screen.getAllByLabelText('Copy URL to Clipboard');
+      await userEvent.click(copyButtons[0]);
+
+      await waitFor(() => {
+        // Should show error toast
+        expect(screen.getByText('Failed to copy URL to clipboard')).toBeInTheDocument();
+      });
+    });
+  });
+
   it('displays online/offline status correctly', async () => {
     renderWithTheme(
       <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
@@ -435,6 +601,56 @@ describe('RepositoriesList', () => {
       expect(firewallHeader).not.toBeInTheDocument();
     });
 
+    // NEXUS-53278: when IQ Server is configured AND Firewall is licensed, the Health Check
+    // column is superseded by Firewall Report — the classic UI has always hidden it in this state
+    // (see NX.Conditions.hasNoFirewall in ExtJS), and the preview UI must match.
+    it('hides Health Check column when IQ Server is enabled and Firewall is licensed', async () => {
+      const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+      ExtJS.state.mockReturnValue({
+        getValue: jest.fn().mockImplementation((key: string) => {
+          if (key === 'clm') return { enabled: true, hasFirewall: true };
+          return undefined;
+        }),
+      });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      const healthCheckHeader = screen.queryByRole('columnheader', { name: /health check/i });
+      expect(healthCheckHeader).not.toBeInTheDocument();
+    });
+
+    // NEXUS-53278 boundary: IQ Server on but no Firewall license (e.g. Sonatype Lifecycle only) —
+    // Health Check must still be visible; it is only redundant when Firewall is what the customer paid for.
+    // Reset checkPermission mock because a sibling test above may have overridden it (jest.clearAllMocks
+    // clears call history but not mockImplementation, so implementations leak across tests in this file).
+    it('shows Health Check column when IQ Server is enabled but Firewall is not licensed', async () => {
+      const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+      ExtJS.checkPermission.mockReturnValue(true);
+      ExtJS.state.mockReturnValue({
+        getValue: jest.fn().mockImplementation((key: string) => {
+          if (key === 'clm') return { enabled: true, hasFirewall: false };
+          return undefined;
+        }),
+      });
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      const healthCheckHeader = screen.queryByRole('columnheader', { name: /health check/i });
+      expect(healthCheckHeader).toBeInTheDocument();
+    });
+
     it('fetches firewall status from the lightweight summary endpoint, not the full IQ endpoint', async () => {
       const FIREWALL_STATUS_FULL_URL = '/service/rest/internal/ui/firewall/status';
       const FIREWALL_STATUS_SUMMARY_URL = '/service/rest/internal/ui/firewall/status/summary';
@@ -507,9 +723,10 @@ describe('RepositoriesList', () => {
         expect(screen.getByRole('alertdialog')).toBeInTheDocument();
       });
 
-      // Type the entity name to enable the delete button
-      const confirmInput = screen.getByPlaceholderText(/type "maven-central" to confirm/i);
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is the literal word "Delete" (case-insensitive) for every
+      // entity now (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      const confirmInput = screen.getByPlaceholderText(/type "delete" to confirm/i);
+      await userEvent.type(confirmInput, 'Delete');
 
       // Click the Delete button
       const confirmBtn = screen.getByRole('button', { name: /^Delete$/i });
@@ -538,9 +755,10 @@ describe('RepositoriesList', () => {
         expect(screen.getByRole('alertdialog')).toBeInTheDocument();
       });
 
-      // Type the entity name to enable the delete button
-      const confirmInput = screen.getByPlaceholderText(/type "maven-central" to confirm/i);
-      await userEvent.type(confirmInput, 'maven-central');
+      // Acknowledgement is the literal word "Delete" (case-insensitive) for every
+      // entity now (NEXUS-53356 — DeleteConfirmationModal no longer demands the name).
+      const confirmInput = screen.getByPlaceholderText(/type "delete" to confirm/i);
+      await userEvent.type(confirmInput, 'Delete');
 
       // Click the Delete button
       const confirmBtn = screen.getByRole('button', { name: /^Delete$/i });
@@ -573,6 +791,212 @@ describe('RepositoriesList', () => {
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(mockApiHook.deleteRepository).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // NEXUS-53946: post-Repository-Profile migration the row menu drops
+  // "View Profile" and adds the operational actions (rebuild index /
+  // invalidate cache / toggle online). Visibility rules match the Settings
+  // form: rebuild = hosted|proxy, invalidate = proxy|group, toggle = all.
+  describe('row action menu (NEXUS-53946)', () => {
+    it('does not render View Profile menu item', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('repo-action-view-maven-central')).not.toBeInTheDocument();
+      expect(screen.queryByText('View Profile')).not.toBeInTheDocument();
+    });
+
+    it('shows Rebuild Index for hosted and proxy rows but not group', async () => {
+      const reposWithGroup = [
+        ...mockRepositories,
+        {
+          name: 'maven-group',
+          type: 'group',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/maven-group/',
+          online: true,
+          status: { online: true },
+        },
+      ];
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(reposWithGroup),
+      } as any);
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-group')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('repo-action-rebuild-index-maven-central')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-action-rebuild-index-maven-releases')).toBeInTheDocument();
+      expect(screen.queryByTestId('repo-action-rebuild-index-maven-group')).not.toBeInTheDocument();
+    });
+
+    it('shows Invalidate Cache for proxy and group rows but not hosted', async () => {
+      const reposWithGroup = [
+        ...mockRepositories,
+        {
+          name: 'maven-group',
+          type: 'group',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/maven-group/',
+          online: true,
+          status: { online: true },
+        },
+      ];
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(reposWithGroup),
+      } as any);
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-group')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('repo-action-invalidate-cache-maven-central')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-action-invalidate-cache-maven-group')).toBeInTheDocument();
+      expect(screen.queryByTestId('repo-action-invalidate-cache-maven-releases')).not.toBeInTheDocument();
+    });
+
+    it('shows the toggle-online item for every row', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      // maven-central + maven-releases are online → "Disable System Status"
+      // npm-proxy is offline → "Enable System Status"
+      const central = screen.getByTestId('repo-action-toggle-online-maven-central');
+      expect(central).toHaveTextContent('Disable System Status');
+      const releases = screen.getByTestId('repo-action-toggle-online-maven-releases');
+      expect(releases).toHaveTextContent('Disable System Status');
+      const npm = screen.getByTestId('repo-action-toggle-online-npm-proxy');
+      expect(npm).toHaveTextContent('Enable System Status');
+    });
+
+    it('opens confirm dialog and calls rebuildIndex on confirm', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-rebuild-index-maven-central'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /rebuild index/i });
+      await userEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(mockApiHook.rebuildIndex).toHaveBeenCalledWith('maven-central');
+      });
+    });
+
+    it('opens confirm dialog and calls invalidateCache on confirm', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-invalidate-cache-maven-central'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /invalidate cache/i });
+      await userEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(mockApiHook.invalidateCache).toHaveBeenCalledWith('maven-central');
+      });
+    });
+
+    it('opens confirm dialog and calls setRepositoryOnline on confirm', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-toggle-online-maven-central'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /take offline/i });
+      await userEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        // maven-central is online → next state is false
+        expect(mockApiHook.setRepositoryOnline).toHaveBeenCalledWith(
+          'maven-central',
+          'maven2',
+          'proxy',
+          false,
+        );
+      });
+    });
+  });
+
+  describe('Actions column (NEXUS-53948)', () => {
+    it('shouldRenderActionsColumnHeaderWithRowActionsLabel', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      const actionsHeader = screen.getByRole('columnheader', {
+        name: /row actions/i,
+      });
+      expect(actionsHeader).toBeInTheDocument();
+    });
+
+    it('shouldRenderPerRowActionsTriggerForEveryRepository', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      mockRepositories.forEach((repo) => {
+        expect(
+          screen.getByRole('button', { name: `Actions for ${repo.name}` })
+        ).toBeInTheDocument();
       });
     });
   });

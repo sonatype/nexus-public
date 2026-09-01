@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-base</artifactId>
@@ -28,7 +28,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.sonatype.nexus.common.components</groupId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
       <artifactId>jetty-ee10-servlet</artifactId>
     </dependency>
 
@@ -193,12 +193,6 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.jetty.ee10</groupId>
-      <artifactId>jetty-ee10-servlet</artifactId>
       <scope>test</scope>
     </dependency>
 

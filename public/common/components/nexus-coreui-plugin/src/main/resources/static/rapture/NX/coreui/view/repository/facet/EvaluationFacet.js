@@ -21,7 +21,8 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
   extend: 'Ext.form.FieldContainer',
   alias: 'widget.nx-coreui-repository-evaluation-facet',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Url'
   ],
 
   /**
@@ -194,16 +195,17 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
             xtype: 'combo',
             name: 'attributes.evaluation.artifactLatestVersions',
             itemId: 'evaluationArtifactLatestVersions',
-            fieldLabel: 'Artifact Latest Versions',
-            helpText: 'Set the number versions of the artifact for evaluation',
+            fieldLabel: 'Latest Deployed Versions',
+            helpText: 'Set the number of most recently deployed component versions to evaluate',
             disabled: true,
             allowBlank: true,
             editable: false,
-            emptyText: 'Select Artifact Latest Versions',
+            emptyText: 'Select Latest Deployed Versions',
             store: [
               ['1', '1'],
               ['2', '2'],
               ['3', '3'],
+              ['4', '4'],
               ['5', '5']
             ],
             queryMode: 'local',
@@ -223,7 +225,7 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
             name: 'attributes.evaluation.policyEvaluationStage',
             itemId: 'evaluationPolicyEvaluationStage',
             fieldLabel: 'Policy Evaluation Stage',
-            helpText: 'Select the lifecycle stage for continuous policy evaluation.',
+            helpText: 'Select the policy evaluation stage used for the initial audit and ongoing monitoring.',
             disabled: true,
             allowBlank: true,
             editable: false,
@@ -283,7 +285,14 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
   },
 
   /**
-   * Helper method to fetch and apply global evaluation settings
+   * Helper method to fetch and apply global evaluation settings.
+   *
+   * NEXUS-54168: the fetched settings are always cached on the radiogroup (they may be needed
+   * later when the user switches to INHERIT), but are only applied to the form fields when the
+   * current mode is INHERIT. Applying unconditionally clobbers the OVERRIDE values that
+   * loadRecord placed on the fields moments earlier, which manifests as the persisted override
+   * appearing to revert to the global values on the next visit to the settings page.
+   *
    * @private
    */
   _fetchAndApplyGlobalSettings: function(radiogroup, callback) {
@@ -293,15 +302,14 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
     }
 
     radiogroup.fetchingGlobalSettings = true;
-    var form = radiogroup.up('form');
 
     Ext.Ajax.request({
-      url: '/service/rest/v1/evaluation/settings',
+      url: NX.util.Url.urlOf('/service/rest/v1/evaluation/settings'),
       method: 'GET',
       success: function(response) {
         radiogroup.fetchingGlobalSettings = false;
         try {
-          var globalSettings = Ext.decode(response.responseText);
+          var globalSettings = (response.status === 204 || !response.responseText) ? null : Ext.decode(response.responseText);
           if (globalSettings) {
             var rawStage = globalSettings.policyEvaluationStage || 'build';
             var normalizedStage = rawStage.toLowerCase().replace(/_/g, '-');
@@ -326,8 +334,7 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
           };
         }
 
-        // Apply the settings to fields
-        me._setFieldValues(form, radiogroup.globalEvaluationSettings, true);
+        me._applyGlobalSettingsIfInherit(radiogroup);
 
         if (callback) {
           callback();
@@ -342,13 +349,39 @@ Ext.define('NX.coreui.view.repository.facet.EvaluationFacet', {
           policyEvaluationStage: 'build'
         };
 
-        // Apply default settings to fields
-        me._setFieldValues(form, radiogroup.globalEvaluationSettings, true);
+        me._applyGlobalSettingsIfInherit(radiogroup);
 
         if (callback) {
           callback();
         }
       }
     });
+  },
+
+  /**
+   * Apply cached global settings to the form fields, but only when the mode is INHERIT.
+   * In OVERRIDE mode the fields already hold the persisted override values (placed there by
+   * loadRecord) and must not be clobbered; in DISABLE mode the mode-change handler clears
+   * them intentionally. See NEXUS-54168.
+   *
+   * The form reference is resolved fresh via radiogroup.up('form') at apply-time rather than
+   * captured earlier in _fetchAndApplyGlobalSettings, so a panel that was destroyed and
+   * re-rendered while the async fetch was in flight cannot cause writes to a detached form.
+   *
+   * @private
+   */
+  _applyGlobalSettingsIfInherit: function(radiogroup) {
+    if (!radiogroup) {
+      return;
+    }
+    var form = radiogroup.up ? radiogroup.up('form') : null;
+    if (!form) {
+      return;
+    }
+    var currentValue = radiogroup.getValue();
+    var currentMode = currentValue ? currentValue['attributes.evaluation.mode'] : null;
+    if (currentMode === 'INHERIT' && radiogroup.globalEvaluationSettings) {
+      this._setFieldValues(form, radiogroup.globalEvaluationSettings, true);
+    }
   }
 });

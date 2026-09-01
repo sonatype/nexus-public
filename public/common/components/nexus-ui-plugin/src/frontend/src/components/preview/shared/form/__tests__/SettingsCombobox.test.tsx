@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import '@testing-library/jest-dom';
 import { SettingsCombobox } from '../SettingsCombobox';
@@ -371,6 +370,39 @@ describe('SettingsCombobox', () => {
       expect(options).toHaveLength(2);
       expect(options[0].textContent).toContain('maven');
       expect(within(listbox).queryByText('nx-script-run')).not.toBeInTheDocument();
+    });
+
+    it('preserves search text and filtered results after selecting an option', () => {
+      const onMultiChange = jest.fn();
+      render(
+        <SettingsCombobox
+          name="privs"
+          label="Privileges"
+          multiple
+          selectedValues={[]}
+          onMultiChange={onMultiChange}
+          options={multiOptions}
+        />
+      );
+
+      const input = screen.getByTestId('combobox-privs') as HTMLInputElement;
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value: 'maven' } });
+
+      // Sanity check: filter matched 2 options.
+      let listbox = screen.getByRole('listbox');
+      const filteredBefore = within(listbox).getAllByRole('option');
+      expect(filteredBefore).toHaveLength(2);
+
+      fireEvent.click(filteredBefore[0]);
+
+      expect(onMultiChange).toHaveBeenCalledWith(['nx-repository-view-maven-read']);
+
+      // Search term still in input, and the listbox is still filtered to
+      // the same 2 maven options — no reset to the full list.
+      expect(input.value).toBe('maven');
+      listbox = screen.getByRole('listbox');
+      expect(within(listbox).getAllByRole('option')).toHaveLength(2);
     });
 
     it('removes last chip on Backspace when input is empty', () => {

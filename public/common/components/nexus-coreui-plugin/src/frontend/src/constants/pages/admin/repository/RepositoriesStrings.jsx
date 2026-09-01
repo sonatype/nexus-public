@@ -216,50 +216,6 @@ export default {
                 }
             }
         },
-        TERRAFORM_STATE_BACKEND: {
-          CAPTION: 'Terraform State Backend Settings',
-          ENCRYPTION: {
-            CAPTION: 'Encryption Settings',
-            ENCRYPTION_ENABLED: {
-              LABEL: 'Encryption',
-              DESCRIPTION: 'Enable encryption for Terraform state files'
-            },
-            ENCRYPTION_KEY: {
-              LABEL: 'Encryption Key',
-              SUBLABEL: 'Encryption key used to encrypt state files. This key cannot be retrieved after creation.'
-            },
-            ENCRYPTION_KEY_CONFIRM: {
-              LABEL: 'Confirm Encryption Key',
-              SUBLABEL: 'Re-enter the encryption key to confirm',
-              MISMATCH_ERROR: 'Encryption keys do not match'
-            },
-            LOCK_TIMEOUT_MINUTES: {
-              LABEL: 'Lock Timeout (Minutes)',
-              SUBLABEL: 'Duration in minutes before a state lock automatically expires (1-1440 minutes, default: 30)'
-            },
-            MAX_STATE_SIZE_MB: {
-              LABEL: 'Maximum State File Size (MB)',
-              SUBLABEL: 'Maximum allowed size for individual state files (1-512 MB, default: 256)'
-            },
-            ENCRYPTION_REQUIRED_INFO: 'Encryption is mandatory for Terraform State Backend repositories. State files contain sensitive infrastructure data including credentials, secrets, and resource identifiers that must be protected at rest.'
-          },
-          ENCRYPTION_MODAL: {
-            MODAL_TITLE: 'Rotate Encryption Key',
-            ENCRYPTION_KEY_LABEL: 'New Encryption Key',
-            ENCRYPTION_KEY_SUBLABEL: 'Enter the new encryption key for state files',
-            ENCRYPTION_KEY_CONFIRM_LABEL: 'Confirm New Encryption Key',
-            ENCRYPTION_KEY_CONFIRM_SUBLABEL: 'Re-enter the new encryption key to confirm',
-            KEY_MISMATCH_ERROR: 'Encryption keys do not match',
-            REENCRYPT_LABEL: 'Re-encryption Options',
-            REENCRYPT_DESCRIPTION: 'Re-encrypt all existing state files with the new key (triggers async job)',
-            EXISTING_KEY_MESSAGE: 'An encryption key is configured. For security, the key cannot be viewed.',
-            UPDATE_BUTTON: 'Update Key',
-            CANCEL_BUTTON: 'Cancel',
-            LOADING_ERROR: 'Failed to load repository information',
-            UPDATE_SUCCESS: 'Encryption key updated successfully',
-            UPDATE_ERROR: 'Failed to update encryption key'
-          }
-        },
         ALPINE: {
             CAPTION: 'Alpine Settings',
             SIGNING: {
@@ -329,6 +285,15 @@ export default {
       REGISTRY_API_SUPPORT_LABEL: 'Enable Docker V1 API',
       REGISTRY_API_SUPPORT_DESCR: 'Allow clients to use the V1 API to interact with this repository',
       DOCKER: {
+        ECR: {
+          CAPTION: 'AWS ECR Authentication',
+          SESSION_TOKEN: {
+            LABEL: 'AWS Session Token',
+            SUBLABEL: 'Optional. Provide only when using short-lived (STS) credentials whose Access Key ID starts with "ASIA". Leave blank for long-lived IAM access keys ("AKIA").',
+            PLACEHOLDER: 'Enter an AWS session token'
+          },
+          EXPIRY_WARNING: 'Short-lived AWS session tokens expire (typically within 12 hours) and cannot be refreshed automatically. When the token expires, ECR pulls will fail until you re-enter a fresh session token here.'
+        },
         INDEX: {
           LABEL: 'Docker Index',
           OPTIONS: {
@@ -468,7 +433,7 @@ export default {
         docker: ' (e.g., https://registry-1.docker.io)',
         maven2: ' (e.g., https://repo1.maven.org/maven2/)',
         npm: ' (e.g., https://registry.npmjs.org)',
-        nuget: ' (e.g., https://api.nuget.org/v3/index.json)',
+        nuget: ' (e.g., https://api.nuget.org/v3/index.json (NuGet v3), https://community.chocolatey.org/api/v2/ (Chocolatey), or https://www.nuget.org/api/v2/ (NuGet v2))',
         r: ' (e.g., https://cran.r-project.org/)',
         pypi: ' (e.g., https://pypi.org)',
         rubygems: ' (e.g., https://rubygems.org)',
@@ -487,7 +452,7 @@ export default {
         },
         SYMBOL_SERVER_URL: {
           LABEL: 'Symbol Server URL',
-          SUBLABEL: 'Optional upstream symbol server URL. If empty, symbols are proxied from the remote storage URL.'
+          SUBLABEL: 'Optional upstream symbol server URL for proxying symbol downloads (e.g. https://symbols.nuget.org/download/symbols).'
         },
         SYMSRV_ENDPOINT: {
           LABEL: 'SymSrv Endpoint URL',
@@ -497,10 +462,8 @@ export default {
           LABEL: 'Allow Anonymous Symbol Access',
           SUBLABEL: 'Allow unauthenticated access to the symbol server (required for debugger integration)'
         },
-        GROUP_VERSION: {
-          LABEL: 'NuGet Type',
-          SUBLABEL: 'Restrict proxy repositories to one NuGet version',
-        }
+        MIXED_VERSION_WARNING: (conflictingName, conflictingVersion, firstMemberName, firstMemberVersion) =>
+          `Group repositories cannot include a mix of NuGet v2 and v3 members. You cannot add ${conflictingName} (${conflictingVersion}) because the group contains ${firstMemberName} (${firstMemberVersion}).`
       },
       WRITABLE: {
         LABEL: 'Writable Repository',

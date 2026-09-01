@@ -80,9 +80,10 @@ export default {
       CRITERIA: {
         GROUP: 'Composer Repositories',
         FIELD_LABEL: {
-          VERSION: 'Version',
           PACKAGE: 'Package',
           VENDOR: 'Vendor',
+          DESCRIPTION: 'Description',
+          KEYWORDS: 'Keywords',
         }
       }
     },
@@ -297,19 +298,6 @@ export default {
           PROVIDER: 'Provider/Type',
           NAMESPACE: 'Namespace',
           NAME: 'Name',
-        }
-      }
-    },
-    TERRAFORM_STATE_BACKEND: {
-      MENU: {
-        text: 'Terraform State Backend',
-        description: 'Search for Terraform state files',
-        icon: faSearch
-      },
-      CRITERIA: {
-        GROUP: 'Terraform State Backend Repositories',
-        FIELD_LABEL: {
-          PATH: 'Path',
         }
       }
     },

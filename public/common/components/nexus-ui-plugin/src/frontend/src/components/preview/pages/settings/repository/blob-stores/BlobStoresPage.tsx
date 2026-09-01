@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Flex, Text, ScrollArea, Heading, Button, TextField, Card } from '@radix-ui/themes';
+import React, { useState, useEffect, useCallback, useMemo, } from 'react';
+import { Box, Flex, Text, Button, TextField, } from '@radix-ui/themes';
 import {
   HardDrive,
   Plus,
@@ -122,8 +122,6 @@ const STRINGS = {
   EDIT_DESCRIPTION: (type: string) => `${type} Blob Store`,
   EDIT_WARNING:
     'Updating the blob store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave the blob store in a non-functional state.',
-  NO_PERMISSION_WARNING:
-    "You don't have permission to edit this page. Contact your administrator to request access.",
   CONVERT_TO_GROUP_BUTTON: 'Convert to Group',
   TYPE: {
     label: 'Type',
@@ -252,7 +250,7 @@ export default function BlobStoresPage() {
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [_refreshKey, setRefreshKey] = useState(0);
 
   // Toast notifications (app-level provider)
   const toast = useToast();
@@ -938,9 +936,7 @@ export default function BlobStoresPage() {
           data-dirty={isDirty ? 'true' : 'false'}
           data-valid={Object.keys(validationErrors).length === 0 ? 'true' : 'false'}
           data-mode={isEdit ? 'edit' : 'create'}
-          headerActions={
-            <>
-              {canConvertToGroup && hasUpdatePermissions && (
+          headerActions={canConvertToGroup && hasUpdatePermissions && (
                 <SettingsButton
                   variant="secondary"
                   onClick={() => setShowConvertModal(true)}
@@ -951,8 +947,6 @@ export default function BlobStoresPage() {
                   {STRINGS.CONVERT_TO_GROUP_BUTTON}
                 </SettingsButton>
               )}
-            </>
-          }
           footerExtra={
             isEdit && (
               <SettingsButton
@@ -987,12 +981,6 @@ export default function BlobStoresPage() {
           {isEdit && hasUpdatePermissions && (
             <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
               {STRINGS.EDIT_WARNING}
-            </SettingsAlert>
-          )}
-
-          {isEdit && !hasUpdatePermissions && (
-            <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
-              {STRINGS.NO_PERMISSION_WARNING}
             </SettingsAlert>
           )}
 

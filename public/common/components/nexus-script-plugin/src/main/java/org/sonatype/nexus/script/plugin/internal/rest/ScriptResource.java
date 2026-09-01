@@ -41,6 +41,9 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -101,6 +104,10 @@ public class ScriptResource
   @Timed
   @ExceptionMetered
   @Operation(summary = "List all stored scripts")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Stored scripts returned",
+          content = @Content(array = @ArraySchema(schema = @Schema(implementation = ScriptXO.class))))
+  })
   @RequiresPermissions("nexus:script:*:browse")
   public List<ScriptXO> browse() {
     List<ScriptXO> storedScripts = new ArrayList<>();
@@ -113,7 +120,11 @@ public class ScriptResource
   @Timed
   @ExceptionMetered
   @Operation(summary = "Read stored script by name")
-  @ApiResponses(@ApiResponse(responseCode = "404", description = "No script with the specified name"))
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Script returned",
+          content = @Content(schema = @Schema(implementation = ScriptXO.class))),
+      @ApiResponse(responseCode = "404", description = "No script with the specified name")
+  })
   public ScriptXO read(@PathParam("name") final String name) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.READ));
     return convert(findOr404(name));
@@ -184,11 +195,23 @@ public class ScriptResource
   @ExceptionMetered
   @Operation(summary = "Run stored script by name")
   @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "Script executed successfully",
+          content = @Content(schema = @Schema(implementation = ScriptResultXO.class))),
       @ApiResponse(responseCode = "404", description = "No script with the specified name"),
+      @ApiResponse(responseCode = "410", description = "Script execution is disabled"),
       @ApiResponse(responseCode = "500", description = "Script execution failed with exception")
   })
   public ScriptResultXO run(@PathParam("name") final String name, final String args) {
     securityHelper.ensurePermitted(scriptPermission(name, RUN_ACTION));
+
+    if (!scriptManager.isEnabled()) {
+      log.debug("Script execution blocked - scripting is disabled");
+      throw new WebApplicationException(
+          Response.status(Response.Status.GONE)
+              .entity(new ScriptResultXO(name, "Script execution is disabled"))
+              .build());
+    }
+
     log.debug("Running Script named: {}", name); // NOSONAR
     Script script = findOr404(name);
 

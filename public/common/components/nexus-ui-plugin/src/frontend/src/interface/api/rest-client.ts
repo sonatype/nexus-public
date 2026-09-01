@@ -71,13 +71,21 @@ export const ENDPOINTS = {
   IQ_AUDIT: `${API_V1}/iq/audit`,
   IQ_AUDIT_REPO: (repositoryName: string) =>
     `${API_V1}/iq/audit/${encodeURIComponent(repositoryName)}`,
-  
+  /**
+   * IQ Server connectivity and entitlements. Returns
+   * `{hasFirewall, hasLifecycle, connected, url, deploymentId}` with the same shape on
+   * self-hosted (pro/community) and cloud, unlike `GET /v1/iq` whose response type differs
+   * per edition. Prefer this as the cross-edition source of truth for "is IQ usable here".
+   */
+  IQ_CAPABILITIES: `${API_V1}/iq/capabilities`,
+
   // Browse (REST API for tree browsing)
   REPOSITORY_BROWSE: (repositoryName: string) => `${API_V1}/repositories/${encodeURIComponent(repositoryName)}/browse`,
 
   // Search
   SEARCH: `${API_V1}/search`,
   SEARCH_ASSETS: `${API_V1}/search/assets`,
+  SEARCH_REPOSITORIES: `${API_V1}/search/repositories`,
 
   // System Settings
   BLOBSTORES: `${API_V1}/blobstores`,
@@ -113,6 +121,9 @@ export const ENDPOINTS = {
   NODES: `${API_INTERNAL_UI}/nodes`,
   HEALTH_CHECK: `${API_INTERNAL_UI}/healthcheck`,
   HEALTH_CHECK_ANALYZE: (repoName: string) => `${API_V1}/repositories/${encodeURIComponent(repoName)}/health-check`,
+  /** Enable/disable Repository Health Check (POST enable / DELETE disable) */
+  REPOSITORY_HEALTH_CHECK: (repoName: string) =>
+    `${API_V1}/repositories/${encodeURIComponent(repoName)}/health-check`,
   HEALTH_CHECK_SUMMARY: `${API_INTERNAL_UI}/healthcheck/summary`,
   FIREWALL_STATUS: `${API_INTERNAL_UI}/firewall/status`,
   FIREWALL_STATUS_SUMMARY: `${API_INTERNAL_UI}/firewall/status/summary`,
@@ -121,6 +132,13 @@ export const ENDPOINTS = {
   BLOBSTORES_TYPES: `${API_INTERNAL_UI}/blobstores/types`,
   BLOBSTORES_QUOTA_TYPES: `${API_INTERNAL_UI}/blobstores/quotaTypes`,
   DATASTORE: `${API_INTERNAL_UI}/datastore`,
+
+  // Malicious risk (mirrors nexus-coreui-plugin's utils/api/rest-client.ts)
+  MALICIOUS_RISK_ACTIVE_FINDINGS: `${API_V1}/malicious-risk/active-findings`,
+  MALICIOUS_RISK_HISTORY: `${API_V1}/malicious-risk/history`,
+  MALICIOUS_RISK_ACKNOWLEDGE: `${API_V1}/malicious-risk/acknowledge`,
+  MALICIOUS_RISK_DELETE_FINDING: `${API_V1}/malicious-risk/delete-finding`,
+  MALICIOUS_RISK_REMEDIATE: `${API_V1}/malicious-risk/remediate`,
 } as const;
 
 /**
@@ -153,7 +171,7 @@ function createClient(): AxiosInstance {
       // Prevent browser caching of GET requests
       if (config.method === 'get') {
         config.headers['Cache-Control'] = 'no-cache';
-        config.headers['Pragma'] = 'no-cache';
+        config.headers.Pragma = 'no-cache';
       }
 
       // Let Axios set Content-Type automatically for FormData (multipart/form-data with boundary)
@@ -281,6 +299,7 @@ function toAxiosConfig(config?: RequestConfig): AxiosRequestConfig | undefined {
     timeout: config.timeout,
     headers: config.headers,
     params: config.params,
+    signal: config.signal,
   };
 }
 

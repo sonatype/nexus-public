@@ -213,7 +213,7 @@ describe('useAnonymousApi', () => {
             userId: '',
             realmName: 'NexusAuthorizingRealm',
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected to throw
         }
       });
@@ -233,7 +233,7 @@ describe('useAnonymousApi', () => {
             userId: 'anonymous',
             realmName: 'NexusAuthorizingRealm',
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected to throw
         }
       });
@@ -256,7 +256,7 @@ describe('useAnonymousApi', () => {
             userId: 'anonymous',
             realmName: 'test',
           });
-        } catch (e) {
+        } catch (_e) {
           // Expected
         }
       });

@@ -15,7 +15,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AlertDialog, Box, Flex, Text, Button, TextField, IconButton } from '@radix-ui/themes';
 import { X } from 'lucide-react';
 
-const DEFAULT_CONFIRMATION_TEXT = 'DELETE';
+// Fixed acknowledgement word required to confirm any destructive deletion. Using a
+// single literal word — instead of per-entity names — keeps the friction predictable
+// and short to type while still forcing a deliberate action. Displayed as-is; the
+// match is case-insensitive so "delete", "Delete", "DELETE" all confirm.
+const CONFIRMATION_TEXT = 'Delete';
 
 export interface DeleteConfirmationModalProps {
   open: boolean;
@@ -24,6 +28,10 @@ export interface DeleteConfirmationModalProps {
   entityName?: string;
   entityType: string;
   loading?: boolean;
+  /** Optional extra content (e.g. resource details) rendered above the
+   *  acknowledgement input. Lets callers surface context like task type or
+   *  schedule without forking the modal. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -31,14 +39,13 @@ export interface DeleteConfirmationModalProps {
  *
  * Follows nexusone design system standards:
  * - Modal width: 450px (destructive confirmation)
- * - Requires text input verification for all deletions
- * - Entity name verification for critical resources (repositories, blob stores)
- * - "DELETE" text verification for all other entities
+ * - Requires typing "Delete" (case-insensitive) for all deletions
+ * - Entity name is displayed in the description but not required for verification
  *
  * @param open - Controls modal visibility
  * @param onClose - Called when modal should close (cancel, X button)
  * @param onConfirm - Called when user confirms deletion with valid text
- * @param entityName - If provided, user must type this exact name. If null/undefined, user types "DELETE"
+ * @param entityName - If provided, displayed in description for context
  * @param entityType - Display name for the entity type (e.g., "repository", "user", "blob store")
  * @param loading - Shows loading state during delete operation
  */
@@ -49,13 +56,17 @@ export function DeleteConfirmationModal({
   entityName,
   entityType,
   loading = false,
+  children,
 }: DeleteConfirmationModalProps) {
   const [confirmationText, setConfirmationText] = useState('');
   const [showError, setShowError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const expectedText = entityName || DEFAULT_CONFIRMATION_TEXT;
-  const isValid = confirmationText === expectedText;
+  // Acknowledgement is a case-insensitive match against the literal CONFIRMATION_TEXT
+  // in every case. The entity name still flows through to the description so the user
+  // can see what they're about to delete, but they no longer have to type it.
+  const expectedLower = CONFIRMATION_TEXT.toLowerCase();
+  const isValid = confirmationText.toLowerCase() === expectedLower;
 
   // Focus input when modal opens
   useEffect(() => {
@@ -77,8 +88,13 @@ export function DeleteConfirmationModal({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setConfirmationText(value);
-    // Show error only if user has typed something and it doesn't match
-    setShowError(value.length > 0 && value !== expectedText);
+    // Show the inline error only when the user has typed something and it doesn't
+    // match (or is not on track to match) the expected literal CONFIRMATION_TEXT.
+    // A correct-so-far prefix (e.g. "del", "Del") is not an error — we just leave
+    // the submit button disabled until the full word lands. Comparison is
+    // case-insensitive so any casing of the word confirms.
+    const matchesPrefixSoFar = expectedLower.startsWith(value.toLowerCase());
+    setShowError(value.length > 0 && !matchesPrefixSoFar);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -111,10 +127,22 @@ export function DeleteConfirmationModal({
           </IconButton>
         </Flex>
 
-        {/* Warning Message */}
+        {/* Warning Message — surface the entity name here so the user sees what they're
+            deleting now that the acknowledgement is a fixed literal word. */}
         <AlertDialog.Description size="2" mb="4">
-          This action cannot be undone. All data associated with this {entityType} will be permanently deleted.
+          {entityName ? (
+            <>
+              This action cannot be undone. All data associated with{' '}
+              <Text as="span" weight="bold">{entityName}</Text>{' '}
+              will be permanently deleted.
+            </>
+          ) : (
+            <>This action cannot be undone. All data associated with this {entityType} will be permanently deleted.</>
+          )}
         </AlertDialog.Description>
+
+        {/* Optional caller-provided context (resource details, related counts, etc.) */}
+        {children && <Box mb="4">{children}</Box>}
 
         {/* Highlighted Warning Box */}
         <Box
@@ -127,7 +155,7 @@ export function DeleteConfirmationModal({
           }}
         >
           <Text size="2" weight="medium" style={{ display: 'block' }}>
-            {expectedText}
+            {CONFIRMATION_TEXT}
           </Text>
           <Text size="1" color="gray">
             Type this to confirm deletion
@@ -150,7 +178,7 @@ export function DeleteConfirmationModal({
             value={confirmationText}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={`Type "${expectedText}" to confirm`}
+            placeholder={`Type "${CONFIRMATION_TEXT}" to confirm`}
             disabled={loading}
             color={showError ? 'red' : undefined}
             style={

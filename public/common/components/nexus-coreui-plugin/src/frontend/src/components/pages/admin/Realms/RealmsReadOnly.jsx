@@ -56,7 +56,7 @@ export default function RealmsReadOnly() {
             error={loadError ? loadError : null}
             retryHandler={retry}
           >
-            {active?.map((realm) => (
+            {active?.length > 0 && active.map((realm) => (
               <NxList.Item key={realm}>
                 <NxList.Text>{realm}</NxList.Text>
               </NxList.Item>

@@ -16,7 +16,7 @@
  */
 import Axios from 'axios';
 import {assign} from 'xstate';
-import {APIConstants, ExtAPIUtils, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
+import {APIConstants, ExtAPIUtils, ExtJS, ListMachineUtils} from '@sonatype/nexus-ui-plugin';
 
 import { filterReposByUiUpload } from '../BrowseUtils';
 
@@ -37,7 +37,8 @@ export default ListMachineUtils.buildListMachine({
     })
   },
   services: {
-    fetchData: () => {
+    fetchData: async () => {
+      await ExtJS.waitForPermissions();
       return Axios.all([
         ExtAPIUtils.extAPIRequest(REPOSITORY.ACTION, REPOSITORY.METHODS.READ_REFERENCES, {})
             .then(ExtAPIUtils.checkForErrorAndExtract),

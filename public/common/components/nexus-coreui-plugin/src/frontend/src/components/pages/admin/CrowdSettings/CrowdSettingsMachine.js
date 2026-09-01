@@ -95,13 +95,17 @@ export default FormUtils.buildFormMachine({
       ExtJS.showErrorMessage(UIStrings.CROWD_SETTINGS.MESSAGES.SAVE_ERROR);
     },
     logConnectionError: (_, event) => {
-      ExtJS.showErrorMessage(`${CROWD_SETTINGS.MESSAGES.VERIFY_CONNECTION_ERROR} ${event.data?.response?.data}`);
+      const raw = event.data?.response?.data;
+      const detail = raw?.message ?? (typeof raw === 'string' ? raw : '');
+      ExtJS.showErrorMessage(`${CROWD_SETTINGS.MESSAGES.VERIFY_CONNECTION_ERROR} ${detail}`);
     },
     logConnectionSuccess: () => {
       ExtJS.showSuccessMessage(CROWD_SETTINGS.MESSAGES.VERIFY_CONNECTION_SUCCESS);
     },
     logClearCacheError: (_, event) => {
-      ExtJS.showErrorMessage(`${CROWD_SETTINGS.MESSAGES.CLEAR_CACHE_ERROR} ${event.data?.response?.data}`);
+      const raw = event.data?.response?.data;
+      const detail = raw?.message ?? (typeof raw === 'string' ? raw : '');
+      ExtJS.showErrorMessage(`${CROWD_SETTINGS.MESSAGES.CLEAR_CACHE_ERROR} ${detail}`);
     },
     logClearCacheSuccess: () => {
       ExtJS.showSuccessMessage(CROWD_SETTINGS.MESSAGES.CLEAR_CACHE_SUCCESS);

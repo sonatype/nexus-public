@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act, } from '@testing-library/react';
 import { useUploadSubmit, UPLOAD_SUBMIT_STRINGS } from '../hooks/useUploadSubmit';
 import * as uploadApi from '../upload.api';
 
@@ -109,11 +109,11 @@ describe('useUploadSubmit', () => {
   // The retry functionality is covered by integration tests
 
   it('should cancel upload', async () => {
-    let resolveUpload: (value: any) => void;
+    let _resolveUpload: (value: any) => void;
     mockedUploadApi.uploadToRepository.mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolveUpload = resolve;
+          _resolveUpload = resolve;
         })
     );
 

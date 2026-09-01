@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class CapabilityEventQueue
 {
   private final EventManager eventManager;
 
-  private ExecutorService eventQueue;
+  private NexusExecutorService eventQueue;
 
   @Autowired
   public CapabilityEventQueue(final EventManager eventManager) {
@@ -53,7 +54,10 @@ public class CapabilityEventQueue
 
   @Override
   protected void doStart() {
-    eventQueue = Executors.newSingleThreadExecutor(new NexusThreadFactory("capability-event", "capability-event"));
+    ExecutorService executor = Executors.newSingleThreadExecutor(
+        new NexusThreadFactory("capability-event", "capability-event"));
+    // Wrap with NexusExecutorService to preserve Shiro Subject (security context) across threads
+    eventQueue = NexusExecutorService.forCurrentSubject(executor);
   }
 
   @Override

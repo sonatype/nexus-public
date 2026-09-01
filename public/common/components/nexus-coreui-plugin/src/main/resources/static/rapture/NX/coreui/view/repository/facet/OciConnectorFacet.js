@@ -153,14 +153,21 @@ Ext.define('NX.oci.view.repository.facet.OciConnectorFacet', {
             layout: 'hbox',
             items: [me.createCheckbox('https'), me.createPort('https')],
           },
-          {
+          isCloud ? {
+            // On cloud, anonymous OCI access is not supported (OciCloudEditionConfigurationValidator
+            // / NEXUS-OCI-CLOUD-ANON). Render a hidden field pinned to true rather than an editable
+            // checkbox the operator could untick, matching the format-module facet.
+            xtype: 'hiddenfield',
+            name: 'attributes.oci.forceBasicAuth',
+            value: true,
+          } : {
             xtype: 'checkbox',
             name: 'attributes.oci.forceBasicAuth',
             fieldLabel: NX.I18n.get('Repository_Facet_OciProxyFacet_BasicAuth_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_OciProxyFacet_BasicAuth_BoxLabel'),
             value: false,
           },
-          {
+          isCloud ? undefined : {
             xtype: 'panel',
             bodyPadding: '10px',
             ui: 'nx-inset',
@@ -221,7 +228,11 @@ Ext.define('NX.oci.view.repository.facet.OciConnectorFacet', {
         var processed = { attributes: {} };
 
         Ext.Object.each(values, function (key, value) {
-          if (key === 'attributes.oci.forceBasicAuth') {
+          // Self-hosted renders an "allow anonymous pulls" checkbox whose value is the
+          // inverse of forceBasicAuth, so it is flipped here. Cloud has no such checkbox
+          // (see the isCloud-gated hidden field above) and submits the raw value, which must
+          // NOT be inverted or the pinned "true" would become "false" and fail validation.
+          if (!isCloud && key === 'attributes.oci.forceBasicAuth') {
             value = !value;
           }
 
@@ -240,6 +251,18 @@ Ext.define('NX.oci.view.repository.facet.OciConnectorFacet', {
           });
         });
 
+        // On cloud, anonymous OCI access is not supported: pin forceBasicAuth=true so a
+        // save can never submit the value OciCloudEditionConfigurationValidator rejects.
+        if (isCloud) {
+          if (!processed.attributes) {
+            processed.attributes = {};
+          }
+          if (!processed.attributes.oci) {
+            processed.attributes.oci = {};
+          }
+          processed.attributes.oci.forceBasicAuth = true;
+        }
+
         return processed;
       },
 
@@ -248,7 +271,9 @@ Ext.define('NX.oci.view.repository.facet.OciConnectorFacet', {
           Ext.Object.each(child, function (key, value) {
             var newPrefix = (prefix ? prefix + '.' : '') + key;
 
-            if (newPrefix === 'attributes.oci.forceBasicAuth') {
+            // Only self-hosted uses the inverted "allow anonymous pulls" checkbox; on cloud
+            // the value is stored/submitted as-is (always true). See doGetValues above.
+            if (!isCloud && newPrefix === 'attributes.oci.forceBasicAuth') {
               value = !value;
             }
             if (newPrefix === 'attributes.oci.pathEnabled') {

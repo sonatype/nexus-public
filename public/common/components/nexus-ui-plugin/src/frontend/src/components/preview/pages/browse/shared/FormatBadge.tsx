@@ -48,7 +48,6 @@ const formatColorMap: Record<string, BadgeColor> = {
   gitlfs: 'orange',
   p2: 'purple',
   terraform: 'purple',
-  terraformbackend: 'purple',
   swift: 'orange',
   huggingface: 'pink',
 };

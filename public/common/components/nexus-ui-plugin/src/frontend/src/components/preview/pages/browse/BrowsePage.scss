@@ -66,18 +66,6 @@
       // in BrowsePage.tsx to match the actual sticky header height
     }
 
-    // Override EVERY Radix wrapper between scroll container and <th>.
-    // Radix Themes Table/Card render nested divs with overflow:hidden
-    // that break position:sticky. This is a known issue (radix-ui/themes#767).
-    // The nuclear option: override overflow on all descendants of the card.
-    .repository-list-table__card {
-      overflow: visible !important;
-
-      *:not(thead):not(th):not(td):not(tbody):not(tr) {
-        overflow: visible !important;
-      }
-    }
-
     .browse-page__sticky-header {
       position: sticky;
       top: 0;

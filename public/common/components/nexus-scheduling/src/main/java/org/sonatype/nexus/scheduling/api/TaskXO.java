@@ -30,8 +30,6 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.Weekly;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -48,6 +46,9 @@ public class TaskXO
 
   @Schema(description = "The type identifier of the task", example = "blobstore.compact")
   private String type;
+
+  @Schema(description = "The human-readable name of the task type", example = "Admin - Compact blob store")
+  private String typeName;
 
   @Schema(description = "A human-readable message describing the task", example = "Admin - Compact blob store")
   private String message;
@@ -100,6 +101,7 @@ public class TaskXO
     taskXO.setId(taskInfo.getId());
     taskXO.setName(taskInfo.getName());
     taskXO.setType(taskInfo.getTypeId());
+    taskXO.setTypeName(configuration.getTypeName());
     taskXO.setMessage(taskInfo.getMessage());
     if (externalTaskState.getState().isRunning() && StringUtils.isNotBlank(externalTaskState.getProgress())) {
       taskXO.setCurrentState(externalTaskState.getState().toString() + ": " + externalTaskState.getProgress());
@@ -200,6 +202,14 @@ public class TaskXO
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  public String getTypeName() {
+    return typeName;
+  }
+
+  public void setTypeName(String typeName) {
+    this.typeName = typeName;
   }
 
   public String getMessage() {
@@ -320,6 +330,7 @@ public class TaskXO
         "id:'" + id + '\'' +
         ", name:'" + name + '\'' +
         ", type:'" + type + '\'' +
+        ", typeName:'" + typeName + '\'' +
         ", message:'" + message + '\'' +
         ", currentState:'" + currentState + '\'' +
         ", lastRunResult:'" + lastRunResult + '\'' +

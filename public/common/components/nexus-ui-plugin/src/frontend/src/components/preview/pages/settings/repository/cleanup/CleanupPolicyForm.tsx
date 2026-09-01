@@ -39,7 +39,6 @@ import {
   NOTES_MAX_LENGTH,
   isRetainSupportedFormat,
   isRepositoriesFieldSupportedFormat,
-  isReleaseType,
 } from './types';
 
 import './CleanupPolicyForm.scss';
@@ -179,8 +178,7 @@ export function CleanupPolicyForm({
     const incomingRepos = policy.repositories ?? [];
     setSelectedRepos(incomingRepos);
     setInitialRepos(incomingRepos);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCreate, policy?.name, formData.format]);
+  }, [isCreate, policy?.name, formData.format, policy?.repositories]);
 
   const handleReposChange = useCallback(
     (items: RepositoryOption[]) => {

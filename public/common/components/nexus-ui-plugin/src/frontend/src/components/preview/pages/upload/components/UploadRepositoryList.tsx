@@ -12,9 +12,8 @@
  */
 
 import React, { useCallback } from 'react';
-import { Box, Flex, Table, Text, Tooltip, Spinner } from '@radix-ui/themes';
+import { Box, Flex, Table, Text, Spinner } from '@radix-ui/themes';
 import { ChevronUp, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
-import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
 import { CopyUrlButton } from '../../browse/actions/CopyUrlButton';
 import { FormatBadge } from '../../../shared';
@@ -133,7 +132,7 @@ export function UploadRepositoryList({
 
   return (
     <Box className="upload-repository-list">
-      <Table.Root size="3" className="upload-repository-list__table">
+      <Table.Root variant="surface" size="3" className="upload-repository-list__table">
         <Table.Header>
           <Table.Row>
             {/* Name Column - Sortable */}

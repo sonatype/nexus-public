@@ -116,9 +116,8 @@ public class RepositoryComboboxTest
     assertThat(withRegex.getLabel(), equalTo("myLabel"));
     assertThat(withRegex.getHelpText(), equalTo("myHelp"));
     assertThat(withRegex.isRequired(), is(false));
-    // Combobox's 5-arg constructor maps the 5th argument to initialValue, not regexValidation (see NEXUS-53405)
-    assertThat(withRegex.getRegexValidation(), nullValue());
-    assertThat(withRegex.getInitialValue(), equalTo(".*"));
+    assertThat(withRegex.getRegexValidation(), equalTo(".*"));
+    assertThat(withRegex.getInitialValue(), nullValue());
   }
 
   @Test

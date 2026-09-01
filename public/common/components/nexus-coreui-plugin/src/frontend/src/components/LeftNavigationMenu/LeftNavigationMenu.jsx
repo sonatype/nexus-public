@@ -21,14 +21,14 @@ import { useClmDashboardVisibility } from './useClmDashboardVisibility';
 import {
   LeftNavigationMenuItem,
   LeftNavigationMenuCollapsibleItem,
-  LeftNavigationMenuCollapsibleChildItem
+  LeftNavigationMenuCollapsibleChildItem,
+  useSideNavbarOpenState
 } from '@sonatype/nexus-ui-plugin';
 import './LeftNavigationMenu.scss';
-import useSideNavbarCollapsedState from '../../hooks/useSideNavbarCollapsedState';
 
 export default function LeftNavigationMenu() {
   const { BROWSE, ADMIN } = ROUTE_NAMES;
-  const [isOpen, onToggleClick] = useSideNavbarCollapsedState(true);
+  const [isOpen, onToggleClick] = useSideNavbarOpenState(true);
 
   const adminInitialRouteName = useDefaultAdminRouteName();
   const isSettingsVisible = !!adminInitialRouteName;

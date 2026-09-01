@@ -14,7 +14,9 @@ package org.sonatype.nexus.cleanup.storage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -25,11 +27,15 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
-import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -70,11 +76,83 @@ public class CleanupPolicyExportTest
     List<CleanupPolicyData> importedData = jsonExporter.importFromJson(jsonFile, CleanupPolicyData.class);
 
     assertThat(importedData.size(), is(2));
-    importedData.forEach(data -> assertThat(data.getName(), anyOf(is("test_1"), is("test_2"))));
-    importedData.forEach(data -> assertThat(data.getFormat(), anyOf(is("format_1"), is("format_2"))));
-    importedData.forEach(data -> assertThat(data.getMode(), anyOf(is("delete"), is("clean"))));
-    importedData.forEach(data -> assertThat(data.getNotes(), anyOf(is("notes 1"), is("notes 2"))));
-    importedData.forEach(data -> assertThat(data.getCriteria(), is(criteria)));
+    // Per-policy associations are validated below via findPolicy; no weaker forEach/anyOf checks needed.
+
+    verify(cleanupPolicyStorage).getAll();
+
+    CleanupPolicyData firstPolicy = findPolicy(importedData, "test_1");
+    assertThat(firstPolicy.getFormat(), is("format_1"));
+    assertThat(firstPolicy.getMode(), is("delete"));
+    assertThat(firstPolicy.getNotes(), is("notes 1"));
+    assertThat(firstPolicy.getCriteria(), is(criteria));
+
+    CleanupPolicyData secondPolicy = findPolicy(importedData, "test_2");
+    assertThat(secondPolicy.getFormat(), is("format_2"));
+    assertThat(secondPolicy.getMode(), is("clean"));
+    assertThat(secondPolicy.getNotes(), is("notes 2"));
+    assertThat(secondPolicy.getCriteria(), is(criteria));
+  }
+
+  @Test
+  public void testRestoreFromJson() throws Exception {
+    Map<String, String> criteria = ImmutableMap.of(
+        "regex", "*.json",
+        "lastDownloaded", "100",
+        "lastBlobUpdated", "200");
+    List<CleanupPolicy> configurationData = Arrays.asList(
+        createCleanupPolicy("test_1", "format_1", "delete", "notes 1", criteria),
+        createCleanupPolicy("test_2", "format_2", "clean", "notes 2", criteria));
+
+    jsonExporter.exportToJson(configurationData, jsonFile);
+
+    CleanupPolicyStorage cleanupPolicyStorage = mock(CleanupPolicyStorage.class);
+
+    CleanupPolicyExport importer = new CleanupPolicyExport(cleanupPolicyStorage);
+    importer.restore(jsonFile);
+
+    ArgumentCaptor<CleanupPolicy> policyCaptor = ArgumentCaptor.forClass(CleanupPolicy.class);
+    verify(cleanupPolicyStorage, times(2)).add(policyCaptor.capture());
+
+    List<CleanupPolicy> addedPolicies = policyCaptor.getAllValues();
+    assertThat(addedPolicies.size(), is(2));
+    // Per-policy associations are validated below via findPolicy; no weaker forEach/anyOf checks needed.
+
+    CleanupPolicy firstPolicy = findPolicy(addedPolicies, "test_1");
+    assertThat(firstPolicy.getFormat(), is("format_1"));
+    assertThat(firstPolicy.getMode(), is("delete"));
+    assertThat(firstPolicy.getNotes(), is("notes 1"));
+    assertThat(firstPolicy.getCriteria(), is(criteria));
+
+    CleanupPolicy secondPolicy = findPolicy(addedPolicies, "test_2");
+    assertThat(secondPolicy.getFormat(), is("format_2"));
+    assertThat(secondPolicy.getMode(), is("clean"));
+    assertThat(secondPolicy.getNotes(), is("notes 2"));
+    assertThat(secondPolicy.getCriteria(), is(criteria));
+  }
+
+  @Test
+  public void testExportEmptyListWritesEmptyJson() throws Exception {
+    CleanupPolicyStorage cleanupPolicyStorage = mock(CleanupPolicyStorage.class);
+    when(cleanupPolicyStorage.getAll()).thenReturn(Collections.emptyList());
+
+    CleanupPolicyExport exporter = new CleanupPolicyExport(cleanupPolicyStorage);
+    exporter.export(jsonFile);
+
+    verify(cleanupPolicyStorage).getAll();
+    assertThat(Files.readString(jsonFile.toPath()), is("{}"));
+    assertThat(jsonExporter.importFromJson(jsonFile, CleanupPolicyData.class).size(), is(0));
+  }
+
+  @Test
+  public void testRestoreEmptyFileAddsNothing() throws Exception {
+    jsonExporter.exportToJson(Collections.emptyList(), jsonFile);
+
+    CleanupPolicyStorage cleanupPolicyStorage = mock(CleanupPolicyStorage.class);
+
+    CleanupPolicyExport importer = new CleanupPolicyExport(cleanupPolicyStorage);
+    importer.restore(jsonFile);
+
+    verify(cleanupPolicyStorage, never()).add(any());
   }
 
   private CleanupPolicy createCleanupPolicy(
@@ -92,5 +170,12 @@ public class CleanupPolicyExportTest
     policyData.setCriteria(criteria);
 
     return policyData;
+  }
+
+  private static <T extends CleanupPolicy> T findPolicy(final List<T> policies, final String name) {
+    return policies.stream()
+        .filter(policy -> name.equals(policy.getName()))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Expected a policy named " + name));
   }
 }

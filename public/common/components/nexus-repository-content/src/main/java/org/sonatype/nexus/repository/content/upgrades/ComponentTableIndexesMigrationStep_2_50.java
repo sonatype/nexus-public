@@ -17,13 +17,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.inject.Named;
-
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Adds indexes to {format}_component tables for existing databases.
@@ -37,7 +36,7 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * @since 3.87
  */
-@Named
+@Component
 public class ComponentTableIndexesMigrationStep_2_50
     implements DatabaseMigrationStep
 {

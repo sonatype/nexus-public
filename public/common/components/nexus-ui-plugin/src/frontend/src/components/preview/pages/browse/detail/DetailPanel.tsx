@@ -20,7 +20,6 @@ import {
   Code,
   Flex,
   Heading,
-  ScrollArea,
   Separator,
   Spinner,
   Tabs,
@@ -396,15 +395,25 @@ export function DetailPanel({
     const DELETE_TIMEOUT_MS = 30_000;
 
     try {
-      // Determine delete target. Order matters:
+      // Determine delete target. Order matters and MUST follow the selected node's type so the
+      // action matches what the panel renders:
       // 1. Package root "delete entire package" (asset node that has children, deleteAsFolder=true)
       // 2. Standard folder delete (folder nodes were previously a no-op — this is the fix)
-      // 3. Component or asset delete
+      // 3. Asset node -> delete ONLY that asset. The asset detail panel also loads componentData
+      //    (to show component info), so we must key off node.type here; otherwise deleting a single
+      //    asset would fall through to the componentData branch and cascade-delete the whole
+      //    component. For multi-asset components (e.g. a Terraform provider version, which holds one
+      //    zip per OS/arch) that wrongly removed every sibling platform.
+      // 4. Component node -> delete the component.
       let deletePromise: Promise<unknown>;
       if (node && node.type === 'asset' && !node.leaf && deleteAsFolder) {
         deletePromise = deleteFolder(node.id, repositoryName);
       } else if (node && node.type === 'folder') {
         deletePromise = deleteFolder(node.id, repositoryName);
+      } else if (node && node.type === 'asset' && assetData) {
+        // assetData.id is the RAW internal id from ExtDirect readAsset (not the
+        // base64 RepositoryItemIDXO the REST API expects); deleteAsset encodes it.
+        deletePromise = deleteAsset(assetData.id, repositoryName);
       } else if (componentData) {
         deletePromise = deleteComponent({
           id: componentData.id,
@@ -415,7 +424,7 @@ export function DetailPanel({
           version: componentData.version,
         });
       } else if (assetData) {
-        deletePromise = deleteAsset(assetData.id, repositoryName, true);
+        deletePromise = deleteAsset(assetData.id, repositoryName);
       } else {
         deletePromise = Promise.resolve();
       }
@@ -727,7 +736,7 @@ function ComponentDetails({
         <>
           <Separator size="4" />
           <Flex p="3" gap="2" justify="end">
-            {componentData && componentData.version && (
+            {componentData?.version && (
               <Button
                 variant="soft"
                 size="2"

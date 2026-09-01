@@ -15,9 +15,11 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.Event;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.AttributeOperation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ComponentSet;
@@ -69,6 +72,11 @@ public class ComponentStore<T extends ComponentDAO>
   private final boolean clustered;
 
   private static final int ASSET_BROWSE_LIMIT = 1000;
+
+  /**
+   * Caps how many unresolved assets are named in the warning logged by {@link #resolveAssetComponents}.
+   */
+  private static final int UNRESOLVED_LOG_LIMIT = 10;
 
   @Autowired
   public ComponentStore(
@@ -577,6 +585,7 @@ public class ComponentStore<T extends ComponentDAO>
     }
 
     List<FluentAsset> assets = fetchAssetsFromComponents(components);
+    components.ifPresent(componentList -> resolveAssetComponents(assets, componentList));
 
     if ("H2".equals(thisSession().sqlDialect())) {
       // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
@@ -586,16 +595,92 @@ public class ComponentStore<T extends ComponentDAO>
       purged += dao().purgeSelectedComponents(componentIds);
     }
 
-    components.ifPresent(
-        c -> postCommitEvent(() -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(c))));
+    components.ifPresent(componentList -> postCommitEvent(
+        () -> new ComponentsPurgedAuditEvent(repositoryId, Collections.unmodifiableList(componentList))));
 
     preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
     Supplier<Event> eventSupplier = components.<Supplier<Event>>map(
-        fluentComponents -> () -> new ComponentPurgedEvent(repositoryId, componentIds, assets))
+        componentList -> () -> new ComponentPurgedEvent(repositoryId, componentIds, assets))
         .orElseGet(() -> () -> new ComponentPurgedEvent(repositoryId, componentIds));
     postCommitEvent(eventSupplier);
 
     return purged;
+  }
+
+  /**
+   * Populates the {@code component} association of each asset about to be purged, using the components already held in
+   * memory.
+   * <p>
+   * The assets are read with lazy associations, but {@link ComponentPurgedEvent} is only posted once this transaction
+   * has committed, and subscribers may handle it asynchronously on another thread. By then both the asset and the
+   * component rows are gone, so a deferred load resolves to nothing and {@code asset.component()} is empty - unlike a
+   * single asset delete
+   * ({@link org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent AssetDeletedEvent}), where the owning
+   * component is left in place and the deferred load still resolves. Every asset fetched here belongs to one of the
+   * components being purged, so the association is satisfied from memory without issuing any additional queries.
+   */
+  private void resolveAssetComponents(final List<FluentAsset> assets, final List<FluentComponent> componentList) {
+    if (assets.isEmpty() || componentList.isEmpty()) {
+      return;
+    }
+
+    // Unwrap each component up front via a type-safe pattern match, so no unchecked cast can abort the purge
+    // transaction. A component not backed by ComponentData cannot take part in the in-memory resolution; its assets
+    // are counted below as having no matching component.
+    Map<Integer, ComponentData> componentsById = new HashMap<>(componentList.size());
+    for (FluentComponent component : componentList) {
+      if (InternalIds.unwrap(component) instanceof ComponentData componentData && componentData.componentId != null) {
+        componentsById.putIfAbsent(componentData.componentId, componentData);
+      }
+    }
+
+    int noMatchingComponent = 0;
+    int unexpectedDataType = 0;
+    List<String> unresolvedAssets = new ArrayList<>();
+
+    for (FluentAsset asset : assets) {
+      if (!(InternalIds.unwrap(asset) instanceof AssetData assetData)) {
+        unexpectedDataType++;
+        recordUnresolvedAsset(unresolvedAssets, asset, OptionalInt.empty());
+        continue;
+      }
+      // assetData.componentId is the materialized column, not the lazy association. It should always be populated
+      // for assets fetched via the component_id IN (...) filter, but guard defensively: a mismatch here would
+      // indicate a logic error elsewhere, and skipping the asset degrades to the pre-existing behaviour.
+      ComponentData component = assetData.componentId == null ? null : componentsById.get(assetData.componentId);
+      if (component == null) {
+        noMatchingComponent++;
+        recordUnresolvedAsset(unresolvedAssets, asset,
+            assetData.componentId == null ? OptionalInt.empty() : OptionalInt.of(assetData.componentId));
+        continue;
+      }
+      // the component was looked up by the asset's own component id, so it is by construction the component this
+      // asset belongs to; assigning the association also cancels the pending lazy load
+      assetData.setComponent(component);
+    }
+
+    int unresolved = noMatchingComponent + unexpectedDataType;
+    if (unresolved > 0) {
+      // Neither case is expected: every asset here was fetched by the component ids of componentList. Subscribers of
+      // ComponentPurgedEvent see an empty component() for these assets, so downstream systems such as the IQ Server
+      // are never told that they were removed.
+      log.warn("Could not resolve the component association of {} of {} assets being purged; {} had no matching"
+          + " component in the purge batch and {} were not backed by the expected data object."
+          + " Affected assets (up to {} shown): {}",
+          unresolved, assets.size(), noMatchingComponent, unexpectedDataType, UNRESOLVED_LOG_LIMIT,
+          unresolvedAssets);
+    }
+  }
+
+  private static void recordUnresolvedAsset(
+      final List<String> unresolvedAssets,
+      final FluentAsset asset,
+      final OptionalInt componentId)
+  {
+    if (unresolvedAssets.size() < UNRESOLVED_LOG_LIMIT) {
+      unresolvedAssets.add(asset.path() + " (component id "
+          + (componentId.isPresent() ? componentId.getAsInt() : "unknown") + ")");
+    }
   }
 
   private List<FluentAsset> fetchAssetsFromComponents(final Optional<List<FluentComponent>> components) {
@@ -604,19 +689,19 @@ public class ComponentStore<T extends ComponentDAO>
     }
 
     List<FluentComponent> componentList = components.get();
-    if (componentList.isEmpty() || componentList.get(0) == null || componentList.get(0).repository() == null) {
+    if (componentList.isEmpty()) {
       return Collections.emptyList();
     }
 
-    ContentFacetSupport contentFacet = (ContentFacetSupport) componentList.get(0)
-        .repository()
-        .facet(ContentFacet.class);
+    Repository repository = componentList.get(0).repository();
+    if (repository == null) {
+      return Collections.emptyList();
+    }
 
-    List<Integer> componentIds = componentList.stream()
+    ContentFacetSupport contentFacet = (ContentFacetSupport) repository.facet(ContentFacet.class);
+
+    String componentIdsStr = componentList.stream()
         .map(InternalIds::internalComponentId)
-        .toList();
-
-    String componentIdsStr = componentIds.stream()
         .map(String::valueOf)
         .collect(Collectors.joining(", "));
 
@@ -625,17 +710,17 @@ public class ComponentStore<T extends ComponentDAO>
 
     do {
       Continuation<FluentAsset> assetPage = contentFacet.assets()
-          .byFilter("component_id IN (" + componentIdsStr + ")", // Dynamically constructed IN clause
-              Map.of())
+          // byFilter has no parameterized IN form: the filter is inlined via MyBatis ${} substitution. Safe here
+          // because every value is a DB-assigned component id read back as an int, so nothing user-supplied reaches
+          // the SQL - do not extend this filter with values from any other source.
+          .byFilter("component_id IN (" + componentIdsStr + ")", Map.of())
           .browse(ASSET_BROWSE_LIMIT, continuationToken);
 
-      // Get the next continuation token BEFORE consuming the results
-      try {
-        continuationToken = assetPage.nextContinuationToken();
-      }
-      catch (IllegalStateException e) {
-        continuationToken = null;
-      }
+      // Get the next continuation token BEFORE consuming the results. An empty page means there are
+      // no more results, which ContinuationArrayList signals by throwing IllegalStateException from
+      // nextContinuationToken() - guard on isEmpty() rather than catching it, so that an unexpected
+      // IllegalStateException surfaces instead of being silently read as "no more pages".
+      continuationToken = assetPage.isEmpty() ? null : assetPage.nextContinuationToken();
       allAssets.addAll(assetPage);
     }
     while (continuationToken != null);

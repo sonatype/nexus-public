@@ -19,16 +19,16 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.text.UnitFormatter.formatStorage;
-import static java.lang.String.format;
-import org.springframework.stereotype.Component;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static org.sonatype.nexus.common.text.UnitFormatter.formatStorage;
 
 /**
- * A {@link BlobStoreQuota} which checks that a blob store has at least a certain amount of space left.
- *
- * @since 3.14
+ * A {@link BlobStoreQuota} which checks that a blob store has at least a certain amount of space remaining.
  */
 @Component
 @Qualifier(SpaceRemainingQuota.ID)
@@ -54,13 +54,14 @@ public class SpaceRemainingQuota
     boolean isUnlimited = blobStore.getMetrics().isUnlimited();
     long limit = getLimit(blobStore.getBlobStoreConfiguration());
 
-    String name = blobStore.getBlobStoreConfiguration().getName();
+    String rawName = blobStore.getBlobStoreConfiguration().getName();
+    String escapedName = StringEscapeUtils.escapeHtml4(rawName);
     String msg = format("Blob store %s is limited to having %s available space, and has %s space remaining",
-        name,
+        escapedName,
         formatStorage(limit),
         formatStorage(availableSpace));
 
-    return new BlobStoreQuotaResult(!isUnlimited && availableSpace < limit, name, msg);
+    return new BlobStoreQuotaResult(!isUnlimited && availableSpace < limit, rawName, msg);
   }
 
   @Override

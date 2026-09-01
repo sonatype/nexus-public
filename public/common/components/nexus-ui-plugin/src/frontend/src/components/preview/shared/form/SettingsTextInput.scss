@@ -43,5 +43,20 @@
     align-items: center;
     gap: var(--space-1);
   }
+
+  /*
+   * Monospace variant, for code-like values such as cron expressions (NEXUS-52338).
+   * Mirrors the existing `monospace` prop on SettingsTextArea.
+   *
+   * The class lands on Radix's TextField.Root, which is where Radix itself declares
+   * `font-family: var(--default-font-family)`; the inner <input> picks it up through
+   * Radix's `all: unset` reset rather than from a rule of its own. Written as a
+   * descendant selector so it outranks `.rt-TextFieldRoot` on specificity instead of
+   * relying on stylesheet order, which CssExtractRspackPlugin does not guarantee
+   * (`ignoreOrder: true`).
+   */
+  & &__input--mono {
+    font-family: var(--font-family-mono);
+  }
 }
 

@@ -304,6 +304,67 @@ describe('SettingsTransferList', () => {
     expect(screen.getByText('Item Two').closest('[role="option"]')).toHaveClass('settings-transfer-list__item--selected');
   });
 
+  describe('accessibility (I5)', () => {
+    it('associates the label with the selector group', () => {
+      render(<SettingsTransferList {...defaultProps} label="Granted Roles" />);
+
+      expect(screen.getByRole('group', { name: 'Granted Roles' })).toBeInTheDocument();
+    });
+
+    it('marks both lists as multi-selectable', () => {
+      render(<SettingsTransferList {...defaultProps} />);
+
+      const listboxes = screen.getAllByRole('listbox');
+      expect(listboxes).toHaveLength(2);
+      listboxes.forEach((listbox) => expect(listbox).toHaveAttribute('aria-multiselectable', 'true'));
+    });
+
+    it('moves an item to selected when Space is pressed on it', () => {
+      const onChange = jest.fn();
+      render(<SettingsTransferList {...defaultProps} onChange={onChange} />);
+
+      const available = screen.getAllByRole('listbox')[0];
+      fireEvent.keyDown(within(available).getByText('Item Two'), { key: ' ' });
+
+      expect(onChange).toHaveBeenCalledWith([{ id: '2', name: 'Item Two' }]);
+    });
+
+    it('moves an item to selected when Enter is pressed on it', () => {
+      const onChange = jest.fn();
+      render(<SettingsTransferList {...defaultProps} onChange={onChange} />);
+
+      const available = screen.getAllByRole('listbox')[0];
+      fireEvent.keyDown(within(available).getByText('Item One'), { key: 'Enter' });
+
+      expect(onChange).toHaveBeenCalledWith([{ id: '1', name: 'Item One' }]);
+    });
+
+    it('announces list counts via polite live regions', () => {
+      render(<SettingsTransferList {...defaultProps} />);
+
+      expect(screen.getByText('4 items')).toHaveAttribute('aria-live', 'polite');
+    });
+
+    it('shows a visible required indicator ("*") when required is set', () => {
+      const { container } = render(<SettingsTransferList {...defaultProps} label="Repos" required />);
+
+      // The visible "*" appears in the label (aria-hidden so AT reads the label unadorned).
+      // aria-required is not a valid attribute on role="group" and must not be set.
+      expect(container.querySelector('.settings-transfer-list__label')).toHaveTextContent('*');
+      expect(screen.getByRole('group', { name: 'Repos' })).not.toHaveAttribute('aria-required');
+    });
+
+    it('shows and associates an error message', () => {
+      render(<SettingsTransferList {...defaultProps} label="Repos" error="At least one is required" />);
+
+      const group = screen.getByRole('group', { name: 'Repos' });
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('At least one is required');
+      expect(group).toHaveAttribute('aria-invalid', 'true');
+      expect(group).toHaveAttribute('aria-describedby', alert.id);
+    });
+  });
+
   describe('testId prop', () => {
     it('sets data-testid on root when testId provided', () => {
       render(<SettingsTransferList {...defaultProps} testId="user-roles" />);
@@ -365,6 +426,41 @@ describe('SettingsTransferList', () => {
     it('does not set testId attributes when testId not provided', () => {
       const { container } = render(<SettingsTransferList {...defaultProps} />);
       expect(container.firstChild).not.toHaveAttribute('data-testid');
+    });
+  });
+
+  describe('selectedEmptyText ("empty = all" sentinel fields)', () => {
+    it('keeps the default empty state when selectedEmptyText is not provided', () => {
+      render(<SettingsTransferList {...defaultProps} selectedItems={[]} />);
+      expect(screen.getByText('No items selected')).toBeInTheDocument();
+    });
+
+    it('shows the custom copy and an "All items" count when empty and selectedEmptyText is set', () => {
+      render(
+        <SettingsTransferList {...defaultProps} selectedItems={[]} selectedEmptyText="All Blob Stores selected" />
+      );
+      expect(screen.getByText('All Blob Stores selected')).toBeInTheDocument();
+      expect(screen.queryByText('No items selected')).not.toBeInTheDocument();
+      expect(screen.getByText('All items')).toBeInTheDocument();
+    });
+
+    it('reverts to the normal count and hides the custom copy once an item is selected', () => {
+      render(
+        <SettingsTransferList {...defaultProps} selectedItems={[allItems[0]]} selectedEmptyText="All Blob Stores selected" />
+      );
+      expect(screen.queryByText('All Blob Stores selected')).not.toBeInTheDocument();
+      expect(screen.getByText('1 item')).toBeInTheDocument();
+    });
+
+    it('shows "No matches" (not the custom copy) when a Selected-column search yields nothing', () => {
+      render(
+        <SettingsTransferList {...defaultProps} selectedItems={[]} selectedEmptyText="All Blob Stores selected" />
+      );
+      // Second search box filters the Selected column.
+      const searchInputs = screen.getAllByPlaceholderText('Filter...');
+      fireEvent.change(searchInputs[1], { target: { value: 'zzz' } });
+      expect(screen.getByText('No matches')).toBeInTheDocument();
+      expect(screen.queryByText('All Blob Stores selected')).not.toBeInTheDocument();
     });
   });
 });

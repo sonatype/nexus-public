@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-jetty</artifactId>
@@ -28,8 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <!-- NEXUS-51175: Upgraded from 12.0.17 to 12.0.33 to address security vulnerabilities (CVSS 6.5) -->
-    <eclipse-jetty.version>12.0.33</eclipse-jetty.version>
+    <eclipse-jetty.version>12.1.11</eclipse-jetty.version>
   </properties>
 
   <dependencyManagement>

@@ -13,22 +13,15 @@
 
 import React from 'react';
 import { Box, Text } from '@radix-ui/themes';
-import { ExtJS } from '../../../../../../../interface/ExtJS';
 
 import { GrantWizard } from '../grant/GrantWizard';
+import { canGrantAccess } from '../utils/endpointPermissions';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
 
 export interface GrantAccessTabProps {
   row: MergedApiEndpoint;
   /** When false, skip loading grant wizard data */
   active: boolean;
-}
-
-function canGrantAccess(): boolean {
-  const rolesRead = ExtJS.checkPermission('nexus:roles:read');
-  const rolesWrite = ExtJS.checkPermission('nexus:roles:update') || ExtJS.checkPermission('nexus:roles:create');
-  const usersUpdate = ExtJS.checkPermission('nexus:users:update');
-  return rolesRead && rolesWrite && usersUpdate;
 }
 
 export function GrantAccessTab({ row, active }: GrantAccessTabProps) {

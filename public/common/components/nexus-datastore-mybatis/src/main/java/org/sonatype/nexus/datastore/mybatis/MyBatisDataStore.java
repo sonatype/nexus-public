@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,6 +94,7 @@ import com.google.common.reflect.TypeToken;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
+import com.zaxxer.hikari.util.PropertyElf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
@@ -164,7 +166,9 @@ public class MyBatisDataStore
 
   private static final Splitter KEY_VALUE = onPattern("[=:]").limit(2).trimResults().omitEmptyStrings();
 
-  private static final MapSplitter TO_MAP = BY_LINE.withKeyValueSeparator(KEY_VALUE);
+  // package-private for reuse by MyBatisDataStoreDescriptor.validate() — the validator MUST parse
+  // identically to the runtime injection below to prevent a parser-differential bypass.
+  static final MapSplitter TO_MAP = BY_LINE.withKeyValueSeparator(KEY_VALUE);
 
   private static final Pattern MAPPER_BODY = compile(".*<mapper[^>]*>(.*)</mapper>", DOTALL);
 
@@ -564,10 +568,24 @@ public class MyBatisDataStore
       log.info("jdbcUrl updated to {}", jdbcUrl);
       properties.setProperty(JDBC_URL, jdbcUrl);
     }
-    // Parse and unflatten advanced attributes
+    // Parse advanced attributes and split them by destination: keys that match a real
+    // HikariConfig pool-level property (e.g. initializationFailTimeout, maximumPoolSize) are
+    // applied to the pool config as before; everything else is a JDBC driver-level connection
+    // property (e.g. loggerLevel, socketTimeout) and must go to the DataSource instead, or
+    // HikariConfig's own Properties constructor rejects it with "Property X does not exist on
+    // target class HikariConfig" (NEXUS-53610).
     Object advanced = properties.remove(ADVANCED);
+    Map<String, String> driverProperties = new LinkedHashMap<>();
     if (advanced instanceof String) {
-      TO_MAP.split((String) advanced).forEach(properties::putIfAbsent);
+      Set<String> hikariPropertyNames = PropertyElf.getPropertyNames(HikariConfig.class);
+      TO_MAP.split((String) advanced).forEach((key, value) -> {
+        if (hikariPropertyNames.contains(key)) {
+          properties.putIfAbsent(key, value);
+        }
+        else {
+          driverProperties.put(key, value);
+        }
+      });
     }
 
     // Hikari doesn't like blank schemas in its config
@@ -581,6 +599,8 @@ public class MyBatisDataStore
     if (properties.getProperty(JDBC_URL, "").startsWith("jdbc:postgresql")) {
       configureHikariForPostgresql(hikariConfig, properties);
     }
+
+    driverProperties.forEach(hikariConfig::addDataSourceProperty);
 
     return hikariConfig;
   }

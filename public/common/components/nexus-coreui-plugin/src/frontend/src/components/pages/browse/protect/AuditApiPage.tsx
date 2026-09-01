@@ -15,6 +15,8 @@ import React, { useState } from 'react';
 import { Box, Card, Flex, Heading, Text, Code, Badge, Separator, Tabs } from '@radix-ui/themes';
 import { ExternalLink } from 'lucide-react';
 
+import './AuditApiPage.scss';
+
 /**
  * Audit API Documentation Page
  *
@@ -89,7 +91,7 @@ export function AuditApiPage() {
   const selectedEndpointData = endpoints.find((e) => e.id === selectedEndpoint);
 
   return (
-    <Box p="6" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <Box p="6" className="nxrm-audit-api-page">
       <Flex direction="column" gap="4">
         {/* Header */}
         <Box>
@@ -105,7 +107,7 @@ export function AuditApiPage() {
 
         {/* Overview Cards */}
         <Flex gap="4" wrap="wrap">
-          <Card style={{ flex: '1 1 300px' }}>
+          <Card className="nxrm-audit-api-page__summary-card">
             <Flex direction="column" gap="2">
               <Text size="2" weight="bold" color="gray">
                 Base URL
@@ -113,7 +115,7 @@ export function AuditApiPage() {
               <Code size="2">/service/rest/internal/ui</Code>
             </Flex>
           </Card>
-          <Card style={{ flex: '1 1 300px' }}>
+          <Card className="nxrm-audit-api-page__summary-card">
             <Flex direction="column" gap="2">
               <Text size="2" weight="bold" color="gray">
                 Authentication
@@ -121,7 +123,7 @@ export function AuditApiPage() {
               <Text size="2">Basic Auth (admin credentials required)</Text>
             </Flex>
           </Card>
-          <Card style={{ flex: '1 1 300px' }}>
+          <Card className="nxrm-audit-api-page__summary-card">
             <Flex direction="column" gap="2">
               <Text size="2" weight="bold" color="gray">
                 Content Type
@@ -143,7 +145,7 @@ export function AuditApiPage() {
             <Flex direction="column" gap="4">
               {/* Method and Path */}
               <Flex align="center" gap="3">
-                <Badge color="green" size="2" style={{ fontFamily: 'monospace' }}>
+                <Badge color="green" size="2" className="nxrm-audit-api-page__method-badge">
                   {selectedEndpointData.method}
                 </Badge>
                 <Code size="3">{selectedEndpointData.path}</Code>
@@ -203,7 +205,7 @@ export function AuditApiPage() {
                   Response Body
                 </Heading>
                 <Card variant="surface">
-                  <Code size="2" style={{ display: 'block', whiteSpace: 'pre', overflowX: 'auto' }}>
+                  <Code size="2" className="nxrm-audit-api-page__code-block">
                     {JSON.stringify(selectedEndpointData.response, null, 2)}
                   </Code>
                 </Card>
@@ -228,7 +230,7 @@ export function AuditApiPage() {
                   {selectedEndpointData.examples.map((example, idx) => (
                     <Tabs.Content key={idx} value={idx.toString()}>
                       <Card variant="surface" mt="3">
-                        <Code size="2" style={{ display: 'block', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
+                        <Code size="2" className="nxrm-audit-api-page__code-block nxrm-audit-api-page__code-block--wrap">
                           {example.curl}
                         </Code>
                       </Card>
@@ -327,9 +329,9 @@ export function AuditApiPage() {
               href="http://localhost:8081/?debug#preview/admin/system/api"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ textDecoration: 'none' }}
+              className="nxrm-audit-api-page__plain-link"
             >
-              <Flex align="center" gap="2" style={{ color: 'var(--accent-11)' }}>
+              <Flex align="center" gap="2" className="nxrm-audit-api-page__link-accent">
                 <Text size="2" weight="medium">
                   Open Swagger UI
                 </Text>

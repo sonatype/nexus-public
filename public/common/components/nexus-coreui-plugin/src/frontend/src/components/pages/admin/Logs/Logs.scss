@@ -69,7 +69,7 @@
       padding: var(--nx-spacing-4x);
       flex: 1;
       color: var(--nx-color-text);
-      font-family: 'Courier New', Courier, monospace;
+      font-family: var(--font-family-mono);
       font-size: var(--nx-font-size-xs);
     }
   }

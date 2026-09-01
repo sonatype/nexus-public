@@ -28,6 +28,9 @@ import {
 import { ProtectionLevelSelector, type ProtectionLevel } from './ProtectionLevelSelector';
 import { useRepositoriesApi } from './useRepositoriesApi';
 import { restClient, ENDPOINTS } from '../../../../../../interface/api';
+import { useToast } from '../../../../shared';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 
 export interface RepositoryFirewallConfigTabProps {
   repositoryName: string;
@@ -72,6 +75,26 @@ export function RepositoryFirewallConfigTab({
   const { enableAudit, enableQuarantine, enablePccs, disable, loading, error } =
     useFirewallEnable(repositoryName);
   const { enableHealthCheck, disableHealthCheck } = useRepositoriesApi();
+  const toast = useToast();
+
+  // Hide health-check enable/disable actions for users without healthcheck:update (NEXUS-54212).
+  // Use the provider-independent ExtJS.usePermission: the context-based usePermission returns
+  // false without a <PermissionsProvider> ancestor, which coreui (self-hosted) never mounts, so
+  // the actions would be hidden even from admins. Depend on hasUser so the check re-evaluates
+  // once the user and their permissions load (they arrive asynchronously after mount).
+  const hasUser = ExtJS.useUser() ?? false;
+  const canUpdateHealthCheck = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.HEALTHCHECK.UPDATE),
+    [hasUser],
+  );
+  // Changing the protection level calls disable()/enableAudit()/enableQuarantine()/enablePccs(),
+  // all of which mutate firewall config, so gate the selector on repository-admin edit — mirroring
+  // the sibling FirewallCard. Without it a repository-admin:read user could pick a mode from the
+  // Preview UI and only hit a backend 403, the exact behaviour NEXUS-54212 removes.
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
 
   const fetchStatus = useCallback(async () => {
     if (!hasFirewallLicense) {
@@ -185,10 +208,11 @@ export function RepositoryFirewallConfigTab({
   const handleEnableHealthCheck = async () => {
     try {
       await enableHealthCheck(repositoryName);
-      setHealthCheck((p) => (p ? { ...p, enabled: true, analyzing: true } : { enabled: true, analyzing: true }));
+      setHealthCheck((p) => (p ? { ...p, enabled: true, analyzing: false } : { enabled: true, analyzing: false }));
       onEnableSuccess?.();
-    } catch {
-      // Best effort
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to enable Health Check';
+      toast.warning(`Health Check could not be enabled for "${repositoryName}": ${message}`);
     }
   };
 
@@ -197,8 +221,9 @@ export function RepositoryFirewallConfigTab({
       await disableHealthCheck(repositoryName);
       setHealthCheck((p) => (p ? { ...p, enabled: false, analyzing: false } : { enabled: false }));
       onEnableSuccess?.();
-    } catch {
-      // Best effort
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to disable Health Check';
+      toast.error(`Health Check could not be disabled for "${repositoryName}": ${message}`);
     }
   };
 
@@ -236,21 +261,23 @@ export function RepositoryFirewallConfigTab({
             )}
 
             {hasFirewallLicense ? (
-              <Box>
-                <Text size="2" weight="medium" mb="2" as="p">
-                  Protection level
-                </Text>
-                <ProtectionLevelSelector
-                  value={protectionLevel}
-                  onChange={handleProtectionChange}
-                  disabled={loading}
-                  size="2"
-                  pccsSupported={pccsSupported}
-                />
-                <Text size="1" color="gray" mt="2">
-                  Audit trail: Configuration change history will be available in a future release.
-                </Text>
-              </Box>
+              canEditFirewall && (
+                <Box>
+                  <Text size="2" weight="medium" mb="2" as="p">
+                    Protection level
+                  </Text>
+                  <ProtectionLevelSelector
+                    value={protectionLevel}
+                    onChange={handleProtectionChange}
+                    disabled={loading}
+                    size="2"
+                    pccsSupported={pccsSupported}
+                  />
+                  <Text size="1" color="gray" mt="2">
+                    Audit trail: Configuration change history will be available in a future release.
+                  </Text>
+                </Box>
+              )
             ) : (
               <Flex direction="column" gap="3">
                 <Text size="2" color="gray">
@@ -313,17 +340,19 @@ export function RepositoryFirewallConfigTab({
                     {healthCheck.analyzing ? 'Analyzing…' : 'Enabled'}
                   </Text>
                 </Flex>
-                <Flex gap="2">
-                  <Button
-                    type="button"
-                    variant="soft"
-                    color="red"
-                    size="2"
-                    onClick={handleDisableHealthCheck}
-                  >
-                    Disable Health Check
-                  </Button>
-                </Flex>
+                {canUpdateHealthCheck && (
+                  <Flex gap="2">
+                    <Button
+                      type="button"
+                      variant="soft"
+                      color="red"
+                      size="2"
+                      onClick={handleDisableHealthCheck}
+                    >
+                      Disable Health Check
+                    </Button>
+                  </Flex>
+                )}
               </Flex>
             ) : (
               <Flex direction="column" gap="3">
@@ -338,17 +367,19 @@ export function RepositoryFirewallConfigTab({
                     Disabled
                   </Text>
                 </Flex>
-                <Flex gap="2">
-                  <Button
-                    type="button"
-                    variant="solid"
-                    color="blue"
-                    size="2"
-                    onClick={handleEnableHealthCheck}
-                  >
-                    Enable Health Check
-                  </Button>
-                </Flex>
+                {canUpdateHealthCheck && (
+                  <Flex gap="2">
+                    <Button
+                      type="button"
+                      variant="solid"
+                      color="blue"
+                      size="2"
+                      onClick={handleEnableHealthCheck}
+                    >
+                      Enable Health Check
+                    </Button>
+                  </Flex>
+                )}
               </Flex>
             )}
           </Flex>

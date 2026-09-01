@@ -294,7 +294,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     };
 
     renderComponent({}, errorState);
-    
+
 
     const retryButton = screen.getByText('Retry');
     userEvent.click(retryButton);
@@ -453,7 +453,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     // Initial state: saving
     const savingState = {
       ...defaultMachineState,
-      matches: jest.fn((state) => state === 'saving')
+      matches: jest.fn((state) => state === 'patchingRepositories')
     };
 
     const {rerender} = renderComponent({}, savingState);
@@ -481,7 +481,11 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     expect(mockRouter.stateService.go).toHaveBeenCalledWith('admin.sonatypelifecycle');
   });
 
-  it('does not navigate when save fails', () => {
+  it('navigates to lifecycle page after successful first-time PUT save', () => {
+    // First-time user flow: the machine enters the 'saving' state on PUT
+    // (not 'patchingRepositories', which is the PATCH flow for returning users).
+    // The isSaving computation in the component includes 'saving' explicitly —
+    // this test guards against regressions where 'saving' is removed from the check.
     const mockRouter = {
       stateService: {
         go: jest.fn()
@@ -494,6 +498,44 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     const savingState = {
       ...defaultMachineState,
       matches: jest.fn((state) => state === 'saving')
+    };
+
+    const {rerender} = renderComponent({}, savingState);
+
+    const loadedState = {
+      ...defaultMachineState,
+      matches: jest.fn((state) => state === 'loaded'),
+      context: {
+        ...defaultMachineState.context,
+        saveError: null
+      }
+    };
+
+    useMachine.mockReturnValue([loadedState, mockSend]);
+    rerender(
+      <HostedRepositoriesEvaluationRepositoriesTab
+        settingsData={mockSettingsData}
+        initialSelectedRepositories={[]}
+        onSelectionChange={mockOnSelectionChange}
+      />
+    );
+
+    expect(mockRouter.stateService.go).toHaveBeenCalledWith('admin.sonatypelifecycle');
+  });
+
+  it('does not navigate when save fails', () => {
+    const mockRouter = {
+      stateService: {
+        go: jest.fn()
+      }
+    };
+
+    const {useRouter} = require('@uirouter/react');
+    useRouter.mockReturnValue(mockRouter);
+
+    const savingState = {
+      ...defaultMachineState,
+      matches: jest.fn((state) => state === 'patchingRepositories')
     };
 
     const {rerender} = renderComponent({}, savingState);
@@ -711,7 +753,10 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
     renderComponent({globalConfigAvailable: true, initialSelectedRepositories: []}, stateWithCustomEnabled);
 
-    // repo1 is isSelected:true so it gets auto-selected on init; Disable Monitoring is shown
+    // Selection now starts empty regardless of monitoring state — click the row first.
+    const checkboxes = screen.getAllByRole('checkbox');
+    await userEvent.click(checkboxes[1]);
+
     // Repo is already enabled so Disable Monitoring is shown — click it to set pending=false
     const disableButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring);
     await userEvent.click(disableButton);
@@ -759,7 +804,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       jest.clearAllTimers();
     });
 
-    it('sends PATCH event for returning users with repository changes via Enable Monitoring', async () => {
+    it('sends PATCH_REPOSITORIES event for returning users with repository changes via Enable Monitoring', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -791,14 +836,14 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         const updateCall = mockSend.mock.calls.find(call =>
           call[0].type === 'UPDATE' &&
           call[0].data &&
-          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined || call[0].data.settings !== undefined)
+          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined)
         );
         expect(updateCall).toBeDefined();
-        expect(mockSend).toHaveBeenCalledWith('PATCH');
+        expect(mockSend).toHaveBeenCalledWith('PATCH_REPOSITORIES');
       });
     });
 
-    it('sends PATCH event for returning users after Enable Monitoring is clicked', async () => {
+    it('sends PATCH_REPOSITORIES event for returning users after Enable Monitoring is clicked', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -830,7 +875,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       await userEvent.click(updateButton);
 
       await waitFor(() => {
-        expect(mockSend).toHaveBeenCalledWith('PATCH');
+        expect(mockSend).toHaveBeenCalledWith('PATCH_REPOSITORIES');
       });
     });
 
@@ -867,7 +912,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       expect(updateButton).toBeDisabled();
     });
 
-    it('redirects to Lifecycle page after successful PATCH', async () => {
+    it('redirects to Lifecycle page after successful PATCH_REPOSITORIES', async () => {
       const mockRouter = {
         stateService: {
           go: jest.fn()
@@ -879,7 +924,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
       const patchingState = {
         ...defaultMachineState,
-        matches: jest.fn((state) => state === 'patching'),
+        matches: jest.fn((state) => state === 'patchingRepositories'),
         context: {
           ...defaultMachineState.context,
           saveError: null
@@ -895,7 +940,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         }
       };
 
-      // First render: component mounts in patching state
+      // First render: component mounts in patchingRepositories state
       useMachine.mockReturnValue([patchingState, mockSend]);
       const {rerender} = render(
         <HostedRepositoriesEvaluationRepositoriesTab
@@ -905,7 +950,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         />
       );
 
-      // Rerender: transition to loaded state (simulates successful PATCH)
+      // Rerender: transition to loaded state (simulates successful PATCH_REPOSITORIES)
       useMachine.mockReturnValue([loadedState, mockSend]);
       rerender(
         <HostedRepositoriesEvaluationRepositoriesTab
@@ -920,7 +965,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       });
     });
 
-    it('does not redirect when PATCH fails', async () => {
+    it('does not redirect when PATCH_REPOSITORIES fails', async () => {
       const mockRouter = {
         stateService: {
           go: jest.fn()
@@ -932,7 +977,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
       const patchingState = {
         ...defaultMachineState,
-        matches: jest.fn((state) => state === 'patching'),
+        matches: jest.fn((state) => state === 'patchingRepositories'),
         context: {
           ...defaultMachineState.context,
           saveError: null
@@ -948,7 +993,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         }
       };
 
-      // First render: component mounts in patching state
+      // First render: component mounts in patchingRepositories state
       useMachine.mockReturnValue([patchingState, mockSend]);
       const {rerender} = render(
         <HostedRepositoriesEvaluationRepositoriesTab
@@ -958,7 +1003,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         />
       );
 
-      // Rerender: transition to loaded state with error (simulates failed PATCH)
+      // Rerender: transition to loaded state with error (simulates failed PATCH_REPOSITORIES)
       useMachine.mockReturnValueOnce([loadedStateWithError, mockSend]);
       rerender(
         <HostedRepositoriesEvaluationRepositoriesTab
@@ -1010,16 +1055,18 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         const updateCall = mockSend.mock.calls.find(call =>
           call[0].type === 'UPDATE' &&
           call[0].data &&
-          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined || call[0].data.settings !== undefined)
+          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined)
         );
         expect(updateCall).toBeDefined();
         expect(updateCall[0].data).toEqual(expect.objectContaining({
           repositoriesToAdd: ['repo-2']
         }));
+        // Settings should NOT be included in PATCH_REPOSITORIES
+        expect(updateCall[0].data.settings).toBeUndefined();
       });
     });
 
-    it('checking a row without clicking Enable Monitoring keeps the Update button disabled when settings unchanged', async () => {
+    it('checking a row without clicking Enable Monitoring keeps the Update button disabled', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -1030,7 +1077,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
             artifactLatestVersions: '5',
             policyEvaluationStage: 'build',
             autoEnrollNewRepos: false,
-            versionDepth: 5
           },
           repositories: [
             {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true},
@@ -1048,7 +1094,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
           artifactLatestVersions: '5',
           policyEvaluationStage: 'build',
           applyToNewRepos: false,
-          versionDepth: '5'
         }
       }, returningUserState);
 
@@ -1056,13 +1101,13 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       const checkbox = screen.getAllByRole('checkbox')[2];
       await userEvent.click(checkbox);
 
-      // Update button should remain disabled since Enable/Disable Monitoring was not clicked AND settings unchanged
+      // Update button should remain disabled since Enable/Disable Monitoring was not clicked
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
       expect(updateButton).toBeDisabled();
-      expect(mockSend).not.toHaveBeenCalledWith('PATCH');
+      expect(mockSend).not.toHaveBeenCalledWith('PATCH_REPOSITORIES');
     });
 
-    it('Update button is enabled when settings have changed without monitoring changes', async () => {
+    it('Update button remains disabled when only settings have changed (settings handled by SettingsTab)', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -1073,7 +1118,6 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
             artifactLatestVersions: '5',
             policyEvaluationStage: 'build',
             autoEnrollNewRepos: false,
-            versionDepth: 5
           },
           repositories: [
             {id: 'repo-1', name: 'Maven Central', format: 'maven2', type: 'hosted', isSelected: true},
@@ -1091,13 +1135,12 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
           artifactLatestVersions: '5',
           policyEvaluationStage: 'build',
           applyToNewRepos: false,
-          versionDepth: '5'
         }
       }, returningUserState);
 
-      // Update button should be enabled because settings changed (activityTimeFrame 60 → 30)
+      // Update button should remain disabled — settings changes are now handled independently by SettingsTab
       const updateButton = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update);
-      expect(updateButton).not.toBeDisabled();
+      expect(updateButton).toBeDisabled();
     });
 
     it('calculates repositoriesToRemove from Disable Monitoring button click, not checkbox deselection', async () => {
@@ -1122,13 +1165,11 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         initialSelectedRepositories: ['repo-1']
       }, returningUserState);
 
-      // Wait for initial selection (repo-1 checked) to be reflected
-      await waitFor(() => {
-        const checkboxes = screen.getAllByRole('checkbox');
-        expect(checkboxes[1]).toBeChecked();
-      });
+      // Selection starts empty regardless of monitoring state — click the enabled
+      // row (repo-1) first so Disable Monitoring becomes available.
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[1]);
 
-      // Click Disable Monitoring on the already-selected repo-1
       const disableBtn = screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring);
       await userEvent.click(disableBtn);
 
@@ -1139,16 +1180,18 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         const updateCall = mockSend.mock.calls.find(call =>
           call[0].type === 'UPDATE' &&
           call[0].data &&
-          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined || call[0].data.settings !== undefined)
+          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined)
         );
         expect(updateCall).toBeDefined();
         expect(updateCall[0].data).toEqual(expect.objectContaining({
           repositoriesToRemove: ['repo-1']
         }));
+        // Settings should NOT be included in PATCH_REPOSITORIES
+        expect(updateCall[0].data.settings).toBeUndefined();
       });
     });
 
-    it('only includes changed settings in PATCH payload', async () => {
+    it('PATCH_REPOSITORIES does not include settings (settings handled by SettingsTab)', async () => {
       const returningUserState = {
         ...defaultMachineState,
         context: {
@@ -1189,14 +1232,12 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         const updateCall = mockSend.mock.calls.find(call =>
           call[0].type === 'UPDATE' &&
           call[0].data &&
-          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined || call[0].data.settings !== undefined)
+          (call[0].data.repositoriesToAdd !== undefined || call[0].data.repositoriesToRemove !== undefined)
         );
         expect(updateCall).toBeDefined();
-        expect(updateCall[0].data.settings).toEqual({
-          activityTimeFrame: '90'
-        });
-        expect(updateCall[0].data.settings.enableFirewallAutoBlocking).toBeUndefined();
-        expect(updateCall[0].data.settings.enableQuarantine).toBeUndefined();
+        // Settings should NOT be included in PATCH_REPOSITORIES - settings are handled by SettingsTab
+        expect(updateCall[0].data.settings).toBeUndefined();
+        expect(updateCall[0].data.repositoriesToAdd).toEqual(['repo-2']);
       });
     });
   });
@@ -1237,6 +1278,26 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       expect(rows[2]).toHaveTextContent('Disabled');
     });
 
+    it('does not auto-select rows based on existing monitoring state on initial load', async () => {
+      renderComponent({globalConfigAvailable: true, initialSelectedRepositories: []}, returningUserState);
+
+      await waitFor(() => {
+        expect(screen.getByText('Monitoring')).toBeInTheDocument();
+      });
+
+      const checkboxes = screen.getAllByRole('checkbox');
+      // checkboxes[0] is select-all; data rows are checkboxes[1..]
+      // Mock data: repo1 has isSelected:true (monitored), repo2 has isSelected:false.
+      // Neither should be pre-checked — selection is independent of monitoring state.
+      expect(checkboxes[1]).not.toBeChecked();
+      expect(checkboxes[2]).not.toBeChecked();
+
+      // Bulk-action buttons must be hidden until the user explicitly selects rows
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring)).not.toBeInTheDocument();
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).not.toBeInTheDocument();
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection)).not.toBeInTheDocument();
+    });
+
     it('does not show Enable/Disable Monitoring buttons when no rows are checked', async () => {
       const noSelectionState = {
         ...returningUserState,
@@ -1256,6 +1317,10 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
     it('shows Disable Monitoring (not Enable) when all checked rows are already enabled', async () => {
       renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      // Mock data: checkboxes[1] is the already-enabled Maven Central row
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[1]);
 
       await waitFor(() => {
         expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).toBeInTheDocument();
@@ -1291,6 +1356,10 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     it('clicking Disable Monitoring updates Monitoring column to Disabled without calling API', async () => {
       renderComponent({globalConfigAvailable: true}, returningUserState);
 
+      // Check the already-enabled row first to make Disable Monitoring available
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[1]);
+
       await waitFor(() => {
         expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring)).toBeInTheDocument();
       });
@@ -1306,6 +1375,9 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
     it('shows Clear Selection button when rows are checked', async () => {
       renderComponent({globalConfigAvailable: true}, returningUserState);
 
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[1]);
+
       await waitFor(() => {
         expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection)).toBeInTheDocument();
       });
@@ -1313,6 +1385,9 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
     it('clicking Clear Selection unchecks all rows', async () => {
       renderComponent({globalConfigAvailable: true}, returningUserState);
+
+      const checkboxes = screen.getAllByRole('checkbox');
+      await userEvent.click(checkboxes[1]);
 
       await waitFor(() => {
         expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection)).toBeInTheDocument();
@@ -1326,22 +1401,11 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
 
   describe('handleRepositoryLinkClick', () => {
     const {ExtJS} = require('@sonatype/nexus-ui-plugin');
-    let mockRouter;
     let originalLocation;
-    let originalExt;
+    let originalNX;
 
     beforeEach(() => {
       jest.clearAllMocks();
-      jest.useFakeTimers();
-
-      mockRouter = {
-        stateService: {
-          go: jest.fn(),
-          href: jest.fn(() => '#admin/iq-server/hosted-repositories-evaluation?activeTab=1')
-        }
-      };
-
-      require('@uirouter/react').useRouter.mockReturnValue(mockRouter);
 
       originalLocation = window.location;
       delete window.location;
@@ -1351,20 +1415,19 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
         replace: jest.fn()
       };
 
-      originalExt = window.Ext;
-      window.Ext = {
-        History: {
-          add: jest.fn()
-        }
+      originalNX = window.NX;
+      window.NX = {
+        getApplication: jest.fn(() => ({
+          getController: jest.fn(() => ({currentIndex: 1}))
+        }))
       };
 
       window.dirty = ['something'];
     });
 
     afterEach(() => {
-      jest.useRealTimers();
       window.location = originalLocation;
-      window.Ext = originalExt;
+      window.NX = originalNX;
     });
 
     it('calls ExtJS.setDirtyStatus with correct parameters', async () => {
@@ -1386,8 +1449,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       expect(ExtJS.setDirtyStatus).toHaveBeenCalledWith('HostedRepositoriesEvaluationMachine', false);
     });
 
-
-    it('performs two-step navigation sequence with ExtJS History', async () => {
+    it('sets window.location.hash to the target repository hash', async () => {
       const loadedState = {
         value: 'loaded',
         context: {
@@ -1403,17 +1465,15 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       const mavenLink = screen.getByRole('link', {name: 'Maven Central'});
       await userEvent.click(mavenLink);
 
-      expect(window.Ext.History.add).toHaveBeenCalledWith('admin/iq-server/hosted-repositories-evaluation?activeTab=1');
-      expect(window.Ext.History.add).toHaveBeenCalledWith('admin/repository/repositories');
-
-      jest.advanceTimersByTime(100);
-
-      expect(window.location.replace).toHaveBeenCalledWith(
-        'http://localhost:8081/#admin/repository/repositories:Maven%20Central'
-      );
+      expect(window.location.hash).toBe('admin/repository/repositories:Maven%20Central');
     });
 
-    it('encodes repository names with special characters correctly', async () => {
+    it('resets ExtJS Drilldown currentIndex to 0 before navigating', async () => {
+      const mockController = {currentIndex: 1};
+      window.NX.getApplication.mockReturnValue({
+        getController: jest.fn(() => mockController)
+      });
+
       const loadedState = {
         value: 'loaded',
         context: {
@@ -1429,15 +1489,11 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       const mavenLink = screen.getByRole('link', {name: 'Maven Central'});
       await userEvent.click(mavenLink);
 
-      jest.advanceTimersByTime(100);
-
-      expect(window.location.replace).toHaveBeenCalledWith(
-        expect.stringContaining('Maven%20Central')
-      );
+      expect(mockController.currentIndex).toBe(0);
     });
 
-    it('works without window.Ext.History using location.hash fallback', async () => {
-      window.Ext = undefined;
+    it('navigates without error when window.NX is absent', async () => {
+      window.NX = undefined;
 
       const loadedState = {
         value: 'loaded',
@@ -1454,13 +1510,7 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       const mavenLink = screen.getByRole('link', {name: 'Maven Central'});
       await userEvent.click(mavenLink);
 
-      expect(window.location.hash).toBe('admin/repository/repositories');
-
-      jest.advanceTimersByTime(100);
-
-      expect(window.location.replace).toHaveBeenCalledWith(
-        'http://localhost:8081/#admin/repository/repositories:Maven%20Central'
-      );
+      expect(window.location.hash).toBe('admin/repository/repositories:Maven%20Central');
     });
 
     it('prevents default link behavior', async () => {
@@ -1483,6 +1533,58 @@ describe('HostedRepositoriesEvaluationRepositoriesTab', () => {
       mavenLink.dispatchEvent(clickEvent);
 
       expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Saving feedback (NxSubmitMask + bulk-button disabled state)', () => {
+    const savingStateFor = (stateName) => ({
+      ...defaultMachineState,
+      matches: jest.fn((s) => s === stateName)
+    });
+
+    it('renders the Saving mask when machine is in patching state', () => {
+      renderComponent({}, savingStateFor('patching'));
+      expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.savingMask)).toBeInTheDocument();
+    });
+
+    it('renders the Saving mask when machine is in patchingSettings state', () => {
+      renderComponent({}, savingStateFor('patchingSettings'));
+      expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.savingMask)).toBeInTheDocument();
+    });
+
+    it('renders the Saving mask when machine is in patchingRepositories state', () => {
+      renderComponent({}, savingStateFor('patchingRepositories'));
+      expect(screen.getByText(HOSTED_REPOSITORIES_EVALUATION.savingMask)).toBeInTheDocument();
+    });
+
+    it('does not render the Saving mask when machine is in loaded state', () => {
+      renderComponent({}, savingStateFor('loaded'));
+      expect(screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.savingMask)).not.toBeInTheDocument();
+    });
+
+    it('disables the Update button while saving', () => {
+      renderComponent({}, savingStateFor('patchingRepositories'));
+      const updateOrSave = screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.update)
+          || screen.getByText(HOSTED_REPOSITORIES_EVALUATION.buttons.save);
+      expect(updateOrSave.closest('button')).toBeDisabled();
+    });
+
+    it('disables the bulk-action and Clear Selection buttons while saving', () => {
+      // repo1 is pre-selected via mockRepositories, so the bulk-action toolbar renders.
+      renderComponent({}, savingStateFor('patchingRepositories'));
+
+      // One of Enable Monitoring / Disable Monitoring is rendered depending on the
+      // selected repos' current state; either way it must be disabled while saving.
+      const enableOrDisable =
+          screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.enableMonitoring)
+              || screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.disableMonitoring);
+      if (enableOrDisable) {
+        expect(enableOrDisable.closest('button')).toBeDisabled();
+      }
+      const clearSelection = screen.queryByText(HOSTED_REPOSITORIES_EVALUATION.buttons.clearSelection);
+      if (clearSelection) {
+        expect(clearSelection.closest('button')).toBeDisabled();
+      }
     });
   });
 });

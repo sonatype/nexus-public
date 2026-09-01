@@ -14,6 +14,8 @@ package org.sonatype.nexus.logging.task;
 
 import javax.annotation.Nullable;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.sift.SiftingAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -22,6 +24,7 @@ import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import java.io.File;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +38,21 @@ public class TaskLogHome
 {
   private static final Logger log = LoggerFactory.getLogger(TaskLogHome.class);
 
+  // Intentionally never reset: suppresses the noise message for the lifetime of the JVM.
+  // Fires at most once regardless of how many tasks run or how many times getTaskLogsHome() is called.
+  private static final AtomicBoolean MISSING_APPENDER_LOGGED = new AtomicBoolean(false);
+
   private TaskLogHome() {
     throw new IllegalAccessError("Utility class");
+  }
+
+  /**
+   * Resets the one-time missing-appender log guard. Intended for test use only, so each test that exercises the
+   * missing-appender branch can assert on it independently of JVM/test-run ordering.
+   */
+  @VisibleForTesting
+  static void resetMissingAppenderLoggedForTests() {
+    MISSING_APPENDER_LOGGED.set(false);
   }
 
   /**
@@ -52,8 +68,10 @@ public class TaskLogHome
       // as of 3.4.1 when task logging was introduced. We don't want to block application start in this scenario.
       // This does not always mean there is a problem. Not using SiftingAppender or RollingFileAppender may be
       // appropriate for some environments.
-      log.info("Could not find a Logback SiftingAppender or RollingFileAppender named 'tasklogfile' in the " +
-          "logback configuration. Please check that the 'tasklogfile' appender exists in logback.xml");
+      if (MISSING_APPENDER_LOGGED.compareAndSet(false, true)) {
+        log.info("Could not find a Logback SiftingAppender or RollingFileAppender named 'tasklogfile' in the " +
+            "logback configuration. Please check that the 'tasklogfile' appender exists in logback.xml");
+      }
       return null;
     }
 

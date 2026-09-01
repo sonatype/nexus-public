@@ -43,11 +43,20 @@ export default function SearchComposerExt() {
           }
         },
         {
-          id: 'assets.attributes.composer.version',
+          id: 'composer.description',
           group: CRITERIA.GROUP,
           config: {
             format: 'composer',
-            fieldLabel: CRITERIA.FIELD_LABEL.VERSION,
+            fieldLabel: CRITERIA.FIELD_LABEL.DESCRIPTION,
+            width: 250
+          }
+        },
+        {
+          id: 'composer.keywords',
+          group: CRITERIA.GROUP,
+          config: {
+            format: 'composer',
+            fieldLabel: CRITERIA.FIELD_LABEL.KEYWORDS,
             width: 250
           }
         }
@@ -62,7 +71,9 @@ export default function SearchComposerExt() {
           { id: 'format', value: 'composer', hidden: true },
           { id: 'assets.attributes.composer.vendor' },
           { id: 'assets.attributes.composer.package' },
-          { id: 'assets.attributes.composer.version' }
+          { id: 'version' },
+          { id: 'composer.description' },
+          { id: 'composer.keywords' }
         ]
       }}
     />

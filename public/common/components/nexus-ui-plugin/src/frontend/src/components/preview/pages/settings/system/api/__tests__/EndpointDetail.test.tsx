@@ -18,7 +18,23 @@ import { Theme } from '@radix-ui/themes';
 
 import { EndpointDetail } from '../EndpointDetail';
 import type { MergedApiEndpoint } from '../utils/mergeSwaggerPermissions';
-import type { EndpointAccessDot } from '../utils/endpointAccess';
+
+jest.mock('../../../../../../../interface/ExtJS', () => {
+  const mockExtJS = {
+    checkPermission: jest.fn().mockReturnValue(true),
+    // usePermission delegates to the getter so tests drive behavior via checkPermission (NEXUS-54212 pattern).
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
+  };
+  return {
+    __esModule: true,
+    default: mockExtJS,
+    ExtJS: mockExtJS,
+  };
+});
+
+const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+const mockCheckPermission = ExtJS.checkPermission as jest.MockedFunction<(perm: string) => boolean>;
 
 jest.mock('../tabs/TryItTab', () => ({
   TryItTab: ({ accessDenied }: any) => (
@@ -62,6 +78,12 @@ function renderWithTheme(ui: React.ReactElement) {
 }
 
 describe('EndpointDetail', () => {
+  beforeEach(() => {
+    // Default: admin (all permissions granted). Individual tests override for permission-gating cases.
+    mockCheckPermission.mockReset();
+    mockCheckPermission.mockReturnValue(true);
+  });
+
   describe('Empty State', () => {
     it('renders placeholder when no row is selected', () => {
       renderWithTheme(<EndpointDetail row={null} fullSwagger={null} access="unknown" />);
@@ -186,6 +208,107 @@ describe('EndpointDetail', () => {
       expect(screen.getByRole('tab', { name: /Try It/ })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /Who Has Access/ })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /Grant Access/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('Permission Gating (NEXUS-54331)', () => {
+    const row = makeRow();
+    const PERM_ROLES_READ = 'nexus:roles:read';
+    const PERM_USERS_READ = 'nexus:users:read';
+    const PERM_PRIVILEGES_READ = 'nexus:privileges:read';
+    const PERM_ROLES_UPDATE = 'nexus:roles:update';
+    const PERM_USERS_UPDATE = 'nexus:users:update';
+    const ALL_READS = [PERM_ROLES_READ, PERM_USERS_READ, PERM_PRIVILEGES_READ];
+    const ALL_GRANT_PERMS = [...ALL_READS, PERM_ROLES_UPDATE, PERM_USERS_UPDATE];
+
+    function grantPermissions(granted: string[]): void {
+      mockCheckPermission.mockImplementation((perm: string) => granted.includes(perm));
+    }
+
+    it('shows only Try It when the user has no security-related permissions', () => {
+      grantPermissions([]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.getByRole('tab', { name: /Try It/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Who Has Access/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Grant Access/ })).not.toBeInTheDocument();
+    });
+
+    it('hides Who Has Access when only nexus:users:read is granted (would 403 on roles or privileges fetch)', () => {
+      grantPermissions([PERM_USERS_READ]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByRole('tab', { name: /Who Has Access/ })).not.toBeInTheDocument();
+    });
+
+    it('hides Who Has Access when only nexus:roles:read is granted', () => {
+      grantPermissions([PERM_ROLES_READ]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByRole('tab', { name: /Who Has Access/ })).not.toBeInTheDocument();
+    });
+
+    it('hides Who Has Access when only nexus:privileges:read is granted', () => {
+      grantPermissions([PERM_PRIVILEGES_READ]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByRole('tab', { name: /Who Has Access/ })).not.toBeInTheDocument();
+    });
+
+    it('hides Who Has Access when two of three security reads are granted', () => {
+      grantPermissions([PERM_ROLES_READ, PERM_USERS_READ]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByRole('tab', { name: /Who Has Access/ })).not.toBeInTheDocument();
+    });
+
+    it('shows Who Has Access when all three security reads are granted', () => {
+      grantPermissions(ALL_READS);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.getByRole('tab', { name: /Who Has Access/ })).toBeInTheDocument();
+    });
+
+    it('hides Grant Access when the user has all three reads but no write permissions', () => {
+      grantPermissions(ALL_READS);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.getByRole('tab', { name: /Who Has Access/ })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /Grant Access/ })).not.toBeInTheDocument();
+    });
+
+    it('hides Grant Access when the user has writes but is missing a required read', () => {
+      grantPermissions([PERM_ROLES_READ, PERM_USERS_READ, PERM_ROLES_UPDATE, PERM_USERS_UPDATE]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByRole('tab', { name: /Grant Access/ })).not.toBeInTheDocument();
+    });
+
+    it('shows Grant Access when the user has all three reads plus roles:update and users:update', () => {
+      grantPermissions(ALL_GRANT_PERMS);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.getByRole('tab', { name: /Grant Access/ })).toBeInTheDocument();
+    });
+
+    it('does not render the Who Has Access tab body when the trigger is hidden', () => {
+      grantPermissions([]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByTestId('who-has-access-tab')).not.toBeInTheDocument();
+    });
+
+    it('does not render the Grant Access tab body when the trigger is hidden', () => {
+      grantPermissions([]);
+      renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      expect(screen.queryByTestId('grant-access-tab')).not.toBeInTheDocument();
+    });
+
+    it('resets to Try It when the active tab loses visibility on re-render', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      const { rerender } = renderWithTheme(<EndpointDetail row={row} fullSwagger={null} access="granted" />);
+      await userEvent.click(screen.getByRole('tab', { name: /Who Has Access/ }));
+      expect(screen.getByTestId('who-has-access-tab')).toBeInTheDocument();
+
+      grantPermissions([]);
+      rerender(
+        <Theme>
+          <EndpointDetail row={row} fullSwagger={null} access="granted" />
+        </Theme>
+      );
+
+      expect(screen.queryByTestId('who-has-access-tab')).not.toBeInTheDocument();
+      expect(screen.getByTestId('try-it-tab')).toBeInTheDocument();
     });
   });
 });

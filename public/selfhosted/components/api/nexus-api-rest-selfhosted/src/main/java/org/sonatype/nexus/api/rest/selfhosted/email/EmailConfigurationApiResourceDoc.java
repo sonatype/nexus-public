@@ -37,6 +37,8 @@ public interface EmailConfigurationApiResourceDoc
 {
   @Operation(summary = "Retrieve the current email configuration")
   @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Email configuration returned",
+          content = @Content(schema = @Schema(implementation = ApiEmailConfiguration.class))),
       @ApiResponse(responseCode = "403", description = "Insufficient permissions to retrieve the email configuration")
   })
   ApiEmailConfiguration getEmailConfiguration();

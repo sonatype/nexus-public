@@ -12,12 +12,13 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { Theme } from '@radix-ui/themes';
 
 import { RepositoryList } from '../RepositoryList';
+import { RepositoryListTable } from '../RepositoryListTable';
 import { RepositoryStatusBadge } from '../RepositoryStatusBadge';
 import { HealthCheckCell } from '../../../../shared/security/HealthCheckCell';
 import { FirewallCell as IqPolicyViolationsCell } from '../../../../shared/security/FirewallCell';
@@ -188,6 +189,7 @@ describe('RepositoryList', () => {
       const copyButtons = screen.getAllByRole('button', { name: /copy url to clipboard/i });
       expect(copyButtons).toHaveLength(mockRepositories.length);
     });
+
   });
 
   describe('Loading State', () => {
@@ -571,3 +573,26 @@ describe('IqPolicyViolationsCell', () => {
   });
 });
 
+describe('RepositoryListTable (Actions column, NEXUS-53948)', () => {
+  it('shouldRenderActionsColumnHeaderWithRowActionsLabel', () => {
+    renderWithTheme(
+      <RepositoryListTable repositories={mockRepositories} />
+    );
+
+    expect(
+      screen.getByRole('columnheader', { name: /row actions/i })
+    ).toBeInTheDocument();
+  });
+
+  it('shouldRenderPerRowActionsTriggerForEveryRepository', () => {
+    renderWithTheme(
+      <RepositoryListTable repositories={mockRepositories} />
+    );
+
+    mockRepositories.forEach((repo) => {
+      expect(
+        screen.getByRole('button', { name: `Actions for ${repo.name}` })
+      ).toBeInTheDocument();
+    });
+  });
+});

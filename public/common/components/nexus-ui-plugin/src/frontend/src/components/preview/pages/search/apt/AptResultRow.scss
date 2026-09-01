@@ -37,7 +37,7 @@
   &__name-primary {
     font-weight: 500;
     color: var(--nx-color-text-dark, #333);
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
   }
 
   &__description {
@@ -47,7 +47,7 @@
   }
 
   &__version {
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
     font-size: 0.875rem;
     color: var(--nx-color-text-dark, #333);
   }
@@ -63,7 +63,7 @@
     color: var(--nx-color-primary-button-background, #0066cc);
     border-radius: 4px;
     font-size: 0.75rem;
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
     font-weight: 500;
   }
 

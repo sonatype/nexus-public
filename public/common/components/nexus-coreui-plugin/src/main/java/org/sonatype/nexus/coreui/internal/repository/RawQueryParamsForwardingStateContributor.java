@@ -14,12 +14,10 @@ package org.sonatype.nexus.coreui.internal.repository;
 
 import java.util.Map;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import org.sonatype.nexus.rapture.StateContributor;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.inject.Inject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +28,6 @@ import static org.sonatype.nexus.common.app.FeatureFlags.RAW_QUERYPARAMS_FORWARD
  * controlling visibility of the query parameter forwarding configuration panel
  * in Raw proxy repository forms.
  */
-@Singleton
 @Component
 public class RawQueryParamsForwardingStateContributor
     implements StateContributor

@@ -219,6 +219,33 @@ describe('ContentSelectorsList', () => {
     expect(screen.getByText('No Content Selectors')).toBeInTheDocument();
   });
 
+  // NEXUS-54212: the empty-state Create button must respect nexus:selectors:create.
+  it('shows empty-state Create button when canCreate is true', async () => {
+    mockFetchContentSelectors.mockResolvedValue([]);
+
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} canCreate={true} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /Create Selector/i })).toBeInTheDocument();
+  });
+
+  it('hides empty-state Create button when canCreate is false', async () => {
+    mockFetchContentSelectors.mockResolvedValue([]);
+
+    render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} canCreate={false} />, {
+      wrapper: TestWrapper,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: /Create Selector/i })).not.toBeInTheDocument();
+  });
+
   it('shows EmptyState when filter has no matches', async () => {
     render(<ContentSelectorsList onSelect={mockOnSelect} onCreate={mockOnCreate} />, {
       wrapper: TestWrapper,

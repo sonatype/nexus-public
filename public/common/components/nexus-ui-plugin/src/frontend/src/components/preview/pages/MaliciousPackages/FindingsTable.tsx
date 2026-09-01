@@ -32,6 +32,8 @@ import {
 } from './useMaliciousPackagesData';
 import { TablePagination } from '../../shared/TablePagination/TablePagination';
 import { AcknowledgeDialog, type AcknowledgeDuration } from './AcknowledgeDialog';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 function buildGuideUrl(finding: MaliciousFinding): string | null {
   const identity = deriveComponentIdentity(finding);
@@ -127,6 +129,17 @@ export function FindingsTable({
   onClearRepoFilter,
   initialStatusFilter = 'pending',
 }: FindingsTableProps): React.ReactElement {
+  // Hide mutating controls (delete / accept-risk / remediate) for users without full admin
+  // (NEXUS-54212). Read-only controls (tabs, filters, expand, Review) stay available.
+  // Use the provider-independent ExtJS.usePermission: coreui never mounts a
+  // <PermissionsProvider>, so the context-based usePermission returns false for everyone.
+  // The hasUser dependency re-evaluates once the user and their permissions load.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canRemediate = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.ADMIN),
+    [hasUser],
+  );
+
   const [viewMode, setViewMode] = useState<ViewMode>('findings');
   const [dateRange, setDateRange] = useState<FindingsDateRange>('30d');
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>(initialStatusFilter);
@@ -172,6 +185,7 @@ export function FindingsTable({
     loadFindings();
   }, [loadFindings]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: repoFilter is an intentional trigger to reset pagination, not read in the body
   useEffect(() => {
     setPage(1);
   }, [repoFilter]);
@@ -372,11 +386,13 @@ export function FindingsTable({
             <Flex align="center" gap="1"><XCircle size={14} color="var(--red-9)" /><Text size="1" color="red">Failed</Text></Flex>
           ) : status === 'deleting' ? (
             <Flex align="center" gap="1"><Loader2 size={14} className="animate-spin" /><Text size="1">Deleting...</Text></Flex>
-          ) : (
+          ) : canRemediate ? (
             <Button size="1" variant="ghost" color="red" onClick={() => handleDeleteSingle(finding.id)} data-testid={`delete-finding-${finding.id}`}>
               <Trash2 size={14} />
               Delete
             </Button>
+          ) : (
+            <Text size="1" color="gray">—</Text>
           )}
         </Table.Cell>
       </Table.Row>
@@ -442,7 +458,7 @@ export function FindingsTable({
                   <Text size="2" color="gray">{formatTimestamp(finding.firstDetectedAt)}</Text>
                 </Table.Cell>
                 <Table.Cell>
-                  {isPending && (
+                  {isPending && canRemediate && (
                     <Flex gap="2">
                       <Button
                         size="1"
@@ -579,26 +595,30 @@ export function FindingsTable({
                       <Eye size={14} />
                       Review
                     </Button>
-                    <Button
-                      size="1"
-                      color="red"
-                      variant="soft"
-                      onClick={() => openComponentDeleteModal(group.componentName, group.componentVersion, pendingInGroup)}
-                      data-testid={`delete-${group.componentName}`}
-                    >
-                      <Trash2 size={14} />
-                      Delete
-                    </Button>
-                    <Button
-                      size="1"
-                      color="blue"
-                      variant="soft"
-                      onClick={() => setAckTarget({ findingIds: pendingInGroup.map((f) => f.id) })}
-                      data-testid={`accept-risk-${group.componentName}`}
-                    >
-                      <ShieldCheck size={14} />
-                      Accept Risk
-                    </Button>
+                    {canRemediate && (
+                      <Button
+                        size="1"
+                        color="red"
+                        variant="soft"
+                        onClick={() => openComponentDeleteModal(group.componentName, group.componentVersion, pendingInGroup)}
+                        data-testid={`delete-${group.componentName}`}
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </Button>
+                    )}
+                    {canRemediate && (
+                      <Button
+                        size="1"
+                        color="blue"
+                        variant="soft"
+                        onClick={() => setAckTarget({ findingIds: pendingInGroup.map((f) => f.id) })}
+                        data-testid={`accept-risk-${group.componentName}`}
+                      >
+                        <ShieldCheck size={14} />
+                        Accept Risk
+                      </Button>
+                    )}
                   </Flex>
                 )}
               </Table.Cell>
@@ -673,43 +693,47 @@ export function FindingsTable({
                       <Eye size={14} />
                       Review
                     </Button>
-                    <Button
-                      size="1"
-                      color="red"
-                      variant="soft"
-                      onClick={() => openRepoDeleteModal(group.repositoryName, pendingInRepo)}
-                      disabled={deleteRepoBlocked}
-                      title={
-                        deleteRepoBlocked
-                          ? localPending
-                            ? 'Remediation is starting for this repository.'
-                            : 'A Malicious Packages task is running for this repository.'
-                          : undefined
-                      }
-                      data-testid={`delete-repo-${group.repositoryName}`}
-                    >
-                      {deleteRepoBlocked ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" />
-                          {localPending ? 'Starting…' : 'Task running'}
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 size={14} />
-                          Delete
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="1"
-                      color="blue"
-                      variant="soft"
-                      onClick={() => setAckTarget({ findingIds: pendingInRepo.map((f) => f.id) })}
-                      data-testid={`accept-risk-repo-${group.repositoryName}`}
-                    >
-                      <ShieldCheck size={14} />
-                      Accept Risk
-                    </Button>
+                    {canRemediate && (
+                      <Button
+                        size="1"
+                        color="red"
+                        variant="soft"
+                        onClick={() => openRepoDeleteModal(group.repositoryName, pendingInRepo)}
+                        disabled={deleteRepoBlocked}
+                        title={
+                          deleteRepoBlocked
+                            ? localPending
+                              ? 'Remediation is starting for this repository.'
+                              : 'A Malicious Packages task is running for this repository.'
+                            : undefined
+                        }
+                        data-testid={`delete-repo-${group.repositoryName}`}
+                      >
+                        {deleteRepoBlocked ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" />
+                            {localPending ? 'Starting…' : 'Task running'}
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={14} />
+                            Delete
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {canRemediate && (
+                      <Button
+                        size="1"
+                        color="blue"
+                        variant="soft"
+                        onClick={() => setAckTarget({ findingIds: pendingInRepo.map((f) => f.id) })}
+                        data-testid={`accept-risk-repo-${group.repositoryName}`}
+                      >
+                        <ShieldCheck size={14} />
+                        Accept Risk
+                      </Button>
+                    )}
                   </Flex>
                 )}
               </Table.Cell>
@@ -725,7 +749,7 @@ export function FindingsTable({
       <Flex direction="column" gap="3">
         <Flex justify="between" align="center" wrap="wrap" gap="3">
           <Heading size="4">Findings to Remediate</Heading>
-          {pendingFindings.length > 0 && (
+          {pendingFindings.length > 0 && canRemediate && (
             <Button
               color="red"
               variant="soft"
@@ -949,7 +973,7 @@ export function FindingsTable({
                   <Dialog.Close>
                     <Button variant="soft" color="gray">{status === 'success' ? 'Close' : 'Cancel'}</Button>
                   </Dialog.Close>
-                  {status !== 'success' && (
+                  {status !== 'success' && canRemediate && (
                     <Button
                       color="red"
                       onClick={() => handleDeleteSingle(f.id)}
@@ -1083,7 +1107,7 @@ export function FindingsTable({
                     <Button variant="soft" color="gray">{bulkDeleteDone || modal.type === 'repo-review' ? 'Close' : 'Cancel'}</Button>
                   </Dialog.Close>
                 )}
-                {modal.type === 'repo-delete' && !bulkDeleteDone && (() => {
+                {modal.type === 'repo-delete' && !bulkDeleteDone && canRemediate && (() => {
                   const modalRepoBusy = getRepoMalwareRemediatorBusyStatus(tasks, modal.repoName);
                   const confirmDisabled = bulkDeleting || modalRepoBusy != null;
                   return (
@@ -1202,7 +1226,7 @@ export function FindingsTable({
                     <Button variant="soft" color="gray">{modal.type === 'component-review' || bulkDeleteDone ? 'Close' : 'Cancel'}</Button>
                   </Dialog.Close>
                 )}
-                {modal.type === 'component-delete' && !bulkDeleteDone && (
+                {modal.type === 'component-delete' && !bulkDeleteDone && canRemediate && (
                   <Button
                     color="red"
                     onClick={() => handleDeleteAllComponent(modal.findings.map((f) => f.id))}

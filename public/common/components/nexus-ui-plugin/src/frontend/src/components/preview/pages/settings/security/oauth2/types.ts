@@ -31,6 +31,13 @@ export interface OAuth2Config {
   exactMatchClaims?: string;
   authorizationCustomParams?: string;
   tokenRequestCustomParams?: string;
+  /**
+   * Whether to validate the IdP's certificate against the Nexus Repository
+   * truststore. Must round-trip through load and save: the backend XO defaults
+   * this to `false`, so omitting it from the payload silently disables a
+   * setting the admin may have enabled elsewhere (NEXUS-54266).
+   */
+  useTrustStore: boolean;
 }
 
 /**
@@ -53,6 +60,7 @@ export const DEFAULT_OAUTH2_CONFIG: OAuth2Config = {
   exactMatchClaims: '',
   authorizationCustomParams: '',
   tokenRequestCustomParams: '',
+  useTrustStore: false,
 };
 
 /**

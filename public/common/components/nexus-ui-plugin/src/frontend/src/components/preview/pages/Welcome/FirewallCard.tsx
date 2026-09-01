@@ -29,11 +29,10 @@
  * - Help modal (?) explains status calculation
  */
 
-import React, { useState } from 'react';
-import { Box, Flex, Text, Card, Button, IconButton, Spinner } from '@radix-ui/themes';
+import React from 'react';
+import { Box, Flex, Text, Card, Button, Spinner } from '@radix-ui/themes';
 import { ShieldCheck, ShieldOff, ExternalLink, AlertCircle } from 'lucide-react';
 import { useMalwareStatus, type MalwareStatus } from './useMalwareStatus';
-import { FirewallHelpModal } from './FirewallHelpModal';
 import { useIqConnectionStatus } from '../../shared/security/useIqConnectionStatus';
 
 import './FirewallCard.scss';

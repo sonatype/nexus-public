@@ -22,7 +22,7 @@ import { RubyGemsSearchResults } from '../RubyGemsSearchResults';
 import { RubyGemsResultRow } from '../RubyGemsResultRow';
 import { RubyGemsDetailPage } from '../RubyGemsDetailPage';
 import { mockRubyGemsResults, mockRubyGemsSearchApi } from '../mockData';
-import type { RubyGemsResult, RubyGemsSearchFilters as FilterValues } from '../rubygems.types';
+import type { RubyGemsResult, } from '../rubygems.types';
 
 // Mock the useRubyGemsSearch hook
 jest.mock('../useRubyGemsSearch', () => ({

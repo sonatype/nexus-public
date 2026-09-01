@@ -184,7 +184,7 @@ describe('searchMachine', () => {
 
   describe('format classification', () => {
     const EXPECTED_SIMPLE = ['all', 'alpine', 'apt', 'cargo', 'cocoapods', 'conda', 'go', 'helm', 'huggingface', 'pub', 'r', 'raw'];
-    const EXPECTED_CUSTOM = ['ansiblegalaxy', 'composer', 'conan', 'docker', 'gitlfs', 'maven', 'npm', 'nuget', 'p2', 'pypi', 'rubygems', 'swift', 'terraform', 'yum'];
+    const EXPECTED_CUSTOM = ['ansiblegalaxy', 'composer', 'conan', 'docker', 'gitlfs', 'maven', 'npm', 'nuget', 'oci', 'p2', 'pypi', 'rubygems', 'swift', 'terraform', 'yum'];
 
     it.each(EXPECTED_SIMPLE)('format %s is classified as simple (repository only)', (format) => {
       expect(SIMPLE_FORMATS).toContain(format);
@@ -288,13 +288,13 @@ describe('searchMachine', () => {
       service.stop();
     });
 
-    it('Composer declares vendor, package', () => {
+    it('Composer declares vendor, package, description, keywords', () => {
       const service = startMachine();
       service.send({ type: 'SELECT_FORMAT', format: 'composer' });
       const meta = getActiveFormatMeta(service.getSnapshot());
 
       expect(meta!.customFilters.map((f) => f.id)).toEqual([
-        'vendor', 'package',
+        'vendor', 'package', 'description', 'keywords',
       ]);
 
       service.stop();
@@ -620,6 +620,110 @@ describe('searchMachine', () => {
 
       service.stop();
     });
+
+    it('defaults to last updated, newest first', () => {
+      const service = startMachine();
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('lastUpdated');
+      expect(ctx.sortDirection).toBe('desc');
+
+      service.stop();
+    });
+
+    it('SET_SORT with only a field keeps the current direction', () => {
+      const service = startMachine();
+
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      service.send({ type: 'SET_SORT', field: 'repository' });
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('repository');
+      expect(ctx.sortDirection).toBe('asc');
+
+      service.stop();
+    });
+
+    it('SET_SORT with only a direction keeps the current field', () => {
+      const service = startMachine();
+
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      service.send({ type: 'SET_SORT', direction: 'desc' });
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('name');
+      expect(ctx.sortDirection).toBe('desc');
+
+      service.stop();
+    });
+
+    it('accepts SET_SORT from any lifecycle state', async () => {
+      const service = startMachine();
+
+      // idle
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      expect(service.getSnapshot().context.sortField).toBe('name');
+
+      // results
+      service.send({ type: 'SEARCH' });
+      await waitFor(service, (s) => s.matches({ lifecycle: 'results' }));
+      service.send({ type: 'SET_SORT', field: 'version', direction: 'desc' });
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('version');
+      expect(ctx.sortDirection).toBe('desc');
+      // Sorting is applied by the server on the next request, so the event only
+      // records the selection — it must not move the lifecycle state.
+      expect(service.getSnapshot().matches({ lifecycle: 'results' })).toBe(true);
+
+      service.stop();
+    });
+
+    it('carries the selected sort into the search service context', async () => {
+      let capturedSort: { field?: string; direction?: string } = {};
+
+      const service = startMachine({
+        search: (ctx: any) => {
+          capturedSort = { field: ctx.sortField, direction: ctx.sortDirection };
+          return Promise.resolve({ results: [], continuationToken: undefined });
+        },
+      });
+
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      service.send({ type: 'SEARCH' });
+      await waitFor(service, (s) => s.matches({ lifecycle: 'results' }));
+
+      expect(capturedSort).toEqual({ field: 'name', direction: 'asc' });
+
+      service.stop();
+    });
+
+    it('preserves the selected sort across a search', async () => {
+      const service = startMachine();
+
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      service.send({ type: 'SEARCH' });
+      await waitFor(service, (s) => s.matches({ lifecycle: 'results' }));
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('name');
+      expect(ctx.sortDirection).toBe('asc');
+
+      service.stop();
+    });
+
+    it('preserves the selected sort when the format changes', () => {
+      const service = startMachine();
+
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      service.send({ type: 'SELECT_FORMAT', format: 'npm' });
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('name');
+      expect(ctx.sortDirection).toBe('asc');
+
+      service.stop();
+    });
   });
 
   // =============================================================================
@@ -646,6 +750,22 @@ describe('searchMachine', () => {
       expect(state.context.filters).toEqual({});
       expect(state.context.results).toEqual([]);
       expect(state.context.format).toBe('all');
+
+      service.stop();
+    });
+
+    it('RESET restores the default sort', async () => {
+      const service = startMachine();
+
+      service.send({ type: 'SET_SORT', field: 'name', direction: 'asc' });
+      service.send({ type: 'SEARCH' });
+      await waitFor(service, (s) => s.matches({ lifecycle: 'results' }));
+
+      service.send({ type: 'RESET' });
+
+      const ctx = service.getSnapshot().context;
+      expect(ctx.sortField).toBe('lastUpdated');
+      expect(ctx.sortDirection).toBe('desc');
 
       service.stop();
     });

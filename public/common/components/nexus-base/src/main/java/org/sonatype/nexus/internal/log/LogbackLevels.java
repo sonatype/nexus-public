@@ -21,7 +21,7 @@ import ch.qos.logback.classic.Level;
  *
  * @since 3.0
  */
-class LogbackLevels
+public class LogbackLevels
 {
   private LogbackLevels() {
     // empty

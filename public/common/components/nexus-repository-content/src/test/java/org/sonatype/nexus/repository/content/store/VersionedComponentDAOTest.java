@@ -103,4 +103,10 @@ class VersionedComponentDAOTest
   protected void testReadCoordinateInRepoIds() {
     super.testReadCoordinateInRepoIds();
   }
+
+  @Override
+  @DatabaseTest(h2 = false, postgresql = true)
+  protected void testCreateComponentReturnsNullIdWhenRepositoryDeleted() {
+    super.testCreateComponentReturnsNullIdWhenRepositoryDeleted();
+  }
 }

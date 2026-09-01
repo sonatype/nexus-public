@@ -13,8 +13,7 @@
 
 import React, { useCallback, useState, useMemo } from 'react';
 import { useRouter, useCurrentStateAndParams } from '@uirouter/react';
-import { Box, Text } from '@radix-ui/themes';
-import { AlertCircle, Trash2, ArrowLeft, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { AlertCircle, Trash2, ArrowLeft, AlertTriangle, RefreshCw, } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 import { Permissions } from '../../../../../../constants/Permissions';
 import {
@@ -26,7 +25,7 @@ import {
   SettingsAlert,
   SettingsButton,
 } from '../../../../shared/form';
-import { useBlobStore, useBlobStoreTypes, useBlobStorePromote } from './useBlobStores';
+import { useBlobStore, useBlobStorePromote } from './useBlobStores';
 import { useBlobStoreForm } from './useBlobStoreForm';
 import FileBlobStoreSettings from './FileBlobStoreSettings';
 import S3BlobStoreSettings from './S3BlobStoreSettings';
@@ -45,7 +44,6 @@ const STRINGS = {
   EDIT_TITLE: (name: string) => `Edit ${name}`,
   EDIT_DESCRIPTION: (type: string) => `${type} Blob Store`,
   EDIT_WARNING: 'Updating the blob store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave the blob store in a non-functional state.',
-  NO_PERMISSION_WARNING: "You don't have permission to edit this page. Contact your administrator to request access.",
   CONVERT_TO_GROUP_BUTTON: 'Convert to Group',
   TYPE: {
     label: 'Type',
@@ -108,7 +106,6 @@ export default function BlobStoresForm() {
   // Use XState form hook
   const {
     form,
-    isCreate,
     blobStoreTypes: types,
     quotaTypes,
     usage,
@@ -117,7 +114,7 @@ export default function BlobStoresForm() {
     blobStoreType: typeFromUrl,
     saveBlobStore: save,
     updateBlobStore: save,
-    deleteBlobStore: remove ? async (blobName: string) => { await remove(); } : undefined,
+    deleteBlobStore: remove ? async (_blobName: string) => { await remove(); } : undefined,
     onCancel: handleBack,
   });
 
@@ -202,7 +199,7 @@ export default function BlobStoresForm() {
       await promote(name, newGroupName);
       setShowConvertModal(false);
       handleBack();
-    } catch (err) {
+    } catch (_err) {
       // Error handled by promote
     }
   }, [name, promote, handleBack]);
@@ -298,12 +295,6 @@ export default function BlobStoresForm() {
         {isEdit && hasUpdatePermissions && (
           <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
             {STRINGS.EDIT_WARNING}
-          </SettingsAlert>
-        )}
-
-        {isEdit && !hasUpdatePermissions && (
-          <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
-            {STRINGS.NO_PERMISSION_WARNING}
           </SettingsAlert>
         )}
 
@@ -405,7 +396,7 @@ export default function BlobStoresForm() {
           >
             <SettingsCheckbox
               label={STRINGS.SOFT_QUOTA.ENABLED}
-              checked={(formData as any).softQuota?.enabled || false}
+              checked={(formData as any).softQuota?.enabled}
               onChange={handleSoftQuotaToggle}
               disabled={!hasUpdatePermissions}
             />
@@ -451,7 +442,7 @@ export default function BlobStoresForm() {
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
-        open={(form.state as any).context.showDeleteModal || false}
+        open={(form.state as any).context.showDeleteModal}
         onClose={() => form.send('HIDE_DELETE_MODAL')}
         onConfirm={() => form.send('DELETE')}
         entityName={name}

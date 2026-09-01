@@ -152,7 +152,7 @@ class SecurityDiagnosticResourceTest
     assertThat(privilegeData.get("name"), is("Privilege One"));
     assertThat(privilegeData.get("description"), is("Test privilege"));
     assertThat(privilegeData.get("version"), is(3));
-    assertThat(privilegeData.get("permission"), is(permission));
+    assertThat(privilegeData.get("permission"), is(permission.toString()));
   }
 
   @Test

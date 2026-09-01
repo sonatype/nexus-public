@@ -58,6 +58,20 @@ public class DefaultSearchMappings
 
   public static final String KEYWORD_ALIAS = "q";
 
+  /*
+   * The four-argument SearchMapping constructor defaults exactMatch to TRUE, which compares the
+   * plain column with '=' (ExactTerm). The five-argument form with 'false' compares the tsvector
+   * column with '@@ to_tsquery(...)' (LenientTerm) instead -- see 'keyword' below.
+   *
+   * Do NOT switch 'format', 'group' or 'name' to lenient matching without reading
+   * private/developer-documentation/architecture/data/sql-search.md first. Composite btree indexes
+   * depend on those three producing plain-column equality; in particular
+   * idx_search_components_format_ns_name_version (NEXUS-54219) stops being usable the moment the
+   * predicate becomes a tsvector match, and the paged component-version browse silently degrades
+   * to a bitmap scan over every row of the component. Results remain correct and nothing is
+   * logged, so the regression is invisible without
+   * ComponentVersionsSearchTableDAOTestSupport.componentVersionFilterUsesPlainColumnsNotTsvector, which guards it.
+   */
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
       new SearchMapping(KEYWORD_ALIAS, "keyword", "Query by keyword", KEYWORDS, false),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name", SearchField.REPOSITORY_NAME),

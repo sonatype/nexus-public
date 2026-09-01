@@ -132,7 +132,7 @@ export function UsageTab({
   }
 
   const hasHealthCheck = healthCheck != null;
-  const hasFirewall = firewall != null && firewall.enabled;
+  const hasFirewall = firewall?.enabled;
   const hasSecurityData = hasHealthCheck || hasFirewall;
   const remoteUrl = repository.attributes?.proxy?.remoteUrl;
   const blobStoreName = repository.attributes?.storage?.blobStoreName;

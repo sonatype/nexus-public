@@ -16,10 +16,17 @@ import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
+// FindingsTable gates mutating controls via the provider-independent ExtJS.usePermission
+// (coreui never mounts a <PermissionsProvider>, so the context hook returns false for
+// everyone — NEXUS-54212). Spy on the real ExtJS singleton; ExtJS.usePermission evaluates
+// its getter synchronously at render.
+import { ExtJS } from '../../../../../interface/ExtJS';
+import Permissions from '../../../../../constants/Permissions';
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 import { FindingsTable } from '../FindingsTable';
 import type { MaliciousFinding } from '../types';
 import type { RemediateResponse, FindingsPage, TaskInfo } from '../useMaliciousPackagesData';
-import { FindingDetailPanel } from '../FindingDetailPanel';
 
 function renderWithTheme(ui: React.ReactElement) {
   return render(<Theme>{ui}</Theme>);
@@ -82,6 +89,8 @@ const defaultProps = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // Default: nexus:* admin so pre-existing behavior (mutating controls visible) is exercised.
+  mockCheckPermission.mockReturnValue(true);
 });
 
 describe('FindingsTable', () => {
@@ -569,6 +578,48 @@ describe('FindingsTable', () => {
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(30, 20, 0, undefined);
       });
+    });
+  });
+
+  describe('write gating (NEXUS-54212)', () => {
+    const renderTable = () =>
+      renderWithTheme(<FindingsTable {...defaultProps} fetchFindings={makeFetchFindings([makeFinding()])} />);
+
+    it('shows Delete and Accept Risk for nexus:* admin', async () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.ADMIN);
+      renderTable();
+      await waitFor(() => expect(screen.getByTestId('finding-row-1')).toBeInTheDocument());
+      expect(screen.getByTestId('delete-finding-btn-1')).toBeInTheDocument();
+      expect(screen.getByTestId('accept-risk-btn-1')).toBeInTheDocument();
+      expect(screen.getByTestId('delete-all-malicious')).toBeInTheDocument();
+    });
+
+    it('hides Delete, Accept Risk, and Delete All for non-admin', async () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderTable();
+      await waitFor(() => expect(screen.getByTestId('finding-row-1')).toBeInTheDocument());
+      expect(screen.queryByTestId('delete-finding-btn-1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('accept-risk-btn-1')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('delete-all-malicious')).not.toBeInTheDocument();
+    });
+
+    it('hides component-view Delete/Accept Risk for non-admin but keeps Review', async () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderTable();
+      await waitFor(() => expect(screen.getByTestId('finding-row-1')).toBeInTheDocument());
+      await userEvent.click(screen.getByTestId('tab-by-component'));
+      expect(screen.getByTestId('review-evil-package')).toBeInTheDocument();
+      expect(screen.queryByTestId('delete-evil-package')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('accept-risk-evil-package')).not.toBeInTheDocument();
+    });
+
+    it('keeps read-only tabs and expand visible for non-admin', async () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderTable();
+      await waitFor(() => expect(screen.getByTestId('finding-row-1')).toBeInTheDocument());
+      expect(screen.getByTestId('tab-findings')).toBeInTheDocument();
+      expect(screen.getByTestId('tab-by-repository')).toBeInTheDocument();
+      expect(screen.getByTestId('expand-finding-1')).toBeInTheDocument();
     });
   });
 });

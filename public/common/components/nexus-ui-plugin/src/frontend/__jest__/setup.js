@@ -81,7 +81,8 @@ global.NX = {
     error: jest.fn()
   },
   Permissions: {
-    check: jest.fn().mockReturnValue(true)
+    check: jest.fn().mockReturnValue(true),
+    permissions: {},
   },
   getApplication: jest.fn(() => ({})),
   app: {

@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
-import jakarta.validation.ConstraintViolation;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.QualifierUtil;
@@ -62,6 +61,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import jakarta.inject.Provider;
+import jakarta.validation.ConstraintViolation;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -343,25 +343,8 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
   private void provisionDefaultRepositories() {
     for (DefaultRepositoriesContributor contributor : defaultRepositoriesContributors) {
       for (Configuration configuration : contributor.getRepositoryConfigurations()) {
-        String repositoryName = configuration.getRepositoryName();
         log.debug("Provisioning default repository: {}", configuration);
-        try {
-          // Run ConfigurationValidators on the contributor-supplied config so
-          // edition-specific guards (e.g. OciCloudEditionConfigurationValidator)
-          // apply to default-repo seeding, not just the REST API write paths.
-          // Per-repo failures are tracked rather than aborting the whole
-          // provisioning loop — a single misconfigured contributor must not
-          // prevent other defaults (and the rest of the manager) from booting.
-          validateConfiguration(configuration);
-          store.create(configuration);
-          failedRepositoryTracker.clearFailure(repositoryName);
-        }
-        catch (Exception e) {
-          log.error("Failed to provision default repository '{}' from contributor '{}'. "
-              + "Repository will not be available; other defaults will continue to provision.",
-              repositoryName, contributor.getClass().getSimpleName(), e);
-          failedRepositoryTracker.recordFailure(repositoryName, e);
-        }
+        store.create(configuration);
       }
     }
   }
@@ -378,12 +361,6 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
               configuration.getRepositoryName(), recipeName);
           continue;
         }
-        // Re-run ConfigurationValidators on restore so a backup taken on a
-        // self-hosted node cannot smuggle a now-illegal config (e.g. an OCI
-        // repo with forceBasicAuth=false) onto a cloud node. Per-repo
-        // failures are caught below and tracked, so other repositories still
-        // start up.
-        validateConfiguration(configuration);
         Repository repository = newRepository(configuration);
         track(repository);
         failedRepositoryTracker.clearFailure(configuration.getRepositoryName());
@@ -802,15 +779,20 @@ public abstract class BaseRepositoryManager<BSM extends BlobStoreManager>
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) {
     for (Repository group : repositories.values()) {
-      Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
-      if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
-        try {
+      try {
+        Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
+        if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
           removeRepositoryFromGroup(repositoryToRemove, group);
         }
-        catch (Exception e) {
-          log.warn("Failed to remove repository '{}' from group '{}'", repositoryToRemove.getName(), group.getName(),
-              e);
-        }
+      }
+      catch (Exception e) {
+        // A concurrent delete/update may transiently stop this group, so the @Guarded(by = STARTED)
+        // member() check (or the subsequent update) can throw InvalidStateException / other lifecycle
+        // errors. Skip this group and continue so one in-flight group does not abort the whole delete
+        // (NEXUS-53816). If the group was only briefly stopped, the stale member self-heals on its next
+        // member change or config update.
+        log.warn("Failed to remove repository '{}' from group '{}'", repositoryToRemove.getName(), group.getName(),
+            e);
       }
     }
   }

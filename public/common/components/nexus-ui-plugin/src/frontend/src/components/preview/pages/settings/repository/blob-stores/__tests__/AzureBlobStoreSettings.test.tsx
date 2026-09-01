@@ -12,12 +12,20 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, } from '@testing-library/react';
 import AzureBlobStoreSettings from '../AzureBlobStoreSettings';
 import * as useBlobStoresModule from '../useBlobStores';
 
 jest.mock('../useBlobStores', () => ({
   useAzureConnectionTest: jest.fn(),
+}));
+
+// Mock ExtJS at the path the source uses. Individual tests can override via
+// jest.requireMock so we can flip isProEdition per case.
+jest.mock('../../../../../../../interface/ExtJS', () => ({
+  ExtJS: {
+    isProEdition: jest.fn(() => true),
+  }
 }));
 
 // Mock shared form components
@@ -31,8 +39,8 @@ jest.mock('../../../../../shared/form', () => ({
   SettingsTextInput: ({ label, value, onChange }) => (
     <div>
       <label>{label}</label>
-      <input 
-        value={value || ''} 
+      <input
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         data-testid={`input-${label}`}
       />
@@ -41,9 +49,9 @@ jest.mock('../../../../../shared/form', () => ({
   SettingsPasswordInput: ({ label, value, onChange }) => (
     <div>
       <label>{label}</label>
-      <input 
+      <input
         type="password"
-        value={value || ''} 
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         data-testid={`password-${label}`}
       />
@@ -59,11 +67,24 @@ jest.mock('../../../../../shared/form', () => ({
       </select>
     </div>
   ),
+  SettingsCheckbox: ({ label, checked, onChange }) => (
+    <div>
+      <label>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          data-testid={`checkbox-${label}`}
+        />
+        {label}
+      </label>
+    </div>
+  ),
   SettingsButton: ({ children, onClick, disabled }) => (
     <button onClick={onClick} disabled={disabled} data-testid="button">{children}</button>
   ),
-  SettingsAlert: ({ children, variant }) => (
-    <div data-testid="alert" data-variant={variant}>{children}</div>
+  SettingsAlert: ({ children, variant, type }) => (
+    <div data-testid="alert" data-variant={variant} data-type={type}>{children}</div>
   )
 }));
 
@@ -208,6 +229,141 @@ describe('AzureBlobStoreSettings', () => {
 
     render(<AzureBlobStoreSettings {...defaultProps} />);
     expect(screen.getByText('Testing connection...')).toBeInTheDocument();
+  });
+
+  describe('Direct Download (SAS URLs) checkbox', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const extjs = require('../../../../../../../interface/ExtJS').ExtJS;
+
+    beforeEach(() => {
+      extjs.isProEdition.mockReturnValue(true);
+    });
+
+    it('renders the checkbox on Pro edition', () => {
+      render(<AzureBlobStoreSettings {...defaultProps} />);
+      expect(screen.getByTestId('checkbox-Direct Download (SAS URLs)')).toBeInTheDocument();
+    });
+
+    it('does not render the checkbox on non-Pro editions', () => {
+      extjs.isProEdition.mockReturnValue(false);
+      render(<AzureBlobStoreSettings {...defaultProps} />);
+      expect(screen.queryByTestId('checkbox-Direct Download (SAS URLs)')).not.toBeInTheDocument();
+    });
+
+    it('reflects preSignedUrlEnabled=true from config', () => {
+      const props = {
+        ...defaultProps,
+        data: {
+          ...defaultProps.data,
+          bucketConfiguration: {
+            ...defaultProps.data.bucketConfiguration,
+            preSignedUrlEnabled: true,
+          }
+        }
+      };
+      render(<AzureBlobStoreSettings {...props} />);
+      expect(screen.getByTestId('checkbox-Direct Download (SAS URLs)')).toBeChecked();
+    });
+
+    it('reflects preSignedUrlEnabled=false when unset', () => {
+      render(<AzureBlobStoreSettings {...defaultProps} />);
+      expect(screen.getByTestId('checkbox-Direct Download (SAS URLs)')).not.toBeChecked();
+    });
+
+    it('calls onChange with the preSignedUrlEnabled path when toggled', () => {
+      render(<AzureBlobStoreSettings {...defaultProps} />);
+      const checkbox = screen.getByTestId('checkbox-Direct Download (SAS URLs)');
+      fireEvent.click(checkbox);
+      expect(defaultProps.onChange).toHaveBeenCalledWith(
+        'bucketConfiguration.preSignedUrlEnabled',
+        true
+      );
+    });
+
+    describe('RBAC info note', () => {
+      const noteText = /generate a user delegation key/;
+
+      it('shows the note when enabled with MANAGEDIDENTITY auth', () => {
+        const props = {
+          ...defaultProps,
+          data: {
+            ...defaultProps.data,
+            bucketConfiguration: {
+              ...defaultProps.data.bucketConfiguration,
+              preSignedUrlEnabled: true,
+              authentication: { authenticationMethod: 'MANAGEDIDENTITY' },
+            }
+          }
+        };
+        render(<AzureBlobStoreSettings {...props} />);
+        expect(screen.getByText(noteText)).toBeInTheDocument();
+      });
+
+      it('shows the note when enabled with ENVIRONMENTVARIABLE auth', () => {
+        const props = {
+          ...defaultProps,
+          data: {
+            ...defaultProps.data,
+            bucketConfiguration: {
+              ...defaultProps.data.bucketConfiguration,
+              preSignedUrlEnabled: true,
+              authentication: { authenticationMethod: 'ENVIRONMENTVARIABLE' },
+            }
+          }
+        };
+        render(<AzureBlobStoreSettings {...props} />);
+        expect(screen.getByText(noteText)).toBeInTheDocument();
+      });
+
+      it('hides the note when enabled with ACCOUNTKEY auth', () => {
+        const props = {
+          ...defaultProps,
+          data: {
+            ...defaultProps.data,
+            bucketConfiguration: {
+              ...defaultProps.data.bucketConfiguration,
+              preSignedUrlEnabled: true,
+              authentication: { authenticationMethod: 'ACCOUNTKEY' },
+            }
+          }
+        };
+        render(<AzureBlobStoreSettings {...props} />);
+        expect(screen.queryByText(noteText)).not.toBeInTheDocument();
+      });
+
+      it('hides the note when checkbox is off, even with MI auth', () => {
+        const props = {
+          ...defaultProps,
+          data: {
+            ...defaultProps.data,
+            bucketConfiguration: {
+              ...defaultProps.data.bucketConfiguration,
+              preSignedUrlEnabled: false,
+              authentication: { authenticationMethod: 'MANAGEDIDENTITY' },
+            }
+          }
+        };
+        render(<AzureBlobStoreSettings {...props} />);
+        expect(screen.queryByText(noteText)).not.toBeInTheDocument();
+      });
+
+      it('hides the note on non-Pro editions even when enabled with MI', () => {
+        extjs.isProEdition.mockReturnValue(false);
+        const props = {
+          ...defaultProps,
+          data: {
+            ...defaultProps.data,
+            bucketConfiguration: {
+              ...defaultProps.data.bucketConfiguration,
+              preSignedUrlEnabled: true,
+              authentication: { authenticationMethod: 'MANAGEDIDENTITY' },
+            }
+          }
+        };
+        render(<AzureBlobStoreSettings {...props} />);
+        expect(screen.queryByText(noteText)).not.toBeInTheDocument();
+      });
+    });
   });
 });
 

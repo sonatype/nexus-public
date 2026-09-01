@@ -28,9 +28,10 @@ import {
 } from 'lucide-react';
 import { TYPE_ICONS, DEFAULT_TYPE_ICON } from './capabilityConstants';
 import DOMPurify from 'dompurify';
-import { SettingsButton, SettingsAlert, SettingsFormSection, SettingsTextArea } from '../../../../shared/form';
+import { SettingsButton, SettingsAlert, SettingsFormSection, } from '../../../../shared/form';
 import { ConfirmDialog } from '../../../../shared';
 import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 import {
   Capability,
   CapabilityType,
@@ -95,8 +96,19 @@ export function CapabilityDetail({
   // Track enabled state locally for UI synchronization between header buttons and form checkbox
   const [isEnabled, setIsEnabled] = useState(capability.enabled);
 
-  const canUpdate = ExtJS.checkPermission('nexus:capabilities:update');
-  const canDelete = ExtJS.checkPermission('nexus:capabilities:delete');
+  // Provider-independent, reactive permission checks (NEXUS-54212). ExtJS.checkPermission alone
+  // evaluates once at render and would not update if permissions load asynchronously after
+  // mount, leaving the Enable/Disable and Delete actions hidden for a permitted non-admin until
+  // refresh; ExtJS.usePermission with a hasUser dependency re-evaluates once the user loads.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canUpdate = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.CAPABILITIES.UPDATE),
+    [hasUser],
+  );
+  const canDelete = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.CAPABILITIES.DELETE),
+    [hasUser],
+  );
 
   useEffect(() => {
     const loadType = async () => {
@@ -222,11 +234,11 @@ export function CapabilityDetail({
               Disable
             </SettingsButton>
           )}
-          {canDelete && !capability.isSystem && (
+          {!capability.isSystem && (
             <SettingsButton
               variant="danger"
               onClick={handleDelete}
-              disabled={loading}
+              disabled={!canDelete || loading}
               icon={Trash2}
               testId="capability-delete-button"
               data-analytics-id="nxrm-capability-delete"
@@ -318,6 +330,7 @@ export function CapabilityDetail({
                 onCancel={onBack}
                 loading={loading}
                 error={error}
+                canEdit={canUpdate}
                 isEnabled={isEnabled}
                 onEnabledChange={handleEnabledChange}
               />

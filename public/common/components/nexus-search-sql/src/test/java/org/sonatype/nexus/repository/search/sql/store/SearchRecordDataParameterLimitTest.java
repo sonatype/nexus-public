@@ -39,7 +39,7 @@ public class SearchRecordDataParameterLimitTest
     // This ensures the shared counter properly tracks SQL parameters (not just Java collection sizes).
     //
     // IMPORTANT: INSERT...ON CONFLICT...DO UPDATE means parameters are used in BOTH clauses
-    // - paths: 4× SQL parameters (2× per clause: join + toQuotedTsVector, × 2 clauses)
+    // - paths: 4× SQL parameters (2× per clause: join + toTsVector, × 2 clauses)
     // - All other collections: 2× SQL parameters (1× per clause: toTsVector, × 2 clauses)
 
     // To reach exactly 60,000 SQL parameters:

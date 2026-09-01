@@ -15,19 +15,15 @@ import React, { useCallback } from 'react';
 import {
   Box,
   Callout,
-  Card,
   DropdownMenu,
   Flex,
   IconButton,
-  Inset,
   Spinner,
   Table,
   Text,
   Tooltip,
 } from '@radix-ui/themes';
-import { useRouter } from '@uirouter/react';
-import { Eye, Copy, X, MoreHorizontal } from 'lucide-react';
-import { ExtJS } from '../../../../../interface/ExtJS';
+import { Copy, MoreHorizontal, X } from 'lucide-react';
 
 import type { Repository, HealthCheckStatus, FirewallStatus } from './repository-list.types';
 import { HealthCheckCell } from '../../../shared/security/HealthCheckCell';
@@ -54,14 +50,15 @@ const STRINGS = {
     url: 'URL',
     healthCheck: 'Health Check',
     iqPolicyViolations: 'Firewall Report',
-    actions: '',
   },
   emptyMessageFiltered: 'No repositories match the current filters',
   emptyMessageNoRepos: 'No repositories available. You may need to sign in or check your permissions.',
   copyUrlTitle: 'Copy URL to Clipboard',
   urlCopiedMessage: 'URL Copied to Clipboard',
+  urlCopyFailedMessage: 'Failed to copy URL to clipboard',
   loadingMessage: 'Loading repositories...',
-  viewProfile: 'View Profile',
+  browseRepositoryAction: 'Browse Repository',
+  copyUrlAction: 'Copy URL',
 };
 
 export interface RepositoryListTableProps {
@@ -123,7 +120,6 @@ export function RepositoryListTable({
   sortDirection = 'asc',
   onSort,
 }: RepositoryListTableProps): JSX.Element {
-  const router = useRouter();
   const toast = useToast();
 
   // Handle sort - must be declared before any early returns (Rules of Hooks)
@@ -151,17 +147,14 @@ export function RepositoryListTable({
   const handleCopyUrl = (url: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
     const urlWithSlash = ensureTrailingSlash(url);
-    navigator.clipboard.writeText(urlWithSlash).then(() => {
-      toast.success(STRINGS.urlCopiedMessage);
-    });
+    navigator.clipboard.writeText(urlWithSlash)
+      .then(() => {
+        toast.success(STRINGS.urlCopiedMessage);
+      })
+      .catch(() => {
+        toast.error(STRINGS.urlCopyFailedMessage);
+      });
   };
-
-  // Handle view profile - navigates to Browse-context profile page
-  // This route is under preview.browse so it renders WITHOUT Settings sidebar
-  const handleViewProfile = useCallback((name: string) => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.stateService.go('preview.browse.repository-profile', { repositoryName: name });
-  }, [router]);
 
   // Loading state
   if (loading) {
@@ -187,76 +180,73 @@ export function RepositoryListTable({
     );
   }
 
-  // Calculate column count for empty state (name, type, format, status, url, actions, + optional columns)
+  // Column count for empty state: name, type, format, status, url, + optional (health, IQ), + actions.
   const colCount = 6 + (showHealthCheck ? 1 : 0) + (showIqPolicyViolations ? 1 : 0);
 
   return (
-    <Card size="1">
-      <Inset clip="padding-box" side="bottom">
-        <Box style={{ overflowX: 'auto' }}>
-          <Table.Root className="repository-list-table" size="2">
-            <Table.Header>
-              <Table.Row>
-                {onSort ? (
-                  <SortableTableHeader
-                    sortKey="name"
-                    currentSortKey={sortKey}
-                    currentSortDirection={sortDirection}
-                    onSort={handleSort}
-                    align="left"
-                  >
-                    {STRINGS.columns.name}
-                  </SortableTableHeader>
-                ) : (
-                  <Table.ColumnHeaderCell>
-                    {STRINGS.columns.name}
-                  </Table.ColumnHeaderCell>
-                )}
-                {onSort ? (
-                  <SortableTableHeader
-                    sortKey="type"
-                    currentSortKey={sortKey}
-                    currentSortDirection={sortDirection}
-                    onSort={handleSort}
-                    align="left"
-                  >
-                    {STRINGS.columns.type}
-                  </SortableTableHeader>
-                ) : (
-                  <Table.ColumnHeaderCell>
-                    {STRINGS.columns.type}
-                  </Table.ColumnHeaderCell>
-                )}
-                {onSort ? (
-                  <SortableTableHeader
-                    sortKey="format"
-                    currentSortKey={sortKey}
-                    currentSortDirection={sortDirection}
-                    onSort={handleSort}
-                    align="left"
-                  >
-                    {STRINGS.columns.format}
-                  </SortableTableHeader>
-                ) : (
-                  <Table.ColumnHeaderCell>
-                    {STRINGS.columns.format}
-                  </Table.ColumnHeaderCell>
-                )}
-                {onSort ? (
-                  <SortableTableHeader
-                    sortKey="status"
-                    currentSortKey={sortKey}
-                    currentSortDirection={sortDirection}
-                    onSort={handleSort}
-                    align="left"
-                  >
-                    {STRINGS.columns.status}
-                  </SortableTableHeader>
-                ) : (
-                  <Table.ColumnHeaderCell>
-                    {STRINGS.columns.status}
-                  </Table.ColumnHeaderCell>
-                )}
+    <Table.Root className="repository-list-table" variant="surface" size="2">
+      <Table.Header>
+        <Table.Row>
+          {onSort ? (
+            <SortableTableHeader
+              sortKey="name"
+              currentSortKey={sortKey}
+              currentSortDirection={sortDirection}
+              onSort={handleSort}
+              align="left"
+            >
+              {STRINGS.columns.name}
+            </SortableTableHeader>
+          ) : (
+            <Table.ColumnHeaderCell>
+              {STRINGS.columns.name}
+            </Table.ColumnHeaderCell>
+          )}
+          {onSort ? (
+            <SortableTableHeader
+              sortKey="type"
+              currentSortKey={sortKey}
+              currentSortDirection={sortDirection}
+              onSort={handleSort}
+              align="left"
+            >
+              {STRINGS.columns.type}
+            </SortableTableHeader>
+          ) : (
+            <Table.ColumnHeaderCell>
+              {STRINGS.columns.type}
+            </Table.ColumnHeaderCell>
+          )}
+          {onSort ? (
+            <SortableTableHeader
+              sortKey="format"
+              currentSortKey={sortKey}
+              currentSortDirection={sortDirection}
+              onSort={handleSort}
+              align="left"
+            >
+              {STRINGS.columns.format}
+            </SortableTableHeader>
+          ) : (
+            <Table.ColumnHeaderCell>
+              {STRINGS.columns.format}
+            </Table.ColumnHeaderCell>
+          )}
+          {onSort ? (
+            <SortableTableHeader
+              sortKey="status"
+              currentSortKey={sortKey}
+              currentSortDirection={sortDirection}
+              onSort={handleSort}
+              align="left"
+            >
+              {STRINGS.columns.status}
+            </SortableTableHeader>
+          ) : (
+            <Table.ColumnHeaderCell>
+              {STRINGS.columns.status}
+            </Table.ColumnHeaderCell>
+          )}
           <Table.ColumnHeaderCell>
             {STRINGS.columns.url}
           </Table.ColumnHeaderCell>
@@ -270,7 +260,12 @@ export function RepositoryListTable({
               {STRINGS.columns.iqPolicyViolations}
             </Table.ColumnHeaderCell>
           )}
-          <Table.ColumnHeaderCell justify="end" aria-label="Row actions" pr="5" />
+          {/* paddingRight: 32 matches the Rapture-safe right gutter used across list tables (see EntityTable.scss). */}
+          <Table.ColumnHeaderCell
+            width="80px"
+            justify="end"
+            aria-label="Row actions"
+          />
         </Table.Row>
       </Table.Header>
       <Table.Body>
@@ -346,7 +341,7 @@ export function RepositoryListTable({
                   />
                 </Table.Cell>
               )}
-              <Table.Cell justify="end" pr="5">
+              <Table.Cell justify="end">
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger>
                     <IconButton
@@ -354,23 +349,26 @@ export function RepositoryListTable({
                       color="gray"
                       size="1"
                       onClick={(e) => e.stopPropagation()}
-                      aria-label="Row actions"
+                      aria-label={`Actions for ${repo.name}`}
                     >
                       <MoreHorizontal size={16} />
                     </IconButton>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content align="end" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu.Item
-                      onClick={handleViewProfile(repo.name)}
-                      data-analytics-id="nxrm-repository-view-profile"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect?.(repo.name);
+                      }}
+                      data-analytics-id="nxrm-browse-repository-menu"
                     >
-                      View Profile
+                      {STRINGS.browseRepositoryAction}
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       onClick={handleCopyUrl(repo.url)}
                       data-analytics-id="nxrm-repository-copy-url-menu"
                     >
-                      Copy URL
+                      {STRINGS.copyUrlAction}
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>
                 </DropdownMenu.Root>
@@ -380,9 +378,6 @@ export function RepositoryListTable({
         )}
       </Table.Body>
     </Table.Root>
-        </Box>
-      </Inset>
-    </Card>
   );
 }
 

@@ -269,8 +269,12 @@ public class RepositoryUiService
   @RequiresAuthentication
   @Validate(groups = {Create.class, Default.class})
   public RepositoryXO create(final @NotNull @Valid RepositoryXO repositoryXO) throws Exception {
-    securityHelper.ensurePermitted(new RepositoryAdminPermission(repositoryXO.getFormat(), repositoryXO.getName(),
-        Collections.singletonList(BreadActions.ADD)));
+    Recipe recipe = recipes.get(repositoryXO.getRecipe());
+    if (recipe == null) {
+      throw new BadRequestException("Recipe not found: " + repositoryXO.getRecipe());
+    }
+    securityHelper.ensurePermitted(new RepositoryAdminPermission(recipe.getFormat().getValue(),
+        repositoryXO.getName(), Collections.singletonList(BreadActions.ADD)));
 
     initializeCleanupAttributes(repositoryXO);
 
@@ -658,6 +662,14 @@ public class RepositoryUiService
     statusXO.setOnline(configuration.isOnline());
 
     Recipe recipe = recipes.get(configuration.getRecipeName());
+
+    // Guard against missing recipe
+    if (recipe == null) {
+      log.debug("Recipe not found for repository {}, skipping status enrichment",
+          configuration.getRepositoryName());
+      return statusXO;
+    }
+
     // TODO - should we try to aggregate status from group members?
     if (recipe.getType() instanceof ProxyType) {
       try {
@@ -688,6 +700,11 @@ public class RepositoryUiService
         configuration -> recipes.get(configuration.getRecipeName()).getFormat().getValue();
 
     List<Configuration> configurations = configurationStore.list();
+
+    // Filter out configurations whose recipe is not registered (NEXUS-53342)
+    configurations = configurations.stream()
+        .filter(configuration -> recipes.containsKey(configuration.getRecipeName()))
+        .collect(Collectors.toList());
     if (parameters != null) {
       String format = parameters.getFilter("format");
       if (format != null && format.indexOf(",") > -1) {
@@ -768,12 +785,12 @@ public class RepositoryUiService
 
   private String getFormat(final Configuration configuration) {
     Recipe recipe = recipes.get(configuration.getRecipeName());
-    return recipe.getFormat().getValue();
+    return recipe != null ? recipe.getFormat().getValue() : null;
   }
 
   private String getType(final Configuration configuration) {
     Recipe recipe = recipes.get(configuration.getRecipeName());
-    return recipe.getType().getValue();
+    return recipe != null ? recipe.getType().getValue() : null;
   }
 
   private Long getSize(final Configuration configuration) {

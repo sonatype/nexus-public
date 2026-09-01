@@ -16,7 +16,8 @@ import java.sql.Connection;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.sonatype.nexus.node.datastore.NodeIdStore;
+import org.sonatype.nexus.internal.node.datastore.upgrade.UpgradeNodeIdStore;
+import org.sonatype.nexus.internal.node.upgrade.UpgradeDeploymentIdStore;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +31,15 @@ public class DeploymentIdUpgradeStep_1_23
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  private final NodeIdStore nodeIdStore;
+  private final UpgradeNodeIdStore nodeIdStore;
 
-  private final DeploymentIdStore deploymentIdStore;
+  private final UpgradeDeploymentIdStore deploymentIdStore;
 
   @Autowired
-  public DeploymentIdUpgradeStep_1_23(final DeploymentIdStore deploymentIdStore, final NodeIdStore nodeIdStore) {
+  public DeploymentIdUpgradeStep_1_23(
+      final UpgradeDeploymentIdStore deploymentIdStore,
+      final UpgradeNodeIdStore nodeIdStore)
+  {
     this.nodeIdStore = checkNotNull(nodeIdStore);
     this.deploymentIdStore = checkNotNull(deploymentIdStore);
   }
@@ -53,11 +57,8 @@ public class DeploymentIdUpgradeStep_1_23
     }
 
     String nodeId = nodeIdStore.getOrCreate();
+    // set() throws IllegalStateException on failure, so reaching this point means the write succeeded.
     deploymentIdStore.set(nodeId);
-
-    deploymentId = deploymentIdStore.get();
-    if (deploymentId.isPresent()) {
-      log.debug("Migration of deployment id was successful.");
-    }
+    log.debug("Migration of deployment id was successful.");
   }
 }

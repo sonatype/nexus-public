@@ -17,15 +17,14 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.MediaType;
+import java.util.Set;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -51,8 +50,16 @@ import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
 import com.google.common.collect.ImmutableSet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import org.apache.shiro.authz.UnauthenticatedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,8 +68,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
-import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
@@ -76,19 +81,19 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
 @ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
-@WithUser(permissions = {"nexus:uploader-metadata:read"})
 class ComponentsResourceTest
 {
   private static final String REPOSITORY_NAME = "test-repo";
@@ -153,12 +158,12 @@ class ComponentsResourceTest
         uploadManager,
         componentXOFactory,
         contentAuthHelper,
-        ImmutableSet.of(componentsResourceExtension),
+        Set.of(componentsResourceExtension),
         null);
   }
 
   // --- getComponents tests ---
-
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponents_returnsEmptyPageWhenNoComponents() {
     when(componentContinuation.isEmpty()).thenReturn(true);
@@ -170,6 +175,7 @@ class ComponentsResourceTest
     assertThat(page.getContinuationToken(), is(nullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponents_returnsPageWithComponents() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -194,6 +200,7 @@ class ComponentsResourceTest
     assertThat(xo.getFormat(), is(FORMAT_VALUE));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponents_continuationTokenIsNullWhenFewerThanPageLimit() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -210,6 +217,7 @@ class ComponentsResourceTest
     assertThat(page.getContinuationToken(), is(nullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponents_continuationTokenIsSetWhenExactlyPageLimit() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -229,6 +237,7 @@ class ComponentsResourceTest
     assertThat(page.getContinuationToken(), is(notNullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponents_invokesExtensions() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -244,6 +253,7 @@ class ComponentsResourceTest
     verify(componentsResourceExtension).updateComponentXO(any(ComponentXO.class), any(FluentComponent.class));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponents_filtersAssetsByPermission() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -267,8 +277,21 @@ class ComponentsResourceTest
     assertThat(page.getItems().iterator().next().getAssets(), is(empty()));
   }
 
+  @WithUser(isAuthenticated = false)
+  @Test
+  void testGetComponents_invalidContinuationToken() {
+    BadRequestException e = assertThrows(BadRequestException.class, () -> underTest.getComponents("", REPOSITORY_NAME));
+    assertThat(e.getMessage(), is("Invalid continuation token"));
+  }
+
+  @Test
+  void testGetComponents_unauthenticated() {
+    assertThrows(UnauthenticatedException.class, () -> underTest.getComponents(null, REPOSITORY_NAME));
+  }
+
   // --- getComponentById tests ---
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponentById_returnsComponent() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -291,6 +314,7 @@ class ComponentsResourceTest
     assertThat(result.getFormat(), is(FORMAT_VALUE));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponentById_throwsNotFoundWhenComponentDoesNotExist() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -302,6 +326,7 @@ class ComponentsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.getComponentById(encodedId));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponentById_throwsNotFoundWhenNotPermitted() {
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(false);
@@ -315,6 +340,7 @@ class ComponentsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.getComponentById(encodedId));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponentById_throwsUnprocessableEntityOnIllegalArgument() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -323,15 +349,12 @@ class ComponentsResourceTest
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    try {
-      underTest.getComponentById(encodedId);
-      fail("Expected WebApplicationException");
-    }
-    catch (WebApplicationException e) {
-      assertThat(e.getResponse().getStatus(), is(422));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.getComponentById(encodedId));
+    assertThat(e.getResponse().getStatus(), is(422));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponentById_setsIdCorrectly() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -350,8 +373,15 @@ class ComponentsResourceTest
     assertThat(result.getId(), is(expectedId));
   }
 
+  @Test
+  void testGetComponentById_unauthenticated() {
+    assertThrows(UnauthenticatedException.class, () -> underTest.getComponentById(""));
+    verifyNoInteractions(fluentComponents);
+  }
+
   // --- deleteComponent tests ---
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteComponent_deletesExistingComponent() {
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(true);
@@ -368,6 +398,7 @@ class ComponentsResourceTest
     verify(maintenanceService).deleteComponent(repository, component);
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteComponent_throwsNotFoundWhenComponentDoesNotExist() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -379,6 +410,7 @@ class ComponentsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.deleteComponent(encodedId));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteComponent_throwsNotFoundWhenNotPermitted() {
     when(contentAuthHelper.checkPathPermissions(COMPONENT_NAME, FORMAT_VALUE, REPOSITORY_NAME)).thenReturn(false);
@@ -392,6 +424,7 @@ class ComponentsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.deleteComponent(encodedId));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteComponent_doesNotDeleteWhenComponentNotFound() {
     String externalId = toExternalId(COMPONENT_ID).getValue();
@@ -400,18 +433,20 @@ class ComponentsResourceTest
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    try {
-      underTest.deleteComponent(encodedId);
-    }
-    catch (NotFoundException e) {
-      // expected
-    }
+    assertThrows(NotFoundException.class, () -> underTest.deleteComponent(encodedId));
 
     verify(maintenanceService, never()).deleteComponent(any(), any());
   }
 
+  @Test
+  void testDeleteComponent_unauthenticated() {
+    assertThrows(UnauthenticatedException.class, () -> underTest.deleteComponent(""));
+    verifyNoInteractions(fluentComponents);
+  }
+
   // --- uploadComponent tests ---
 
+  @WithUser(isAuthenticated = false)
   @Test
   void uploadComponent_successfulUpload() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
@@ -425,6 +460,7 @@ class ComponentsResourceTest
     verify(uploadManager).handle(repository, request);
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void uploadComponent_acceptsMultipartWithBoundary() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
@@ -438,34 +474,29 @@ class ComponentsResourceTest
     verify(uploadManager).handle(repository, request);
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void uploadComponent_throwsBadRequestWhenContentTypeIsNull() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(null);
 
-    try {
-      underTest.uploadComponent(REPOSITORY_NAME, request);
-      fail("Expected WebApplicationMessageException");
-    }
-    catch (WebApplicationMessageException e) {
-      assertThat(e.getResponse().getStatus(), is(400));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getResponse().getStatus(), is(400));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void uploadComponent_throwsBadRequestWhenContentTypeIsNotMultipart() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(MediaType.APPLICATION_JSON);
 
-    try {
-      underTest.uploadComponent(REPOSITORY_NAME, request);
-      fail("Expected WebApplicationMessageException");
-    }
-    catch (WebApplicationMessageException e) {
-      assertThat(e.getResponse().getStatus(), is(400));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getResponse().getStatus(), is(400));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void uploadComponent_throwsBadRequestOnIllegalOperationException() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
@@ -473,32 +504,61 @@ class ComponentsResourceTest
     when(uploadManager.handle(repository, request))
         .thenThrow(new IllegalOperationException("Repository does not allow upload"));
 
-    try {
-      underTest.uploadComponent(REPOSITORY_NAME, request);
-      fail("Expected WebApplicationMessageException");
-    }
-    catch (WebApplicationMessageException e) {
-      assertThat(e.getResponse().getStatus(), is(400));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getResponse().getStatus(), is(400));
   }
 
+  @WithUser(isAuthenticated = false)
+  @Test
+  void uploadComponent_throwsConflictOnConcurrentOperationException() throws Exception {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
+
+    doThrow(new ConcurrentOperationException("Upload failed: component was concurrently deleted. Please retry."))
+        .when(uploadManager)
+        .handle(repository, request);
+
+    WebApplicationMessageException e =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getResponse().getStatus(), is(409));
+  }
+
+  @WithUser(isAuthenticated = false)
+  @Test
+  void uploadComponent_throwsConflictOnRedeployDisabledException() throws Exception {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
+
+    doThrow(new RedeployDisabledException(repository, "/foo", "Repository does not allow upload")).when(uploadManager)
+        .handle(repository, request);
+
+    WebApplicationMessageException e =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getResponse().getStatus(), is(409));
+  }
+
+  @WithUser(isAuthenticated = false)
   @Test
   void uploadComponent_propagatesIOException() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
     when(uploadManager.handle(repository, request)).thenThrow(new IOException("Upload failed"));
 
-    try {
-      underTest.uploadComponent(REPOSITORY_NAME, request);
-      fail("Expected IOException");
-    }
-    catch (IOException e) {
-      assertThat(e.getMessage(), is("Upload failed"));
-    }
+    IOException e = assertThrows(IOException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    assertThat(e.getMessage(), is("Upload failed"));
+  }
+
+  @Test
+  void testUploadComponent_unauthenticated() {
+    HttpServletRequest request = mock();
+    assertThrows(UnauthenticatedException.class, () -> underTest.uploadComponent(REPOSITORY_NAME, request));
+    verifyNoInteractions(fluentComponents);
   }
 
   // --- fromComponent / toComponentXOs tests (exercised through getComponentById) ---
 
+  @WithUser(isAuthenticated = false)
   @Test
   void fromComponent_populatesAllFieldsCorrectly() {
     when(componentXOFactory.createComponentXO()).thenReturn(new DefaultComponentXO());
@@ -523,6 +583,7 @@ class ComponentsResourceTest
     assertThat(result.getId(), is(new RepositoryItemIDXO(REPOSITORY_NAME, externalId).getValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void fromComponent_invokesMultipleExtensions() {
     ComponentsResourceExtension secondExtension = mock(ComponentsResourceExtension.class);
@@ -553,6 +614,7 @@ class ComponentsResourceTest
     verify(secondExtension).updateComponentXO(any(ComponentXO.class), any(FluentComponent.class));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void fromComponent_worksWithNoExtensions() {
     ComponentsResource resourceWithNoExtensions = new ComponentsResource(
@@ -582,6 +644,7 @@ class ComponentsResourceTest
 
   // --- getComponent (private) error handling tested through getComponentById ---
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getComponent_throwsUnprocessableEntityForInvalidIdFormat() {
     // When find throws IllegalArgumentException, the resource should wrap it as 422
@@ -591,13 +654,9 @@ class ComponentsResourceTest
 
     String encodedId = encodeId(REPOSITORY_NAME, externalId);
 
-    try {
-      underTest.getComponentById(encodedId);
-      fail("Expected WebApplicationException");
-    }
-    catch (WebApplicationException e) {
-      assertThat(e.getResponse().getStatus(), is(422));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.getComponentById(encodedId));
+    assertThat(e.getResponse().getStatus(), is(422));
   }
 
   // --- Helper methods ---
@@ -650,7 +709,7 @@ class ComponentsResourceTest
     return new FluentComponentImpl(contentFacetSupport, componentData, List.of(fluentAsset));
   }
 
-  private String encodeId(final String repositoryName, final String id) {
+  private static String encodeId(final String repositoryName, final String id) {
     return getUrlEncoder().withoutPadding().encodeToString((repositoryName + ":" + id).getBytes());
   }
 

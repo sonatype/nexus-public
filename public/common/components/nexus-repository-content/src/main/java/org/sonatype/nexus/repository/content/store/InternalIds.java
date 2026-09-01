@@ -54,6 +54,9 @@ public class InternalIds
     return EntityHelper.id(toHexString((int) (internalId * TO_EXTERNAL))); // NOSONAR: we want truncation
   }
 
+  /**
+   * @throws NumberFormatException on invalid ids
+   */
   public static int toInternalId(final EntityId externalId) {
     try {
       return (int) (parseUnsignedInt(externalId.getValue(), 16) * TO_INTERNAL); // NOSONAR: we want truncation
@@ -106,7 +109,11 @@ public class InternalIds
     return internalId;
   }
 
-  private static RepositoryContent unwrap(final RepositoryContent content) {
+  /**
+   * Package-private so store classes in this package can reach the backing data object of a fluent wrapper without
+   * duplicating the unwrapping logic.
+   */
+  static RepositoryContent unwrap(final RepositoryContent content) {
     return content instanceof WrappedContent<?> ? ((WrappedContent<?>) content).unwrap() : content;
   }
 }

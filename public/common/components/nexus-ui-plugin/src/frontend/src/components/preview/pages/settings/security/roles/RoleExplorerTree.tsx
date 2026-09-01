@@ -147,7 +147,7 @@ function TreeNode({ node, onToggleExpand, depth = 0, searchTerm }: TreeNodeProps
   };
 
   const highlightText = (text: string | undefined) => {
-    if (!text || !searchTerm) return text;
+    if (!(text && searchTerm)) return text;
     const parts = text.split(new RegExp(`(${searchTerm})`, 'gi'));
     return parts.map((part, i) => 
       part.toLowerCase() === searchTerm.toLowerCase() 

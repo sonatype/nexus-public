@@ -12,11 +12,15 @@
  */
 package org.sonatype.nexus.cleanup.internal.task;
 
+import javax.annotation.Nullable;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.cleanup.service.CleanupService;
-import org.sonatype.nexus.scheduling.TaskSupport;
 import org.sonatype.nexus.logging.task.TaskLogging;
+import org.sonatype.nexus.scheduling.CancelableByRecoveryMode;
+import org.sonatype.nexus.scheduling.RecoveryModeService;
+import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
@@ -26,24 +30,33 @@ import org.springframework.stereotype.Component;
 
 /**
  * Runs cleanup via the cleanup service.
- *
- * @since 3.14
  */
 @Component
 @TaskLogging(TASK_LOG_ONLY)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class CleanupTask
     extends TaskSupport
+    implements CancelableByRecoveryMode
 {
   private final CleanupService cleanupService;
 
+  private final RecoveryModeService recoveryModeService;
+
   @Autowired
-  public CleanupTask(final CleanupService cleanupService) {
+  public CleanupTask(
+      final CleanupService cleanupService,
+      @Nullable final RecoveryModeService recoveryModeService)
+  {
     this.cleanupService = checkNotNull(cleanupService);
+    this.recoveryModeService = recoveryModeService;
   }
 
   @Override
   protected Object execute() {
+    if (recoveryModeService != null) {
+      recoveryModeService.ensureNotInRecoveryMode(getName());
+    }
+
     log.info("Starting cleanup");
 
     cleanupService.cleanup(this::isCanceled);

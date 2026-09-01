@@ -74,6 +74,8 @@ public class AuditRecorderImpl
   @Override
   public void record(final AuditData data) {
     checkNotNull(data);
+    checkNotNull(data.getDomain());
+    checkNotNull(data.getType());
 
     if (enabled) {
       // fill in timestamp, node-id and initiator if missing

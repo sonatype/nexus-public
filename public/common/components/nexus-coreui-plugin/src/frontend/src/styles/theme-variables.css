@@ -528,8 +528,28 @@
   }
 }
 
-/* Font configuration for Radix UI Themes - Nexus uses system fonts */
+/*
+ * Font configuration for Super UI (NEXUS-52338).
+ *
+ * The self-hosted @font-face rules are registered globally by styles/fonts.js, but the
+ * font-family that applies them is deliberately scoped to `.radix-themes`. Radix Themes
+ * puts that class on the Super UI root and, via an internal `<Theme asChild>` wrapper, on
+ * the content of every portalled overlay (Dialog, DropdownMenu, Select, Popover, Tooltip,
+ * HoverCard) as well - so overlays are covered wherever they attach in the DOM. The class
+ * never appears in Classic UI, which keeps ExtJS typography untouched.
+ *
+ * `--default-font-family` and `--code-font-family` are what Radix Themes itself consumes.
+ * The Nexus aliases are pointed at the same canonical stacks so components already using
+ * them converge here rather than drifting: `--font-family-base` / `--font-family-mono` are
+ * declared at :root in nexus-ui-plugin's design-tokens.css and are overridden here for
+ * Super UI only, and `--font-mono` is consumed by a number of components but was never
+ * defined anywhere, so those declarations previously had no effect.
+ */
 .radix-themes {
-  --default-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', system-ui, sans-serif;
-  --code-font-family: 'Menlo', 'Monaco', 'Courier New', ui-monospace, 'Roboto Mono', Consolas, 'Liberation Mono', monospace;
+  --font-family-base: 'Inter', system-ui, sans-serif;
+  --default-font-family: var(--font-family-base);
+
+  --font-family-mono: 'Geist Mono', ui-monospace, 'Roboto Mono', consolas, 'Liberation Mono', menlo, monospace;
+  --code-font-family: var(--font-family-mono);
+  --font-mono: var(--font-family-mono);
 }

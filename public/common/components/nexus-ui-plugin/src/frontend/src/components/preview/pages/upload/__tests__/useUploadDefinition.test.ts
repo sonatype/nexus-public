@@ -114,7 +114,7 @@ describe('useUploadDefinition', () => {
     expect(result.current.componentFieldsByGroup).toHaveProperty('Component coordinates');
     expect(result.current.componentFieldsByGroup).toHaveProperty('Options');
     expect(result.current.componentFieldsByGroup['Component coordinates']).toHaveLength(3);
-    expect(result.current.componentFieldsByGroup['Options']).toHaveLength(1);
+    expect(result.current.componentFieldsByGroup.Options).toHaveLength(1);
   });
 
   it('returns error when repository is not found', async () => {
@@ -203,7 +203,7 @@ describe('useUploadDefinition', () => {
     expect(result.current.uploadDefinition).toBeNull();
   });
 
-  it('handles 404 on upload-specs gracefully (e.g. cloud deployment)', async () => {
+  it('surfaces an error when upload-specs cannot be loaded', async () => {
     mockGet
       .mockResolvedValueOnce([mockRepository])
       .mockRejectedValueOnce({ response: { status: 404 } });
@@ -214,9 +214,8 @@ describe('useUploadDefinition', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBeNull();
+    expect(result.current.error).not.toBeNull();
     expect(result.current.uploadDefinition).toBeNull();
-    expect(result.current.repositorySettings).toEqual(mockRepository);
   });
 
   it('falls back to public repos endpoint when internal endpoint returns 404 (cloud deployment)', async () => {
@@ -227,7 +226,7 @@ describe('useUploadDefinition', () => {
       if (url === '/service/rest/v1/repositories') {
         return Promise.resolve([mockRepository]);
       }
-      if (url.includes('/formats/upload-specs')) {
+      if (url === '/service/rest/v1/formats/upload-specs') {
         return Promise.resolve([mockUploadDefinition]);
       }
       return Promise.resolve([]);

@@ -17,17 +17,13 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 
 import {
   SettingsFormSection,
-  SettingsButton,
   SettingsAlert,
 } from '../../../../shared/form';
 import { MetadataGrid } from '../../../../shared';
 import { RoleForm } from './RoleForm';
 import { useRolesApi } from './useRolesApi';
 import {
-  Role,
-  RoleFormData,
   RoleDetailProps,
-  NEXUS_SOURCE,
   isReadOnlyRole,
   formatRoleSourceDisplay,
 } from './types';

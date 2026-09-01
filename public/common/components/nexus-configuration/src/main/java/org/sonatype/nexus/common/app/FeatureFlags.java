@@ -26,11 +26,21 @@ public class FeatureFlags
   /* Hugging Face format is temporarily hidden behind the feature flag. Default value: false */
   public static final String HUGGING_FACE_FORMAT_ENABLED = "nexus.format.huggingface.enabled";
 
+  /*
+   * Kill switch for the Hugging Face XET protocol (§0.6, §5 of xet-implementation-spec).
+   * Independent of HUGGING_FACE_FORMAT_ENABLED so operators can run the HF format on the
+   * legacy LFS-only download path while the XET protocol is disabled. Default value: false.
+   * When false the recipe skips registering XET routes and the proxy facet does not persist
+   * or emit the X-Xet-Hash content-attribute; instance behaviour is bit-for-bit identical to
+   * a pre-XET Nexus.
+   */
+  public static final String HUGGING_FACE_XET_ENABLED = "nexus.format.huggingface.xet.enabled";
+
+  public static final String HUGGING_FACE_XET_ENABLED_NAMED_VALUE =
+      "${" + HUGGING_FACE_XET_ENABLED + ":-false}";
+
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
-
-  /* Terraform Backend format is temporarily hidden behind the feature flag. Default value: false */
-  public static final String TERRAFORM_STATE_BACKEND_FORMAT_ENABLED = "nexus.format.terraform-backend.enabled";
 
   /*
    * Kill switch for the OCI (Open Container Initiative) repository format. When false, the OCI
@@ -40,6 +50,15 @@ public class FeatureFlags
   public static final String OCI_FORMAT_ENABLED = "nexus.format.oci.enabled";
 
   public static final String OCI_FORMAT_ENABLED_NAMED_VALUE = "${nexus.format.oci.enabled:true}";
+
+  /*
+   * Feature flag for Chocolatey-specific NuGet behaviour (LegacyGallery suppression
+   * in v3 hosted service index, and mixed v2+v3 group routing). When true, enables
+   * Chocolatey support. Available values: true, false. Default value: true.
+   */
+  public static final String NUGET_CHOCOLATEY_ENABLED = "nexus.nuget.chocolatey.enabled";
+
+  public static final String NUGET_CHOCOLATEY_ENABLED_NAMED_VALUE = "${nexus.nuget.chocolatey.enabled:true}";
 
   /* Docker GC Custom task enabled. Available values: true, false. Default value: false */
   public static final String DOCKER_GC_CUSTOM_TASK_ENABLED = "nexus.docker.gc.custom.enabled";
@@ -121,6 +140,14 @@ public class FeatureFlags
   public static final String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED_VALUE =
       "${" + RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED + ":true}";
 
+  /**
+   * Feature flag to enable/disable the audit-events cleanup task (retention pruning).
+   */
+  public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED = "nexus.audit.events.cleanup.task.enabled";
+
+  public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE =
+      "${" + AUDIT_EVENTS_CLEANUP_TASK_ENABLED + ":true}";
+
   public static final String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
 
   public static final String CLEANUP_PREVIEW_ENABLED = "nexus.cleanup.preview.enabled";
@@ -135,7 +162,7 @@ public class FeatureFlags
 
   public static final String CLEANUP_RETAIN_ALL_FORMATS = "nexus.cleanup.retainAllFormats.enabled";
 
-  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:false}";
+  public static final String CLEANUP_RETAIN_ALL_FORMATS_NAMED_VALUE = "${nexus.cleanup.retainAllFormats.enabled:true}";
 
   public static final String FORMAT_RETAIN_PATTERN = "nexus.cleanup.{format}Retain";
 
@@ -244,11 +271,31 @@ public class FeatureFlags
   public static final String NEXUS_SECURITY_PASSWORD_ITERATIONS_NAMED_VALUE =
       "${nexus.security.password.iterations:}";
 
+  /*
+   * Short-lived cache of successfully verified credentials, keyed by a keyed hash of (stored-hash + submitted
+   * password). Lets repeated identical Basic-Auth requests skip the deliberately-expensive password KDF. Only
+   * successful verifications are cached (failures always pay the full KDF cost, preserving brute-force resistance),
+   * and the stored-hash is part of the key so a password change transparently invalidates prior entries.
+   */
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_ENABLED_NAMED_VALUE =
+      "${nexus.security.password.cache.enabled:true}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_SIZE_NAMED_VALUE =
+      "${nexus.security.password.cache.size:1000}";
+
+  public static final String NEXUS_SECURITY_PASSWORD_CACHE_EXPIRE_SECONDS_NAMED_VALUE =
+      "${nexus.security.password.cache.expireSeconds:2}";
+
   public static final String NEXUS_SECURITY_SECRETS_ALGORITHM_NAMED_VALUE =
       "${nexus.security.secrets.algorithm:PBKDF2WithHmacSHA1}";
 
   public static final String NEXUS_SECURITY_SECRETS_ITERATIONS_NAMED_VALUE =
       "${nexus.security.secrets.iterations:}";
+
+  /* Service Account tokens feature. Available values: true, false. Default value: false */
+  public static final String SERVICE_ACCOUNT_ENABLED = "nexus.service.account.enabled";
+
+  public static final String SERVICE_ACCOUNT_ENABLED_NAMED_VALUE = "${" + SERVICE_ACCOUNT_ENABLED + ":false}";
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED = "nexus.container.images.eval.enabled";
 
@@ -256,15 +303,17 @@ public class FeatureFlags
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED_NAMED_VALUE = "${nexus.container.images.eval.enabled:true}";
 
-  public static final String CONTAINER_IMAGES_EVAL_API_ENABLED_VALUE =
-      "${nexus.container.images.eval.api.enabled:true}";
-
   public static final String NEXUS_SECURITY_AUTH0_USER_MANAGEMENT_ENABLED =
       "nexus.security.auth0.userManagement.enabled";
 
-  public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_NAMED = "${nexus.firewall.container.workdirectory:-}";
-
   public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_VALUE = "${nexus.firewall.container.workdirectory:}";
+
+  /* Layer download timeout for container image scanning, in minutes. When unset, the scanner default is used. */
+  public static final String FIREWALL_CONTAINER_DOWNLOAD_TIMEOUT_MINUTES =
+      "nexus.firewall.container.download.timeout.minutes";
+
+  public static final String FIREWALL_CONTAINER_DOWNLOAD_TIMEOUT_MINUTES_VALUE =
+      "${nexus.firewall.container.download.timeout.minutes:}";
 
   public static final String EGRESS_METRICS_AGGREGATION_TASK_VISIBLE = "${nexus.egressmetrics.task.visible:false}";
 
@@ -275,6 +324,16 @@ public class FeatureFlags
   public static final String PYPI_METADATA_ENABLED = "nexus.pypi.metadata.enabled";
 
   public static final String PYPI_METADATA_ENABLED_NAMED_VALUE = "${nexus.pypi.metadata.enabled:false}";
+
+  /*
+   * PyPI repair-metadata-content-type task visibility. When true, the task appears in the Tasks UI so
+   * operators can monitor and re-run it. Default: false (hidden; auto-scheduled via migration step).
+   */
+  public static final String PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE =
+      "nexus.pypi.repair.metadata.content.type.task.visible";
+
+  public static final String PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE_NAMED_VALUE =
+      "${" + PYPI_REPAIR_METADATA_CONTENT_TYPE_TASK_VISIBLE + ":false}";
 
   public static final String NEXUS_USER_CONFIGURATION_SOURCE_ENABLED = "nexus.user.configuration.source.enabled";
 
@@ -287,6 +346,14 @@ public class FeatureFlags
   public static final String REACT_CAPABILITIES_ENABLED = "nexus.react.capabilities.enabled";
 
   public static final String REACT_CAPABILITIES_NAMED_VALUE = "${nexus.react.capabilities.enabled:true}";
+
+  /*
+   * Gates the new React onboarding wizard. When enabled, the ExtJS onboarding wizard defers so the React wizard can
+   * take over. Available values: true, false. Default value: true
+   */
+  public static final String REACT_ONBOARDING_ENABLED = "nexus.react.onboarding.enabled";
+
+  public static final String REACT_ONBOARDING_ENABLED_NAMED_VALUE = "${nexus.react.onboarding.enabled:true}";
 
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
@@ -339,39 +406,28 @@ public class FeatureFlags
    * Gates Preview UI audit event DB persistence and the audit log REST/UI surface.
    * Intentionally decoupled from the preview UI visibility flags so audit DB writes can be
    * deferred until the persistence path is production-ready.
-   * Available values: true, false. Default value: false
+   * Available values: true, false. Default value: true
    */
   public static final String PREVIEW_UI_AUDIT_ENABLED = "nexus.previewui.audit.enabled";
 
-  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:false}";
+  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:true}";
 
-  /* Principal permissions cache maximum size. Default value: 250 */
+  /*
+   * Per-realm principal permissions cache maximum size. Default value: 1000. Override per realm by appending the
+   * realm name, e.g. nexus.authorizingrealm.permissionscache.maximumsize.LdapRealm=5000.
+   */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE =
       "nexus.authorizingrealm.permissionscache.maximumsize";
 
   public static final String PRINCIPAL_PERMISSIONS_CACHE_MAXIMUM_SIZE_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.maximumsize:250}";
+      "${nexus.authorizingrealm.permissionscache.maximumsize:1000}";
 
-  /* Principal permissions cache expire after write in minutes. Default value: 60 */
-  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES =
-      "nexus.authorizingrealm.permissionscache.expireafterwrite.minutes";
-
-  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_WRITE_MINUTES_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.expireafterwrite.minutes:60}";
-
-  /* Principal permissions cache expire after access in minutes. Default value: 60 */
-  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES =
-      "nexus.authorizingrealm.permissionscache.expireafteraccess.minutes";
-
-  public static final String PRINCIPAL_PERMISSIONS_CACHE_EXPIRE_AFTER_ACCESS_MINUTES_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.expireafteraccess.minutes:60}";
-
-  /* Principal permissions cache record statistics. Default value: true */
+  /* Principal permissions cache record statistics. Default value: false (enable when diagnosing). */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS =
       "nexus.authorizingrealm.permissionscache.recordstats";
 
   public static final String PRINCIPAL_PERMISSIONS_CACHE_RECORD_STATS_NAMED_VALUE =
-      "${nexus.authorizingrealm.permissionscache.recordstats:true}";
+      "${nexus.authorizingrealm.permissionscache.recordstats:false}";
 
   /* Principal permissions cache concurrency level. Default value: 16 */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_CONCURRENCY_LEVEL =
@@ -385,14 +441,6 @@ public class FeatureFlags
 
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
       "${nexus.hosted.repository.evaluation.enabled:false}";
-
-  // Hosted Repository Synchronous Policy Enforcement feature (CLM-38411). Default: false.
-  // Requires HOSTED_REPOSITORY_EVALUATION_ENABLED to also be true.
-  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED =
-      "nexus.hosted.repository.enforcement.enabled";
-
-  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED_NAMED_VALUE =
-      "${nexus.hosted.repository.enforcement.enabled:false}";
 
   public static final String HOSTED_REPOSITORY_WORK_DIRECTORY_VALUE =
       "${nexus.lifecycle.hosted-repository.workdirectory:}";
@@ -425,12 +473,9 @@ public class FeatureFlags
    */
   public static final String TELEMETRY_MANDATORY_ENABLED = "nexus.telemetry.mandatory.enabled";
 
-  public static final String TELEMETRY_MANDATORY_ENABLED_NAMED_VALUE =
-      "${nexus.telemetry.mandatory.enabled:false}";
-
   /**
    * When enabled, activates mandatory telemetry logic for alerting only, without blocking operations (e.g., read-only
-   * mode).
+   * mode). Default value: true
    */
   public static final String TELEMETRY_MANDATORY_WARNING_ENABLED = "nexus.telemetry.mandatory.warning.enabled";
 
@@ -441,10 +486,10 @@ public class FeatureFlags
 
   public static final String AUTH_RATE_LIMIT_ENABLED_NAMED_VALUE = "${nexus.auth.ratelimit.enabled:true}";
 
-  /* NuGet Symbol Server support. Available values: true, false. Default value: false */
+  /* NuGet Symbol Server support. Available values: true, false. Default value: true */
   public static final String NUGET_SYMBOL_SERVER_ENABLED = "nexus.nuget.symbol.server.enabled";
 
-  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:false}";
+  public static final String NUGET_SYMBOL_SERVER_ENABLED_NAMED_VALUE = "${nexus.nuget.symbol.server.enabled:true}";
 
   /* Firewall capability shim for backwards API compatibility. Available values: true, false. Default value: true */
   public static final String FIREWALL_CAPABILITY_SHIM_ENABLED = "nexus.firewall.capability.shim.enabled";
@@ -458,4 +503,24 @@ public class FeatureFlags
    * Default value: true.
    */
   public static final String FIREWALL_REPOSITORY_SERVICE_ENABLED = "nexus.firewall.repository.service.enabled";
+
+  /*
+   * FIRE-105 / NEXUS-52802 — PyPI PCCS throughput perf fixes (template content cache, Guava HTML escaper,
+   * pre-escape relocation + safeLink scheme guard, reflection cache). Gates the optimised PyPI
+   * simple-index rendering path; default true (optimised path on unless explicitly
+   * disabled). Set false to run the legacy path. Available values: true, false.
+   */
+  public static final String NEXUS_PCCS_PERF_PYPI_ENABLED = "nexus.pccs.perf.pypi.enabled";
+
+  public static final String NEXUS_PCCS_PERF_PYPI_ENABLED_NAMED_VALUE = "${nexus.pccs.perf.pypi.enabled:true}";
+
+  /*
+   * NEXUS-52802 — npm PCCS throughput perf fixes (shared ObjectMapper singleton + ThreadLocal,
+   * reflection cache). Gates the optimised npm metadata streaming path; default true (optimised
+   * path on unless explicitly disabled). Set false to run the legacy per-request path. Available
+   * values: true, false.
+   */
+  public static final String NEXUS_PCCS_PERF_NPM_ENABLED = "nexus.pccs.perf.npm.enabled";
+
+  public static final String NEXUS_PCCS_PERF_NPM_ENABLED_NAMED_VALUE = "${nexus.pccs.perf.npm.enabled:true}";
 }

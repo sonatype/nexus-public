@@ -226,6 +226,52 @@ class MyBatisDataStoreTest
   }
 
   @Test
+  void testPostgresHikariConfigAppliesAdvancedDriverProperty() throws Exception {
+    // Test that advanced properties which are NOT HikariConfig pool settings (e.g. JDBC
+    // driver-level connection properties like loggerLevel) are routed to the DataSource
+    // instead of being rejected by HikariConfig's Properties constructor (NEXUS-53610).
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "loggerLevel=DEBUG");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = assertDoesNotThrow(() -> postgresStore.configureHikari("test-postgres", attributes),
+        "Advanced JDBC driver properties should not be rejected by HikariConfig");
+
+    assertThat("loggerLevel should be applied as a DataSource property",
+        hikariConfig.getDataSourceProperties().getProperty("loggerLevel"), is("DEBUG"));
+  }
+
+  @Test
+  void testPostgresHikariConfigAppliesBothPoolAndDriverAdvancedProperties() throws Exception {
+    // Test that a mix of a pool-level override and a driver-level property in the same
+    // advanced string are both applied, each to the correct destination.
+    DataStoreConfiguration postgresConfig = new DataStoreConfiguration();
+    postgresConfig.setName("test-postgres");
+    Map<String, String> attributes = Map.of(
+        "jdbcUrl", "jdbc:postgresql://localhost:5432/test",
+        "advanced", "initializationFailTimeout=120000\nsocketTimeout=30000");
+    postgresConfig.setAttributes(attributes);
+
+    MyBatisDataStore postgresStore = new MyBatisDataStore(databaseCipher, passwordHelper, directories, logManager,
+        List.of(declaredAccessType), List.of(), true, true);
+    postgresStore.setConfiguration(postgresConfig);
+
+    HikariConfig hikariConfig = postgresStore.configureHikari("test-postgres", attributes);
+
+    assertThat("initializationFailTimeout should still be applied as a pool setting",
+        hikariConfig.getInitializationFailTimeout(), equalTo(120000L));
+    assertThat("socketTimeout should be applied as a DataSource property",
+        hikariConfig.getDataSourceProperties().getProperty("socketTimeout"), is("30000"));
+  }
+
+  @Test
   void testMultiplePostgresDatastoresCleanupMetrics() throws Exception {
     // Test that creating multiple PostgreSQL datastores cleans up stale metrics
     DataStoreConfiguration postgresConfig1 = new DataStoreConfiguration();

@@ -13,7 +13,7 @@
 
 import { renderHook, act } from '@testing-library/react';
 import { useTasksApi } from '../useTasksApi';
-import { restClient, parseApiError, urlBuilder } from '../../../../../../../interface/api';
+import { restClient, } from '../../../../../../../interface/api';
 
 // Mock the REST API - path relative to this test file
 jest.mock('../../../../../../../interface/api', () => ({
@@ -59,6 +59,7 @@ describe('useTasksApi', () => {
         enabled: true,
         name: 'Cleanup Task',
         type: 'repository.cleanup',
+        typeName: 'Admin - Cleanup repositories using their associated policies',
         currentState: 'WAITING' as const,
         message: 'Waiting',
         nextRun: '2026-01-22T10:00:00.000Z',
@@ -99,6 +100,8 @@ describe('useTasksApi', () => {
       expect(tasks).toHaveLength(1);
       expect(tasks![0].id).toBe('task-1');
       expect(tasks![0].name).toBe('Cleanup Task');
+      expect(tasks![0].typeId).toBe('repository.cleanup');
+      expect(tasks![0].typeName).toBe('Admin - Cleanup repositories using their associated policies');
       expect(tasks![0].status).toBe('WAITING');
     });
 
@@ -113,6 +116,33 @@ describe('useTasksApi', () => {
       });
 
       expect(tasks).toEqual([]);
+    });
+
+    it('falls back to type ID when typeName is not provided', async () => {
+      mockRestClientGet.mockResolvedValueOnce({
+        items: [
+          {
+            id: 'task-2',
+            enabled: true,
+            name: 'Legacy Task',
+            type: 'repository.cleanup',
+            // typeName is not provided
+            currentState: 'WAITING' as const,
+            message: '',
+          },
+        ],
+      });
+
+      const { result } = renderHook(() => useTasksApi());
+
+      let tasks;
+      await act(async () => {
+        tasks = await result.current.fetchTasks();
+      });
+
+      expect(tasks).toHaveLength(1);
+      expect(tasks![0].typeId).toBe('repository.cleanup');
+      expect(tasks![0].typeName).toBe('repository.cleanup'); // falls back to type
     });
 
     it('throws error on failure', async () => {
@@ -260,6 +290,85 @@ describe('useTasksApi', () => {
       });
 
       consoleSpy.mockRestore();
+    });
+
+    it('consumes template.formFields preserving per-field required flag and storeFilters', async () => {
+      mockRestClientGet.mockResolvedValueOnce([
+        {
+          type: 'repository.export',
+          name: 'Repository - Export assets',
+          enabled: true,
+          notificationCondition: 'FAILURE',
+          frequency: { schedule: 'manual' },
+          properties: { repositoryName: '', targetDir: '', exportThreshold: '' },
+          formFields: [
+            {
+              id: 'repositoryName',
+              type: 'combobox',
+              label: 'Source repository',
+              helpText: 'Select the repository to export from.',
+              required: true,
+              storeApi: 'coreui_Repository.readReferences',
+              storeFilters: { type: 'hosted,proxy' },
+            },
+            {
+              id: 'targetDir',
+              type: 'string',
+              label: 'Target directory',
+              required: true,
+            },
+            {
+              id: 'exportThreshold',
+              type: 'number',
+              label: 'Threshold (in days) of unused assets to include',
+              required: false,
+              minValue: '1',
+            },
+          ],
+        },
+      ]);
+
+      const { result } = renderHook(() => useTasksApi());
+
+      let types;
+      await act(async () => {
+        types = await result.current.fetchTaskTypes();
+      });
+
+      expect(types).toHaveLength(1);
+      const fields = types![0].formFields!;
+      const exportThreshold = fields.find((f) => f.id === 'exportThreshold')!;
+      expect(exportThreshold.required).toBe(false);
+      expect(exportThreshold.minValue).toBe('1');
+
+      const repositoryName = fields.find((f) => f.id === 'repositoryName')!;
+      expect(repositoryName.required).toBe(true);
+      expect(repositoryName.storeFilters).toEqual({ type: 'hosted,proxy' });
+      expect(repositoryName.storeApi).toBe('coreui_Repository.readReferences');
+    });
+
+    it('falls back to properties when template.formFields is absent', async () => {
+      mockRestClientGet.mockResolvedValueOnce([
+        {
+          type: 'repository.cleanup',
+          name: 'Cleanup repositories',
+          enabled: true,
+          notificationCondition: 'FAILURE',
+          frequency: { schedule: 'manual' },
+          properties: { repositoryName: '' },
+        },
+      ]);
+
+      const { result } = renderHook(() => useTasksApi());
+
+      let types;
+      await act(async () => {
+        types = await result.current.fetchTaskTypes();
+      });
+
+      expect(types).toHaveLength(1);
+      expect(types![0].formFields).toBeDefined();
+      expect(types![0].formFields!.some((f) => f.id === 'repositoryName')).toBe(true);
     });
   });
 
@@ -817,6 +926,221 @@ describe('useTasksApi', () => {
     });
   });
 
+  describe('Data Repair Plan serialization (blobstore.planReconciliation)', () => {
+    const created = {
+      id: 'plan-1', name: 'Repair - Data Repair Plan', type: 'blobstore.planReconciliation',
+      currentState: 'WAITING', message: '',
+    };
+
+    const durationProps = {
+      topAlertBanner: '',
+      bottomAlertBanner: '',
+      onlyNotify: 'true',
+      blobstoreName: '(All Blob Stores)',
+      repositoryName: '',
+      taskScope: 'duration',
+      name: 'Repair - Data Repair Plan',
+      sinceDays: '',
+      sinceHours: '',
+      sinceMinutes: '',
+      reconcileStartDate: '',
+      reconcileEndDate: '',
+    };
+
+    const createPlan = async (properties: Record<string, string>) => {
+      mockRestClientPost.mockResolvedValueOnce(created);
+      const { result } = renderHook(() => useTasksApi());
+      await act(async () => {
+        await result.current.createTask({
+          typeId: 'blobstore.planReconciliation',
+          name: 'Repair - Data Repair Plan',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties,
+        } as any);
+      });
+      const calls = mockRestClientPost.mock.calls;
+      return (calls[calls.length - 1][1] as any).properties as Record<string, string>;
+    };
+
+    // EDIT/UPDATE serialization. PUT is a merge on the backend (TasksApiResourcePro#updateTask
+    // applies the existing config, then overlays the payload via setString), and
+    // TaskConfiguration#setString removes a key when given an empty string. So to CLEAR a
+    // previously-saved selector the payload must carry an explicit '' for that key — omitting it
+    // would leave the old value in place. This helper returns the PUT request's properties map.
+    const updatePlan = async (properties: Record<string, string>) => {
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce(created);
+      const { result } = renderHook(() => useTasksApi());
+      await act(async () => {
+        await result.current.updateTask('plan-1', {
+          id: 'plan-1',
+          typeId: 'blobstore.planReconciliation',
+          name: 'Repair - Data Repair Plan',
+          enabled: true,
+          schedule: 'manual' as const,
+          properties,
+        } as any);
+      });
+      const calls = mockRestClientPut.mock.calls;
+      return (calls[calls.length - 1][1] as any).properties as Record<string, string>;
+    };
+
+    it('drops display-only banners and the name template from the payload', async () => {
+      const props = await createPlan(durationProps);
+      expect(props).not.toHaveProperty('topAlertBanner');
+      expect(props).not.toHaveProperty('bottomAlertBanner');
+      expect(props).not.toHaveProperty('name');
+    });
+
+    // Classic parity: empty ExtJS number fields export the literal string "null".
+    it('serializes empty duration fields as the literal "null" (only Minutes set)', async () => {
+      const props = await createPlan({ ...durationProps, sinceMinutes: '30' });
+      expect(props.sinceDays).toBe('null');
+      expect(props.sinceHours).toBe('null');
+      expect(props.sinceMinutes).toBe('30');
+      // Duration scope drops the date side.
+      expect(props).not.toHaveProperty('reconcileStartDate');
+      expect(props).not.toHaveProperty('reconcileEndDate');
+      expect(props.taskScope).toBe('duration');
+    });
+
+    it('serializes all-blank duration fields as "null" (matches Classic byte-for-byte)', async () => {
+      const props = await createPlan(durationProps); // sinceDays/Hours/Minutes all ''
+      expect(props.sinceDays).toBe('null');
+      expect(props.sinceHours).toBe('null');
+      expect(props.sinceMinutes).toBe('null');
+    });
+
+    it('omits blobstoreName for the implicit all-blob-stores state (empty or sentinel)', async () => {
+      const fromSentinel = await createPlan({ ...durationProps, blobstoreName: '(All Blob Stores)' });
+      expect(fromSentinel).not.toHaveProperty('blobstoreName');
+      const fromEmpty = await createPlan({ ...durationProps, blobstoreName: '' });
+      expect(fromEmpty).not.toHaveProperty('blobstoreName');
+    });
+
+    it('serializes an explicit blob-store selection as a comma-separated list', async () => {
+      const props = await createPlan({ ...durationProps, blobstoreName: 'default,other' });
+      expect(props.blobstoreName).toBe('default,other');
+    });
+
+    it('omits an empty repository selection but serializes an explicit one', async () => {
+      const empty = await createPlan({ ...durationProps, repositoryName: '' });
+      expect(empty).not.toHaveProperty('repositoryName');
+      const explicit = await createPlan({ ...durationProps, repositoryName: 'maven-central,npm-proxy' });
+      expect(explicit.repositoryName).toBe('maven-central,npm-proxy');
+    });
+
+    it('keeps the date side and drops the duration side when scope=dates', async () => {
+      const props = await createPlan({
+        ...durationProps,
+        taskScope: 'dates',
+        reconcileStartDate: '06/24/2026',
+        reconcileEndDate: '06/25/2026',
+      });
+      expect(props.reconcileStartDate).toBe('06/24/2026');
+      expect(props.reconcileEndDate).toBe('06/25/2026');
+      expect(props).not.toHaveProperty('sinceDays');
+      expect(props).not.toHaveProperty('sinceHours');
+      expect(props).not.toHaveProperty('sinceMinutes');
+    });
+
+    it('coerces onlyNotify to a boolean string', async () => {
+      const props = await createPlan({ ...durationProps, onlyNotify: 'true' });
+      expect(props.onlyNotify).toBe('true');
+      const propsFalse = await createPlan({ ...durationProps, onlyNotify: '' });
+      expect(propsFalse.onlyNotify).toBe('false');
+    });
+
+    it('does not apply these rules to unrelated task types (scope guard)', async () => {
+      mockRestClientPost.mockResolvedValueOnce({
+        id: 'c1', name: 'Cleanup', type: 'repository.cleanup', currentState: 'WAITING', message: '',
+      });
+      const { result } = renderHook(() => useTasksApi());
+      await act(async () => {
+        await result.current.createTask({
+          typeId: 'repository.cleanup', name: 'Cleanup', enabled: true, schedule: 'manual' as const,
+          properties: { repositoryName: '' },
+        } as any);
+      });
+      const calls = mockRestClientPost.mock.calls;
+      const props = (calls[calls.length - 1][1] as any).properties as Record<string, string>;
+      // repository.cleanup has no omitWhenEmpty/serializeEmptyAs override → empty value passes through as ''.
+      expect(props.repositoryName).toBe('');
+    });
+
+    // ---- EDIT mode: clearing a previously-saved selection must persist (NEXUS-53485) ----
+    // On CREATE the all-state selector is omitted (Classic parity); on UPDATE it must be sent as
+    // '' so the backend merge overwrites/removes the prior explicit value instead of retaining it.
+
+    it('UPDATE: clearing repositoryName sends an explicit "" so the merge drops the old value', async () => {
+      const props = await updatePlan({ ...durationProps, repositoryName: '' });
+      // Present (not omitted) and empty — setString('') removes the key on the merged config.
+      expect(props).toHaveProperty('repositoryName');
+      expect(props.repositoryName).toBe('');
+    });
+
+    it('UPDATE: clearing blobstoreName (sentinel or empty) sends "" to clear the prior selection', async () => {
+      const fromSentinel = await updatePlan({ ...durationProps, blobstoreName: '(All Blob Stores)' });
+      expect(fromSentinel).toHaveProperty('blobstoreName');
+      expect(fromSentinel.blobstoreName).toBe('');
+      const fromEmpty = await updatePlan({ ...durationProps, blobstoreName: '' });
+      expect(fromEmpty.blobstoreName).toBe('');
+    });
+
+    it('UPDATE: clearing both blobstoreName and repositoryName sends "" for each', async () => {
+      const props = await updatePlan({
+        ...durationProps,
+        blobstoreName: '(All Blob Stores)',
+        repositoryName: '',
+      });
+      expect(props.blobstoreName).toBe('');
+      expect(props.repositoryName).toBe('');
+    });
+
+    it('UPDATE: explicit selections still serialize as comma-separated lists (not cleared)', async () => {
+      const props = await updatePlan({
+        ...durationProps,
+        blobstoreName: 'default,other',
+        repositoryName: 'maven-central,npm-proxy',
+      });
+      expect(props.blobstoreName).toBe('default,other');
+      expect(props.repositoryName).toBe('maven-central,npm-proxy');
+    });
+
+    it('CREATE omits but UPDATE clears the all-blob-stores selector (merge-aware asymmetry)', async () => {
+      const createProps = await createPlan({ ...durationProps, blobstoreName: '(All Blob Stores)' });
+      expect(createProps).not.toHaveProperty('blobstoreName');
+      const updateProps = await updatePlan({ ...durationProps, blobstoreName: '(All Blob Stores)' });
+      expect(updateProps.blobstoreName).toBe('');
+    });
+
+    it('UPDATE: blank active duration fields still serialize as the literal "null"', async () => {
+      const props = await updatePlan(durationProps); // sinceDays/Hours/Minutes all ''
+      expect(props.sinceDays).toBe('null');
+      expect(props.sinceHours).toBe('null');
+      expect(props.sinceMinutes).toBe('null');
+    });
+
+    it('UPDATE scope guard: unrelated task types are unaffected by the clear-on-update rule', async () => {
+      mockRestClientPut.mockResolvedValueOnce(undefined);
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'c1', name: 'Cleanup', type: 'repository.cleanup', currentState: 'WAITING', message: '',
+      });
+      const { result } = renderHook(() => useTasksApi());
+      await act(async () => {
+        await result.current.updateTask('c1', {
+          id: 'c1', typeId: 'repository.cleanup', name: 'Cleanup', enabled: true, schedule: 'manual' as const,
+          properties: { repositoryName: '' },
+        } as any);
+      });
+      const calls = mockRestClientPut.mock.calls;
+      const props = (calls[calls.length - 1][1] as any).properties as Record<string, string>;
+      // repository.cleanup has no omitWhenEmpty override → the value passes through unchanged ('').
+      expect(props.repositoryName).toBe('');
+    });
+  });
+
   describe('setError', () => {
     it('allows clearing error state', async () => {
       mockRestClientPost.mockRejectedValueOnce({ message: 'Some error' });
@@ -840,6 +1164,63 @@ describe('useTasksApi', () => {
       });
 
       expect(result.current.error).toBeNull();
+    });
+  });
+
+  describe('serialization — Execute display fields', () => {
+    it('drops banners, static-info headers, plan-information widget, and read-only display fields from the payload', async () => {
+      const { EXECUTE_RECONCILE_PLAN_TYPE_ID } = require('../taskFieldMetadata');
+      mockRestClientPost.mockResolvedValueOnce({ id: 'x', name: 'x', type: EXECUTE_RECONCILE_PLAN_TYPE_ID });
+      const { result } = renderHook(() => useTasksApi());
+      await act(async () => {
+        await result.current.createTask({
+          enabled: true,
+          name: 'Repair - Execute Data Repair Plan',
+          typeId: EXECUTE_RECONCILE_PLAN_TYPE_ID,
+          schedule: 'manual',
+          properties: {
+            topAlertBanner: '',
+            planOptionsLabelId: '',
+            planInformationLabelId: '',
+            planInformation: '',
+            blobstoreName: '(All Blob Stores)',
+            repositoryName: 'repo-1',
+            taskScope: 'dates',
+            reconcileStartDate: '06/01/2026',
+            reconcileEndDate: '06/02/2026',
+          },
+        } as any);
+      });
+      const sent = (mockRestClientPost.mock.calls[0][1] as any).properties;
+      // Display-only types (banners, static-info, plan-information widget) — never persisted
+      expect(sent.topAlertBanner).toBeUndefined();
+      expect(sent.planOptionsLabelId).toBeUndefined();
+      expect(sent.planInformationLabelId).toBeUndefined();
+      expect(sent.planInformation).toBeUndefined();
+      // Derived display-only fields (neverSerialize) — never sent to the backend
+      expect(sent.blobstoreName).toBeUndefined();
+      expect(sent.repositoryName).toBeUndefined();
+      expect(sent.reconcileStartDate).toBeUndefined();
+      expect(sent.reconcileEndDate).toBeUndefined();
+      // taskScope is a display-only field (Execute task ignores it at runtime) — never serialized
+      expect(sent.taskScope).toBeUndefined();
+    });
+
+    it('preserves planIds through serialization (not a read-only field)', async () => {
+      const { EXECUTE_RECONCILE_PLAN_TYPE_ID } = require('../taskFieldMetadata');
+      mockRestClientPost.mockResolvedValueOnce({ id: 'x', name: 'x', type: EXECUTE_RECONCILE_PLAN_TYPE_ID });
+      const { result } = renderHook(() => useTasksApi());
+      await act(async () => {
+        await result.current.createTask({
+          enabled: true,
+          name: 'Repair - Execute Data Repair Plan',
+          typeId: EXECUTE_RECONCILE_PLAN_TYPE_ID,
+          schedule: 'manual',
+          properties: { planIds: 'plan-abc-123' },
+        } as any);
+      });
+      const sent = (mockRestClientPost.mock.calls[0][1] as any).properties;
+      expect(sent.planIds).toBe('plan-abc-123');
     });
   });
 
@@ -913,6 +1294,78 @@ describe('useTasksApi', () => {
           properties: { 'repository.cleanup.policies': 'old,older' },
         }),
       );
+    });
+  });
+
+  // The REST `currentState` is the raw TaskState enum (TaskState.java): WAITING,
+  // RUNNING_STARTING / RUNNING / RUNNING_BLOCKED / RUNNING_CANCELED, and the
+  // DONE-group OK / FAILED / CANCELED / INTERRUPTED. When a task reports progress
+  // it arrives as "RUNNING: <progress>" (TaskXO.java). The transform must classify
+  // every running-group value (including the progress suffix) as RUNNING so the
+  // badge and Stop button reflect a live run; otherwise it stays stuck at WAITING.
+  describe('currentState → status transform', () => {
+    const fetchSingle = async (currentState: string) => {
+      mockRestClientGet.mockResolvedValueOnce({
+        id: 'task-1',
+        enabled: true,
+        name: 'T',
+        type: 'repository.cleanup',
+        currentState,
+        message: '',
+      });
+      const { result } = renderHook(() => useTasksApi());
+      let task;
+      await act(async () => {
+        task = await result.current.fetchTask('task-1');
+      });
+      return task!;
+    };
+
+    it('maps WAITING to WAITING (runnable, not stoppable)', async () => {
+      const task = await fetchSingle('WAITING');
+      expect(task.status).toBe('WAITING');
+      expect(task.runnable).toBe(true);
+      expect(task.stoppable).toBe(false);
+    });
+
+    it('maps RUNNING to RUNNING (stoppable, not runnable)', async () => {
+      const task = await fetchSingle('RUNNING');
+      expect(task.status).toBe('RUNNING');
+      expect(task.runnable).toBe(false);
+      expect(task.stoppable).toBe(true);
+    });
+
+    it('maps RUNNING with a progress suffix to RUNNING', async () => {
+      const task = await fetchSingle('RUNNING: 42 of 100 assets');
+      expect(task.status).toBe('RUNNING');
+      expect(task.stoppable).toBe(true);
+    });
+
+    it('maps RUNNING_STARTING to RUNNING', async () => {
+      expect((await fetchSingle('RUNNING_STARTING')).status).toBe('RUNNING');
+    });
+
+    it('maps RUNNING_BLOCKED to RUNNING', async () => {
+      const task = await fetchSingle('RUNNING_BLOCKED');
+      expect(task.status).toBe('RUNNING');
+      expect(task.stoppable).toBe(true);
+    });
+
+    it('maps RUNNING_CANCELED to RUNNING', async () => {
+      expect((await fetchSingle('RUNNING_CANCELED')).status).toBe('RUNNING');
+    });
+
+    it('maps the DONE-group terminal states to themselves', async () => {
+      expect((await fetchSingle('OK')).status).toBe('OK');
+      expect((await fetchSingle('FAILED')).status).toBe('FAILED');
+      expect((await fetchSingle('CANCELED')).status).toBe('CANCELED');
+      expect((await fetchSingle('INTERRUPTED')).status).toBe('INTERRUPTED');
+    });
+
+    it('treats terminal states as not running (runnable, not stoppable)', async () => {
+      const task = await fetchSingle('OK');
+      expect(task.runnable).toBe(true);
+      expect(task.stoppable).toBe(false);
     });
   });
 });

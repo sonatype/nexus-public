@@ -647,6 +647,29 @@ public abstract class BaseBlobStoreManager
   private static final int MAX_MOVE_RETRIES = 3;
 
   @Override
+  public Blob copyBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
+    checkNotNull(blobId);
+    checkNotNull(srcBlobStore);
+    checkNotNull(destBlobStore);
+
+    BlobAttributes srcBlobAttributes = srcBlobStore.getBlobAttributes(blobId);
+    if (srcBlobAttributes == null) {
+      throw new BlobStoreException("Blob attributes not found for blob: " + blobId, null);
+    }
+    boolean isSrcDeleted = srcBlobAttributes.isDeleted();
+
+    Map<String, String> headers = srcBlobAttributes.getHeaders();
+
+    Blob newBlob = createBlobWithRetry(blobId, srcBlobStore, destBlobStore, headers);
+    destBlobStore.setBlobAttributes(newBlob.getId(), srcBlobAttributes);
+
+    ensureDeletedStateTransferred(blobId, newBlob.getId(), srcBlobStore, destBlobStore, isSrcDeleted);
+    log.debug("Copied blobId {} to blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
+
+    return newBlob;
+  }
+
+  @Override
   public Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
     checkNotNull(srcBlobStore);
     checkNotNull(destBlobStore);

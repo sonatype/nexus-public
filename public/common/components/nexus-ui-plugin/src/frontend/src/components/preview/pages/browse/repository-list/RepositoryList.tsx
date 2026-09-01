@@ -36,7 +36,6 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { ExtJS } from '../../../../../interface/ExtJS';
 
 import type {
   RepositoryListProps,

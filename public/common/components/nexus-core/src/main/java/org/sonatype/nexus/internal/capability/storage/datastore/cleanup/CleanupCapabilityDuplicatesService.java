@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.capability.storage.datastore.cleanup;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,8 +20,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
+import org.sonatype.nexus.internal.capability.storage.upgrade.UpgradeCapabilityStorage;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.springframework.stereotype.Component;
@@ -37,10 +38,10 @@ public class CleanupCapabilityDuplicatesService
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  private final CapabilityStorage capabilityStorage;
+  private final UpgradeCapabilityStorage capabilityStorage;
 
   @Autowired
-  public CleanupCapabilityDuplicatesService(final CapabilityStorage capabilityStorage) {
+  public CleanupCapabilityDuplicatesService(final UpgradeCapabilityStorage capabilityStorage) {
     this.capabilityStorage = checkNotNull(capabilityStorage);
   }
 
@@ -51,17 +52,20 @@ public class CleanupCapabilityDuplicatesService
       return;
     }
 
-    duplicateCapabilities.forEach((typeId, duplicates) -> {
-      log.info("Cleaning up {} duplicates for {} capability", duplicates.size() - 1, typeId);
+    List<CapabilityIdentity> toRemove = new ArrayList<>();
+    duplicateCapabilities.forEach((item, duplicates) -> {
+      log.info("Cleaning up {} duplicates for {} capability", duplicates.size() - 1, item.getType());
 
       duplicates.stream()
-          .skip(1) // left one capability in the storage
-          .forEach(identity -> {
-            if (capabilityStorage.remove(identity)) {
-              log.debug("Capability duplicate {} removed", identity);
-            }
-          });
+          .skip(1) // leave one capability in the storage
+          .forEach(toRemove::add);
     });
+
+    // Remove all duplicates in a single batched transaction rather than one connection acquisition + commit
+    // (fsync on PostgreSQL) per row, which on instances with many duplicates is the startup-outage failure
+    // mode NEXUS-53442 targets.
+    int removed = capabilityStorage.removeAll(toRemove);
+    log.debug("Removed {} capability duplicate(s)", removed);
   }
 
   /**

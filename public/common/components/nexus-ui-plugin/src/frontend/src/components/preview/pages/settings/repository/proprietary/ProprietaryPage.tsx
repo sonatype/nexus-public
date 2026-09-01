@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Box, Flex, Text, ScrollArea } from '@radix-ui/themes';
-import { Lock, Save, RotateCcw } from 'lucide-react';
+import { Box, Text, } from '@radix-ui/themes';
+import { Lock, } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import {
@@ -25,8 +25,6 @@ import {
 import {
   SettingsForm,
   SettingsFormSection,
-  SettingsButton,
-  SettingsAlert,
   SettingsTransferList,
 } from '../../../../shared/form';
 import { useProprietaryApi } from './useProprietaryApi';
@@ -117,14 +115,10 @@ export function ProprietaryPage() {
   }, []);
 
   const handleSave = useCallback(async () => {
-    try {
       const result = await updateSettings(enabledRepos);
       setInitialEnabledRepos(result.enabledRepositories);
       setEnabledRepos(result.enabledRepositories);
       toast.success('Proprietary repositories settings saved successfully');
-    } catch (err) {
-      throw err;
-    }
   }, [enabledRepos, updateSettings, toast]);
 
   const handleDiscard = useCallback(() => {

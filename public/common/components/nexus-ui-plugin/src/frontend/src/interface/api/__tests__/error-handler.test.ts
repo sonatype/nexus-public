@@ -109,3 +109,54 @@ describe('HelperBean / attributes prefix stripping (via parseApiError)', () => {
     expect(result.fieldErrors?.[1].field).toBe('HelperBean.expression');
   });
 });
+
+describe('405 Method Not Allowed (via parseApiError)', () => {
+  it('returns status 405 with fallback message when no body message', () => {
+    const data = { 'status-code': 405, 'status-message': 'METHOD_NOT_ALLOWED' };
+    const result = parseApiError(makeAxiosError(405, data));
+    expect(result.status).toBe(405);
+    expect(result.message).toBe('This operation is not supported for the current resource state.');
+  });
+
+  it('returns the body message when present', () => {
+    const data = { message: 'Health Check is not available' };
+    const result = parseApiError(makeAxiosError(405, data));
+    expect(result.message).toBe('Health Check is not available');
+  });
+});
+
+// WebApplicationMessageException callers on the backend commonly pass the message as a
+// JSON string literal (e.g. `"\"Repository not found\""`), so the parsed `message` field
+// is wrapped in a redundant pair of literal quote characters. Toasts should show the
+// plain text. (NEXUS-53607 manual testing)
+describe('quoted message unwrapping (via parseApiError)', () => {
+  it('strips wrapping quotes from a 409 message', () => {
+    const data = { id: '*', message: '"Repository Health Check instance capability is not enabled"' };
+    const result = parseApiError(makeAxiosError(409, data));
+    expect(result.message).toBe('Repository Health Check instance capability is not enabled');
+  });
+
+  it('strips wrapping quotes from a 403 message', () => {
+    const data = { id: '*', message: '"EULA is not accepted"' };
+    const result = parseApiError(makeAxiosError(403, data));
+    expect(result.message).toBe('EULA is not accepted');
+  });
+
+  it('strips wrapping quotes from a 404 message', () => {
+    const data = { id: '*', message: '"Repository not found"' };
+    const result = parseApiError(makeAxiosError(404, data));
+    expect(result.message).toBe('Repository not found');
+  });
+
+  it('leaves an unquoted message unchanged', () => {
+    const data = { id: '*', message: 'Repository type is not proxy' };
+    const result = parseApiError(makeAxiosError(400, data));
+    expect(result.message).toBe('Repository type is not proxy');
+  });
+
+  it('does not strip a single leading or trailing quote', () => {
+    const data = { id: '*', message: '"unterminated' };
+    const result = parseApiError(makeAxiosError(409, data));
+    expect(result.message).toBe('"unterminated');
+  });
+});

@@ -1155,14 +1155,11 @@ public class AptProxyMetadataFacetTest
     assertThat("Release file must include main/binary-arm64/Packages in checksums",
         releaseContent, containsString("main/binary-arm64/Packages"));
 
-    // The test proves NEXUS-49457 fix works because:
-    // 1. Upstream Release only advertises "arm64" (not "all")
-    // 2. Cached packages exist for both "all" and "arm64" architectures
-    // 3. Fix detects cached "all" architecture via findMissingArchitectures()
-    // 4. Fix adds "all" slice via addSlicesForMissingArchitectures()
-    // 5. Fix includes cached "all" packages via addCachedPackagesForArchitecture()
-    // 6. Generated Release file lists BOTH "all" and "arm64" architectures with their Packages files
-    // 7. WITHOUT the fix: only "arm64" would be in Release, and cached "all" packages would be invisible to APT clients
+    // The test proves NEXUS-49457 fix works via rebuildFromCachedOnly() fallback:
+    // 1. Upstream is unreachable (HTTP 2-arg execute not mocked, returns null -> NPE -> empty)
+    // 2. discoverSlicesFromUpstream() returns empty -> rebuildFromCachedOnly() is invoked
+    // 3. rebuildFromCachedOnly() groups ALL KV cached packages by architecture
+    // 4. Generated Release file lists BOTH "all" and "arm64" architectures with their Packages files
   }
 
   /**
@@ -1308,14 +1305,404 @@ public class AptProxyMetadataFacetTest
     assertThat("Release file must include main/binary-amd64/Packages in checksums",
         releaseContent, containsString("main/binary-amd64/Packages"));
 
-    // This test proves the NEXUS-49457 fix is architecture-agnostic because:
-    // 1. Upstream Release only advertises "amd64" (not "i386")
-    // 2. Cached packages exist for both "amd64" and "i386" architectures
-    // 3. Fix detects cached "i386" architecture via findMissingArchitectures()
-    // 4. Fix adds "i386" slice via addSlicesForMissingArchitectures()
-    // 5. Fix includes cached "i386" packages via addCachedPackagesForArchitecture()
-    // 6. Generated Release file lists BOTH "i386" and "amd64" architectures with their Packages files
-    // 7. The fix works identically for i386, arm64, armhf, ppc64el, s390x, or ANY other architecture
+    // This test proves the NEXUS-49457 fix is architecture-agnostic via rebuildFromCachedOnly() fallback:
+    // 1. Upstream is unreachable (HTTP 2-arg execute not mocked, returns null -> NPE -> empty)
+    // 2. discoverSlicesFromUpstream() returns empty -> rebuildFromCachedOnly() is invoked
+    // 3. rebuildFromCachedOnly() groups ALL KV cached packages by architecture
+    // 4. Generated Release file lists BOTH "i386" and "amd64" architectures with their Packages files
+  }
+
+  /**
+   * Test NEXUS-53742: In multi-distribution re-signing mode, each codename's Packages index
+   * must only contain its own packages, not packages from other cached distributions.
+   *
+   * Scenario:
+   * - Two distributions ("focal", "jammy") both have amd64 packages in the KV store
+   * - Upstream is reachable and only lists "focal"'s package for focal's Packages index
+   * - Proxy rebuilds focal's metadata
+   * - Expected: focal's Packages index contains only focal's package (ubuntu20.04 version)
+   * - Expected: focal's Packages index does NOT contain jammy's package (ubuntu22.04 version)
+   *
+   * Root cause of bug: addCachedPackagesForArchitecture() filtered only by architecture,
+   * so all amd64 packages from ALL distributions were merged into every distribution's index.
+   * Fix: remove addCachedPackagesForArchitecture(); rely on upstream + previousEntries for inclusion.
+   */
+  @Test
+  public void testRebuildMetadata_MultiDistributionMode_NoPackageContaminationAcrossDistributions() throws Exception {
+    when(signingFacet.isConfigured()).thenReturn(true);
+    when(contentFacet.isEnforceDistribution()).thenReturn(false);
+
+    // Upstream focal Release: only amd64/main
+    String focalRelease = "Architectures: amd64\n" +
+        "Components: main\n" +
+        "MD5Sum:\n" +
+        " d41d8cd98f00b204e9800998ecf8427e 0 main/binary-amd64/Packages\n";
+
+    // Upstream focal Packages (plain): only the focal version of zabbix-agent2
+    String focalPackagesContent =
+        "Package: zabbix-agent2\n" +
+            "Version: 7.4.11-1+ubuntu20.04\n" +
+            "Architecture: amd64\n" +
+            "Filename: pool/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\n" +
+            "Size: 123456\n" +
+            "MD5Sum: aaaa1111bbbb2222cccc3333dddd4444\n" +
+            "SHA256: a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4e1e2e3e4f1f2f3f4a1a2a3a4b1b2b3b4\n\n";
+
+    // HTTP: 200 for Release, 404 for Packages.gz (falls back to plain), 200 for plain Packages
+    HttpResponse releaseResponse = mock(HttpResponse.class);
+    StatusLine releaseStatus = mock(StatusLine.class);
+    when(releaseStatus.getStatusCode()).thenReturn(200);
+    when(releaseResponse.getStatusLine()).thenReturn(releaseStatus);
+    when(releaseResponse.getEntity()).thenReturn(
+        new org.apache.http.entity.ByteArrayEntity(focalRelease.getBytes(StandardCharsets.UTF_8)));
+
+    HttpResponse notFoundResponse = mock(HttpResponse.class);
+    StatusLine notFoundStatus = mock(StatusLine.class);
+    when(notFoundStatus.getStatusCode()).thenReturn(404);
+    when(notFoundResponse.getStatusLine()).thenReturn(notFoundStatus);
+
+    HttpResponse packagesResponse = mock(HttpResponse.class);
+    StatusLine packagesStatus = mock(StatusLine.class);
+    when(packagesStatus.getStatusCode()).thenReturn(200);
+    when(packagesResponse.getStatusLine()).thenReturn(packagesStatus);
+    when(packagesResponse.getEntity()).thenReturn(
+        new org.apache.http.entity.ByteArrayEntity(focalPackagesContent.getBytes(StandardCharsets.UTF_8)));
+
+    // Use the typed 2-arg execute overload so fetchUpstreamContentRaw() returns real responses.
+    // (The NEXUS-49457 tests rely on the 1-arg mock not matching the 2-arg call so those
+    // tests exercise the rebuildFromCachedOnly() fallback instead.)
+    when(httpClient.execute(
+        any(org.apache.http.client.methods.HttpGet.class),
+        any(org.apache.http.protocol.HttpContext.class)))
+            .thenReturn(releaseResponse, notFoundResponse, packagesResponse);
+
+    // KV store holds packages for BOTH focal and jammy - this is the contamination scenario.
+    // Both packages are amd64; old code included both in focal's index.
+    String focalKvJson = "{\n" +
+        "  \"package_name\": \"zabbix-agent2\",\n" +
+        "  \"package_version\": \"7.4.11-1+ubuntu20.04\",\n" +
+        "  \"architecture\": \"amd64\",\n" +
+        "  \"index_section\": \"Package: zabbix-agent2\\nVersion: 7.4.11-1+ubuntu20.04\\n" +
+        "Architecture: amd64\\nFilename: pool/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\\n\"\n" +
+        "}";
+    String jammyKvJson = "{\n" +
+        "  \"package_name\": \"zabbix-agent2\",\n" +
+        "  \"package_version\": \"7.4.11-1+ubuntu22.04\",\n" +
+        "  \"architecture\": \"amd64\",\n" +
+        "  \"index_section\": \"Package: zabbix-agent2\\nVersion: 7.4.11-1+ubuntu22.04\\n" +
+        "Architecture: amd64\\nFilename: pool/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu22.04_amd64.deb\\n\"\n" +
+        "}";
+
+    when(keyValueFacet.browsePackagesMetadata())
+        .thenReturn(java.util.stream.Stream.of(focalKvJson, jammyKvJson));
+
+    ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<Payload> payloadCaptor = ArgumentCaptor.forClass(Payload.class);
+
+    setupMockPutOperations();
+
+    // Rebuild metadata for focal only
+    underTest.rebuildDistributionMetadata(null, "focal");
+
+    verify(contentFacet, atLeast(1)).put(pathCaptor.capture(), payloadCaptor.capture());
+
+    List<String> paths = pathCaptor.getAllValues();
+    List<Payload> payloads = payloadCaptor.getAllValues();
+
+    // Find the plain focal/main/amd64 Packages file
+    int packagesIdx = -1;
+    for (int i = 0; i < paths.size(); i++) {
+      String p = paths.get(i);
+      if (p.contains("binary-amd64/Packages") && !p.endsWith(".gz") && !p.endsWith(".bz2")) {
+        packagesIdx = i;
+        break;
+      }
+    }
+    assertThat("focal amd64 Packages file should be written", packagesIdx, greaterThanOrEqualTo(0));
+
+    String packagesContent;
+    try (InputStream is = payloads.get(packagesIdx).openInputStream()) {
+      packagesContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    // Focal package must be present
+    assertThat("focal Packages file must contain the focal package version",
+        packagesContent, containsString("ubuntu20.04"));
+
+    // Jammy package must NOT be present - this is what NEXUS-53742 fixes
+    assertThat("focal Packages file must NOT contain jammy packages (NEXUS-53742)",
+        packagesContent, not(containsString("ubuntu22.04")));
+  }
+
+  /**
+   * Test NEXUS-49457 preservation in multi-distribution mode (NEXUS-53742 regression guard):
+   * if a focal package was previously cached and upstream later drops it, it must survive
+   * the next rebuild via the previousEntries mechanism — without pulling in jammy packages.
+   *
+   * Scenario:
+   * - Previously generated focal Packages file contains a focal package (ubuntu20.04)
+   * - Previously generated focal Release file lists Architectures: amd64
+   * - Upstream no longer lists that focal package (it was deleted from upstream)
+   * - KV store contains the focal package (it was downloaded through the proxy) AND a jammy package
+   * - After rebuild, focal's Packages index must still contain the focal package (previousEntries)
+   * - After rebuild, focal's Packages index must NOT contain the jammy package
+   */
+  @Test
+  public void testRebuildMetadata_MultiDistributionMode_PreviousEntriesPreservedWithoutContamination() throws Exception {
+    when(signingFacet.isConfigured()).thenReturn(true);
+    when(contentFacet.isEnforceDistribution()).thenReturn(false);
+
+    // Upstream focal Release: only amd64/main — package has been dropped from upstream Packages
+    String focalRelease = "Architectures: amd64\n" +
+        "Components: main\n" +
+        "MD5Sum:\n" +
+        " d41d8cd98f00b204e9800998ecf8427e 0 main/binary-amd64/Packages\n";
+
+    // Upstream Packages is empty — the focal package was deleted from upstream
+    String emptyPackages = "";
+
+    HttpResponse releaseResponse = mock(HttpResponse.class);
+    StatusLine releaseStatus = mock(StatusLine.class);
+    when(releaseStatus.getStatusCode()).thenReturn(200);
+    when(releaseResponse.getStatusLine()).thenReturn(releaseStatus);
+    when(releaseResponse.getEntity()).thenReturn(
+        new org.apache.http.entity.ByteArrayEntity(focalRelease.getBytes(StandardCharsets.UTF_8)));
+
+    HttpResponse notFoundResponse = mock(HttpResponse.class);
+    StatusLine notFoundStatus = mock(StatusLine.class);
+    when(notFoundStatus.getStatusCode()).thenReturn(404);
+    when(notFoundResponse.getStatusLine()).thenReturn(notFoundStatus);
+
+    HttpResponse packagesResponse = mock(HttpResponse.class);
+    StatusLine packagesStatus = mock(StatusLine.class);
+    when(packagesStatus.getStatusCode()).thenReturn(200);
+    when(packagesResponse.getStatusLine()).thenReturn(packagesStatus);
+    when(packagesResponse.getEntity()).thenReturn(
+        new org.apache.http.entity.ByteArrayEntity(emptyPackages.getBytes(StandardCharsets.UTF_8)));
+
+    when(httpClient.execute(
+        any(org.apache.http.client.methods.HttpGet.class),
+        any(org.apache.http.protocol.HttpContext.class)))
+            .thenReturn(releaseResponse, notFoundResponse, packagesResponse);
+
+    // Previously generated focal Packages file: has the focal package (cached before upstream drop)
+    String previousFocalPackages =
+        "Package: zabbix-agent2\n" +
+            "Version: 7.4.11-1+ubuntu20.04\n" +
+            "Architecture: amd64\n" +
+            "Filename: pool/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\n" +
+            "Size: 123456\n" +
+            "MD5Sum: aaaa1111bbbb2222cccc3333dddd4444\n" +
+            "SHA256: a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4e1e2e3e4f1f2f3f4a1a2a3a4b1b2b3b4\n\n";
+
+    Content previousPackagesContent =
+        new Content(new BytesPayload(previousFocalPackages.getBytes(StandardCharsets.UTF_8), "text/plain"));
+    when(contentFacet.get("/dists/focal/main/binary-amd64/Packages"))
+        .thenReturn(Optional.of(previousPackagesContent));
+
+    // Previously generated focal Release (needed by loadArchitecturesFromPreviousRelease)
+    String previousFocalRelease = "Origin: Nexus\nArchitectures: amd64\nComponents: main\n";
+    Content previousReleaseContent =
+        new Content(new BytesPayload(previousFocalRelease.getBytes(StandardCharsets.UTF_8), "text/plain"));
+    when(contentFacet.get("/dists/focal/Release"))
+        .thenReturn(Optional.of(previousReleaseContent));
+
+    // KV store: focal package (downloaded through proxy — NEXUS-49457 scenario)
+    // AND jammy package (the contamination source for NEXUS-53742)
+    String focalKvJson = "{\n" +
+        "  \"package_name\": \"zabbix-agent2\",\n" +
+        "  \"package_version\": \"7.4.11-1+ubuntu20.04\",\n" +
+        "  \"architecture\": \"amd64\",\n" +
+        "  \"index_section\": \"Package: zabbix-agent2\\nVersion: 7.4.11-1+ubuntu20.04\\n" +
+        "Architecture: amd64\\nFilename: pool/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\\n\"\n" +
+        "}";
+    String jammyKvJson = "{\n" +
+        "  \"package_name\": \"zabbix-agent2\",\n" +
+        "  \"package_version\": \"7.4.11-1+ubuntu22.04\",\n" +
+        "  \"architecture\": \"amd64\",\n" +
+        "  \"index_section\": \"Package: zabbix-agent2\\nVersion: 7.4.11-1+ubuntu22.04\\n" +
+        "Architecture: amd64\\nFilename: pool/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu22.04_amd64.deb\\n\"\n" +
+        "}";
+
+    when(keyValueFacet.browsePackagesMetadata())
+        .thenReturn(java.util.stream.Stream.of(focalKvJson, jammyKvJson));
+
+    ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<Payload> payloadCaptor = ArgumentCaptor.forClass(Payload.class);
+
+    setupMockPutOperations();
+
+    underTest.rebuildDistributionMetadata(null, "focal");
+
+    verify(contentFacet, atLeast(1)).put(pathCaptor.capture(), payloadCaptor.capture());
+
+    List<String> paths = pathCaptor.getAllValues();
+    List<Payload> payloads = payloadCaptor.getAllValues();
+
+    int packagesIdx = -1;
+    for (int i = 0; i < paths.size(); i++) {
+      String p = paths.get(i);
+      if (p.contains("binary-amd64/Packages") && !p.endsWith(".gz") && !p.endsWith(".bz2")) {
+        packagesIdx = i;
+        break;
+      }
+    }
+    assertThat("focal amd64 Packages file should be written", packagesIdx, greaterThanOrEqualTo(0));
+
+    String packagesContent;
+    try (InputStream is = payloads.get(packagesIdx).openInputStream()) {
+      packagesContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    // NEXUS-49457: previously cached focal package must survive upstream deletion
+    assertThat("focal Packages must contain previously-cached focal package (NEXUS-49457)",
+        packagesContent, containsString("ubuntu20.04"));
+
+    // NEXUS-53742: jammy package must NOT appear just because it's the same architecture
+    assertThat("focal Packages must NOT contain jammy packages (NEXUS-53742)",
+        packagesContent, not(containsString("ubuntu22.04")));
+  }
+
+  /**
+   * Test NEXUS-49457 via the main merge path (upstream reachable, package dropped by upstream).
+   *
+   * <p>
+   * Scenario:
+   * <ul>
+   * <li>Upstream is reachable and returns only package B (zabbix-agent2).</li>
+   * <li>The previously-generated local Packages file contains both A (curl-focal-only)
+   * and B (zabbix-agent2) — A was cached before upstream dropped it.</li>
+   * <li>Package A is absent from upstream but present in the KV store and previousEntries.</li>
+   * </ul>
+   *
+   * <p>
+   * Expected: both A and B appear in the rebuilt Packages index.
+   * A survives via the {@code previousEntries} mechanism on the main merge path —
+   * not via the {@code rebuildFromCachedOnly()} fallback that the NEXUS-49457 unit tests exercise.
+   */
+  @Test
+  public void testRebuildMetadata_PackageDroppedByUpstream_PreservedViaPreviousEntries() throws Exception {
+    when(signingFacet.isConfigured()).thenReturn(true);
+    when(contentFacet.isEnforceDistribution()).thenReturn(false);
+
+    // Upstream Release: amd64 only
+    String upstreamRelease = "Architectures: amd64\n" +
+        "Components: main\n" +
+        "MD5Sum:\n" +
+        " d41d8cd98f00b204e9800998ecf8427e 0 main/binary-amd64/Packages\n";
+
+    // Upstream Packages contains only B — A (curl-focal-only) has been dropped
+    String upstreamPackagesB =
+        "Package: zabbix-agent2\n" +
+            "Version: 7.4.11-1+ubuntu20.04\n" +
+            "Architecture: amd64\n" +
+            "Filename: pool/main/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\n" +
+            "Size: 100000\n" +
+            "SHA256: a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4e1e2e3e4f1f2f3f4a1a2a3a4b1b2b3b4\n\n";
+
+    HttpResponse releaseResponse = mock(HttpResponse.class);
+    StatusLine releaseStatus = mock(StatusLine.class);
+    when(releaseStatus.getStatusCode()).thenReturn(200);
+    when(releaseResponse.getStatusLine()).thenReturn(releaseStatus);
+    when(releaseResponse.getEntity()).thenReturn(
+        new org.apache.http.entity.ByteArrayEntity(upstreamRelease.getBytes(StandardCharsets.UTF_8)));
+
+    HttpResponse notFoundResponse = mock(HttpResponse.class);
+    StatusLine notFoundStatus = mock(StatusLine.class);
+    when(notFoundStatus.getStatusCode()).thenReturn(404);
+    when(notFoundResponse.getStatusLine()).thenReturn(notFoundStatus);
+
+    HttpResponse packagesResponse = mock(HttpResponse.class);
+    StatusLine packagesStatus = mock(StatusLine.class);
+    when(packagesStatus.getStatusCode()).thenReturn(200);
+    when(packagesResponse.getStatusLine()).thenReturn(packagesStatus);
+    when(packagesResponse.getEntity()).thenReturn(
+        new org.apache.http.entity.ByteArrayEntity(upstreamPackagesB.getBytes(StandardCharsets.UTF_8)));
+
+    when(httpClient.execute(
+        any(org.apache.http.client.methods.HttpGet.class),
+        any(org.apache.http.protocol.HttpContext.class)))
+            .thenReturn(releaseResponse, notFoundResponse, packagesResponse);
+
+    // Previously-generated Packages: both A and B were present before upstream dropped A
+    String previousPackages =
+        "Package: curl-focal-only\n" +
+            "Version: 8.0.1-focal\n" +
+            "Architecture: amd64\n" +
+            "Filename: pool/main/c/curl/curl-focal-only_8.0.1-focal_amd64.deb\n" +
+            "Size: 200000\n" +
+            "SHA256: c1c2c3c4d1d2d3d4e1e2e3e4f1f2f3f4a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4\n\n" +
+            "Package: zabbix-agent2\n" +
+            "Version: 7.4.11-1+ubuntu20.04\n" +
+            "Architecture: amd64\n" +
+            "Filename: pool/main/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\n" +
+            "Size: 100000\n" +
+            "SHA256: a1a2a3a4b1b2b3b4c1c2c3c4d1d2d3d4e1e2e3e4f1f2f3f4a1a2a3a4b1b2b3b4\n\n";
+
+    Content previousPackagesContent =
+        new Content(new BytesPayload(previousPackages.getBytes(StandardCharsets.UTF_8), "text/plain"));
+    when(contentFacet.get("/dists/focal/main/binary-amd64/Packages"))
+        .thenReturn(Optional.of(previousPackagesContent));
+
+    // Previously-generated Release (needed by loadArchitecturesFromPreviousRelease)
+    String previousRelease = "Origin: Nexus\nArchitectures: amd64\nComponents: main\n";
+    Content previousReleaseContent =
+        new Content(new BytesPayload(previousRelease.getBytes(StandardCharsets.UTF_8), "text/plain"));
+    when(contentFacet.get("/dists/focal/Release"))
+        .thenReturn(Optional.of(previousReleaseContent));
+
+    // KV store has both packages (they were downloaded through this proxy before)
+    String kvJsonA = "{\n" +
+        "  \"package_name\": \"curl-focal-only\",\n" +
+        "  \"package_version\": \"8.0.1-focal\",\n" +
+        "  \"architecture\": \"amd64\",\n" +
+        "  \"index_section\": \"Package: curl-focal-only\\nVersion: 8.0.1-focal\\n" +
+        "Architecture: amd64\\nFilename: pool/main/c/curl/curl-focal-only_8.0.1-focal_amd64.deb\\n\"\n" +
+        "}";
+    String kvJsonB = "{\n" +
+        "  \"package_name\": \"zabbix-agent2\",\n" +
+        "  \"package_version\": \"7.4.11-1+ubuntu20.04\",\n" +
+        "  \"architecture\": \"amd64\",\n" +
+        "  \"index_section\": \"Package: zabbix-agent2\\nVersion: 7.4.11-1+ubuntu20.04\\n" +
+        "Architecture: amd64\\nFilename: pool/main/z/zabbix/zabbix-agent2_7.4.11-1+ubuntu20.04_amd64.deb\\n\"\n" +
+        "}";
+    when(keyValueFacet.browsePackagesMetadata())
+        .thenReturn(java.util.stream.Stream.of(kvJsonA, kvJsonB));
+
+    ArgumentCaptor<String> pathCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<Payload> payloadCaptor = ArgumentCaptor.forClass(Payload.class);
+
+    setupMockPutOperations();
+
+    underTest.rebuildDistributionMetadata(null, "focal");
+
+    verify(contentFacet, atLeast(1)).put(pathCaptor.capture(), payloadCaptor.capture());
+
+    List<String> paths = pathCaptor.getAllValues();
+    List<Payload> payloads = payloadCaptor.getAllValues();
+
+    int packagesIdx = -1;
+    for (int i = 0; i < paths.size(); i++) {
+      String p = paths.get(i);
+      if (p.contains("binary-amd64/Packages") && !p.endsWith(".gz") && !p.endsWith(".bz2")) {
+        packagesIdx = i;
+        break;
+      }
+    }
+    assertThat("focal amd64 Packages file should be written", packagesIdx, greaterThanOrEqualTo(0));
+
+    String packagesContent;
+    try (InputStream is = payloads.get(packagesIdx).openInputStream()) {
+      packagesContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    // Package B must be present (from upstream)
+    assertThat("Packages must contain zabbix-agent2 (still in upstream)",
+        packagesContent, containsString("zabbix-agent2"));
+
+    // Package A must survive even though upstream dropped it (NEXUS-49457 via previousEntries)
+    assertThat("Packages must contain curl-focal-only (dropped by upstream, preserved via previousEntries)",
+        packagesContent, containsString("curl-focal-only"));
   }
 
   private void setupMockPutOperations() throws IOException {

@@ -67,6 +67,9 @@ import {
   fetchBrowseNodes,
   fetchComponent,
   fetchAsset,
+  canDeleteAsset,
+  canDeleteComponent,
+  canDeleteFolder,
   deleteComponent,
   deleteAsset,
   deleteFolder,
@@ -74,12 +77,13 @@ import {
   showSuccessMessage,
   showErrorMessage,
 } from '../browse.api';
-import { restClient } from '../../../../../interface/api';
+import { restClient, encodeRepositoryItemId } from '../../../../../interface/api';
 import ExtAPIUtils from '../../../../../interface/ExtAPIUtils';
 import type { ComponentXO } from '../browse.types';
 
 // Get mock references
 const mockRestClient = restClient as jest.Mocked<typeof restClient>;
+const mockEncode = encodeRepositoryItemId as jest.Mock;
 const mockExtAPI = ExtAPIUtils as unknown as {
   extAPIRequest: jest.Mock;
   checkForErrorAndExtract: jest.Mock;
@@ -367,6 +371,115 @@ describe('browse.api', () => {
     });
   });
 
+  describe('canDeleteAsset (NEXUS-53861)', () => {
+    const ASSET_ID = 'asset-42';
+    const REPO_NAME = 'maven-hosted';
+
+    it('returns true when the server responds with true', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(true);
+
+      const result = await canDeleteAsset(ASSET_ID, REPO_NAME);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith('coreui_Component', 'canDeleteAsset', {
+        data: [ASSET_ID, REPO_NAME],
+      });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the server responds with false', async () => {
+      // extractResult() with no default coerces false → undefined; canDeleteAsset
+      // must not read that as a truthy result.
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await canDeleteAsset(ASSET_ID, REPO_NAME)).toBe(false);
+    });
+
+    it('returns false and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('repo not found');
+      });
+
+      expect(await canDeleteAsset(ASSET_ID, REPO_NAME)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('canDeleteComponent (NEXUS-53861)', () => {
+    const COMPONENT: ComponentXO = {
+      id: 'comp-9',
+      repositoryName: 'maven-hosted',
+      format: 'maven2',
+      group: 'com.example',
+      name: 'demo',
+      version: '1.0.0',
+    };
+
+    it('sends JSON-stringified ComponentXO to the server', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(true);
+
+      const result = await canDeleteComponent(COMPONENT);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith(
+        'coreui_Component',
+        'canDeleteComponent',
+        { data: [JSON.stringify(COMPONENT)] }
+      );
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the server denies', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await canDeleteComponent(COMPONENT)).toBe(false);
+    });
+
+    it('returns false and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('component gone');
+      });
+
+      expect(await canDeleteComponent(COMPONENT)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('canDeleteFolder (NEXUS-53861)', () => {
+    const FOLDER_PATH = '/org/apache';
+    const REPO_NAME = 'maven-hosted';
+
+    it('passes path and repository to the server', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(true);
+
+      const result = await canDeleteFolder(FOLDER_PATH, REPO_NAME);
+
+      expect(mockExtAPI.extAPIRequest).toHaveBeenCalledWith('coreui_Component', 'canDeleteFolder', {
+        data: [FOLDER_PATH, REPO_NAME],
+      });
+      expect(result).toBe(true);
+    });
+
+    it('returns false when the server denies', async () => {
+      mockExtAPI.checkForErrorAndExtract.mockReturnValue(undefined);
+
+      expect(await canDeleteFolder(FOLDER_PATH, REPO_NAME)).toBe(false);
+    });
+
+    it('returns false and logs when the server throws', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockExtAPI.checkForErrorAndExtract.mockImplementation(() => {
+        throw new Error('boom');
+      });
+
+      expect(await canDeleteFolder(FOLDER_PATH, REPO_NAME)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('deleteComponent', () => {
     it('handles success and returns deleted IDs', async () => {
       const mockComponent: ComponentXO = {
@@ -384,6 +497,29 @@ describe('browse.api', () => {
 
       expect(mockRestClient.delete).toHaveBeenCalledWith('/service/rest/v1/components/comp-123');
       expect(result).toEqual(['comp-123']);
+    });
+
+    it('uses componentData.id as-is and does NOT re-encode it (avoids double-encode 404)', async () => {
+      // componentData.id is already the base64 RepositoryItemIDXO from REST fetchComponent.
+      // Re-encoding would double-encode → REST DELETE 404. Assert we never call the encoder
+      // for the component id and hit the endpoint with the id verbatim.
+      mockRestClient.delete.mockResolvedValue(undefined);
+      const alreadyEncodedId = 'c2QtbWF2ZW4taG9zdGVkOjRmMWJiY2Rk';
+      const mockComponent: ComponentXO = {
+        id: alreadyEncodedId,
+        repositoryName: 'maven-hosted',
+        format: 'maven2',
+        group: 'com.example',
+        name: 'my-lib',
+        version: '1.0.0',
+      };
+
+      await deleteComponent(mockComponent);
+
+      expect(mockEncode).not.toHaveBeenCalledWith('maven-hosted', alreadyEncodedId);
+      expect(mockRestClient.delete).toHaveBeenCalledWith(
+        `/service/rest/v1/components/${alreadyEncodedId}`
+      );
     });
 
     it('throws error on failure', async () => {
@@ -421,21 +557,20 @@ describe('browse.api', () => {
       consoleSpy.mockRestore();
     });
 
-    it('handles Go asset IDs with special characters using real base64 encoding', async () => {
-      // deleteAsset now expects the ID to be already encoded (the encoded RepositoryItemIDXO from fetchAsset)
+    it('encodes the raw asset ID before calling the REST delete endpoint', async () => {
+      // deleteAsset receives a RAW id (as fetchAsset returns it from ExtDirect
+      // readAsset) and must encode it via encodeRepositoryItemId before hitting
+      // the REST endpoint. Assert the encoder is actually invoked with the raw
+      // id and repo (the earlier bug shipped the raw id straight through, 404).
+      mockEncode.mockReturnValueOnce('go-proxy:v2.2.1+incompatible-encoded');
       mockRestClient.delete.mockResolvedValue(undefined);
-      const goRawId = 'v2.2.1+incompatible';
-      // Use URL-safe base64 without padding (matching encodeRepositoryItemId implementation)
-      const expectedEncoded = btoa(`go-proxy:${goRawId}`)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+      const rawId = 'v2.2.1+incompatible';
 
-      // Pass the already-encoded ID (as fetchAsset would return)
-      await deleteAsset(expectedEncoded, 'go-proxy');
+      await deleteAsset(rawId, 'go-proxy');
 
+      expect(mockEncode).toHaveBeenCalledWith('go-proxy', rawId);
       expect(mockRestClient.delete).toHaveBeenCalledWith(
-        `/service/rest/v1/assets/${expectedEncoded}`
+        '/service/rest/v1/assets/go-proxy:v2.2.1+incompatible-encoded'
       );
     });
   });

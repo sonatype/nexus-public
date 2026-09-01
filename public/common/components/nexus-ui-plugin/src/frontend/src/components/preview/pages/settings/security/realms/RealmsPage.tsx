@@ -224,15 +224,6 @@ export function RealmsPage({ className }: RealmsPageProps) {
         </Box>
       )}
 
-      {/* Permission Warning */}
-      {!canUpdate && (
-        <Box className="realms-page__alerts">
-          <SettingsAlert type="warning">
-            You don't have permission to edit this page. Contact your administrator to request access.
-          </SettingsAlert>
-        </Box>
-      )}
-
       {/* Form */}
       <SettingsForm
         onSubmit={() => realmsForm.submit()}

@@ -230,19 +230,19 @@ export const NOTES_MAX_LENGTH = 400;
 export const isValidCriteriaNumber = (value: number | string | null): boolean => {
   if (value === null || value === '') return false;
   const num = typeof value === 'string' ? Number(value) : value;
-  return !isNaN(num) && num >= 1 && num <= 24855 && Number.isInteger(num);
+  return !Number.isNaN(num) && num >= 1 && num <= 24855 && Number.isInteger(num);
 };
 
 /**
  * Check if at least one criteria is selected
  */
 export const hasCriteriaSelected = (data: CleanupPolicyFormData): boolean => {
-  return !!(
+  return Boolean((
     data.criteriaLastBlobUpdated ||
     data.criteriaLastDownloaded ||
     data.criteriaAssetRegex ||
     data.retain
-  );
+  ));
 };
 
 

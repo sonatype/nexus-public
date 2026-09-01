@@ -11,25 +11,26 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Badge,
   Box,
   Button,
+  Callout,
   Card,
-  Checkbox,
   Flex,
   Grid,
   IconButton,
   Inset,
   Select,
+  Spinner,
   Table,
   Text,
   TextField,
 } from '@radix-ui/themes';
-import { Download, Filter, RefreshCw, Search, X } from 'lucide-react';
+import { AlertCircle, Download, Filter, RefreshCw, Search, X } from 'lucide-react';
 
-import type { GAVersion } from '../core';
+import type { ComponentVersionSort, GAVersion } from '../core';
 import {
   SortableTableHeader,
   TablePagination,
@@ -38,111 +39,80 @@ import {
 import { MobileFilterDrawer } from '../unified/MobileFilterDrawer';
 import { exportToCsv } from '../../../shared';
 
-const STATUS_OPTIONS = [
-  { value: 'recommended', label: 'Recommended' },
-  { value: 'quarantined', label: 'Quarantined' },
-  { value: 'malware', label: 'Malware' },
-  { value: 'not-recommended', label: 'Not Recommended' },
-  { value: 'none', label: 'None' },
-] as const;
-
 interface GAVersionsTabProps {
+  /** The current page's versions, already ordered and filtered server-side. */
   versions: readonly GAVersion[];
+  /** Total distinct versions matching the current filter, across all pages. */
+  total: number;
+  totalPages: number;
+  /** 1-based, matching TablePagination. */
+  currentPage: number;
+  itemsPerPage: number;
+  sortKey: ComponentVersionSort;
+  sortDirection: 'asc' | 'desc';
+  /** The committed (debounced) version filter. May lag a keystroke behind the input. */
+  searchQuery: string;
+  loading: boolean;
+  error: string | null;
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange: (size: number) => void;
+  onSortChange: (sort: ComponentVersionSort, direction: 'asc' | 'desc') => void;
+  onSearchQueryChange: (value: string) => void;
+  onRetry: () => void;
   selectedVersion: string | null;
   onVersionSelect: (version: string) => void;
 }
 
 /**
- * GAVersionsTab - Table of versions with status badges.
- * Matches nexusone-ux-prototype reference table: filter bar, action bar, Card+Inset, pagination.
+ * GAVersionsTab - Render-only table of a component's versions.
+ *
+ * All data, filtering, sorting, and paging come from props: the owning page's
+ * useComponentVersions hook fetches one page at a time from the server. This component holds
+ * no version data itself — only the mobile filter-drawer open state and a local echo of the
+ * search input so keystrokes render immediately ahead of the hook's debounce.
  */
 export function GAVersionsTab({
   versions,
+  total,
+  totalPages,
+  currentPage,
+  itemsPerPage,
+  sortKey,
+  sortDirection,
+  searchQuery,
+  loading,
+  error,
+  onPageChange,
+  onItemsPerPageChange,
+  onSortChange,
+  onSearchQueryChange,
+  onRetry,
   selectedVersion,
   onVersionSelect,
 }: GAVersionsTabProps) {
-  const [sortKey, setSortKey] = useState<string | null>('lastUpdated');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20);
-
-  const handleSort = (key: string, direction: SortDirection) => {
-    setSortKey(key);
-    setSortDirection(direction ?? 'asc');
-    setCurrentPage(1);
-  };
+  // searchInput is local so the field stays responsive while onSearchQueryChange debounces.
+  // The effect keeps it a function of the prop: any committed filter the parent produces
+  // without an edit here — a reset, a restored URL, a re-mount with existing state — would
+  // otherwise leave the field showing text the server is no longer filtering on.
+  const [searchInput, setSearchInput] = useState(searchQuery);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filterStatuses]);
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
 
-  const filteredVersions = useMemo(() => {
-    return versions.filter((v) => {
-      const q = searchQuery.trim().toLowerCase();
-      if (
-        q &&
-        !(
-          v.version.toLowerCase().includes(q) ||
-          v.status.toLowerCase().includes(q) ||
-          v.repositories.some((r) => r.toLowerCase().includes(q))
-        )
-      ) {
-        return false;
-      }
-      if (
-        filterStatuses.length > 0 &&
-        !filterStatuses.includes(v.status)
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [versions, searchQuery, filterStatuses]);
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    onSearchQueryChange(value);
+  };
 
-  const sortedVersions = useMemo(() => {
-    const arr = [...filteredVersions];
-    if (!sortKey) return arr;
-
-    arr.sort((a, b) => {
-      let cmp = 0;
-      switch (sortKey) {
-        case 'version':
-          cmp = compareVersions(a.version, b.version);
-          break;
-        case 'status':
-          cmp = a.status.localeCompare(b.status);
-          break;
-        case 'repositories':
-          cmp = a.repositories.length - b.repositories.length;
-          break;
-        case 'lastUpdated':
-          cmp =
-            new Date(a.lastUpdated).getTime() -
-            new Date(b.lastUpdated).getTime();
-          break;
-        default:
-          return 0;
-      }
-      return sortDirection === 'desc' ? -cmp : cmp;
-    });
-    return arr;
-  }, [filteredVersions, sortKey, sortDirection]);
-
-  const totalItems = sortedVersions.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const offset = (currentPage - 1) * itemsPerPage;
-  const paginatedVersions = sortedVersions.slice(
-    offset,
-    offset + itemsPerPage,
-  );
+  const handleSort = (key: string, direction: SortDirection) => {
+    onSortChange(key as ComponentVersionSort, direction ?? 'asc');
+  };
 
   const clearAllFilters = () => {
-    setSearchQuery('');
-    setFilterStatuses([]);
-    setCurrentPage(1);
+    setSearchInput('');
+    onSearchQueryChange('');
     setShowMobileFilters(false);
   };
 
@@ -165,27 +135,20 @@ export function GAVersionsTab({
           </Text>
           <Flex direction="column" gap="2">
             <Select.Root
-              value={sortKey ?? 'lastUpdated'}
-              onValueChange={(v) => {
-                setSortKey(v);
-                setCurrentPage(1);
-              }}
+              value={sortKey}
+              onValueChange={(v) => onSortChange(v as ComponentVersionSort, sortDirection)}
               size="2"
             >
               <Select.Trigger />
               <Select.Content>
                 <Select.Item value="version">Version</Select.Item>
-                <Select.Item value="status">Status</Select.Item>
                 <Select.Item value="repositories">Repositories</Select.Item>
                 <Select.Item value="lastUpdated">Last Updated</Select.Item>
               </Select.Content>
             </Select.Root>
             <Select.Root
-              value={sortDirection ?? 'desc'}
-              onValueChange={(v) => {
-                setSortDirection(v as SortDirection);
-                setCurrentPage(1);
-              }}
+              value={sortDirection}
+              onValueChange={(v) => onSortChange(sortKey, v as 'asc' | 'desc')}
               size="2"
             >
               <Select.Trigger />
@@ -196,31 +159,55 @@ export function GAVersionsTab({
             </Select.Root>
           </Flex>
         </Box>
-        <Box>
-          <Text size="2" weight="bold" mb="2" style={{ display: 'block' }}>
-            Status
-          </Text>
-          {STATUS_OPTIONS.map((opt) => (
-            <Flex key={opt.value} align="center" gap="2" mb="1">
-              <Checkbox
-                checked={filterStatuses.includes(opt.value)}
-                onCheckedChange={(c) =>
-                  setFilterStatuses((prev) =>
-                    c === true
-                      ? [...prev, opt.value]
-                      : prev.filter((x) => x !== opt.value),
-                  )
-                }
-              />
-              <Text size="2">{opt.label}</Text>
-            </Flex>
-          ))}
-        </Box>
       </Flex>
     </Box>
   );
 
-  if (versions.length === 0) {
+  if (error) {
+    return (
+      <Card size="1">
+        <Flex
+          direction="column"
+          align="center"
+          justify="center"
+          gap="3"
+          p="6"
+          style={{ minHeight: '160px' }}
+        >
+          <Callout.Root color="red" style={{ width: '100%' }}>
+            <Callout.Icon>
+              <AlertCircle size={16} />
+            </Callout.Icon>
+            <Callout.Text>{error}</Callout.Text>
+          </Callout.Root>
+          <Button
+            size="2"
+            variant="outline"
+            onClick={onRetry}
+            data-testid="versions-retry-button"
+          >
+            <RefreshCw size={14} />
+            Retry
+          </Button>
+        </Flex>
+      </Card>
+    );
+  }
+
+  if (loading && versions.length === 0) {
+    return (
+      <Flex justify="center" align="center" p="6">
+        <Flex direction="column" align="center" gap="2">
+          <Spinner size="2" />
+          <Text size="2" color="gray">
+            Loading versions...
+          </Text>
+        </Flex>
+      </Flex>
+    );
+  }
+
+  if (!loading && total === 0) {
     return (
       <Card size="1">
         <Flex
@@ -228,19 +215,41 @@ export function GAVersionsTab({
           align="center"
           justify="center"
           gap="2"
-          p="4"
+          py="8"
+          px="4"
           style={{ minHeight: '160px' }}
         >
-          <Text size="3" weight="medium">
-            No versions found
-          </Text>
-          <Text size="1" color="gray">
-            No versions are available for this component.
-          </Text>
+          {searchQuery ? (
+            <>
+              <Text size="3" weight="medium">
+                No Versions Found
+              </Text>
+              <Text size="1" color="gray" align="center">
+                Try Adjusting Your Search Terms Or Filters.
+              </Text>
+              <Button size="1" variant="solid" mt="1" onClick={clearAllFilters}>
+                <RefreshCw size={12} />
+                Reset Filters
+              </Button>
+            </>
+          ) : (
+            <>
+              <Text size="3" weight="medium">
+                No versions found
+              </Text>
+              <Text size="1" color="gray">
+                No versions are available for this component.
+              </Text>
+            </>
+          )}
         </Flex>
       </Card>
     );
   }
+
+  const totalPagesDisplay = Math.max(totalPages, 1);
+  const exportFilename = `versions-page-${currentPage}-of-${totalPagesDisplay}.csv`;
+  const exportAriaLabel = `Export this page of versions as CSV (page ${currentPage} of ${totalPagesDisplay})`;
 
   return (
     <>
@@ -251,21 +260,21 @@ export function GAVersionsTab({
           <Flex direction="column" gap="3">
             <Flex justify="between" align="center" gap="2">
               <TextField.Root
-                placeholder="Filter"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Filter by version"
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 style={{ width: '100%', minWidth: 0 }}
               >
                 <TextField.Slot>
                   <Search size={14} />
                 </TextField.Slot>
-                {searchQuery && (
+                {searchInput && (
                   <TextField.Slot side="right">
                     <IconButton
                       variant="ghost"
                       color="gray"
                       size="1"
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => handleSearchChange('')}
                       aria-label="Clear search"
                     >
                       <X size={14} />
@@ -273,7 +282,8 @@ export function GAVersionsTab({
                   </TextField.Slot>
                 )}
               </TextField.Root>
-              <Flex gap="2" style={{ flexShrink: 0 }}>
+              <Flex gap="2" align="center" style={{ flexShrink: 0 }}>
+                {loading && versions.length > 0 && <Spinner size="1" data-testid="versions-inline-spinner" />}
                 <Box display={{ initial: 'block', sm: 'none' }}>
                   <Button
                     size="2"
@@ -287,19 +297,18 @@ export function GAVersionsTab({
                 </Box>
                 <Button asChild size="2" variant="outline" color="gray">
                   <button
-                    disabled={sortedVersions.length === 0}
-                    aria-label="Export all filtered results as CSV"
+                    type="button"
+                    disabled={versions.length === 0}
+                    aria-label={exportAriaLabel}
                     onClick={() =>
                       exportToCsv(
-                        sortedVersions.map((v) => ({
+                        versions.map((v) => ({
                           version: v.version,
-                          status: v.status,
-                          statusReason: v.statusReason,
                           repositories: v.repositories.join(';'),
                           lastUpdated: v.lastUpdated,
                         })),
-                        'versions.csv',
-                        ['version', 'status', 'statusReason', 'repositories', 'lastUpdated'],
+                        exportFilename,
+                        ['version', 'repositories', 'lastUpdated'],
                       )
                     }
                   >
@@ -309,178 +318,124 @@ export function GAVersionsTab({
                       display={{ initial: 'none', sm: 'inline' }}
                       style={{ marginLeft: 6 }}
                     >
-                      <span>Export CSV</span>
+                      <span>Export page</span>
                     </Box>
                   </button>
                 </Button>
               </Flex>
             </Flex>
 
-            {filteredVersions.length === 0 ? (
-              <Card>
-                <Flex
-                  direction="column"
-                  align="center"
-                  justify="center"
-                  gap="2"
-                  py="8"
-                  px="4"
-                  style={{ minHeight: '160px' }}
-                >
-                  <Text size="3" weight="medium">
-                    No Versions Found
-                  </Text>
-                  <Text size="1" color="gray" align="center">
-                    Try Adjusting Your Search Terms Or Filters.
-                  </Text>
-                  <Button
-                    size="1"
-                    variant="solid"
-                    mt="1"
-                    onClick={clearAllFilters}
-                  >
-                    <RefreshCw size={12} />
-                    Reset Filters
-                  </Button>
-                </Flex>
-              </Card>
-            ) : (
-              <Flex direction="column" gap="3">
-                <Card size="1">
-                  <Inset clip="padding-box" side="bottom">
-                    <Box style={{ overflowX: 'auto' }}>
-                      <Table.Root size="2">
-                        <Table.Header>
-                          <Table.Row>
-                            <SortableTableHeader
-                              sortKey="version"
-                              currentSortKey={sortKey}
-                              currentSortDirection={sortDirection}
-                              onSort={handleSort}
-                              align="left"
-                            >
-                              Version
-                            </SortableTableHeader>
-                            <SortableTableHeader
-                              sortKey="status"
-                              currentSortKey={sortKey}
-                              currentSortDirection={sortDirection}
-                              onSort={handleSort}
-                              align="center"
-                            >
-                              Status
-                            </SortableTableHeader>
-                            <SortableTableHeader
-                              sortKey="repositories"
-                              currentSortKey={sortKey}
-                              currentSortDirection={sortDirection}
-                              onSort={handleSort}
-                              align="center"
-                            >
-                              Repositories
-                            </SortableTableHeader>
-                            <SortableTableHeader
-                              sortKey="lastUpdated"
-                              currentSortKey={sortKey}
-                              currentSortDirection={sortDirection}
-                              onSort={handleSort}
-                              align="left"
-                            >
-                              Last Updated
-                            </SortableTableHeader>
-                          </Table.Row>
-                        </Table.Header>
+            <Flex direction="column" gap="3">
+              <Card size="1">
+                <Inset clip="padding-box" side="bottom">
+                  <Box style={{ overflowX: 'auto' }}>
+                    <Table.Root size="2" data-testid="versions-table">
+                      <Table.Header>
+                        <Table.Row>
+                          <SortableTableHeader
+                            sortKey="version"
+                            currentSortKey={sortKey}
+                            currentSortDirection={sortDirection}
+                            onSort={handleSort}
+                            align="left"
+                          >
+                            Version
+                          </SortableTableHeader>
+                          <SortableTableHeader
+                            sortKey="repositories"
+                            currentSortKey={sortKey}
+                            currentSortDirection={sortDirection}
+                            onSort={handleSort}
+                            align="center"
+                          >
+                            Repositories
+                          </SortableTableHeader>
+                          <SortableTableHeader
+                            sortKey="lastUpdated"
+                            currentSortKey={sortKey}
+                            currentSortDirection={sortDirection}
+                            onSort={handleSort}
+                            align="left"
+                          >
+                            Last Updated
+                          </SortableTableHeader>
+                        </Table.Row>
+                      </Table.Header>
 
-                        <Table.Body>
-                          {paginatedVersions.map((version) => (
-                            <Table.Row
-                              key={version.version}
-                              data-version={version.version}
-                              data-selected={selectedVersion === version.version}
-                              style={{
-                                cursor: 'pointer',
-                                backgroundColor:
-                                  selectedVersion === version.version
-                                    ? 'var(--blue-2)'
-                                    : undefined,
-                                borderLeft:
-                                  selectedVersion === version.version
-                                    ? '3px solid var(--blue-9)'
-                                    : undefined,
-                                boxSizing: 'border-box',
-                              }}
-                              onClick={(e) => {
+                      <Table.Body>
+                        {versions.map((version) => (
+                          <Table.Row
+                            key={version.version}
+                            data-version={version.version}
+                            data-selected={selectedVersion === version.version}
+                            style={{
+                              cursor: 'pointer',
+                              backgroundColor:
+                                selectedVersion === version.version
+                                  ? 'var(--blue-2)'
+                                  : undefined,
+                              borderLeft:
+                                selectedVersion === version.version
+                                  ? '3px solid var(--blue-9)'
+                                  : undefined,
+                              boxSizing: 'border-box',
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onVersionSelect(version.version);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                e.stopPropagation();
                                 onVersionSelect(version.version);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  onVersionSelect(version.version);
-                                }
-                              }}
-                              tabIndex={0}
-                              role="button"
-                              aria-pressed={selectedVersion === version.version}
-                            >
-                              <Table.Cell>
-                                <Text size="2" weight="medium" color="blue">
-                                  {version.version}
-                                </Text>
-                              </Table.Cell>
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-pressed={selectedVersion === version.version}
+                          >
+                            <Table.Cell>
+                              <Text size="2" weight="medium" color="blue">
+                                {version.version}
+                              </Text>
+                            </Table.Cell>
 
-                              <Table.Cell justify="center">
-                                <Text size="2" color="gray">
-                                  {version.status === 'none'
-                                    ? '-'
-                                    : formatStatusLabel(version.status)}
-                                </Text>
-                              </Table.Cell>
+                            <Table.Cell justify="center">
+                              <Badge
+                                color="gray"
+                                variant="solid"
+                                radius="full"
+                                size="1"
+                              >
+                                {version.repositories.length} repo
+                                {version.repositories.length !== 1 ? 's' : ''}
+                              </Badge>
+                            </Table.Cell>
 
-                              <Table.Cell justify="center">
-                                <Badge
-                                  color="gray"
-                                  variant="solid"
-                                  radius="full"
-                                  size="1"
-                                >
-                                  {version.repositories.length} repo
-                                  {version.repositories.length !== 1
-                                    ? 's'
-                                    : ''}
-                                </Badge>
-                              </Table.Cell>
+                            <Table.Cell>
+                              <Text size="2" color="gray">
+                                {formatDate(version.lastUpdated)}
+                              </Text>
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table.Root>
+                  </Box>
+                </Inset>
+              </Card>
 
-                              <Table.Cell>
-                                <Text size="2" color="gray">
-                                  {formatDate(version.lastUpdated)}
-                                </Text>
-                              </Table.Cell>
-                            </Table.Row>
-                          ))}
-                        </Table.Body>
-                      </Table.Root>
-                    </Box>
-                  </Inset>
-                </Card>
-
-                {totalItems > 0 && (
-                  <TablePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    itemsPerPage={itemsPerPage}
-                    totalItems={totalItems}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={(limit) => {
-                      setItemsPerPage(limit);
-                      setCurrentPage(1);
-                    }}
-                    mt="0"
-                  />
-                )}
-              </Flex>
-            )}
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                itemsPerPage={itemsPerPage}
+                totalItems={total}
+                onPageChange={onPageChange}
+                onItemsPerPageChange={onItemsPerPageChange}
+                mt="0"
+              />
+            </Flex>
           </Flex>
         </Box>
       </Grid>
@@ -495,30 +450,6 @@ export function GAVersionsTab({
       </MobileFilterDrawer>
     </>
   );
-}
-
-function formatStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    recommended: 'Recommended',
-    quarantined: 'Quarantined',
-    malware: 'Malware',
-    'not-recommended': 'Not Recommended',
-  };
-  return labels[status] ?? status;
-}
-
-function compareVersions(a: string, b: string): number {
-  const parse = (v: string) =>
-    v.split('.').map((n) => parseInt(n, 10) || 0);
-  const aParts = parse(a);
-  const bParts = parse(b);
-  const len = Math.max(aParts.length, bParts.length);
-  for (let i = 0; i < len; i++) {
-    const x = aParts[i] ?? 0;
-    const y = bParts[i] ?? 0;
-    if (x !== y) return x - y;
-  }
-  return 0;
 }
 
 function formatDate(dateString: string): string {

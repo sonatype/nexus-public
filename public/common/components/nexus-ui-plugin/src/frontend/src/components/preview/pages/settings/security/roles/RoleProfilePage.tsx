@@ -11,18 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Flex, Text, Tabs, Badge } from '@radix-ui/themes';
-import { ExtJS } from '../../../../../../interface/ExtJS';
+import React, { useState, useEffect, } from 'react';
+import { Box, Flex, Text, Tabs, } from '@radix-ui/themes';
 import { 
   Shield, 
   Key, 
-  Filter, 
   Users, 
   Info,
-  ArrowLeft,
-  Loader2,
-  AlertTriangle
 } from 'lucide-react';
 
 import {

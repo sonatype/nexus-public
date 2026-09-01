@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-security</artifactId>
@@ -28,16 +28,15 @@
   <packaging>pom</packaging>
 
   <properties>
-    <apache-shiro.version>1.13.0</apache-shiro.version>
-    <bouncycastle.version>1.84</bouncycastle.version>
-    <bcpkix.fips.version>2.1.9</bcpkix.fips.version>
-    <bcpg.fips.version>2.1.11</bcpg.fips.version>
-    <bcutil.fips.version>2.1.4</bcutil.fips.version>
-    <bc.fips.version>2.1.2</bc.fips.version>
+    <apache-shiro.version>2.2.1</apache-shiro.version>
+    <bouncycastle.version>1.85</bouncycastle.version>
+    <bcpkix.fips.version>2.1.12</bcpkix.fips.version>
+    <bcpg.fips.version>2.1.13</bcpg.fips.version>
+    <bcutil.fips.version>2.1.7</bcutil.fips.version>
+    <bc.fips.version>2.1.3</bc.fips.version>
     <java-jwt.version>3.16.0</java-jwt.version>
     <nimbusds.jwt.version>10.2</nimbusds.jwt.version>
     <nimbusds.oauth2.version>11.23.1</nimbusds.oauth2.version>
-    <open.saml.version>4.3.2</open.saml.version>
   </properties>
 
   <dependencyManagement>
@@ -81,13 +80,14 @@
             <artifactId>commons-beanutils</artifactId>
           </exclusion>
           <!--
-          Exclude shiro modules that are duplicated in shiro-core
-          (this exclusion can be removed when SHIRO-654 is fixed)
+          Shiro 2.x split the former fat-jar into separate modules. shiro-core:jakarta
+          NO LONGER contains shiro-lang/shiro-cache/shiro-crypto-*/shiro-config-*/shiro-event,
+          so the previous blanket "org.apache.shiro:*" exclusion (safe under 1.13.0's fat-jar)
+          would now strip required runtime classes. Those split modules are servlet-free
+          single-flavor artifacts pulled transitively by this POM and must be kept. Only the
+          servlet-touching shiro-web / shiro-spring still ship a jakarta classifier; their
+          unclassified (javax.servlet) variants are excluded on those declarations below.
           -->
-          <exclusion>
-            <groupId>org.apache.shiro</groupId>
-            <artifactId>*</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
 
@@ -107,22 +107,25 @@
             <artifactId>commons-beanutils</artifactId>
           </exclusion>
           <!--
-          NEXUS-46395: kill ALL transitive shiro modules from this declaration. The
-          ${apache-shiro.version}-jakarta classifier was packaged with a POM that still
-          references the unclassified (javax.servlet) shiro-core, which in turn drags in
-          shiro-lang/shiro-cache/shiro-crypto-*/shiro-config-core/shiro-event AND the
-          unclassified shiro-web. Both unclassified flavors then ship alongside our
-          desired :jakarta variants, producing a 109-class split-package collision in
-          org.apache.shiro.web.* (Shiro’s servlet integration) where ClassLoader.loadClass
-          becomes order-dependent. Excluding the whole org.apache.shiro group is safe
-          because shiro-core:jakarta is a fat-jar that already contains every support
-          module's classes (verified: shiro-cache 8/8, shiro-crypto-hash 25/25,
-          shiro-crypto-core 4/4, shiro-crypto-cipher 13/13, shiro-config-core 6/6,
-          shiro-event 13/13). This subsumes the previous shiro-config-ogdl exclusion.
+          NEXUS-46395 (Shiro 2.x): shiro-web:jakarta's POM still references the UNCLASSIFIED
+          (javax.servlet) shiro-core plus the javax servlet/jsp APIs. Left in, the javax-flavored
+          shiro-core ships alongside our shiro-core:jakarta declaration above, reproducing the
+          split-package collision in org.apache.shiro.web.*. Exclude only those javax-flavored
+          transitives, NOT the whole org.apache.shiro group, since the 2.x split modules
+          (shiro-lang/shiro-cache/shiro-crypto-*/shiro-config-*/shiro-event) are required and
+          arrive via shiro-core:jakarta.
           -->
           <exclusion>
             <groupId>org.apache.shiro</groupId>
-            <artifactId>*</artifactId>
+            <artifactId>shiro-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -139,42 +142,27 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
           <!--
-          NEXUS-46395: shiro-spring:jakarta’s POM references the unclassified shiro-core
-          and shiro-web, smuggling the javax.servlet variant onto the runtime classpath
-          alongside our :jakarta declarations. Same fix as on shiro-web above. See the
-          comment block on shiro-web for the full justification.
+          NEXUS-46395 (Shiro 2.x): shiro-spring:jakarta's POM references the unclassified
+          shiro-core and shiro-web, smuggling the javax.servlet variant onto the runtime
+          classpath alongside our :jakarta declarations. Exclude only those javax-flavored
+          servlet artifacts; the required 2.x split modules still arrive via shiro-core:jakarta.
+          See the comment block on shiro-web above for the full justification.
           -->
           <exclusion>
             <groupId>org.apache.shiro</groupId>
-            <artifactId>*</artifactId>
+            <artifactId>shiro-core</artifactId>
           </exclusion>
-        </exclusions>
-      </dependency>
-      
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-core</artifactId>
-        <version>${open.saml.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-saml-api</artifactId>
-        <version>${open.saml.version}</version>
-        <exclusions>
           <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-web</artifactId>
           </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.opensaml</groupId>
-        <artifactId>opensaml-saml-impl</artifactId>
-        <version>${open.saml.version}</version>
-        <exclusions>
           <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -219,12 +207,6 @@
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcpkix-fips</artifactId>
         <version>${bcpkix.fips.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.springframework.security</groupId>
-        <artifactId>spring-security-saml2-service-provider</artifactId>
-        <version>6.5.11</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

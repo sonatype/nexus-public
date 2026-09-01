@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
 import { Trash2, Info, ExternalLink, Loader2 } from 'lucide-react';
 

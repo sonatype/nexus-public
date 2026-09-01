@@ -18,7 +18,6 @@ import {
   Heart,
   AlertTriangle,
   CheckCircle,
-  XCircle,
   ExternalLink,
 } from 'lucide-react';
 import type {

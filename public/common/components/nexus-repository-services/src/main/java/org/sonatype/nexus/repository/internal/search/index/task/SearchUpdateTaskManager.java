@@ -17,22 +17,25 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
-
-import org.springframework.beans.factory.annotation.Value;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.repository.internal.search.index.task.SearchUpdateTaskDescriptor.REPOSITORY_NAMES_FIELD_ID;
-import org.springframework.stereotype.Component;
 
 /**
  * Ad-hoc "manager" class that checks to see if any repository indexes are out of date, missed or need to be updated and
@@ -81,7 +84,7 @@ public class SearchUpdateTaskManager
   private void maybeScheduleReIndex() {
     try {
       List<String> reindexList = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
-          .filter(searchUpdateService::needsReindex)
+          .filter(this::needsReindexSafely)
           .map(Repository::getName)
           .collect(Collectors.toList());
 
@@ -97,12 +100,35 @@ public class SearchUpdateTaskManager
     }
   }
 
+  private boolean needsReindexSafely(final Repository repository) {
+    try {
+      return searchUpdateService.needsReindex(repository);
+    }
+    catch (MissingFacetException | InvalidStateException e) {
+      // Repository was deleted concurrently mid-iteration (NEXUS-53351); skip it and continue the sweep.
+      // See RepositoryTaskSupport.execute() for the full InvalidStateException trade-off rationale.
+      log.warn("Skipping search index check for repository '{}' as it appears to have been removed: {}",
+          repository.getName(), e.getMessage());
+      return false;
+    }
+  }
+
   private void runSearchUpdateTaskForRepositories(final List<String> repositories) {
     String repositoriesCsv = String.join(",", repositories);
     TaskConfiguration configuration = taskScheduler
         .createTaskConfigurationInstance(SearchUpdateTaskDescriptor.TYPE_ID);
     configuration.setString(REPOSITORY_NAMES_FIELD_ID, repositoriesCsv);
     configuration.setName("Update repository indexes - (" + repositoriesCsv + ")");
-    taskScheduler.submit(configuration);
+    try {
+      taskScheduler.submit(configuration);
+    }
+    catch (ValidationErrorsException e) {
+      // In HA deployments, another node may have scheduled the same task between our
+      // findAndSubmit() check and this submit() call. This catch fires when one node's
+      // INSERT committed before the other's singleton guard ran. If both nodes pass the
+      // guard simultaneously (before either INSERT commits), both tasks are created and
+      // this catch is not reached — the guard reduces but does not fully eliminate the race.
+      log.warn("repository.search.update task was already scheduled by another node, skipping: {}", e.getMessage());
+    }
   }
 }

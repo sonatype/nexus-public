@@ -22,7 +22,7 @@ import { YumSearchResults } from '../YumSearchResults';
 import { YumResultRow } from '../YumResultRow';
 import { YumDetailPage } from '../YumDetailPage';
 import { mockYumResults, mockYumSearchApi } from '../mockData';
-import type { YumResult, YumSearchFilters as FilterValues } from '../yum.types';
+import type { YumResult, } from '../yum.types';
 
 // Mock the useYumSearch hook
 jest.mock('../useYumSearch', () => ({

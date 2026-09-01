@@ -67,7 +67,7 @@
     font-size: 14px;
     color: var(--nx-color-text-secondary, #666);
     margin: 0;
-    font-family: monospace;
+    font-family: var(--font-family-mono);
   }
 
   &__content {
@@ -108,7 +108,7 @@
   }
 
   &__checksum {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     font-size: 12px;
     word-break: break-all;
   }

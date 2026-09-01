@@ -71,11 +71,13 @@ class TasksApiResourceTest
 
   private TestTaskInfo[] testTasks = new TestTaskInfo[]{
       new TestTaskInfo("task0", "Invisible task", "aType", new TestCurrentState(WAITING), invisibleConfig),
-      new TestTaskInfo("task1", "Task 1", "anotherType", new TestCurrentState(WAITING), visibleConfig),
+      new TestTaskInfo("task1", "Task 1", "anotherType", new TestCurrentState(WAITING),
+          configuration(true, "Another Task Type")),
       new TestTaskInfo("task2", "Task 2", "aType", new TestCurrentState(RUNNING, new Date(), new CompletableFuture<>()),
-          visibleConfig),
+          configuration(true, "A Task Type")),
       new TestTaskInfo("task3", "Task 3", "anotherType",
-          new TestCurrentState(OK, new Date(), CompletableFuture.completedFuture(null)), visibleConfig)
+          new TestCurrentState(OK, new Date(), CompletableFuture.completedFuture(null)),
+          configuration(true, "Another Task Type"))
   };
 
   @Mock
@@ -109,6 +111,8 @@ class TasksApiResourceTest
     assertThat(extract(page.getItems(), TaskXO::getId), contains("task1", "task2", "task3"));
     assertThat(extract(page.getItems(), TaskXO::getName), contains("Task 1", "Task 2", "Task 3"));
     assertThat(extract(page.getItems(), TaskXO::getType), contains("anotherType", "aType", "anotherType"));
+    assertThat(extract(page.getItems(), TaskXO::getTypeName),
+        contains("Another Task Type", "A Task Type", "Another Task Type"));
     assertThat(extract(page.getItems(), TaskXO::getCurrentState),
         contains(WAITING.toString(), RUNNING.toString(), OK.toString()));
   }
@@ -139,6 +143,7 @@ class TasksApiResourceTest
     assertThat(validTaskXO.getId(), is("task1"));
     assertThat(validTaskXO.getName(), is("Task 1"));
     assertThat(validTaskXO.getType(), is("anotherType"));
+    assertThat(validTaskXO.getTypeName(), is("Another Task Type"));
     assertThat(validTaskXO.getCurrentState(), is(WAITING.toString()));
   }
 
@@ -268,6 +273,13 @@ class TasksApiResourceTest
   private static TaskConfiguration configuration(final boolean visible) {
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setVisible(visible);
+    return configuration;
+  }
+
+  private static TaskConfiguration configuration(final boolean visible, final String typeName) {
+    TaskConfiguration configuration = new TaskConfiguration();
+    configuration.setVisible(visible);
+    configuration.setTypeName(typeName);
     return configuration;
   }
 

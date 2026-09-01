@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { CapabilitiesList } from '../CapabilitiesList';
 import { Capability } from '../types';

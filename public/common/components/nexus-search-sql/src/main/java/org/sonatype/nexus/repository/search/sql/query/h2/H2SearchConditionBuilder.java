@@ -115,18 +115,28 @@ abstract class H2SearchConditionBuilder
   }
 
   private Optional<CharSequence> process(final SqlClause clause) {
+    // SqlClause.create enforces >= 2 expressions, so a single-expression clause can only occur when
+    // constructed by other means; it delegates directly and never reaches the bracket-joining path below.
     if (clause.expressions().size() == 1) {
       return process(Iterables.getOnlyElement(clause.expressions()));
     }
 
     String operator = clause.operand() == Operand.AND ? " AND " : " OR ";
 
-    String expression = clause.expressions()
+    List<CharSequence> parts = clause.expressions()
         .stream()
         .map(this::process)
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .collect(Collectors.joining(operator, BRACKET_OPEN, BRACKET_CLOSE));
+        .collect(Collectors.toList());
+
+    // NEXUS-54104: when every child resolves to empty (e.g. a crafted query like q="" "" "")
+    // do not emit "()" — an empty bracket pair renders as invalid SQL "WHERE (())"
+    if (parts.isEmpty()) {
+      return Optional.empty();
+    }
+
+    String expression = BRACKET_OPEN + String.join(operator, parts) + BRACKET_CLOSE;
 
     return Optional.of(expression);
   }

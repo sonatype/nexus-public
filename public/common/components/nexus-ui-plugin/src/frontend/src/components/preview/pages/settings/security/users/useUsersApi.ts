@@ -15,7 +15,16 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 // Sprint 15: ExtAPIUtils and APIConstants removed - no longer using ExtDirect
 import { restClient, parseApiError, ENDPOINTS, urlBuilder } from '../../../../../../interface/api';
 import { ExtJS } from '../../../../../../interface/ExtJS';
-import { User, UserSource, Role, UserFormData, DEFAULT_SOURCE, isExternalUser } from './types';
+import {
+  User,
+  UserSource,
+  Role,
+  UserFormData,
+  DEFAULT_SOURCE,
+  isExternalUser,
+  RestUser,
+  restToUser,
+} from './types';
 
 export interface UserInviteData {
   firstName: string;
@@ -24,40 +33,6 @@ export interface UserInviteData {
 }
 
 // Sprint 15: All ExtDirect usage eliminated - using REST API for all operations
-
-/**
- * REST API user response shape
- */
-interface RestUser {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  emailAddress: string;
-  source: string;
-  status: 'active' | 'disabled';
-  roles: string[];
-  externalRoles?: string[];
-  readOnly?: boolean;
-}
-
-/**
- * Convert REST user to User shape
- */
-function restToUser(rest: RestUser): User {
-  return {
-    userId: rest.userId,
-    realm: rest.source,
-    source: rest.source,
-    firstName: rest.firstName,
-    lastName: rest.lastName,
-    emailAddress: rest.emailAddress,
-    email: rest.emailAddress,
-    status: rest.status,
-    roles: rest.roles || [],
-    externalRoles: rest.externalRoles,
-    readOnly: rest.readOnly,
-  };
-}
 
 /**
  * Custom hook for Users API operations
@@ -316,6 +291,27 @@ export function useUsersApi() {
   }, []);
 
   /**
+   * Status-only update. Reuses PUT /v1/security/users/{userId} by reconstructing
+   * the full payload from the server-truth user with only `status` overridden;
+   * preserves other fields against concurrent in-progress form edits.
+   */
+  const patchUserStatus = useCallback(async (
+    currentUser: User,
+    active: boolean,
+  ): Promise<User> => {
+    const data: UserFormData = {
+      userId: currentUser.userId,
+      firstName: currentUser.firstName ?? '',
+      lastName: currentUser.lastName ?? '',
+      emailAddress: currentUser.emailAddress || currentUser.email || '',
+      status: active,
+      roles: currentUser.roles ?? [],
+      source: currentUser.source,
+    };
+    return updateUser(currentUser.userId, data, currentUser.source);
+  }, [updateUser]);
+
+  /**
    * Reset user token using REST API
    */
   const resetUserToken = useCallback(async (
@@ -346,6 +342,7 @@ export function useUsersApi() {
     fetchRoles,
     createUser,
     updateUser,
+    patchUserStatus,
     deleteUser,
     changePassword,
     resetUserToken,

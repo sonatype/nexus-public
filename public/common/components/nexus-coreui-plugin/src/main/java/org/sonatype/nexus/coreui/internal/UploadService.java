@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.cache.RepositoryCacheInvalidationService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
-import org.sonatype.nexus.repository.upload.UploadRepositoryContext;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 
 import com.google.common.collect.Iterables;
@@ -87,19 +86,7 @@ public class UploadService
 
     Repository repository = checkNotNull(repositoryManager.get(repositoryName), "Specified repository is missing");
 
-    // CLM-39871: bind the repository on this thread so any
-    // ComponentUploadExtension.validate(...) impl that runs inside
-    // uploadManager.handle(...) can reach it. Cleared in finally.
-    log.debug("UploadService.upload entered for repo={} format={}",
-        repositoryName, repository.getFormat().getValue());
-    UploadResponse uploadResponse;
-    try {
-      UploadRepositoryContext.set(repository);
-      uploadResponse = uploadManager.handle(repository, request);
-    }
-    finally {
-      UploadRepositoryContext.clear();
-    }
+    UploadResponse uploadResponse = uploadManager.handle(repository, request);
 
     if (NPM_FORMAT.equals(repository.getFormat().getValue())) {
       repositoryManager.findContainingGroups(repositoryName)

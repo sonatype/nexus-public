@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -41,9 +44,14 @@ import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryCo
 public class FluentComponentBuilderImpl
     implements FluentComponentBuilder
 {
+  private static final String CONCURRENT_DELETE_MESSAGE =
+      "Upload failed: repository was concurrently deleted. Please retry.";
+
   private final ContentFacetSupport facet;
 
   private final ComponentStore<?> componentStore;
+
+  private final Function<String, String> versionNormalizer;
 
   private final String name;
 
@@ -60,10 +68,12 @@ public class FluentComponentBuilderImpl
   public FluentComponentBuilderImpl(
       final ContentFacetSupport facet,
       final ComponentStore<?> componentStore,
+      final Function<String, String> versionNormalizer,
       final String name)
   {
     this.facet = checkNotNull(facet);
     this.componentStore = checkNotNull(componentStore);
+    this.versionNormalizer = checkNotNull(versionNormalizer);
     this.name = checkNotNull(name);
   }
 
@@ -88,6 +98,7 @@ public class FluentComponentBuilderImpl
   @Override
   public FluentComponentBuilder version(final String version) {
     this.version = checkNotNull(version);
+    this.normalizedVersion = versionNormalizer.apply(version);
     return this;
   }
 
@@ -148,7 +159,16 @@ public class FluentComponentBuilderImpl
       component.attributes().backing().putAll(attributes);
     }
 
-    componentStore.createComponent(component);
+    try {
+      componentStore.createComponent(component);
+    }
+    catch (ForeignKeyViolationException e) {
+      throw new ConcurrentOperationException(CONCURRENT_DELETE_MESSAGE, e);
+    }
+
+    if (component.componentId() == null) {
+      throw new ConcurrentOperationException(CONCURRENT_DELETE_MESSAGE);
+    }
 
     return component;
   }

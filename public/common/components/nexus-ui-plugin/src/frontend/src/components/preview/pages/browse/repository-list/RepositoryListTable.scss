@@ -22,11 +22,6 @@
 .repository-list-table {
   width: 100%;
 
-  thead,
-  .rt-TableHeader {
-    background-color: var(--color-background);
-  }
-
   &__row {
     transition: background-color var(--transition-fast);
 

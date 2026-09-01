@@ -62,7 +62,7 @@
     font-size: 1.75rem;
     font-weight: 600;
     color: var(--nx-color-text-dark, #333);
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
   }
 
   &__description {
@@ -148,7 +148,7 @@
   }
 
   &__version-cell {
-    font-family: var(--nx-font-family-monospace, monospace);
+    font-family: var(--font-family-mono);
     font-weight: 500;
   }
 

@@ -69,4 +69,33 @@
   .swagger-ui .microlight {
     filter: invert(100%) hue-rotate(180deg);
   }
+
+  // Swagger sets no text color on inputs, so `color-scheme: dark` supplies a
+  // light one that the invert above flips to dark-on-dark (NEXUS-52212).
+  // These hex values are deliberately hardcoded to mirror swagger-ui's own
+  // palette, so they must track it rather than our design tokens - a token would
+  // be theme-aware and defeat the inversion. #3b4151 is swagger-ui's base text
+  // color (`.swagger-ui { color: #3b4151 }`).
+  .swagger-ui input,
+  .swagger-ui textarea,
+  .swagger-ui select {
+    color-scheme: light;
+    color: #3b4151;
+  }
+
+  // Swagger styles invalid fields with `background: #feebeb` but sets no text
+  // color, so this dark red is ours - chosen to invert into readable light red.
+  .swagger-ui input.invalid,
+  .swagger-ui textarea.invalid,
+  .swagger-ui select.invalid {
+    color: #8b1a1a;
+  }
+
+  // #888 is swagger-ui's own `input[disabled]` color. Restated here so it
+  // outranks the rule above regardless of stylesheet load order.
+  .swagger-ui input[disabled],
+  .swagger-ui textarea[disabled],
+  .swagger-ui select[disabled] {
+    color: #888;
+  }
 }

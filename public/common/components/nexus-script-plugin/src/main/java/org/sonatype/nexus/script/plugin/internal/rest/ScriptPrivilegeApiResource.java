@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPrivilegeDescriptor;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeApiResourceSupport;
@@ -46,9 +47,10 @@ public class ScriptPrivilegeApiResource
   @Autowired
   public ScriptPrivilegeApiResource(
       final SecuritySystem securitySystem,
+      final SecurityHelper securityHelper,
       final List<PrivilegeDescriptor> privilegeDescriptorsList)
   {
-    super(securitySystem, privilegeDescriptorsList);
+    super(securitySystem, securityHelper, privilegeDescriptorsList);
   }
 
   @Override

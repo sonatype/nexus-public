@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCurrentStateAndParams } from '@uirouter/react';
 import { useForm } from '../../../../../../interface/form';
 import { useToast, useIsCloud, useHasFirewallLicense } from '../../../../shared';
 import { useRepositoriesApi } from './useRepositoriesApi';
@@ -46,7 +47,7 @@ export interface UseRepositoryFormOptions {
   /** Repository type for create mode (defaults to 'hosted') */
   repositoryType?: RepositoryType;
   /** Optional callback after save completes. Return { skipNavigate: true } to prevent automatic navigation. */
-  onSave?: (data: RepositoryFormData) => Promise<void | { skipNavigate?: boolean }>;
+  onSave?: (data: RepositoryFormData) => Promise<undefined | { skipNavigate?: boolean }>;
   /** Callback to navigate back / cancel the form */
   onCancel: () => void;
   /** When true, save only calls onSave (advance wizard) without creating/updating */
@@ -55,9 +56,18 @@ export interface UseRepositoryFormOptions {
   onSubmitRef?: React.MutableRefObject<(() => void) | null>;
   /** Callback to report whether form is valid for wizard advancement */
   onCanAdvanceChange?: (canAdvance: boolean) => void;
+  /** Callback to report whether the form has unsaved edits (NEXUS-54349) */
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
-export type RepositoryFormTab = 'summary' | 'settings' | 'firewall' | 'health-check';
+export type RepositoryFormTab =
+  | 'summary'
+  | 'settings'
+  | 'firewall'
+  | 'health-check'
+  | 'evaluation'
+  | 'audit'
+  | 'tasks-capabilities';
 
 export interface UseRepositoryFormReturn {
   /** Form state and helpers from useForm */
@@ -128,6 +138,7 @@ export function useRepositoryForm({
   advanceOnly = false,
   onSubmitRef,
   onCanAdvanceChange,
+  onDirtyChange,
 }: UseRepositoryFormOptions): UseRepositoryFormReturn {
   const toast = useToast();
   const { createRepository, updateRepository } = useRepositoriesApi();
@@ -144,7 +155,17 @@ export function useRepositoryForm({
   // UI state (presentation-adjacent, managed in hook layer)
   // ============================================
 
-  const [activeTab, setActiveTab] = useState<RepositoryFormTab>(isCreate ? 'summary' : 'settings');
+  // ?tab from router state supports deep-links (e.g. evaluation tab from Hosted Repo Eval surface); dynamic: true lets it change without remount.
+  const { params: routerParams } = useCurrentStateAndParams();
+  const TAB_IDS: readonly RepositoryFormTab[] = ['summary', 'settings', 'firewall', 'health-check', 'evaluation', 'audit', 'tasks-capabilities'];
+  const initialTab: RepositoryFormTab = (() => {
+    if (isCreate) return 'summary';
+    const requested = routerParams?.tab as string | undefined | null;
+    return requested && (TAB_IDS as readonly string[]).includes(requested)
+      ? (requested as RepositoryFormTab)
+      : 'settings';
+  })();
+  const [activeTab, setActiveTab] = useState<RepositoryFormTab>(initialTab);
   const [originChangeWarning, setOriginChangeWarning] = useState(false);
 
   // ============================================
@@ -269,6 +290,12 @@ export function useRepositoryForm({
       onCanAdvanceChange(!hasFormErrors(validationErrors));
     }
   }, [form.data, form.isLoading, onCanAdvanceChange, isCloud]);
+
+  // NEXUS-54349: report the machine's pristine state to the wizard so it can
+  // skip the "Unsaved Changes" dialog on Cancel when no field has been edited.
+  useEffect(() => {
+    onDirtyChange?.(!form.isPristine);
+  }, [form.isPristine, onDirtyChange]);
 
   // ============================================
   // Return

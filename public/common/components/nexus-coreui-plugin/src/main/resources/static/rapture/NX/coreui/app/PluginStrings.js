@@ -138,7 +138,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchGitLfs_Group: 'Git LFS Repositories',
     SearchYum_Group: 'Yum Repositories',
     SearchTerraform_Group: 'Terraform Repositories',
-    SearchTerraformbackend_Group: 'Terraform State Backend Repositories',
     SearchAnsiblegalaxy_Group: 'Ansible Galaxy Repositories',
     SearchSwift_Group: 'Swift Repositories',
     SearchCriteria_MD5_FieldLabel: 'MD5',
@@ -163,7 +162,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchMaven_Version_FieldLabel: 'Version',
     SearchComposer_Vendor_FieldLabel: 'Vendor',
     SearchComposer_Package_FieldLabel: 'Package',
-    SearchComposer_Version_FieldLabel: 'Version',
     SearchComposer_Description_FieldLabel: 'Description',
     SearchComposer_Keywords_FieldLabel: 'Keywords',
     SearchNpm_Scope_FieldLabel: 'Scope',
@@ -191,9 +189,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchTerraform_Provider_FieldLabel: 'Provider',
     SearchTerraform_Namespace_FieldLabel: 'Namespace',
     SearchTerraform_Name_FieldLabel: 'Name',
-    SearchTerraformbackend_Path_FieldLabel: 'State Path',
-    SearchTerraformbackend_Lineage_FieldLabel: 'Lineage',
-    SearchTerraformbackend_CreatedBy_FieldLabel: 'Created By',
     SearchAnsiblegalaxy_Namespace_FieldLabel: 'Namespace',
     SearchAnsiblegalaxy_Name_FieldLabel: 'Name',
     SearchAnsiblegalaxy_Version_FieldLabel: 'Version',
@@ -243,8 +238,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchHelm_Text: 'Helm',
     SearchHelm_Description: 'Search for components in Helm repositories',
     SearchHelm_Group: 'Helm Repositories',
-    SearchHelm_Name_FieldLabel: 'Name',
-    SearchHelm_Version_FieldLabel: 'Version',
     Repository_Facet_HelmFacet_Title: 'Helm Settings',
 
     // Browse -> Search -> npm
@@ -332,10 +325,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Terraform
     SearchTerraform_Text: 'Terraform',
     SearchTerraform_Description: 'Search for components in Terraform repositories',
-
-    // Browse -> Search -> Terraform State Backend
-    SearchTerraformbackend_Text: 'Terraform State Backend',
-    SearchTerraformbackend_Description: 'Search for components in Terraform State Backend repositories',
 
     // Browse -> Search -> Ansible Galaxy
     SearchAnsiblegalaxy_Text: 'Ansible Galaxy',
@@ -443,6 +432,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_FieldLabel: 'Foreign Layer Allowed URLs',
     Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_HelpText: 'Regular expressions used to identify URLs that are allowed for foreign layer requests',
     Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_AddButton: 'Add URL Pattern',
+    Repository_Facet_DockerProxyFacet_EcrSessionToken_FieldLabel: 'AWS ECR Session Token',
+    Repository_Facet_DockerProxyFacet_EcrSessionToken_HelpText: 'Optional AWS session token for AWS ECR proxies using short-lived (STS) credentials whose Access Key ID starts with "ASIA". Leave blank for long-lived IAM access keys ("AKIA"). Short-lived session tokens expire (typically within 12 hours) and cannot be refreshed automatically — when the token expires, ECR pulls fail until you re-enter a fresh session token here.',
     Repository_Facet_DockerProxyFacet_BasicAuth_FieldLabel: 'Allow Anonymous Docker Pulls for This Repository',
     Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel: 'Allow anonymous Docker pulls for this repository (Global Anonymous Access and Docker Bearer Token Realm required)',
     Repository_Facet_DockerProxyFacet_BasicAuth_HelpText: 'Anonymous access to Docker repositories requires configuration in two places: globally on the Security → Anonymous Access page and within each Docker repository\'s configuration form. <a href="https://links.sonatype.com/products/nxrm3/docs/docker-authentication" target="_blank" rel="noopener noreferrer">Learn more in our Docker help documentation</a>.',
@@ -468,17 +459,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_TerraformSigningFacet_Keypair_FieldLabel: 'Signing Key',
     Repository_Facet_TerraformSigningFacet_Keypair_HelpText: 'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor <Name or ID>)',
     Repository_Facet_TerraformSigningFacet_Passphrase_FieldLabel: 'Passphrase',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_Title: 'Encryption Settings',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_Required_Info: 'Encryption is mandatory for Terraform State Backend repositories. State files contain sensitive infrastructure data including credentials, secrets, and resource identifiers that must be protected at rest.',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_EncryptionKey_FieldLabel: 'Encryption Key',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_EncryptionKey_HelpText: 'Encryption key used to encrypt state files. This key cannot be retrieved after creation.',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_ConfirmEncryptionKey_FieldLabel: 'Confirm Encryption Key',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_ConfirmEncryptionKey_HelpText: 'Re-enter the encryption key to confirm',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_KeyMismatch_HelpText: 'Encryption keys do not match',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_LockTimeout_FieldLabel: 'Lock Timeout (Minutes)',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_LockTimeout_HelpText: 'Duration in minutes before a state lock automatically expires (1-1440 minutes, default: 30)',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_MaxStateSize_FieldLabel: 'Maximum State File Size (MB)',
-    Repository_Facet_TerraformStateBackendEncryptionFacet_MaxStateSize_HelpText: 'Maximum allowed size for individual state files (1-512 MB, default: 256)',
     Repository_Facet_CondaFacet_Title: 'Conda Settings',
     Repository_Facet_ConanProxyFacet_Title: 'Conan',
     Repository_Facet_ConanProxyFacet_ProtocolVersion: 'Protocol version',
@@ -490,7 +470,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ConanGroupFacet_Title: 'Conan',
 
     Repository_Facet_GroupFacet_Title: 'Group',
-    Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel: '<span style="color: red; ">Group repositories cannot include a mix of NuGet v2 and v3 members. You cannot add <b>{0}</b> ({1}) because the group contains <b>{2}</b> ({3}).</span>',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',
     Repository_Facet_NegativeCacheFacet_Title: 'Negative Cache',
@@ -587,6 +566,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',
     Repository_Facet_ProxyFacet_Npm_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.npmjs.org',
     Repository_Facet_ProxyFacet_Nuget_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://api.nuget.org/v3/index.json',
+    Repository_Facet_ProxyFacet_Nuget_Remote_HelpText_Chocolatey: 'Enter the URL to proxy. Supports NuGet V2, NuGet V3, and Chocolatey. For example: https://api.nuget.org/v3/index.json',
     Repository_Facet_ProxyFacet_Pypi_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pypi.org',
     Repository_Facet_ProxyFacet_Rubygems_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://rubygems.org',
     Repository_Facet_ProxyFacet_Yum_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://mirror.stream.centos.org/',
@@ -654,9 +634,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_NugetProxyFacet_ItemMaxAge_FieldLabel: 'Metadata query cache age',
     Repository_Facet_NugetProxyFacet_ItemMaxAge_HelpText: 'How long to cache query results from the proxied repository (in seconds)',
     Repository_Facet_NugetProxyFacet_SymbolServerUrl_FieldLabel: 'Symbol Server URL',
-    Repository_Facet_NugetProxyFacet_SymbolServerUrl_HelpText: 'Optional upstream symbol server URL for proxying symbol downloads (e.g. https://symbols.nuget.org/download/symbols). If empty, symbols are proxied from the remote storage URL.',
+    Repository_Facet_NugetProxyFacet_SymbolServerUrl_HelpText: 'Optional upstream symbol server URL for proxying symbol downloads (e.g. https://symbols.nuget.org/download/symbols).',
     Repository_Facet_NugetProxyFacet_AllowAnonymousSymbolAccess_FieldLabel: 'Allow Anonymous Symbol Access',
     Repository_Facet_NugetProxyFacet_AllowAnonymousSymbolAccess_HelpText: 'Allow unauthenticated access to the symbol server (required for debugger integration)',
+    Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel: '<span style="color: red; ">Group repositories cannot include a mix of NuGet v2 and v3 members. You cannot add <b>{0}</b> ({1}) because the group contains <b>{2}</b> ({3}).</span>',
     Repository_Facet_Npm_Title: 'npm',
     Repository_Facet_Npm_RemoveQuarantined_Label: 'Filter component versions that fail Sonatype Repository Firewall policy',
     Repository_Facet_Npm_RemoveQuarantined_HelpText: 'If enabled, automatically filter component versions from metadata that fail Sonatype Repository Firewall policy at the Proxy stage. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/pccs/npm">Learn more.</a>',
@@ -665,6 +646,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_Pypi_Title: 'PyPI',
     Repository_Facet_Pypi_IndexPath_FieldLabel: 'Remote Index Path',
     Repository_Facet_Pypi_IndexPath_HelpText: 'Path appended to the remote URL for PyPI Simple API access. Use "/simple" (default) for standard PyPI repositories like PyPI.org, or leave empty for root-path repositories like pypi.nvidia.com or pypi.fury.io.',
+    Repository_Facet_Pypi_IndexPath_ValidationError: 'Index path must be "/simple" (standard) or empty (root path). Custom paths are not supported.',
     Repository_Facet_Pypi_RemoveQuarantined_Label: 'Filter component versions that fail Sonatype Repository Firewall policy',
     Repository_Facet_Pypi_RemoveQuarantined_HelpText: 'If enabled, automatically filter component versions from metadata that fail Sonatype Repository Firewall policy at the Proxy stage. <a target="_blank" href="http://links.sonatype.com/products/nxrm3/docs/pccs/pypi">Learn more.</a>',
     Repository_Facet_Pypi_RemoveQuarantined_Warning: 'This feature requires IQ Server Release 167 or higher.',
@@ -1527,227 +1509,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
    * @type {Object}
    */
   bundles: {
-    'NX.coreui.migration.Controller': {
-      Feature_Text: 'Upgrade',
-      Feature_Description: 'Upgrade configuration and content from Sonatype Nexus Repository 2 to Sonatype Nexus Repository 3',
-
-      Activate_Mask: 'Loading',
-
-      Configure_Mask: 'Configuring',
-      Configure_Message: 'Upgrade configured',
-
-      Cancel_Confirm_Title: 'Cancel Upgrade',
-      Cancel_Confirm_Text: 'Do you want to cancel upgrade?',
-      Cancel_Mask: 'Canceling',
-      Cancel_Message: 'Upgrade canceled',
-
-      IncompleteCancel_Title: 'Configuration Incomplete',
-      IncompleteCancel_Text: 'Upgrade has been partially configured and needs to be reset to continue.',
-      IncompleteCancel_Mask: 'Resetting',
-
-      PlanStepDetail_Mask: 'Fetching details'
-    },
-
-    'NX.coreui.migration.NoUpgradeHAScreen': {
-      Title: 'High Availability Cluster (HA-C) Detected',
-      Description: '<p>Upgrading from Nexus Repository Manager 2 while running a HA-C is not available.</p>' +
-          '<p>Please run Nexus Repository Manager 3 as a single-node to continue.</p>'
-    },
-
-    'NX.coreui.migration.AgentScreen': {
-      Title: 'Agent Connection',
-      Description: "<p>Configure the connection to remote server's upgrade-agent.<br/>" +
-          'The remote server must have an upgrade-agent configured and enabled.</p>',
-      Endpoint_FieldLabel: 'URL',
-      Endpoint_HelpText: "The base URL of the remote server",
-      Token_FieldLabel: 'Access Token',
-      Token_HelpText: "The access token from the remote server's upgrade-agent settings",
-      FetchSize_FieldLabel: 'Fetch Size',
-      FetchSize_HelpText: "Batch size of changes pulled from NXRM2 at once. Lower the value if you are having issues during the Synchronizing step."
-    },
-
-    'NX.coreui.migration.AgentStep': {
-      Connect_Mask: 'Connecting',
-      Connect_Message: 'Connected'
-    },
-
-    'NX.coreui.migration.ContentScreen': {
-      Title: 'Content',
-      Description: '<p>What content from Nexus Repository Manager 2 would you like to transfer?</p>',
-      Repositories_FieldLabel: 'Repository configuration and content',
-      Configuration_FieldLabel: 'Server configuration'
-    },
-
-    'NX.coreui.migration.OverviewScreen': {
-      Title: 'Overview',
-      Description: '<p>This wizard will help you upgrade from Sonatype Nexus Repository 2.</p>' +
-          '<p>Before proceeding with this wizard, thoroughly review our <a href="https://links.sonatype.com/products/nxrm3/docs/upgrade2to3">comprehensive upgrade help documentation</a>.</p>' +
-          '<p>You should also ensure that you have met the following <strong>minimum prerequisites for using this wizard</strong>:</p>' +
-          '<ul>' +
-          '<li>Nexus Repository 2 instance is on the latest version</li>' +
-          '<li>Nexus Repository 2 and 3 have the same license type (OSS or Pro)</li>' +
-          '<li>Nexus Repository 3 instance is a fresh/clean instance</li>' +
-          '<li>All files in the Nexus Repository work directory are owned by the OS user, and there are no zero length files</li>' +
-          '<li>Nexus Repository 2 repository and repository group Repository IDs differ by more than just case</li>' +
-          '</ul>' +
-          '<p><strong>We always recommend testing your upgrade in a test environment before upgrading a production instance</strong>.</p>'
-    },
-
-    'NX.coreui.migration.PhaseFinishScreen': {
-      Title: 'Finishing',
-      Description: '<p>Upgrade is finishing.</p>',
-      Abort_Button: 'Abort',
-      Done_Button: 'Done'
-    },
-
-    'NX.coreui.migration.RepositoryDefaultsScreen': {
-      $extend: 'NX.coreui.migration.RepositoryCustomizeWindow',
-
-      Title: 'Repository Defaults',
-      Description: '<p>Configure the default settings used for repository upgrade.<br/>' +
-          'Per-repository settings may be customized when selecting repositories to upgrade.</p>',
-      IngestMethod_HelpText: 'Choose how the repository content should be transferred. The method you choose may not be supported by all repositories.'
-    },
-
-    'NX.coreui.migration.RepositoryCustomizeWindow': {
-      Title: 'Customize {0}',
-
-      BlobStore_FieldLabel: 'Blob store',
-      BlobStore_HelpText: 'Choose where the repository content should be stored',
-      BlobStore_EmptyText: 'Choose a blob store',
-
-      IngestMethod_FieldLabel: 'Method',
-      IngestMethod_HelpText: 'Choose how the repository content should be transferred',
-      IngestMethod_EmptyText: 'Choose a repository content transfer method',
-      IngestMethod_Link: 'Hard link (fastest)',
-      IngestMethod_Copy: 'Filesystem copy (slow)',
-      IngestMethod_Download: 'Download (slowest)'
-    },
-
-    'NX.coreui.migration.PlanStepDetailWindow': {
-      Title: '{0}',
-      EmptyLog: 'No progress',
-      Timestamp_Column: 'Timestamp',
-      Message_Column: 'Message'
-    },
-
-    'NX.coreui.migration.PreviewScreen': {
-      Title: 'Preview',
-      Description: '<p>Here is a preview of the upgrade configuration.</p>',
-      Name_Column: 'Name',
-      State_Column: 'State',
-      Begin_Button: 'Begin'
-    },
-
-    'NX.coreui.migration.PreviewStep': {
-      Begin_Confirm_Title: 'Begin Upgrade',
-      Begin_Confirm_Text: 'Do you want to begin upgrade?',
-      Begin_Mask: 'Upgrade beginning',
-      Begin_Message: 'Upgrade begun'
-    },
-
-    'NX.coreui.migration.ProgressScreenSupport': {
-      Name_Column: 'Name',
-      Status_Column: 'Status',
-      State_Column: 'State',
-      Complete_Column: 'Complete'
-    },
-
-    'NX.coreui.migration.ProgressStepSupport': {
-      Loading_Mask: 'Loading'
-    },
-
-    'NX.coreui.migration.RepositoriesScreen': {
-      Title: 'Repositories',
-      Description: '<p>Select the repositories to be upgraded.<br/>' +
-          'Customize advanced configuration of the upgrade per-repository as needed.</p>',
-      Repository_Column: 'Repository',
-      Type_Column: 'Type',
-      Format_Column: 'Format',
-      Supported_Column: 'Supported',
-      Status_Column: 'Status',
-      Datastore_Column: 'Data store',
-      Blobstore_Column: 'Blob store',
-      Method_Column: 'Method',
-      Action_Tooltip: 'Customize repository options'
-    },
-
-    'NX.coreui.migration.RepositoriesStep': {
-      $extend: 'NX.coreui.migration.ProgressStepSupport'
-    },
-
-    'NX.coreui.migration.RepositoryDefaultsStep': {
-      $extend: 'NX.coreui.migration.ProgressStepSupport'
-    },
-
-    'NX.coreui.migration.PhasePrepareScreen': {
-      Title: 'Preparing',
-      Description: '<p>Preparing for upgrade.</p>',
-      Abort_Button: 'Abort',
-      Continue_Button: 'Continue'
-    },
-
-    'NX.coreui.migration.PhasePrepareStep': {
-      $extend: 'NX.coreui.migration.ProgressStepSupport',
-
-      Abort_Confirm_Title: 'Abort Upgrade',
-      Abort_Confirm_Text: 'Do you want to abort upgrade?',
-      Abort_Mask: 'Upgrade aborting',
-      Abort_Message: 'Upgrade aborted',
-
-      Continue_Confirm_Title: 'Continue Upgrade',
-      Continue_Confirm_Text: 'Do you want to continue upgrade?',
-      Continue_Mask: 'Upgrade continuing',
-      Continue_Message: 'Upgrade continuing'
-    },
-
-    'NX.coreui.migration.PhaseSyncScreen': {
-      Title: 'Synchronizing',
-      Description: '<p>Upgrade is synchronizing changes.</p>',
-      Abort_Button: 'Abort',
-      Continue_Button: 'Continue',
-      Continue_Button_Pending: '<i class="fa fa-spinner fa-spin fa-fw"></i> Continue'
-    },
-
-    'NX.coreui.migration.PhaseSyncStep': {
-      $extend: 'NX.coreui.migration.ProgressStepSupport',
-
-      Abort_Confirm_Title: 'Abort Upgrade',
-      Abort_Confirm_Text: 'Do you want to abort upgrade?',
-      Abort_Mask: 'Upgrade aborting',
-      Abort_Message: 'Upgrade aborted',
-
-      Stop_Waiting_Confirm_Title: 'Stop waiting for changes',
-      Stop_Waiting_Confirm_Text: 'Any future changes to repositories will not be synchronized. Proceed?',
-      Stop_Waiting_Confirm_Mask: 'Finalizing changes',
-      Stop_Waiting_Confirm_Message: 'Changes finalized',
-
-      Finish_Mask: 'Upgrade finishing',
-      Finish_Message: 'Upgrade finishing'
-    },
-
-    'NX.coreui.migration.PhaseFinishStep': {
-      $extend: 'NX.coreui.migration.ProgressStepSupport',
-
-      Abort_Confirm_Title: 'Abort Upgrade',
-      Abort_Confirm_Text: 'Do you want to abort upgrade?',
-      Abort_Mask: 'Upgrade aborting',
-      Abort_Message: 'Upgrade aborted',
-
-      Done_Mask: 'Confirming',
-      Done_Message: 'Upgrade done',
-
-      Done_Dialog_title: 'Upgrade Complete',
-      Done_Dialog_prefix: '<p>Repository content is available immediately for direct download.</p>' +
-          '<p>Tasks have been automatically scheduled to build:</p>' +
-          '<ul>',
-      Done_Dialog_with_browse: '<li>component Browse UI and HTML views</li>',
-      Done_Dialog_with_search: '<li>component Search UI and Search REST APIs</li>',
-      Done_Dialog_suffix: '</ul>' +
-          '<p>All components will not be visible until tasks named "Repo 2 Migration" finish. ' +
-          'Monitor status in the Tasks user interface or by examining the associated task log.</p>'
-    },
-
     'NX.coreui.view.ldap.LdapSystemPasswordModal': {
       Title: 'LDAP Server system password',
       Password_FieldLabel: 'Password',

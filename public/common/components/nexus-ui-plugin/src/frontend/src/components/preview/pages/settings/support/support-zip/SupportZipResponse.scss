@@ -52,7 +52,7 @@
     color: var(--gray-12);
 
     &--path {
-      font-family: monospace;
+      font-family: var(--font-family-mono);
       font-size: 0.875em;
       word-break: break-all;
     }

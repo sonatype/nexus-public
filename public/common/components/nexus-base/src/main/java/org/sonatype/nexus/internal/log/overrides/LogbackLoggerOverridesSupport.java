@@ -27,9 +27,13 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.ApplicationDirector
 import org.sonatype.nexus.common.io.SafeXml;
 import org.sonatype.nexus.common.log.LoggerLevel;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.internal.log.LogbackLevels;
 import org.sonatype.nexus.internal.log.LoggerOverrides;
 
+import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.Maps;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -58,6 +62,27 @@ public abstract class LogbackLoggerOverridesSupport
 
   protected boolean logbackFileExists() {
     return logbackFile.exists();
+  }
+
+  /**
+   * Applies the given logger-level overrides directly to the live logback context. Each store calls this
+   * from its own lifecycle phase (when its persisted overrides are available), so no earlier-phase component
+   * has to load or apply a later-phase store's overrides on its behalf.
+   */
+  protected void applyToLogback(final Map<String, LoggerLevel> overrides) {
+    LoggerContext context = loggerContext();
+    overrides.forEach((name, level) -> context.getLogger(name).setLevel(LogbackLevels.convert(level)));
+  }
+
+  private static LoggerContext loggerContext() {
+    ILoggerFactory factory = LoggerFactory.getILoggerFactory();
+    if (factory instanceof LoggerContext) {
+      return (LoggerContext) factory;
+    }
+    // Nexus runs on Spring Boot with logback-classic as the SLF4J binding, so the factory is always a logback
+    // LoggerContext. Fail with a clear message if that ever stops being true rather than a bare ClassCastException.
+    throw new IllegalStateException(
+        "Expected the SLF4J binding to be logback, but found: " + factory.getClass().getName());
   }
 
   /**

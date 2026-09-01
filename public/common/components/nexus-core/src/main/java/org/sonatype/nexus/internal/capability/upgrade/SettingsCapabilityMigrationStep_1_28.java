@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
+import org.sonatype.nexus.internal.capability.storage.upgrade.UpgradeCapabilityStorage;
 import org.sonatype.nexus.upgrade.datastore.DatabaseMigrationStep;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,10 +28,10 @@ import org.springframework.stereotype.Component;
 public class SettingsCapabilityMigrationStep_1_28
     implements DatabaseMigrationStep
 {
-  private final CapabilityStorage capabilityStorage;
+  private final UpgradeCapabilityStorage capabilityStorage;
 
   @Autowired
-  public SettingsCapabilityMigrationStep_1_28(final CapabilityStorage capabilityStorage) {
+  public SettingsCapabilityMigrationStep_1_28(final UpgradeCapabilityStorage capabilityStorage) {
     this.capabilityStorage = checkNotNull(capabilityStorage);
   }
 

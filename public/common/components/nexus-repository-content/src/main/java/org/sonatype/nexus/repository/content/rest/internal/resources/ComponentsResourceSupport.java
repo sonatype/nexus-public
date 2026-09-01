@@ -26,6 +26,8 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +65,7 @@ abstract class ComponentsResourceSupport
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
   }
 
+  @VisibleForTesting
   List<FluentComponent> browse(final Repository browsedRepository, final String continuationToken) {
     List<FluentComponent> permittedComponents = new ArrayList<>();
     String internalToken = toInternalToken(continuationToken);
@@ -75,7 +78,7 @@ abstract class ComponentsResourceSupport
     return trim(permittedComponents, PAGE_SIZE_LIMIT);
   }
 
-  private Continuation<FluentComponent> getComponents(Repository repository, final String continuationToken) {
+  private Continuation<FluentComponent> getComponents(final Repository repository, final String continuationToken) {
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       return repository.facet(ContentFacet.class)
           .components()
@@ -98,7 +101,7 @@ abstract class ComponentsResourceSupport
     return component -> contentAuthHelper.checkPathPermissions(component.name(), format, repositoryName);
   }
 
-  Predicate<FluentAsset> assetPermitted(Repository repository) {
+  Predicate<FluentAsset> assetPermitted(final Repository repository) {
     String repositoryName = repository.getName();
     Set<String> repoNames = new HashSet<>(repositoryManagerRESTAdapter.findContainingGroups(repositoryName));
     repoNames.add(repositoryName);

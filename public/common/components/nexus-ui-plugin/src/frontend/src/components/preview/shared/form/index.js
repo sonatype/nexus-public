@@ -42,4 +42,5 @@ export { SettingsButton } from './SettingsButton';
 export { SettingsTransferList } from './SettingsTransferList';
 export { WizardForm } from './WizardForm';
 export { ConfirmDialog } from './ConfirmDialog';
+export { RequiredMark } from './RequiredMark';
 

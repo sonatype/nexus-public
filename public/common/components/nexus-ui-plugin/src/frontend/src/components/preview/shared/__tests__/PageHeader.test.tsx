@@ -40,6 +40,26 @@ describe('PageHeader', () => {
     expect(screen.getByText('Manage your repositories')).toBeInTheDocument();
   });
 
+  it('renders an inline count next to the title', () => {
+    renderWithTheme(<PageHeader title="Tags" count="3" />);
+
+    expect(screen.getByRole('heading', { name: 'Tags' })).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('omits the count element when count is not provided', () => {
+    renderWithTheme(<PageHeader title="Tags" />);
+
+    // No stray count text — only the title is rendered in the header.
+    expect(screen.getByTestId('page-header')).toHaveTextContent('Tags');
+  });
+
+  it('renders a zero count (does not treat 0 as absent)', () => {
+    renderWithTheme(<PageHeader title="Tags" count={0} />);
+
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
   it('renders action buttons', () => {
     renderWithTheme(
       <PageHeader

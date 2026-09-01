@@ -11,211 +11,216 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useState } from 'react';
-import {
-  Box,
-  Button,
-  Card,
-  Code,
-  Flex,
-  Grid,
-  Heading,
-  Link,
-  Table,
-  Text,
-  Tooltip,
-} from '@radix-ui/themes';
-import { Copy, ExternalLink } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Button, Card, Code, Flex, Grid, Heading, Select, Table, Text, Tooltip } from '@radix-ui/themes';
+import { Copy } from 'lucide-react';
 
 import type { GADetail } from '../core';
+import { parseGaCoordinates } from './detailHelpers';
+import { getDependencySnippets } from './dependencySnippets/registry';
+import { getFormatLabel } from './dependencySnippets/formatLabel';
+import { trackSnippetCopy } from './dependencySnippets/trackSnippetCopy';
+import type { SnippetComponentModel } from './dependencySnippets/types';
 
 interface GAOverviewTabProps {
   detail: GADetail;
   selectedVersion: string | null;
+  /**
+   * Repository names holding the selected version.
+   *
+   * Passed in rather than read off `detail.repositories`, which is now always empty: it used to be
+   * aggregated by walking every page of /v1/search, and that walk is gone (NEXUS-54201 /
+   * NEXUS-54220). The caller sources this from the same per-version endpoint the Repositories tab
+   * uses, so the "Repository" row and the snippet's registry URL agree with that tab.
+   */
+  repositories?: readonly string[];
+  /** The selected version's most recent asset timestamp, or null if none carries one. */
+  lastUpdated?: string | null;
 }
 
-/**
- * GAOverviewTab - Overview information for a GA.
- * Matches prototype layout: cards in grid, License, Description, Project URL, Usage snippets.
- */
-function formatDate(dateString: string | undefined): string {
+function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return '—';
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '—';
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   } catch {
     return '—';
   }
 }
 
-export function GAOverviewTab({ detail, selectedVersion }: GAOverviewTabProps) {
-  const { projectUrl, gaId, repositories } = detail;
-  const [copiedType, setCopiedType] = useState<'maven' | 'gradle' | null>(null);
+/**
+ * GAOverviewTab - Overview information for a GA.
+ *
+ * Renders per-format dependency snippets (ported from the Classic UI) and a Component Details
+ * summary. The snippet set is chosen by repository format, so an npm component shows npm/Yarn
+ * commands rather than a Maven pom.xml fragment. Formats with no generator show no snippet section.
+ */
+export function GAOverviewTab({
+  detail,
+  selectedVersion,
+  repositories = [],
+  lastUpdated = null,
+}: GAOverviewTabProps) {
+  const { gaId, format } = detail;
+  const [copied, setCopied] = useState(false);
+  const [selectedName, setSelectedName] = useState<string | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const parts = gaId.split(':');
-  const groupId = parts.length >= 3 ? parts[1] : '';
-  const artifactId = parts.length >= 3 ? parts[2] : detail.displayName;
-  const ver = selectedVersion || detail.versions[0]?.version || 'VERSION';
+  // Clear any pending copied-reset timer when the tab unmounts so it can't fire afterwards.
+  useEffect(
+    () => () => {
+      if (copiedTimerRef.current) {
+        clearTimeout(copiedTimerRef.current);
+      }
+    },
+    [],
+  );
 
-  const selectedVersionObj = detail.versions.find((v) => v.version === ver);
-  const lastUpdated = selectedVersionObj?.lastUpdated ?? detail.versions[0]?.lastUpdated;
-  const ecosystemLabel = detail.format === 'maven' ? 'Maven' : detail.format;
-  const repositoryNames = repositories?.map((r) => r.name).join(', ') || '—';
+  // Navigating to a component of a different format exposes a different snippet set, so drop any
+  // prior selection and fall back to that format's default rather than a stale (or absent) type.
+  // Adjusting state during render (React's recommended pattern) avoids the one-frame flicker an
+  // effect would leave when the old and new format share a snippet displayName.
+  const [prevFormat, setPrevFormat] = useState(format);
+  if (prevFormat !== format) {
+    setPrevFormat(format);
+    setSelectedName(null);
+  }
 
-  const mavenSnippet = `<dependency>
-    <groupId>${groupId}</groupId>
-    <artifactId>${artifactId}</artifactId>
-    <version>${ver}</version>
-</dependency>`;
+  const { group, name: parsedName } = parseGaCoordinates(gaId);
+  const name = parsedName || detail.displayName;
+  // `??`, not `||`: '' is the valid selected version of a versionless format (raw), and there is
+  // no `detail.versions[0]` to fall back to any more regardless.
+  const ver = selectedVersion ?? '';
 
-  const gradleSnippet = `implementation '${groupId}:${artifactId}:${ver}'`;
+  const formatLabel = getFormatLabel(format);
+  const repositoryName = repositories[0];
+  const repositoryNames = repositories.join(', ');
 
-  const handleCopyMaven = useCallback(() => {
-    navigator.clipboard.writeText(mavenSnippet);
-    setCopiedType('maven');
-    setTimeout(() => setCopiedType(null), 2000);
-  }, [mavenSnippet]);
+  const snippets = useMemo(() => {
+    const component: SnippetComponentModel = { format, group, name, version: ver, repositoryName };
+    // The Overview is component-level, so there is no specific asset — matching Classic, which
+    // emits no extension here. Synthesizing a jar extension for Maven would wrongly append @jar
+    // to Gradle/PURL/Leiningen coordinates and break transitive resolution.
+    return getDependencySnippets(format, component, undefined);
+  }, [format, group, name, ver, repositoryName]);
 
-  const handleCopyGradle = useCallback(() => {
-    navigator.clipboard.writeText(gradleSnippet);
-    setCopiedType('gradle');
-    setTimeout(() => setCopiedType(null), 2000);
-  }, [gradleSnippet]);
+  // Require a resolvable version: several generators (npm, pypi, maven, …) don't guard on an empty
+  // version, so without this gate a version-less component would emit a truncated coordinate.
+  const hasSnippets = snippets.length > 0 && !!ver;
+
+  // The selected snippet, defaulting to the first one (mirrors the Classic combo behavior).
+  const selectedSnippet = snippets.find((s) => s.displayName === selectedName) ?? snippets[0];
+
+  const handleSelect = useCallback((displayName: string) => {
+    setSelectedName(displayName);
+    setCopied(false);
+  }, []);
+
+  const handleCopy = useCallback(
+    (displayName: string, snippetText: string) => {
+      // writeText can reject (permissions, insecure context); swallow it so it isn't an
+      // unhandled rejection — the copy is best-effort and the analytics event still fires.
+      navigator.clipboard.writeText(snippetText).catch(() => {});
+      trackSnippetCopy(format, displayName);
+      setCopied(true);
+      if (copiedTimerRef.current) {
+        clearTimeout(copiedTimerRef.current);
+      }
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
+    },
+    [format],
+  );
+
+  const detailRows: Array<{ label: string; value: string; mono?: boolean }> = [
+    { label: 'Last Updated', value: formatDate(lastUpdated) },
+    { label: 'Format', value: formatLabel },
+    ...(group ? [{ label: 'Group', value: group }] : []),
+    ...(name ? [{ label: 'Name', value: name }] : []),
+    ...(ver ? [{ label: 'Version', value: ver }] : []),
+    ...(repositoryNames ? [{ label: 'Repository', value: repositoryNames, mono: true }] : []),
+  ];
 
   return (
     <Flex direction="column" gap="6">
-      {/* First Row - License+Description combined, Project URL (same width as before) */}
-      <Grid columns={{ initial: '1', md: '2fr 1fr' }} gap="4">
-        {/* Dependencies Card */}
-        <Card size="1">
-          <Box p="4">
-            <Heading size="4" mb="4">Dependencies</Heading>
-            <Flex direction="column" gap="4">
-              <Box>
-                <Text size="1" color="gray" weight="medium" mb="2">Maven</Text>
-                <Box
-                  p="4"
-                  style={{
-                    backgroundColor: 'var(--gray-2)',
-                    borderRadius: '6px',
-                  }}
+      <Grid columns={{ initial: '1', md: hasSnippets ? '2fr 1fr' : '1' }} gap="4">
+        {hasSnippets && selectedSnippet && (
+          <Card size="1">
+            <Box p="4">
+              <Heading size="4" mb="4">
+                Dependencies
+              </Heading>
+              <Flex align="center" gap="2" mb="3">
+                {/* Deliberately shows one snippet at a time behind this picker rather than stacking
+                    them all: some formats (e.g. Maven/Java) expose many snippets, and stacking would
+                    force the user to scroll past a long wall of code to reach the details below.
+                    Radix Select keeps this consistent with every other dropdown in the Preview UI. */}
+                <Select.Root value={selectedSnippet.displayName} onValueChange={handleSelect} size="2">
+                  <Select.Trigger aria-label="Select dependency snippet" style={{ flex: 1 }} />
+                  <Select.Content>
+                    {snippets.map((snippet) => (
+                      <Select.Item key={snippet.displayName} value={snippet.displayName}>
+                        {snippet.displayName}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+                <Tooltip content={copied ? 'Copied!' : 'Copy'}>
+                  <Button
+                    variant="soft"
+                    color="blue"
+                    size="2"
+                    aria-label={`Copy ${selectedSnippet.displayName} snippet`}
+                    onClick={() => handleCopy(selectedSnippet.displayName, selectedSnippet.snippetText)}
+                  >
+                    <Copy size={14} />
+                  </Button>
+                </Tooltip>
+              </Flex>
+              {selectedSnippet.description && (
+                <Text as="div" size="1" color="gray" mb="2">
+                  {selectedSnippet.description}
+                </Text>
+              )}
+              <Box p="4" style={{ backgroundColor: 'var(--gray-2)', borderRadius: '6px' }}>
+                <Code
+                  size="2"
+                  color="gray"
+                  variant="ghost"
+                  style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', display: 'block', overflowX: 'auto' }}
                 >
-                  <Flex align="center" justify="between" gap="2">
-                    <Code
-                      size="2"
-                      color="gray"
-                      variant="ghost"
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                        flex: 1,
-                        overflowX: 'auto',
-                      }}
-                    >
-                      {mavenSnippet}
-                    </Code>
-                    <Tooltip content={copiedType === 'maven' ? 'Copied!' : 'Copy'}>
-                      <Button variant="soft" color="blue" size="2" onClick={handleCopyMaven}>
-                        <Copy size={14} />
-                      </Button>
-                    </Tooltip>
-                  </Flex>
-                </Box>
+                  {selectedSnippet.snippetText}
+                </Code>
               </Box>
-              <Box>
-                <Text size="1" color="gray" weight="medium" mb="2">Gradle</Text>
-                <Box
-                  p="4"
-                  style={{
-                    backgroundColor: 'var(--gray-2)',
-                    borderRadius: '6px',
-                  }}
-                >
-                  <Flex align="center" justify="between" gap="2">
-                    <Code
-                      size="2"
-                      color="gray"
-                      variant="ghost"
-                      style={{
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                        flex: 1,
-                      }}
-                    >
-                      {gradleSnippet}
-                    </Code>
-                    <Tooltip content={copiedType === 'gradle' ? 'Copied!' : 'Copy'}>
-                      <Button variant="soft" color="blue" size="2" onClick={handleCopyGradle}>
-                        <Copy size={14} />
-                      </Button>
-                    </Tooltip>
-                  </Flex>
-                </Box>
-              </Box>
-            </Flex>
-          </Box>
-        </Card>
+            </Box>
+          </Card>
+        )}
 
-        {/* Component Details Card - same width as before (1/3) */}
         <Card size="1">
           <Box p="4">
-            <Heading size="4" mb="3">Component Details</Heading>
+            <Heading size="4" mb="3">
+              Component Details
+            </Heading>
             <Table.Root variant="ghost" size="1">
               <Table.Body>
-                <Table.Row>
-                  <Table.Cell>
-                    <Text size="2" color="gray">Last Updated</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="2" weight="medium">{formatDate(lastUpdated)}</Text>
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>
-                    <Text size="2" color="gray">Ecosystem</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="2" weight="medium">{ecosystemLabel}</Text>
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>
-                    <Text size="2" color="gray">Group</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="2" weight="medium">{groupId || '—'}</Text>
-                  </Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell>
-                    <Text size="2" color="gray">Repository</Text>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Text size="2" weight="medium" style={{ fontFamily: 'monospace', fontSize: '11px' }}>
-                      {repositoryNames}
-                    </Text>
-                  </Table.Cell>
-                </Table.Row>
-                {projectUrl && (
-                  <Table.Row>
+                {detailRows.map((row) => (
+                  <Table.Row key={row.label}>
                     <Table.Cell>
-                      <Text size="2" color="gray">Project URL</Text>
+                      <Text size="2" color="gray">
+                        {row.label}
+                      </Text>
                     </Table.Cell>
                     <Table.Cell>
-                      <Link href={projectUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                        <Text size="2" weight="medium" style={{ color: 'var(--blue-11)' }}>
-                          {projectUrl}
-                        </Text>
-                        <ExternalLink size={12} style={{ marginLeft: 4, verticalAlign: 'middle', display: 'inline' }} />
-                      </Link>
+                      <Text
+                        size="2"
+                        weight="medium"
+                        style={row.mono ? { fontFamily: 'monospace', fontSize: '11px' } : undefined}
+                      >
+                        {row.value}
+                      </Text>
                     </Table.Cell>
                   </Table.Row>
-                )}
+                ))}
               </Table.Body>
             </Table.Root>
           </Box>

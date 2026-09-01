@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-rest</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <jackson2.version>2.22.1</jackson2.version>
+    <jackson2.version>2.22.2</jackson2.version>
     <!-- NEXUS-46395: Jakarta XML Binding 4.0 for Jakarta EE 10 (was 2.3.3). -->
     <jaxb.version>4.0.5</jaxb.version>
     <!-- NEXUS-46395: RESTEasy 7.x is the Jakarta EE 10 / JAX-RS 3.1 line.
@@ -100,7 +100,7 @@
       <dependency>
         <groupId>org.jsoup</groupId>
         <artifactId>jsoup</artifactId>
-        <version>1.15.3</version>
+        <version>1.23.1</version>
       </dependency>
 
       <!--
@@ -301,7 +301,7 @@
       <dependency>
         <groupId>tools.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>3.2.0</version>
+        <version>3.2.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

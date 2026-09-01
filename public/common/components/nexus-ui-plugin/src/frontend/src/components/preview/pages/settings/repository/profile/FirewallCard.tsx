@@ -15,12 +15,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Card, Flex, Text, Badge, Button, Tooltip, Grid, Separator } from '@radix-ui/themes';
 import { Shield, ShieldCheck, Info, ExternalLink, ShieldOff } from 'lucide-react';
 import type { FirewallData, IqCapabilities, MalwareCleanupSummary } from './types';
-import { useFirewallEnable, fetchIqAuditStatus } from '../../../../shared/security/useFirewallEnable';
+import { useFirewallEnable, } from '../../../../shared/security/useFirewallEnable';
 import {
   setMalwareRemediatorEnabledForRepository,
   type MalwareRemediatorMode,
 } from '../../../../shared/security/malwareRemediatorTask';
 import { useToast } from '../../../../shared/Toast';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 
 export interface FirewallCardProps {
   repositoryName: string;
@@ -99,6 +101,20 @@ export function FirewallCard({
   const toast = useToast();
   const { enableAudit, enableQuarantine, disable, loading: firewallLoading } = useFirewallEnable(repositoryName);
   const [taskLoading, setTaskLoading] = useState(false);
+
+  // Hide firewall protection-level controls without repository-admin edit, and
+  // the malware-remediator task controls without tasks:create (NEXUS-54212). coreui never
+  // mounts a <PermissionsProvider>, so context usePermission returns false for everyone; use
+  // the provider-independent ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
+  const canManageMalwareTask = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TASKS.CREATE),
+    [hasUser],
+  );
 
   const derivedLevel = deriveProtectionLevel(firewall);
   const [optimisticLevel, setOptimisticLevel] = useState<ProtectionLevel | null>(null);
@@ -286,7 +302,8 @@ export function FirewallCard({
         <Separator size="4" />
 
         {/* ---- Protection Level (compact row) ---- */}
-        <Box>
+        {canEditFirewall && (
+        <Box data-testid="firewall-protection-level">
           <Flex align="center" gap="1" mb="2">
             <Text size="1" color="gray">Protection Level</Text>
             {infoIcon("Controls how Firewall handles policy violations for incoming components.")}
@@ -339,9 +356,11 @@ export function FirewallCard({
             })}
           </Flex>
         </Box>
+        )}
 
         {/* ---- Malicious Packages (3-option radio) ---- */}
-        <Box>
+        {canManageMalwareTask && (
+        <Box data-testid="firewall-malware-task">
           <Flex align="center" gap="1" mb="2">
             <Text size="1" color="gray">Malicious Packages</Text>
             {infoIcon("Scheduled task that scans for malicious packages. Disabled = off. Audit = scan and record only. Delete = scan and remove (Recommended).")}
@@ -398,6 +417,7 @@ export function FirewallCard({
             {pending > 0 && <Text size="1" color="red">{pending} pending</Text>}
           </Flex>
         </Box>
+        )}
       </Flex>
     </Card>
   );

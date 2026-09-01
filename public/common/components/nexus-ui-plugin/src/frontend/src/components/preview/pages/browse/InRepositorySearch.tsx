@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Box, Card, Flex, Spinner, Text, TextField } from '@radix-ui/themes';
+import { Box, Card, Spinner, Text, TextField } from '@radix-ui/themes';
 import { Search, X } from 'lucide-react';
 import { searchInRepository, type SearchResultItem as SearchResult } from './browse.api';
 import { SearchResultItem } from './SearchResultItem';
@@ -34,7 +34,7 @@ const MAX_RESULTS = 20;
  *   - PyPI:   group is typically null, browse is name/version
  *   - Docker: browse tree is under v2/name/tags/version
  */
-function buildBrowsePath(result: SearchResult): string {
+function _buildBrowsePath(result: SearchResult): string {
   if (result.path) return result.path;
 
   const format = result.format?.toLowerCase();
@@ -119,7 +119,7 @@ export function InRepositorySearch({
         setResults(searchResults);
         setIsOpen(true);
         setSelectedIndex(-1);
-      } catch (err) {
+      } catch (_err) {
         setError('Search failed. Please try again.');
         setResults([]);
         setIsOpen(true);

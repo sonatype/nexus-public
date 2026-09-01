@@ -13,17 +13,24 @@
 package org.sonatype.nexus.datastore.mybatis;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.sonatype.nexus.common.i18n.I18N;
 import org.sonatype.nexus.common.i18n.MessageBundle;
 import org.sonatype.nexus.datastore.DataStoreDescriptor;
+import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.formfields.TextAreaFormField;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.collect.ImmutableList;
-import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
  * MyBatis {@link DataStoreDescriptor}.
@@ -46,6 +53,24 @@ public class MyBatisDataStoreDescriptor
   public static final String SCHEMA = "schema";
 
   public static final String ADVANCED = "advanced";
+
+  /*
+   * An allow list of HikariCP configuration settings which are safe for security.
+   * Full list - https://github.com/brettwooldridge/HikariCP/blob/dev/README.md#gear-configuration-knobs-baby
+   */
+  private static final Set<String> ALLOWED_ADVANCED_KEYS = Set.of(
+      "maximumPoolSize",
+      "minimumIdle",
+      "connectionTimeout",
+      "idleTimeout",
+      "maxLifetime",
+      "leakDetectionThreshold",
+      "validationTimeout",
+      "autoCommit",
+      "transactionIsolation",
+      "poolName",
+      "keepaliveTime",
+      "initializationFailTimeout");
 
   private interface Messages
       extends MessageBundle
@@ -83,5 +108,26 @@ public class MyBatisDataStoreDescriptor
   @Override
   public List<FormField<?>> getFormFields() {
     return formFields;
+  }
+
+  @Override
+  public void validate(final DataStoreConfiguration configuration) {
+    String advanced = configuration.getAttributes().get(ADVANCED);
+    if (isBlank(advanced)) {
+      return;
+    }
+    // Parse with the same splitter MyBatisDataStore uses at runtime to inject these properties
+    // into HikariCP — reusing it prevents a parser-differential bypass.
+    String rejected = MyBatisDataStore.TO_MAP.split(advanced)
+        .keySet()
+        .stream()
+        .filter(key -> !ALLOWED_ADVANCED_KEYS.contains(key))
+        .sorted()
+        .collect(Collectors.joining(", "));
+    if (!rejected.isEmpty()) {
+      throw new ValidationErrorsException().withError(
+          ADVANCED,
+          "The advanced configuration is invalid or contains unknown properties: " + rejected);
+    }
   }
 }

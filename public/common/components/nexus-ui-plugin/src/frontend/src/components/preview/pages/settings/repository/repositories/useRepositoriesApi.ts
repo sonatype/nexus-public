@@ -13,6 +13,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { restClient, parseApiError, ENDPOINTS } from '../../../../../../interface/api';
+import { ExtJS } from '../../../../../../interface/ExtJS';
+import FeatureFlags from '../../../../../../constants/FeatureFlags';
 import {
   Repository,
   RepositoryFormData,
@@ -24,6 +26,8 @@ import {
   HealthCheckStatus,
 } from './types';
 
+const { NUGET_SYMBOL_SERVER_ENABLED } = FeatureFlags;
+
 // =============================================================================
 // API Endpoints - REST only, NO ExtDirect
 // =============================================================================
@@ -34,7 +38,7 @@ const REPOSITORIES_LIST_URL = '/service/rest/internal/ui/repositories';
 const RECIPES_URL = '/service/rest/internal/ui/repositories/recipes';
 const BLOB_STORES_URL = '/service/rest/v1/blobstores';
 const ROUTING_RULES_URL = '/service/rest/v1/routing-rules';
-const CLEANUP_POLICIES_URL = '/service/rest/v1/cleanup-policies';
+const CLEANUP_POLICIES_URL = '/service/rest/internal/cleanup-policies';
 
 /**
  * Maps format names to REST API endpoint paths.
@@ -86,42 +90,61 @@ export function useRepositoriesApi() {
   }, []);
 
   /**
-   * Fetch a single repository by name
-   * Uses REST API: GET /service/rest/v1/repositories/{name}
+   * Fetch a single repository by name for the edit form.
+   *
+   * Uses the internal UI endpoint GET /service/rest/internal/ui/repositories/repository/{name}
+   * as the authoritative config source. That endpoint resolves the repository via
+   * `getRepositoryWithAdmin`, which gates on the repository-admin READ permission — the
+   * SAME permission the list endpoint (/details) and Classic's edit form use.
+   *
+   * Previously the detail fetch started with the public v1 GET /v1/repositories/{name}, which
+   * gates on repository-VIEW read/browse (userCanReadOrBrowse) — a different permission family.
+   * A user granted repository-admin read but not repository-view read/browse could see the
+   * repository list yet hit a 403 when opening a repository, bouncing back to the list
+   * (RepositoriesPage bounces to BASE_PATH on fetch error). Reading detail through the
+   * admin-gated internal endpoint keeps list and detail on one permission, matching Classic
+   * (NEXUS-54019).
    */
   const fetchRepository = useCallback(async (name: string): Promise<Repository | null> => {
     try {
-      const basic = await restClient.get<Repository>(`${REPOSITORIES_REST_URL}/${encodeURIComponent(name)}`);
-      if (!basic) return null;
+      const detail = await restClient.get<Repository>(
+        `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}`
+      );
+      if (!detail) return null;
 
-      const apiFormat = getApiFormatPath(basic.format);
-      const detailUrl = `${REPOSITORIES_REST_URL}/${encodeURIComponent(apiFormat)}/${encodeURIComponent(basic.type)}/${encodeURIComponent(name)}`;
+      // The admin config payload (AbstractApiRepository) lacks the UI-only `status` and `size`
+      // fields the list surfaces. Enrich best-effort from the public v1 basic endpoint, which
+      // gates on repository-view read/browse — so this may 403 for an admin-read-only user.
+      // Non-fatal: on failure we keep the admin config alone (detail wins on merge either way).
+      let repo: Repository = detail;
       try {
-        const detail = await restClient.get<Repository>(detailUrl);
-        const repo = { ...basic, ...detail } || basic;
-
-        // Fetch signing passphrase from internal endpoint for apt/yum repos
-        if (repo.format === 'apt' || repo.format === 'yum') {
-          try {
-            const signing = await restClient.get<{ passphrase: string | null }>(
-              `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}/signing-passphrase`
-            );
-            if (signing?.passphrase != null) {
-              if (repo.format === 'apt') {
-                repo.aptSigning = { ...repo.aptSigning, passphrase: signing.passphrase };
-              } else {
-                repo.yumSigning = { ...repo.yumSigning, passphrase: signing.passphrase };
-              }
-            }
-          } catch {
-            // Non-critical — passphrase field will just be empty
-          }
+        const basic = await restClient.get<Repository>(`${REPOSITORIES_REST_URL}/${encodeURIComponent(name)}`);
+        if (basic) {
+          repo = { ...basic, ...detail };
         }
-
-        return repo;
       } catch {
-        return basic;
+        // repository-view read/browse not granted — proceed with the admin config only.
       }
+
+      // Fetch signing passphrase from internal endpoint for apt/yum repos
+      if (repo.format === 'apt' || repo.format === 'yum') {
+        try {
+          const signing = await restClient.get<{ passphrase: string | null }>(
+            `${REPOSITORIES_LIST_URL}/repository/${encodeURIComponent(name)}/signing-passphrase`
+          );
+          if (signing?.passphrase != null) {
+            if (repo.format === 'apt') {
+              repo.aptSigning = { ...repo.aptSigning, passphrase: signing.passphrase };
+            } else {
+              repo.yumSigning = { ...repo.yumSigning, passphrase: signing.passphrase };
+            }
+          }
+        } catch {
+          // Non-critical — passphrase field will just be empty
+        }
+      }
+
+      return repo;
     } catch (err: unknown) {
       const apiError = parseApiError(err);
       if (apiError.status === 404) {
@@ -353,17 +376,20 @@ export function useRepositoriesApi() {
   }, []);
 
   /**
-   * Fetch cleanup policies for a format
-   * Uses REST API: GET /service/rest/v1/cleanup-policies
+   * Fetch cleanup policies for a format.
+   * Uses GET /service/rest/internal/cleanup-policies. The v1 endpoint at
+   * /service/rest/v1/cleanup-policies is Pro/Cloud-only and 404s in CE.
    */
   const fetchCleanupPolicies = useCallback(async (format?: string): Promise<CleanupPolicy[]> => {
     try {
       const data = await restClient.get<CleanupPolicy[]>(CLEANUP_POLICIES_URL);
       const policies = Array.isArray(data) ? data : [];
       
-      // Filter by format client-side if format is specified
+      // Filter by format client-side if format is specified; include the
+      // "all formats" sentinel '*' which the REST API uses to represent
+      // policies stored with format = 'ALL_FORMATS'.
       if (format) {
-        return policies.filter((p) => p.format === format);
+        return policies.filter((p) => p.format === format || p.format === '*');
       }
       return policies;
     } catch (err: unknown) {
@@ -391,6 +417,21 @@ export function useRepositoriesApi() {
     } catch (err) {
       console.error('Failed to fetch health check status:', err);
       return {};
+    }
+  }, []);
+
+  /**
+   * Check whether the system-level Health Check capability is enabled.
+   * Uses REST API: GET /service/rest/v1/capabilities
+   * Returns true if the capability exists and is enabled, false if disabled, absent, or on error.
+   */
+  const fetchHealthCheckCapabilityEnabled = useCallback(async (): Promise<boolean> => {
+    try {
+      const data = await restClient.get<Array<{ type: string; enabled: boolean }>>(ENDPOINTS.CAPABILITIES);
+      const cap = Array.isArray(data) ? data.find((c) => c.type === 'healthcheck') : undefined;
+      return cap?.enabled ?? false;
+    } catch {
+      return false;
     }
   }, []);
 
@@ -441,6 +482,7 @@ export function useRepositoriesApi() {
     fetchCleanupPolicies,
     // Health check
     fetchHealthCheckStatus,
+    fetchHealthCheckCapabilityEnabled,
     enableHealthCheck,
     disableHealthCheck,
   };
@@ -628,9 +670,37 @@ function buildRepositoryConfig(data: RepositoryFormData): Record<string, unknown
   // The `NpmConfig` type was removed accordingly — see types.ts.
 
   if (data.format === 'nuget' && data.type === 'proxy') {
+    // Symbol-server attributes are only emitted when the feature flag is enabled, matching
+    // the Classic UI behavior (see NugetProxy.js which gates `container.insert` for the two
+    // symbol fields on the same NX.State check). Without this gate the Preview UI would
+    // silently persist `allowAnonymousSymbolAccess: true` on every nuget-proxy create,
+    // even when the backend routes wired by the flag aren't registered — diverging from
+    // Classic UI and producing inert config that survives across flag toggles.
+    const symbolServerFlagEnabled = (() => {
+      try {
+        return Boolean(ExtJS.state()?.getValue?.(NUGET_SYMBOL_SERVER_ENABLED));
+      } catch {
+        return false;
+      }
+    })();
+
     config.nugetProxy = {
       queryCacheItemMaxAge: data.nugetProxy?.queryCacheItemMaxAge ?? 3600,
       nugetVersion: data.nugetProxy?.nugetVersion ?? 'V3',
+      ...(symbolServerFlagEnabled
+        ? {
+            // Symbol Server URL is optional per NugetAttributes.symbolServerUrl (@Nullable).
+            // Send verbatim when the user has typed something; omit when empty so the backend
+            // stores null rather than an empty string that later reads as "configured".
+            ...(data.nugetProxy?.symbolServerUrl
+              ? { symbolServerUrl: data.nugetProxy.symbolServerUrl }
+              : {}),
+            // Default to true when the user hasn't toggled, matching Classic UI's checkbox
+            // `value: true` seed and the backend NugetAttributes.allowAnonymousSymbolAccess
+            // default.
+            allowAnonymousSymbolAccess: data.nugetProxy?.allowAnonymousSymbolAccess ?? true,
+          }
+        : {}),
     };
   }
 

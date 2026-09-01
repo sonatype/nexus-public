@@ -47,6 +47,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1036,6 +1037,27 @@ public abstract class ComponentDAOTestSupport
         }
       });
     }
+  }
+
+  protected void testCreateComponentReturnsNullIdWhenRepositoryDeleted() {
+    ContentRepositoryData contentRepository = generateContentRepository();
+    createContentRepository(contentRepository);
+    int deletedRepositoryId = contentRepository.repositoryId;
+
+    // Delete the content repository to simulate a concurrent repository deletion
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      session.access(TestContentRepositoryDAO.class).deleteContentRepository(contentRepository);
+      session.getTransaction().commit();
+    }
+
+    // On PostgreSQL the lock_repo CTE finds no row → WHERE EXISTS false → 0 rows inserted → componentId stays null
+    ComponentData component = generateComponent(deletedRepositoryId, "test-ns", "deleted-repo-component", "1.0");
+    try (DataSession<?> session = sessionRule.openSession(DEFAULT_DATASTORE_NAME)) {
+      session.access(TestComponentDAO.class).createComponent(component, entityVersionEnabled);
+      session.getTransaction().commit();
+    }
+
+    assertThat(component.componentId(), is(nullValue()));
   }
 
   private static void assertEntityVersion(

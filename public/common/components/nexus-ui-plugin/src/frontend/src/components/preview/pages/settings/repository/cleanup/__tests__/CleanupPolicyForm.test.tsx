@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.

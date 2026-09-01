@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { TaskForm } from '../TaskForm';
 import { useTasksApi } from '../useTasksApi';
@@ -104,7 +104,7 @@ jest.mock('../../../../../shared/form', () => ({
           <button onClick={onComplete} disabled={!canAdvance || loading} {...(submitAnalyticsId ? {'data-analytics-id': submitAnalyticsId} : {})}>{completeLabel || 'Complete'}</button>
         ) : (
           <button
-            onClick={() => onStepChange && onStepChange(currentStep + 1)}
+            onClick={() => onStepChange?.(currentStep + 1)}
             disabled={!canAdvance || loading}
             data-testid="wizard-next"
           >
@@ -263,10 +263,6 @@ describe('TaskForm', () => {
         isCreate: !task,
       } as any;
     });
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
   });
 
   describe('create mode', () => {
@@ -557,6 +553,178 @@ describe('TaskForm', () => {
 
       const runBtn = screen.getByRole('button', {name: /run now/i});
       expect(runBtn).toHaveAttribute('data-analytics-id', 'nxrm-task-run');
+    });
+  });
+
+  /**
+   * NEXUS-53358 — Schedule-only task types declare zero per-task form fields.
+   * The Configure step must omit the "Task Configuration" section entirely
+   * so the user sees only the common Settings (Enabled, Name, Email,
+   * Notification) before moving to the Schedule step. AT-035 / BDD-023.
+   */
+  describe('Schedule-only task types omit Task Configuration section (NEXUS-53358)', () => {
+    const SCHEDULE_ONLY: Array<[string, string]> = [
+      ['repository.cleanup',                  'Admin - Cleanup repositories using their associated policies'],
+      ['security.purge-api-keys',             'Admin - Delete orphaned API keys'],
+      ['usertoken.cleanup',                   'Admin - Cleanup expired user tokens'],
+      ['repository.docker.ecr.token.refresh', 'Docker - ECR Token Refresh'],
+    ];
+
+    it.each(SCHEDULE_ONLY)(
+      'omits "Task Configuration" on the Configure step for %s',
+      (typeId, name) => {
+        const scheduleOnlyType: TaskType = {
+          id: typeId,
+          name,
+          exposed: true,
+          formFields: [],
+        };
+
+        const task: Task = {
+          ...mockTask,
+          id: `task-${typeId}`,
+          name: 'Test Task',
+          typeId,
+          typeName: name,
+          properties: {},
+        };
+
+        mockUseTasksForm.mockImplementation(() => ({
+          form: createMockTaskForm(
+            {
+              id: task.id,
+              enabled: true,
+              name: task.name,
+              typeId: task.typeId,
+              alertEmail: '',
+              notificationCondition: 'FAILURE',
+              properties: {},
+              schedule: 'manual',
+              startDate: null,
+              recurringDays: [],
+              cronExpression: '',
+              timeZoneOffset: '',
+            },
+            [scheduleOnlyType],
+          ),
+          task,
+          taskTypes: [scheduleOnlyType],
+          selectedTaskType: scheduleOnlyType,
+          isCreate: false,
+        } as any));
+
+        renderWithTheme(
+          <TaskForm
+            {...defaultProps}
+            taskTypes={[scheduleOnlyType]} // schedule-only override — no formFields
+            isCreate={false}
+            task={task}
+          />,
+        );
+
+        // Settings section is always present on the Configure step.
+        expect(screen.getByRole('heading', {name: 'Settings'})).toBeInTheDocument();
+
+        // Task Configuration heading must NOT appear when formFields is empty.
+        expect(
+          screen.queryByRole('heading', {name: 'Task Configuration'}),
+        ).not.toBeInTheDocument();
+
+        // DynamicFormFields must not render at all.
+        expect(screen.queryByTestId('dynamic-form-fields')).not.toBeInTheDocument();
+
+        // No required fields means Next is immediately enabled — the user can
+        // proceed to Schedule without filling anything in.
+        expect(screen.getByTestId('wizard-next')).not.toBeDisabled();
+      },
+    );
+  });
+
+  // NEXUS-53485: Data Repair Plan is singleton + manual-only (parity with Classic).
+  describe('singleton & manual-only parity (blobstore.planReconciliation)', () => {
+    const PLAN = 'blobstore.planReconciliation';
+    const planType: TaskType = {
+      id: PLAN,
+      name: 'Repair - Data Repair Plan',
+      exposed: true,
+      formFields: [],
+    };
+    const typesWithPlan = [...mockTaskTypes, planType];
+
+    const apiWithTasks = (existing: Array<{ typeId: string }>) =>
+      ({
+        loading: false, error: null, setError: jest.fn(),
+        fetchTasks: jest.fn().mockResolvedValue(existing),
+        fetchTask: jest.fn(), fetchTaskTypes: jest.fn().mockResolvedValue(typesWithPlan),
+        createTask: jest.fn(), updateTask: jest.fn(), deleteTask: jest.fn(), runTask: jest.fn(), stopTask: jest.fn(),
+      } as any);
+
+    it('hides the Data Repair Plan type in the create selector when one already exists', async () => {
+      mockUseTasksApi.mockReturnValue(apiWithTasks([{ typeId: PLAN }]));
+
+      renderWithTheme(<TaskForm {...defaultProps} taskTypes={typesWithPlan} />);
+
+      await waitFor(() =>
+        expect(screen.queryByTestId(`type-card-${PLAN}`)).not.toBeInTheDocument()
+      );
+      // Other types remain creatable.
+      expect(screen.getByTestId('type-card-repository.cleanup')).toBeInTheDocument();
+      expect(screen.getByTestId('type-card-db.backup')).toBeInTheDocument();
+    });
+
+    it('still offers the Data Repair Plan type when none exists yet', async () => {
+      mockUseTasksApi.mockReturnValue(apiWithTasks([]));
+
+      renderWithTheme(<TaskForm {...defaultProps} taskTypes={typesWithPlan} />);
+
+      expect(await screen.findByTestId(`type-card-${PLAN}`)).toBeInTheDocument();
+    });
+
+    it('does not hide a non-singleton type even when an instance of it already exists', async () => {
+      // db.backup is not a singleton — an existing instance must not remove it from the selector.
+      mockUseTasksApi.mockReturnValue(apiWithTasks([{ typeId: 'db.backup' }]));
+
+      renderWithTheme(<TaskForm {...defaultProps} taskTypes={typesWithPlan} />);
+
+      expect(await screen.findByTestId('type-card-db.backup')).toBeInTheDocument();
+      expect(screen.getByTestId(`type-card-${PLAN}`)).toBeInTheDocument();
+    });
+
+    it('omits the Schedule step for the manual-only Data Repair Plan task', async () => {
+      mockUseTasksApi.mockReturnValue(apiWithTasks([]));
+
+      renderWithTheme(<TaskForm {...defaultProps} taskTypes={typesWithPlan} />);
+
+      fireEvent.click(await screen.findByTestId(`type-card-${PLAN}`));
+
+      expect(screen.queryByTestId('wizard-step-schedule')).not.toBeInTheDocument();
+      expect(screen.getByTestId('wizard-step-config')).toBeInTheDocument();
+    });
+
+    it('keeps the Schedule step for non-manual-only task types', async () => {
+      mockUseTasksApi.mockReturnValue(apiWithTasks([]));
+
+      renderWithTheme(<TaskForm {...defaultProps} taskTypes={typesWithPlan} />);
+
+      fireEvent.click(await screen.findByTestId('type-card-repository.cleanup'));
+
+      expect(screen.getByTestId('wizard-step-schedule')).toBeInTheDocument();
+    });
+
+    it('omits the Schedule step when editing a manual-only task, even before selectedTaskType resolves', () => {
+      mockUseTasksApi.mockReturnValue(apiWithTasks([]));
+      const planTask = {
+        ...mockTask, id: 'plan-1', name: 'Repair - Data Repair Plan',
+        typeId: PLAN, typeName: 'Repair - Data Repair Plan', schedule: 'manual' as const,
+      };
+      // taskTypes intentionally omits the plan type so selectedTaskType is unresolved; the manual-only
+      // decision must come from task.typeId (no one-render Schedule-step flash on edit).
+      renderWithTheme(
+        <TaskForm {...defaultProps} isCreate={false} task={planTask} taskTypes={mockTaskTypes} />
+      );
+
+      expect(screen.queryByTestId('wizard-step-schedule')).not.toBeInTheDocument();
+      expect(screen.getByTestId('wizard-step-config')).toBeInTheDocument();
     });
   });
 

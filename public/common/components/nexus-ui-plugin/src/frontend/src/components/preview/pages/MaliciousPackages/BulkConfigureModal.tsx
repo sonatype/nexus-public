@@ -19,13 +19,14 @@ import {
   Flex,
   Progress,
   RadioGroup,
-  Spinner,
   Text,
 } from '@radix-ui/themes';
 import { CheckCircle } from 'lucide-react';
 
 import { MalwareRemediatorMode } from '../../shared/security/malwareRemediatorTask';
 import { BulkProgress } from './useMaliciousPackagesData';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 interface BulkConfigureModalProps {
   open: boolean;
@@ -43,6 +44,14 @@ export function BulkConfigureModal({
   onClose,
 }: BulkConfigureModalProps): React.ReactElement {
   const [mode, setMode] = useState<'audit' | 'delete'>('audit');
+  // Hide the bulk task-creation action for users without tasks:create (NEXUS-54212). coreui
+  // never mounts a <PermissionsProvider>, so context usePermission returns false for everyone;
+  // use the provider-independent ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canCreateTasks = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TASKS.CREATE),
+    [hasUser],
+  );
   const isRunning = bulkProgress.active;
   const isDone = !bulkProgress.active && bulkProgress.completed > 0 && bulkProgress.completed === bulkProgress.total;
 
@@ -123,9 +132,11 @@ export function BulkConfigureModal({
               <Dialog.Close>
                 <Button variant="soft" color="gray">Cancel</Button>
               </Dialog.Close>
-              <Button variant="solid" onClick={() => onConfirm(mode)}>
-                Create {repoCount} Tasks
-              </Button>
+              {canCreateTasks && (
+                <Button variant="solid" onClick={() => onConfirm(mode)}>
+                  Create {repoCount} Tasks
+                </Button>
+              )}
             </Flex>
           </Flex>
         )}

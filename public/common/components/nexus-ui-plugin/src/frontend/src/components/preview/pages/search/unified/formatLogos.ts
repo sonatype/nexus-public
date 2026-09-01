@@ -54,6 +54,7 @@ const FORMAT_LOGO_MAP: Record<string, string> = {
   maven,
   npm,
   nuget,
+  oci: docker,
   p2,
   pypi,
   r,
@@ -61,7 +62,6 @@ const FORMAT_LOGO_MAP: Record<string, string> = {
   rubygems,
   swift,
   terraform,
-  terraformbackend: terraform,
   yum,
 };
 

@@ -59,7 +59,7 @@ export function useContentSelectorForm({
   deleteContentSelector,
 }: UseContentSelectorFormOptions): UseContentSelectorFormReturn {
   const toast = useToast();
-  const isCreate = !selectorName && !selector;
+  const isCreate = !(selectorName || selector);
 
   // Create the form machine - memoized based on selectorName and selector
   const machine = useMemo(

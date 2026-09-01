@@ -371,7 +371,7 @@ public class DefaultCapabilityReference
     return p1.size() == p2.size() && p1.equals(p2);
   }
 
-  private void resetFailure() {
+  void resetFailure() {
     try {
       stateLock.writeLock().lock();
       if (failure != null) {

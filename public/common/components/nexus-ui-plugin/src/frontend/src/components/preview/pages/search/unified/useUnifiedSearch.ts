@@ -36,6 +36,7 @@ import { buildQueryParams, getPlaceholderForFormat, getApiFormat } from './searc
 import { createSearchMachine } from './searchMachine';
 import { isMockMode } from '../../../config/featureFlags';
 import { getMockSearchResults } from '../../browse/mockData';
+import { compareBySort } from './sortOptions';
 
 // Error name for cancelled Axios requests
 const ABORT_ERROR_NAME = 'CanceledError';
@@ -44,7 +45,6 @@ const ABORT_ERROR_NAME = 'CanceledError';
 const SORT_FIELD_TO_API: Record<string, string> = {
   lastUpdated: 'last_updated',
   name: 'name',
-  version: 'version',
   repository: 'repository',
 };
 
@@ -56,7 +56,7 @@ function addSortParams(
   const apiSort = SORT_FIELD_TO_API[sortField];
   if (apiSort) {
     params.set('sort', apiSort);
-    params.set('direction', sortDirection || 'asc');
+    params.set('direction', sortDirection);
   }
 }
 
@@ -160,21 +160,35 @@ export function useUnifiedSearch(): UseUnifiedSearchReturn {
         abortControllerRef.current = abortController;
 
         const searchQuery = ctx.query.trim();
-        const nameOrVersion = ctx.filters['nameOrVersion']?.trim() || '';
+        const nameOrVersion = ctx.filters.nameOrVersion?.trim() || '';
         // Effective search: combine main query + name filter (matches buildQueryParams logic)
         const effectiveSearch = [searchQuery, nameOrVersion].filter(Boolean).join(' ').trim();
 
         if (isMockMode()) {
           const apiFormat =
             ctx.format !== 'all' ? getApiFormat(ctx.format) : undefined;
-          const repositoryFilter = ctx.filters['repository'] || undefined;
+          const repositoryFilter = ctx.filters.repository || undefined;
           const { items, continuationToken } = getMockSearchResults(
             effectiveSearch,
             apiFormat,
             repositoryFilter,
           );
+          // Mock mode never reaches the REST API, so the sort the server would
+          // have applied has to be applied here instead — otherwise the sort
+          // controls appear inert in mock mode. Real searches are always sorted
+          // server-side and never take this path.
+          const sorted = items
+            .map(transformResult)
+            .sort((a, b) =>
+              compareBySort(
+                a,
+                b,
+                ctx.sortField as SortField,
+                ctx.sortDirection as SortDirection,
+              ),
+            );
           return Promise.resolve({
-            results: items.map(transformResult),
+            results: sorted,
             continuationToken,
           });
         }

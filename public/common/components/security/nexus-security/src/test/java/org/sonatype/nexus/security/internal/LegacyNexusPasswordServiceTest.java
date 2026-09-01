@@ -64,4 +64,16 @@ public class LegacyNexusPasswordServiceTest
 
     assertThat(underTest.passwordsMatch(password, md5Hash), is(false));
   }
+
+  @Test
+  public void testNullEncryptedReturnsFalse() {
+    assertThat(underTest.passwordsMatch("admin123", null), is(false));
+  }
+
+  @Test
+  public void testNullPlaintextReturnsFalse() {
+    String sha1Hash = "f865b53623b121fd34ee5426c792e5c33af8c227";
+
+    assertThat(underTest.passwordsMatch(null, sha1Hash), is(false));
+  }
 }

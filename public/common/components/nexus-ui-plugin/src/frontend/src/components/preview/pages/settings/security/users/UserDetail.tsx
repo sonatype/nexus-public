@@ -12,9 +12,11 @@
  */
 
 import React, { useState } from 'react';
-import { Box, Flex, Text, Heading, Separator } from '@radix-ui/themes';
+import { Box, Flex, Text, Separator } from '@radix-ui/themes';
 import { Loader2, Key, RefreshCw, AlertTriangle } from 'lucide-react';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
+
+import { MetadataGrid, StatusBadge, type StatusType } from '../../../../shared';
 
 import {
   SettingsFormSection,
@@ -24,12 +26,9 @@ import {
   ConfirmDialog,
 } from '../../../../shared/form';
 import { useToast } from '../../../../shared';
-import { UserForm } from './UserForm';
 import { useUsersApi } from './useUsersApi';
 import {
   User,
-  UserFormData,
-  DEFAULT_SOURCE,
   isExternalUser,
   getFullName,
 } from './types';
@@ -40,11 +39,7 @@ interface UserDetailProps {
   user: User | null;
   loading: boolean;
   canEdit: boolean;
-  canDelete: boolean;
-  onSave: (data: UserFormData) => Promise<void>;
-  onDelete: () => void;
   onCancel: () => void;
-  error?: string;
 }
 
 /**
@@ -54,11 +49,7 @@ export function UserDetail({
   user,
   loading,
   canEdit,
-  canDelete,
-  onSave,
-  onDelete,
   onCancel,
-  error,
 }: UserDetailProps) {
   const { changePassword, resetUserToken, loading: apiLoading, error: apiError, setError } = useUsersApi();
   const toast = useToast();
@@ -67,29 +58,32 @@ export function UserDetail({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [showResetToken, setShowResetToken] = useState(false);
   const [resetTokenDialogOpen, setResetTokenDialogOpen] = useState(false);
 
   const isPro = ExtJS.isProEdition();
   const isAdmin = ExtJS.checkPermission('nexus:*');
   const state = ExtJS.state();
   const isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
-  const isCurrentUser = user?.userId === state?.getUser?.()?.id;
-  const isAdminUser = user?.userId === 'admin';
   const isExternal = user ? isExternalUser(user.source) : false;
   const activeCapabilities = state?.getValue?.('capabilityActiveTypes') || [];
   const isUserTokenCapabilityActive = activeCapabilities.includes('usertoken');
   const canResetUserToken = ExtJS.checkPermission('nexus:usertoken-user:delete');
 
-  const showDeleteButton = canDelete && !isExternal && !isAnonymous && !isCurrentUser && !isAdminUser;
   const showChangePasswordButton = canEdit && !isExternal && !isAnonymous && isAdmin;
   const showResetTokenButton = isPro && !isExternal && isUserTokenCapabilityActive && canResetUserToken;
 
   // Loading state
   if (loading) {
     return (
-      <Flex align="center" justify="center" className="user-detail__loading">
-        <Loader2 size={24} className="user-detail__spinner" />
+      <Flex
+        align="center"
+        justify="center"
+        className="user-detail__loading"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <Loader2 size={24} className="user-detail__spinner" aria-hidden="true" />
         <Text size="2">Loading user details...</Text>
       </Flex>
     );
@@ -98,8 +92,12 @@ export function UserDetail({
   // No user found
   if (!user) {
     return (
-      <Box className="user-detail__not-found">
-        <AlertTriangle size={24} />
+      <Box
+        className="user-detail__not-found"
+        role="alert"
+        aria-live="assertive"
+      >
+        <AlertTriangle size={24} aria-hidden="true" />
         <Text size="2">User not found</Text>
       </Box>
     );
@@ -123,7 +121,7 @@ export function UserDetail({
       setShowChangePassword(false);
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   };
@@ -137,45 +135,31 @@ export function UserDetail({
     try {
       await resetUserToken(user.userId, user.realm || user.source);
       toast.success(`User token has been reset for ${getFullName(user)}`);
-      setShowResetToken(false);
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
   };
 
   // Read-only view for users without edit permission
   if (!canEdit) {
+    const userStatusMap: Record<string, StatusType> = {
+      active: 'success',
+      disabled: 'offline',
+    };
+    const statusType: StatusType = userStatusMap[user.status] ?? 'unknown';
+    const statusLabel = user.status.charAt(0).toUpperCase() + user.status.slice(1);
+
     return (
       <Box className="user-detail">
         <SettingsFormSection title="User Information" defaultOpen>
-          <Box className="user-detail__info">
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">ID</Text>
-              <Text size="2">{user.userId}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">First Name</Text>
-              <Text size="2">{user.firstName}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Last Name</Text>
-              <Text size="2">{user.lastName}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Email</Text>
-              <Text size="2">{user.emailAddress || user.email}</Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Status</Text>
-              <Text size="2" className={`user-detail__status user-detail__status--${user.status}`}>
-                {user.status}
-              </Text>
-            </Flex>
-            <Flex className="user-detail__row">
-              <Text size="2" weight="medium" className="user-detail__label">Source</Text>
-              <Text size="2">{isExternal ? user.source : 'Local'}</Text>
-            </Flex>
-          </Box>
+          <MetadataGrid items={[
+            { label: 'ID', value: user.userId },
+            { label: 'First Name', value: user.firstName },
+            { label: 'Last Name', value: user.lastName },
+            { label: 'Email', value: user.emailAddress || user.email },
+            { label: 'Status', value: <StatusBadge status={statusType} label={statusLabel} size="small" /> },
+            { label: 'Source', value: isExternal ? user.source : 'Local' },
+          ]} />
         </SettingsFormSection>
 
         <SettingsFormSection title="Assigned Roles">
@@ -212,17 +196,6 @@ export function UserDetail({
           {apiError}
         </SettingsAlert>
       )}
-
-      {/* User Form */}
-      <UserForm
-        user={user}
-        isCreate={false}
-        onSave={onSave}
-        onCancel={onCancel}
-        onDelete={showDeleteButton ? onDelete : undefined}
-        loading={loading || apiLoading}
-        error={error}
-      />
 
       {/* Account Actions -- grouped in one section */}
       {(showChangePasswordButton || showResetTokenButton) && (
@@ -329,5 +302,4 @@ export function UserDetail({
 }
 
 export default UserDetail;
-
 

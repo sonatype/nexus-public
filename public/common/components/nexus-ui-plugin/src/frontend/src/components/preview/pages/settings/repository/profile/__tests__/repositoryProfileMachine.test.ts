@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
@@ -473,6 +469,64 @@ describe('repositoryProfileMachine', () => {
               service.stop();
               resolve();
             }
+          }
+        });
+        service.start();
+      });
+    });
+  });
+
+  // ========================================
+  // Health Check Toggle Tests
+  // ========================================
+
+  describe('health check toggle', () => {
+    it('transitions to loading (not loaded) after a successful enable so healthCheck data refreshes', async () => {
+      mockRestClient.post.mockResolvedValue({});
+
+      const machine = createRepositoryProfileMachine({ repositoryName: 'test-maven-repo' });
+
+      await new Promise<void>((resolve) => {
+        let sent = false;
+        let wasExecuting = false;
+        const service = interpret(machine).onTransition((state) => {
+          if (state.matches('loaded') && state.context.repository && !sent) {
+            sent = true;
+            service.send({ type: 'TOGGLE_HEALTH_CHECK', enabled: true });
+          } else if (state.matches('executingToggleHealthCheck')) {
+            wasExecuting = true;
+          } else if (state.matches('loading') && wasExecuting) {
+            // Verify it went through loading (reload) rather than staying in loaded with stale data
+            service.stop();
+            resolve();
+          }
+        });
+        service.start();
+      });
+    });
+
+    it('sets actionError (not reload) on 405 so user sees the error message', async () => {
+      const axiosError = new Error('Request failed') as any;
+      axiosError.isAxiosError = true;
+      axiosError.response = { status: 405, data: {}, headers: {}, config: {}, statusText: '' };
+      mockRestClient.post.mockRejectedValue(axiosError);
+
+      const machine = createRepositoryProfileMachine({ repositoryName: 'test-maven-repo' });
+
+      await new Promise<void>((resolve) => {
+        let sent = false;
+        let wasExecuting = false;
+        const service = interpret(machine).onTransition((state) => {
+          if (state.matches('loaded') && state.context.repository && !sent) {
+            sent = true;
+            service.send({ type: 'TOGGLE_HEALTH_CHECK', enabled: true });
+          } else if (state.matches('executingToggleHealthCheck')) {
+            wasExecuting = true;
+          } else if (state.matches('loaded') && wasExecuting) {
+            expect(state.context.actionError).toBeTruthy();
+            expect(state.context.actionError).toContain('System Capabilities');
+            service.stop();
+            resolve();
           }
         });
         service.start();

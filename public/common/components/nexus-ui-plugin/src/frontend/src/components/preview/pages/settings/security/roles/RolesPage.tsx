@@ -15,6 +15,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Box, Button, Flex, Text } from '@radix-ui/themes';
 import { Shield, Plus, ArrowLeft, Trash2, Pencil } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
+import Permissions from '../../../../../../constants/Permissions';
 
 import { useToast, PageHeader } from '../../../../shared';
 import { SettingsAlert, ConfirmDialog, WizardForm, SettingsButton } from '../../../../shared/form';
@@ -98,9 +99,15 @@ export function RolesPage() {
     deleteRole,
   } = useRolesApi();
 
-  const canCreate = ExtJS.checkPermission('nexus:roles:create');
-  const canUpdate = ExtJS.checkPermission('nexus:roles:update');
-  const canDelete = ExtJS.checkPermission('nexus:roles:delete');
+  // Provider-independent, reactive permission checks (NEXUS-54212). ExtJS.checkPermission on
+  // its own evaluates once at render and would briefly disable the Create/Edit/Delete controls
+  // for a permitted non-admin if permissions load asynchronously after mount; ExtJS.usePermission
+  // with a hasUser dependency re-evaluates once the user and their permissions arrive. Matches the
+  // pattern used by ContentSelectorsPage and CapabilityDetail.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canCreate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.ROLES.CREATE), [hasUser]);
+  const canUpdate = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.ROLES.UPDATE), [hasUser]);
+  const canDelete = ExtJS.usePermission(() => ExtJS.checkPermission(Permissions.ROLES.DELETE), [hasUser]);
 
   // Handle hash changes for routing
   useEffect(() => {
@@ -178,10 +185,10 @@ export function RolesPage() {
       toast.success(`Role "${listDeleteRoleName || roleIdToDelete}" deleted successfully`);
       setRefreshKey((k) => k + 1);
       if (role && role.id === roleIdToDelete) handleBack();
-    } catch (err) {
+    } catch (_err) {
       // Error is set by the API hook
     }
-  }, [role, listDeleteRoleId, deleteRole, handleBack, toast]);
+  }, [role, listDeleteRoleId, deleteRole, handleBack, toast, listDeleteRoleName]);
 
   const handleListDelete = useCallback((roleId: string, roleName?: string) => {
     setListDeleteRoleId(roleId);
@@ -190,7 +197,7 @@ export function RolesPage() {
   }, []);
 
   // Determine if role can be edited/deleted
-  const roleCanEdit = canUpdate && role && !isReadOnlyRole(role);
+  const _roleCanEdit = canUpdate && role && !isReadOnlyRole(role);
   const roleCanDelete = canDelete && role && !isReadOnlyRole(role);
 
   // Header configuration
@@ -201,13 +208,13 @@ export function RolesPage() {
           icon: Shield,
           title: 'Roles',
           description: 'Manage roles and their privilege assignments',
-          actions: canCreate ? (
-            <Button variant="solid" color="blue" highContrast onClick={handleCreate} data-testid="create-role-button" data-analytics-id="nxrm-role-create">
+          actions: (
+            <Button variant="solid" color="blue" highContrast onClick={handleCreate} disabled={!canCreate} data-testid="create-role-button" data-analytics-id="nxrm-role-create">
               <Plus size={16} /> Create Role
             </Button>
-          ) : undefined
+          )
         };
-      case 'create':
+      case 'create': {
         const createSteps = ['Type', 'Setup', 'Privileges', 'Contained Roles'];
         return {
           icon: Shield,
@@ -219,8 +226,11 @@ export function RolesPage() {
             </Button>
           )
         };
-      case 'edit':
-        const editSteps = ['Type', 'Setup', 'Privileges', 'Contained Roles'];
+      }
+      case 'edit': {
+        // Type step is skipped in edit mode (role type is immutable once persisted),
+        // so the edit wizard runs Setup → Privileges → Contained Roles.
+        const editSteps = ['Setup', 'Privileges', 'Contained Roles'];
         return {
           icon: Shield,
           title: role ? `Edit ${role.name}` : 'Role Details',
@@ -233,7 +243,8 @@ export function RolesPage() {
             </Button>
           )
         };
-      case 'profile':
+      }
+      case 'profile': {
         const canEditThisRole = canUpdate && role && !isReadOnlyRole(role);
         return {
           icon: Shield,
@@ -257,6 +268,7 @@ export function RolesPage() {
             </Flex>
           )
         };
+      }
       default:
         return {
           icon: Shield,
@@ -264,7 +276,7 @@ export function RolesPage() {
           description: 'Manage roles'
         };
     }
-  }, [routeState.viewMode, role, canCreate, handleCreate, handleBack, internalWizardStep]);
+  }, [routeState.viewMode, role, canCreate, handleCreate, handleBack, internalWizardStep, canUpdate, routeState.roleId]);
 
   return (
     <Box 
@@ -307,6 +319,7 @@ export function RolesPage() {
               }}
               onDelete={canDelete ? handleListDelete : undefined}
               onCreate={handleCreate}
+              canUpdate={canUpdate}
               canDelete={canDelete}
             />
           </>
@@ -332,23 +345,43 @@ export function RolesPage() {
           </>
         )}
 
-        {(routeState.viewMode === 'create' || (routeState.viewMode === 'edit' && role)) && (
+        {(routeState.viewMode === 'create' || (routeState.viewMode === 'edit' && role)) && (() => {
+          // Edit mode skips the Type step (role type is immutable once persisted),
+          // so the wizard is 3 steps: Setup → Privileges → Contained Roles.
+          // RoleForm still interprets `wizardStep` in its logical sense (0=Type, 1=Setup,
+          // 2=Privileges, 3=Roles), so in edit mode we shift by +1 at the boundary.
+          const isCreateView = routeState.viewMode === 'create';
+          const steps = isCreateView
+            ? [
+                { id: 'type', label: 'Type' },
+                { id: 'setup', label: 'Setup' },
+                { id: 'privileges', label: 'Privileges' },
+                { id: 'roles', label: 'Contained Roles' },
+              ]
+            : [
+                { id: 'setup', label: 'Setup' },
+                { id: 'privileges', label: 'Privileges' },
+                { id: 'roles', label: 'Contained Roles' },
+              ];
+          const setupStepIndex = isCreateView ? 1 : 0;
+          const finalStepIndex = isCreateView ? 3 : 2;
+          const logicalWizardStep = isCreateView ? internalWizardStep : internalWizardStep + 1;
+          return (
           <WizardForm
-            steps={[
-              { id: 'type', label: 'Type' },
-              { id: 'setup', label: 'Setup' },
-              { id: 'privileges', label: 'Privileges' },
-              { id: 'roles', label: 'Contained Roles' },
-            ]}
+            steps={steps}
             currentStep={internalWizardStep}
             onStepChange={handleWizardStepChange}
             onComplete={handleFinalSubmit}
             onCancel={handleBack}
-            completeLabel={routeState.viewMode === 'create' ? 'Create Role' : 'Save'}
-            submitAnalyticsId={routeState.viewMode === 'create' ? 'nxrm-role-create' : 'nxrm-role-save'}
+            completeLabel={isCreateView ? 'Create Role' : 'Save'}
+            submitAnalyticsId={isCreateView ? 'nxrm-role-create' : 'nxrm-role-save'}
             dirty={false}
-            canAdvance={internalWizardStep === 1 || internalWizardStep === 3 ? isRoleFormValid : true}
-            loading={loading && internalWizardStep === 3}
+            canAdvance={
+              internalWizardStep === setupStepIndex || internalWizardStep === finalStepIndex
+                ? isRoleFormValid
+                : true
+            }
+            loading={loading && internalWizardStep === finalStepIndex}
             noDirtyTracking={true}
             title={headerProps.title}
             description={headerProps.description}
@@ -364,18 +397,19 @@ export function RolesPage() {
             }
           >
             <RoleForm
-              isCreate={routeState.viewMode === 'create'}
+              isCreate={isCreateView}
               role={role}
               onCancel={handleBack}
               onComplete={handleComplete}
               loading={loading}
               onSubmitRef={roleFormSubmitRef}
               onValidationChange={setIsRoleFormValid}
-              wizardStep={internalWizardStep}
+              wizardStep={logicalWizardStep}
               hideActions
             />
           </WizardForm>
-        )}
+          );
+        })()}
       </Box>
 
       {/* Delete Confirmation Dialog (edit view or list) */}

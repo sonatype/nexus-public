@@ -26,6 +26,10 @@
     display: block;
   }
 
+  &__required {
+    color: var(--color-error);
+  }
+
   &__container {
     display: flex;
     align-items: stretch;
@@ -111,6 +115,11 @@
 
   &__help {
     color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  &__error {
+    color: var(--color-error);
     margin: 0;
   }
 }

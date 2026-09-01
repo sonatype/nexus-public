@@ -44,7 +44,7 @@ export function InstanceConfigTab({
   const [deploymentIdCopied, setDeploymentIdCopied] = useState(false);
 
   const healthCheckCapability = capabilities.find(c => c.type === 'healthcheck');
-  const isHealthCheckConfigured = !!healthCheckCapability;
+  const isHealthCheckConfigured = Boolean(healthCheckCapability);
   const isHealthCheckEnabled = healthCheckCapability?.enabled ?? false;
 
   const deploymentId = iqCapabilities?.deploymentId?.trim() ?? '';

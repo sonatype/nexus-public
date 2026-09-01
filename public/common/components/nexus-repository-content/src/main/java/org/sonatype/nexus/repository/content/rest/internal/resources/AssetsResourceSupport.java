@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -26,6 +27,9 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
+
+import com.google.common.annotations.VisibleForTesting;
+import jakarta.ws.rs.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +61,7 @@ public abstract class AssetsResourceSupport
     this.contentAuthHelper = checkNotNull(contentAuthHelper);
   }
 
+  @VisibleForTesting
   List<FluentAsset> browse(final Repository repository, final String continuationToken) {
     List<FluentAsset> permittedAssets = new ArrayList<>();
     String internalToken = toInternalToken(continuationToken);
@@ -69,14 +74,15 @@ public abstract class AssetsResourceSupport
     return trim(permittedAssets, PAGE_SIZE_LIMIT);
   }
 
-  public List<FluentAsset> browseEager(
+  @VisibleForTesting
+  List<FluentAsset> browseEager(
       final Repository repository,
       final String continuationToken)
   {
     return browseEager(repository, continuationToken, PAGE_SIZE_LIMIT, null, null);
   }
 
-  public List<FluentAsset> browseEager(
+  protected List<FluentAsset> browseEager(
       final Repository repository,
       final String continuationToken,
       final int pageSize,
@@ -102,7 +108,7 @@ public abstract class AssetsResourceSupport
     return trim(permittedAssets, PAGE_SIZE_LIMIT);
   }
 
-  private Continuation<FluentAsset> getAssets(Repository repository, final String continuationToken) {
+  private Continuation<FluentAsset> getAssets(final Repository repository, final String continuationToken) {
     // helper for users, if they query by group chances are they want the list of member content
     if (GroupType.NAME.equals(repository.getType().getValue())) {
       return repository.facet(ContentFacet.class)
@@ -114,22 +120,14 @@ public abstract class AssetsResourceSupport
   }
 
   private Continuation<FluentAsset> getAssetsEager(
-      Repository repository,
-      final String continuationToken,
-      final int pageLimit)
-  {
-    return getAssetsEager(repository, continuationToken, pageLimit, null, null);
-  }
-
-  private Continuation<FluentAsset> getAssetsEager(
-      Repository repository,
+      final Repository repository,
       final String continuationToken,
       final int pageLimit,
       @Nullable final OffsetDateTime newerThan,
       @Nullable final OffsetDateTime olderThan)
   {
     // For now, we only support timestamp filtering on direct repository calls, not group member content
-    if (GroupType.NAME.equals(repository.getType().getValue()) || (olderThan == null && newerThan == null)) {
+    if (GroupType.NAME.equals(repository.getType().getValue()) || olderThan == null && newerThan == null) {
       if (GroupType.NAME.equals(repository.getType().getValue())) {
         return repository.facet(ContentFacet.class)
             .assets()
@@ -175,7 +173,12 @@ public abstract class AssetsResourceSupport
 
   static String toInternalToken(final String continuationToken) {
     if (continuationToken != null) {
-      return toInternalId(EntityHelper.id(continuationToken)) + EMPTY;
+      try {
+        return toInternalId(EntityHelper.id(continuationToken)) + EMPTY;
+      }
+      catch (NumberFormatException e) {
+        throw new BadRequestException("Invalid continuation token");
+      }
     }
     return null;
   }

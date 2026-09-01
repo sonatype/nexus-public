@@ -11,6 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+@use '../../../../shared/animations';
+
 .user-detail {
   &__loading {
     padding: var(--space-6, 24px);
@@ -33,64 +35,6 @@
 
     [data-theme='dark'] & {
       color: var(--gray-11, #9898a1);
-    }
-  }
-
-  &__info {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3, 12px);
-  }
-
-  &__row {
-    display: flex;
-    gap: var(--space-4, 16px);
-    padding: var(--space-2, 8px) 0;
-    border-bottom: 1px solid var(--gray-4, #e8e8eb);
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    [data-theme='dark'] & {
-      border-bottom-color: var(--gray-4, #27272b);
-    }
-  }
-
-  &__label {
-    min-width: 120px;
-    color: var(--gray-11, #6f6f78);
-
-    [data-theme='dark'] & {
-      color: var(--gray-11, #9898a1);
-    }
-  }
-
-  &__status {
-    text-transform: capitalize;
-    padding: var(--space-1, 4px) var(--space-2, 8px);
-    border-radius: var(--radius-1, 4px);
-    font-size: var(--font-size-1, 12px);
-    font-weight: 500;
-
-    &--active {
-      background: var(--green-3, #e5fbeb);
-      color: var(--green-11, #18794e);
-
-      [data-theme='dark'] & {
-        background: var(--green-3, #0d2a1c);
-        color: var(--green-11, #4cc38a);
-      }
-    }
-
-    &--disabled {
-      background: var(--gray-3, #f1f1f3);
-      color: var(--gray-11, #6f6f78);
-
-      [data-theme='dark'] & {
-        background: var(--gray-4, #27272b);
-        color: var(--gray-11, #9898a1);
-      }
     }
   }
 
@@ -142,14 +86,4 @@
     padding-left: var(--space-1, 4px);
   }
 }
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 

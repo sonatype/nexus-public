@@ -49,15 +49,19 @@ export default createMachine({
       loadError: () => null
     }),
 
-    handleDismiss: (context, event) => {
-      const {banner} = event;
-      if (banner === 'under_end_grace') {
-        const expires = new Date();
-        expires.setMonth(expires.getMonth() + 6);
-        document.cookie = `${banner}=dismissed; expires=${expires.toUTCString()}; path=/`;
+    handleDismiss: assign({
+      dismissedBanners: (context, event) => {
+        const {banner} = event;
+        // Side effect: set cookie for under_end_grace dismissal
+        if (banner === 'under_end_grace') {
+          const expires = new Date();
+          expires.setMonth(expires.getMonth() + 6);
+          const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+          document.cookie = `${banner}=dismissed; expires=${expires.toUTCString()}; path=/; SameSite=Lax${secureFlag}`;
+        }
+        // Return new array immutably (XState best practice)
+        return [...(context.dismissedBanners || []), banner];
       }
-      context.dismissedBanners = context.dismissedBanners || [];
-      context.dismissedBanners.push(banner);
-    }
+    })
   }
 });

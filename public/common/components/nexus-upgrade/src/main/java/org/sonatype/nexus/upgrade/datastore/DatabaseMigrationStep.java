@@ -64,6 +64,22 @@ public interface DatabaseMigrationStep
     return "H2".equals(conn.getMetaData().getDatabaseProductName());
   }
 
+  /**
+   * Binds a JSON value to a prepared-statement parameter using the dialect-correct type: H2 stores JSON(B)
+   * as a {@code byte[]}, PostgreSQL as a UTF-8 {@code String}. Delegates to the shared
+   * {@link JsonParameterBinder} (the single source of truth also used by
+   * {@code UpgradeConfigStoreSupport#setJsonParameter}) so the two dialect bindings cannot drift — a
+   * wrong-dialect binding silently corrupts the stored JSON.
+   */
+  default void setJsonParameter(
+      final PreparedStatement statement,
+      final int index,
+      final byte[] json,
+      final boolean isH2) throws SQLException
+  {
+    JsonParameterBinder.setJsonParameter(statement, index, json, isH2);
+  }
+
   default boolean isPostgresql(final Connection conn) throws SQLException {
     return "PostgreSQL".equals(conn.getMetaData().getDatabaseProductName());
   }

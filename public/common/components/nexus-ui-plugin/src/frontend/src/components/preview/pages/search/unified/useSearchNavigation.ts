@@ -13,18 +13,84 @@
 
 import { useCallback } from 'react';
 import { useRouter } from '@uirouter/react';
-import type { SearchResult, SearchFormat, FilterValues } from './unified.types';
-
-/** Storage key for preserving search state when navigating to component detail */
-export const COMPONENT_DETAIL_RETURN_SEARCH_KEY = 'nexus-component-detail-return-search';
+import type { SearchResult } from './unified.types';
 
 /**
- * Search state to preserve when navigating to detail and restore when returning.
+ * Storage key holding the search URL to return to from a component detail page.
+ *
+ * The value is the search page's own `window.location.hash` — one plain string,
+ * not machine state, and not JSON.
+ *
+ * This replaces `COMPONENT_DETAIL_RETURN_SEARCH_KEY`, which stored
+ * query/format/filters. That channel existed only because `nameOrVersion` could
+ * not be serialized into the URL; NEXUS-54333 made the URL carry it (pinned by a
+ * round-trip test in `useSearchUrlState.test.ts`), after which the duplicate
+ * channel was pure risk: the search page read it ahead of the URL on *every*
+ * mount, and browsers copy sessionStorage into a tab opened from a link, so a
+ * stale payload beat a fresh deep link or header search (NEXUS-54503 Defect 1).
  */
-export interface SearchStateToPreserve {
-  query: string;
-  format: SearchFormat;
-  filters: FilterValues;
+export const SEARCH_RETURN_URL_KEY = 'nexus-search-return-url';
+
+/** Hash of the unified-search page, without its query string. */
+const SEARCH_HASH_PREFIX = '#preview/browse/search';
+
+/**
+ * True only for the unified-search page's own hash.
+ *
+ * A plain `startsWith` is not enough: `#preview/browse/search` also prefixes
+ * every component-detail hash (`#preview/browse/search/maven/{keyword}/ga/{gaId}`),
+ * so `navigateToDetail` would store a detail URL on a detail -> detail hop and
+ * `consumeSearchReturnUrl` would accept it — the breadcrumb would then assign
+ * the hash it is already on and silently do nothing. The prefix therefore only
+ * counts when the whole hash *is* the search path, optionally followed by its
+ * query string.
+ */
+function isUnifiedSearchHash(hash: string): boolean {
+  return hash === SEARCH_HASH_PREFIX || hash.startsWith(`${SEARCH_HASH_PREFIX}?`);
+}
+
+/**
+ * Read and clear the stored search return URL.
+ *
+ * Returns undefined unless the stored value is a unified-search hash, so a value
+ * tampered with in sessionStorage cannot send the breadcrumb somewhere else. The
+ * key is cleared either way — it is single-use whether or not it was valid.
+ *
+ * Storage access is guarded: `sessionStorage` throws on access in Safari private
+ * mode and storage-blocked embeds, and an exception here would abort the
+ * breadcrumb click before it navigates. An unreadable store degrades to "no
+ * stored URL", which the caller already handles by falling back to bare search.
+ */
+export function consumeSearchReturnUrl(): string | undefined {
+  let stored: string | null = null;
+  try {
+    stored = sessionStorage.getItem(SEARCH_RETURN_URL_KEY);
+    sessionStorage.removeItem(SEARCH_RETURN_URL_KEY);
+  } catch {
+    // Cleared rather than returned: if the remove failed, the value is no longer
+    // single-use, and re-serving it later is worse than losing it now.
+    stored = null;
+  }
+  if (!stored || !isUnifiedSearchHash(stored)) {
+    return undefined;
+  }
+  return stored;
+}
+
+/**
+ * Build the component-detail `gaId` for a search result: `format:group:name`,
+ * or `format:name` when the result has no group.
+ *
+ * Shared by {@link buildComponentDetailUrl} and `navigateToDetail` so the URL
+ * string and the router param can never drift apart.
+ */
+function buildGaId(result: Pick<SearchResult, 'format' | 'group' | 'name'>): string {
+  const parts = [result.format];
+  if (result.group) {
+    parts.push(result.group);
+  }
+  parts.push(result.name);
+  return parts.join(':');
 }
 
 /**
@@ -42,24 +108,21 @@ export interface DetailRoute {
  */
 export interface UseSearchNavigationReturn {
   /** Navigate to the detail page for a search result */
-  navigateToDetail: (result: SearchResult, searchState?: SearchStateToPreserve) => void;
+  navigateToDetail: (result: SearchResult) => void;
   /** Get the route configuration without navigating */
   getDetailRoute: (result: SearchResult) => DetailRoute;
 }
 
 /**
- * Build the GA Detail URL for a search result.
+ * Build a URL string for a search result's component detail, returned by
+ * {@link useSearchNavigation}'s `getDetailRoute`. This only builds a string; it
+ * does not navigate — the primary navigation path is `navigateToDetail`, which
+ * uses `router.stateService.go('preview.browse.search.component', { gaId, version })`.
  *
- * Navigates to the component detail page (GADetailPage) which shows
- * Overview, Versions, Repositories, Files, and Security tabs.
+ * The gaId format is `format:group:name` (or `format:name` when there is no group).
  *
- * The gaId format is: format:group:name (or format:name if no group).
- *
- * UIRouter route structure:
- *   preview.browse.search.maven       → /maven/:keyword
- *   preview.browse.search.maven.detail → /ga/:gaId
- *
- * So the full URL is: preview/browse/search/maven/{keyword}/ga/{gaId}
+ * The returned string has the form:
+ *   preview/browse/search/maven/{encodeURIComponent(name)}/ga/{encodeURIComponent(gaId)}[?version=...]
  *
  * Examples:
  * - preview/browse/search/maven/lodash/ga/npm%3Alodash
@@ -67,13 +130,7 @@ export interface UseSearchNavigationReturn {
  * - preview/browse/search/maven/curl/ga/apt%3Aamd64%3Acurl
  */
 function buildComponentDetailUrl(result: SearchResult): string {
-  // Build gaId from format, group, and name
-  const parts = [result.format];
-  if (result.group) {
-    parts.push(result.group);
-  }
-  parts.push(result.name);
-  const gaId = parts.join(':');
+  const gaId = buildGaId(result);
 
   // The keyword segment is the component name (used by the parent maven search route)
   const keyword = encodeURIComponent(result.name);
@@ -108,22 +165,30 @@ export function useSearchNavigation(): UseSearchNavigationReturn {
   /**
    * Navigate to the detail page for a search result.
    * Uses UIRouter stateService.go() for proper state resolution.
-   * Optionally stores search state in sessionStorage for restoration when returning.
+   *
+   * Captures the current search URL under {@link SEARCH_RETURN_URL_KEY} so the
+   * detail page's breadcrumb can return to it. The caller must have flushed any
+   * pending debounced URL write first, or the captured URL is one edit stale —
+   * `UnifiedSearchPage.handleSelect` does exactly that.
    */
   const navigateToDetail = useCallback(
-    (result: SearchResult, searchState?: SearchStateToPreserve): void => {
-      if (searchState) {
-        sessionStorage.setItem(
-          COMPONENT_DETAIL_RETURN_SEARCH_KEY,
-          JSON.stringify(searchState),
-        );
+    (result: SearchResult): void => {
+      const hash = window.location.hash;
+      if (isUnifiedSearchHash(hash)) {
+        try {
+          sessionStorage.setItem(SEARCH_RETURN_URL_KEY, hash);
+        } catch {
+          // Storage unavailable or full. The breadcrumb falls back to bare
+          // search; losing the return URL must not block the click-through.
+        }
       }
 
-      // Build gaId from format, group, name
-      const parts = [result.format];
-      if (result.group) parts.push(result.group);
-      parts.push(result.name);
-      const gaId = encodeURIComponent(parts.join(':'));
+      // Pass gaId plain — the route declares it as `type: 'path'`, so UI-Router encodes it on
+      // write and decodes it on read. Pre-encoding here made the stored param ('npm%3Aa%3Ab')
+      // differ from the value parsed back out of the URL ('npm:a:b'); since gaId is not
+      // `dynamic`, the router settled that mismatch with a state re-entry, remounting the detail
+      // page and firing every request on it twice (NEXUS-54201).
+      const gaId = buildGaId(result);
 
       const params: Record<string, string | null> = {
         keyword: result.name,

@@ -22,7 +22,7 @@ import { PyPISearchResults } from '../PyPISearchResults';
 import { PyPIResultRow } from '../PyPIResultRow';
 import { PyPIDetailPage } from '../PyPIDetailPage';
 import { mockPyPIResults, mockPyPISearchApi } from '../mockData';
-import type { PyPIResult, PyPISearchFilters as FilterValues } from '../pypi.types';
+import type { PyPIResult, } from '../pypi.types';
 
 // Mock the usePyPISearch hook
 jest.mock('../usePyPISearch', () => ({

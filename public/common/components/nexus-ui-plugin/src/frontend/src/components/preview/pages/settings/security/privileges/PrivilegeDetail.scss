@@ -76,7 +76,7 @@
     background: var(--gray-3, #f1f1f3);
     border-radius: var(--radius-1, 4px);
     font-size: 13px;
-    font-family: monospace;
+    font-family: var(--font-family-mono);
 
     [data-theme='dark'] & {
       background: var(--gray-4, #27272b);

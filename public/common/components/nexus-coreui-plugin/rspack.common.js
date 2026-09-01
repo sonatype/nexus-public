@@ -53,16 +53,37 @@ module.exports = {
       },
       {
         test: /\.s?css$/,
-        use: [
+        oneOf: [
           {
-            loader: rspack.CssExtractRspackPlugin.loader
+            // @fontsource packages ship plain CSS whose @font-face rules reference their
+            // font files with relative url(./files/*.woff2) paths. Those url()s must be
+            // resolved so the referenced files are handed to the asset/resource rule below
+            // and actually emitted. Scoped to node_modules/@fontsource only, so all
+            // application and react-shared-components CSS keeps the url: false behaviour
+            // it relies on. No sass-loader: these are plain .css files.
+            include: /node_modules[\/\\]@fontsource[\/\\]/,
+            use: [
+              {
+                loader: rspack.CssExtractRspackPlugin.loader
+              },
+              {
+                loader: 'css-loader'
+              }
+            ]
           },
           {
-            loader: 'css-loader',
-            options: { url: false } // disable build-tile resolution of url() paths
-          },
-          {
-            loader: 'sass-loader'
+            use: [
+              {
+                loader: rspack.CssExtractRspackPlugin.loader
+              },
+              {
+                loader: 'css-loader',
+                options: { url: false } // disable build-tile resolution of url() paths
+              },
+              {
+                loader: 'sass-loader'
+              }
+            ]
           }
         ]
       },

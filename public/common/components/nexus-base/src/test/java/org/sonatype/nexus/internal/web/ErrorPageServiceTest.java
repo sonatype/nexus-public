@@ -17,6 +17,7 @@ import java.io.IOException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.sonatype.nexus.bootstrap.jetty.NexusReasonPhraseCustomizer;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.internal.web.ErrorPageService.ErrorInfo;
@@ -64,10 +65,10 @@ class ErrorPageServiceTest
   @InjectMocks
   ErrorPageService underTest;
 
-  // NEXUS-46395: HttpServletResponse.setStatus(int, String) was removed in Servlet 6,
+  // NEXUS-46395 / STL-476: HttpServletResponse.setStatus(int, String) was removed in Servlet 6,
   // and the production ErrorPageService now calls setStatus(int) only. The custom HTTP
-  // reason phrase is preserved via Jetty's core Response#setReason(); the propagation
-  // tests below exercise that path through the EE10 ServletContextResponse helper.
+  // reason phrase is set as a sentinel response header (read by NexusReasonPhraseCustomizer);
+  // the propagation tests below exercise that path through the EE10 ServletContextResponse helper.
   @Test
   void testWriteErrorResponse() throws IOException {
     underTest.writeErrorResponse(new ErrorInfo(500, "Something Bad"), request, response);
@@ -96,15 +97,17 @@ class ErrorPageServiceTest
   }
 
   /**
-   * NEXUS-46395: the reason phrase the caller passes (e.g. "Quarantined" for the Firewall block
-   * path) must reach the patched core Jetty {@code Response#setReason} so it appears on the HTTP/1.1
-   * status line. The EE10 unwrap helper {@code ServletContextResponse.getServletContextResponse}
-   * is responsible for walking through Shiro / wrapper chains to the underlying Jetty response;
-   * we stub it here to assert that the reason value flows through correctly.
+   * NEXUS-46395 / STL-476: the reason phrase the caller passes (e.g. "Quarantined" for the Firewall
+   * block path) must be set as the sentinel response header read by NexusReasonPhraseCustomizer, so
+   * it appears on the HTTP/1.1 status line. The EE10 unwrap helper
+   * {@code ServletContextResponse.getServletContextResponse} walks through Shiro / wrapper chains to the
+   * underlying Jetty response; we stub it here to assert the reason value flows through correctly.
    */
   @Test
   void testWriteErrorResponse_errorMessagePropagation() throws IOException {
     Response coreResponse = mock(Response.class);
+    org.eclipse.jetty.http.HttpFields.Mutable coreHeaders = mock(org.eclipse.jetty.http.HttpFields.Mutable.class);
+    when(coreResponse.getHeaders()).thenReturn(coreHeaders);
     ServletContextResponse contextResponse = mock(ServletContextResponse.class);
     when(contextResponse.getResponse()).thenReturn(coreResponse);
 
@@ -116,7 +119,7 @@ class ErrorPageServiceTest
     }
 
     verify(response).setStatus(403);
-    verify(coreResponse).setReason("Quarantined");
+    verify(coreHeaders).put(NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER, "Quarantined");
   }
 
   /**

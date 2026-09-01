@@ -25,6 +25,11 @@ public class APIConstants
   public static final String V1_API_PREFIX = "/v1";
 
   /**
+   * Used for REST endpoints which use version 2 of the API.
+   */
+  public static final String V2_API_PREFIX = "/v2";
+
+  /**
    * Used for REST endpoints which are labeled as beta. These endpoints may be changed though we ought to warn users via
    * release notes when this occurs.
    */

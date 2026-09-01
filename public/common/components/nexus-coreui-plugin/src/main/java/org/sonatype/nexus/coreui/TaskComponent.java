@@ -195,7 +195,12 @@ public class TaskComponent
     Map<String, String> taskProperties = taskXO.getProperties();
     taskUtils.validateTaskCreationForUI(taskName, taskType, taskProperties, schedule);
 
-    taskXO.getProperties().forEach(taskConfiguration::setString);
+    // Filter out dot-prefixed internal keys to prevent task hijacking (NEXUS-52686)
+    taskXO.getProperties()
+        .entrySet()
+        .stream()
+        .filter(e -> e.getKey() != null && !e.getKey().startsWith("."))
+        .forEach(e -> taskConfiguration.setString(e.getKey(), e.getValue()));
     taskConfiguration.setTypeId(taskXO.getTypeId());
     taskConfiguration.setAlertEmail(taskXO.getAlertEmail());
     taskConfiguration.setNotificationCondition(taskXO.getNotificationCondition());
@@ -235,7 +240,12 @@ public class TaskComponent
     taskConfiguration.setName(taskXO.getName());
     taskConfiguration.setAlertEmail(taskXO.getAlertEmail());
     taskConfiguration.setNotificationCondition(taskXO.getNotificationCondition());
-    taskXO.getProperties().forEach(taskConfiguration::setString);
+    // Filter out dot-prefixed internal keys to prevent task hijacking (NEXUS-52686)
+    taskXO.getProperties()
+        .entrySet()
+        .stream()
+        .filter(e -> e.getKey() != null && !e.getKey().startsWith("."))
+        .forEach(e -> taskConfiguration.setString(e.getKey(), e.getValue()));
     taskConfiguration.setTypeId(task.getTypeId());
 
     task = scheduleTask(() -> taskScheduler.scheduleTask(taskConfiguration, schedule));

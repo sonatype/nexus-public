@@ -222,9 +222,9 @@ describe('RoutingRulesForm', function() {
       expect(screen.getByText('Delete routing rule?')).toBeInTheDocument();
     });
 
-    // Type DELETE to confirm
-    const input = screen.getByPlaceholderText('Type "DELETE" to confirm');
-    fireEvent.change(input, { target: { value: 'DELETE' } });
+    // Acknowledgement word changed to sentence-case "Delete" — NEXUS-53356.
+    const input = screen.getByPlaceholderText('Type "Delete" to confirm');
+    fireEvent.change(input, { target: { value: 'Delete' } });
 
     // Click modal's delete button
     await waitFor(() => {

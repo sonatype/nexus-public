@@ -36,7 +36,9 @@ public class ApiKeyData
 
   private OffsetDateTime created;
 
-  ApiKeyData() {
+  // Public no-arg constructor so tests in other modules can build instances via the public setters without
+  // a same-package subclass (avoids a split-package across modules).
+  public ApiKeyData() {
   }
 
   ApiKeyData(

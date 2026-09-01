@@ -15,6 +15,7 @@ package org.sonatype.nexus.api.rest.selfhosted.user;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -52,9 +54,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -194,6 +198,79 @@ class UserApiResourceTest
     WebApplicationMessageException ex = assertThrows(WebApplicationMessageException.class,
         () -> underTest.updateUser("fred", apiUser), "The path's userId does not match the body");
     assertThat(ex.getResponse().getStatusInfo(), is(Status.BAD_REQUEST));
+  }
+
+  /**
+   * Verifies that LDAP users can be updated without lastName.
+   * Previously this would fail validation, but NEXUS-53662 fixed this
+   * to align with Swagger spec which only marks status as required.
+   */
+  @Test
+  void testUpdateUser_externalSource_withoutLastName() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, "John", null, "john@example.org",
+        "LDAP", ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), Collections.emptySet());
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    verify(securitySystem).setUsersRoles(USER_ID, "LDAP",
+        apiUser.getRoles()
+            .stream()
+            .map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
+            .collect(Collectors.toSet()));
+  }
+
+  /**
+   * Verifies that local users can be updated without lastName.
+   * The field is now optional to match Swagger specification.
+   */
+  @Test
+  void testUpdateUser_localSource_withoutLastName() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, "John", null, "john@example.org",
+        UserManager.DEFAULT_SOURCE, ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), null);
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(securitySystem).updateUser(captor.capture());
+    assertNull(captor.getValue().getLastName());
+    assertEquals("John", captor.getValue().getFirstName());
+    assertEquals("john@example.org", captor.getValue().getEmailAddress());
+  }
+
+  /**
+   * Verifies that local users can be updated without firstName.
+   * The field is now optional to match Swagger specification.
+   */
+  @Test
+  void testUpdateUser_localSource_withoutFirstName() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, null, "Smith", "john@example.org",
+        UserManager.DEFAULT_SOURCE, ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), null);
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(securitySystem).updateUser(captor.capture());
+    assertNull(captor.getValue().getFirstName());
+    assertEquals("Smith", captor.getValue().getLastName());
+    assertEquals("john@example.org", captor.getValue().getEmailAddress());
+  }
+
+  /**
+   * Verifies that local users can be updated without emailAddress.
+   * The field is now optional to match Swagger specification.
+   */
+  @Test
+  void testUpdateUser_localSource_withoutEmailAddress() throws Exception {
+    ApiUser apiUser = new ApiUser(USER_ID, "John", "Smith", null,
+        UserManager.DEFAULT_SOURCE, ApiUserStatus.disabled, false, Collections.singleton("nx-admin"), null);
+
+    underTest.updateUser(USER_ID, apiUser);
+
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(securitySystem).updateUser(captor.capture());
+    assertNull(captor.getValue().getEmailAddress());
+    assertEquals("John", captor.getValue().getFirstName());
+    assertEquals("Smith", captor.getValue().getLastName());
   }
 
   @Test

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.components</groupId>
     <artifactId>nexus-common-components-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-spring</artifactId>
@@ -44,16 +44,8 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-xml</artifactId>
     </dependency>
-    <!-- NEXUS-46395: the upstream org.eclipse.jetty.ee10:jetty-ee10-servlet is intentionally
-         NOT declared as a direct dep. The Nexus-modified
-         org.sonatype.nexus.common.components:jetty-ee10-servlet (declared below) carries the
-         HTTP/1.1 reason-phrase patch the Firewall depends on; we want it - and only it - on
-         the runtime classpath. Other transitives (jetty-ee10-webapp etc.) exclude the
-         upstream via the pattern in nexus-bootstrap-spring/pom.xml. The previous self-
-         referential exclusion block (excluding jetty-ee10-servlet from itself) was a Maven
-         no-op and let both jars ship together with classpath-order-dependent class loading. -->
     <dependency>
-      <groupId>org.sonatype.nexus.common.components</groupId>
+      <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
     </dependency>
     <dependency>
@@ -75,13 +67,31 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus.common.components</groupId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
       <artifactId>jetty-ee10-servlet</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.common.components</groupId>
       <artifactId>nexus-testsupport</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- STL-476: HTTP/2 (h2c) client + server for NexusReasonPhraseCustomizerHttp2Test, which verifies the
+         reason-phrase sentinel is stripped on HTTP/2 responses. Versions managed by jetty-bom. -->
+    <dependency>
+      <groupId>org.eclipse.jetty.http2</groupId>
+      <artifactId>jetty-http2-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.http2</groupId>
+      <artifactId>jetty-http2-client-transport</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

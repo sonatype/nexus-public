@@ -85,7 +85,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Value;
@@ -123,7 +122,6 @@ import java.util.regex.PatternSyntaxException;
  * @since 3.29
  */
 @Component
-@Tag(name = "Cleanup policies")
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Path(RESOURCE_URI)
@@ -228,18 +226,6 @@ public class CleanupPolicyResource
   @GET
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:read")
-  @Operation(summary = "List cleanup policies",
-      description = "Returns all configured cleanup policies sorted by name. "
-          + "Pass the optional `format` query parameter to return only policies for that format "
-          + "(e.g. `maven2`, `npm`, `docker`); omit it or pass `*` to return policies across all formats. "
-          + "Each entry includes the policy definition and the number of repositories currently using it.")
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "Cleanup policies matching the request",
-          content = @Content(
-              array = @ArraySchema(schema = @Schema(implementation = CleanupPolicyXO.class)))),
-      @ApiResponse(responseCode = "401", description = "Authentication required"),
-      @ApiResponse(responseCode = "403", description = "Insufficient permissions")
-  })
   public List<CleanupPolicyXO> get(@QueryParam("format") final String format) {
     List<CleanupPolicy> policies = isBlank(format) || format.equals(ALL_FORMATS)
         ? cleanupPolicyStorage.getAll()
@@ -260,21 +246,6 @@ public class CleanupPolicyResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @Validate(groups = {Create.class, Default.class})
-  @Operation(summary = "Create a cleanup policy",
-      description = "Creates a new cleanup policy with the supplied name, format, and criteria. "
-          + "The policy name must be unique. At least one criterion "
-          + "(`criteriaLastBlobUpdated`, `criteriaLastDownloaded`, or `criteriaAssetRegex`) is required. "
-          + "Only criteria supported by the selected format are accepted; unsupported criteria are rejected. "
-          + "The created policy is returned with an `inUseCount` of 0.")
-  @ApiResponses({
-      @ApiResponse(responseCode = "200", description = "Policy created",
-          content = @Content(schema = @Schema(implementation = CleanupPolicyXO.class))),
-      @ApiResponse(responseCode = "400",
-          description = "Invalid payload (unknown format, missing/invalid criteria, or unsupported criterion for the format)"),
-      @ApiResponse(responseCode = "401", description = "Authentication required"),
-      @ApiResponse(responseCode = "403", description = "Insufficient permissions"),
-      @ApiResponse(responseCode = "409", description = "A policy with the given name already exists")
-  })
   public CleanupPolicyXO add(@Valid final CleanupPolicyXO cleanupPolicyXO) {
     if (!this.formatNames.contains(cleanupPolicyXO.getFormat())) {
       throw new ValidationErrorsException("format",

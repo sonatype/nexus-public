@@ -14,7 +14,7 @@
 
 
 import React from 'react';
-import { Box, Flex, Text, Heading, Callout, Link } from '@radix-ui/themes';
+import { Box, Text, Callout, Link } from '@radix-ui/themes';
 import { ExternalLink, FileArchive, Info } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 

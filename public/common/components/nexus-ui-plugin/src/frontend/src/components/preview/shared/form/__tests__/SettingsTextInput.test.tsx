@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { SettingsTextInput } from '../SettingsTextInput';
 
@@ -84,6 +83,18 @@ describe('SettingsTextInput', () => {
         <SettingsTextInput {...defaultProps} className="custom-class" />
       );
       expect(container.querySelector('.custom-class')).toBeInTheDocument();
+    });
+
+    it('applies monospace styling when monospace is true', () => {
+      const { container } = render(
+        <SettingsTextInput {...defaultProps} monospace />
+      );
+      expect(container.querySelector('.settings-text-input__input--mono')).toBeInTheDocument();
+    });
+
+    it('does not apply monospace styling by default', () => {
+      const { container } = render(<SettingsTextInput {...defaultProps} />);
+      expect(container.querySelector('.settings-text-input__input--mono')).not.toBeInTheDocument();
     });
   });
 
@@ -196,6 +207,24 @@ describe('SettingsTextInput', () => {
       render(<SettingsTextInput {...defaultProps} type="number" step={5} />);
       expect(screen.getByRole('spinbutton')).toHaveAttribute('step', '5');
     });
+
+    it('blurs number input on wheel scroll to prevent accidental value changes', () => {
+      render(<SettingsTextInput {...defaultProps} type="number" value="60" />);
+      const input = screen.getByRole('spinbutton');
+      input.focus();
+      expect(document.activeElement).toBe(input);
+      fireEvent.wheel(input, { deltaY: -100 });
+      expect(document.activeElement).not.toBe(input);
+    });
+
+    it('does not blur text input on wheel scroll', () => {
+      render(<SettingsTextInput {...defaultProps} type="text" value="hello" />);
+      const input = screen.getByRole('textbox');
+      input.focus();
+      expect(document.activeElement).toBe(input);
+      fireEvent.wheel(input, { deltaY: -100 });
+      expect(document.activeElement).toBe(input);
+    });
   });
 
   describe('accessibility', () => {
@@ -225,6 +254,16 @@ describe('SettingsTextInput', () => {
     it('sets required attribute when required', () => {
       render(<SettingsTextInput {...defaultProps} required />);
       expect(screen.getByRole('textbox')).toHaveAttribute('required');
+    });
+
+    it('sets aria-required="true" when required', () => {
+      render(<SettingsTextInput {...defaultProps} required />);
+      expect(screen.getByTestId('input-test-input')).toHaveAttribute('aria-required', 'true');
+    });
+
+    it('sets aria-required="false" when not required', () => {
+      render(<SettingsTextInput {...defaultProps} />);
+      expect(screen.getByTestId('input-test-input')).toHaveAttribute('aria-required', 'false');
     });
   });
 

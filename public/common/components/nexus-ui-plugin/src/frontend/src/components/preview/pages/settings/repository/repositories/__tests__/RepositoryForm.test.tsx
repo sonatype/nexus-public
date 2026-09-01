@@ -23,6 +23,35 @@ import { ToastProvider } from '../../../../../shared/Toast';
 // Mock the hook (Layer 2) - component only consumes hook output
 jest.mock('../useRepositoryForm');
 
+// Mock the useAuditLogApi hook
+jest.mock('../../../../../../../utils/audit/useAuditLogApi', () => ({
+  useAuditLogApi: jest.fn(),
+}));
+
+const mockUseAuditLogApi = require('../../../../../../../utils/audit/useAuditLogApi').useAuditLogApi;
+
+// Mock ExtJS for auditEnabled state check
+jest.mock('../../../../../../../interface/ExtJS', () => {
+  const mockExtJS = {
+    checkPermission: jest.fn().mockReturnValue(true),
+    // RepositoryForm reads permissions through the provider-independent ExtJS.usePermission
+    // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn().mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return false;
+        return undefined;
+      }),
+    }),
+  };
+  return {
+    __esModule: true,
+    default: mockExtJS,
+    ExtJS: mockExtJS,
+  };
+});
+
 const mockUseRepositoryForm = useRepositoryForm as jest.MockedFunction<typeof useRepositoryForm>;
 
 const MOCK_BLOB_STORES = [{ name: 'default' }, { name: 'secondary' }];
@@ -409,6 +438,147 @@ describe('RepositoryForm', () => {
     expect(mockOnCancel).toHaveBeenCalled();
   });
 
+  // NEXUS-53946: post-Repository-Profile migration the Settings header
+  // gains a Browse Repository button that navigates to the in-app browse
+  // tree. Only rendered in edit mode and only when the parent supplies the
+  // callback.
+  describe('Browse Repository action (NEXUS-53946)', () => {
+    const buildEditHookReturn = () => {
+      const editFormData = {
+        name: 'maven-central', type: 'proxy', format: 'maven2',
+        recipe: 'maven2-proxy', online: true,
+        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        httpClient: { blocked: false, autoBlock: true },
+        negativeCache: { enabled: true, timeToLive: 1440 },
+      };
+      return createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: editFormData as any,
+        form: createMockForm(editFormData),
+      });
+    };
+
+    it('renders Browse Repository button in edit mode when onBrowseRepository is provided', async () => {
+      mockUseRepositoryForm.mockReturnValue(buildEditHookReturn());
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onBrowseRepository={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /browse repository/i })).toBeInTheDocument();
+      });
+    });
+
+    it('does not render Browse Repository button when callback is not supplied', async () => {
+      mockUseRepositoryForm.mockReturnValue(buildEditHookReturn());
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('button', { name: /browse repository/i })).not.toBeInTheDocument();
+    });
+
+    it('does not render Browse Repository button in create mode', async () => {
+      renderWithTheme(
+        <RepositoryForm
+          recipe={MOCK_HOSTED_RECIPE}
+          isCreate={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onBrowseRepository={jest.fn()}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('button', { name: /browse repository/i })).not.toBeInTheDocument();
+    });
+
+    it('calls onBrowseRepository when the button is clicked', async () => {
+      const mockOnBrowse = jest.fn();
+      mockUseRepositoryForm.mockReturnValue(buildEditHookReturn());
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onBrowseRepository={mockOnBrowse}
+        />
+      );
+
+      await userEvent.click(await screen.findByRole('button', { name: /browse repository/i }));
+
+      expect(mockOnBrowse).toHaveBeenCalledTimes(1);
+    });
+
+    it('disables Browse Repository button while another action is in flight', async () => {
+      mockUseRepositoryForm.mockReturnValue(buildEditHookReturn());
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onBrowseRepository={jest.fn()}
+          isActionInFlight={true}
+        />
+      );
+
+      const button = await screen.findByRole('button', { name: /browse repository/i });
+      expect(button).toBeDisabled();
+    });
+
+    it('disables Browse Repository button while the form is dirty to avoid discarding unsaved edits', async () => {
+      const hookReturn = buildEditHookReturn();
+      hookReturn.form.isPristine = false;
+      mockUseRepositoryForm.mockReturnValue(hookReturn);
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onBrowseRepository={jest.fn()}
+        />
+      );
+
+      const button = await screen.findByRole('button', { name: /browse repository/i });
+      expect(button).toBeDisabled();
+      expect(button.getAttribute('title')).toMatch(/unsaved changes/i);
+    });
+  });
+
   it('shows delete button and calls onDelete', async () => {
     const editFormData = {
       name: 'maven-central', type: 'proxy', format: 'maven2',
@@ -725,6 +895,538 @@ describe('RepositoryForm', () => {
 
       // Component shows loading state, submit logic is handled by hook
       expect(screen.getByText(/loading form data/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Audit tab (NEXUS-53949)', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+
+    beforeEach(() => {
+      // Reset the mock to return false by default
+      ExtJS.state().getValue.mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return false;
+        return undefined;
+      });
+      ExtJS.checkPermission.mockImplementation((perm: string) => {
+        if (perm === 'nexus:audit:read') return false;
+        return true;
+      });
+    });
+
+    it('shouldNotShowAuditTabWhenAuditIsDisabled', async () => {
+      ExtJS.state().getValue.mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return false;
+        return undefined;
+      });
+
+      const editFormData = {
+        name: 'maven-central', type: 'proxy', format: 'maven2',
+        recipe: 'maven2-proxy', online: true,
+        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        httpClient: { blocked: false, autoBlock: true },
+        negativeCache: { enabled: true, timeToLive: 1440 },
+      };
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: editFormData as any,
+        form: createMockForm(editFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+
+      // Audit tab should not be present when previewAuditEnabled is false
+      expect(screen.queryByRole('tab', { name: /audit/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldNotShowAuditTabWhenUserLacksAuditReadPermission', async () => {
+      // Audit enabled but user lacks permission
+      ExtJS.state().getValue.mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return true;
+        return undefined;
+      });
+      ExtJS.checkPermission.mockImplementation((perm: string) => {
+        if (perm === 'nexus:audit:read') return false;
+        return true;
+      });
+
+      const editFormData = {
+        name: 'maven-central', type: 'proxy', format: 'maven2',
+        recipe: 'maven2-proxy', online: true,
+        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        httpClient: { blocked: false, autoBlock: true },
+        negativeCache: { enabled: true, timeToLive: 1440 },
+      };
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: editFormData as any,
+        form: createMockForm(editFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+
+      // Audit tab should not be present when user lacks nexus:audit:read permission
+      expect(screen.queryByRole('tab', { name: /audit/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldShowAuditTabWhenAuditIsEnabledAndUserHasPermission', async () => {
+      // Enable audit and grant permission
+      ExtJS.state().getValue.mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return true;
+        return undefined;
+      });
+      ExtJS.checkPermission.mockImplementation((perm: string) => {
+        if (perm === 'nexus:audit:read') return true;
+        return true;
+      });
+
+      const editFormData = {
+        name: 'maven-central', type: 'proxy', format: 'maven2',
+        recipe: 'maven2-proxy', online: true,
+        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        httpClient: { blocked: false, autoBlock: true },
+        negativeCache: { enabled: true, timeToLive: 1440 },
+      };
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: editFormData as any,
+        form: createMockForm(editFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /audit/i })).toBeInTheDocument();
+      });
+
+      // Should also show Settings and Summary tabs
+      expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /summary/i })).toBeInTheDocument();
+    });
+
+    it('shouldNotShowAuditTabForCreateMode', async () => {
+      // Enable audit and grant permission
+      ExtJS.state().getValue.mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return true;
+        return undefined;
+      });
+      ExtJS.checkPermission.mockImplementation((perm: string) => {
+        if (perm === 'nexus:audit:read') return true;
+        return true;
+      });
+
+      renderWithTheme(
+        <RepositoryForm
+          recipe={MOCK_HOSTED_RECIPE}
+          isCreate={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      });
+
+      // Audit tab should not be present in create mode
+      expect(screen.queryByRole('tab', { name: /audit/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldRenderAuditTabContentWhenAuditTabIsSelected', async () => {
+      // Enable audit and grant permission
+      ExtJS.state().getValue.mockImplementation((key: string) => {
+        if (key === 'previewAuditEnabled') return true;
+        return undefined;
+      });
+      ExtJS.checkPermission.mockImplementation((perm: string) => {
+        if (perm === 'nexus:audit:read') return true;
+        return true;
+      });
+
+      mockUseAuditLogApi.mockReturnValue({
+        data: null,
+        loading: true,
+        error: null,
+      });
+
+      const editFormData = {
+        name: 'maven-central', type: 'proxy', format: 'maven2',
+        recipe: 'maven2-proxy', online: true,
+        storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+        proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+        httpClient: { blocked: false, autoBlock: true },
+        negativeCache: { enabled: true, timeToLive: 1440 },
+      };
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'audit',
+        formData: editFormData as any,
+        form: createMockForm(editFormData),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      // Should render audit content - it will show loading spinner since useAuditLogApi is mocked as loading
+      await waitFor(() => {
+        // The tab content renders RepositoryAuditTab which shows loading spinner
+        // Spinner is rendered as a div with class containing "rt-Spinner"
+        const spinner = document.querySelector('.rt-Spinner');
+        expect(spinner).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Tasks & Capabilities tab (NEXUS-53943)', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+
+    beforeEach(() => {
+      ExtJS.checkPermission.mockReturnValue(true);
+    });
+
+    it('shouldRenderTasksAndCapabilitiesTabWhenUserHasTasksReadPermission', async () => {
+      ExtJS.checkPermission.mockImplementation((perm: string) => perm === 'nexus:tasks:read');
+
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: MOCK_PROXY_REPOSITORY.attributes as any,
+        form: createMockForm(MOCK_PROXY_REPOSITORY.attributes),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /Tasks & Capabilities/i })).toBeInTheDocument();
+      });
+    });
+
+    it('shouldRenderTasksAndCapabilitiesTabWhenUserHasCapabilitiesReadPermission', async () => {
+      ExtJS.checkPermission.mockImplementation((perm: string) => perm === 'nexus:capabilities:read');
+
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: MOCK_PROXY_REPOSITORY.attributes as any,
+        form: createMockForm(MOCK_PROXY_REPOSITORY.attributes),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /Tasks & Capabilities/i })).toBeInTheDocument();
+      });
+    });
+
+    it('shouldHideTasksAndCapabilitiesTabWhenUserHasNeitherPermission', async () => {
+      ExtJS.checkPermission.mockImplementation((perm: string) => {
+        if (perm === 'nexus:tasks:read') return false;
+        if (perm === 'nexus:capabilities:read') return false;
+        return true;
+      });
+
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: MOCK_PROXY_REPOSITORY.attributes as any,
+        form: createMockForm(MOCK_PROXY_REPOSITORY.attributes),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('tab', { name: /Tasks & Capabilities/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldHideTasksAndCapabilitiesTabInCreateMode', async () => {
+      ExtJS.checkPermission.mockReturnValue(true);
+
+      renderWithTheme(
+        <RepositoryForm
+          recipe={MOCK_HOSTED_RECIPE}
+          isCreate={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('tab', { name: /Tasks & Capabilities/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Access & Security tab (NEXUS-53942)', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+
+    const ACCESS_SECURITY_PERMS = [
+      'nexus:privileges:read',
+      'nexus:roles:read',
+      'nexus:users:read',
+      'nexus:settings:read',
+    ];
+
+    beforeEach(() => {
+      ExtJS.checkPermission.mockReturnValue(true);
+    });
+
+    it.each(ACCESS_SECURITY_PERMS)(
+      'shouldRenderAccessSecurityTabWhenUserHas_%s',
+      async (grantedPerm: string) => {
+        ExtJS.checkPermission.mockImplementation((perm: string) => perm === grantedPerm);
+
+        mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+          isCreate: false,
+          repository: MOCK_PROXY_REPOSITORY as any,
+          activeTab: 'settings',
+          formData: MOCK_PROXY_REPOSITORY.attributes as any,
+          form: createMockForm(MOCK_PROXY_REPOSITORY.attributes),
+        }));
+
+        renderWithTheme(
+          <RepositoryForm
+            repository={MOCK_PROXY_REPOSITORY as any}
+            recipe={MOCK_PROXY_RECIPE}
+            isCreate={false}
+            onSave={mockOnSave}
+            onCancel={mockOnCancel}
+            onDelete={mockOnDelete}
+          />
+        );
+
+        await waitFor(() => {
+          expect(screen.getByRole('tab', { name: /Access & Security/i })).toBeInTheDocument();
+        });
+      }
+    );
+
+    it('shouldHideAccessSecurityTabWhenUserHasNoneOfTheFourPermissions', async () => {
+      ExtJS.checkPermission.mockImplementation((perm: string) =>
+        !ACCESS_SECURITY_PERMS.includes(perm)
+      );
+
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: MOCK_PROXY_REPOSITORY.attributes as any,
+        form: createMockForm(MOCK_PROXY_REPOSITORY.attributes),
+      }));
+
+      renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('tab', { name: /Access & Security/i })).not.toBeInTheDocument();
+    });
+
+    it('shouldHideAccessSecurityTabInCreateMode', async () => {
+      ExtJS.checkPermission.mockReturnValue(true);
+
+      renderWithTheme(
+        <RepositoryForm
+          recipe={MOCK_HOSTED_RECIPE}
+          isCreate={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('tab', { name: /Access & Security/i })).not.toBeInTheDocument();
+    });
+  });
+
+  // NEXUS-54212: the Save/Update button must respect the per-repository edit permission
+  // (nexus:repository-admin:{format}:{name}:edit), matching Classic UI (RepositorySettingsForm.js).
+  // A user with repository-admin:read but no :edit for this repo can open the detail but must not
+  // see a Save button.
+  describe('Save button permission gating (NEXUS-54212)', () => {
+    const { ExtJS } = jest.requireMock('../../../../../../../interface/ExtJS');
+
+    const editFormData = {
+      name: 'maven-central', type: 'proxy', format: 'maven2',
+      recipe: 'maven2-proxy', online: true,
+      storage: { blobStoreName: 'default', strictContentTypeValidation: true },
+      proxy: { remoteUrl: 'https://repo1.maven.org/maven2/', contentMaxAge: 1440, metadataMaxAge: 1440 },
+      httpClient: { blocked: false, autoBlock: true },
+      negativeCache: { enabled: true, timeToLive: 1440 },
+    };
+
+    const renderEdit = () => {
+      mockUseRepositoryForm.mockReturnValue(createMockHookReturn({
+        isCreate: false,
+        repository: MOCK_PROXY_REPOSITORY as any,
+        activeTab: 'settings',
+        formData: editFormData as any,
+        pristineData: MOCK_PROXY_REPOSITORY as any,
+        form: createMockForm(editFormData),
+      }));
+
+      return renderWithTheme(
+        <RepositoryForm
+          repository={MOCK_PROXY_REPOSITORY as any}
+          recipe={MOCK_PROXY_RECIPE}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+    };
+
+    it('hides the Save button when the user lacks per-repo edit permission', async () => {
+      ExtJS.checkPermission.mockImplementation(() => false);
+
+      renderEdit();
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('form-submit')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save changes/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the Save button when the user holds edit permission for this repo', async () => {
+      ExtJS.checkPermission.mockImplementation(
+        (perm: string) => perm === 'nexus:repository-admin:maven2:maven-central:edit'
+      );
+
+      renderEdit();
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /settings/i })).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('form-submit')).toBeInTheDocument();
+    });
+
+    it('shows the Save button for a holder of the repository-admin edit wildcard', async () => {
+      // ExtJS.checkPermission applies Shiro wildcard semantics, so *:*:edit satisfies the
+      // concrete per-repo check.
+      ExtJS.checkPermission.mockImplementation(
+        (perm: string) => perm === 'nexus:repository-admin:maven2:maven-central:edit'
+      );
+
+      renderEdit();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('form-submit')).toBeInTheDocument();
+      });
+    });
+
+    it('always shows the Create button in create mode regardless of per-repo edit permission', async () => {
+      ExtJS.checkPermission.mockImplementation(() => false);
+
+      renderWithTheme(
+        <RepositoryForm
+          recipe={MOCK_HOSTED_RECIPE}
+          isCreate={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /create repository/i })).toBeInTheDocument();
+      });
     });
   });
 });

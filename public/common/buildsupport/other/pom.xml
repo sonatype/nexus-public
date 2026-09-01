@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.94.2-01</version>
+    <version>3.96.0-09</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -317,6 +317,13 @@
       </dependency>
 
       <!--
+        NEXUS-54504: Upgrade netty-bom to 4.2.17.Final to resolve the netty-handler
+        hostname verification bypass on the OpenSSL client path (Java 25+), the SNI
+        routing bypass via fragmented ClientHello, CVE-2026-59902 (transport-sctp)
+        and CVE-2026-59903 (codec-http CORS Vary).
+        NEXUS-54004: Upgrade netty-bom to 4.2.16.Final to resolve CVE-2026-56819
+        (netty-codec-http2 memory leak in the HTTP/2 decompressor - CWE-401,
+        CVSS 7.5, GHSA-93wv-jw9v-4972).
         NEXUS-53122: Upgrade netty-bom to 4.2.15.Final to resolve CVE-2026-42587
         (codec-http/http2 decompression limit bypass - CVSS 8.7). The earlier
         4.2.14.Final upgrade addressed the following CVEs but not 42587:
@@ -329,7 +336,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.15.Final</version>
+        <version>4.2.17.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

@@ -45,6 +45,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
   restClient: {
     post: (...args) => mockRestClientPost(...args),
   },
+  useSideNavbarOpenState: () => [true],
 }));
 
 jest.mock('@uirouter/react', () => ({
@@ -60,7 +61,6 @@ jest.mock('../SystemStatusRadix', () => () => <div data-testid="system-status" /
 jest.mock('../HelpMenuRadix', () => () => <div data-testid="help-menu" />);
 jest.mock('../LoginAndUserButtonRadix', () => () => <div data-testid="login-button" />);
 jest.mock('../../ThemeSwitcher/ThemeSwitcher', () => () => null);
-jest.mock('../../../hooks/useSideNavbarCollapsedState', () => () => [true]);
 
 import GlobalHeaderRadix from '../GlobalHeaderRadix';
 
@@ -337,6 +337,43 @@ describe('GlobalHeaderRadix', () => {
       fireEvent.click(useClassicBtn);
 
       expect(mockRestClientPost).not.toHaveBeenCalled();
+    });
+  });
+
+  // NEXUS-51836: replaced `style={{cursor: ... }}` with conditional className.
+  // The `--disabled` modifier must track `isFeedbackTooLong` to preserve the
+  // prior `cursor: not-allowed` rendering when the textarea exceeds the limit.
+  describe('Use Classic UI button cursor modifier class', () => {
+    const ENABLED_CURSOR_CLASS = 'nxrm-global-header-radix__clickable';
+    const DISABLED_CURSOR_CLASS = 'nxrm-global-header-radix__clickable--disabled';
+    const VALID_FEEDBACK = 'Valid feedback within limit';
+    const TOO_LONG_FEEDBACK = 'x'.repeat(501);
+
+    beforeEach(() => {
+      window.location.hash = 'preview/browse/welcome';
+      mockUseUser.mockReturnValue({ authenticated: true, userId: 'admin' });
+    });
+
+    async function openPopoverWithFeedback(feedbackValue) {
+      renderHeader();
+      fireEvent.click(screen.getByText('Switch to Classic UI'));
+      const textarea = await screen.findByLabelText('Optional feedback');
+      fireEvent.change(textarea, { target: { value: feedbackValue } });
+      return screen.findByText('Use Classic UI');
+    }
+
+    it('applies the enabled cursor class when feedback is within the limit', async () => {
+      const useClassicBtn = await openPopoverWithFeedback(VALID_FEEDBACK);
+
+      expect(useClassicBtn).toHaveClass(ENABLED_CURSOR_CLASS);
+      expect(useClassicBtn).not.toHaveClass(DISABLED_CURSOR_CLASS);
+    });
+
+    it('applies the disabled cursor modifier class when feedback exceeds the limit', async () => {
+      const useClassicBtn = await openPopoverWithFeedback(TOO_LONG_FEEDBACK);
+
+      expect(useClassicBtn).toHaveClass(DISABLED_CURSOR_CLASS);
+      expect(useClassicBtn).not.toHaveClass(ENABLED_CURSOR_CLASS);
     });
   });
 });

@@ -239,7 +239,7 @@ export function EntityTable<T>({
             );
           })}
           {showRowArrow && clickable && (
-            <Table.ColumnHeaderCell style={{ width: '40px' }} />
+            <Table.ColumnHeaderCell className="entity-table__arrow-header" />
           )}
         </Table.Row>
       </Table.Header>
