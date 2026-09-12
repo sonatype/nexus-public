@@ -147,6 +147,8 @@ public class FeatureFlags
 
   public static final String DISABLE_NORMALIZE_VERSION_TASK = "nexus.cleanup.disableNormalizeVersionTask";
 
+  public static final String DISABLE_RENORMALIZE_VERSION_TASK = "nexus.cleanup.disableReNormalizeVersionTask";
+
   public static final String DISABLE_CREATING_COMPONENT_INDEXES_TASK = "nexus.component.index.task";
 
   public static final String FIREWALL_QUARANTINE_FIX_ENABLED = "nexus.firewall.quarantineFix.enabled";

@@ -254,6 +254,7 @@ describe('CleanupPolicyForm', () => {
       isPreviewEnabled: jest.fn().mockReturnValue(false),
       isRetainEnabled: jest.fn().mockReturnValue(false),
       isRetainAllFormatsEnabled: jest.fn().mockReturnValue(false),
+      isRenormalizationInProgress: jest.fn().mockReturnValue(false),
     } as any);
   });
 
@@ -663,6 +664,7 @@ describe('CleanupPolicyForm', () => {
         isPreviewEnabled: jest.fn().mockReturnValue(true),
         isRetainEnabled: jest.fn().mockReturnValue(false),
         isRetainAllFormatsEnabled: jest.fn().mockReturnValue(false),
+        isRenormalizationInProgress: jest.fn().mockReturnValue(false),
       } as any);
 
       const policyWithFormat: CleanupPolicy = {
@@ -810,6 +812,7 @@ describe('CleanupPolicyForm', () => {
         isPreviewEnabled: jest.fn().mockReturnValue(false),
         isRetainEnabled: jest.fn().mockReturnValue(true),
         isRetainAllFormatsEnabled: jest.fn().mockReturnValue(false),
+        isRenormalizationInProgress: jest.fn().mockReturnValue(false),
       } as any);
     }
 
@@ -1003,6 +1006,7 @@ describe('CleanupPolicyForm', () => {
           isPreviewEnabled: jest.fn().mockReturnValue(false),
           isRetainEnabled: jest.fn((format: string) => format !== 'npm'),
           isRetainAllFormatsEnabled: jest.fn().mockReturnValue(false),
+            isRenormalizationInProgress: jest.fn().mockReturnValue(false),
         } as any);
 
         const npmPolicy: CleanupPolicy = {
@@ -1030,6 +1034,162 @@ describe('CleanupPolicyForm', () => {
         );
 
         expect(screen.queryByText('Except, do not remove any component that meets the following criterion:')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('retain temporarily unavailable', () => {
+      const npmPolicy: CleanupPolicy = {
+        name: 'npm-policy',
+        format: 'npm',
+        notes: '',
+        criteriaLastBlobUpdated: 30,
+        criteriaLastDownloaded: null,
+        criteriaReleaseType: null,
+        criteriaAssetRegex: null,
+        retain: null,
+        sortBy: null,
+        inUseCount: 0,
+      };
+
+      function setupRetainUnavailable({
+        renormalizationInProgress,
+      }: { renormalizationInProgress: boolean }) {
+        mockedUseCleanupPoliciesApi.mockReturnValue({
+          loading: false,
+          error: null,
+          setError: jest.fn(),
+          fetchCleanupPolicies: jest.fn().mockResolvedValue([]),
+          fetchCleanupPolicy: jest.fn().mockResolvedValue(null),
+          fetchFormatCriteria: jest.fn().mockResolvedValue(mockFormatCriteria),
+          fetchRepositories: jest.fn().mockResolvedValue([]),
+          createCleanupPolicy: jest.fn().mockResolvedValue({}),
+          updateCleanupPolicy: jest.fn().mockResolvedValue({}),
+          deleteCleanupPolicy: jest.fn().mockResolvedValue({}),
+          previewCleanupPolicy: jest.fn().mockResolvedValue({ components: [], total: 0 }),
+          getDryRunCsvUrl: jest.fn().mockReturnValue(''),
+          isPreviewEnabled: jest.fn().mockReturnValue(false),
+          isRetainEnabled: jest.fn().mockReturnValue(false),
+          isRetainAllFormatsEnabled: jest.fn().mockReturnValue(true),
+          isRenormalizationInProgress: jest.fn().mockReturnValue(renormalizationInProgress),
+        } as any);
+      }
+
+      it('shows repair alert alongside retain section when renormalization is in progress', () => {
+        setupRetainUnavailable({ renormalizationInProgress: true });
+
+        render(
+          <CleanupPolicyForm
+            policy={npmPolicy}
+            isCreate={false}
+            formatCriteria={mockFormatCriteria}
+            onSave={mockOnSave}
+            onCancel={mockOnCancel}
+          />,
+          { wrapper: TestWrapper }
+        );
+
+        expect(screen.getByText('The ability to retain a select number of most-recent versions is temporarily unavailable while a migration task runs. It will be automatically re-enabled once the migration task completes.')).toBeInTheDocument();
+        expect(screen.queryByText('Exclusion criteria will populate once post-upgrade tasks complete.')).not.toBeInTheDocument();
+        expect(screen.getByText('Except, do not remove any component that meets the following criterion:')).toBeInTheDocument();
+      });
+
+      it('shows no unavailability alert when retain is fully operational', () => {
+        mockedUseCleanupPoliciesApi.mockReturnValue({
+          loading: false,
+          error: null,
+          setError: jest.fn(),
+          fetchCleanupPolicies: jest.fn().mockResolvedValue([]),
+          fetchCleanupPolicy: jest.fn().mockResolvedValue(null),
+          fetchFormatCriteria: jest.fn().mockResolvedValue(mockFormatCriteria),
+          fetchRepositories: jest.fn().mockResolvedValue([]),
+          createCleanupPolicy: jest.fn().mockResolvedValue({}),
+          updateCleanupPolicy: jest.fn().mockResolvedValue({}),
+          deleteCleanupPolicy: jest.fn().mockResolvedValue({}),
+          previewCleanupPolicy: jest.fn().mockResolvedValue({ components: [], total: 0 }),
+          getDryRunCsvUrl: jest.fn().mockReturnValue(''),
+          isPreviewEnabled: jest.fn().mockReturnValue(false),
+          isRetainEnabled: jest.fn().mockReturnValue(true),
+          isRetainAllFormatsEnabled: jest.fn().mockReturnValue(false),
+          isRenormalizationInProgress: jest.fn().mockReturnValue(false),
+        } as any);
+
+        render(
+          <CleanupPolicyForm
+            policy={npmPolicy}
+            isCreate={false}
+            formatCriteria={mockFormatCriteria}
+            onSave={mockOnSave}
+            onCancel={mockOnCancel}
+          />,
+          { wrapper: TestWrapper }
+        );
+
+        expect(screen.queryByText('The ability to retain a select number of most-recent versions is temporarily unavailable while a migration task runs. It will be automatically re-enabled once the migration task completes.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Exclusion criteria will populate once post-upgrade tasks complete.')).not.toBeInTheDocument();
+      });
+
+      it('shows no repair alert when combined release type selected (Releases & Pre-Releases)', () => {
+        // maven2 has isPrerelease in criteria, so releaseTypeApplicable=true and combined (null) = hasReleaseTypeSelected=false
+        const maven2Policy: CleanupPolicy = {
+          name: 'maven2-policy',
+          format: 'maven2',
+          notes: '',
+          criteriaLastBlobUpdated: 30,
+          criteriaLastDownloaded: null,
+          criteriaReleaseType: null,
+          criteriaAssetRegex: null,
+          retain: null,
+          sortBy: null,
+          inUseCount: 0,
+        };
+        setupRetainUnavailable({ renormalizationInProgress: true });
+
+        render(
+          <CleanupPolicyForm
+            policy={maven2Policy}
+            isCreate={false}
+            formatCriteria={mockFormatCriteria}
+            onSave={mockOnSave}
+            onCancel={mockOnCancel}
+          />,
+          { wrapper: TestWrapper }
+        );
+
+        expect(screen.queryByText('The ability to retain a select number of most-recent versions is temporarily unavailable while a migration task runs. It will be automatically re-enabled once the migration task completes.')).not.toBeInTheDocument();
+      });
+
+      it('shows no repair alert when retain feature flag is not enabled', () => {
+        mockedUseCleanupPoliciesApi.mockReturnValue({
+          loading: false,
+          error: null,
+          setError: jest.fn(),
+          fetchCleanupPolicies: jest.fn().mockResolvedValue([]),
+          fetchCleanupPolicy: jest.fn().mockResolvedValue(null),
+          fetchFormatCriteria: jest.fn().mockResolvedValue(mockFormatCriteria),
+          fetchRepositories: jest.fn().mockResolvedValue([]),
+          createCleanupPolicy: jest.fn().mockResolvedValue({}),
+          updateCleanupPolicy: jest.fn().mockResolvedValue({}),
+          deleteCleanupPolicy: jest.fn().mockResolvedValue({}),
+          previewCleanupPolicy: jest.fn().mockResolvedValue({ components: [], total: 0 }),
+          getDryRunCsvUrl: jest.fn().mockReturnValue(''),
+          isPreviewEnabled: jest.fn().mockReturnValue(false),
+          isRetainEnabled: jest.fn().mockReturnValue(false),
+          isRetainAllFormatsEnabled: jest.fn().mockReturnValue(false),
+          isRenormalizationInProgress: jest.fn().mockReturnValue(true),
+        } as any);
+
+        render(
+          <CleanupPolicyForm
+            policy={npmPolicy}
+            isCreate={false}
+            formatCriteria={mockFormatCriteria}
+            onSave={mockOnSave}
+            onCancel={mockOnCancel}
+          />,
+          { wrapper: TestWrapper }
+        );
+
+        expect(screen.queryByText('The ability to retain a select number of most-recent versions is temporarily unavailable while a migration task runs. It will be automatically re-enabled once the migration task completes.')).not.toBeInTheDocument();
       });
     });
   });
@@ -1065,6 +1225,7 @@ describe('CleanupPolicyForm', () => {
         isPreviewEnabled: jest.fn().mockReturnValue(false),
         isRetainEnabled: jest.fn().mockReturnValue(false),
         isRetainAllFormatsEnabled: jest.fn().mockReturnValue(true),
+        isRenormalizationInProgress: jest.fn().mockReturnValue(false),
         ...overrides,
       } as any);
     }

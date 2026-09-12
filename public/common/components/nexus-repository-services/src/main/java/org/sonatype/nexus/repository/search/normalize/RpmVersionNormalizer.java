@@ -37,9 +37,9 @@ public class RpmVersionNormalizer
    */
   private static final int MAX_VERSION_LENGTH = 256;
 
-  private static final String PRE_RELEASE_KEY = "a";
+  private static final String PRE_RELEASE_KEY = "0a";
 
-  private static final String RELEASE_KEY = "c";
+  private static final String RELEASE_KEY = "0c";
 
   @Override
   public String getNormalizedVersion(final String version) {
@@ -54,12 +54,12 @@ public class RpmVersionNormalizer
     String trimmed = version.trim();
 
     // Parse epoch (N:)
-    String epoch = "000000000";
+    String epoch = VersionNumberExpander.padPrefixed(0);
     int colonIndex = trimmed.indexOf(':');
     if (colonIndex >= 0) {
       String epochStr = trimmed.substring(0, colonIndex);
       try {
-        epoch = String.format("%09d", Long.parseLong(epochStr));
+        epoch = VersionNumberExpander.padPrefixed(Long.parseLong(epochStr));
       }
       catch (NumberFormatException e) {
         // invalid epoch, keep default
@@ -90,10 +90,13 @@ public class RpmVersionNormalizer
     if (!releasePart.isEmpty()) {
       // "0." prefix in release field indicates pre-release by RPM convention
       if (releasePart.startsWith("0.")) {
-        result.append(".").append(PRE_RELEASE_KEY).append(".").append(VersionNumberExpander.expand(releasePart));
+        result.append(".")
+            .append(PRE_RELEASE_KEY)
+            .append(".")
+            .append(VersionNumberExpander.expandPrefixed(releasePart));
       }
       else {
-        result.append(".").append(RELEASE_KEY).append(".").append(VersionNumberExpander.expand(releasePart));
+        result.append(".").append(RELEASE_KEY).append(".").append(VersionNumberExpander.expandPrefixed(releasePart));
       }
     }
 
@@ -109,14 +112,14 @@ public class RpmVersionNormalizer
       String basePart = version.substring(0, tildeIndex);
       String preReleasePart = version.substring(tildeIndex + 1);
       // Guard against a bare trailing tilde (e.g. "1.0~") where preReleasePart is empty.
-      // VersionNumberExpander.expand("") returns "", which would leave a trailing "." in the
+      // VersionNumberExpander.expandPrefixed("") returns "", which would leave a trailing "." in the
       // sort key. Substitute "0" so the key remains well-formed and the pre-release marker
       // still sorts before the corresponding release.
       String expandedPre = preReleasePart.isEmpty()
-          ? VersionNumberExpander.expand("0")
-          : VersionNumberExpander.expand(preReleasePart);
-      return VersionNumberExpander.expand(basePart) + "." + PRE_RELEASE_KEY + "." + expandedPre;
+          ? VersionNumberExpander.expandPrefixed("0")
+          : VersionNumberExpander.expandPrefixed(preReleasePart);
+      return VersionNumberExpander.expandPrefixed(basePart) + "." + PRE_RELEASE_KEY + "." + expandedPre;
     }
-    return VersionNumberExpander.expand(version);
+    return VersionNumberExpander.expandPrefixed(version);
   }
 }

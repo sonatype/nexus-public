@@ -418,6 +418,21 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
+   * Updates the normalized_version of each of the given components in a single transaction, rather than one
+   * transaction per component - callers repairing/backfilling many rows at once (e.g. a full-table re-scan)
+   * should batch a page of components through this rather than calling {@link #updateComponentNormalizedVersion}
+   * in a loop.
+   *
+   * @param components the components to update
+   */
+  @Transactional
+  public void updateComponentsNormalizedVersion(final Iterable<? extends Component> components) {
+    for (Component component : components) {
+      dao().updateComponentNormalizedVersion(component, clustered);
+    }
+  }
+
+  /**
    * Updates the attributes of the given component in the content data store.
    *
    * @param component the component to update

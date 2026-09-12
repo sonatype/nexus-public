@@ -30,15 +30,15 @@ public class PEP440VersionNormalizerTest
   @Test
   public void testReleaseVersion() {
     String result = underTest.getNormalizedVersion("1.2.3");
-    assertThat(result).startsWith("000000000."); // default epoch
-    assertThat(result).endsWith(".c");
+    assertThat(result).startsWith("1000000000."); // default epoch
+    assertThat(result).endsWith(".0c");
   }
 
   @Test
   public void testEpoch() {
     String withEpoch = underTest.getNormalizedVersion("2!1.2.3");
     String withoutEpoch = underTest.getNormalizedVersion("1.2.3");
-    assertThat(withEpoch).startsWith("000000002.");
+    assertThat(withEpoch).startsWith("1000000002.");
     assertThat(withoutEpoch).isLessThan(withEpoch);
   }
 
