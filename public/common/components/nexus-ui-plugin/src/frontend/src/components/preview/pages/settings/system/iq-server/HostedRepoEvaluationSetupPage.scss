@@ -1,0 +1,39 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ */
+
+.hosted-repo-eval-setup-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+
+  &__settings-select {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  &__selection-banner {
+    background: var(--gray-a3, #f3f4f6);
+    border-radius: 6px;
+    padding: 8px 12px;
+  }
+
+  &__action-toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 24px;
+    background: var(--gray-12, #1f2937);
+    color: var(--gray-1, #fff);
+    border-radius: 12px;
+    padding: 10px 14px;
+    z-index: 100;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}

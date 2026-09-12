@@ -132,7 +132,7 @@ export function UploadRepositoryList({
 
   return (
     <Box className="upload-repository-list">
-      <Table.Root size="3" className="upload-repository-list__table">
+      <Table.Root variant="surface" size="3" className="upload-repository-list__table">
         <Table.Header>
           <Table.Row>
             {/* Name Column - Sortable */}

@@ -119,6 +119,10 @@ module.exports = {
     // package barrel (and createRouter) use, so a deep import of it in tests
     // shares one module instance rather than a second copy via node_modules.
     '^@sonatype/nexus-ui-plugin/src/frontend/src/router/unsavedChangesDialog$': '<rootDir>/../../../nexus-ui-plugin/src/frontend/src/router/unsavedChangesDialog.js',
+    // Resolve the shared CE usage-helper utilities to the same workspace source
+    // the barrel uses, so a deep import shares one transformed module instance
+    // rather than an untransformed copy resolved via node_modules.
+    '^@sonatype/nexus-ui-plugin/src/frontend/src/components/widgets/SystemStatusAlerts/CELimits/usageHelperUtils$': '<rootDir>/../../../nexus-ui-plugin/src/frontend/src/components/widgets/SystemStatusAlerts/CELimits/usageHelperUtils.js',
     // Redirect nexus-ui-plugin's broken Tasks exports (files missing, live in nexus-coreui-plugin) - see TEST-BASELINE.md
     '^(\\./)?components/admin/Tasks/TasksList$': '<rootDir>/src/components/pages/admin/Tasks/TasksList.jsx',
     '^(\\./)?components/admin/Tasks/TasksListMachine$': '<rootDir>/src/components/pages/admin/Tasks/TasksListMachine.js',

@@ -52,6 +52,7 @@ export function SettingsTextInput({
   step,
   autoComplete = 'off',
   className = '',
+  monospace = false,
   inputRef,
   onBlur,
   onFocus,
@@ -106,6 +107,7 @@ export function SettingsTextInput({
         data-testid={`input-${name}`}
         color={error ? 'red' : undefined}
         size="2"
+        className={monospace ? 'settings-text-input__input--mono' : undefined}
       />
       {error && (
         <Text as="p" size="1" id={errorId} className="settings-text-input__error">
@@ -157,6 +159,8 @@ SettingsTextInput.propTypes = {
   autoComplete: PropTypes.string,
   /** Additional CSS class */
   className: PropTypes.string,
+  /** Use monospace font, for code-like values such as cron expressions */
+  monospace: PropTypes.bool,
   /** Ref for input element */
   inputRef: PropTypes.oneOfType([
     PropTypes.func,

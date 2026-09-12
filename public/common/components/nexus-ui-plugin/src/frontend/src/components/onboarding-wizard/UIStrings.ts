@@ -25,19 +25,25 @@ export default {
     },
     SETUP_COMPLETE: {
       TITLE: 'Setup Complete',
-      DESCRIPTION:
-        'Your instance is now ready to use. Explore Sonatype Nexus Repository to unlock its full potential.',
+      DESCRIPTION: 'Your Nexus Repository is ready to use.',
+      STILL_REQUIRED_MESSAGE:
+        'Some onboarding steps still need to be completed. Please re-finalize your choices.',
+      NETWORK_ERROR_MESSAGE: 'A network error occurred. Please try again.',
+    },
+    ISSUE_OCCURRED: {
+      TITLE: 'Issue Occurred',
+      MESSAGE:
+        'An issue occurred during setup. You may need to re-finalize your choices or selections.',
+    },
+    DISMISS_TOAST: {
+      MESSAGE:
+        'Setup was not completed. Some features may require additional configuration.',
     },
     VERIFYING: {
       MESSAGE: 'Verifying setup...',
     },
     LOADING: {
       MESSAGE: 'Loading...',
-    },
-    ISSUE_OCCURRED: {
-      TITLE: 'Something went wrong',
-      FALLBACK_MESSAGE: 'An unexpected error occurred while setting up your instance.',
-      DISMISS_HELP: 'You can dismiss onboarding and finish setup later from the admin settings.',
     },
     UNKNOWN_STEP: {
       MESSAGE: 'This step type is not yet supported.',
@@ -59,26 +65,54 @@ export default {
       GET_STARTED: 'Get Started',
       NEXT: 'Next',
       FINISH: 'Finish',
+      COMPLETE_SETUP: 'Complete Setup',
+      DISMISS: 'Dismiss for now',
       RETRY: 'Retry',
-      DISMISS: 'Skip for Now',
     },
     CONFIGURE_ANONYMOUS_ACCESS: {
       TITLE: 'Configure Anonymous Access',
+      SUBTITLE: 'Control access to your repositories',
       ENABLE_LABEL: 'Enable anonymous access',
       DISABLE_LABEL: 'Disable anonymous access',
       ENABLE_OPTION_DESCRIPTION: 'Allow anonymous users to read from repositories',
       DISABLE_OPTION_DESCRIPTION: 'Require authentication for all repository access',
-      ENABLE_DESCRIPTION_TERM: 'Enable anonymous access',
-      ENABLE_DESCRIPTION_DEFINITION_START:
-        'By default, users can search, browse and download components from repositories without credentials. ',
-      ENABLE_DESCRIPTION_DEFINITION_EMPHASIS:
-        'Please consider the security implications for your organization.',
-      DISABLE_DESCRIPTION_TERM: 'Disable anonymous access',
-      DISABLE_DESCRIPTION_DEFINITION_START: 'Choose with care because it will ',
-      DISABLE_DESCRIPTION_DEFINITION_EMPHASIS: 'require credentials',
-      DISABLE_DESCRIPTION_DEFINITION_END: ' for all users and/or build tools.',
-      MORE_INFO_LABEL: 'More information',
+      DESCRIPTION:
+        'Anonymous access allows users to browse and download repository content without authentication. Disable anonymous access to require authentication for all users and build tools.',
+      MORE_INFO_LABEL: 'Learn more',
       MORE_INFO_HREF: 'https://links.sonatype.com/products/nexus/anonymous-access/docs',
+    },
+    COMMUNITY_DISCOVER: {
+      TITLE: 'Welcome to Nexus Repository Community Edition',
+      SUBTITLE: 'Manage, store, and distribute software components.',
+      LEARN_MORE_LABEL: 'Learn More',
+      BENEFITS_LIST: [
+        {
+          label: 'Repository formats',
+          description: 'Support for Docker, Maven, npm, PyPI, NuGet, Helm, and more.',
+        },
+        {
+          label: 'Search and browse components',
+          description: 'Find components across your repositories.',
+        },
+        {
+          label: 'Security and access management',
+          description: 'Integrate with LDAP and configure role-based access.',
+        },
+        {
+          label: 'REST API and automation',
+          description: 'Automate repository management and CI/CD workflows.',
+        },
+      ] as ReadonlyArray<{ readonly label: string; readonly description: string }>,
+    },
+    COMMUNITY_EULA: {
+      TITLE: 'End User License Agreement',
+      SUBTITLE: 'Please read and accept the terms and conditions',
+      IFRAME_TITLE: 'End User License Agreement',
+      CHECKBOX_LABEL: 'I accept the terms and conditions',
+      READ_FULL_LICENSE_LABEL: 'Read Full License Agreement',
+      SUCCESS_MESSAGE: 'Agreement accepted',
+      LOADING_ERROR: 'Unable to load the End User License Agreement.',
+      SUBMISSION_ERROR: 'Failed to submit your agreement. Please try again.',
     },
   },
 };

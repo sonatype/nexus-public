@@ -45,6 +45,8 @@ import { useRouter, useCurrentStateAndParams } from '@uirouter/react';
 import { useToast } from '../../shared/Toast';
 import { ConfirmDialog } from '../../shared/form';
 import { exportToCsv, PageHeader, useRouteVisibility } from '../../shared';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 import { useTagDetailExtended, type TaggedComponent } from './hooks';
 import { useSearchNavigation } from '../search/unified/useSearchNavigation';
@@ -170,6 +172,21 @@ export function TagDetailPage(): JSX.Element {
 
   // Check if user can navigate to Search component detail (same check the left-nav uses)
   const canOpenComponent = useRouteVisibility('browse.search');
+
+  // Gate the Delete Tag action on the tags:delete permission (NEXUS-54212). This prominent
+  // destructive button stays visible but disabled for read-only users (discoverability),
+  // rather than being hidden like the inline edit/save controls — a deliberate asymmetry
+  // matching the Classic UI's large action buttons.
+  // Use the provider-independent ExtJS.usePermission: the context-based usePermission
+  // returns false without a <PermissionsProvider> ancestor, which coreui (self-hosted)
+  // never mounts, so the action would be disabled even for admins. Depend on hasUser so the
+  // check re-evaluates once the user and their permissions load (they arrive asynchronously
+  // after mount); without it a permitted non-admin would stay stuck on the initial false.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canDeleteTag = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TAGS.DELETE),
+    [hasUser],
+  );
 
   // Local UI state (filters, sort, etc.)
   const [searchFilter, setSearchFilter] = useState('');
@@ -489,7 +506,12 @@ export function TagDetailPage(): JSX.Element {
                 </Flex>
               </Flex>
             </Box>
-            <Button variant="soft" color="red" onClick={() => setDeleteDialogOpen(true)}>
+            <Button
+              variant="soft"
+              color="red"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={!canDeleteTag}
+            >
               <Trash2 size={14} />
               {STRINGS.actions.delete}
             </Button>

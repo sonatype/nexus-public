@@ -66,12 +66,17 @@ import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.squareup.tape.QueueFile;
 import org.joda.time.DateTime;
 import org.junit.After;
+import org.slf4j.LoggerFactory;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -996,6 +1001,84 @@ public class FileBlobStoreTest
     // Verify it attempted to update but didn't retry (returned early due to race condition)
     verify(fileBlobAttributes, times(1)).updateFrom(blobAttributes);
     verify(fileBlobAttributes, times(1)).store();
+  }
+
+  @Test
+  public void testGetBlobAttributesWithException_FileNotFoundReturnNullNotError() throws Exception {
+    Logger logger = (Logger) LoggerFactory.getLogger(FileBlobStore.class);
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender.start();
+    logger.addAppender(listAppender);
+    try {
+      BlobId blobId = new BlobId("concurrent-read-blob");
+      FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+      doThrow(new java.io.FileNotFoundException("blob.properties (No such file or directory)"))
+          .when(fileBlobAttributes)
+          .load();
+
+      FileBlobStore spyUnderTest = spy(underTest);
+      doReturn(fileBlobAttributes).when(spyUnderTest).newFileBlobAttributes(any());
+
+      BlobAttributes result = spyUnderTest.getBlobAttributesWithException(blobId);
+
+      assertNull(result);
+      verify(fileBlobAttributes, times(1)).load();
+      assertThat(listAppender.list.stream().anyMatch(e -> e.getLevel() == Level.ERROR), is(false));
+    }
+    finally {
+      logger.detachAppender(listAppender);
+    }
+  }
+
+  @Test
+  public void testGetBlobAttributesWithException_NoSuchFileReturnNullNotError() throws Exception {
+    Logger logger = (Logger) LoggerFactory.getLogger(FileBlobStore.class);
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender.start();
+    logger.addAppender(listAppender);
+    try {
+      BlobId blobId = new BlobId("concurrent-read-no-such-file");
+      FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+      doThrow(new java.nio.file.NoSuchFileException("blob.properties"))
+          .when(fileBlobAttributes)
+          .load();
+
+      FileBlobStore spyUnderTest = spy(underTest);
+      doReturn(fileBlobAttributes).when(spyUnderTest).newFileBlobAttributes(any());
+
+      BlobAttributes result = spyUnderTest.getBlobAttributesWithException(blobId);
+
+      assertNull(result);
+      verify(fileBlobAttributes, times(1)).load();
+      assertThat(listAppender.list.stream().anyMatch(e -> e.getLevel() == Level.ERROR), is(false));
+    }
+    finally {
+      logger.detachAppender(listAppender);
+    }
+  }
+
+  @Test
+  public void testGetBlobAttributesWithException_OtherIOExceptionThrowsBlobStoreException() throws Exception {
+    Logger logger = (Logger) LoggerFactory.getLogger(FileBlobStore.class);
+    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender.start();
+    logger.addAppender(listAppender);
+    try {
+      BlobId blobId = new BlobId("corrupt-blob");
+      FileBlobAttributes fileBlobAttributes = mock(FileBlobAttributes.class);
+      doThrow(new IOException("Disk read error"))
+          .when(fileBlobAttributes)
+          .load();
+
+      FileBlobStore spyUnderTest = spy(underTest);
+      doReturn(fileBlobAttributes).when(spyUnderTest).newFileBlobAttributes(any());
+
+      assertThrows(BlobStoreException.class, () -> spyUnderTest.getBlobAttributesWithException(blobId));
+      assertThat(listAppender.list.stream().anyMatch(e -> e.getLevel() == Level.ERROR), is(true));
+    }
+    finally {
+      logger.detachAppender(listAppender);
+    }
   }
 
   @Test

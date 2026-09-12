@@ -441,4 +441,45 @@ public class DefaultCapabilityReferenceTest
 
     verify(capability).onPassivate();
   }
+
+  /**
+   * When activation fails, the capability auto-recovers when its own activation condition re-satisfies.
+   * Regression test for NEXUS-53560: a failed onActivate() must not permanently block re-activation.
+   */
+  @Test
+  public void activateProblemAutoRecoveryWhenCapabilityConditionRecovers() throws Exception {
+    doThrow(new UnsupportedOperationException("Expected")).doNothing().when(capability).onActivate();
+
+    underTest.enable();
+    underTest.activate();
+    assertThat(underTest.isActive(), is(false));
+    assertThat(underTest.hasFailure(), is(true));
+
+    // Simulate the capability's own activation condition recovering — triggers failure reset cascade
+    eventManager.post(new ConditionEvent.Satisfied(activationCondition));
+
+    assertThat(underTest.isActive(), is(true));
+    assertThat(underTest.hasFailure(), is(false));
+  }
+
+  /**
+   * When activation fails, the capability auto-recovers when Nexus restarts (simulated by stopping then
+   * starting the Nexus-is-active condition).
+   * Regression test for NEXUS-53560: a failed onActivate() must not permanently block re-activation.
+   */
+  @Test
+  public void activateProblemAutoRecoveryWhenNexusRestarts() throws Exception {
+    doThrow(new UnsupportedOperationException("Expected")).doNothing().when(capability).onActivate();
+
+    underTest.enable();
+    underTest.activate();
+    assertThat(underTest.isActive(), is(false));
+    assertThat(underTest.hasFailure(), is(true));
+
+    activeCondition.stop(); // simulate Nexus shutdown
+    activeCondition.start(); // simulate Nexus restart — triggers failure reset cascade
+
+    assertThat(underTest.isActive(), is(true));
+    assertThat(underTest.hasFailure(), is(false));
+  }
 }

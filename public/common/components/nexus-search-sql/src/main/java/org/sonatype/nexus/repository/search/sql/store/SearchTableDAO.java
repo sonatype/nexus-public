@@ -180,4 +180,21 @@ public interface SearchTableDAO
    * @return list of unique repositories wrapped in {@link SearchRepositoryData}
    */
   List<SearchRepositoryData> getSearchRepositories();
+
+  /**
+   * Browses distinct versions of a component, newest first, with the repositories containing each.
+   *
+   * @param request the filter, sort, and page bounds
+   * @return one entry per distinct version
+   */
+  List<ComponentVersionData> browseComponentVersions(ComponentVersionSearchRequest request);
+
+  /**
+   * Counts distinct versions matching the filter. Unlike {@link #count}, this does not
+   * over-count components that span multiple repositories.
+   *
+   * @param request the filter (sort and page bounds are ignored)
+   * @return the number of distinct versions
+   */
+  long countComponentVersions(ComponentVersionSearchRequest request);
 }

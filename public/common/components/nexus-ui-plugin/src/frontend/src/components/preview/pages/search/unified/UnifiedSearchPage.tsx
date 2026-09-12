@@ -15,7 +15,7 @@ import { MobileFilterDrawer } from './MobileFilterDrawer';
 import MalwareBanner from '../../../shared/security/MalwareBanner';
 import { useUnifiedSearch } from './useUnifiedSearch';
 import { useRepositories } from './useRepositories';
-import { useSearchNavigation, COMPONENT_DETAIL_RETURN_SEARCH_KEY } from './useSearchNavigation';
+import { useSearchNavigation } from './useSearchNavigation';
 import {
   useSearchUrlState,
   DEFAULT_SORT_FIELD,
@@ -137,10 +137,9 @@ export default function UnifiedSearchPage(): JSX.Element {
    * Uses bulk setFilters so all filters are applied in one machine transition
    * (avoids N sequential sends and the previous fragile setTimeout chain).
    *
-   * The format is always applied (including 'all') so a Back/Forward to a URL
-   * without a format param resets the machine rather than retaining a stale
-   * format. Sort is applied when either field or direction is present, falling
-   * back to defaults for whichever value the URL omits.
+   * Format and sort are always applied (including their defaults) so a
+   * Back/Forward to a URL without those params resets the machine rather than
+   * retaining stale values.
    */
   const rehydrateFromUrl = useCallback(
     (url: ReturnType<typeof readFromUrl>) => {
@@ -158,12 +157,11 @@ export default function UnifiedSearchPage(): JSX.Element {
       setSelectedFormat(url.format === 'all' ? '' : url.format);
       setQuery(url.query);
       setFilters(url.filters);
-      // Apply sort if either field or direction is present in the URL. Missing
-      // values fall back to the defaults so a URL carrying only `direction=asc`
-      // (default field) still rehydrates correctly.
-      if (url.sortField || url.sortDirection) {
-        setSort(url.sortField ?? DEFAULT_SORT_FIELD, url.sortDirection ?? DEFAULT_SORT_DIRECTION);
-      }
+      // Always apply sort, resolving missing or invalid params to the canonical
+      // defaults. Applying it conditionally let the machine keep a previous
+      // non-default sort on a Back to a parameterless URL, which Effect 2 then
+      // wrote back onto that history entry.
+      setSort(url.sortField ?? DEFAULT_SORT_FIELD, url.sortDirection ?? DEFAULT_SORT_DIRECTION);
       // Defer the search to the next tick so the machine has processed the bulk
       // state above. This relies on XState's default SYNCHRONOUS send: the
       // setFormat/setQuery/setFilters/setSort events are all applied to context
@@ -175,21 +173,13 @@ export default function UnifiedSearchPage(): JSX.Element {
     [setFormat, setQuery, setFilters, setSort, search],
   );
 
-  // Mount: restore state from sessionStorage (breadcrumb return) or the URL.
+  // Mount: restore state from the URL. The URL is the only source; there is no
+  // sessionStorage fallback. A machine-state copy in sessionStorage used to take
+  // precedence here, which meant a stale payload — copied into a tab opened from
+  // a link, or simply left over from an earlier detail visit — beat a fresh deep
+  // link or header search (NEXUS-54503 Defect 1). The URL now carries every
+  // criterion, `nameOrVersion` included, so the fallback had nothing left to add.
   useEffect(() => {
-    // Restore search state when returning from component detail (breadcrumb click)
-    const stored = sessionStorage.getItem(COMPONENT_DETAIL_RETURN_SEARCH_KEY);
-    if (stored) {
-      try {
-        const { query, format, filters } = JSON.parse(stored);
-        sessionStorage.removeItem(COMPONENT_DETAIL_RETURN_SEARCH_KEY);
-        rehydrateFromUrl({ format: format || 'all', query: query || '', filters: filters || {} });
-        return;
-      } catch {
-        sessionStorage.removeItem(COMPONENT_DETAIL_RETURN_SEARCH_KEY);
-      }
-    }
-
     rehydrateFromUrl(readFromUrl());
     // Mount-only: intentionally run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -283,49 +273,87 @@ export default function UnifiedSearchPage(): JSX.Element {
     setTimeout(() => search(), 0);
   }, [reset, search]);
 
+  /**
+   * Write the current state to the URL now, cancelling any pending debounced
+   * write.
+   *
+   * Called before navigating away. A queued write would otherwise fire after the
+   * navigation, or be cancelled by unmount, leaving the URL one edit behind —
+   * and the URL is exactly what `navigateToDetail` captures as the breadcrumb's
+   * return target. Uses replace, not push: this rewrites the history entry the
+   * user is standing on, and the navigation that follows adds its own.
+   */
+  const flushUrlWrite = useCallback(() => {
+    if (urlWriteTimerRef.current) {
+      clearTimeout(urlWriteTimerRef.current);
+      urlWriteTimerRef.current = null;
+    }
+    const snapshot = {
+      format: state.format,
+      query: state.query,
+      filters: state.filters,
+      sortField: state.sortField,
+      sortDirection: state.sortDirection,
+    };
+    lastSerialized.current = serializeSearchState(snapshot);
+    syncToUrl(snapshot, true);
+  }, [
+    state.format,
+    state.query,
+    state.filters,
+    state.sortField,
+    state.sortDirection,
+    syncToUrl,
+  ]);
+
   const handleSelect = useCallback(
     (result: SearchResult) => {
-      const searchState = {
-        query: state.query,
-        format: state.format,
-        filters: state.filters,
-      };
-      navigateToDetail(result, searchState);
+      flushUrlWrite();
+      navigateToDetail(result);
     },
-    [navigateToDetail, state.query, state.format, state.filters],
+    [flushUrlWrite, navigateToDetail],
   );
 
   const handleRetry = useCallback(() => {
     search();
   }, [search]);
 
+  /**
+   * The results-page filter input is the single editable home of the search
+   * text. On edit it takes ownership from the global header bar: `query` is
+   * cleared and the value moves to `nameOrVersion`, so exactly one text value is
+   * ever live. Without that, `buildQueryParams` would space-join the two into a
+   * single API `q` and the user would get results for both terms at once.
+   *
+   * Both sends land before the deferred search runs — see the note on
+   * `rehydrateFromUrl` about XState's synchronous dispatch.
+   */
   const handleNameFilterChange = useCallback(
     (value: string) => {
+      setQuery('');
       handleFilterChange('nameOrVersion', value);
-      // Defer search to next tick so UPDATE_FILTER is processed before SEARCH runs
-      setTimeout(() => search(), 50);
+      // Defer search to the next tick so both events above are processed before
+      // SEARCH runs. 0, like every other deferred search here: XState's default
+      // dispatch is synchronous, so both sends have already landed in context by
+      // the time this fires, and no wall-clock delay buys anything.
+      setTimeout(() => search(), 0);
     },
-    [handleFilterChange, search]
+    [handleFilterChange, search, setQuery]
   );
 
+  /**
+   * Sort handler for the results-header dropdown — the only sorting control.
+   * It reports an explicit field AND direction, so there is no direction
+   * inference here.
+   */
   const handleSortChange = useCallback(
-    (value: string) => {
-      const field = value as SortField;
-      // Re-selecting the same field keeps the current direction (so a shared URL
-      // like ?sort=name&direction=desc isn't reset by a no-op click). A genuinely
-      // new field applies that field's sensible default direction.
-      const direction: SortDirection =
-        field === state.sortField
-          ? (state.sortDirection as SortDirection)
-          : field === 'lastUpdated' || field === 'version'
-            ? 'desc'
-            : 'asc';
+    (field: SortField, direction: SortDirection) => {
       setSort(field, direction);
       // Defer to the next tick so the machine applies SET_SORT before search()
       // reads context. Relies on XState's synchronous send (see rehydrateFromUrl).
       setTimeout(() => search(), 0);
     },
-    [setSort, search, state.sortField, state.sortDirection]
+    [setSort, search]
   );
 
   return (
@@ -383,11 +411,14 @@ export default function UnifiedSearchPage(): JSX.Element {
               onSelect={handleSelect}
               onRetry={handleRetry}
               query={state.query}
-              nameFilter={state.filters.nameOrVersion || ''}
+              // Display fallback: a query arriving from the global header bar as
+              // ?q= must be visible in this input (BDD-002). nameOrVersion wins
+              // when set, because an edit here transfers ownership to it.
+              nameFilter={state.filters.nameOrVersion || state.query}
               onNameFilterChange={handleNameFilterChange}
-              sortBy={state.sortField}
+              sortField={state.sortField}
+              sortDirection={state.sortDirection}
               onSortChange={handleSortChange}
-              selectedFormat={selectedFormat}
               onOpenMobileFilters={() => setShowMobileFilters(true)}
             />
           </Box>

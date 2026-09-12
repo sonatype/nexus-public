@@ -25,9 +25,6 @@ jest.mock('../useBlobStores', () => ({
 jest.mock('../../../../../../../interface/ExtJS', () => ({
   ExtJS: {
     isProEdition: jest.fn(() => true),
-    state: jest.fn(() => ({
-      getValue: (key: string) => key === 'azureSasUrlEnabled' ? true : null
-    })),
   }
 }));
 
@@ -284,7 +281,7 @@ describe('AzureBlobStoreSettings', () => {
     });
 
     describe('RBAC info note', () => {
-      const noteText = /Storage Blob Delegator/;
+      const noteText = /generate a user delegation key/;
 
       it('shows the note when enabled with MANAGEDIDENTITY auth', () => {
         const props = {

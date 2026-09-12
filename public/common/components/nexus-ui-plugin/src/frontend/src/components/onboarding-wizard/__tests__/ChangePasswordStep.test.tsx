@@ -89,6 +89,7 @@ describe('ChangePasswordStep', () => {
       getStarted: jest.fn(),
       submit: wizardSubmit,
       finish: jest.fn(),
+      actionButtonRef: { current: null },
     });
     // Default resolve so tests that don't care about HTTP still complete cleanly
     mockedPut.mockResolvedValue(undefined);

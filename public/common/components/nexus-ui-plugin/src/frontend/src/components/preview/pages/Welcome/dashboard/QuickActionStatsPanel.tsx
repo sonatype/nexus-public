@@ -37,6 +37,15 @@ const BROWSE_HREF = '#preview/browse';
 const SEARCH_HREF = '#preview/browse/search';
 const CLEANUP_POLICIES_HREF = '#preview/admin/repository/cleanup-policies';
 
+function TileLoadingSkeleton() {
+  return (
+    <Flex align="center" gap="2" role="status" aria-live="polite" aria-busy="true">
+      <RefreshCw size={16} aria-hidden="true" className="nxrm-quick-action-stat-card__spinner" />
+      <Text size="2" color="gray">Loading…</Text>
+    </Flex>
+  );
+}
+
 interface StatCardProps {
   title: string;
   href?: string;
@@ -102,16 +111,17 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
   const instanceTotals = useInstanceTotals();
 
   const [healthChecks, setHealthChecks] = useState<{ healthy: number; unhealthy: number } | null>(null);
+  const [healthChecksError, setHealthChecksError] = useState<boolean>(false);
   const [cleanupCount, setCleanupCount] = useState<number | null>(null);
+  const [cleanupError, setCleanupError] = useState<boolean>(false);
 
   // Check if user has permission to view cleanup policies (requires admin permission)
   const canViewCleanupPolicies = ExtJS.checkPermission(Permissions.ADMIN) && ExtJS.state().getUser();
   const isCloud: boolean = ExtJS.state?.()?.getValue?.('isCloud', false) ?? false;
 
   useEffect(() => {
-    // On cloud the API returns 403; the catch handler sets counts to 0/0 so the card
-    // still renders — the href guard above prevents navigation to the missing route.
     let cancelled = false;
+    setHealthChecksError(false);
     fetchMetricHealth()
       .then((checks) => {
         if (cancelled) return;
@@ -127,7 +137,9 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
         setHealthChecks(counts);
       })
       .catch(() => {
-        if (!cancelled) setHealthChecks({ healthy: 0, unhealthy: 0 });
+        // Hide the tile when the data source is unavailable rather than
+        // rendering a misleading 0 unhealthy / 0 healthy (AC2, NEXUS-54012).
+        if (!cancelled) setHealthChecksError(true);
       });
     return () => {
       cancelled = true;
@@ -141,12 +153,15 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
     }
 
     let cancelled = false;
+    setCleanupError(false);
     fetchCleanupPolicies()
       .then((policies) => {
         if (!cancelled) setCleanupCount(Array.isArray(policies) ? policies.length : 0);
       })
       .catch(() => {
-        if (!cancelled) setCleanupCount(0);
+        // Hide the tile when the data source is unavailable rather than
+        // rendering a misleading zero-state (AC2, NEXUS-54012).
+        if (!cancelled) setCleanupError(true);
       });
     return () => {
       cancelled = true;
@@ -158,8 +173,11 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
     return reposByFormat.data?.reduce((sum, f) => sum + f.totalCount, 0) ?? 0;
   }, [reposByFormat.loading, reposByFormat.error, reposByFormat.data]);
 
-  const componentCount = instanceTotals.data?.totalComponents ?? null;
-  const componentLimit = instanceTotals.data?.totalComponentsLimit || 0;
+  // Use the decoupled Components view: it resolves as soon as
+  // component_total_count arrives and does not wait on the peak-requests
+  // metric (which this compact card never displays).
+  const componentCount = instanceTotals.componentCount;
+  const componentLimit = instanceTotals.componentLimit;
   const hasComponentLimit = componentLimit > 0;
   const componentRatio = hasComponentLimit && componentCount != null ? componentCount / componentLimit : 0;
   const componentExceeding = hasComponentLimit && componentRatio >= 1;
@@ -178,105 +196,123 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
   return (
     <div className="nxrm-quick-action-stats">
       <div className="nxrm-quick-action-stats__grid">
-        <StatCard
-          title={SYSTEM_HEALTH.title}
-          href={isCloud ? undefined : SYSTEM_HEALTH_HREF}
-          className={systemHealthClassName}
-        >
-          {healthChecks != null ? (
-            <Flex direction="column" gap="2" className="nxrm-system-health__progress">
-              <Flex justify="between" align="baseline">
-                <Heading
-                  as="h1"
-                  size="6"
-                  className={`nxrm-quick-action-stat-card__number ${healthChecks.unhealthy > 0 ? 'nxrm-system-health__number--unhealthy' : ''}`}
+        {isCloud || healthChecksError ? null : (
+          <StatCard
+            title={SYSTEM_HEALTH.title}
+            href={healthChecks != null ? SYSTEM_HEALTH_HREF : undefined}
+            className={systemHealthClassName}
+          >
+            {healthChecks != null ? (
+              <Flex direction="column" gap="2" className="nxrm-system-health__progress">
+                <Flex justify="between" align="baseline">
+                  <Heading
+                    as="h1"
+                    size="6"
+                    className={`nxrm-quick-action-stat-card__number ${healthChecks.unhealthy > 0 ? 'nxrm-system-health__number--unhealthy' : ''}`}
+                  >
+                    {healthChecks.unhealthy.toLocaleString()}
+                  </Heading>
+                  <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
+                    {healthChecks.healthy.toLocaleString()}
+                  </Heading>
+                </Flex>
+                <Flex
+                  className={`nxrm-system-health__progress-bar ${
+                    healthChecks.unhealthy + healthChecks.healthy === 0
+                      ? 'nxrm-system-health__progress-bar--empty'
+                      : ''
+                  }`}
                 >
-                  {healthChecks.unhealthy.toLocaleString()}
-                </Heading>
-                <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
-                  {healthChecks.healthy.toLocaleString()}
-                </Heading>
+                  <Box
+                    className="nxrm-system-health__progress-segment nxrm-system-health__progress-segment--unhealthy"
+                    style={{
+                      flex: healthChecks.unhealthy + healthChecks.healthy === 0 ? 1 : healthChecks.unhealthy,
+                    }}
+                  />
+                  <Box
+                    className="nxrm-system-health__progress-segment nxrm-system-health__progress-segment--healthy"
+                    style={{
+                      flex: healthChecks.unhealthy + healthChecks.healthy === 0 ? 1 : healthChecks.healthy,
+                    }}
+                  />
+                </Flex>
+                <Flex justify="between">
+                  <Text size="1" color="gray">
+                    Unhealthy
+                  </Text>
+                  <Text size="1" color="gray">
+                    Healthy
+                  </Text>
+                </Flex>
               </Flex>
-              <Flex
-                className={`nxrm-system-health__progress-bar ${
-                  healthChecks.unhealthy + healthChecks.healthy === 0
-                    ? 'nxrm-system-health__progress-bar--empty'
-                    : ''
-                }`}
-              >
-                <Box
-                  className="nxrm-system-health__progress-segment nxrm-system-health__progress-segment--unhealthy"
-                  style={{
-                    flex: healthChecks.unhealthy + healthChecks.healthy === 0 ? 1 : healthChecks.unhealthy,
-                  }}
-                />
-                <Box
-                  className="nxrm-system-health__progress-segment nxrm-system-health__progress-segment--healthy"
-                  style={{
-                    flex: healthChecks.unhealthy + healthChecks.healthy === 0 ? 1 : healthChecks.healthy,
-                  }}
-                />
-              </Flex>
-              <Flex justify="between">
-                <Text size="1" color="gray">
-                  Unhealthy
-                </Text>
-                <Text size="1" color="gray">
-                  Healthy
-                </Text>
-              </Flex>
-            </Flex>
-          ) : (
-            <Text size="2" color="gray">
-              —
-            </Text>
-          )}
-        </StatCard>
+            ) : (
+              <TileLoadingSkeleton />
+            )}
+          </StatCard>
+        )}
 
-        <StatCard title="Repositories">
-          {repoCount != null ? (
-            <Flex direction="column" gap="3">
-              <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
-                {repoCount.toLocaleString()}
-              </Heading>
-              <Flex gap="2" wrap="wrap">
-                <Button
-                  size="2"
-                  variant="surface"
-                  color="blue"
-                  onClick={() => {
-                    window.location.hash = BROWSE_HREF;
-                  }}
-                >
-                  {BROWSE.title}
-                </Button>
-                <Button size="2" variant="surface" color="blue" onClick={onConnectClick}>
-                  {CONNECT.title}
-                </Button>
+        {reposByFormat.error ? null : (
+          <StatCard title="Repositories">
+            {reposByFormat.loading ? (
+              <TileLoadingSkeleton />
+            ) : repoCount != null ? (
+              <Flex direction="column" gap="3">
+                <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
+                  {repoCount.toLocaleString()}
+                </Heading>
+                <Flex gap="2" wrap="wrap">
+                  <Button
+                    size="2"
+                    variant="surface"
+                    color="blue"
+                    onClick={() => {
+                      window.location.hash = BROWSE_HREF;
+                    }}
+                  >
+                    {BROWSE.title}
+                  </Button>
+                  <Button size="2" variant="surface" color="blue" onClick={onConnectClick}>
+                    {CONNECT.title}
+                  </Button>
+                </Flex>
               </Flex>
-            </Flex>
-          ) : (
-            <Text size="2" color="gray">
-              —
-            </Text>
-          )}
-        </StatCard>
+            ) : null}
+          </StatCard>
+        )}
 
         <StatCard title="Components">
-          {instanceTotals.loading ? (
+          {instanceTotals.componentsLoading ? (
             <Flex align="center" gap="2">
-              <RefreshCw size={16} className="nxrm-quick-action-stat-card__spinner" />
+              <RefreshCw size={16} aria-hidden="true" className="nxrm-quick-action-stat-card__spinner" />
               <Text size="2" color="gray">
                 Loading…
               </Text>
             </Flex>
-          ) : componentCount != null ? (
+          ) : instanceTotals.componentsError ? (
+            <Flex direction="column" gap="2" className="nxrm-quick-action-stat-card__error">
+              <Flex align="center" gap="2">
+                <AlertCircle size={16} aria-hidden="true" className="nxrm-quick-action-stat-card__icon--unhealthy" />
+                <Text size="2" color="gray">
+                  Couldn't load metrics
+                </Text>
+              </Flex>
+              <Button size="2" variant="surface" color="blue" onClick={instanceTotals.retry}>
+                Retry
+              </Button>
+            </Flex>
+          ) : (
+            // useInstanceTotals guarantees componentCount is non-null when
+            // both componentsLoading and componentsError are false.
             <Flex direction="column" gap="3">
               <Flex align="baseline" gap="2">
-                {componentExceeding && <AlertCircle size={16} style={{color: 'var(--red-9)', flexShrink: 0}} />}
-                {componentApproaching && <AlertTriangle size={16} style={{color: 'var(--orange-9)', flexShrink: 0}} />}
+                {componentExceeding && (
+                  <AlertCircle size={16} aria-hidden="true" className="nxrm-quick-action-stat-card__icon--unhealthy" />
+                )}
+                {componentApproaching && (
+                  <AlertTriangle size={16} aria-hidden="true" className="nxrm-quick-action-stat-card__icon--warning" />
+                )}
                 <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
-                  {componentCount.toLocaleString()}
+                  {componentCount?.toLocaleString()}
                 </Heading>
               </Flex>
               {hasComponentLimit && (
@@ -289,7 +325,7 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
                   />
                   <Flex justify="between" mt="1">
                     <Text size="1" color="gray">
-                      {componentCount.toLocaleString()} of {componentLimit.toLocaleString()}
+                      {componentCount?.toLocaleString()} of {componentLimit.toLocaleString()}
                     </Text>
                     <Text size="1" color="gray">
                       limit
@@ -308,14 +344,14 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
                 {SEARCH.title}
               </Button>
             </Flex>
-          ) : (
-            <Text size="2" color="gray">
-              —
-            </Text>
           )}
         </StatCard>
 
-        {canViewCleanupPolicies && (cleanupCount === 0 ? (
+        {canViewCleanupPolicies && !cleanupError && (cleanupCount === null ? (
+          <StatCard title={CLEANUP_POLICIES.title}>
+            <TileLoadingSkeleton />
+          </StatCard>
+        ) : cleanupCount === 0 ? (
           <StatCard
             title={CLEANUP_POLICIES.title}
             className="nxrm-quick-action-stat-card--zero-cleanup"
@@ -338,15 +374,9 @@ export function QuickActionStatsPanel({ onConnectClick }: QuickActionStatsPanelP
           </StatCard>
         ) : (
           <StatCard title={CLEANUP_POLICIES.title} href={CLEANUP_POLICIES_HREF}>
-            {cleanupCount != null ? (
-              <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
-                {cleanupCount.toLocaleString()}
-              </Heading>
-            ) : (
-              <Text size="2" color="gray">
-                —
-              </Text>
-            )}
+            <Heading as="h1" size="6" className="nxrm-quick-action-stat-card__number">
+              {cleanupCount.toLocaleString()}
+            </Heading>
           </StatCard>
         ))}
       </div>

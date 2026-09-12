@@ -1,0 +1,35 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+
+.tablepagination-jump-combobox {
+  // RSC anchors the menu and the loading/empty alert with top: 100% and offers
+  // no placement API. Both are flipped above the input here.
+  .nx-combobox__menu,
+  .nx-combobox__alert {
+    top: auto;
+    bottom: 100%;
+    margin: 0 0 var(--nx-spacing-base) 0;
+  }
+
+  .nx-combobox__menu {
+    width: max-content;
+    min-width: 100%;
+    max-width: 160px;
+  }
+
+  // Distinct from .selected, which RSC uses for the arrow-key cursor.
+  .nx-dropdown-button[aria-current='page'] {
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 0 var(--nx-color-text-stark);
+  }
+}

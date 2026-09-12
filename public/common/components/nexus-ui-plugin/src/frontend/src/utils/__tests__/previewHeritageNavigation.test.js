@@ -91,6 +91,20 @@ describe('getHeritageEquivalent', () => {
     expect(getHeritageEquivalent('preview/admin/support/recoverymode'))
       .toBe('admin/support/recovery');
   });
+
+  it('maps IQ Server Connected page with slash-separated path', () => {
+    expect(getHeritageEquivalent('preview/admin/iq/connected')).toBe('admin/iq/connected');
+  });
+
+  it('maps Hosted Repository Evaluation to Classic sonatype-lifecycle route', () => {
+    expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval'))
+      .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval');
+  });
+
+  it('preserves query string when mapping Hosted Repository Evaluation', () => {
+    expect(getHeritageEquivalent('preview/admin/iq/hosted-repos-eval?configured=true'))
+      .toBe('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true');
+  });
 });
 
 describe('heritageToPreviewPath', () => {
@@ -148,6 +162,13 @@ describe('heritageToPreviewPath', () => {
 
   it('maps admin/ (trailing slash) to preview/settings', () => {
     expect(heritageToPreviewPath('admin/')).toBe('preview/settings');
+  });
+
+  it('maps Classic Hosted Repository Evaluation to Preview route', () => {
+    expect(heritageToPreviewPath('admin/iq/sonatype-lifecycle/hosted-repos-eval'))
+      .toBe('preview/admin/iq/hosted-repos-eval');
+    expect(heritageToPreviewPath('admin/iq/sonatype-lifecycle/hosted-repos-eval?configured=true'))
+      .toBe('preview/admin/iq/hosted-repos-eval?configured=true');
   });
 
   it('maps admin/security/atlassiancrowd to preview crowd route', () => {

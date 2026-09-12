@@ -29,6 +29,8 @@ import {
   setMalwareRemediatorEnabledForRepository,
   type MalwareRemediatorMode,
 } from '../../shared/security/malwareRemediatorTask';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 const MALWARE_MODE_LABELS: Record<MalwareRemediatorMode, string> = {
   disabled: 'Off',
@@ -60,6 +62,19 @@ export default function ProtectRepoRow({
 }: ProtectRepoRowProps) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+
+  // Hide firewall protection radios without repository-admin edit, and Auto Remediation
+  // radios without tasks:create (NEXUS-54212). coreui never mounts a <PermissionsProvider>,
+  // so context usePermission returns false for everyone; use ExtJS.usePermission.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canEditFirewall = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.REPOSITORY_ADMIN.EDIT),
+    [hasUser],
+  );
+  const canManageRemediation = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TASKS.CREATE),
+    [hasUser],
+  );
 
   const supported = isFirewallSupportedFormat(repo.format);
   const hcFormatSupported = isHealthCheckSupportedFormat(repo.format);
@@ -210,6 +225,12 @@ export default function ProtectRepoRow({
                     —
                   </Text>
                 </Tooltip>
+              ) : !canEditFirewall ? (
+                <Tooltip content="You do not have permission to manage firewall protection">
+                  <Text size="2" color="gray">
+                    —
+                  </Text>
+                </Tooltip>
               ) : busy ? (
                 <Spinner size="1" />
               ) : (
@@ -240,6 +261,12 @@ export default function ProtectRepoRow({
                 </Text>
               ) : !hasIqConnection ? (
                 <Tooltip content="Connect IQ Server to enable Auto Remediation">
+                  <Text size="2" color="gray">
+                    —
+                  </Text>
+                </Tooltip>
+              ) : !canManageRemediation ? (
+                <Tooltip content="You do not have permission to manage Auto Remediation">
                   <Text size="2" color="gray">
                     —
                   </Text>

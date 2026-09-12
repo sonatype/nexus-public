@@ -166,6 +166,17 @@ export default {
                 <li>Highest recorded count: Highest monthly requests in the last 12 months.</li>
               </ul>
               *Calculations are based on UTC time.
+            </>,
+          // Radix Themes' Tooltip always wraps its content in <Text as="p">, so a nested
+          // <ul> (as in TOOLTIP above, used by Classic UI's NxTooltip) is invalid HTML and
+          // triggers a hydration warning. This variant uses <br/> instead of a list for the
+          // Preview UI Tooltip; the copy matches TOOLTIP.
+          TOOLTIP_PREVIEW: <>
+              Requests Per Month Metrics:<br />
+              Total Requests: Total requests for the current month.<br />
+              Average requests: Average monthly requests for the last 12 months.<br />
+              Highest recorded count: Highest monthly requests in the last 12 months.<br />
+              *Calculations are based on UTC time.
             </>
         },
         CARD_PRO_LABELS: {
@@ -175,6 +186,18 @@ export default {
         },
         CARD_CE_LABELS: {
           USAGE_LIMIT: 'Usage Limit',
+        },
+        CLOUD_TILE_LABELS: {
+          CURRENT_MONTH: 'Current Month',
+          MONTHLY_AVERAGE: 'Monthly Average',
+          PEAK: (title) => `Peak ${title}`,
+          EGRESS: 'Egress',
+          STORAGE: 'Storage',
+          EGRESS_TOOLTIP: 'Total data transferred out of this instance, including downloads from any client, automation, or integration.',
+          STORAGE_TOOLTIP: 'Total amount of storage currently used in this instance, including binaries and metadata.',
+          HISTORICAL_USAGE_TITLE: 'Historical Usage',
+          HISTORICAL_USAGE_TEXT: "Monitor how your repository's usage has changed month by month.",
+          HISTORICAL_USAGE_LINK: 'See historical usage data.',
         },
         CARD_SHARED_LABELS: {
           PERIOD: 'period',

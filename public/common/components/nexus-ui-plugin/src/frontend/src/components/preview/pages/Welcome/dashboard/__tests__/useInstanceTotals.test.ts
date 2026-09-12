@@ -73,17 +73,31 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
+const FULL_H2_DATA = {
+  totalComponents: 42,
+  peakRequestsPerDay: 7,
+  peakRequestsPerMonth: 0,
+  totalComponentsLimit: 0,
+  peakRequestsPerDayLimit: 0,
+};
+
 describe('useInstanceTotals', () => {
   it('returns loading=true with null data when usage is empty on mount', () => {
     setExtJsState([], false);
     const { result } = renderHook(() => useInstanceTotals());
-    expect(result.current).toEqual({ data: null, loading: true });
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(true);
+    expect(result.current.componentsLoading).toBe(true);
+    expect(result.current.componentsError).toBe(false);
+    expect(result.current.componentCount).toBeNull();
   });
 
   it('returns loading=true with null data when usage is undefined', () => {
     setExtJsState(undefined, false);
     const { result } = renderHook(() => useInstanceTotals());
-    expect(result.current).toEqual({ data: null, loading: true });
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(true);
+    expect(result.current.componentsLoading).toBe(true);
   });
 
   it('returns loading=true when only some metrics are present', () => {
@@ -92,7 +106,11 @@ describe('useInstanceTotals', () => {
       false
     );
     const { result } = renderHook(() => useInstanceTotals());
-    expect(result.current).toEqual({ data: null, loading: true });
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(true);
+    // component_total_count is still missing, so the Components view stays loading
+    expect(result.current.componentsLoading).toBe(true);
+    expect(result.current.componentCount).toBeNull();
   });
 
   it('resolves loading after poll interval when data arrives', () => {
@@ -107,35 +125,35 @@ describe('useInstanceTotals', () => {
       jest.advanceTimersByTime(500);
     });
 
-    expect(result.current).toEqual({
-      data: {
-        totalComponents: 42,
-        peakRequestsPerDay: 7,
-        peakRequestsPerMonth: 0,
-        totalComponentsLimit: 0,
-        peakRequestsPerDayLimit: 0,
-      },
-      loading: false,
-    });
+    expect(result.current.data).toEqual(FULL_H2_DATA);
+    expect(result.current.loading).toBe(false);
   });
 
   it('returns loading=false with full data when both H2 metrics are present on mount', () => {
     setExtJsState(FULL_H2_USAGE, false);
     const { result } = renderHook(() => useInstanceTotals());
-    expect(result.current).toEqual({
-      data: {
-        totalComponents: 42,
-        peakRequestsPerDay: 7,
-        peakRequestsPerMonth: 0,
-        totalComponentsLimit: 0,
-        peakRequestsPerDayLimit: 0,
-      },
-      loading: false,
-    });
+    expect(result.current.data).toEqual(FULL_H2_DATA);
+    expect(result.current.loading).toBe(false);
   });
 
   it('uses postgresql metric name when isPostgres=true', () => {
     setExtJsState(FULL_PG_USAGE, true);
+    const { result } = renderHook(() => useInstanceTotals());
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data?.peakRequestsPerDay).toBe(9);
+  });
+
+  it('falls back to the h2 metric name when isPostgres=true but only the h2 variant is present', () => {
+    // Backend sent the h2 name regardless of datastore, or isPostgres loaded
+    // before the metrics did. The fallback must still resolve peak requests.
+    setExtJsState(FULL_H2_USAGE, true);
+    const { result } = renderHook(() => useInstanceTotals());
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data?.peakRequestsPerDay).toBe(7);
+  });
+
+  it('falls back to the postgresql metric name when isPostgres=false but only the pg variant is present', () => {
+    setExtJsState(FULL_PG_USAGE, false);
     const { result } = renderHook(() => useInstanceTotals());
     expect(result.current.loading).toBe(false);
     expect(result.current.data?.peakRequestsPerDay).toBe(9);
@@ -148,16 +166,15 @@ describe('useInstanceTotals', () => {
     ];
     setExtJsState(usageWithGenuineZero, false);
     const { result } = renderHook(() => useInstanceTotals());
-    expect(result.current).toEqual({
-      data: {
-        totalComponents: 0,
-        peakRequestsPerDay: 0,
-        peakRequestsPerMonth: 0,
-        totalComponentsLimit: 0,
-        peakRequestsPerDayLimit: 0,
-      },
-      loading: false,
+    expect(result.current.data).toEqual({
+      totalComponents: 0,
+      peakRequestsPerDay: 0,
+      peakRequestsPerMonth: 0,
+      totalComponentsLimit: 0,
+      peakRequestsPerDayLimit: 0,
     });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.componentCount).toBe(0);
   });
 
   it('treats metricValue null as missing (loading)', () => {
@@ -167,7 +184,8 @@ describe('useInstanceTotals', () => {
     ];
     setExtJsState(usageWithNullValue, false);
     const { result } = renderHook(() => useInstanceTotals());
-    expect(result.current).toEqual({ data: null, loading: true });
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(true);
   });
 
   it('keeps loading=false on subsequent poll even if state momentarily empties', () => {
@@ -190,5 +208,96 @@ describe('useInstanceTotals', () => {
       totalComponentsLimit: 0,
       peakRequestsPerDayLimit: 0,
     });
+  });
+
+  it('componentCount keeps the last-seen value when state transiently empties', () => {
+    setExtJsState(FULL_H2_USAGE, false);
+    const { result } = renderHook(() => useInstanceTotals());
+    expect(result.current.componentCount).toBe(42);
+
+    // State clears on a later poll (e.g. during a refresh): the count card must
+    // keep showing 42, not flash "0".
+    setExtJsState([], false);
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(result.current.componentCount).toBe(42);
+  });
+
+  it('stops loading and reports an error once the timeout elapses with no data', () => {
+    setExtJsState([], false);
+    const { result } = renderHook(() => useInstanceTotals());
+    expect(result.current.loading).toBe(true);
+    expect(result.current.componentsLoading).toBe(true);
+
+    act(() => {
+      jest.advanceTimersByTime(15000);
+    });
+
+    // No metrics ever arrived: loading resolves to an error state, not an
+    // infinite spinner.
+    expect(result.current.loading).toBe(false);
+    expect(result.current.componentsLoading).toBe(false);
+    expect(result.current.componentsError).toBe(true);
+    expect(result.current.componentCount).toBeNull();
+    expect(result.current.data).toBeNull();
+  });
+
+  it('resolves the Components view when only component_total_count is present', () => {
+    // Decoupling: the compact Components card must not wait for peak requests.
+    setExtJsState([{ metricName: 'component_total_count', metricValue: 123 }], false);
+    const { result } = renderHook(() => useInstanceTotals());
+
+    // Full `data` still gated on both metrics...
+    expect(result.current.data).toBeNull();
+    expect(result.current.loading).toBe(true);
+    // ...but the Components view resolves immediately.
+    expect(result.current.componentsLoading).toBe(false);
+    expect(result.current.componentsError).toBe(false);
+    expect(result.current.componentCount).toBe(123);
+  });
+
+  it('recovers automatically when metrics arrive after the timeout', () => {
+    setExtJsState([], false);
+    const { result } = renderHook(() => useInstanceTotals());
+
+    act(() => {
+      jest.advanceTimersByTime(15000);
+    });
+    expect(result.current.componentsError).toBe(true);
+
+    // Aggregation eventually runs; the next poll picks it up.
+    setExtJsState(FULL_H2_USAGE, false);
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(result.current.componentsError).toBe(false);
+    expect(result.current.componentCount).toBe(42);
+    expect(result.current.data).toEqual(FULL_H2_DATA);
+  });
+
+  it('retry() restarts the loading window', () => {
+    setExtJsState([], false);
+    const { result } = renderHook(() => useInstanceTotals());
+
+    act(() => {
+      jest.advanceTimersByTime(15000);
+    });
+    expect(result.current.componentsError).toBe(true);
+
+    act(() => {
+      result.current.retry();
+    });
+
+    // Back to loading after retry; error clears until the window elapses again.
+    expect(result.current.componentsError).toBe(false);
+    expect(result.current.componentsLoading).toBe(true);
+
+    act(() => {
+      jest.advanceTimersByTime(15000);
+    });
+    expect(result.current.componentsError).toBe(true);
   });
 });

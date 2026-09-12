@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 import UnifiedSearchPage, { serializeSearchState } from '../UnifiedSearchPage';
@@ -22,11 +22,12 @@ import * as useUnifiedSearchModule from '../useUnifiedSearch';
 jest.mock('../useUnifiedSearch');
 
 // Mock useSearchNavigation to avoid UIRouter dependency
+const mockNavigateToDetail = jest.fn();
 jest.mock('../useSearchNavigation', () => ({
   useSearchNavigation: () => ({
-    navigateToDetail: jest.fn(),
+    navigateToDetail: mockNavigateToDetail,
   }),
-  COMPONENT_DETAIL_RETURN_SEARCH_KEY: 'nexus-component-detail-return-search',
+  SEARCH_RETURN_URL_KEY: 'nexus-search-return-url',
 }));
 
 // Mock useRepositories
@@ -98,6 +99,7 @@ describe('UnifiedSearchPage', () => {
     mockUrlState = { format: 'all', query: '', filters: {} };
     // Clear any sessionStorage state from previous tests
     sessionStorage.clear();
+    mockNavigateToDetail.mockClear();
     mockUseUnifiedSearch.mockReturnValue({
       state: defaultMockState,
       placeholder: 'Search by component name or ID',
@@ -618,40 +620,132 @@ describe('UnifiedSearchPage', () => {
     });
   });
 
-  describe('SessionStorage breadcrumb restore', () => {
-    const STORAGE_KEY = 'nexus-component-detail-return-search';
-
-    it('restores search state from sessionStorage when returning from detail page', async () => {
-      // Set up sessionStorage with saved search state
-      const savedState = { query: 'react', format: 'npm', filters: { author: 'facebook' } };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(savedState));
-
-      renderWithTheme(<UnifiedSearchPage />);
-
-      await waitFor(() => {
-        expect(mockSetFormat).toHaveBeenCalledWith('npm');
-      });
-      expect(mockSetQuery).toHaveBeenCalledWith('react');
-      expect(mockSetFilters).toHaveBeenCalledWith({ author: 'facebook' });
-
-      // Should be removed after restore
-      expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull();
+  describe('Deep-link URL rehydration', () => {
+    afterEach(() => {
+      mockUrlState = { format: 'all', query: '', filters: {} };
     });
 
-    it('handles malformed sessionStorage JSON gracefully', async () => {
-      sessionStorage.setItem(STORAGE_KEY, 'not-valid-json');
+    it('restores the nameOrVersion filter from a bookmarked / shared URL', async () => {
+      // Companion to the buildQueryString/parseUrlState round-trip test in
+      // useSearchUrlState.test.ts — this verifies the mount effect actually
+      // pipes that URL state into the search machine when there is no
+      // sessionStorage payload (deep-link / refresh / share path).
+      mockUrlState = {
+        format: 'all',
+        query: '',
+        filters: { nameOrVersion: 'commons' },
+      };
 
       renderWithTheme(<UnifiedSearchPage />);
 
-      // Should fall back to URL state and still call search
       await waitFor(() => {
-        expect(mockSearch).toHaveBeenCalled();
+        expect(mockSetFilters).toHaveBeenCalledWith({ nameOrVersion: 'commons' });
       });
-
-      // Should remove the malformed entry (when JSON.parse throws, catch block removes it)
-      // Note: The catch block only removes if the parse fails, which it will for 'not-valid-json'
-      // But the test might be racing with the effect. Let's check that search was called instead.
       expect(mockSearch).toHaveBeenCalled();
+    });
+  });
+
+  describe('sort controls', () => {
+    // jsdom lacks the pointer-capture / scrollIntoView APIs Radix Select needs
+    // when the dropdown opens.
+    beforeAll(() => {
+      window.HTMLElement.prototype.hasPointerCapture = jest.fn(() => false);
+      window.HTMLElement.prototype.releasePointerCapture = jest.fn();
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    });
+
+    /** The results header renders three times (mobile / tablet / desktop). */
+    function sortTrigger() {
+      return screen.getAllByRole('combobox', { name: /^Sort:/ })[0];
+    }
+
+    function renderWithSort(sortField: string, sortDirection: string) {
+      mockUseUnifiedSearch.mockReturnValue({
+        state: { ...defaultMockState, sortField, sortDirection } as never,
+        placeholder: 'Search by component name or ID',
+        setFormat: mockSetFormat,
+        setQuery: mockSetQuery,
+        setFilter: mockSetFilter,
+        setFilters: mockSetFilters,
+        search: mockSearch,
+        loadMore: mockLoadMore,
+        reset: mockReset,
+        hasMore: false,
+        setSortField: mockSetSortField,
+        setSortDirection: mockSetSortDirection,
+        setSort: mockSetSort,
+      });
+      return renderWithTheme(<UnifiedSearchPage />);
+    }
+
+    it('shows the shared sort state in the dropdown', () => {
+      renderWithSort('name', 'desc');
+
+      expect(sortTrigger()).toHaveTextContent('Name — Z-A');
+    });
+
+    it('renders no sorting control outside the results header', () => {
+      renderWithSort('name', 'desc');
+
+      // The results-header dropdown is the only sorting control; the sidebar
+      // (also rendered inside the mobile filter drawer) must offer none.
+      expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+      expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    });
+
+    it('moves the dropdown when the sort state changes', () => {
+      const { rerender } = renderWithSort('name', 'asc');
+
+      expect(sortTrigger()).toHaveTextContent('Name — A-Z');
+
+      // A state change (e.g. from a URL rehydration) must move the dropdown.
+      mockUseUnifiedSearch.mockReturnValue({
+        state: {
+          ...defaultMockState,
+          sortField: 'lastUpdated',
+          sortDirection: 'asc',
+        } as never,
+        placeholder: 'Search by component name or ID',
+        setFormat: mockSetFormat,
+        setQuery: mockSetQuery,
+        setFilter: mockSetFilter,
+        setFilters: mockSetFilters,
+        search: mockSearch,
+        loadMore: mockLoadMore,
+        reset: mockReset,
+        hasMore: false,
+        setSortField: mockSetSortField,
+        setSortDirection: mockSetSortDirection,
+        setSort: mockSetSort,
+      });
+      rerender(
+        <Theme>
+          <UnifiedSearchPage />
+        </Theme>,
+      );
+
+      expect(sortTrigger()).toHaveTextContent('Last updated — Oldest first');
+    });
+
+    it('routes a dropdown selection into the shared sort state and re-runs the search', async () => {
+      renderWithSort('lastUpdated', 'desc');
+      mockSearch.mockClear();
+
+      await userEvent.click(sortTrigger());
+      await userEvent.click(screen.getAllByRole('option', { name: 'A-Z' })[0]);
+
+      expect(mockSetSort).toHaveBeenCalledWith('name', 'asc');
+      await waitFor(() => expect(mockSearch).toHaveBeenCalled());
+    });
+
+    it('writes the selected sort to the URL', async () => {
+      renderWithSort('name', 'asc');
+
+      await waitFor(() => {
+        expect(mockSyncToUrl).toHaveBeenCalledWith(
+          expect.objectContaining({ sortField: 'name', sortDirection: 'asc' }),
+        );
+      });
     });
   });
 
@@ -723,6 +817,176 @@ describe('UnifiedSearchPage', () => {
       // depend on the echo-guard's prior state.
       expect(mockSetQuery).toHaveBeenCalledWith('spring');
       expect(mockSetFilters).toHaveBeenCalledWith({ groupId: 'org.apache' });
+    });
+  });
+
+  describe('URL is the only mount-time source', () => {
+    afterEach(() => {
+      mockUrlState = { format: 'all', query: '', filters: {} };
+    });
+
+    it('rehydrates every criterion from the URL and searches once (AT-002)', async () => {
+      mockUrlState = {
+        format: 'maven',
+        query: 'spring',
+        filters: { groupId: 'org.apache', nameOrVersion: 'commons' },
+        sortField: 'name',
+        sortDirection: 'asc',
+      };
+
+      renderWithTheme(<UnifiedSearchPage />);
+
+      await waitFor(() => {
+        expect(mockSearch).toHaveBeenCalledTimes(1);
+      });
+      expect(mockSetFormat).toHaveBeenCalledWith('maven');
+      expect(mockSetQuery).toHaveBeenCalledWith('spring');
+      expect(mockSetFilters).toHaveBeenCalledWith({
+        groupId: 'org.apache',
+        nameOrVersion: 'commons',
+      });
+      expect(mockSetSort).toHaveBeenCalledWith('name', 'asc');
+    });
+
+    it('ignores a stale return-URL key and uses the URL (AT-003)', async () => {
+      // Regression guard for NEXUS-54503 Defect 1: sessionStorage is copied into
+      // a tab opened from a link, and the key survives a refresh, so the mount
+      // effect must not consult it at all.
+      sessionStorage.setItem(
+        'nexus-search-return-url',
+        '#preview/browse/search?q=stale&format=npm',
+      );
+      mockUrlState = { format: 'all', query: 'fresh', filters: {} };
+
+      renderWithTheme(<UnifiedSearchPage />);
+
+      await waitFor(() => {
+        expect(mockSetQuery).toHaveBeenCalledWith('fresh');
+      });
+      expect(mockSetQuery).not.toHaveBeenCalledWith('stale');
+      expect(mockSetFormat).not.toHaveBeenCalledWith('npm');
+      // Untouched — only the breadcrumb consumes it.
+      expect(sessionStorage.getItem('nexus-search-return-url')).not.toBeNull();
+    });
+  });
+
+  describe('flush before navigating to detail', () => {
+    it('writes the settled state to the URL before navigating (AT-020)', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          name: 'lodash',
+          format: 'npm',
+          repository: 'npm-proxy',
+          version: '4.17.21',
+        },
+      ];
+      mockUseUnifiedSearch.mockReturnValue({
+        state: {
+          ...defaultMockState,
+          results: mockResults,
+          totalCount: 1,
+          query: 'lodash',
+          filters: { nameOrVersion: 'lodash' },
+        },
+        placeholder: 'Search by component name or ID',
+        setFormat: mockSetFormat,
+        setQuery: mockSetQuery,
+        setFilter: mockSetFilter,
+        setFilters: mockSetFilters,
+        search: mockSearch,
+        loadMore: mockLoadMore,
+        reset: mockReset,
+        hasMore: false,
+        setSortField: mockSetSortField,
+        setSortDirection: mockSetSortDirection,
+        setSort: mockSetSort,
+      });
+
+      renderWithTheme(<UnifiedSearchPage />);
+      mockSyncToUrl.mockClear();
+
+      await userEvent.click(screen.getByRole('button', { name: /view details for lodash/i }));
+
+      // replace=true: the entry the user is standing on is rewritten, and the
+      // navigation that follows pushes its own. Without this flush, a click
+      // inside the 350ms debounce window stores a stale return URL.
+      expect(mockSyncToUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: 'lodash',
+          filters: { nameOrVersion: 'lodash' },
+        }),
+        true,
+      );
+      expect(mockNavigateToDetail).toHaveBeenCalledWith(mockResults[0]);
+    });
+  });
+
+  describe('page-level filter and the global query', () => {
+    /** Mock the hook with a given machine state, keeping every dispatcher stable. */
+    function mockStateWith(overrides: Record<string, unknown>) {
+      mockUseUnifiedSearch.mockReturnValue({
+        state: { ...defaultMockState, ...overrides },
+        placeholder: 'Search by component name or ID',
+        setFormat: mockSetFormat,
+        setQuery: mockSetQuery,
+        setFilter: mockSetFilter,
+        setFilters: mockSetFilters,
+        search: mockSearch,
+        loadMore: mockLoadMore,
+        reset: mockReset,
+        hasMore: false,
+        setSortField: mockSetSortField,
+        setSortDirection: mockSetSortDirection,
+        setSort: mockSetSort,
+      });
+    }
+
+    it('shows the global query in the filter input when no nameOrVersion is set (AT-004)', () => {
+      mockStateWith({ query: 'spring', filters: {} });
+
+      renderWithTheme(<UnifiedSearchPage />);
+
+      const inputs = screen.getAllByPlaceholderText(/filter by component name or version/i);
+      expect(inputs.length).toBeGreaterThan(0);
+      expect(inputs[0]).toHaveValue('spring');
+    });
+
+    it('prefers nameOrVersion over the query when both are set (AT-004)', () => {
+      mockStateWith({ query: 'spring', filters: { nameOrVersion: 'commons' } });
+
+      renderWithTheme(<UnifiedSearchPage />);
+
+      const inputs = screen.getAllByPlaceholderText(/filter by component name or version/i);
+      expect(inputs[0]).toHaveValue('commons');
+    });
+
+    it('clears the query and sets nameOrVersion on edit (AT-005)', () => {
+      // fireEvent + fake timers, not userEvent: userEvent@12 (installed here) has
+      // no .setup()/advanceTimers option, and the SearchResults debounce test
+      // (SearchResults.test.tsx) already establishes fireEvent.change as this
+      // codebase's pattern for driving a debounced controlled input under fake
+      // timers.
+      jest.useFakeTimers();
+      try {
+        mockStateWith({ query: 'spring', filters: {} });
+
+        renderWithTheme(<UnifiedSearchPage />);
+        const input = screen.getAllByPlaceholderText(
+          /filter by component name or version/i,
+        )[0];
+
+        fireEvent.change(input, { target: { value: 'boot' } });
+        // SearchResults debounces the filter input by 500ms.
+        act(() => {
+          jest.advanceTimersByTime(600);
+        });
+
+        expect(mockSetQuery).toHaveBeenCalledWith('');
+        expect(mockSetFilter).toHaveBeenCalledWith('nameOrVersion', 'boot');
+      } finally {
+        jest.useRealTimers();
+      }
     });
   });
 });

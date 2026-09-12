@@ -371,9 +371,10 @@ export async function canDeleteFolder(path: string, repositoryName: string): Pro
  */
 export async function deleteComponent(componentData: ComponentXO): Promise<string[]> {
   try {
-    // REST API expects base64(repositoryName:rawId) format
-    const encodedId = encodeRepositoryItemId(componentData.repositoryName, componentData.id);
-    const url = urlBuilder.components.delete(encodedId);
+    // componentData.id is ALREADY the base64(repository:internalId) RepositoryItemIDXO form
+    // (it comes straight from the REST v1 fetchComponent response). Re-encoding it here would
+    // double-encode and the REST DELETE would 404, so use it as-is.
+    const url = urlBuilder.components.delete(componentData.id);
     await restClient.delete(url);
     return [componentData.id];
   } catch (err: unknown) {
@@ -389,13 +390,11 @@ export async function deleteComponent(componentData: ComponentXO): Promise<strin
  * @param assetId - Raw asset ID from browse tree
  * @param repositoryName - Repository name (required to encode ID for REST API)
  */
-export async function deleteAsset(
-  assetId: string,
-  repositoryName: string,
-  alreadyEncoded = false
-): Promise<void> {
+export async function deleteAsset(assetId: string, repositoryName: string): Promise<void> {
   try {
-    const encodedId = alreadyEncoded ? assetId : encodeRepositoryItemId(repositoryName, assetId);
+    // assetId is the RAW internal id (from ExtDirect readAsset); the REST API
+    // expects the base64(repository:internalId) RepositoryItemIDXO form.
+    const encodedId = encodeRepositoryItemId(repositoryName, assetId);
     const url = urlBuilder.assets.delete(encodedId);
     await restClient.delete(url);
   } catch (err: unknown) {

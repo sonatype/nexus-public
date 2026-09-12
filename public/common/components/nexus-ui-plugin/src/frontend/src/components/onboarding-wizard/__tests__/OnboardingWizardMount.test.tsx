@@ -22,6 +22,7 @@ jest.mock('../../../interface/ExtJS', () => ({
   useState: jest.fn(),
   useUser: jest.fn(),
   state: jest.fn(),
+  showErrorMessage: jest.fn(),
 }));
 
 // Mock rest-client module
@@ -41,6 +42,7 @@ jest.mock('../Wizard', () => {
 // Mock WizardContext module - capture props via a passthrough
 let capturedWizardProviderProps: {
   fetchSteps?: () => Promise<unknown[]>;
+  verify?: () => Promise<void>;
   onDone?: () => void;
   children?: React.ReactNode;
 } = {};
@@ -48,14 +50,16 @@ let capturedWizardProviderProps: {
 jest.mock('../WizardContext', () => ({
   WizardProvider: function MockWizardProvider({
     fetchSteps,
+    verify,
     onDone,
     children,
   }: {
     fetchSteps: () => Promise<unknown[]>;
+    verify?: () => Promise<void>;
     onDone?: () => void;
     children: React.ReactNode;
   }): JSX.Element {
-    capturedWizardProviderProps = { fetchSteps, onDone, children };
+    capturedWizardProviderProps = { fetchSteps, verify, onDone, children };
     return <>{children}</>;
   },
 }));
@@ -215,6 +219,119 @@ describe('OnboardingWizardMount', () => {
       expect(() => capturedWizardProviderProps.onDone!()).not.toThrow();
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verify service', () => {
+    beforeEach(() => {
+      (ExtJS.useState as jest.Mock)
+        .mockReturnValueOnce(true) // featureEnabled
+        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
+    });
+
+    it('provides verify that calls the onboarding endpoint and throws OnboardingStillRequired if steps remain', async () => {
+      const mockSteps = [{ type: 'Foo' }];
+      (restClient.get as jest.Mock).mockResolvedValueOnce(mockSteps);
+
+      render(<OnboardingWizardMount />);
+
+      // Trigger the verify
+      try {
+        await capturedWizardProviderProps.verify!();
+        throw new Error('verify should have thrown');
+      } catch (err) {
+        expect((err as Error).message).toBe('Onboarding still required');
+        // Machine relies on this name to classify errorKind as stillRequired
+        // rather than network — verify the wire contract.
+        expect((err as Error).name).toBe('OnboardingStillRequired');
+      }
+      expect(restClient.get).toHaveBeenCalledWith(
+        '/service/rest/internal/ui/onboarding',
+      );
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it('verify resolves without error when no steps remain', async () => {
+      (restClient.get as jest.Mock).mockResolvedValueOnce([]);
+
+      render(<OnboardingWizardMount />);
+
+      // Trigger the verify - should not throw
+      await expect(capturedWizardProviderProps.verify!()).resolves.toBeUndefined();
+      expect(restClient.get).toHaveBeenCalledWith(
+        '/service/rest/internal/ui/onboarding',
+      );
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('dismiss toast on close', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      (ExtJS.useState as jest.Mock)
+        .mockReturnValueOnce(true) // featureEnabled
+        .mockReturnValueOnce(true); // onboardingRequired
+      (ExtJS.useUser as jest.Mock).mockReturnValue({ administrator: true });
+      (ExtJS.state as jest.Mock).mockReturnValue({
+        getValue: jest.fn(),
+        setValue: jest.fn(),
+      });
+    });
+
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('shows the "setup not completed" toast when dismissed flag is set', () => {
+      sessionStorage.setItem('onboarding.dismissed', 'true');
+
+      render(<OnboardingWizardMount />);
+
+      capturedWizardProviderProps.onDone!();
+
+      expect(ExtJS.showErrorMessage).toHaveBeenCalledTimes(1);
+      expect(ExtJS.showErrorMessage).toHaveBeenCalledWith(
+        expect.stringContaining('Setup was not completed'),
+      );
+      // Flag is cleared so a subsequent unrelated re-open won't repeat the toast.
+      expect(sessionStorage.getItem('onboarding.dismissed')).toBeNull();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not show the toast when there is no dismissed flag', () => {
+      render(<OnboardingWizardMount />);
+
+      capturedWizardProviderProps.onDone!();
+
+      expect(ExtJS.showErrorMessage).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+    });
+
+    it('completes cleanup and clears state even if sessionStorage throws', () => {
+      const mockSetValue = jest.fn();
+      (ExtJS.state as jest.Mock).mockReturnValue({
+        getValue: jest.fn(),
+        setValue: mockSetValue,
+      });
+      const getItemSpy = jest
+        .spyOn(Storage.prototype, 'getItem')
+        .mockImplementation(() => {
+          throw new Error('SecurityError');
+        });
+
+      render(<OnboardingWizardMount />);
+
+      expect(() => capturedWizardProviderProps.onDone!()).not.toThrow();
+      // The critical side effect (clearing onboarding.required) must still fire
+      // even when sessionStorage is unavailable.
+      expect(mockSetValue).toHaveBeenCalledWith('onboarding.required', false);
+
+      getItemSpy.mockRestore();
     });
   });
 });

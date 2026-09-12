@@ -34,10 +34,12 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class BearerTokenManagerTest
@@ -133,6 +135,43 @@ public class BearerTokenManagerTest
     when(apiKeyService.getApiKey(any(), any())).thenReturn(Optional.empty());
     assertFalse(underTest.deleteToken());
     verify(apiKeyService, never()).deleteApiKey(FORMAT, principalCollection);
+  }
+
+  @Test
+  public void echoResolverShortCircuitsApiKeyService_whenPresentedTokenIsPresent() {
+    BearerTokenEchoResolver echoResolver = mock(BearerTokenEchoResolver.class);
+    when(echoResolver.presentedToken(eq(principalCollection))).thenReturn(Optional.of("sat.test-value"));
+    setField(underTest, "echoResolver", echoResolver);
+
+    String result = underTest.createToken(principalCollection);
+
+    assertThat(result, is(equalTo("sat.test-value")));
+    verify(apiKeyService, never()).getApiKey(any(), any());
+    verify(apiKeyService, never()).createApiKey(any(), any());
+  }
+
+  @Test
+  public void echoResolverFallsThroughWhenEmpty() {
+    BearerTokenEchoResolver echoResolver = mock(BearerTokenEchoResolver.class);
+    when(echoResolver.presentedToken(eq(principalCollection))).thenReturn(Optional.empty());
+    setField(underTest, "echoResolver", echoResolver);
+    Optional<ApiKey> apiKey = Optional.of(mockApiKey(TOKEN.toCharArray()));
+    when(apiKeyService.getApiKey(any(), any())).thenReturn(apiKey);
+
+    String result = underTest.createToken(principalCollection);
+
+    assertThat(result, is(equalTo(FORMAT + "." + TOKEN)));
+    verify(apiKeyService).getApiKey(any(), any());
+  }
+
+  @Test
+  public void nullEchoResolverFallsThroughToApiKeyService() {
+    // echoResolver field is null by default — no setField call
+    Optional<ApiKey> apiKey = Optional.of(mockApiKey(TOKEN.toCharArray()));
+    when(apiKeyService.getApiKey(any(), any())).thenReturn(apiKey);
+
+    assertThat(underTest.createToken(principalCollection), is(equalTo(FORMAT + "." + TOKEN)));
+    verify(apiKeyService).getApiKey(any(), any());
   }
 
   private ApiKey mockApiKey(final char[] token) {

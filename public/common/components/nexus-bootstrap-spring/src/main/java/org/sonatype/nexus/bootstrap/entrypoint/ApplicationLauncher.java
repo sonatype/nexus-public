@@ -31,10 +31,6 @@ import org.springframework.core.env.MapPropertySource;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.COMMUNITY;
-import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.FALSE;
-import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.TRUE;
-import static org.sonatype.nexus.common.app.FeatureFlags.TELEMETRY_MANDATORY_WARNING_ENABLED;
 
 @Component
 public class ApplicationLauncher
@@ -73,7 +69,7 @@ public class ApplicationLauncher
 
     LOG.info("Starting nexus with edition {}", nexusEdition.getShortName());
 
-    mayForceAnalytics(nexusEdition);
+    warnIfDeprecatedAnalyticsPropertySet();
 
     // Allow the edition value below to resolve as a String when requested that way.
     ConfigurableConversionService conversionService = context.getEnvironment().getConversionService();
@@ -87,20 +83,13 @@ public class ApplicationLauncher
             Map.of("nexus.edition", nexusEdition)));
   }
 
-  private void mayForceAnalytics(final NexusEdition nexusEdition) {
-    // If edition is CE, ensure analytics is always enabled
-    if (COMMUNITY.equals(nexusEdition.getId())) {
-      if (FALSE.equals(nexusProperties.getProperty("nexus.analytics.enabled"))) {
-        LOG.warn(
-            "Attempt to disable analytics in Community Edition detected. Analytics will remain enabled as this is required for CE.");
-        if (TRUE.equals(nexusProperties.getProperty(TELEMETRY_MANDATORY_WARNING_ENABLED))) {
-          LOG.warn("{} property is deprecated and has no effect. " +
-              "Telemetry is required per license agreement. " +
-              "For opt-out provisioning, please contact Sonatype Sales.",
-              "nexus.analytics.enabled");
-        }
-      }
-      nexusProperties.enforceCommunityEditionAnalytics();
+  private void warnIfDeprecatedAnalyticsPropertySet() {
+    String analyticsEnabled = nexusProperties.getProperty("nexus.analytics.enabled");
+    if (analyticsEnabled != null) {
+      LOG.warn("{} property is deprecated and has no effect. " +
+          "Telemetry configuration is managed through license provisioning. " +
+          "For opt-out provisioning, please contact Sonatype Sales.",
+          "nexus.analytics.enabled");
     }
   }
 

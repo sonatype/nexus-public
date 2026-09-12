@@ -115,9 +115,16 @@ const mockApiHook = {
   error: null,
   setError: jest.fn(),
   fetchRepositories: jest.fn().mockResolvedValue(mockRepositories),
+  fetchRepository: jest.fn().mockImplementation((name: string) => {
+    const repo = mockRepositories.find((r) => r.name === name);
+    return Promise.resolve(repo ? { ...repo, status: { online: false } } : null);
+  }),
   fetchHealthCheckStatus: jest.fn().mockResolvedValue({}),
   enableHealthCheck: jest.fn().mockResolvedValue(undefined),
   deleteRepository: jest.fn().mockResolvedValue(undefined),
+  invalidateCache: jest.fn().mockResolvedValue(undefined),
+  rebuildIndex: jest.fn().mockResolvedValue(undefined),
+  setRepositoryOnline: jest.fn().mockResolvedValue(undefined),
 };
 
 const renderWithTheme = (component: React.ReactElement) => {
@@ -784,6 +791,212 @@ describe('RepositoriesList', () => {
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         expect(mockApiHook.deleteRepository).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // NEXUS-53946: post-Repository-Profile migration the row menu drops
+  // "View Profile" and adds the operational actions (rebuild index /
+  // invalidate cache / toggle online). Visibility rules match the Settings
+  // form: rebuild = hosted|proxy, invalidate = proxy|group, toggle = all.
+  describe('row action menu (NEXUS-53946)', () => {
+    it('does not render View Profile menu item', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('repo-action-view-maven-central')).not.toBeInTheDocument();
+      expect(screen.queryByText('View Profile')).not.toBeInTheDocument();
+    });
+
+    it('shows Rebuild Index for hosted and proxy rows but not group', async () => {
+      const reposWithGroup = [
+        ...mockRepositories,
+        {
+          name: 'maven-group',
+          type: 'group',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/maven-group/',
+          online: true,
+          status: { online: true },
+        },
+      ];
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(reposWithGroup),
+      } as any);
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-group')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('repo-action-rebuild-index-maven-central')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-action-rebuild-index-maven-releases')).toBeInTheDocument();
+      expect(screen.queryByTestId('repo-action-rebuild-index-maven-group')).not.toBeInTheDocument();
+    });
+
+    it('shows Invalidate Cache for proxy and group rows but not hosted', async () => {
+      const reposWithGroup = [
+        ...mockRepositories,
+        {
+          name: 'maven-group',
+          type: 'group',
+          format: 'maven2',
+          url: 'http://localhost:8081/repository/maven-group/',
+          online: true,
+          status: { online: true },
+        },
+      ];
+      mockUseRepositoriesApi.mockReturnValue({
+        ...mockApiHook,
+        fetchRepositories: jest.fn().mockResolvedValue(reposWithGroup),
+      } as any);
+
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-group')).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId('repo-action-invalidate-cache-maven-central')).toBeInTheDocument();
+      expect(screen.getByTestId('repo-action-invalidate-cache-maven-group')).toBeInTheDocument();
+      expect(screen.queryByTestId('repo-action-invalidate-cache-maven-releases')).not.toBeInTheDocument();
+    });
+
+    it('shows the toggle-online item for every row', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      // maven-central + maven-releases are online → "Disable System Status"
+      // npm-proxy is offline → "Enable System Status"
+      const central = screen.getByTestId('repo-action-toggle-online-maven-central');
+      expect(central).toHaveTextContent('Disable System Status');
+      const releases = screen.getByTestId('repo-action-toggle-online-maven-releases');
+      expect(releases).toHaveTextContent('Disable System Status');
+      const npm = screen.getByTestId('repo-action-toggle-online-npm-proxy');
+      expect(npm).toHaveTextContent('Enable System Status');
+    });
+
+    it('opens confirm dialog and calls rebuildIndex on confirm', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-rebuild-index-maven-central'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /rebuild index/i });
+      await userEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(mockApiHook.rebuildIndex).toHaveBeenCalledWith('maven-central');
+      });
+    });
+
+    it('opens confirm dialog and calls invalidateCache on confirm', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-invalidate-cache-maven-central'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /invalidate cache/i });
+      await userEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(mockApiHook.invalidateCache).toHaveBeenCalledWith('maven-central');
+      });
+    });
+
+    it('opens confirm dialog and calls setRepositoryOnline on confirm', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('repo-action-toggle-online-maven-central'));
+
+      await waitFor(() => {
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /take offline/i });
+      await userEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        // maven-central is online → next state is false
+        expect(mockApiHook.setRepositoryOnline).toHaveBeenCalledWith(
+          'maven-central',
+          'maven2',
+          'proxy',
+          false,
+        );
+      });
+    });
+  });
+
+  describe('Actions column (NEXUS-53948)', () => {
+    it('shouldRenderActionsColumnHeaderWithRowActionsLabel', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      const actionsHeader = screen.getByRole('columnheader', {
+        name: /row actions/i,
+      });
+      expect(actionsHeader).toBeInTheDocument();
+    });
+
+    it('shouldRenderPerRowActionsTriggerForEveryRepository', async () => {
+      renderWithTheme(
+        <RepositoriesList onSelect={mockOnSelect} onCreate={mockOnCreate} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('maven-central')).toBeInTheDocument();
+      });
+
+      mockRepositories.forEach((repo) => {
+        expect(
+          screen.getByRole('button', { name: `Actions for ${repo.name}` })
+        ).toBeInTheDocument();
       });
     });
   });

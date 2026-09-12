@@ -24,13 +24,25 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Flex, Text, Heading, Card, Badge, Button, Tabs, Switch, Callout, Select } from '@radix-ui/themes';
+import { Box, Flex, Text, Heading, Card, Badge, Button, Tabs, Switch, Callout, Select, Checkbox } from '@radix-ui/themes';
 import { FlaskConical, ExternalLink, ToggleLeft, TestTube2, Info, AlertTriangle } from 'lucide-react';
 import { notifySessionExpiredFromRest } from '../../../../interface/api';
+import {
+  CE_REQUESTS_HARD_THRESHOLD,
+  CE_COMPONENTS_HARD_THRESHOLD,
+  OVER_LIMITS,
+  NEAR_LIMITS,
+  UNDER_LIMITS
+} from '../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
+import { stepRegistry } from '../../../onboarding-wizard/stepRegistry';
 
 import './SonatypeTestHub.scss';
 
 const TOGGLES_STORAGE_KEY = 'SONATYPE_TEST_TOGGLES';
+// Must match MOCK_STEPS_STORAGE_KEY in OnboardingWizardMount.tsx.
+const ONBOARDING_MOCK_STEPS_KEY = 'SONATYPE_TEST_ONBOARDING_STEPS';
+// Reuse the real registry so this list can't drift from the steps that actually exist.
+const ONBOARDING_STEP_TYPES = Object.keys(stepRegistry);
 
 interface TestToggle {
   id: string;
@@ -67,8 +79,8 @@ const TEST_PAGES: TestPage[] = [
   {
     id: 'test-malware-defense',
     route: 'preview.test-malware-defense',
-    title: 'Protect Page (was Malware Defense)',
-    description: 'Protect module tabs rendered in all 8 states — Overview, Quick Config, Audit. Includes renamed "Overview" tab (was "Main") and "Protect" nav label.',
+    title: 'Protect Page',
+    description: 'Protect module tabs rendered in all 8 states — Overview, Quick Config, Audit.',
     tags: ['protect', 'tabs', 'firewall', 'health-check'],
   },
   {
@@ -91,25 +103,18 @@ const TEST_PAGES: TestPage[] = [
 // CE Hard Limit Banner Scenarios
 // ---------------------------------------------------------------------------
 
-// CE throttle status values (must match UsageHelper.js)
-const OVER_LIMITS = 'Over limits';
-const NEAR_LIMITS = '75% usage';
-const UNDER_LIMITS = 'Under limits';
-
-// CE threshold constants (must match UsageHelper.js)
-const CE_REQUESTS_HARD_THRESHOLD = 100000;
-const CE_COMPONENTS_HARD_THRESHOLD = 40000;
-
-// Additional test-only thresholds not used in production
-const CE_REQUESTS_SOFT_THRESHOLD = 20000;
-const CE_COMPONENTS_SOFT_THRESHOLD = 100000;
+// Soft/unique-user thresholds included in mock metric data only
+const CE_REQUESTS_SOFT_THRESHOLD = 75000;
+const CE_COMPONENTS_SOFT_THRESHOLD = 30000;
 const CE_UNIQUE_USER_SOFT_THRESHOLD = 100;
 
 // Metric values for each usage level (test scenarios only)
-const CE_COMPONENTS_NEAR = 75000;
-const CE_REQUESTS_NEAR = 150000;
-const CE_COMPONENTS_OVER = 40000;
-const CE_REQUESTS_OVER = 100000;
+// NEAR: above 75% of the hard limit but below it (triggers yellow warning)
+const CE_COMPONENTS_NEAR = 31000;  // ~77.5% of 40,000
+const CE_REQUESTS_NEAR = 76000;    // 76% of 100,000
+// OVER: clearly exceeds the hard limit (triggers red error)
+const CE_COMPONENTS_OVER = 45000;  // 112.5% of 40,000
+const CE_REQUESTS_OVER = 110000;   // 110% of 100,000
 
 const GRACE_PERIOD_DAYS_FUTURE = 7;
 const GRACE_PERIOD_DAYS_PAST = -7;
@@ -262,6 +267,11 @@ function captureOriginalCEState() {
 }
 
 function applyCEScenario(scenario: CEScenario) {
+  // Mark this browser session as having an active CE test scenario.
+  // sessionStorage is cleared when the browser closes / a new session starts,
+  // so stale localStorage values from prior test runs are ignored on fresh login.
+  sessionStorage.setItem('SONATYPE_TEST_CE_SESSION', '1');
+
   // Store test values in localStorage so components can pick them up
   // This is similar to how the malware banner test override works
   localStorage.setItem('SONATYPE_TEST_CE_THROTTLING_STATUS', scenario.throttlingStatus);
@@ -302,6 +312,9 @@ function applyCEScenario(scenario: CEScenario) {
 }
 
 function clearCEScenario() {
+  // Clear the session marker so UsageHelper stops reading localStorage overrides
+  sessionStorage.removeItem('SONATYPE_TEST_CE_SESSION');
+
   // Clear localStorage test overrides
   localStorage.removeItem('SONATYPE_TEST_CE_THROTTLING_STATUS');
   localStorage.removeItem('SONATYPE_TEST_CE_GRACE_PERIOD_ENDS');
@@ -343,6 +356,42 @@ function clearCEScenario() {
 
   // Force React components to re-render by dispatching a storage event
   window.dispatchEvent(new StorageEvent('storage', { key: 'SONATYPE_TEST_CE_THROTTLING_STATUS' }));
+}
+
+function triggerOnboardingWizard() {
+  // OnboardingWizardMount gates on these two ExtJS state keys and re-renders
+  // on the State store's 'datachanged' event — same mechanism the CE scenario
+  // and malware banner toggles above already rely on. Step *content* still
+  // comes from the real onboarding REST endpoint, so an instance that has
+  // already completed onboarding will jump straight to "Setup complete"
+  // instead of walking each step.
+  const { stateController, stateStore } = getExtJSState();
+  if (!stateController?.setValue) {
+    console.warn('[TestHub] Could not access ExtJS state to trigger onboarding wizard');
+    return;
+  }
+  stateController.setValue('nexus.react.onboarding.enabled', true);
+  stateController.setValue('onboarding.required', true);
+  if (stateStore?.fireEvent) {
+    stateStore.fireEvent('datachanged', stateStore);
+  }
+}
+
+function getMockOnboardingStepTypes(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ONBOARDING_MOCK_STEPS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+function setMockOnboardingStepTypes(types: string[]) {
+  if (types.length === 0) {
+    localStorage.removeItem(ONBOARDING_MOCK_STEPS_KEY);
+  } else {
+    localStorage.setItem(ONBOARDING_MOCK_STEPS_KEY, JSON.stringify(types));
+  }
 }
 
 function getToggles(): Record<string, boolean> {
@@ -414,6 +463,7 @@ function navigateTo(route: string) {
 function TogglesTab() {
   const [toggles, setToggles] = useState<Record<string, boolean>>(getToggles);
   const [ceScenarioId, setCeScenarioId] = useState<string>('off');
+  const [mockOnboardingSteps, setMockOnboardingSteps] = useState<string[]>(getMockOnboardingStepTypes);
 
   // Clear any leftover CE scenario state on mount
   // CE scenarios should not persist across page refreshes
@@ -441,6 +491,20 @@ function TogglesTab() {
         setCeScenarioId(value);
       }
     }
+  };
+
+  const handleMockOnboardingStepToggle = (type: string, checked: boolean) => {
+    const selected = new Set(mockOnboardingSteps);
+    if (checked) {
+      selected.add(type);
+    } else {
+      selected.delete(type);
+    }
+    // Keep canonical registry order regardless of check order, so the
+    // simulated wizard walks steps in the same order the real one would.
+    const next = ONBOARDING_STEP_TYPES.filter((t) => selected.has(t));
+    setMockOnboardingStepTypes(next);
+    setMockOnboardingSteps(next);
   };
 
   const activeCELabel = ceScenarioId !== 'off'
@@ -478,6 +542,48 @@ function TogglesTab() {
             Show session expired modal
           </Button>
         </Flex>
+      </Card>
+
+      <Card className="sonatype-test-hub__toggle-card" mb="4">
+        <Flex align="start" justify="between" gap="4" wrap="wrap">
+          <Box>
+            <Text size="3" weight="medium">Re-trigger onboarding wizard</Text>
+            <Text size="2" color="gray" as="p" mt="1">
+              Forces the CE onboarding wizard to mount (requires an admin session). Check
+              steps below to simulate fake step data instead of the real onboarding REST
+              response — otherwise an instance that has already completed onboarding will
+              jump straight to "Setup complete" instead of walking each step. Note: a
+              simulated step's own submit still calls its real backend endpoint, so it can
+              mutate live config.
+            </Text>
+          </Box>
+          <Button
+            variant="outline"
+            color="amber"
+            size="2"
+            type="button"
+            onClick={() => triggerOnboardingWizard()}
+          >
+            Trigger onboarding wizard
+          </Button>
+        </Flex>
+
+        <Box mt="3">
+          <Text size="2" weight="medium">Simulated steps (leave all unchecked to use real data)</Text>
+          <Flex direction="column" gap="2" mt="2">
+            {ONBOARDING_STEP_TYPES.map((type) => (
+              <Text as="label" size="2" key={type}>
+                <Flex gap="2" align="center">
+                  <Checkbox
+                    checked={mockOnboardingSteps.includes(type)}
+                    onCheckedChange={(checked) => handleMockOnboardingStepToggle(type, checked === true)}
+                  />
+                  {type}
+                </Flex>
+              </Text>
+            ))}
+          </Flex>
+        </Box>
       </Card>
 
       <Flex direction="column" gap="3">
@@ -610,9 +716,6 @@ export default function SonatypeTestHub() {
           <Heading size="6">Sonatype Internal Test Harness</Heading>
           <Text size="2" color="amber" weight="medium">
             Not included in production builds · Enable with <code>localStorage.setItem('SONATYPE_INTERNAL','true')</code>
-          </Text>
-          <Text size="1" color="gray" mt="1" as="p">
-            Sprint 19: "Malware Defense" renamed to "Protect" · RHC + Firewall unified module
           </Text>
         </Box>
       </Flex>

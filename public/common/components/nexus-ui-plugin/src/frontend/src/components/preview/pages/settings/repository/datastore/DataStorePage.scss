@@ -145,7 +145,7 @@
     }
 
     &--mono {
-      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+      font-family: var(--font-family-mono);
       font-size: 13px;
     }
   }
@@ -195,7 +195,7 @@
   }
 
   &__effective-value {
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-family: var(--font-family-mono);
     font-size: 13px;
     color: var(--gray-12, #1a1a1a);
 

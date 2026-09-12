@@ -222,6 +222,32 @@ public class SearchStore
   }
 
   /**
+   * Browses distinct versions of a component.
+   *
+   * @param request the filter, sort, and page bounds
+   * @return one entry per distinct version, newest first
+   */
+  @Transactional
+  public List<ComponentVersionData> browseComponentVersions(final ComponentVersionSearchRequest request) {
+    log.debug("Browse component versions - filter: {}, params: {}, sort: {} {}, limit: {}, offset: {}",
+        request.filter, request.filterParams, request.sortExpression, request.sortDirection,
+        request.limit, request.offset);
+    return dao().browseComponentVersions(request);
+  }
+
+  /**
+   * Counts distinct versions matching the filter.
+   *
+   * @param request the filter
+   * @return the number of distinct versions
+   */
+  @Transactional
+  public long countComponentVersions(final ComponentVersionSearchRequest request) {
+    log.debug("Count component versions - filter: {}, params: {}", request.filter, request.filterParams);
+    return dao().countComponentVersions(request);
+  }
+
+  /**
    * Batch Insert data.
    *
    * @param searchData data to be saved.

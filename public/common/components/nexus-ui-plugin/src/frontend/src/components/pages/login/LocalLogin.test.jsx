@@ -21,6 +21,7 @@ import { RouteNames } from '../../../constants/RouteNames';
 
 const mockRequestSession = jest.fn();
 const mockWaitForNextPermissionChange = jest.fn().mockResolvedValue();
+const mockState = jest.fn(() => ({ getValue: (_key, def) => def }));
 
 jest.mock('../../../interface/ExtJS', () => ({
   __esModule: true,
@@ -31,6 +32,9 @@ jest.mock('../../../interface/ExtJS', () => ({
     get waitForNextPermissionChange() {
       return mockWaitForNextPermissionChange;
     },
+    get state() {
+      return mockState;
+    },
     setDirtyStatus: jest.fn(),
     fireEvent: jest.fn()
   },
@@ -40,6 +44,9 @@ jest.mock('../../../interface/ExtJS', () => ({
     },
     get waitForNextPermissionChange() {
       return mockWaitForNextPermissionChange;
+    },
+    get state() {
+      return mockState;
     },
     setDirtyStatus: jest.fn(),
     fireEvent: jest.fn()
@@ -70,6 +77,8 @@ describe('LocalLogin', () => {
   beforeEach(() => {
     mockRequestSession.mockReset();
     mockWaitForNextPermissionChange.mockReset().mockResolvedValue();
+    mockState.mockReset().mockImplementation(() => ({ getValue: (_key, def) => def }));
+    sessionStorage.clear();
     mockRouter.globals.params = {};
     mockRouter.urlService.url.mockReset();
     mockRouter.stateService.go.mockReset();
@@ -468,6 +477,163 @@ describe('LocalLogin', () => {
       await waitFor(() => {
         expect(mockWaitForNextPermissionChange).toHaveBeenCalled();
         expect(mockRouter.stateService.go).toHaveBeenCalledWith(RouteNames.MISSING_ROUTE);
+      });
+    });
+
+    it('redirects to preview welcome when defaultToPreviewUi and loggedInEnabled are enabled', async () => {
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.stateService.go).toHaveBeenCalledWith('preview.browse.welcome');
+      });
+    });
+
+    it('redirects to classic welcome when defaultToPreviewUi is on but loggedInEnabled is off', async () => {
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: false }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.stateService.go).toHaveBeenCalledWith('browse.welcome');
+      });
+    });
+
+    it('clears user_requested_legacy on login so defaultToPreviewUi is re-evaluated (lands on preview)', async () => {
+      sessionStorage.setItem('user_requested_legacy', 'true');
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.stateService.go).toHaveBeenCalledWith('preview.browse.welcome');
+      });
+      expect(sessionStorage.getItem('user_requested_legacy')).toBeNull();
+    });
+
+    it('overrides a Classic landing returnTo with the preview dashboard when defaultToPreviewUi is on', async () => {
+      mockRouter.globals.params.returnTo = btoa('#browse/welcome');
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.stateService.go).toHaveBeenCalledWith('preview.browse.welcome');
+      });
+      expect(mockRouter.urlService.url).not.toHaveBeenCalled();
+    });
+
+    it('preserves a Classic deep-link returnTo even when defaultToPreviewUi is on', async () => {
+      const deepLink = '#admin/security/users';
+      mockRouter.globals.params.returnTo = btoa(deepLink);
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.urlService.url).toHaveBeenCalledWith(deepLink);
+      });
+      expect(mockRouter.stateService.go).not.toHaveBeenCalled();
+    });
+
+    it('honors a preview returnTo instead of overriding it', async () => {
+      const previewReturnTo = '#preview/admin/repository/repositories';
+      mockRouter.globals.params.returnTo = btoa(previewReturnTo);
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.urlService.url).toHaveBeenCalledWith(previewReturnTo);
+      });
+      expect(mockRouter.stateService.go).not.toHaveBeenCalled();
+    });
+
+    it('honors a Classic returnTo when defaultToPreviewUi is off', async () => {
+      const classicReturnTo = '#admin/repository/repositories';
+      mockRouter.globals.params.returnTo = btoa(classicReturnTo);
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: false, loggedInEnabled: true }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.urlService.url).toHaveBeenCalledWith(classicReturnTo);
+      });
+    });
+
+    it('does not redirect to preview after clearing legacy flag when loggedInEnabled is off', async () => {
+      sessionStorage.setItem('user_requested_legacy', 'true');
+      mockState.mockImplementation(() => ({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: false }[key] ?? def)
+      }));
+      renderComponent();
+      await fillCredentials('admin', 'admin123');
+
+      mockRequestSession.mockResolvedValue({ response: { status: 204 } });
+
+      await act(async () => {
+        await userEvent.click(selectors.loginButton());
+      });
+
+      await waitFor(() => {
+        expect(mockRouter.stateService.go).toHaveBeenCalledWith('browse.welcome');
       });
     });
   });

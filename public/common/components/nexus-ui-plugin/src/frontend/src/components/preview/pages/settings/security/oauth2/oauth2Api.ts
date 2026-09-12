@@ -33,21 +33,38 @@ function stringifyObject(val: unknown): string {
 }
 
 /**
- * Parse a JSON string field back to an object for the API payload. Invalid or
- * empty input becomes an empty object (matching legacy behavior).
+ * Parse a JSON string field back to an object for the API payload. Blank input
+ * becomes an empty object.
+ *
+ * Throws on malformed or non-object input rather than coercing to `{}`
+ * (NEXUS-54266): the previous silent coercion reported a successful save while
+ * discarding whatever the field held before. `validateOAuth2` rejects such input
+ * first, so this is a backstop for any caller that bypasses validation — and it
+ * matches Classic, which aborts the save by letting JSON.parse throw.
  */
-function parseString(val: string): Record<string, unknown> {
-  if (val) {
-    try {
-      const result = JSON.parse(val);
-      if (typeof result === 'object') {
-        return result;
-      }
-    } catch {
-      return {};
-    }
+function parseString(fieldLabel: string, val: string): Record<string, string> {
+  if (!val?.trim()) {
+    return {};
   }
-  return {};
+
+  const invalid = () => new Error(`${fieldLabel} must be a valid JSON object with string values`);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(val);
+  } catch {
+    throw invalid();
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw invalid();
+  }
+  // The API declares these as Map<String, String>; anything else is either
+  // rejected with a 400 (arrays, nested objects) or silently coerced (scalars).
+  if (!Object.values(parsed).every((entry) => typeof entry === 'string')) {
+    throw invalid();
+  }
+  return parsed as Record<string, string>;
 }
 
 /**
@@ -63,6 +80,10 @@ export async function fetchOAuth2Config(): Promise<OAuth2Config> {
     return {
       ...DEFAULT_OAUTH2_CONFIG,
       ...data,
+      // Coerce explicitly: the backend XO sends a primitive boolean, but a
+      // missing/null value must land on `false` rather than `undefined` so the
+      // checkbox stays controlled and pristine-tracking works.
+      useTrustStore: data.useTrustStore ?? false,
       exactMatchClaims: stringifyObject(data.exactMatchClaims),
       authorizationCustomParams: stringifyObject(data.authorizationCustomParams),
       tokenRequestCustomParams: stringifyObject(data.tokenRequestCustomParams),
@@ -95,9 +116,17 @@ export async function saveOAuth2Config(config: OAuth2Config): Promise<void> {
       lastNameClaim: config.lastNameClaim?.trim(),
       emailClaim: config.emailClaim?.trim(),
       groupsClaim: config.groupsClaim?.trim(),
-      exactMatchClaims: parseString(config.exactMatchClaims || ''),
-      authorizationCustomParams: parseString(config.authorizationCustomParams || ''),
-      tokenRequestCustomParams: parseString(config.tokenRequestCustomParams || ''),
+      // Sent explicitly: the backend XO field is a primitive boolean defaulting
+      // to false, so omitting it here would reset the admin's truststore choice
+      // on every save (NEXUS-54266).
+      useTrustStore: config.useTrustStore ?? false,
+      exactMatchClaims: parseString('Exact Match Claims', config.exactMatchClaims || ''),
+      authorizationCustomParams: parseString(
+        'Authorization Custom Parameters',
+        config.authorizationCustomParams || ''),
+      tokenRequestCustomParams: parseString(
+        'Token Request Custom Parameters',
+        config.tokenRequestCustomParams || ''),
     };
 
     await restClient.put(OAUTH2_API_URL, payload);

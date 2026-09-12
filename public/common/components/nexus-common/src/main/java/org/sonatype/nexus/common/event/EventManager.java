@@ -45,7 +45,11 @@ public interface EventManager
   void unregister(Object handler);
 
   /**
-   * Posts an event. The event manager will notify all previously registered handlers about this event.
+   * Posts an event, notifying all registered handlers.
+   * <p>
+   * The event manager only delivers events once it has started (the {@code EVENTS} lifecycle phase) and its
+   * subscribers have been registered. Events posted before it has started, or after it has been shut down, are
+   * dropped with a warning rather than delivered to an incompletely-wired bus; the caller is not failed.
    *
    * @param event an event
    *

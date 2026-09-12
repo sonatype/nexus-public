@@ -162,6 +162,15 @@ function parseAxiosError(error: AxiosError<RestErrorResponse>): ApiError {
         originalError: error,
       };
 
+    case 405:
+      return {
+        status: 405,
+        message: unwrapQuotedMessage(data?.message) || 'This operation is not supported for the current resource state.',
+        code: 'METHOD_NOT_ALLOWED',
+        requestId,
+        originalError: error,
+      };
+
     case 409:
       return {
         status: 409,

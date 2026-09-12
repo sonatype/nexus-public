@@ -14,6 +14,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
+import { UIRouterContext } from '@uirouter/react';
 import { PrivilegesPage } from '../PrivilegesPage';
 import { usePrivilegesApi } from '../usePrivilegesApi';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
@@ -82,9 +83,13 @@ jest.mock('../PrivilegeTypeSelector', () => ({
 }));
 
 jest.mock('../PrivilegeProfilePage', () => ({
-  PrivilegeProfilePage: ({ privilegeId, onBack }: any) => (
+  PrivilegeProfilePage: ({ privilegeId, onBack, activeTab, onTabChange }: any) => (
     <div data-testid="privilege-profile">
       <span>Profile for: {privilegeId}</span>
+      {/* Surfaced so routing tests can assert which tab the URL resolved to. */}
+      <span data-testid="active-tab">{activeTab}</span>
+      <button onClick={() => onTabChange?.('users')}>Go Users Tab</button>
+      <button onClick={() => onTabChange?.('roles')}>Go Roles Tab</button>
       <button onClick={onBack}>Back</button>
     </div>
   ),
@@ -270,9 +275,199 @@ describe('PrivilegesPage', () => {
       ...mockUsePrivilegesApi(),
       error: 'Test error message',
     });
-    
+
     renderWithTheme(<PrivilegesPage />);
-    
+
     expect(screen.getByText('Test error message')).toBeInTheDocument();
+  });
+
+  /**
+   * NEXUS-52167 follow-up: from the profile's "Users With Access" tab, clicking a
+   * User ID then pressing Back landed on Overview, because the active tab was
+   * local state destroyed on unmount. It now lives in the URL.
+   */
+  describe('profile tab is preserved in the URL (NEXUS-52167)', () => {
+    it('defaults to overview for a legacy /profile URL with no tab segment', async () => {
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('overview');
+      });
+    });
+
+    it('restores the users tab from the URL', async () => {
+      window.location.hash =
+        '#preview/admin/security/privileges/test-priv/profile?tab=users';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('users');
+      });
+    });
+
+    it('restores the roles tab from the URL', async () => {
+      window.location.hash =
+        '#preview/admin/security/privileges/test-priv/profile?tab=roles';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('roles');
+      });
+    });
+
+    it('falls back to overview for an unknown tab segment', async () => {
+      window.location.hash =
+        '#preview/admin/security/privileges/test-priv/profile?tab=not-a-tab';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('overview');
+      });
+    });
+
+    it('writes the tab into the hash when the tab changes', async () => {
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Go Users Tab'));
+
+      await waitFor(() => {
+        expect(window.location.hash).toBe(
+          '#preview/admin/security/privileges/test-priv/profile?tab=users'
+        );
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('users');
+      });
+    });
+
+    // The reported bug, end to end.
+    it('reproduces the reported round trip: users tab survives leaving and returning', async () => {
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+      const { unmount } = renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+      });
+
+      // User switches to the Users With Access tab.
+      fireEvent.click(screen.getByText('Go Users Tab'));
+      await waitFor(() => {
+        expect(window.location.hash).toContain('tab=users');
+      });
+      const urlBeforeLeaving = window.location.hash;
+
+      // Clicking a User ID navigates away; PrivilegesPage unmounts.
+      unmount();
+      window.location.hash = '#preview/admin/security/users/test1/default/profile';
+
+      // Browser Back restores the previous hash and remounts the page.
+      window.location.hash = urlBeforeLeaving;
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        // Previously this was 'overview' — the bug.
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('users');
+      });
+    });
+
+    /**
+     * The tab must be a query param, not a path segment: the profile route is the
+     * terminal pattern `/:privilegeId/profile`, so `/profile/users` matches no
+     * route and Back falls through to `rules.otherwise()`. Locked down here because
+     * it is invisible in jsdom, where no router is mounted and any hash "works".
+     */
+    it('encodes the tab as a ?tab query param, never as a path segment', async () => {
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Go Users Tab'));
+
+      await waitFor(() => {
+        expect(window.location.hash).toContain('tab=users');
+      });
+
+      // The path must remain exactly the registered route pattern.
+      const [path] = window.location.hash.replace(/^#/, '').split('?');
+      expect(path).toBe('preview/admin/security/privileges/test-priv/profile');
+      expect(window.location.hash).not.toContain('/profile/users');
+    });
+
+    // When a router is present it must own the URL write, so its state params and
+    // the address bar cannot disagree.
+    it('routes tab changes through UI-Router when one is mounted', async () => {
+      const go = jest.fn();
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+
+      render(
+        <Theme>
+          <ToastProvider>
+            <UIRouterContext.Provider value={{ stateService: { go } } as any}>
+              <PrivilegesPage />
+            </UIRouterContext.Provider>
+          </ToastProvider>
+        </Theme>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Go Users Tab'));
+
+      expect(go).toHaveBeenCalledWith(
+        'preview.admin.security.privileges.profile',
+        { privilegeId: 'test-priv', tab: 'users' },
+        { notify: false, location: 'replace' }
+      );
+      // The tab still renders immediately, not gated on the router.
+      expect(screen.getByTestId('active-tab')).toHaveTextContent('users');
+    });
+
+    it('falls back to writing the hash when no router is mounted', async () => {
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Go Users Tab'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('active-tab')).toHaveTextContent('users');
+        expect(window.location.hash).toContain('tab=users');
+      });
+    });
+
+    it('does not push history entries for tab switches', async () => {
+      window.location.hash = '#preview/admin/security/privileges/test-priv/profile';
+      renderWithTheme(<PrivilegesPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('privilege-profile')).toBeInTheDocument();
+      });
+
+      const replaceSpy = jest.spyOn(window.history, 'replaceState');
+      const pushSpy = jest.spyOn(window.history, 'pushState');
+
+      fireEvent.click(screen.getByText('Go Users Tab'));
+      fireEvent.click(screen.getByText('Go Roles Tab'));
+
+      // Back must mean "the page before this one", not "the previous tab".
+      expect(replaceSpy).toHaveBeenCalledTimes(2);
+      expect(pushSpy).not.toHaveBeenCalled();
+
+      replaceSpy.mockRestore();
+      pushSpy.mockRestore();
+    });
   });
 });

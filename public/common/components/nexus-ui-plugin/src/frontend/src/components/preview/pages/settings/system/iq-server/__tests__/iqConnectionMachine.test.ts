@@ -27,15 +27,12 @@ const SETTINGS = { ...DEFAULT_IQ_CONFIGURATION, enabled: true, url: 'https://iq'
 describe('fetchCapabilities', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('logs a warning and falls back to defaults when the request fails', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  it('silently falls back to defaults when the request fails', async () => {
     mockedAxios.get.mockRejectedValueOnce(new Error('403 Forbidden'));
 
     const capabilities = await fetchCapabilities();
 
     expect(capabilities).toEqual(DEFAULT_IQ_CAPABILITIES);
-    expect(warnSpy).toHaveBeenCalledWith('Could not load IQ Server capabilities:', expect.any(Error));
-    warnSpy.mockRestore();
   });
 });
 

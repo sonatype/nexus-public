@@ -17,7 +17,7 @@ import { Theme } from '@radix-ui/themes';
 import { RoleForm } from '../RoleForm';
 import { useRolesApi } from '../useRolesApi';
 import { useRolesForm } from '../useRolesForm';
-import { Role, NEXUS_SOURCE } from '../types';
+import { Role, NEXUS_SOURCE, isExternalRole } from '../types';
 
 // Mock hooks
 jest.mock('../useRolesApi');
@@ -44,7 +44,7 @@ function createMockForm(data: any = {}, validationErrors: Record<string, string>
     validationErrors,
     state: {
       matches: jest.fn(() => false),
-      context: { data, privileges: mockPrivilegeRefs, roles: mockRoleRefs, allSources: [] },
+      context: { data, allPrivileges: mockPrivilegeRefs, allRoles: mockRoleRefs, allSources: [] },
     },
     send: jest.fn(),
     submit: jest.fn(),
@@ -88,9 +88,14 @@ describe('RoleForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRolesForm.mockImplementation(({ role }: any) => {
+      // Mirror rolesFormMachine's load service: derive roleType/externalSource
+      // from role.source when a role is present.
+      const external = role ? isExternalRole(role.source || NEXUS_SOURCE) : false;
       const formData = role ? {
         id: role.id, name: role.name, description: role.description || '',
         privileges: role.privileges || [], roles: role.roles || [], source: role.source || NEXUS_SOURCE,
+        roleType: external ? 'external' : 'nexus',
+        externalSource: external ? role.source : undefined,
       } : { id: '', name: '', description: '', privileges: [], roles: [], source: NEXUS_SOURCE };
       return { form: createMockForm(formData), role: role || null, isCreate: !role } as any;
     });
@@ -278,6 +283,18 @@ describe('RoleForm', () => {
         const idInput = screen.getByDisplayValue('test-role');
         expect(idInput).toBeDisabled();
       });
+    });
+
+    // Edit mode skips Step 0 (Role Type) entirely — the wizard starts on Setup.
+    // The RolesPage-level test covers that behaviour; RoleForm's Step 0 render is
+    // now guarded by `isCreate` so it renders nothing in edit mode if wizardStep=0
+    // is somehow passed.
+    it('renders no Type section in edit mode when wizardStep=0 (defense-in-depth)', async () => {
+      renderWithTheme(
+        <RoleForm role={mockRole} isCreate={false} onCancel={mockOnCancel} wizardStep={0} />
+      );
+      expect(screen.queryByText('Role Type')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('select-roleType')).not.toBeInTheDocument();
     });
   });
 

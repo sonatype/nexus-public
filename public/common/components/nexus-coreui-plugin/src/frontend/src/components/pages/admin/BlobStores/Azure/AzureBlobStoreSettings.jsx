@@ -36,10 +36,8 @@ export default function AzureBlobStoreSettings({service}) {
   const [current, send] = useActor(service);
   const {bucketConfiguration = {}} = current.context.data;
   const isProEdition = ExtJS.isProEdition();
-  const isAzureSasEnabled = ExtJS.state()?.getValue?.('azureSasUrlEnabled') === true;
   const authMode = bucketConfiguration.authentication?.authenticationMethod;
   const isTokenCredentialAuth = authMode === 'MANAGEDIDENTITY' || authMode === 'ENVIRONMENTVARIABLE';
-  const preflightError = current.context.errors?.bucketConfiguration?.preSignedUrlEnabled;
 
   const [azureState, sendAzureEvent] = useMachine(AzureBlobStoreSettingsMachine, {
     context: {
@@ -159,7 +157,7 @@ export default function AzureBlobStoreSettings({service}) {
         </NxFormGroup>
         }
 
-        {isProEdition && isAzureSasEnabled && (
+        {isProEdition && (
           <div className="nxrm-azure-presigned">
             <NxFieldset label={AZURE.PRE_SIGNED_URL.LABEL}
                         sublabel={AZURE.PRE_SIGNED_URL.SUBLABEL}>
@@ -170,9 +168,6 @@ export default function AzureBlobStoreSettings({service}) {
               </NxCheckbox>
               {bucketConfiguration.preSignedUrlEnabled && isTokenCredentialAuth && (
                 <NxInfoAlert>{AZURE.PRE_SIGNED_URL.RBAC_NOTE}</NxInfoAlert>
-              )}
-              {preflightError && (
-                <NxErrorAlert>{AZURE.PRE_SIGNED_URL.RBAC_ERROR}</NxErrorAlert>
               )}
             </NxFieldset>
           </div>

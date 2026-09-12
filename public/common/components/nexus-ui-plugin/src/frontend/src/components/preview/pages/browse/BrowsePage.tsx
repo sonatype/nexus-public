@@ -530,9 +530,8 @@ export function BrowsePage(): JSX.Element {
   // =========================================================================
 
   /**
-   * Handle repository selection from the list (row click, chevron).
+   * Handle repository selection from the list (row click).
    * Navigate to Browse Contents (folder tree) in same tab.
-   * Eye icon uses handleViewProfile in RepositoryListTable to go to repository-profile.
    */
   const handleSelectRepository = useCallback(
     (repoName: string) => {

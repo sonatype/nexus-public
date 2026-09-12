@@ -76,6 +76,9 @@ export default function IqPolicyViolationsCell({name}) {
     );
   }
 
+  // NEXUS-54323: 'message' is the non-admin badge ("Audit enabled" / "Quarantine enabled").
+  // Backend guarantees message == null on the admin path so this branch is skipped and the
+  // chiclet counters below render instead. See FirewallRepositoryStatusComponent#getRepositoryStatusXO.
   if (message) {
     return <NxP>{message}</NxP>;
   }

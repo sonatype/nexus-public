@@ -128,7 +128,8 @@ describe('SearchRadix', () => {
 
       expect(mockGo).toHaveBeenCalledWith(
         'preview.browse.search.unified',
-        {q: 'react'}
+        {q: 'react'},
+        {inherit: false, reload: 'preview.browse.search.unified'},
       );
     });
 
@@ -138,7 +139,56 @@ describe('SearchRadix', () => {
       const input = screen.getByPlaceholderText('Search components or CVEs...');
       fireEvent.keyDown(input, {key: 'Enter'});
 
-      expect(mockGo).toHaveBeenCalledWith('preview.browse.search.unified');
+      expect(mockGo).toHaveBeenCalledWith(
+        'preview.browse.search.unified',
+        {},
+        {inherit: false, reload: 'preview.browse.search.unified'},
+      );
+    });
+
+    it('navigates without inheriting stale router params (AT-017)', () => {
+      render(<SearchRadix isPreviewUI={true} />);
+
+      const input = screen.getByPlaceholderText('Search components or CVEs...');
+      fireEvent.change(input, {target: {value: 'shared02'}});
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      expect(mockGo).toHaveBeenCalledWith(
+        'preview.browse.search.unified',
+        {q: 'shared02'},
+        {inherit: false, reload: 'preview.browse.search.unified'},
+      );
+    });
+
+    it('resets params on an empty search (AT-017)', () => {
+      render(<SearchRadix isPreviewUI={true} />);
+
+      const input = screen.getByPlaceholderText('Search components or CVEs...');
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      expect(mockGo).toHaveBeenCalledWith(
+        'preview.browse.search.unified',
+        {},
+        {inherit: false, reload: 'preview.browse.search.unified'},
+      );
+    });
+
+    it('forces the transition when the term matches the router cache (AT-017)', () => {
+      // inherit: false alone is not enough. The search page writes its URL with
+      // raw pushState, so the router keeps a stale `q`; re-submitting that same
+      // term produces a same-state/same-params transition, which UI-Router
+      // rejects as 'SameAsCurrent' and the page never re-syncs. The reload
+      // option names the state rather than passing `true`, which would resolve
+      // to the registry root and remount the whole preview shell.
+      render(<SearchRadix isPreviewUI={true} />);
+
+      const input = screen.getByPlaceholderText('Search components or CVEs...');
+      fireEvent.change(input, {target: {value: 'spring'}});
+      fireEvent.keyDown(input, {key: 'Enter'});
+
+      const [, , options] = mockGo.mock.calls.at(-1);
+      expect(options.reload).toBe('preview.browse.search.unified');
+      expect(options.reload).not.toBe(true);
     });
   });
 

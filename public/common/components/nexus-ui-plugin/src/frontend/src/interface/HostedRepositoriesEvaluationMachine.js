@@ -264,6 +264,14 @@ export default FormUtils.buildFormMachine({
         existingSettings: event.data?.data || event.data || null
       };
     }),
+    
+    // Override of FormUtils.setLoadError to surface the backend message body (CLM-42478).
+    setLoadError: assign({
+      loadError: (_, event) => {
+        const message = event.data?.response?.data?.message || event.data?.message;
+        return message ? `${message}` : null;
+      }
+    }),
 
     validate: assign({
       validationErrors: () => ({})

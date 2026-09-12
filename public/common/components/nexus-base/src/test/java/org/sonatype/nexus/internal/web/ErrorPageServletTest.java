@@ -83,7 +83,7 @@ class ErrorPageServletTest
       public String getEdition() {
         return "Test";
       }
-    }, new VelocityEngine());
+    }, new VelocityEngine(), false);
 
     XFrameOptions xFrameOptions = new XFrameOptions(true);
 

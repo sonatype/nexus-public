@@ -50,6 +50,8 @@ describe('SsoLogin', () => {
       writable: true
     });
 
+    mockRouterParams.returnTo = undefined;
+    sessionStorage.clear();
     jest.clearAllMocks();
   });
 
@@ -290,6 +292,151 @@ describe('SsoLogin', () => {
         expect(window.location.assign).toHaveBeenCalledWith('/saml?');
       });
     });
+  });
+
+  describe('default-to-preview return target', () => {
+    it('injects preview hash when defaultToPreviewUi and loggedInEnabled are enabled and no returnTo', async () => {
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      mockRouterParams.returnTo = undefined;
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      const expectedHash = encodeURIComponent(btoa('#preview/browse/welcome'));
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith(`/saml?hash=${expectedHash}`);
+      });
+    });
+
+    it('clears a stale user_requested_legacy flag and injects preview hash', async () => {
+      sessionStorage.setItem('user_requested_legacy', 'true');
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      mockRouterParams.returnTo = undefined;
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      const expectedHash = encodeURIComponent(btoa('#preview/browse/welcome'));
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith(`/saml?hash=${expectedHash}`);
+      });
+      expect(sessionStorage.getItem('user_requested_legacy')).toBeNull();
+    });
+
+    it('overrides a Classic landing returnTo with the preview hash when defaultToPreviewUi is on', async () => {
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      mockRouterParams.returnTo = btoa('#browse/welcome');
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      const expectedHash = encodeURIComponent(btoa('#preview/browse/welcome'));
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith(`/saml?hash=${expectedHash}`);
+      });
+    });
+
+    it('preserves a Classic deep-link returnTo even when defaultToPreviewUi is on', async () => {
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      const deepLink = btoa('#admin/security/users');
+      mockRouterParams.returnTo = deepLink;
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      const expectedHash = encodeURIComponent(deepLink);
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith(`/saml?hash=${expectedHash}`);
+      });
+    });
+
+    it('honors a preview returnTo instead of overriding it', async () => {
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      const previewReturnTo = btoa('#preview/admin/repository/repositories');
+      mockRouterParams.returnTo = previewReturnTo;
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: true }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      const expectedHash = encodeURIComponent(previewReturnTo);
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith(`/saml?hash=${expectedHash}`);
+      });
+    });
+
+    it('does NOT inject preview hash when loggedInEnabled is off', async () => {
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      mockRouterParams.returnTo = undefined;
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: true, loggedInEnabled: false }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith('/saml?');
+      });
+    });
+
+    it('preserves an explicit returnTo when defaultToPreviewUi is off', async () => {
+      mockUseState
+        .mockReturnValueOnce(true)   // samlEnabled
+        .mockReturnValueOnce(false)  // oauth2Enabled
+        .mockReturnValueOnce('/')    // contextPath
+        .mockReturnValueOnce(false); // isCloud
+      mockRouterParams.returnTo = '#admin/repository/repositories';
+      mockState.mockReturnValue({
+        getValue: (key, def) => ({ defaultToPreviewUi: false, loggedInEnabled: true }[key] ?? def)
+      });
+
+      render(<SsoLogin />);
+      fireEvent.click(screen.getByRole('button'));
+
+      await waitFor(() => {
+        expect(window.location.assign).toHaveBeenCalledWith('/saml?hash=%23admin%2Frepository%2Frepositories');
+      });
+    });
+
   });
 
   describe('accessibility', () => {

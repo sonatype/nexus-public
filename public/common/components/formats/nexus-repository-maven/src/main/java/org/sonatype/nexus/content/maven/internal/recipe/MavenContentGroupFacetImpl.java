@@ -339,6 +339,16 @@ public class MavenContentGroupFacetImpl
       final TempBlob tempBlob,
       final String contentType) throws IOException
   {
+    // NEXUS-53858: When every member returns unparseable maven-metadata.xml, the merge produces no
+    // output and the resulting TempBlob is empty (0 bytes). Caching it via put() would fail metadata
+    // validation with InvalidContentException and spam WARN logs on every request. Skip caching and
+    // serve the (empty) merged content uncached, forcing a re-merge on the next request.
+    if (tempBlob.getBlob().getMetrics().getContentSize() == 0L) {
+      log.debug("Merged metadata is empty for {} : {}; skipping cache and serving uncached content",
+          getRepository().getName(), mavenPath.getPath());
+      return serveUncached(mavenPath, tempBlob, contentType);
+    }
+
     try {
       Content content = new Content(getRepository().facet(MavenContentFacet.class)
           .put(mavenPath, new BlobPayload(tempBlob.getBlob(), contentType)));
@@ -364,7 +374,15 @@ public class MavenContentGroupFacetImpl
           getRepository().getName(), mavenPath.getPath(), e);
     }
 
-    // Handle exception by forcing re-merge on next request and retrieving content from TempBlob
+    return serveUncached(mavenPath, tempBlob, contentType);
+  }
+
+  private Content serveUncached(
+      final MavenPath mavenPath,
+      final TempBlob tempBlob,
+      final String contentType) throws IOException
+  {
+    // force re-merge on next request and retrieve content from TempBlob
     getRepository().facet(ContentFacet.class)
         .assets()
         .path(prependIfMissing(mavenPath.getPath(), "/"))

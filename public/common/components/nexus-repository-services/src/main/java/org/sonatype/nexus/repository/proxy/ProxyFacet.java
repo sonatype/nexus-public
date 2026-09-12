@@ -52,4 +52,12 @@ public interface ProxyFacet
    * Returns the configuration object used by the proxy facet
    */
   ProxyRepositoryConfiguration getConfiguration();
+
+  /**
+   * Returns {@code true} if this proxy repository has content for the request path available in the shared local
+   * store. Does not initiate any remote fetch. Intended for HA coordination decisions where a peer node may have
+   * populated the shared store since this node last observed the path (for example, allowing a stale negative-cache
+   * entry to be bypassed once the asset is available locally).
+   */
+  boolean hasContentFor(Context context);
 }

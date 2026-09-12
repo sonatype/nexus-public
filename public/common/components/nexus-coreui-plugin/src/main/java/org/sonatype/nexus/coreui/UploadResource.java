@@ -28,8 +28,11 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 import org.sonatype.nexus.coreui.internal.UploadService;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.validation.Validate;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -121,10 +124,23 @@ public class UploadResource
       Packet responseJson = new Packet(uploadService.upload(repositoryName, request));
       body = objectMapper.writeValueAsString(responseJson);
     }
+    catch (RedeployDisabledException e) {
+      log.debug("Re-deploy denied for repository {}: {}", repositoryName, e.getMessage());
+      status = Status.CONFLICT;
+      body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
+    catch (ConcurrentOperationException e) {
+      log.debug("Concurrent operation conflict for repository {}: {}", repositoryName, e.getMessage());
+      status = Status.CONFLICT;
+      body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
     catch (IllegalOperationException e) {
       log.warn("Rejected upload to repository {}: {}", repositoryName, e.getMessage());
       status = Status.BAD_REQUEST;
       body = objectMapper.writeValueAsString(Arrays.asList(new ErrorPacket(e.getMessage())));
+    }
+    catch (ValidationErrorsException e) {
+      throw e;
     }
     catch (Exception e) {
       log.error("Unable to perform upload to repository {}", repositoryName, e);

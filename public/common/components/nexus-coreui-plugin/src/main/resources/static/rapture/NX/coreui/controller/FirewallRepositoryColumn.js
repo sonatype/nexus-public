@@ -227,6 +227,9 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
           errorMessage: errorMessage
         });
       }
+      // NEXUS-54323: 'message' is the non-admin badge ("Audit enabled" / "Quarantine enabled").
+      // Backend guarantees message == null on the admin path so this branch is skipped and the
+      // chiclet template below renders instead. See FirewallRepositoryStatusComponent#getRepositoryStatusXO.
       else if (statusModel.get('message')) {
         var message = Ext.util.Format.htmlEncode(statusModel.get('message'));
         metadata.tdAttr = 'data-qtip="' + message + '"';

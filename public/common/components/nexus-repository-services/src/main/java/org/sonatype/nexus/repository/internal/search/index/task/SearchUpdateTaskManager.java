@@ -22,7 +22,9 @@ import org.springframework.stereotype.Component;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.scheduling.PeriodicJobService;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.index.SearchUpdateService;
@@ -82,7 +84,7 @@ public class SearchUpdateTaskManager
   private void maybeScheduleReIndex() {
     try {
       List<String> reindexList = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
-          .filter(searchUpdateService::needsReindex)
+          .filter(this::needsReindexSafely)
           .map(Repository::getName)
           .collect(Collectors.toList());
 
@@ -95,6 +97,19 @@ public class SearchUpdateTaskManager
     }
     catch (Exception e) {
       log.error("Failed to determine if any repository indexes needed to be updated", e);
+    }
+  }
+
+  private boolean needsReindexSafely(final Repository repository) {
+    try {
+      return searchUpdateService.needsReindex(repository);
+    }
+    catch (MissingFacetException | InvalidStateException e) {
+      // Repository was deleted concurrently mid-iteration (NEXUS-53351); skip it and continue the sweep.
+      // See RepositoryTaskSupport.execute() for the full InvalidStateException trade-off rationale.
+      log.warn("Skipping search index check for repository '{}' as it appears to have been removed: {}",
+          repository.getName(), e.getMessage());
+      return false;
     }
   }
 

@@ -84,6 +84,18 @@ describe('SettingsTextInput', () => {
       );
       expect(container.querySelector('.custom-class')).toBeInTheDocument();
     });
+
+    it('applies monospace styling when monospace is true', () => {
+      const { container } = render(
+        <SettingsTextInput {...defaultProps} monospace />
+      );
+      expect(container.querySelector('.settings-text-input__input--mono')).toBeInTheDocument();
+    });
+
+    it('does not apply monospace styling by default', () => {
+      const { container } = render(<SettingsTextInput {...defaultProps} />);
+      expect(container.querySelector('.settings-text-input__input--mono')).not.toBeInTheDocument();
+    });
   });
 
   describe('input types', () => {

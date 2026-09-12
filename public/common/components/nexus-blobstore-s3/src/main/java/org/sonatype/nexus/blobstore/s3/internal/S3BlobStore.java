@@ -50,9 +50,9 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreMigrationStateProvider;
+import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
 import org.sonatype.nexus.blobstore.api.BlobStoreWarmupConstants;
-import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.api.ExternalMetadata;
 import org.sonatype.nexus.blobstore.api.OperationMetrics;
 import org.sonatype.nexus.blobstore.api.OperationType;
@@ -80,8 +80,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -279,19 +279,6 @@ public class S3BlobStore
         throw new BlobStoreWarmingUpException(getBlobStoreConfiguration().getName());
       }
     }
-  }
-
-  /**
-   * Resets the warmup failure state for testing purposes.
-   * This method should only be called from test code to clear the warmup failure timestamp
-   * after start() completes, allowing tests to proceed without BlobStoreWarmingUpException.
-   *
-   * Public visibility is required to allow test classes in different packages (e.g., ProS3BlobStore tests)
-   * to reset the warmup state.
-   */
-  @VisibleForTesting
-  public void resetWarmupStateForTesting() {
-    warmupFailedAt = 0L;
   }
 
   @Nullable
@@ -1374,6 +1361,7 @@ public class S3BlobStore
   public BlobAttributes getBlobAttributesWithException(final BlobId blobId) throws BlobStoreException {
     try {
       S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+      // NoSuchKeyException (404) is absorbed inside S3BlobAttributes.load(), which returns false; result is null.
       return blobAttributes.load() ? blobAttributes : null;
     }
     catch (Exception e) {

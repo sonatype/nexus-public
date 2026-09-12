@@ -45,7 +45,6 @@ export async function fetchCapabilities(): Promise<IqCapabilities> {
     const response = await Axios.get(IQ_CAPABILITIES_API);
     return { ...DEFAULT_IQ_CAPABILITIES, ...response.data };
   } catch (err) {
-    console.warn('Could not load IQ Server capabilities:', err);
     return DEFAULT_IQ_CAPABILITIES;
   }
 }
@@ -55,7 +54,6 @@ export async function fetchCapabilitiesWithConfig(settings: IqServerConfiguratio
     const response = await Axios.post(IQ_CAPABILITIES_TEST_API, settings);
     return { ...DEFAULT_IQ_CAPABILITIES, ...response.data };
   } catch (err) {
-    console.warn('Could not load IQ Server capabilities:', err);
     return DEFAULT_IQ_CAPABILITIES;
   }
 }

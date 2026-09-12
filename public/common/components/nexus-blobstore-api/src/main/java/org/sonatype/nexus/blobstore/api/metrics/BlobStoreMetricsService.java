@@ -37,14 +37,14 @@ public interface BlobStoreMetricsService<B extends BlobStore>
   /**
    * Record a new blob being added to the blob store.
    *
-   * @param size Size of the newly added blob in bytes.
+   * @param size Size of the newly added blob in bytes; must be non-negative.
    */
   void recordAddition(final long size);
 
   /**
    * Record a blob being deleted from the from blobstore.
    *
-   * @param size Size of the deleted blob in bytes.
+   * @param size Size of the deleted blob in bytes; must be non-negative.
    */
   void recordDeletion(final long size);
 

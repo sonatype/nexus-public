@@ -119,6 +119,13 @@ jest.mock('../settingsConfig', () => ({
           description: 'Manage scheduled system tasks',
           featureKey: 'system.tasks',
         },
+        {
+          id: 'usage',
+          path: 'system/usage',
+          label: 'Usage',
+          description: 'Monitor historical usage metrics and trends',
+          cloudOnly: true,
+        },
       ],
     },
   ],
@@ -691,6 +698,26 @@ describe('SettingsHubPage', () => {
 
       // Section remains because Repositories is not cloudExcluded
       expect(screen.getByRole('heading', { name: 'Repository' })).toBeInTheDocument();
+    });
+
+    it('shows cloudOnly cards when isCloud is true', () => {
+      // Depends on this describe's beforeEach setting isCloud = true. If this test
+      // is ever moved out of "Cloud Mode Filtering", the default isCloud = false
+      // would filter the card out and this assertion would flip to a false pass —
+      // keep it (or its own isCloud=true setup) inside a cloud context.
+      renderWithTheme(<SettingsHubPage />);
+
+      // Usage is cloudOnly: true in the mock
+      expect(screen.getByText('Usage')).toBeInTheDocument();
+    });
+  });
+
+  describe('Cloud-Only Filtering (self-hosted)', () => {
+    it('hides cloudOnly cards on self-hosted (default isCloud=false)', () => {
+      renderWithTheme(<SettingsHubPage />);
+
+      // Usage is cloudOnly: true, so it must not appear on self-hosted
+      expect(screen.queryByText('Usage')).not.toBeInTheDocument();
     });
   });
 

@@ -16,6 +16,9 @@
  */
 import {useEffect, useState, useRef} from 'react';
 
+/** Default time to wait for the first state poll to answer who the user is. */
+const AUTH_STATE_TIMEOUT_MS = 2000;
+
 /**
  * Phase 1: React Shell - Bridge between React and ExtJS
  *
@@ -77,6 +80,13 @@ export default class ExtJS {
    */
   static proLicenseUrl() {
     return ExtJS.urlOf('/PRO-LICENSE.html');
+  }
+
+  /**
+   *@returns a complete url for the CE-LICENSE.html
+   */
+  static ceLicenseUrl() {
+    return ExtJS.urlOf('/CE-LICENSE.html');
   }
 
   /**
@@ -667,6 +677,120 @@ export default class ExtJS {
     // In debug mode, React loads before app.js, so NX.app.state isn't set yet.
     // The NXSESSIONID cookie is the most reliable indicator of an authenticated session.
     return document.cookie.includes('NXSESSIONID');
+  }
+
+  /**
+   * Subscribes a listener to ExtJS State controller events.
+   * @param events array of event names, e.g. ['userchanged']
+   * @param listener
+   * @returns an unsubscribe function, or null when there is no State controller to subscribe to
+   */
+  static onStateChange(events, listener) {
+    let stateController;
+    try {
+      stateController = window.Ext?.getApplication?.()?.getController?.('State');
+    } catch {
+      // ExtJS application has not launched
+    }
+    if (!stateController?.on) {
+      return null;
+    }
+    events.forEach((event) => stateController.on(event, listener));
+    return () => events.forEach((event) => stateController.un?.(event, listener));
+  }
+
+  /**
+   * Subscribes a listener to the ExtJS Permissions controller's 'changed' event, which
+   * fires whenever a permission set is installed.
+   *
+   * Note this is a strictly stronger signal than {@link arePermissionsReady}: that only
+   * reports whether *some* map is installed, and reads true over an empty one, so it
+   * cannot tell "permissions known" from "permissions known to be nothing yet".
+   *
+   * @param listener invoked after each permission install
+   * @returns an unsubscribe function, or null when there is no controller to subscribe to
+   */
+  static onPermissionsChange(listener) {
+    let permissionsController;
+    try {
+      permissionsController = window.Ext?.getApplication?.()?.getController?.('Permissions');
+    } catch {
+      // ExtJS application has not launched
+    }
+    if (!permissionsController?.on) {
+      return null;
+    }
+    permissionsController.on('changed', listener);
+    return () => permissionsController.un?.('changed', listener);
+  }
+
+  /**
+   * True when the client has an authoritative answer to "is a user signed in". Under
+   * header/token authentication hasUser() is false until the first state poll lands, so it
+   * cannot distinguish "no user" from "user not known yet" during bootstrap (NEXUS-54290).
+   */
+  static isAuthStateResolved() {
+    if (ExtJS.hasUser()) {
+      return true;
+    }
+    if (window.__nxRestBootstrap && 'user' in window.__nxRestBootstrap) {
+      return true;
+    }
+    try {
+      // The State controller sets `receiving` false on launch and true on the first successful
+      // poll, so false is the only value meaning "a poll is expected but has not landed".
+      return window.NX?.State?.getValue?.('receiving') !== false;
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Resolves once isAuthStateResolved() holds, or after timeoutMs, whichever comes first.
+   * Requests an immediate state poll rather than waiting for the polling interval.
+   * @param timeoutMs
+   * @returns {Promise<void>}
+   */
+  static whenAuthStateResolved(timeoutMs = AUTH_STATE_TIMEOUT_MS) {
+    if (ExtJS.isAuthStateResolved()) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      let timer;
+      let unsubscribe;
+      let settled = false;
+
+      function finish() {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe?.();
+        resolve();
+      }
+
+      // `receivingchanged` fires before setValues() applies the new user, so settle on the
+      // next macrotask to let that value land first.
+      function onChange() {
+        setTimeout(finish, 0);
+      }
+
+      unsubscribe = ExtJS.onStateChange(['userchanged', 'receivingchanged'], onChange);
+      if (!unsubscribe) {
+        resolve();
+        return;
+      }
+
+      timer = setTimeout(finish, timeoutMs);
+
+      try {
+        window.NX?.State?.refreshNow?.();
+      } catch {
+        // Polling URLs are not registered yet; the timeout still applies
+      }
+    });
   }
 
   static signOut() {

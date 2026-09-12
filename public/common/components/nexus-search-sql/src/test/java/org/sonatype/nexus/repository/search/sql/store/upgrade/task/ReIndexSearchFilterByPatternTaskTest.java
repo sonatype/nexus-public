@@ -16,7 +16,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -42,6 +44,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -157,24 +160,95 @@ class ReIndexSearchFilterByPatternTaskTest
   }
 
   @Test
-  void shouldHandleRepositoryWithoutContentFacet() throws Exception {
+  void shouldLogErrorAndSkipWhenRepositoryThrowsUnexpectedException() throws Exception {
     String filterCondition = "namespace LIKE '%\\_%'";
     configureTask(filterCondition);
 
-    Repository repo = mock(Repository.class);
-    when(repo.getName()).thenReturn("proxy-repo");
-    when(repo.facet(ContentFacet.class)).thenReturn(null);
+    // An unexpected RuntimeException (NOT a concurrent-deletion signal) must land in the generic
+    // catch and be logged at ERROR — distinct from the MissingFacet/InvalidState WARN-and-skip path.
+    Repository brokenRepo = mock(Repository.class);
+    when(brokenRepo.getName()).thenReturn("broken-repo");
+    when(brokenRepo.facet(ContentFacet.class)).thenThrow(new RuntimeException("unexpected failure"));
 
-    when(repositoryManager.browse()).thenReturn(List.of(repo));
+    Repository healthyRepo = createRepositoryWithComponents("healthy-repo", 1);
+
+    when(repositoryManager.browse()).thenReturn(List.of(brokenRepo, healthyRepo));
 
     Object result = underTest.execute();
 
-    assertThat(result, is(equalTo(0L)));
-    verify(sqlSearchIndexService, never()).indexBatch(any(), any());
+    // The broken repo is skipped (returns 0) but the healthy repo is still indexed.
+    assertThat(result, is(equalTo(1L)));
+    verify(sqlSearchIndexService, times(1)).indexBatch(any(), eq(healthyRepo));
 
     assertThat(logs.logs(), hasItem(allOf(
         logLevel(Level.ERROR),
-        formattedMessage(containsString("Error processing repository proxy-repo")))));
+        formattedMessage(containsString("Error processing repository broken-repo")))));
+
+    // It must NOT be treated as a benign concurrent-deletion WARN.
+    assertThat(logs.logs(), not(hasItem(allOf(
+        logLevel(Level.WARN),
+        formattedMessage(containsString("broken-repo"))))));
+  }
+
+  @Test
+  void shouldWarnAndSkipWhenRepositoryThrowsMissingFacetException() throws Exception {
+    String filterCondition = "namespace LIKE '%\\_%'";
+    configureTask(filterCondition);
+
+    Repository deletedRepo = mock(Repository.class);
+    when(deletedRepo.getName()).thenReturn("deleted-repo");
+    // Construct the exception before the stubbing call: MissingFacetException's constructor invokes
+    // deletedRepo.getName(), and calling a mock method inside an in-progress when() would trip
+    // Mockito's "unfinished stubbing" detection.
+    MissingFacetException missingFacet = new MissingFacetException(deletedRepo, ContentFacet.class);
+    when(deletedRepo.facet(ContentFacet.class)).thenThrow(missingFacet);
+
+    Repository healthyRepo = createRepositoryWithComponents("healthy-repo", 1);
+
+    when(repositoryManager.browse()).thenReturn(List.of(deletedRepo, healthyRepo));
+
+    Object result = underTest.execute();
+
+    assertThat(result, is(equalTo(1L)));
+    verify(sqlSearchIndexService, times(1)).indexBatch(any(), eq(healthyRepo));
+
+    assertThat(logs.logs(), hasItem(allOf(
+        logLevel(Level.WARN),
+        formattedMessage(
+            containsString("Skipping repository 'deleted-repo' as it appears to have been removed during re-index")))));
+
+    assertThat(logs.logs(), not(hasItem(allOf(
+        logLevel(Level.ERROR),
+        formattedMessage(containsString("deleted-repo"))))));
+  }
+
+  @Test
+  void shouldWarnAndSkipWhenRepositoryThrowsInvalidStateException() throws Exception {
+    String filterCondition = "namespace LIKE '%\\_%'";
+    configureTask(filterCondition);
+
+    Repository deletedRepo = mock(Repository.class);
+    when(deletedRepo.getName()).thenReturn("deleted-repo");
+    when(deletedRepo.facet(ContentFacet.class))
+        .thenThrow(new InvalidStateException("DELETED", new String[]{"STARTED"}));
+
+    Repository healthyRepo = createRepositoryWithComponents("healthy-repo", 1);
+
+    when(repositoryManager.browse()).thenReturn(List.of(deletedRepo, healthyRepo));
+
+    Object result = underTest.execute();
+
+    assertThat(result, is(equalTo(1L)));
+    verify(sqlSearchIndexService, times(1)).indexBatch(any(), eq(healthyRepo));
+
+    assertThat(logs.logs(), hasItem(allOf(
+        logLevel(Level.WARN),
+        formattedMessage(
+            containsString("Skipping repository 'deleted-repo' as it appears to have been removed during re-index")))));
+
+    assertThat(logs.logs(), not(hasItem(allOf(
+        logLevel(Level.ERROR),
+        formattedMessage(containsString("deleted-repo"))))));
   }
 
   @Test

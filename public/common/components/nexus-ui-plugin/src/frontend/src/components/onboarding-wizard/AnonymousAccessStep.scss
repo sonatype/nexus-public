@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 16px);
-  padding: var(--space-4, 16px) var(--space-6, 24px);
+  padding: var(--space-2, 8px) var(--space-4, 16px);
 
   &-form {
     display: flex;
@@ -29,21 +29,23 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-3, 12px);
+    gap: var(--space-2, 8px);
   }
 
   &-legend {
     font-size: var(--font-size-6, 24px);
     font-weight: 600;
     padding: 0;
+    margin: 0;
+  }
+
+  &-subtitle {
     margin: 0 0 var(--space-2, 8px) 0;
+    line-height: 1.5;
+    color: var(--gray-11);
   }
 
   &-description {
-    // Hybrid — Radix Callout (variant="surface" color="blue") supplies the
-    // outer bordered/tinted panel and top-left info icon. The Callout body
-    // holds a semantic <dl>/<dt>/<dd> so each option name reads as a term
-    // with its explanation indented on the next line.
     margin: 0 0 var(--space-2, 8px) 0;
 
     a {
@@ -52,46 +54,10 @@
     }
   }
 
-  &-description-list {
-    margin: 0;
-    padding: 0;
-
-    dt {
-      font-weight: 600;
-      color: var(--gray-12, #111827);
-      margin: 0;
-      padding: 0;
-    }
-
-    // dd sits flush against its dt — no vertical gap between term and its
-    // definition. Only the left indent remains so the definition reads as
-    // subordinate content under its heading.
-    dd {
-      margin: 0 0 0 var(--space-4, 16px);
-      color: var(--gray-11, #6b7280);
-    }
-
-    // Space is added only *between* pairs — a dt immediately after a dd
-    // marks the start of a new term/definition pair.
-    dd + dt {
-      margin-top: var(--space-3, 12px);
-    }
-
-    em {
-      font-style: italic;
-      color: var(--gray-12, #111827);
-    }
-  }
-
-  &-description-more-info {
-    margin: var(--space-3, 12px) 0 0 0;
-  }
-
   &-options {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3, 12px);
-    margin-top: var(--space-2, 8px);
+    gap: var(--space-2, 8px);
   }
 
   &-option {
@@ -118,6 +84,7 @@
     &[data-selected='true'] {
       border-color: var(--green-9, #10b981);
       box-shadow: inset 0 0 0 1px var(--green-9, #10b981);
+      background: var(--green-3, #d1fae5);
     }
 
     &-input {

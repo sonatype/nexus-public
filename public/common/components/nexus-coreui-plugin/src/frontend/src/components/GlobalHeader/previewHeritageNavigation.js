@@ -118,8 +118,11 @@ export const PREVIEW_TO_HERITAGE_ROUTES = [
   { preview: 'preview/admin/system/licensing', heritage: 'admin/system/licensing' },
   { preview: 'preview/admin/system/nodes', heritage: 'admin/system/nodes' },
   { preview: 'preview/admin/system/api', heritage: 'admin/system/api' },
-  { preview: 'preview/admin/system/upgrade', heritage: 'admin/system/upgrade' },
   { preview: 'preview/admin/system/previewui', heritage: 'admin/system/previewui' },
+  // IQ routes use slash paths (not ExtJS colon convention) — exact entries must precede the generic iq fallback.
+  { preview: 'preview/admin/iq/connection', heritage: 'admin/iq/connected' },
+  { preview: 'preview/admin/iq/connected', heritage: 'admin/iq/connected' },
+  { preview: 'preview/admin/iq/hosted-repos-eval', heritage: 'admin/iq/sonatype-lifecycle/hosted-repos-eval' },
   { preview: 'preview/admin/iq', heritage: 'admin/iq' },
   { preview: 'preview/user/account', heritage: 'user/account' },
   { preview: 'preview/user/nugetapitoken', heritage: 'user/NuGetApiToken' },
@@ -184,6 +187,8 @@ export function heritageToPreviewPath(currentPath) {
     newPath = 'preview/browse/malwarerisk';
   } else if (cleanPath === 'admin/hub' || cleanPath === 'admin' || cleanPath === 'admin/') {
     newPath = 'preview/settings';
+  } else if (cleanPath === 'admin/iq/sonatype-lifecycle/hosted-repos-eval' || cleanPath.startsWith('admin/iq/sonatype-lifecycle/hosted-repos-eval/')) {
+    newPath = cleanPath.replace('admin/iq/sonatype-lifecycle/hosted-repos-eval', 'preview/admin/iq/hosted-repos-eval');
   } else if (cleanPath === 'admin/security/atlassiancrowd' || cleanPath.startsWith('admin/security/atlassiancrowd/')) {
     newPath = 'preview/admin/security/crowd';
   } else if (cleanPath === 'user/account' || cleanPath.startsWith('user/account/')) {

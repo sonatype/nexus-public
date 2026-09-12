@@ -11,8 +11,9 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';
 import { Box, Text, Button } from '@radix-ui/themes';
+import { UIRouterContext } from '@uirouter/react';
 import { Key, Plus, ArrowLeft } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
@@ -37,44 +38,79 @@ const BASE_PATH = 'preview/admin/security/privileges';
  * - /privileges/create    → Type selector (Step 1)
  * - /privileges/create/{type} → Configuration form (Step 2)
  * - /privileges/{id}      → Edit form
- * - /privileges/{id}/profile → Profile (read-only)
+ * - /privileges/{id}/profile → Profile (read-only), Overview tab
+ * - /privileges/{id}/profile?tab={tab} → Profile on a specific tab
  */
 type ViewMode = 'list' | 'select-type' | 'create' | 'edit' | 'profile' | 'detail';
+
+const PROFILE_TABS = ['overview', 'roles', 'users'] as const;
+type ProfileTab = (typeof PROFILE_TABS)[number];
+const DEFAULT_PROFILE_TAB: ProfileTab = 'overview';
+
+function isProfileTab(value: string): value is ProfileTab {
+  return (PROFILE_TABS as readonly string[]).includes(value);
+}
 
 interface RouteState {
   viewMode: ViewMode;
   privilegeId: string | null;
   typeId: string | null;
+  /** Only meaningful when viewMode === 'profile'. */
+  profileTab: ProfileTab;
+}
+
+function parseTabFromHash(hash: string): ProfileTab {
+  const queryStart = hash.indexOf('?');
+  if (queryStart === -1) return DEFAULT_PROFILE_TAB;
+
+  const raw = new URLSearchParams(hash.slice(queryStart + 1)).get('tab') ?? '';
+  return isProfileTab(raw) ? raw : DEFAULT_PROFILE_TAB;
 }
 
 function parseRoute(hash: string): RouteState {
   const cleanHash = hash.replace(/^#/, '').replace(/\?.*$/, '');
   const parts = cleanHash.split('/');
   const privIndex = parts.indexOf('privileges');
-  
-  if (privIndex === -1) return { viewMode: 'list', privilegeId: null, typeId: null };
+
+  const listState: RouteState = {
+    viewMode: 'list',
+    privilegeId: null,
+    typeId: null,
+    profileTab: DEFAULT_PROFILE_TAB,
+  };
+
+  if (privIndex === -1) return listState;
 
   const pathAfterPrivs = parts.slice(privIndex + 1);
-  if (pathAfterPrivs.length === 0) return { viewMode: 'list', privilegeId: null, typeId: null };
+  if (pathAfterPrivs.length === 0) return listState;
 
   if (pathAfterPrivs[0] === 'create') {
-    if (pathAfterPrivs.length === 1) return { viewMode: 'select-type', privilegeId: null, typeId: null };
+    if (pathAfterPrivs.length === 1) {
+      return { ...listState, viewMode: 'select-type' };
+    }
     return {
       viewMode: 'create',
       privilegeId: null,
       typeId: decodeURIComponent(pathAfterPrivs[1]),
+      profileTab: DEFAULT_PROFILE_TAB,
     };
   }
 
   const privilegeId = decodeURIComponent(pathAfterPrivs[0]);
   if (pathAfterPrivs.length >= 2 && pathAfterPrivs[1] === 'profile') {
-    return { viewMode: 'profile', privilegeId, typeId: null };
+    return {
+      viewMode: 'profile',
+      privilegeId,
+      typeId: null,
+      profileTab: parseTabFromHash(hash),
+    };
   }
 
-  return { 
-    viewMode: 'edit', 
-    privilegeId, 
-    typeId: null 
+  return {
+    viewMode: 'edit',
+    privilegeId,
+    typeId: null,
+    profileTab: DEFAULT_PROFILE_TAB,
   };
 }
 
@@ -89,6 +125,9 @@ function navigateTo(path: string) {
  * Uses a multi-step wizard for creation.
  */
 export function PrivilegesPage() {
+  // useContext rather than useRouter(), which throws when there is no <UIRouter>
+  // ancestor (tests, embedded shells). Falls back to direct hash handling below.
+  const router = useContext(UIRouterContext);
   const [routeState, setRouteState] = useState<RouteState>(() => parseRoute(window.location.hash));
   const [privilege, setPrivilege] = useState<Privilege | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -112,7 +151,9 @@ export function PrivilegesPage() {
   const canUpdate = ExtJS.checkPermission('nexus:privileges:update');
   const canDelete = ExtJS.checkPermission('nexus:privileges:delete');
 
-  // Handle hash changes for routing
+  // Handle hash changes for routing. Also the browser-Back path for the profile
+  // tab (NEXUS-52167): Back restores the hash, which fires `hashchange`, and
+  // parseRoute reads the `?tab` param back out.
   useEffect(() => {
     const handleHashChange = () => {
       const newState = parseRoute(window.location.hash);
@@ -171,6 +212,39 @@ export function PrivilegesPage() {
   const handleBack = useCallback(() => {
     navigateTo(BASE_PATH);
   }, []);
+
+  /**
+   * Writes the active tab into the URL so browser Back returns to the tab the
+   * user left from (NEXUS-52167). Goes through UI-Router because the router owns
+   * this URL — writing the hash directly leaves its state params disagreeing with
+   * the address bar. `location: 'replace'` keeps Back meaning "the page before
+   * this one" rather than stepping back through tabs; `notify: false` avoids a
+   * remount and refetch on every tab click (safe because `tab` is `dynamic`).
+   * Mirrors RepositoryProfilePage.
+   */
+  const handleProfileTabChange = useCallback(
+    (tab: string) => {
+      const privilegeId = routeState.privilegeId;
+      if (!privilegeId || !isProfileTab(tab)) return;
+
+      setRouteState((prev) => ({ ...prev, profileTab: tab }));
+
+      if (router) {
+        router.stateService.go(
+          'preview.admin.security.privileges.profile',
+          { privilegeId, tab },
+          { notify: false, location: 'replace' }
+        );
+        return;
+      }
+
+      // No router on the page (tests, standalone/embedded shell). Keep the URL
+      // truthful anyway so the tab is still shareable and restorable.
+      const path = `${BASE_PATH}/${encodeURIComponent(privilegeId)}/profile?tab=${encodeURIComponent(tab)}`;
+      window.history.replaceState(null, '', `#${path}`);
+    },
+    [routeState.privilegeId, router]
+  );
 
   const handleBackToTypeSelect = useCallback(() => {
     navigateTo(`${BASE_PATH}/create`);
@@ -423,6 +497,8 @@ export function PrivilegesPage() {
         {routeState.viewMode === 'profile' && routeState.privilegeId && (
           <PrivilegeProfilePage
             privilegeId={routeState.privilegeId}
+            activeTab={routeState.profileTab}
+            onTabChange={handleProfileTabChange}
             onBack={handleBack}
             onEdit={
               canUpdate
@@ -489,5 +565,3 @@ export function PrivilegesPage() {
 }
 
 export default PrivilegesPage;
-
-

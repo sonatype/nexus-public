@@ -225,7 +225,7 @@
     min-width: 20px;
     text-align: center;
     color: var(--gray-9, #8d8d8f);
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    font-family: var(--font-family-mono);
     font-size: 12px;
   }
 
@@ -245,7 +245,7 @@
     background: var(--color-background, #fff);
     color: var(--gray-12, #1a1a1a);
     font-size: 14px;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    font-family: var(--font-family-mono);
     overflow-x: auto; // Scroll for long patterns - layout stays aligned
     overflow-y: hidden;
     white-space: nowrap;
@@ -428,7 +428,7 @@
     background: var(--color-background, #fff);
     color: var(--gray-12, #1a1a1a);
     font-size: 14px;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    font-family: var(--font-family-mono);
     overflow-x: auto; // Scroll horizontally for long paths - layout stays aligned
     overflow-y: hidden;
     white-space: nowrap; // Prevent path from wrapping; overflow-x allows horizontal scroll

@@ -29,7 +29,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>3.95.4-01</version>
+  <version>3.96.1-01</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -62,7 +62,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.95.4-01</nexus.version>
+    <nexus.version>3.96.1-01</nexus.version>
     <nexus2.version>2.15.1-02</nexus2.version>
 
     <spring-boot.version>4.1.0</spring-boot.version>
@@ -156,6 +156,16 @@
     See NEXUS-53922. Remove this pin once the transitive dependencies ship 2.25.5+.
     -->
     <log4j.version>2.25.5</log4j.version>
+
+    <!--
+    Force jboss-logging above the 3.4.3.Final that the Spring Boot BOM pins, which lacks
+    the getMessageLogger(MethodHandles.Lookup, Class, String) method introduced in 3.5.0.
+    RESTEasy 7.0.0 (also on the classpath) was compiled against 3.5+ and calls this method
+    during static initialisation of LogMessages, crashing the Jetty thread before it can
+    bind to the HTTP port. 3.6.1.Final is the version already present in the local repository.
+    Remove this pin once the Spring Boot BOM ships jboss-logging 3.5.0+.
+    -->
+    <jboss.logging.version>3.6.1.Final</jboss.logging.version>
   </properties>
 
   <dependencyManagement>
@@ -178,6 +188,12 @@
         <version>${log4j.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <!-- Pin jboss-logging above 3.4.3.Final (Spring Boot BOM default) — see property above. -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>${jboss.logging.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -235,7 +251,7 @@
         <plugin>
           <groupId>org.sonatype.nexus.common.maven.plugins</groupId>
           <artifactId>extjs-maven-plugin</artifactId>
-          <version>3.95.4-01</version>
+          <version>3.96.1-01</version>
           <executions>
             <execution>
               <goals>
@@ -431,9 +447,6 @@
 
                   <!-- Exclude developers local scripts folder-->
                   <exclude>myscripts/**</exclude>
-
-                  <!-- Exclude jetty modifications -->
-                  <exclude>public/common/components/thirdparty/jetty-modifications/**</exclude>
                 </excludes>
               </licenseSet>
 
@@ -654,7 +667,7 @@
           <!-- see private/developer-documentation/getting-started/formatting.md -->
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.8.0</version>
 
           <configuration>
             <ratchetFrom>origin/main</ratchetFrom>
@@ -675,31 +688,7 @@
               <removeUnusedImports/>
 
               <eclipse>
-                <!--
-                  Eclipse JDT formatter version. The p2 mirror below is version-agnostic, so an
-                  Eclipse formatter bump only requires changing this value.
-                -->
-                <version>4.35</version>
                 <file>${maven.multiModuleProjectDirectory}/sonatype-config/sonatype-eclipse.xml</file>
-                <!--
-                  Spotless bootstraps the Eclipse JDT formatter from the Eclipse p2 update site.
-                  download.eclipse.org has intermittent outages that break the build (NEXUS-53727),
-                  so redirect that update site to a stable official Eclipse mirror. p2Mirrors is a
-                  URI prefix->url map (one URL per prefix, NOT a fallback list). The prefix is
-                  matched as a URI prefix, so the version segment is intentionally omitted and
-                  supplied by <version> above. To switch mirrors, change the single <url> below.
-                  Verified official mirrors:
-                    - https://ftp.osuosl.org/pub/eclipse/eclipse/updates/    (active)
-                    - https://ftp2.osuosl.org/pub/eclipse/eclipse/updates/
-                    - https://mirrors.xmission.com/eclipse/eclipse/updates/
-                    - https://ftp.fau.de/eclipse/eclipse/updates/
-                -->
-                <p2Mirrors>
-                  <p2Mirror>
-                    <prefix>https://download.eclipse.org/eclipse/updates/</prefix>
-                    <url>https://ftp.osuosl.org/pub/eclipse/eclipse/updates/</url>
-                  </p2Mirror>
-                </p2Mirrors>
               </eclipse>
             </java>
           </configuration>

@@ -368,6 +368,15 @@ describe('SearchSidebar', () => {
     });
   });
 
+  describe('sort', () => {
+    it('renders no sorting control — the results-header dropdown is the only one', () => {
+      renderWithTheme(<SearchSidebar {...defaultProps} />);
+      expect(screen.queryByText('Sort')).not.toBeInTheDocument();
+      expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+      expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    });
+  });
+
   describe('disabled state', () => {
     it('disables Reset filters button when disabled', () => {
       renderWithTheme(<SearchSidebar {...defaultProps} disabled={true} />);

@@ -106,6 +106,12 @@ jest.mock('../../../../../utils/firewallFormats', () => ({
   isFirewallSupportedFormat: (f: string) => ['maven2', 'npm'].includes(f),
 }));
 
+import Permissions from '../../../../../constants/Permissions';
+import { ExtJS } from '../../../../../interface/ExtJS';
+// ProtectQuickConfig reads permissions through the provider-independent ExtJS.usePermission
+// (NEXUS-54212); spy on checkPermission so tests keep driving behavior via permission strings.
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 import ProtectQuickConfig from '../ProtectQuickConfig';
 
 const renderWithTheme = (ui: React.ReactElement) => render(<Theme>{ui}</Theme>);
@@ -113,6 +119,8 @@ const renderWithTheme = (ui: React.ReactElement) => render(<Theme>{ui}</Theme>);
 describe('ProtectQuickConfig', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: user has all write permissions so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
   });
 
   it('renders the Quick Config heading', () => {
@@ -177,5 +185,38 @@ describe('ProtectQuickConfig', () => {
     );
     expect(screen.queryByText(/Enable Firewall on visible/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Enable cleanup on visible/)).not.toBeInTheDocument();
+  });
+
+  describe('write gating (NEXUS-54212)', () => {
+    it('shows Enable Firewall with repository-admin edit', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderWithTheme(<ProtectQuickConfig protectData={DEFAULT_PROTECT_DATA} />);
+      expect(screen.getByText(/Enable Firewall on visible/)).toBeInTheDocument();
+    });
+
+    it('hides Enable Firewall without repository-admin edit', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.TASKS.CREATE);
+      renderWithTheme(<ProtectQuickConfig protectData={DEFAULT_PROTECT_DATA} />);
+      expect(screen.queryByText(/Enable Firewall on visible/)).not.toBeInTheDocument();
+    });
+
+    it('shows Enable Auto Remediation with tasks:create', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.TASKS.CREATE);
+      renderWithTheme(<ProtectQuickConfig protectData={DEFAULT_PROTECT_DATA} />);
+      expect(screen.getByText(/Enable Auto Remediation on visible/)).toBeInTheDocument();
+    });
+
+    it('hides Enable Auto Remediation without tasks:create', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderWithTheme(<ProtectQuickConfig protectData={DEFAULT_PROTECT_DATA} />);
+      expect(screen.queryByText(/Enable Auto Remediation on visible/)).not.toBeInTheDocument();
+    });
+
+    it('hides both firewall + remediation bulk actions for a read-only user', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderWithTheme(<ProtectQuickConfig protectData={DEFAULT_PROTECT_DATA} />);
+      expect(screen.queryByText(/Enable Firewall on visible/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Enable Auto Remediation on visible/)).not.toBeInTheDocument();
+    });
   });
 });

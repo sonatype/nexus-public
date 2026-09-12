@@ -31,7 +31,8 @@ Ext.define('NX.coreui.view.repository.recipe.PyPiProxy', {
     'NX.coreui.view.repository.facet.HttpClientFacetWithPreemptiveAuth',
     'NX.coreui.view.repository.facet.NegativeCacheFacet',
     'NX.coreui.view.repository.facet.CleanupPolicyFacet',
-    'NX.coreui.view.repository.facet.FirewallFacet'
+    'NX.coreui.view.repository.facet.FirewallFacet',
+    'NX.coreui.view.repository.facet.PyPiProxyFacet'
   ],
 
   /**
@@ -42,6 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.PyPiProxy', {
 
     me.items = [
       {xtype: 'nx-coreui-repository-firewall-facet', pccsEnabled: true},
+      {xtype: 'nx-coreui-repository-pypi-proxy-facet'},
       {xtype: 'nx-coreui-repository-proxy-facet'},
       {xtype: 'nx-coreui-repository-storage-facet'},
       {xtype: 'nx-coreui-repository-routing-rule-facet'},

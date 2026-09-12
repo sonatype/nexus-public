@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.config.internal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -29,7 +30,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.supportzip.PasswordSanitizing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -55,7 +55,7 @@ public class ConfigurationData
 
   private EntityId routingRuleId;
 
-  private Map<String, Map<String, Object>> attributes;
+  private volatile Map<String, Map<String, Object>> attributes;
 
   @Override
   public EntityId getId() {
@@ -137,18 +137,23 @@ public class ConfigurationData
 
   @Override
   public void setAttributes(@Nullable final Map<String, Map<String, Object>> attributes) {
-    this.attributes = attributes;
+    if (attributes != null && !(attributes instanceof ConcurrentHashMap)) {
+      this.attributes = new ConcurrentHashMap<>(attributes);
+    }
+    else {
+      this.attributes = attributes;
+    }
   }
 
   @Override
-  public NestedAttributesMap attributes(final String key) {
+  public synchronized NestedAttributesMap attributes(final String key) {
     checkNotNull(key);
 
     if (attributes == null) {
-      attributes = Maps.newHashMap();
+      attributes = new ConcurrentHashMap<>();
     }
 
-    return new NestedAttributesMap(key, attributes.computeIfAbsent(key, k -> Maps.newHashMap()));
+    return new NestedAttributesMap(key, attributes.computeIfAbsent(key, k -> new ConcurrentHashMap<>()));
   }
 
   @Override

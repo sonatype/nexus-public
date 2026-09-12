@@ -62,6 +62,14 @@ public class BlobPayload
     return blob.getRedirectUrl(action, name, contentType);
   }
 
+  /**
+   * @return if this payload would return a URL when calling getRedirectUrl
+   */
+  @Override
+  public boolean hasRedirect() {
+    return blob.hasRedirect();
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +

@@ -26,6 +26,19 @@ public class FeatureFlags
   /* Hugging Face format is temporarily hidden behind the feature flag. Default value: false */
   public static final String HUGGING_FACE_FORMAT_ENABLED = "nexus.format.huggingface.enabled";
 
+  /*
+   * Kill switch for the Hugging Face XET protocol (§0.6, §5 of xet-implementation-spec).
+   * Independent of HUGGING_FACE_FORMAT_ENABLED so operators can run the HF format on the
+   * legacy LFS-only download path while the XET protocol is disabled. Default value: false.
+   * When false the recipe skips registering XET routes and the proxy facet does not persist
+   * or emit the X-Xet-Hash content-attribute; instance behaviour is bit-for-bit identical to
+   * a pre-XET Nexus.
+   */
+  public static final String HUGGING_FACE_XET_ENABLED = "nexus.format.huggingface.xet.enabled";
+
+  public static final String HUGGING_FACE_XET_ENABLED_NAMED_VALUE =
+      "${" + HUGGING_FACE_XET_ENABLED + ":-false}";
+
   /* Composer format is temporarily hidden behind the feature flag. Default value: false */
   public static final String COMPOSER_FORMAT_ENABLED = "nexus.format.composer.enabled";
 
@@ -126,6 +139,14 @@ public class FeatureFlags
 
   public static final String RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED_NAMED_VALUE =
       "${" + RECALCULATE_BLOBSTORE_SIZE_TASK_ENABLED + ":true}";
+
+  /**
+   * Feature flag to enable/disable the audit-events cleanup task (retention pruning).
+   */
+  public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED = "nexus.audit.events.cleanup.task.enabled";
+
+  public static final String AUDIT_EVENTS_CLEANUP_TASK_ENABLED_NAMED_VALUE =
+      "${" + AUDIT_EVENTS_CLEANUP_TASK_ENABLED + ":true}";
 
   public static final String FIREWALL_ONBOARDING_ENABLED = "nexus.firewall.onboarding.enabled";
 
@@ -284,13 +305,8 @@ public class FeatureFlags
 
   public static final String CONTAINER_IMAGES_EVAL_ENABLED_NAMED_VALUE = "${nexus.container.images.eval.enabled:true}";
 
-  public static final String CONTAINER_IMAGES_EVAL_API_ENABLED_VALUE =
-      "${nexus.container.images.eval.api.enabled:true}";
-
   public static final String NEXUS_SECURITY_AUTH0_USER_MANAGEMENT_ENABLED =
       "nexus.security.auth0.userManagement.enabled";
-
-  public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_NAMED = "${nexus.firewall.container.workdirectory:-}";
 
   public static final String FIREWALL_CONTAINER_WORK_DIRECTORY_VALUE = "${nexus.firewall.container.workdirectory:}";
 
@@ -335,11 +351,11 @@ public class FeatureFlags
 
   /*
    * Gates the new React onboarding wizard. When enabled, the ExtJS onboarding wizard defers so the React wizard can
-   * take over. Available values: true, false. Default value: false
+   * take over. Available values: true, false. Default value: true
    */
   public static final String REACT_ONBOARDING_ENABLED = "nexus.react.onboarding.enabled";
 
-  public static final String REACT_ONBOARDING_ENABLED_NAMED_VALUE = "${nexus.react.onboarding.enabled:false}";
+  public static final String REACT_ONBOARDING_ENABLED_NAMED_VALUE = "${nexus.react.onboarding.enabled:true}";
 
   /* Enable principal permissions cache. Default value: true */
   public static final String PRINCIPAL_PERMISSIONS_CACHE_ENABLED_NAMED_VALUE =
@@ -392,11 +408,11 @@ public class FeatureFlags
    * Gates Preview UI audit event DB persistence and the audit log REST/UI surface.
    * Intentionally decoupled from the preview UI visibility flags so audit DB writes can be
    * deferred until the persistence path is production-ready.
-   * Available values: true, false. Default value: false
+   * Available values: true, false. Default value: true
    */
   public static final String PREVIEW_UI_AUDIT_ENABLED = "nexus.previewui.audit.enabled";
 
-  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:false}";
+  public static final String PREVIEW_UI_AUDIT_ENABLED_NAMED_VALUE = "${nexus.previewui.audit.enabled:true}";
 
   /*
    * Per-realm principal permissions cache maximum size. Default value: 1000. Override per realm by appending the
@@ -427,14 +443,6 @@ public class FeatureFlags
 
   public static final String HOSTED_REPOSITORY_EVALUATION_ENABLED_NAMED_VALUE =
       "${nexus.hosted.repository.evaluation.enabled:false}";
-
-  // Hosted Repository Synchronous Policy Enforcement feature (CLM-38411). Default: false.
-  // Requires HOSTED_REPOSITORY_EVALUATION_ENABLED to also be true.
-  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED =
-      "nexus.hosted.repository.enforcement.enabled";
-
-  public static final String HOSTED_REPOSITORY_ENFORCEMENT_ENABLED_NAMED_VALUE =
-      "${nexus.hosted.repository.enforcement.enabled:false}";
 
   public static final String HOSTED_REPOSITORY_WORK_DIRECTORY_VALUE =
       "${nexus.lifecycle.hosted-repository.workdirectory:}";
@@ -467,12 +475,9 @@ public class FeatureFlags
    */
   public static final String TELEMETRY_MANDATORY_ENABLED = "nexus.telemetry.mandatory.enabled";
 
-  public static final String TELEMETRY_MANDATORY_ENABLED_NAMED_VALUE =
-      "${nexus.telemetry.mandatory.enabled:false}";
-
   /**
    * When enabled, activates mandatory telemetry logic for alerting only, without blocking operations (e.g., read-only
-   * mode).
+   * mode). Default value: true
    */
   public static final String TELEMETRY_MANDATORY_WARNING_ENABLED = "nexus.telemetry.mandatory.warning.enabled";
 
@@ -502,11 +507,22 @@ public class FeatureFlags
   public static final String FIREWALL_REPOSITORY_SERVICE_ENABLED = "nexus.firewall.repository.service.enabled";
 
   /*
-   * Feature flag for the Azure Blob Storage Direct Download (SAS URLs) feature. When enabled,
-   * Nexus mints short-lived Shared Access Signature URLs and redirects downloads directly to
-   * Azure, bypassing the proxied path. Pro-only. Available values: true, false. Default: false.
+   * FIRE-105 / NEXUS-52802 — PyPI PCCS throughput perf fixes (template content cache, Guava HTML escaper,
+   * pre-escape relocation + safeLink scheme guard, reflection cache). Gates the optimised PyPI
+   * simple-index rendering path; default true (optimised path on unless explicitly
+   * disabled). Set false to run the legacy path. Available values: true, false.
    */
-  public static final String AZURE_SAS_ENABLED = "nexus.azure.sas.enabled";
+  public static final String NEXUS_PCCS_PERF_PYPI_ENABLED = "nexus.pccs.perf.pypi.enabled";
 
-  public static final String AZURE_SAS_ENABLED_NAMED_VALUE = "${nexus.azure.sas.enabled:false}";
+  public static final String NEXUS_PCCS_PERF_PYPI_ENABLED_NAMED_VALUE = "${nexus.pccs.perf.pypi.enabled:true}";
+
+  /*
+   * NEXUS-52802 — npm PCCS throughput perf fixes (shared ObjectMapper singleton + ThreadLocal,
+   * reflection cache). Gates the optimised npm metadata streaming path; default true (optimised
+   * path on unless explicitly disabled). Set false to run the legacy per-request path. Available
+   * values: true, false.
+   */
+  public static final String NEXUS_PCCS_PERF_NPM_ENABLED = "nexus.pccs.perf.npm.enabled";
+
+  public static final String NEXUS_PCCS_PERF_NPM_ENABLED_NAMED_VALUE = "${nexus.pccs.perf.npm.enabled:true}";
 }

@@ -291,6 +291,19 @@ public abstract class SearchTableDAOTestSupport
     assertThat(searchResult.version(), notNullValue());
     assertThat(searchResult.repositoryName(), notNullValue());
     assertThat(searchResult.lastModified(), notNullValue());
+
+    // NEXUS-54104: a crafted query such as q="" "" "" collapses to an empty SQL filter. The condition builder
+    // returns an empty string for that case, so the mapper must treat an empty-string filter/assetFilter as
+    // match-all rather than emitting the invalid SQL "WHERE ()" (which previously surfaced as an HTTP 500).
+    // Folded into this test (rather than a separate @DatabaseTest method) so it does not add another Postgres
+    // connection pool to the class run — see PostgresSearchTableDAOTest max_connections limit.
+    SqlSearchRequest emptyFilterRequest = SqlSearchRequest.builder()
+        .searchFilter("")
+        .searchAssetFilter("")
+        .limit(10)
+        .build();
+    assertThat(searchDAO.count(emptyFilterRequest), is(2L));
+    assertThat(searchDAO.searchComponents(emptyFilterRequest), hasSize(2));
   }
 
   @DatabaseTest(postgresql = true)

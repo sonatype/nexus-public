@@ -210,6 +210,364 @@ describe('CrowdPage', () => {
     });
   });
 
+  describe('screen-reader announcements (NEXUS-54024)', () => {
+    it('announces the loading state via a fresh-mount live region (F1)', async () => {
+      mockedFetch.mockReturnValue(new Promise(() => {}));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      const region = await screen.findByTestId('crowd-page-status');
+      expect(region).toHaveTextContent('Loading Crowd configuration...');
+      // Assertive, not polite: a polite/role="status" announcement here would
+      // queue behind VoiceOver's own page-load narration and be dropped
+      // rather than spoken (confirmed via manual VoiceOver testing).
+      expect(region).toHaveAttribute('role', 'alert');
+      expect(region).toHaveAttribute('aria-live', 'assertive');
+      expect(region).toHaveAttribute('aria-atomic', 'true');
+    });
+
+    it('does not leave a stale loading announcement once the form has loaded', async () => {
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Loading Crowd configuration...')).not.toBeInTheDocument();
+    });
+
+    it('announces the save operation while it is in progress (F2)', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedSave.mockReturnValue(new Promise(() => {}));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus-modified' } });
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        const region = screen.getByTestId('crowd-page-status');
+        expect(region).toHaveTextContent('Saving Crowd settings...');
+        expect(region).toHaveAttribute('role', 'alert');
+        expect(region).toHaveAttribute('aria-live', 'assertive');
+      });
+      const container = screen.getByTestId('crowd-page');
+      expect(container).toHaveAttribute('data-loading', 'true');
+      expect(container).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('announces the verify-connection operation while it is in progress (F2)', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedVerify.mockReturnValue(new Promise(() => {}));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        const region = screen.getByTestId('crowd-page-status');
+        expect(region).toHaveTextContent('Verifying connection...');
+        expect(region).toHaveAttribute('role', 'alert');
+        expect(region).toHaveAttribute('aria-live', 'assertive');
+      });
+      const container = screen.getByTestId('crowd-page');
+      expect(container).toHaveAttribute('data-loading', 'true');
+      expect(container).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('announces the clear-cache operation while it is in progress (F2)', async () => {
+      mockedClear.mockReturnValue(new Promise(() => {}));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /clear.*cache/i }));
+
+      await waitFor(() => {
+        const region = screen.getByTestId('crowd-page-status');
+        expect(region).toHaveTextContent('Clearing cache...');
+        expect(region).toHaveAttribute('role', 'alert');
+        expect(region).toHaveAttribute('aria-live', 'assertive');
+      });
+      const container = screen.getByTestId('crowd-page');
+      expect(container).toHaveAttribute('data-loading', 'true');
+      expect(container).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('sets data-loading and aria-busy back to false on the main container once busy work settles', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        const container = screen.getByTestId('crowd-page');
+        expect(container).toHaveAttribute('data-loading', 'false');
+        expect(container).toHaveAttribute('aria-busy', 'false');
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        expect(mockedVerify).toHaveBeenCalled();
+        const container = screen.getByTestId('crowd-page');
+        expect(container).toHaveAttribute('data-loading', 'false');
+        expect(container).toHaveAttribute('aria-busy', 'false');
+      });
+    });
+
+    it('announces a verify-connection failure assertively, alongside the visible error banner (F3)', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedVerify.mockRejectedValueOnce(new Error('Connection refused'));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        const region = screen.getByTestId('crowd-page-status');
+        expect(region).toHaveTextContent('Connection refused');
+        expect(region).toHaveAttribute('role', 'alert');
+        expect(region).toHaveAttribute('aria-live', 'assertive');
+        expect(region).toHaveAttribute('aria-atomic', 'true');
+      });
+
+      // Visible banner for sighted users still renders too — the announcer is
+      // an additional assistive-tech channel, not a replacement. Both nodes
+      // legitimately contain the same text, hence getAllByText over getByText.
+      expect(screen.getAllByText('Connection refused')).toHaveLength(2);
+    });
+
+    it('announces a clear-cache failure assertively, alongside the visible error banner (F3)', async () => {
+      mockedClear.mockRejectedValueOnce(new Error('Failed to clear Crowd cache'));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /clear.*cache/i }));
+
+      await waitFor(() => {
+        const region = screen.getByTestId('crowd-page-status');
+        expect(region).toHaveTextContent('Failed to clear Crowd cache');
+        expect(region).toHaveAttribute('role', 'alert');
+        expect(region).toHaveAttribute('aria-live', 'assertive');
+        expect(region).toHaveAttribute('aria-atomic', 'true');
+      });
+
+      expect(screen.getAllByText('Failed to clear Crowd cache')).toHaveLength(2);
+    });
+
+    it('announces a save failure assertively, alongside the visible error banner (F3)', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedSave.mockRejectedValueOnce(new Error('Save failed'));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus-modified' } });
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        const region = screen.getByTestId('crowd-page-status');
+        expect(region).toHaveTextContent('Save failed');
+        expect(region).toHaveAttribute('role', 'alert');
+        expect(region).toHaveAttribute('aria-live', 'assertive');
+        expect(region).toHaveAttribute('aria-atomic', 'true');
+      });
+
+      expect(screen.getAllByText('Save failed')).toHaveLength(2);
+    });
+
+    it('remounts the announcer fresh (new key) rather than swapping text in place across consecutive failures', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedVerify.mockRejectedValueOnce(new Error('Connection refused'));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Connection refused');
+      });
+      const firstNode = screen.getByTestId('crowd-page-status');
+
+      mockedVerify.mockRejectedValueOnce(new Error('Timed out'));
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Timed out');
+      });
+      const secondNode = screen.getByTestId('crowd-page-status');
+
+      // A distinct DOM node was inserted for the second announcement, not the
+      // same node with its text mutated in place.
+      expect(secondNode).not.toBe(firstNode);
+    });
+
+    it('clears the stale failure announcement once a subsequent operation succeeds', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedVerify.mockRejectedValueOnce(new Error('Connection refused'));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Connection refused');
+      });
+
+      mockedVerify.mockResolvedValueOnce(undefined);
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByText('Connection refused')).not.toBeInTheDocument();
+      });
+    });
+
+    it('does not let the F3 error-clear effect stomp a live F2 busy announcement', async () => {
+      // Regression guard: F1/F2/F3 are all assertive now, so the F3 effect's
+      // clear-on-no-error branch can no longer distinguish "our error message"
+      // from "someone else's live announcement" via the assertive flag alone
+      // (every message is assertive) — it must track its own message text.
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedSave.mockReturnValue(new Promise(() => {}));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus-modified' } });
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Saving Crowd settings...');
+      });
+
+      // No verify-connection error has ever occurred, so the F3 effect runs
+      // with `error === null` on every render throughout this save — it must
+      // leave the "Saving..." announcement alone rather than clearing it.
+      expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Saving Crowd settings...');
+    });
+
+    it('clears the "Saving..." announcement once a save completes successfully (F2)', async () => {
+      // Regression guard: F2 previously only handled the busy flags going
+      // *true* and never cleared its own message on a successful settle, so
+      // "Saving Crowd settings..." would linger in the live region forever
+      // after a successful save.
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus-modified' } });
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(mockedSave).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Saving Crowd settings...')).not.toBeInTheDocument();
+      });
+    });
+
+    it('clears the "Verifying connection..." announcement once verification succeeds (F2)', async () => {
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+
+      await waitFor(() => {
+        expect(mockedVerify).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Verifying connection...')).not.toBeInTheDocument();
+      });
+    });
+
+    it('clears the "Clearing cache..." announcement once the cache clear succeeds (F2)', async () => {
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /clear.*cache/i }));
+
+      await waitFor(() => {
+        expect(mockedClear).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Clearing cache...')).not.toBeInTheDocument();
+      });
+    });
+
+    it('does not leave a stale error announcement when a new busy operation starts immediately after a failure', async () => {
+      // Regression guard for F2/F3 ordering: a stale verify-connection error is
+      // showing, then the user immediately triggers Save. `error` clears and
+      // `isSaving` becomes true in the same render — the final announcement
+      // must be "Saving...", not the old "Connection refused" text, regardless
+      // of which of F2/F3 happens to run first.
+      mockedFetch.mockResolvedValue({ ...validSettings });
+      mockedVerify.mockRejectedValueOnce(new Error('Connection refused'));
+      mockedSave.mockReturnValue(new Promise(() => {}));
+      render(<CrowdPage />, { wrapper: TestWrapper });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /verify.*connection/i }));
+      await waitFor(() => {
+        expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Connection refused');
+      });
+
+      fireEvent.change(screen.getByTestId('input-applicationName'), { target: { value: 'nexus-modified' } });
+      const saveButton = screen.getByRole('button', { name: /save/i });
+      await waitFor(() => expect(saveButton).not.toBeDisabled());
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('crowd-page-status')).toHaveTextContent('Saving Crowd settings...');
+      });
+      expect(screen.queryByText('Connection refused')).not.toBeInTheDocument();
+    });
+  });
+
   it('clears cache when Clear Cache button is clicked', async () => {
     render(<CrowdPage />, { wrapper: TestWrapper });
 
@@ -269,11 +627,16 @@ describe('CrowdPage', () => {
   it('handles loading state', () => {
     mockedFetch.mockReturnValue(new Promise(() => {}));
     render(<CrowdPage />, { wrapper: TestWrapper });
-    expect(screen.getByText(/Loading Crowd configuration/i)).toBeInTheDocument();
+    // Both the visible spinner label and the SR-only announcer legitimately
+    // render this text (NEXUS-54024), hence getAllByText over getByText.
+    expect(screen.getAllByText(/Loading Crowd configuration/i)).toHaveLength(2);
     const container = screen.getByTestId('crowd-page');
     expect(container).toHaveAttribute('data-loading', 'true');
     expect(container).toHaveAttribute('aria-busy', 'true');
-    expect(container).toHaveAttribute('aria-live', 'polite');
+    // No aria-live on the outer container (A1): it would form a nested live
+    // region around the assertive announcer below and risk a double
+    // announcement in JAWS/NVDA.
+    expect(container).not.toHaveAttribute('aria-live');
   });
 
   it('shows an error banner when an operation fails', async () => {
@@ -372,6 +735,43 @@ describe('CrowdPage', () => {
     expect(mockedSave).not.toHaveBeenCalled();
   });
 
+  it('reveals all field errors as soon as the Enable Crowd checkbox is toggled, without saving', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('checkbox-enabled'));
+
+    // timeout is excluded here: it's in VALIDATED_FIELDS but the mock config
+    // loads it as a valid 30, so it has no error to reveal.
+    await waitFor(() => {
+      expect(screen.getByText('Crowd server URL is required')).toBeInTheDocument();
+      expect(screen.getByText('Application name is required')).toBeInTheDocument();
+      expect(screen.getByText('Application password is required')).toBeInTheDocument();
+    });
+    // No save attempted — the errors are revealed purely by the checkbox toggle.
+    expect(mockedSave).not.toHaveBeenCalled();
+  });
+
+  it('reveals all field errors as soon as the Enable Crowd Realm checkbox is toggled, without saving', async () => {
+    render(<CrowdPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('input-url')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('checkbox-realmActive'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Crowd server URL is required')).toBeInTheDocument();
+      expect(screen.getByText('Application name is required')).toBeInTheDocument();
+      expect(screen.getByText('Application password is required')).toBeInTheDocument();
+    });
+    expect(mockedSave).not.toHaveBeenCalled();
+  });
+
   it('shows URL required error and disables Verify when URL is cleared', async () => {
     mockedFetch.mockResolvedValue({ ...validSettings });
     render(<CrowdPage />, { wrapper: TestWrapper });
@@ -456,14 +856,18 @@ describe('CrowdPage', () => {
     expect(screen.queryByRole('button', { name: /clear.*cache/i })).not.toBeInTheDocument();
   });
 
-  it('shows permission warning when user lacks update permission', async () => {
+  // NEXUS-54212: the read-only warning banner was removed — read-only users simply see
+  // the form without write actions instead of a warning message.
+  it('does not show a permission warning banner when user lacks update permission', async () => {
     (global as any).NX.Permissions.check.mockReturnValue(false);
 
     render(<CrowdPage />, { wrapper: TestWrapper });
 
     await waitFor(() => {
-      expect(screen.getByText(/don't have permission to edit/i)).toBeInTheDocument();
+      expect(screen.getByTestId('input-applicationName')).toBeInTheDocument();
     });
+
+    expect(screen.queryByText(/don't have permission to edit/i)).not.toBeInTheDocument();
   });
 
   it('renders analytics IDs on all actionable elements', async () => {

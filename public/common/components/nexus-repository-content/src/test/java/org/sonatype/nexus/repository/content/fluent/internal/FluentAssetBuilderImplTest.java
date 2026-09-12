@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,13 +26,15 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.content.facet.ContentFacetStores;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -58,11 +61,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -486,6 +491,23 @@ public class FluentAssetBuilderImplTest
     assertThat(result, is(notNullValue()));
     // checkAttachAllowed is called with the existing asset when one is found
     verify(facet).checkAttachAllowed(existingAsset);
+  }
+
+  @Test
+  public void testSaveThrowsConcurrentOperationException_whenAssetCreateFailsWithFkViolation() {
+    // Simulate what ContentStoreSupport.transactionalSave() does:
+    // find returns empty → create callback is invoked → createAsset() throws FK violation
+    when(assetStore.save(any(Supplier.class), any(Supplier.class), any(UnaryOperator.class), any(Consumer.class)))
+        .thenAnswer(invocation -> {
+          Supplier<Asset> create = invocation.getArgument(1);
+          return create.get(); // drives the createAsset() callback
+        });
+    when(assetStore.readPath(REPOSITORY_ID, ASSET_PATH)).thenReturn(Optional.empty());
+
+    SQLException sqlCause = new SQLException("FK violation", "23503");
+    doThrow(new ForeignKeyViolationException(sqlCause)).when(assetStore).createAsset(any());
+
+    assertThrows(ConcurrentOperationException.class, () -> underTest.save());
   }
 
   // --- createAsset callback tests ---

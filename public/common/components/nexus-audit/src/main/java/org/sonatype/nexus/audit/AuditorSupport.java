@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.text.Strings2;
@@ -25,6 +24,7 @@ import org.sonatype.nexus.common.text.Strings2;
 import com.google.common.base.Joiner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -45,17 +45,17 @@ public abstract class AuditorSupport
   /**
    * Common type for created events.
    */
-  protected static final String CREATED_TYPE = "created";
+  public static final String CREATED_TYPE = "created";
 
   /**
    * Common type for updated events.
    */
-  protected static final String UPDATED_TYPE = "updated";
+  public static final String UPDATED_TYPE = "updated";
 
   /**
    * Common type for deleted events.
    */
-  protected static final String DELETED_TYPE = "deleted";
+  public static final String DELETED_TYPE = "deleted";
 
   /**
    * Common type for deleted events.

@@ -96,6 +96,51 @@ public class DefaultRoleRealmTest
   }
 
   @Test
+  public void testCacheInvalidation_afterRoleChange_permissionsUpdateImmediately() {
+    // Regression guard for NEXUS-53867: the Shiro authz cache must be cleared when the DefaultRole
+    // capability's configured role is updated, so the new role takes effect on the very next request
+    // with no TTL wait.
+    //
+    // This test drives the DefaultRoleRealm directly (no capability, no event bus) to verify the
+    // cache contract: after invalidatePrincipalPermissions() is called (the method
+    // RealmManagerImpl.clearAuthzRealmCaches() invokes on each realm), a stale cached permission
+    // is evicted and the next isPermitted() re-evaluates against the updated role.
+    BatchRolePermissionResolver resolver = mock(BatchRolePermissionResolver.class);
+    when(resolver.resolvePermissionsForRoles(any()))
+        .thenReturn(List.of(new WildcardPermission("nexus:*:*"))); // nx-admin: all permissions
+    DefaultRoleRealm realm =
+        new DefaultRoleRealm(new PrincipalPermissionsCacheFactory(true, 250, () -> Time.minutes(60), false, 16));
+    realm.setRole("nx-admin");
+    realm.setRolePermissionResolver(resolver);
+
+    PrincipalCollection user = principals("testuser");
+    WildcardPermission adminPerm = new WildcardPermission("nexus:users:read");
+
+    // Warm the cache: resolver called exactly once, permission granted.
+    assertThat(realm.isPermitted(user, adminPerm), is(true));
+    verify(resolver, times(1)).resolvePermissionsForRoles(any());
+
+    // Role changes to nx-anonymous (no permissions), but cache has NOT been invalidated yet.
+    when(resolver.resolvePermissionsForRoles(any())).thenReturn(List.of());
+    realm.setRole("nx-anonymous");
+
+    // Without invalidation the stale cache entry still grants the old nx-admin permission.
+    // This is exactly the pre-fix behavior that NEXUS-53867 reported.
+    assertThat(realm.isPermitted(user, adminPerm), is(true)); // stale - bug scenario
+    verify(resolver, times(1)).resolvePermissionsForRoles(any()); // no re-evaluation yet
+
+    // Invalidate: this is what DefaultRoleCapability.onActivate / onPassivate trigger through
+    // eventManager.post(new AuthorizationConfigurationChanged()), which causes
+    // RealmManagerImpl.clearAuthzRealmCaches() to call invalidatePrincipalPermissions() here.
+    realm.invalidatePrincipalPermissions();
+
+    // After invalidation the cache is cleared: the next check re-evaluates with the updated role
+    // and correctly denies the permission - role change takes effect immediately, no TTL wait.
+    assertThat(realm.isPermitted(user, adminPerm), is(false)); // fix confirmed
+    verify(resolver, times(2)).resolvePermissionsForRoles(any()); // re-expanded exactly once
+  }
+
+  @Test
   public void testGetName_isStableRealmName() {
     // The realm name must be the stable NAME constant (Shiro realm identity / principal realm-name matching, not a
     // cache key), not Shiro's default (class name + instance counter).

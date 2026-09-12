@@ -45,7 +45,8 @@ public class SelectorComboFormField
       boolean required,
       String regexValidation)
   {
-    super(id, label, helpText, required, regexValidation);
+    super(id, label, helpText, required);
+    withRegexValidation(regexValidation);
   }
 
   public SelectorComboFormField(String id, String label, String helpText, boolean required) {

@@ -18,10 +18,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.inject.Provider;
-import jakarta.validation.ValidationException;
 
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -59,6 +60,7 @@ import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUC
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.BUCKET_PREFIX_KEY;
 import static org.sonatype.nexus.blobstore.s3.S3BlobStoreConfigurationHelper.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 
@@ -80,6 +82,13 @@ public class S3BlobStoreDescriptor
   private static final String DEFAULT_LABEL = "Default";
 
   public static final String TYPE = "S3";
+
+  // Region.regions() is SDK-static; new AWS regions require an SDK bump.
+  // Users on newer AWS regions should enable the CustomS3RegionCapability as a workaround.
+  private static final Set<String> VALID_AWS_REGIONS = Region.regions()
+      .stream()
+      .map(Region::id)
+      .collect(Collectors.toUnmodifiableSet());
 
   private final Provider<CapabilityRegistry> capabilityRegistryProvider;
 
@@ -133,6 +142,7 @@ public class S3BlobStoreDescriptor
   public void validateConfig(final BlobStoreConfiguration config) {
     super.validateConfig(config);
     validateEndpoint(config);
+    validateRegion(config);
     for (BlobStore existingBlobStore : blobStoreManager.browse()) {
       validateOverlappingBucketWithConfiguration(config, existingBlobStore.getBlobStoreConfiguration());
     }
@@ -230,8 +240,26 @@ public class S3BlobStoreDescriptor
         if (!newEndpoint.isEmpty() || !existingEndpoint.isEmpty()) {
           message = message + format(" on endpoint '%s'", existingEndpoint);
         }
-        throw new ValidationException(message);
+        throw new ValidationErrorsException(message);
       }
+    }
+  }
+
+  private void validateRegion(final BlobStoreConfiguration config) {
+    if (isCustomS3RegionCapabilityEnabled()) {
+      return;
+    }
+    String endpoint = config.attributes(CONFIG_KEY).get(ENDPOINT_KEY, String.class);
+    if (!StringUtils.isBlank(endpoint)) {
+      return;
+    }
+    String region = config.attributes(CONFIG_KEY).get(REGION_KEY, String.class);
+    if (StringUtils.isBlank(region) || AmazonS3Factory.DEFAULT.equals(region)) {
+      return;
+    }
+    if (!VALID_AWS_REGIONS.contains(region)) {
+      throw new ValidationErrorsException(
+          "Invalid S3 region: " + region + ". For non-AWS S3 deployments, set an endpoint URL instead.");
     }
   }
 

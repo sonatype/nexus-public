@@ -48,6 +48,20 @@ export interface WizardFormProps {
   className?: string;
   /** Disable dirty tracking (for create-only wizards) */
   noDirtyTracking?: boolean;
+  /**
+   * Opt out of the wizard's own dirty registration when the embedded form
+   * already tracks dirty state via a form machine (`useForm`). Prevents the
+   * wizard from adding a second `window.dirty` entry that would trigger a
+   * duplicate unsaved-changes dialog. Pair with `onDiscardConfirm`.
+   */
+  externalDirtyTracking?: boolean;
+  /**
+   * Called after the user confirms "Leave" in the discard dialog. Callers
+   * using `externalDirtyTracking` must clear their form machine's dirty entry
+   * here (via `clearDirtyState(machineId)`) and then navigate. Replaces the
+   * default `onCancel()` invocation.
+   */
+  onDiscardConfirm?: () => void;
   /** Override submit handler for specific step (e.g. to run nested form validation before advancing) */
   onStepSubmitOverride?: (step: number) => (() => void) | undefined;
   /** Hide the Next/Complete button (for auto-advance scenarios) */
@@ -158,6 +172,8 @@ export function WizardForm({
   children,
   className = '',
   noDirtyTracking = false,
+  externalDirtyTracking = false,
+  onDiscardConfirm,
   onStepSubmitOverride,
   hideSubmitButton = false,
   hideStepTitle = false,
@@ -214,6 +230,8 @@ export function WizardForm({
       submitDisabled={!canAdvance || loading}
       confirmDiscard={dirty}
       noDirtyTracking={noDirtyTracking || !dirty}
+      externalDirtyTracking={externalDirtyTracking}
+      onDiscardConfirm={onDiscardConfirm}
       showActions
       error={error}
       testId={testId || 'wizard-form'}

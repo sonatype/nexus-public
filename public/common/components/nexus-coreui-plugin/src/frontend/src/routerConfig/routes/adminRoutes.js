@@ -49,7 +49,6 @@ const RecoveryMode = lazyLoad(() => import('../../components/pages/admin/Recover
 const Api = lazyLoad(() => import('../../components/pages/admin/Api/Api'));
 const HTTP = lazyLoad(() => import('../../components/pages/admin/Http/Http'));
 const Licensing = lazyLoad(() => import('../../components/pages/admin/Licensing/Licensing'));
-const Upgrade = lazyLoad(() => import('../../components/pages/admin/Upgrade/Upgrade'));
 
 const PreviewUiSettings = lazyLoad(() => import('@sonatype/nexus-ui-plugin').then(m => ({ default: m.PreviewUiSettings })));
 const NodesExt = lazyLoad(() => import('../../components/pages/admin/Nodes/NodesExt'));
@@ -105,7 +104,6 @@ export const adminRoutes = [
           Permissions.ATLAS.READ,
           Permissions.METRICS.READ,
           Permissions.LICENSING.READ,
-          Permissions.MIGRATION.READ,
         ],
       },
     },
@@ -870,19 +868,6 @@ export const adminRoutes = [
         permissions: [Permissions.ADMIN],
       },
       title: ADMIN.SYSTEM.NODES.TITLE,
-    },
-  },
-
-  {
-    name: ADMIN.SYSTEM.UPGRADE.ROOT,
-    url: '/upgrade',
-    component: Upgrade,
-    data: {
-      visibilityRequirements: {
-        permissions: [Permissions.MIGRATION.READ],
-        capability: 'migration',
-      },
-      title: ADMIN.SYSTEM.UPGRADE.TITLE,
     },
   },
 

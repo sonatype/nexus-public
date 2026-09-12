@@ -92,11 +92,9 @@ public class RoleXORequest
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof RoleXORequest)) {
+    if (!(obj instanceof RoleXORequest other)) {
       return false;
     }
-
-    RoleXORequest other = (RoleXORequest) obj;
 
     return Objects.equals(id, other.id) && Objects.equals(name, other.name) && Objects
         .equals(description, other.description) && Objects.equals(roles, other.roles)

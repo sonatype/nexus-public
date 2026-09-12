@@ -664,7 +664,9 @@ export function createRepositoryProfileMachine(options: RepositoryProfileMachine
         executingToggleHealthCheck: {
           invoke: {
             src: 'executeToggleHealthCheck',
-            onDone: { target: 'loaded' },
+            // Reload after a successful toggle so healthCheck data is fresh (mirrors executeToggleOnline).
+            // Without this, the UI stays stuck on the pre-toggle state (e.g., "Analyzing…" after disabling).
+            onDone: { target: 'loading' },
             onError: { target: 'loaded', actions: setActionError },
           },
         },
@@ -672,7 +674,10 @@ export function createRepositoryProfileMachine(options: RepositoryProfileMachine
         executingToggleInstanceHealthCheck: {
           invoke: {
             src: 'executeToggleInstanceHealthCheck',
-            onDone: { target: 'loaded' },
+            // Reload after instance capability toggle so context.capabilities is fresh.
+            // Without this, the card stays stuck on the pre-toggle state (e.g., still
+            // showing "Enabled" after the user disables the instance capability).
+            onDone: { target: 'loading' },
             onError: { target: 'loaded', actions: setActionError },
           },
         },
@@ -790,10 +795,27 @@ export function createRepositoryProfileMachine(options: RepositoryProfileMachine
         executeToggleHealthCheck: async (context, event) => {
           const { enabled } = event as Extract<RepositoryProfileEvent, { type: 'TOGGLE_HEALTH_CHECK' }>;
           const url = `/service/rest/v1/repositories/${encodeURIComponent(context.repositoryName)}/health-check`;
-          if (enabled) {
-            await restClient.post(url);
-          } else {
-            await restClient.delete(url);
+          try {
+            if (enabled) {
+              await restClient.post(url);
+            } else {
+              await restClient.delete(url);
+            }
+          } catch (err) {
+            const apiError = parseApiError(err);
+            if (apiError.status === 405 && enabled) {
+              // Backend returns 405 when a repository was auto-enabled by the instance-level
+              // "configured for all" capability and was then explicitly disabled. The server
+              // does not support re-enabling an individually-disabled repo via POST in this
+              // state. Workaround: toggle the instance-level Health Check capability off then
+              // back on, which resets the per-repository override.
+              throw new Error(
+                'Health Check cannot be re-enabled at the repository level when it was automatically ' +
+                'configured by the instance capability. To re-enable, go to System Capabilities and ' +
+                'toggle the Health Check capability off then on again.'
+              );
+            }
+            throw new Error(apiError.message);
           }
         },
 

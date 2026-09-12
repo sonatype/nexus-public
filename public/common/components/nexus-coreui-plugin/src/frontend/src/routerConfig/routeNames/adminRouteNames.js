@@ -155,10 +155,6 @@ export default {
       ROOT: 'admin.system.nodes',
       TITLE: 'Nodes',
     },
-    UPGRADE: {
-      ROOT: 'admin.system.upgrade',
-      TITLE: 'Upgrade',
-    },
     PREVIEWUI: {
       ROOT: 'admin.system.previewui',
       TITLE: 'Nexus One UI',

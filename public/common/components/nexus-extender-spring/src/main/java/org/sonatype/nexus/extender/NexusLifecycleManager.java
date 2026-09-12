@@ -14,6 +14,7 @@ package org.sonatype.nexus.extender;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.common.PrecedenceConstants;
 import org.springframework.core.annotation.Order;
 
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.app.ManagedComponentRegistrar;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
@@ -63,6 +65,10 @@ public class NexusLifecycleManager
   private final int timeToDelay;
 
   private final ApplicationContext context;
+
+  // Lazily resolved once the context has refreshed (all singletons exist before any phase runs); registrars are
+  // static singletons for the life of the context, so a single lookup is sufficient.
+  private volatile Collection<ManagedComponentRegistrar> registrars;
 
   @Autowired
   public NexusLifecycleManager(
@@ -149,6 +155,8 @@ public class NexusLifecycleManager
       if (components.put(phase, lifecycle)) {
         log.debug("Start {}: {}", phase, lifecycle);
         lifecycle.start();
+        // Notify registrars only after a successful start so a component is never wired up while half-initialised.
+        notifyRegistrars(lifecycle, true);
       }
     }
     catch (Exception | LinkageError e) {
@@ -170,6 +178,8 @@ public class NexusLifecycleManager
     try {
       if (components.remove(phase, lifecycle)) {
         log.debug("Stop {}: {}", phase, lifecycle);
+        // Notify registrars before the component stops so it is withdrawn while still fully operational.
+        notifyRegistrars(lifecycle, false);
         lifecycle.stop();
       }
     }
@@ -179,6 +189,40 @@ public class NexusLifecycleManager
         throw e;
       }
     }
+  }
+
+  /**
+   * Notifies every {@link ManagedComponentRegistrar} that a component has started (after its {@code start()}) or is
+   * about to stop (before its {@code stop()}). A misbehaving registrar is logged and skipped so it cannot break the
+   * lifecycle transition of the component itself.
+   */
+  private void notifyRegistrars(final Lifecycle lifecycle, final boolean started) {
+    for (ManagedComponentRegistrar registrar : getRegistrars()) {
+      try {
+        if (started) {
+          registrar.onStarted(lifecycle);
+        }
+        else {
+          registrar.onStopping(lifecycle);
+        }
+      }
+      catch (Exception e) {
+        log.warn("Registrar {} failed handling {} of {}",
+            registrar.getClass().getName(), started ? "start" : "stop", lifecycle, e);
+      }
+    }
+  }
+
+  private Collection<ManagedComponentRegistrar> getRegistrars() {
+    // Safe without extra synchronization: getRegistrars() is only reached from to(), which is
+    // synchronized, so at most one thread performs the lazy lookup. The volatile field then
+    // guarantees any later reader observes the fully-published collection.
+    Collection<ManagedComponentRegistrar> local = registrars;
+    if (local == null) {
+      local = context.getBeansOfType(ManagedComponentRegistrar.class).values();
+      registrars = local;
+    }
+    return local;
   }
 
   private void delayStartUpTask(final Phase phase, final Lifecycle lifecycle, final boolean propagateErrors) {

@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.audit.internal.store.AuditEventData;
+import org.sonatype.nexus.audit.internal.store.AuditEventStore;
+import org.sonatype.nexus.rest.Resource;
+
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -34,16 +37,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-
-import org.sonatype.nexus.audit.internal.store.AuditEventData;
-import org.sonatype.nexus.audit.internal.store.AuditEventStore;
-import org.sonatype.nexus.rest.Resource;
-
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.stereotype.Component;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -53,7 +52,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.PREVIEW_UI_AUDIT_ENABLE
  * REST API for querying audit events across all domains.
  */
 @Component
-@ConditionalOnProperty(name = PREVIEW_UI_AUDIT_ENABLED, havingValue = "true")
+@ConditionalOnBooleanProperty(name = PREVIEW_UI_AUDIT_ENABLED, matchIfMissing = true)
 @Path("/internal/ui/audit-log")
 @Produces(APPLICATION_JSON)
 public class AuditLogResource

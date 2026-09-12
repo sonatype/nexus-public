@@ -25,10 +25,16 @@ jest.mock('../useSslCertificatesApi', () => ({
 }));
 jest.mock('../useSslForm');
 
-// Mock child component
+// Mock child component. The real detail renders its own action bar; the stub reproduces just the
+// cancel affordance from it so the callback this form supplies can be exercised.
 jest.mock('../SslCertificatesDetail', () => ({
-  SslCertificatesDetail: function MockSslCertificatesDetail({ certificate }: any) {
-    return <div data-testid="certificate-detail">Certificate: {certificate?.subjectCommonName}</div>;
+  SslCertificatesDetail: function MockSslCertificatesDetail({ certificate, onCancel }: any) {
+    return (
+      <div data-testid="certificate-detail">
+        Certificate: {certificate?.subjectCommonName}
+        <button type="button" onClick={onCancel}>Back to List</button>
+      </div>
+    );
   },
 }));
 
@@ -218,6 +224,43 @@ describe('SslCertificatesAddForm', () => {
     });
   });
 
+  // NEXUS-54265: the preview's Back to List was wired to a no-op, so it rendered as an enabled
+  // button that did nothing. It has to step back one stage — preview -> form, keeping the entered
+  // input — leaving the outer Discard as the way out of the form entirely.
+  it('returns from the preview to the form when Back to List is clicked', async () => {
+    mockedUseSslForm.mockReturnValue(createSslFormMock({
+      source: 'remoteHost',
+      remoteHostUrl: 'example.com',
+      pemContent: '',
+    }, {
+      isPristine: false,
+      formData: { source: 'remoteHost', remoteHostUrl: 'example.com', pemContent: '' },
+      hasValidationErrors: false,
+    }));
+
+    render(
+      <SslCertificatesAddForm onSave={mockOnSave} onCancel={mockOnCancel} />,
+      { wrapper: TestWrapper }
+    );
+
+    fireEvent.click(screen.getByText('Load Certificate'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('certificate-detail')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Back to List'));
+
+    // Back on the source form, with the hostname still there to correct rather than retype.
+    expect(screen.queryByTestId('certificate-detail')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Load from server/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/example.com/i)).toHaveValue('example.com');
+    // Submit reverts to reloading the certificate rather than adding the discarded preview.
+    expect(screen.getByText('Load Certificate')).toBeInTheDocument();
+    // Leaving the page is the outer Discard's job, not this button's.
+    expect(mockOnCancel).not.toHaveBeenCalled();
+  });
+
   it('calls onCancel when cancel button is clicked', () => {
     render(
       <SslCertificatesAddForm onSave={mockOnSave} onCancel={mockOnCancel} />,
@@ -227,6 +270,99 @@ describe('SslCertificatesAddForm', () => {
     fireEvent.click(screen.getByText('Discard'));
     
     expect(mockOnCancel).toHaveBeenCalled();
+  });
+
+  // NEXUS-54265: Classic UI raises SslCertificatesAlreadyExistsModal when the loaded certificate
+  // is already trusted, offering the existing certificate instead of a dead-end error.
+  describe('already-trusted certificate', () => {
+    const trustedCertificate = {
+      id: 'cert1',
+      subjectCommonName: 'example.com',
+      fingerprint: 'AA:BB:CC:DD:EE:FF',
+      inTrustStore: true,
+      pem: '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----',
+    };
+
+    const mockOnViewExisting = jest.fn();
+
+    function renderWithLoadedCertificate() {
+      mockedUseSslForm.mockReturnValue(createSslFormMock({
+        source: 'remoteHost',
+        remoteHostUrl: 'example.com',
+        pemContent: '',
+      }, {
+        isPristine: false,
+        formData: { source: 'remoteHost', remoteHostUrl: 'example.com', pemContent: '' },
+        hasValidationErrors: false,
+      }));
+
+      render(
+        <SslCertificatesAddForm
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          onViewExisting={mockOnViewExisting}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      fireEvent.click(screen.getByText('Load Certificate'));
+    }
+
+    it('opens the duplicate dialog as soon as the certificate loads', async () => {
+      mockLoadCertificateDetails.mockResolvedValue(trustedCertificate);
+
+      renderWithLoadedCertificate();
+
+      await waitFor(() => {
+        expect(screen.getByText('Certificate Already Exists')).toBeInTheDocument();
+      });
+      expect(screen.getByText(/already exists and cannot be added again/i)).toBeInTheDocument();
+    });
+
+    it('navigates to the existing certificate from the dialog', async () => {
+      mockLoadCertificateDetails.mockResolvedValue(trustedCertificate);
+
+      renderWithLoadedCertificate();
+
+      await waitFor(() => {
+        expect(screen.getByText('View Certificate')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('View Certificate'));
+
+      expect(mockOnViewExisting).toHaveBeenCalledWith('cert1');
+    });
+
+    it('does not attempt an add that the backend would reject with a 409', async () => {
+      mockLoadCertificateDetails.mockResolvedValue(trustedCertificate);
+
+      renderWithLoadedCertificate();
+
+      await waitFor(() => {
+        expect(screen.getByText('Add Certificate')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText('Add Certificate'));
+
+      await waitFor(() => {
+        expect(mockSetError).toHaveBeenCalledWith(
+          'This certificate already exists in the trust store and cannot be added again.'
+        );
+      });
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+
+    it('leaves the dialog closed for a certificate that is not trusted yet', async () => {
+      mockLoadCertificateDetails.mockResolvedValue({ ...trustedCertificate, inTrustStore: false });
+
+      renderWithLoadedCertificate();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('certificate-detail')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Certificate Already Exists')).not.toBeInTheDocument();
+    });
   });
 
   it('handles API errors', async () => {

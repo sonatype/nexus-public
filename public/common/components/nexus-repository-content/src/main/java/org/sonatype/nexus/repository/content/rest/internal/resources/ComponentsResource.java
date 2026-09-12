@@ -24,6 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.RedeployDisabledException;
@@ -40,7 +41,6 @@ import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.upload.UploadManager;
-import org.sonatype.nexus.repository.upload.UploadRepositoryContext;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -60,6 +60,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -123,6 +124,7 @@ public class ComponentsResource
   /**
    * @since 3.26
    */
+  @RequiresUser
   @Override
   @GET
   public Page<ComponentXO> getComponents(
@@ -137,6 +139,7 @@ public class ComponentsResource
   /**
    * @since 3.26
    */
+  @RequiresUser
   @Override
   @GET
   @Path("/{id}")
@@ -166,6 +169,7 @@ public class ComponentsResource
   /**
    * @since 3.26
    */
+  @RequiresUser
   @Override
   @DELETE
   @Path("/{id}")
@@ -178,6 +182,7 @@ public class ComponentsResource
         .ifPresent(c -> maintenanceService.deleteComponent(repository, c));
   }
 
+  @RequiresUser
   @Override
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -192,18 +197,10 @@ public class ComponentsResource
 
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    // CLM-39871: bind the repository on the upload thread so the hosted-policy
-    // enforcement ComponentUploadExtension (UiUploadEnforcementInterceptor) can
-    // resolve it from validate(ComponentUpload). The UI service does the same
-    // bind+clear pair; without it, REST uploads silently bypass the policy gate.
-    // set() lives inside the try so any future code added between repository
-    // resolution and this point cannot leave a stale binding on the thread when
-    // it throws — finally always clears.
     try {
-      UploadRepositoryContext.set(repository);
       uploadManager.handle(repository, request);
     }
-    catch (RedeployDisabledException e) {
+    catch (RedeployDisabledException | ConcurrentOperationException e) {
       throw new WebApplicationMessageException(Status.CONFLICT, e.getMessage());
     }
     catch (IllegalOperationException e) {
@@ -229,28 +226,6 @@ public class ComponentsResource
       throw new WebApplicationMessageException(Status.INTERNAL_SERVER_ERROR,
           "\"" + e.getMessage() + "\"",
           MediaType.APPLICATION_JSON);
-    }
-    catch (RuntimeException e) {
-      // CLM-39871: hosted-policy block / unavailable surfaces as a RuntimeException
-      // whose message is prefixed with the HOSTED_ENFORCEMENT:: contract. Detect by
-      // the prefix because the throwing exception class lives in a private module
-      // that the public REST module cannot depend on. Strip the prefix and pick the
-      // HTTP status from the errorCode in the JSON envelope: BLOCKED → 403 (permanent
-      // policy rejection, do not retry); UNAVAILABLE → 503 (transient IQ issue, safe
-      // to retry). Routing UNAVAILABLE through 403 would tell CI pipelines that treat
-      // 403 as fatal to stop retrying on every transient IQ blip.
-      String message = e.getMessage();
-      if (message != null && message.startsWith("HOSTED_ENFORCEMENT::")) {
-        String json = message.substring("HOSTED_ENFORCEMENT::".length());
-        Status status = json.contains("HOSTED_ENFORCEMENT_UNAVAILABLE")
-            ? Status.SERVICE_UNAVAILABLE
-            : Status.FORBIDDEN;
-        throw new WebApplicationMessageException(status, json, MediaType.APPLICATION_JSON);
-      }
-      throw e;
-    }
-    finally {
-      UploadRepositoryContext.clear();
     }
   }
 

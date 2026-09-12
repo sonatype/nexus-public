@@ -77,7 +77,7 @@
   }
 
   &__help-name {
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-family: var(--font-family-mono);
     color: var(--blue-12);
     min-width: 180px;
   }
@@ -88,7 +88,7 @@
 
   &__help-values {
     color: var(--amber-11);
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-family: var(--font-family-mono);
     font-size: 11px;
   }
 
@@ -165,7 +165,7 @@
     }
 
     span:first-child {
-      font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+      font-family: var(--font-family-mono);
     }
   }
 }

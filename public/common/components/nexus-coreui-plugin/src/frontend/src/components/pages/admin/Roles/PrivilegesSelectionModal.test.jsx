@@ -229,7 +229,7 @@ describe('PrivilegesSelectionModal', function () {
     expect(tableRow(0).cells[1]).toHaveTextContent('nx-analytics-all');
 
     await TestUtils.changeField(filter, 'z');
-    expect(tableRow(0).cells[1]).not.toBe;
+    expect(modal().querySelectorAll('tbody tr[id]').length).toBe(0);
 
     await TestUtils.changeField(filter, '');
     expect(tableRow(0).cells[1]).toHaveTextContent('nx-admin');

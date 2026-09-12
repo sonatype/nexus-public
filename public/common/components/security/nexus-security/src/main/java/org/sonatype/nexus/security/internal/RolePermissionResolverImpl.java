@@ -23,8 +23,8 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.distributed.event.service.api.common.AuthorizationChangedDistributedEvent;
 import org.sonatype.nexus.security.authz.AuthorizationConfigurationChanged;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -57,7 +57,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Component
 @Qualifier("default")
 public class RolePermissionResolverImpl
-    implements BatchRolePermissionResolver
+    implements BatchRolePermissionResolver, EventAware
 {
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -85,13 +85,11 @@ public class RolePermissionResolverImpl
   public RolePermissionResolverImpl(
       final SecurityConfigurationManager configuration,
       final List<PrivilegeDescriptor> privilegeDescriptors,
-      final EventManager eventManager,
       @Value("${security.roleNotFoundCacheSize:100000}") final int roleNotFoundCacheSize)
   {
     this.configuration = checkNotNull(configuration);
     this.privilegeDescriptors = checkNotNull(privilegeDescriptors);
     this.roleNotFoundCache = CacheBuilder.newBuilder().maximumSize(roleNotFoundCacheSize).build();
-    eventManager.register(this);
   }
 
   /**

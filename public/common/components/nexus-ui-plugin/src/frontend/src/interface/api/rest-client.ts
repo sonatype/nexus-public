@@ -71,13 +71,21 @@ export const ENDPOINTS = {
   IQ_AUDIT: `${API_V1}/iq/audit`,
   IQ_AUDIT_REPO: (repositoryName: string) =>
     `${API_V1}/iq/audit/${encodeURIComponent(repositoryName)}`,
-  
+  /**
+   * IQ Server connectivity and entitlements. Returns
+   * `{hasFirewall, hasLifecycle, connected, url, deploymentId}` with the same shape on
+   * self-hosted (pro/community) and cloud, unlike `GET /v1/iq` whose response type differs
+   * per edition. Prefer this as the cross-edition source of truth for "is IQ usable here".
+   */
+  IQ_CAPABILITIES: `${API_V1}/iq/capabilities`,
+
   // Browse (REST API for tree browsing)
   REPOSITORY_BROWSE: (repositoryName: string) => `${API_V1}/repositories/${encodeURIComponent(repositoryName)}/browse`,
 
   // Search
   SEARCH: `${API_V1}/search`,
   SEARCH_ASSETS: `${API_V1}/search/assets`,
+  SEARCH_REPOSITORIES: `${API_V1}/search/repositories`,
 
   // System Settings
   BLOBSTORES: `${API_V1}/blobstores`,
@@ -291,6 +299,7 @@ function toAxiosConfig(config?: RequestConfig): AxiosRequestConfig | undefined {
     timeout: config.timeout,
     headers: config.headers,
     params: config.params,
+    signal: config.signal,
   };
 }
 

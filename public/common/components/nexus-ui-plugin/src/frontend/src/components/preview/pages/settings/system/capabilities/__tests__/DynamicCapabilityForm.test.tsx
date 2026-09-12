@@ -311,6 +311,73 @@ describe('DynamicCapabilityForm', () => {
     });
   });
 
+  // NEXUS-54212: the Capabilities route only requires nexus:capabilities:read, so a read-only
+  // user can open a capability detail. Classic CapabilitySettingsForm gates the Save button on
+  // nexus:capabilities:update (editableCondition). The Save button must be hidden when canEdit
+  // is false, even after the form is dirtied, instead of a button that 403s on submit.
+  describe('Save button permission gating (NEXUS-54212)', () => {
+    // A dirty edit form would normally reveal the Save button (showActions={!isPristine}).
+    const mockDirtyEditForm = () => {
+      mockUseCapabilitiesForm.mockImplementation(({ capability }: any) => {
+        const formData = capability
+          ? { typeId: capability.typeId, enabled: capability.enabled, notes: capability.notes || '', properties: capability.properties || {} }
+          : { typeId: '', enabled: true, notes: '', properties: {} };
+        return {
+          form: { ...createMockCapForm(formData), isPristine: false },
+          capability: capability || null,
+          capabilityTypes: [],
+          selectedCapabilityType: null,
+          isCreate: !capability,
+        } as any;
+      });
+    };
+
+    it('hides the Save button in edit mode when canEdit is false', () => {
+      mockDirtyEditForm();
+      renderWithTheme(
+        <DynamicCapabilityForm
+          capabilityType={simpleCapabilityType}
+          capability={existingCapability}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          canEdit={false}
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    });
+
+    it('shows the Save button in edit mode when canEdit is true', () => {
+      mockDirtyEditForm();
+      renderWithTheme(
+        <DynamicCapabilityForm
+          capabilityType={simpleCapabilityType}
+          capability={existingCapability}
+          isCreate={false}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+          canEdit={true}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    });
+
+    it('shows the Create button in create mode by default (create is gated at navigation)', () => {
+      renderWithTheme(
+        <DynamicCapabilityForm
+          capabilityType={simpleCapabilityType}
+          isCreate={true}
+          onSave={mockOnSave}
+          onCancel={mockOnCancel}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument();
+    });
+  });
+
   describe('field types', () => {
     it('renders all field types correctly', () => {
       renderWithTheme(

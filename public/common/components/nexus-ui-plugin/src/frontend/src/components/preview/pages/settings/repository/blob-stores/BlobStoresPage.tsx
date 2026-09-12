@@ -122,8 +122,6 @@ const STRINGS = {
   EDIT_DESCRIPTION: (type: string) => `${type} Blob Store`,
   EDIT_WARNING:
     'Updating the blob store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave the blob store in a non-functional state.',
-  NO_PERMISSION_WARNING:
-    "You don't have permission to edit this page. Contact your administrator to request access.",
   CONVERT_TO_GROUP_BUTTON: 'Convert to Group',
   TYPE: {
     label: 'Type',
@@ -983,12 +981,6 @@ export default function BlobStoresPage() {
           {isEdit && hasUpdatePermissions && (
             <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
               {STRINGS.EDIT_WARNING}
-            </SettingsAlert>
-          )}
-
-          {isEdit && !hasUpdatePermissions && (
-            <SettingsAlert variant="warning" icon={<AlertTriangle size={16} />}>
-              {STRINGS.NO_PERMISSION_WARNING}
             </SettingsAlert>
           )}
 

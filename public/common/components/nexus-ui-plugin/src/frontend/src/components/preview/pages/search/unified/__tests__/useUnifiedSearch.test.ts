@@ -309,6 +309,120 @@ describe('useUnifiedSearch', () => {
     expect(url).toContain('q=react');
   });
 
+  describe('server-side sorting', () => {
+    /**
+     * Sorting is delegated to the REST API: every request carries `sort` and
+     * `direction`, and the hook never re-orders what comes back. These tests
+     * pin the UI sort field to the API alias it maps to.
+     */
+    function requestedParams(callIndex = 0): URLSearchParams {
+      const [url] = mockedAxios.get.mock.calls[callIndex] as [string];
+      return new URLSearchParams(url.slice(url.indexOf('?') + 1));
+    }
+
+    it('sends the default sort with every search', async () => {
+      mockedAxios.get.mockResolvedValueOnce(mockSearchResponse);
+
+      const { result } = renderHook(() => useUnifiedSearch());
+
+      await act(async () => {
+        await result.current.search();
+      });
+
+      const params = requestedParams();
+      expect(params.get('sort')).toBe('last_updated');
+      expect(params.get('direction')).toBe('desc');
+    });
+
+    it.each([
+      ['name', 'asc', 'name', 'asc'],
+      ['name', 'desc', 'name', 'desc'],
+      ['lastUpdated', 'asc', 'last_updated', 'asc'],
+      ['repository', 'asc', 'repository', 'asc'],
+    ])(
+      'sends %s/%s as sort=%s&direction=%s',
+      async (field, direction, apiSort, apiDirection) => {
+        mockedAxios.get.mockResolvedValueOnce(mockSearchResponse);
+
+        const { result } = renderHook(() => useUnifiedSearch());
+
+        act(() => {
+          result.current.setSort(field as never, direction as never);
+        });
+
+        await act(async () => {
+          await result.current.search();
+        });
+
+        const params = requestedParams();
+        expect(params.get('sort')).toBe(apiSort);
+        expect(params.get('direction')).toBe(apiDirection);
+      },
+    );
+
+    it('keeps the sort on the loadMore request alongside the continuation token', async () => {
+      mockedAxios.get.mockResolvedValueOnce(mockSearchResponse);
+
+      const { result } = renderHook(() => useUnifiedSearch());
+
+      act(() => {
+        result.current.setSort('name', 'asc');
+      });
+
+      await act(async () => {
+        await result.current.search();
+      });
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { items: [], continuationToken: null },
+      });
+
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      const params = requestedParams(1);
+      expect(params.get('sort')).toBe('name');
+      expect(params.get('direction')).toBe('asc');
+      expect(params.get('continuationToken')).toBe('token123');
+    });
+
+    it('does not re-order the results the server returned', async () => {
+      // The API response is deliberately not alphabetical; the hook must
+      // preserve it rather than apply a client-side sort of its own.
+      mockedAxios.get.mockResolvedValueOnce(mockSearchResponse);
+
+      const { result } = renderHook(() => useUnifiedSearch());
+
+      act(() => {
+        result.current.setSort('name', 'asc');
+      });
+
+      await act(async () => {
+        await result.current.search();
+      });
+
+      expect(result.current.state.results.map((r) => r.name)).toEqual([
+        'lodash',
+        'commons-lang3',
+      ]);
+    });
+
+    it('exposes the current sort selection on the state', () => {
+      const { result } = renderHook(() => useUnifiedSearch());
+
+      expect(result.current.state.sortField).toBe('lastUpdated');
+      expect(result.current.state.sortDirection).toBe('desc');
+
+      act(() => {
+        result.current.setSort('name', 'asc');
+      });
+
+      expect(result.current.state.sortField).toBe('name');
+      expect(result.current.state.sortDirection).toBe('asc');
+    });
+  });
+
   describe('AbortController - request cancellation', () => {
     it('passes AbortController signal to Axios requests', async () => {
       mockedAxios.get.mockResolvedValueOnce(mockSearchResponse);

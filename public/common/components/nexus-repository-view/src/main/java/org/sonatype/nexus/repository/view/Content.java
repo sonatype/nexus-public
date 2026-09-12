@@ -146,6 +146,11 @@ public class Content
   }
 
   @Override
+  public boolean hasRedirect() {
+    return !disableRedirect && payload.hasRedirect();
+  }
+
+  @Override
   public Optional<URL> getRedirectUrl(final String action, final String name) {
     return disableRedirect ? Optional.empty() : payload.getRedirectUrl(action, name);
   }

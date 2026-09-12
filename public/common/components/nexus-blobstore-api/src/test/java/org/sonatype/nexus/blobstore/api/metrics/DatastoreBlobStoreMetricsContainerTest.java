@@ -181,22 +181,13 @@ public class DatastoreBlobStoreMetricsContainerTest
     assertThat(container.blobCountDelta.get(), is(0L));
   }
 
-  @Test
-  public void testRecordDeletionWithNegativeSizeIncreasesUsageAndDecrementsCount() {
-    // recordDeletion negates the size argument, so a negative size adds to the usage delta
+  @Test(expected = IllegalArgumentException.class)
+  public void testRecordDeletionRejectsNegativeSize() {
     container.recordDeletion(-30L);
-
-    assertThat(container.blobstoreUsageDelta.get(), is(30L));
-    assertThat(container.blobCountDelta.get(), is(-1L));
   }
 
-  @Test
-  public void testRecordAdditionThenNegativeDeletionNetsUsageButNotCount() {
-    // addition adds size and increments count; a negative-size deletion adds size again and decrements count
-    container.recordAddition(30L);
-    container.recordDeletion(-30L);
-
-    assertThat(container.blobstoreUsageDelta.get(), is(60L));
-    assertThat(container.blobCountDelta.get(), is(0L));
+  @Test(expected = IllegalArgumentException.class)
+  public void testRecordAdditionRejectsNegativeSize() {
+    container.recordAddition(-30L);
   }
 }

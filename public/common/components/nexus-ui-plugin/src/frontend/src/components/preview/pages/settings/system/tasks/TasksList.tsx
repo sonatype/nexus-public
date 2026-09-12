@@ -119,6 +119,8 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
 
   const canDelete = ExtJS.checkPermission('nexus:tasks:delete');
   const canRun = ExtJS.checkPermission('nexus:tasks:start');
+  // Stopping requires nexus:tasks:stop, distinct from the start permission (matches Classic).
+  const canStop = ExtJS.checkPermission('nexus:tasks:stop');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -423,7 +425,7 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
               <Play size={14} />
             </button>
           )}
-          {canRun && task.stoppable && task.status === 'RUNNING' && (
+          {canStop && task.stoppable && task.status === 'RUNNING' && (
             <button
               type="button"
               className="tasks-list__action-btn tasks-list__action-btn--stop"
@@ -451,7 +453,7 @@ export function TasksList({ onSelect, onCreate }: TasksListProps) {
       width: '90px',
       align: 'right',
     },
-  ], [canRun, canDelete, actionLoading, handleRun, handleStop, handleDeleteClick]);
+  ], [canRun, canStop, canDelete, actionLoading, handleRun, handleStop, handleDeleteClick]);
 
   const emptyState = useMemo(() => {
     const hasFilters = searchQuery || statusFilter.length > 0 || typeFilter.length > 0;

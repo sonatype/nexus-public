@@ -16,6 +16,12 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Theme } from '@radix-ui/themes';
 
+import { ExtJS } from '../../../../../interface/ExtJS';
+import Permissions from '../../../../../constants/Permissions';
+// DetectTable reads permissions through the provider-independent ExtJS.usePermission
+// (NEXUS-54212); spy on checkPermission so tests keep driving behavior via permission strings.
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 import { DetectTable } from '../DetectTable';
 import { MaliciousFinding } from '../types';
 import { TaskInfo, ProxyRepo, RhcScanInfo } from '../useMaliciousPackagesData';
@@ -88,6 +94,8 @@ const defaultProps = {
 describe('DetectTable', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: user has all write permissions so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
   });
 
   it('renders the unified table with data-testid="detect-table"', () => {
@@ -387,5 +395,40 @@ describe('DetectTable', () => {
     const npmRow = screen.getByTestId('detect-row-npm-proxy');
     expect(within(npmRow).getByText(/Analyzing\s+17%/)).toBeInTheDocument();
     expect(within(npmRow).getByTestId('analyzing-task-log-link-npm-proxy')).toHaveTextContent('View task log');
+  });
+
+  describe('write gating (NEXUS-54212)', () => {
+    it('shows Enable Detection (unmonitored) with healthcheck:update', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.HEALTHCHECK.UPDATE);
+      renderWithTheme(<DetectTable {...defaultProps} />);
+      expect(screen.getByTestId('enable-rhc-maven-proxy')).toBeInTheDocument();
+    });
+
+    it('hides Enable Detection (unmonitored) without healthcheck:update', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderWithTheme(<DetectTable {...defaultProps} />);
+      expect(screen.queryByTestId('enable-rhc-maven-proxy')).not.toBeInTheDocument();
+    });
+
+    it('shows Run One-Time Analysis with tasks:create', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.TASKS.CREATE);
+      renderWithTheme(<DetectTable {...defaultProps} />);
+      expect(screen.getByTestId('identify-npm-proxy')).toBeInTheDocument();
+    });
+
+    it('hides Run One-Time Analysis without tasks:create', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderWithTheme(<DetectTable {...defaultProps} />);
+      expect(screen.queryByTestId('identify-npm-proxy')).not.toBeInTheDocument();
+    });
+
+    it('hides Retry (failed RHC scan) without healthcheck:update', () => {
+      mockCheckPermission.mockReturnValue(false);
+      const rhcScans = new Map<string, RhcScanInfo>([
+        ['maven-proxy', { phase: 'failed', startedAt: 1, error: 'scan failed' }],
+      ]);
+      renderWithTheme(<DetectTable {...defaultProps} rhcScans={rhcScans} />);
+      expect(screen.queryByTestId('retry-rhc-maven-proxy')).not.toBeInTheDocument();
+    });
   });
 });

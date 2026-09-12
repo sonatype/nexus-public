@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -42,6 +44,9 @@ import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryCo
 public class FluentComponentBuilderImpl
     implements FluentComponentBuilder
 {
+  private static final String CONCURRENT_DELETE_MESSAGE =
+      "Upload failed: repository was concurrently deleted. Please retry.";
+
   private final ContentFacetSupport facet;
 
   private final ComponentStore<?> componentStore;
@@ -154,7 +159,16 @@ public class FluentComponentBuilderImpl
       component.attributes().backing().putAll(attributes);
     }
 
-    componentStore.createComponent(component);
+    try {
+      componentStore.createComponent(component);
+    }
+    catch (ForeignKeyViolationException e) {
+      throw new ConcurrentOperationException(CONCURRENT_DELETE_MESSAGE, e);
+    }
+
+    if (component.componentId() == null) {
+      throw new ConcurrentOperationException(CONCURRENT_DELETE_MESSAGE);
+    }
 
     return component;
   }

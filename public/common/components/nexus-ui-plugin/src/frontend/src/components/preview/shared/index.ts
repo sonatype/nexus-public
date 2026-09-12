@@ -110,8 +110,16 @@ export {
   useUnreadStatusFailure,
   resetUnreadStatusFailure,
   STATUS_BELL_ACK_STORAGE_KEY,
+  useBlobStoreInfo,
+  useRepositoryMetrics,
 } from './hooks';
-export type { UseUnreadStatusFailureReturn } from './hooks';
+export type {
+  UseUnreadStatusFailureReturn,
+  BlobStoreInfo,
+  UseBlobStoreInfoResult,
+  RepositoryMetrics,
+  UseRepositoryMetricsResult,
+} from './hooks';
 
 // Toast - Viewport-fixed notification system (available but not yet in use)
 // Keeping for future implementation - requires app-level provider
@@ -168,6 +176,7 @@ export {
   SettingsAlert,
   SettingsButton,
   SettingsTransferList,
+  RequiredMark,
 } from './form';
 
 // SearchRadix - Global header search with autocomplete

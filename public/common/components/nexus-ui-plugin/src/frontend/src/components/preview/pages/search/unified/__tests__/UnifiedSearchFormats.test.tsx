@@ -48,6 +48,7 @@ const ALL_FORMATS: SearchFormat[] = [
   'maven',
   'npm',
   'nuget',
+  'oci',
   'p2',
   'pub',
   'pypi',
@@ -167,6 +168,29 @@ describe('Unified Search - Format-Specific Filters', () => {
       expect(filterMap.get('imageTag')?.apiParam).toBe('docker.imageTag');
       expect(filterMap.get('layerId')?.apiParam).toBe('docker.layerId');
       expect(filterMap.get('contentDigest')?.apiParam).toBe('docker.contentDigest');
+    });
+  });
+
+  describe('OCI filters', () => {
+    it('should have all OCI-specific filters', () => {
+      const filters = getFiltersForFormat('oci');
+      const filterIds = filters.map((f) => f.id);
+
+      expect(filterIds).toContain('repository');
+      expect(filterIds).toContain('imageName');
+      expect(filterIds).toContain('imageTag');
+      expect(filterIds).toContain('contentDigest');
+    });
+
+    it('should have correct API parameters for OCI filters', () => {
+      const filters = getFiltersForFormat('oci');
+      const filterMap = new Map(filters.map((f) => [f.id, f]));
+
+      // OCI attributes live under the oci.* namespace (OciSearchMappings.java),
+      // not docker.*, even though OCI reuses Docker's content facet internally.
+      expect(filterMap.get('imageName')?.apiParam).toBe('oci.imageName');
+      expect(filterMap.get('imageTag')?.apiParam).toBe('oci.imageTag');
+      expect(filterMap.get('contentDigest')?.apiParam).toBe('oci.contentDigest');
     });
   });
 
@@ -486,6 +510,26 @@ describe('Unified Search - Query Parameter Building', () => {
       expect(params.get('repository')).toBe('docker-proxy');
       expect(params.get('docker.imageName')).toBe('nginx');
       expect(params.get('docker.imageTag')).toBe('latest');
+    });
+
+    it('should build correct params for OCI search', () => {
+      const params = buildQueryParams(
+        'oci',
+        'nginx',
+        {
+          repository: 'oci-hosted',
+          imageName: 'nginx',
+          imageTag: 'latest',
+          contentDigest: 'sha256:abc123',
+        }
+      );
+
+      expect(params.get('format')).toBe('oci');
+      expect(params.get('q')).toBe('nginx');
+      expect(params.get('repository')).toBe('oci-hosted');
+      expect(params.get('oci.imageName')).toBe('nginx');
+      expect(params.get('oci.imageTag')).toBe('latest');
+      expect(params.get('oci.contentDigest')).toBe('sha256:abc123');
     });
 
     it('should build correct params for npm search', () => {

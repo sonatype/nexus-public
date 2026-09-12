@@ -18,8 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -43,7 +41,13 @@ import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.rest.Page;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
+import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import org.apache.shiro.authz.UnauthenticatedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,8 +55,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
-import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 
 import static java.util.Base64.getUrlEncoder;
 import static java.util.Collections.emptyList;
@@ -66,7 +68,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -74,13 +75,13 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.rest.internal.resources.AssetsResourceSupport.PAGE_SIZE_LIMIT;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
 @ExtendWith({MockitoExtension.class, AuthenticationExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
-@WithUser(permissions = {"nexus:uploader-metadata:read"})
 class AssetsResourceTest
 {
   private static final String ASSET_PATH = "/junit/junit/4.12/junit-4.12.jar";
@@ -138,7 +139,7 @@ class AssetsResourceTest
   }
 
   // --- getAssets tests ---
-
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssetsShouldReturnAPageAssets() {
     Page<AssetXO> assets = underTest.getAssets(null, REPOSITORY_NAME);
@@ -148,6 +149,7 @@ class AssetsResourceTest
     verify(fluentAssets).browse(PAGE_SIZE_LIMIT, null);
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_returnsEmptyPageWhenNoAssets() {
     when(assetContinuation.isEmpty()).thenReturn(true);
@@ -159,6 +161,14 @@ class AssetsResourceTest
     assertThat(page.getContinuationToken(), is(nullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
+  @Test
+  void getAssets_invalidContinuationToken() {
+    BadRequestException e = assertThrows(BadRequestException.class, () -> underTest.getAssets("", REPOSITORY_NAME));
+    assertThat(e.getMessage(), is("Invalid continuation token"));
+  }
+
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_continuationTokenIsNullWhenFewerThanPageLimit() {
     when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
@@ -173,6 +183,7 @@ class AssetsResourceTest
     assertThat(page.getContinuationToken(), is(nullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_continuationTokenIsSetWhenExactlyPageLimit() {
     when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
@@ -187,6 +198,7 @@ class AssetsResourceTest
     assertThat(page.getContinuationToken(), is(notNullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_filtersOutAssetsWithoutPermission() {
     // Deny permission for all assets
@@ -208,6 +220,7 @@ class AssetsResourceTest
     assertThat(page.getContinuationToken(), is(nullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_filtersPermittedAndNonPermittedAssets() {
     String permittedPath = "/allowed/path.jar";
@@ -234,6 +247,7 @@ class AssetsResourceTest
     assertThat(page.getItems().iterator().next().getPath(), is(permittedPath));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_paginatesUntilPageSizeLimitReached() {
     // All assets are permitted
@@ -261,6 +275,7 @@ class AssetsResourceTest
     assertThat(page.getContinuationToken(), is(notNullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_groupRepositoryUsesGroupMemberContent() {
     when(repository.getType()).thenReturn(new GroupType());
@@ -280,6 +295,7 @@ class AssetsResourceTest
     assertThat(page.getItems(), is(empty()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssets_hostedRepositoryDoesNotUseGroupMemberContent() {
     when(assetContinuation.isEmpty()).thenReturn(true);
@@ -290,8 +306,14 @@ class AssetsResourceTest
     verify(fluentAssets).browse(PAGE_SIZE_LIMIT, null);
   }
 
-  // --- getAssetById tests ---
+  @Test
+  void getAssets_unauthenticated() {
+    assertThrows(UnauthenticatedException.class, () -> underTest.getAssets(null, REPOSITORY_NAME));
+    verifyNoInteractions(fluentAssets);
+  }
 
+  // --- getAssetById tests ---
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssetByIdShouldReturnAnAssetWhenFound() {
     FluentAssetImpl fluentAsset = aFluentAsset();
@@ -304,6 +326,7 @@ class AssetsResourceTest
     assertThat(assetXO, is(anAssetXO()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssetByIdShouldThrowNotFoundExceptionWhenNotFound() {
     when(fluentAssets.find(new DetachedEntityId(AN_ASSET_ID + ""))).thenReturn(Optional.empty());
@@ -311,6 +334,7 @@ class AssetsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.getAssetById(anEncodedAssetId()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssetById_throwsNotFoundWhenAssetNotPermitted() {
     FluentAssetImpl fluentAsset = aFluentAsset();
@@ -322,20 +346,18 @@ class AssetsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.getAssetById(anEncodedAssetId()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssetById_throwsUnprocessableEntityOnIllegalArgument() {
     when(fluentAssets.find(any(DetachedEntityId.class)))
         .thenThrow(new IllegalArgumentException("bad id"));
 
-    try {
-      underTest.getAssetById(anEncodedAssetId());
-      fail("Expected WebApplicationException");
-    }
-    catch (WebApplicationException e) {
-      assertThat(e.getResponse().getStatus(), is(422));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.getAssetById(anEncodedAssetId()));
+    assertThat(e.getResponse().getStatus(), is(422));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void getAssetById_setsIdCorrectly() {
     FluentAssetImpl fluentAsset = aFluentAsset();
@@ -347,8 +369,14 @@ class AssetsResourceTest
     assertThat(result.getId(), is(expectedId));
   }
 
-  // --- deleteAsset tests ---
+  @Test
+  void getAssetById_unauthenticated() {
+    assertThrows(UnauthenticatedException.class, () -> underTest.getAssetById(anEncodedAssetId()));
+    verifyNoInteractions(fluentAssets);
+  }
 
+  // --- deleteAsset tests ---
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteAssetShouldDeleteAsset() {
     FluentAssetImpl assetToDelete = aFluentAsset();
@@ -359,6 +387,7 @@ class AssetsResourceTest
     verify(maintenanceService).deleteAsset(repository, assetToDelete);
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteAssetShouldThrowNotFoundExceptionWhenNotFound() {
     when(fluentAssets.find(new DetachedEntityId(AN_ASSET_ID + ""))).thenReturn(Optional.empty());
@@ -366,6 +395,7 @@ class AssetsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteAsset_throwsNotFoundWhenAssetNotPermitted() {
     FluentAssetImpl fluentAsset = aFluentAsset();
@@ -377,36 +407,35 @@ class AssetsResourceTest
     assertThrows(NotFoundException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteAsset_throwsUnprocessableEntityOnIllegalArgument() {
     when(fluentAssets.find(any(DetachedEntityId.class)))
         .thenThrow(new IllegalArgumentException("bad id"));
 
-    try {
-      underTest.deleteAsset(anEncodedAssetId());
-      fail("Expected WebApplicationException");
-    }
-    catch (WebApplicationException e) {
-      assertThat(e.getResponse().getStatus(), is(422));
-    }
+    WebApplicationException e =
+        assertThrows(WebApplicationException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
+    assertThat(e.getResponse().getStatus(), is(422));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void deleteAsset_doesNotDeleteWhenAssetNotFound() {
     when(fluentAssets.find(any(DetachedEntityId.class))).thenReturn(Optional.empty());
 
-    try {
-      underTest.deleteAsset(anEncodedAssetId());
-    }
-    catch (NotFoundException e) {
-      // expected
-    }
+    assertThrows(NotFoundException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
 
     verify(maintenanceService, never()).deleteAsset(any(), any());
   }
 
-  // --- browse (AssetsResourceSupport) pagination tests ---
+  @Test
+  void deleteAsset_unauthenticated() {
+    assertThrows(UnauthenticatedException.class, () -> underTest.deleteAsset(anEncodedAssetId()));
+    verifyNoInteractions(fluentAssets, maintenanceService);
+  }
 
+  // --- browse (AssetsResourceSupport) pagination tests ---
+  @WithUser(isAuthenticated = false)
   @Test
   void browse_trimsResultsWhenPermittedAssetsExceedLimit() {
     when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);
@@ -422,6 +451,7 @@ class AssetsResourceTest
     assertThat(page.getItems(), hasSize(PAGE_SIZE_LIMIT));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void browse_continuesToFetchWhenPermissionFilterRemovesAllAssetsFromPage() {
     // First page: all assets denied
@@ -649,7 +679,7 @@ class AssetsResourceTest
   }
 
   // --- nextContinuationToken tests (indirectly through getAssets) ---
-
+  @WithUser(isAuthenticated = false)
   @Test
   void nextContinuationToken_returnsNullWhenEmptyResult() {
     when(assetContinuation.isEmpty()).thenReturn(true);
@@ -659,6 +689,7 @@ class AssetsResourceTest
     assertThat(page.getContinuationToken(), is(nullValue()));
   }
 
+  @WithUser(isAuthenticated = false)
   @Test
   void nextContinuationToken_returnsTokenBasedOnLastAssetId() {
     when(contentAuthHelper.checkPathPermissions(anyString(), eq(A_FORMAT), eq(REPOSITORY_NAME))).thenReturn(true);

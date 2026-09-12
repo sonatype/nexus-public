@@ -41,7 +41,7 @@ type ManagementType = 'user' | 'system';
 /**
  * RolesList - Displays roles using SUPER UI/UX standard
  */
-export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: RolesListProps) {
+export function RolesList({ onSelect, onDelete, onCreate, canUpdate = true, canDelete = true }: RolesListProps) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [filter, setFilter] = useState('');
   const [managementFilter, setManagementFilter] = useState<ManagementType[]>([]);
@@ -268,16 +268,18 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
           {/* Edit and Delete only for non-read-only roles */}
           {!isReadOnlyRole(role) && (
             <>
-              <Tooltip content="Edit Role">
-                <IconButton
-                  variant="ghost"
-                  size="1"
-                  onClick={(e) => { e.stopPropagation(); onSelect(role.id, 'edit'); }}
-                  aria-label={`Edit ${role.name}`}
-                >
-                  <Pencil size={14} />
-                </IconButton>
-              </Tooltip>
+              {canUpdate && (
+                <Tooltip content="Edit Role">
+                  <IconButton
+                    variant="ghost"
+                    size="1"
+                    onClick={(e) => { e.stopPropagation(); onSelect(role.id, 'edit'); }}
+                    aria-label={`Edit ${role.name}`}
+                  >
+                    <Pencil size={14} />
+                  </IconButton>
+                </Tooltip>
+              )}
               {canDelete && onDelete && (
                 <Tooltip content="Delete Role">
                   <IconButton
@@ -296,7 +298,7 @@ export function RolesList({ onSelect, onDelete, onCreate, canDelete = true }: Ro
       ),
       width: '120px',
     },
-  ], [onSelect, onDelete, canDelete]);
+  ], [onSelect, onDelete, canUpdate, canDelete]);
 
   // Empty state
   const emptyState = useMemo(() => {

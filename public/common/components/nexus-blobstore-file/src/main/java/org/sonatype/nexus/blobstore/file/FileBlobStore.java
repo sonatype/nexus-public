@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -169,7 +170,7 @@ public class FileBlobStore
   private static final String NATIVE_CONTENT_TMP_PATH = CONTENT_TMP_PATH.replace('/', File.separatorChar);
 
   public static final String ATTRIBUTES_FOR_BLOB_ID_EXCEPTION =
-      "Unable to load BlobAttributes for blob id: {}, path: {}, exception: {} - {}";
+      "Unable to load BlobAttributes for blob id: {}, path: {}, exception: {}";
 
   private Path contentDir;
 
@@ -1616,24 +1617,34 @@ public class FileBlobStore
     }
   }
 
+  @VisibleForTesting
+  FileBlobAttributes newFileBlobAttributes(final Path path) {
+    return new FileBlobAttributes(path);
+  }
+
   @Nullable
   @Override
   public BlobAttributes getBlobAttributesWithException(final BlobId blobId) throws BlobStoreException {
     Path blobPath = attributePath(blobId);
     try {
-      FileBlobAttributes blobAttributes = new FileBlobAttributes(blobPath);
+      FileBlobAttributes blobAttributes = newFileBlobAttributes(blobPath);
       if (!blobAttributes.load()) {
         log.debug("Attempt to access blob attributes file {} for blob {} (file temporarily unavailable or deleted)",
-            attributePath(blobId), blobId);
+            blobPath, blobId);
         return null;
       }
       else {
         return blobAttributes;
       }
     }
+    catch (FileNotFoundException | NoSuchFileException e) {
+      // Transient: file momentarily absent during concurrent write (same pattern as setBlobAttributes fix in
+      // NEXUS-48143)
+      log.debug("Blob attributes temporarily unavailable for blob id: {} during concurrent access", blobId);
+      return null;
+    }
     catch (Exception e) {
-      log.error(ATTRIBUTES_FOR_BLOB_ID_EXCEPTION,
-          blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
+      log.error(ATTRIBUTES_FOR_BLOB_ID_EXCEPTION, blobId, blobPath, e.getMessage(), e);
       throw new BlobStoreException(e, blobId);
     }
   }

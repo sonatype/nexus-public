@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Box, Callout } from '@radix-ui/themes';
+import { Callout } from '@radix-ui/themes';
 import { Info } from 'lucide-react';
 
 import { useAnonymousAccessStep } from './useAnonymousAccessStep';
@@ -33,17 +33,12 @@ export default function AnonymousAccessStep(): JSX.Element {
 
   const {
     TITLE,
+    SUBTITLE,
     ENABLE_LABEL,
     DISABLE_LABEL,
     ENABLE_OPTION_DESCRIPTION,
     DISABLE_OPTION_DESCRIPTION,
-    ENABLE_DESCRIPTION_TERM,
-    ENABLE_DESCRIPTION_DEFINITION_START,
-    ENABLE_DESCRIPTION_DEFINITION_EMPHASIS,
-    DISABLE_DESCRIPTION_TERM,
-    DISABLE_DESCRIPTION_DEFINITION_START,
-    DISABLE_DESCRIPTION_DEFINITION_EMPHASIS,
-    DISABLE_DESCRIPTION_DEFINITION_END,
+    DESCRIPTION,
     MORE_INFO_LABEL,
     MORE_INFO_HREF,
   } = UIStrings.ONBOARDING_WIZARD.CONFIGURE_ANONYMOUS_ACCESS;
@@ -56,6 +51,7 @@ export default function AnonymousAccessStep(): JSX.Element {
           aria-describedby="onboarding-wizard__anonymous-access-description"
         >
           <legend className="onboarding-wizard__anonymous-access-legend">{TITLE}</legend>
+          <p className="onboarding-wizard__anonymous-access-subtitle">{SUBTITLE}</p>
           <Callout.Root
             id="onboarding-wizard__anonymous-access-description"
             className="onboarding-wizard__anonymous-access-description"
@@ -66,37 +62,17 @@ export default function AnonymousAccessStep(): JSX.Element {
             <Callout.Icon>
               <Info size={16} />
             </Callout.Icon>
-            {/*
-              Escape hatch — Callout.Text renders as <p> internally (even
-              with asChild), so nesting <dl> inside would be invalid HTML.
-              Radix exposes the rt-CalloutText class as a public hook that
-              gives us the same positioning next to the icon while letting
-              us use a block-level container. Same pattern is used by
-              RemediatePage.tsx for the same reason.
-            */}
-            <Box className="rt-CalloutText">
-              <dl
-                className="onboarding-wizard__anonymous-access-description-list"
-                data-testid="onboarding-wizard__anonymous-access-description-list"
+            <Callout.Text>
+              {DESCRIPTION}{' '}
+              <a
+                href={MORE_INFO_HREF}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="onboarding-wizard__anonymous-access-more-info-link"
               >
-                <dt>{ENABLE_DESCRIPTION_TERM}</dt>
-                <dd>
-                  {ENABLE_DESCRIPTION_DEFINITION_START}
-                  <em>{ENABLE_DESCRIPTION_DEFINITION_EMPHASIS}</em>
-                </dd>
-                <dt>{DISABLE_DESCRIPTION_TERM}</dt>
-                <dd>
-                  {DISABLE_DESCRIPTION_DEFINITION_START}
-                  <em>{DISABLE_DESCRIPTION_DEFINITION_EMPHASIS}</em>
-                  {DISABLE_DESCRIPTION_DEFINITION_END}
-                </dd>
-              </dl>
-              <p className="onboarding-wizard__anonymous-access-description-more-info">
-                <a href={MORE_INFO_HREF} target="_blank" rel="noopener noreferrer">
-                  {MORE_INFO_LABEL}
-                </a>
-              </p>
-            </Box>
+                {MORE_INFO_LABEL}
+              </a>
+            </Callout.Text>
           </Callout.Root>
           <div className="onboarding-wizard__anonymous-access-options">
             <label

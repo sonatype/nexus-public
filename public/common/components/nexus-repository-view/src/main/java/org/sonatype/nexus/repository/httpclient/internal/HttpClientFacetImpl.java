@@ -46,6 +46,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -238,6 +239,12 @@ public class HttpClientFacetImpl
   @Guarded(by = STARTED)
   public void setStatus(final RemoteConnectionStatus status) {
     httpClient.setRemoteConnectionStatus(status);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void recordConnectionFailure(final IOException failure, final HttpHost target) {
+    httpClient.recordConnectionFailure(failure, target);
   }
 
   @Subscribe

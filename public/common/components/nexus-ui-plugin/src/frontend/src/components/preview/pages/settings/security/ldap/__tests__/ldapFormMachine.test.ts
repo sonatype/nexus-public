@@ -13,7 +13,7 @@
 
 import { interpret } from 'xstate';
 import { waitFor } from 'xstate/lib/waitFor';
-import { createLdapFormMachine, validateLdap } from '../ldapFormMachine';
+import { createLdapFormMachine, validateConnection, validateLdap } from '../ldapFormMachine';
 import { DEFAULT_LDAP_SERVER, type LdapFormData, type LdapServer } from '../types';
 
 // Mock the nexus-ui-plugin module
@@ -47,6 +47,11 @@ function validLdapFormData(overrides: Partial<LdapFormData> = {}): LdapFormData 
     authScheme: 'simple',
     authUsername: 'cn=admin,dc=example,dc=com',
     authPassword: 'secret',
+    // Explicitly pinned so the NEXUS-54076 required-field tests remain valid
+    // even if DEFAULT_LDAP_SERVER ever loses these defaults.
+    connectionTimeout: 30,
+    connectionRetryDelay: 300,
+    maxIncidentsCount: 3,
     userObjectClass: 'inetOrgPerson',
     userIdAttribute: 'uid',
     userRealNameAttribute: 'cn',
@@ -450,28 +455,46 @@ describe('ldapFormMachine', () => {
       service.stop();
     });
 
-    // Machine-level contract: ValidationUtils.isInRange treats blank/undefined
-    // as "not provided" and skips validation. A real user can't actually
-    // reach the machine with a blank value here - LdapForm.tsx's onChange
-    // coerces a cleared numeric input back to its default before sending
-    // UPDATE - but this test sends UPDATE directly, bypassing that
-    // coercion, to pin the machine's own contract independent of the UI.
-    it('allows blank numeric connection fields (not required)', async () => {
-      const machine = createLdapFormMachine(undefined);
-      const service = await startAndLoad(machine);
-
-      service.send({ type: 'UPDATE', name: 'connectionTimeout', value: '' } as any);
-      service.send({ type: 'UPDATE', name: 'connectionRetryDelay', value: '' } as any);
-      service.send({ type: 'UPDATE', name: 'maxIncidentsCount', value: '' } as any);
-      service.send({ type: 'SUBMIT' } as any);
-
-      const state = service.getSnapshot();
-      expect(state.context.validationErrors.connectionTimeout).toBeFalsy();
-      expect(state.context.validationErrors.connectionRetryDelay).toBeFalsy();
-      expect(state.context.validationErrors.maxIncidentsCount).toBeFalsy();
-
-      service.stop();
+    // NEXUS-54076: all three connection settings fields are @NotNull on the
+    // backend and must be required at the machine level too. Previously, the
+    // machine silently accepted undefined/blank (relying on the UI to coerce
+    // cleared inputs back to defaults), which prevented users from ever
+    // seeing a "required" or "out-of-range" validation message.
+    it('requires connectionTimeout when cleared to undefined (NEXUS-54076)', () => {
+      const errors = validateConnection({ ...validLdapFormData(), connectionTimeout: undefined });
+      expect(errors.connectionTimeout).toBeTruthy();
     });
+
+    it('requires connectionRetryDelay when cleared to undefined (NEXUS-54076)', () => {
+      const errors = validateConnection({ ...validLdapFormData(), connectionRetryDelay: undefined });
+      expect(errors.connectionRetryDelay).toBeTruthy();
+    });
+
+    it('requires maxIncidentsCount when cleared to undefined (NEXUS-54076)', () => {
+      const errors = validateConnection({ ...validLdapFormData(), maxIncidentsCount: undefined });
+      expect(errors.maxIncidentsCount).toBeTruthy();
+    });
+
+    // Unified range messages: whether NaN, below-range, or above-range, each
+    // field shows one consistent message so users know the expected range.
+    it.each([
+      [0, 'connectionTimeout', 'Must be a number between 1 and 3600'],
+      [3601, 'connectionTimeout', 'Must be a number between 1 and 3600'],
+      [NaN, 'connectionTimeout', 'Must be a number between 1 and 3600'],
+      [1.5, 'connectionTimeout', 'Must be a number between 1 and 3600'],
+      [-1, 'connectionRetryDelay', 'Must be a number 0 or greater'],
+      [NaN, 'connectionRetryDelay', 'Must be a number 0 or greater'],
+      [0.5, 'connectionRetryDelay', 'Must be a number 0 or greater'],
+      [-1, 'maxIncidentsCount', 'Must be a number 0 or greater'],
+      [NaN, 'maxIncidentsCount', 'Must be a number 0 or greater'],
+      [2.1, 'maxIncidentsCount', 'Must be a number 0 or greater'],
+    ])(
+      'shows unified range message for %s in %s',
+      (value, field, expectedMessage) => {
+        const errors = validateConnection({ ...validLdapFormData(), [field]: value });
+        expect(errors[field as keyof typeof errors]).toBe(expectedMessage);
+      }
+    );
   });
 
   describe('user mapping validation', () => {
@@ -763,6 +786,106 @@ describe('ldapFormMachine', () => {
     });
   });
 
+  describe('duplicate name validation', () => {
+    it('rejects a name that matches an existing server (create mode)', async () => {
+      const existingNamesRef = { current: ['prod-ldap', 'dev-ldap'] };
+      const machine = createLdapFormMachine(undefined, null, existingNamesRef);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'prod-ldap' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.name).toBe('This name is already in use');
+
+      service.stop();
+    });
+
+    it('accepts a name that does not match any existing server', async () => {
+      const existingNamesRef = { current: ['prod-ldap', 'dev-ldap'] };
+      const machine = createLdapFormMachine(undefined, null, existingNamesRef);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'staging-ldap' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.name).toBeFalsy();
+
+      service.stop();
+    });
+
+    it('does not flag the server\'s own unchanged name in edit mode', async () => {
+      // The caller (LdapPage.tsx) excludes the server's own current name from
+      // existingNames, so the machine sees a list containing only *other* servers.
+      const server = buildPreloadedServer({ name: 'prod-ldap' });
+      const existingNamesRef = { current: ['dev-ldap'] };
+      const machine = createLdapFormMachine('test-id', server, existingNamesRef);
+      const service = await startAndLoad(machine);
+
+      expect(service.getSnapshot().context.validationErrors.name).toBeFalsy();
+
+      service.stop();
+    });
+
+    it('checks for duplicates in edit mode when renaming to another server\'s name', async () => {
+      const server = buildPreloadedServer({ name: 'prod-ldap' });
+      const existingNamesRef = { current: ['dev-ldap'] };
+      const machine = createLdapFormMachine('test-id', server, existingNamesRef);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'dev-ldap' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.name).toBe('This name is already in use');
+
+      service.stop();
+    });
+
+    it('reflects updated existingNames when the ref is mutated', async () => {
+      const existingNamesRef = { current: ['prod-ldap'] };
+      const machine = createLdapFormMachine(undefined, null, existingNamesRef);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'new-ldap' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+      expect(service.getSnapshot().context.validationErrors.name).toBeFalsy();
+
+      // Simulate another server being added
+      existingNamesRef.current = ['prod-ldap', 'new-ldap'];
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'new-ldap' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+      expect(service.getSnapshot().context.validationErrors.name).toBe('This name is already in use');
+
+      service.stop();
+    });
+
+    it('trims surrounding whitespace before checking for duplicates', async () => {
+      const existingNamesRef = { current: ['prod-ldap'] };
+      const machine = createLdapFormMachine(undefined, null, existingNamesRef);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: '  prod-ldap  ' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      expect(service.getSnapshot().context.validationErrors.name).toBe('This name is already in use');
+
+      service.stop();
+    });
+
+    it('treats existingNames as absent when no ref is provided', async () => {
+      const machine = createLdapFormMachine(undefined);
+      const service = await startAndLoad(machine);
+
+      service.send({ type: 'UPDATE', name: 'name', value: 'any-name' } as any);
+      service.send({ type: 'SUBMIT' } as any);
+
+      // No duplicate check should run; name error should be absent
+      expect(service.getSnapshot().context.validationErrors.name).toBeFalsy();
+
+      service.stop();
+    });
+  });
+
   describe('validateLdap function', () => {
     it('returns no errors for valid complete data', () => {
       const data = validLdapFormData();
@@ -800,6 +923,18 @@ describe('ldapFormMachine', () => {
       });
       const errors = validateLdap(data);
       expect(errors.userMemberOfAttribute).toBeTruthy();
+    });
+
+    it('flags duplicate name on create when existingNames provided', () => {
+      const data = validLdapFormData({ name: 'prod-ldap' });
+      const errors = validateLdap(data, true, ['prod-ldap', 'dev-ldap']);
+      expect(errors.name).toBe('This name is already in use');
+    });
+
+    it('flags duplicate name on edit when existingNames provided', () => {
+      const data = validLdapFormData({ name: 'prod-ldap' });
+      const errors = validateLdap(data, false, ['prod-ldap', 'dev-ldap']);
+      expect(errors.name).toBe('This name is already in use');
     });
 
     it('requires bind password on create but not on edit (PG5)', () => {

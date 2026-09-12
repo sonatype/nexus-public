@@ -514,6 +514,7 @@ export function TaskScheduler({
               onChange={handleCronChange}
               placeholder="0 0 * * * ?"
               helpText="Enter a Quartz cron expression. Format: [seconds] [minutes] [hours] [day-of-month] [month] [day-of-week] [year(optional)]"
+              monospace
               error={errors.cronExpression || (
                 value.cronExpression && !cronResult.valid ? cronResult.reason || 'Invalid cron expression' : ''
               )}

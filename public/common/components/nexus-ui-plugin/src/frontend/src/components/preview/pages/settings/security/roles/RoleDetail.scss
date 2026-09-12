@@ -82,7 +82,7 @@
     padding: var(--space-2, 8px) var(--space-3, 12px);
     background: var(--gray-2, #f9f9fb);
     border-radius: var(--radius-2, 6px);
-    font-family: monospace;
+    font-family: var(--font-family-mono);
 
     [data-theme='dark'] & {
       background: var(--gray-3, #222225);

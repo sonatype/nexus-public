@@ -77,8 +77,23 @@ describe('CEHardLimitAlerts', () => {
   }
 
   beforeEach(() => {
+    // Default to a logged-in admin so each test starts from a known user state
+    // (a prior test overriding useUser to null must not leak into the next).
+    ExtJS.useUser.mockReturnValue({ administrator: true });
     const date = new Date('2024-12-02');
     jest.useFakeTimers().setSystemTime(date);
+  });
+
+  it('does not render any alert when there is no logged-in user (anonymous)', async () => {
+    ExtJS.useUser.mockReturnValue(null);
+
+    // Over limits + grace period ended: for a logged-in non-admin this resolves
+    // to NON_ADMIN_OVER_LIMITS_GRACE_PERIOD_ENDED and renders the error alert.
+    // Anonymous users must see nothing at all.
+    const {container} = await renderView('2024-10-15T00:00:00.000', 'Over limits');
+
+    expect(container.querySelector('.ce-alerts')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('should render the correct links', () => {
@@ -91,14 +106,21 @@ describe('CEHardLimitAlerts', () => {
     expect(uploadLicense).toHaveAttribute('href', '#admin/system/licensing');
   });
 
-  it('should render the nearing limits banner', async () => {
+  it('should render the nearing limits banner with warning styling and a tertiary Learn More CTA', async () => {
     const {container} = await renderView('', '75% usage');
 
     expect(container.querySelector('.nx-alert')).toHaveTextContent('Instance Trending Toward Usage LimitsOnce limits are reached, new components cannot be added. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn More');
     expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
+
+    // 75% approaching limits state uses warning styling
+    expect(container.querySelector('.nx-alert--warning')).toBeInTheDocument();
+    expect(container.querySelector('.nx-alert--error')).not.toBeInTheDocument();
+
+    // "Learn More" CTA uses surface (tertiary) styling
+    expect(screen.getByRole('link', {name: 'Learn More'})).toHaveClass('nx-btn', 'nx-btn--tertiary');
   });
 
-  it('should render the over limits banner outside of grace period', async () => {
+  it('should render the over limits banner outside of grace period with error styling and tertiary/primary CTAs', async () => {
     const {container} = await renderView('2024-10-15T00:00:00.000', 'Over limits');
     const getPurchaseNowButton = screen.getByRole('link', {name: 'Purchase Now'});
     const getLearnMoreLimitsEnforcedButton = screen.getByRole('link', {name: 'Learn More'});
@@ -106,13 +128,28 @@ describe('CEHardLimitAlerts', () => {
     expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits In EffectUsage limits came into effect on October 15, 2024. As usage levels are currently higher than the Nexus Repository Community Edition maximum, new components can no longer be added to this instance. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn MorePurchase Now');
     expect(getPurchaseNowButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/ce/purchase-license?nodeId=node-example-id&componentCountLimit=40000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=100000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&malwareCount=3');
     expect(getLearnMoreLimitsEnforcedButton).toHaveAttribute('href', 'http://links.sonatype.com/products/nxrm3/ce/learn-more-limits-enforced?nodeId=node-example-id&componentCountLimit=40000&componentCountMax=12500&componentCount=85000&requestsPer24HoursLimit=100000&requestsPer24HoursMax=75000&requestsPer24HoursCount=3300&malwareCount=3');
+
+    // Over limits, write restricted uses error styling
+    expect(container.querySelector('.nx-alert--error')).toBeInTheDocument();
+    expect(container.querySelector('.nx-alert--warning')).not.toBeInTheDocument();
+
+    // "Learn More" is tertiary (surface); "Purchase Now" is primary (blue/white)
+    expect(getLearnMoreLimitsEnforcedButton).toHaveClass('nx-btn', 'nx-btn--tertiary');
+    expect(getPurchaseNowButton).toHaveClass('nx-btn', 'nx-btn--primary');
   });
 
-  it('should render the over limits banner inside grace period', async () => {
+  it('should render the over limits banner inside grace period with warning styling and a tertiary Learn More CTA', async () => {
     const {container} = await renderView('2024-12-15T00:00:00.000', 'Over limits');
 
     expect(container.querySelector('.nx-alert')).toHaveTextContent('Usage Limits Will Be Enforced Starting December 15, 2024Starting December 15, 2024, new components cannot be added. Purchase a license to remove limits, or if you have already purchased a license upload it here.Learn More');
     expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
+
+    // Over limits grace period uses warning styling, not error
+    expect(container.querySelector('.nx-alert--warning')).toBeInTheDocument();
+    expect(container.querySelector('.nx-alert--error')).not.toBeInTheDocument();
+
+    // "Learn More" CTA uses surface (tertiary) styling
+    expect(screen.getByRole('link', {name: 'Learn More'})).toHaveClass('nx-btn', 'nx-btn--tertiary');
   });
 
   it('should render the under limits banner inside grace period', async () => {

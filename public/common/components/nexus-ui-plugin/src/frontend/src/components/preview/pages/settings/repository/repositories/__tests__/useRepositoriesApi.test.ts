@@ -85,6 +85,62 @@ describe('useRepositoriesApi', () => {
     });
   });
 
+  describe('fetchRepository', () => {
+    // NEXUS-54019: the edit form must read repository config through the internal admin-gated
+    // endpoint (repository-admin READ) FIRST — the SAME permission the list uses. The public v1
+    // GET /v1/repositories/{name} (which gates on repository-view read/browse) is now only a
+    // best-effort enrichment for UI-only fields. Reading v1 first let an admin-read-only user
+    // see the list but 403 opening a repo.
+    it('reads detail from the internal admin-gated endpoint first, then enriches from v1', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', online: true })
+        .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', status: { online: true } });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('repo1');
+      });
+
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(
+        1,
+        '/service/rest/internal/ui/repositories/repository/repo1',
+      );
+      expect(mockRestClient.get).toHaveBeenNthCalledWith(2, '/service/rest/v1/repositories/repo1');
+      expect(repo.name).toBe('repo1');
+      expect(repo.status).toEqual({ online: true });
+    });
+
+    it('returns the admin config when the v1 enrichment call 403s (admin-read-only user)', async () => {
+      mockRestClient.get
+        .mockResolvedValueOnce({ name: 'repo1', format: 'npm', type: 'hosted', online: true })
+        .mockRejectedValueOnce({ response: { status: 403 }, message: 'Forbidden' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('repo1');
+      });
+
+      expect(repo).toEqual({ name: 'repo1', format: 'npm', type: 'hosted', online: true });
+    });
+
+    it('returns null when the repository is not found (404)', async () => {
+      mockRestClient.get.mockRejectedValueOnce({ response: { status: 404 }, message: 'Not Found' });
+
+      const { result } = renderHook(() => useRepositoriesApi());
+
+      let repo: any;
+      await act(async () => {
+        repo = await result.current.fetchRepository('missing');
+      });
+
+      expect(repo).toBeNull();
+    });
+  });
+
   describe('createRepository', () => {
     it('creates repository successfully', async () => {
       mockRestClient.post.mockResolvedValueOnce({});

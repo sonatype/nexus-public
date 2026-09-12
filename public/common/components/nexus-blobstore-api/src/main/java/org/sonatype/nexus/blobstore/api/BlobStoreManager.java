@@ -136,11 +136,27 @@ public interface BlobStoreManager
   void validateConfiguration(final BlobStoreConfiguration configuration, final boolean sanitize);
 
   /**
-   * Moves a blob from one blobstore to another
+   * Moves a blob from one blobstore to another, atomically deleting it from the source after copying.
+   * <p>
+   * <strong>Warning:</strong> Do not use this method in migration flows that require updating DB references
+   * between the copy and the source deletion (e.g. repository blobstore migration). In those cases use
+   * {@link #copyBlob} instead, update DB references, then delete the source blob explicitly. Using
+   * {@code moveBlob} in such flows creates a window where DB still points to the now-deleted source blob.
    *
    * @param blobId
    * @param srcBlobStore
    * @param destBlobStore
    */
   Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore);
+
+  /**
+   * Copies a blob from one blobstore to another without deleting it from the source.
+   * The blob ID is preserved in the destination. Callers are responsible for deleting
+   * the source blob after updating any DB references to point to the destination.
+   *
+   * @param blobId
+   * @param srcBlobStore
+   * @param destBlobStore
+   */
+  Blob copyBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore);
 }

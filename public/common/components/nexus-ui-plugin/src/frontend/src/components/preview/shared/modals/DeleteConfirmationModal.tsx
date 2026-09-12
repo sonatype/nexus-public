@@ -15,17 +15,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { AlertDialog, Box, Flex, Text, Button, TextField, IconButton } from '@radix-ui/themes';
 import { X } from 'lucide-react';
 
-import './DeleteConfirmationModal.scss';
-
 // Fixed acknowledgement word required to confirm any destructive deletion. Using a
 // single literal word — instead of per-entity names — keeps the friction predictable
 // and short to type while still forcing a deliberate action. Displayed as-is; the
 // match is case-insensitive so "delete", "Delete", "DELETE" all confirm.
 const CONFIRMATION_TEXT = 'Delete';
-// Body class applied while the modal is open. Scoped CSS in
-// DeleteConfirmationModal.scss bumps the Radix overlay z-index above page chrome
-// (sticky action-bars etc.) only while this modal is mounted.
-const BODY_OPEN_CLASS = 'nxrm-delete-confirmation-open';
 
 export interface DeleteConfirmationModalProps {
   open: boolean;
@@ -89,19 +83,6 @@ export function DeleteConfirmationModal({
       setConfirmationText('');
       setShowError(false);
     }
-  }, [open]);
-
-  // Toggle a body class while the modal is open so the scoped SCSS can raise the
-  // Radix overlay above the SettingsForm sticky action-bar (and any other
-  // ancestor stacking context). Cleanup on unmount in case the modal is torn
-  // down while still open (e.g. parent route change mid-confirmation).
-  useEffect(() => {
-    if (open) {
-      document.body.classList.add(BODY_OPEN_CLASS);
-    }
-    return () => {
-      document.body.classList.remove(BODY_OPEN_CLASS);
-    };
   }, [open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

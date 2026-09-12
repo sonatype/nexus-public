@@ -417,6 +417,7 @@ export function LdapPage({ className }: LdapPageProps) {
           <LdapForm
             server={null}
             isCreate={true}
+            existingNames={servers.map((s) => s.name)} // snapshot of loaded servers; concurrent additions by other users will not be reflected until LdapPage re-fetches
             onSave={handleSave}
             onCancel={handleBack}
             loading={loading}
@@ -445,6 +446,7 @@ export function LdapPage({ className }: LdapPageProps) {
             <LdapForm
               server={selectedServer}
               isCreate={false}
+              existingNames={servers.filter((s) => s.id !== selectedServer.id).map((s) => s.name)}
               onSave={handleSave}
               onCancel={handleBack}
               onDelete={canDelete ? () => handleDelete(selectedServer, true) : undefined}

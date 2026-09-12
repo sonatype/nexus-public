@@ -47,14 +47,13 @@
   "dependencies": {
     "@react-hook/resize-observer": "^2.0.2",
     "@uirouter/react": "1.0.7",
-    "axios": "1.17.0",
+    "axios": "1.19.0",
     "core-js-pure": "3.47.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.57.0",
+    "@playwright/test": "1.61.1",
     "@rspack/binding-darwin-arm64": "1.7.6",
-    "dotenv": "^16.4.5",
-    "playwright": "^1.57.0"
+    "dotenv": "^16.4.5"
   },
   "scripts": {
     "sync-coreui": "yarn workspace @sonatype/nexus-coreui-plugin run build && ./mvnw install -pl public/common/components/nexus-coreui-plugin -DskipTests",

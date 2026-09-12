@@ -125,6 +125,7 @@ describe('MaliciousRiskOnDisk', () => {
   });
 
   it('does not render if feature flag is false', async () => {
+    ExtJS.useUser.mockReturnValue({'administrator': true});
     when(ExtJS.state().getValue)
         .calledWith(MALWARE_RISK_ENABLED)
         .mockReturnValue(false);
@@ -135,7 +136,23 @@ describe('MaliciousRiskOnDisk', () => {
     expect(selectors.queryAlert()).not.toBeInTheDocument();
   });
 
+  it('does not render if feature flag is false even when malwareCount > 0', async () => {
+    ExtJS.useUser.mockReturnValue({'administrator': true});
+    when(ExtJS.state().getValue)
+        .calledWith(MALWARE_RISK_ENABLED)
+        .mockReturnValue(false);
+    when(ExtJS.state().getValue)
+        .calledWith('nexus.malware.count')
+        .mockReturnValue(maliciousRiskOnDiskResponse);
+    await act(async () => {
+      render(<MaliciousRiskOnDisk />);
+    });
+
+    expect(selectors.queryAlert()).not.toBeInTheDocument();
+  });
+
   it('does not render if malicious count is 0', async () => {
+    ExtJS.useUser.mockReturnValue({'administrator': true});
     when(ExtJS.state().getValue)
         .calledWith('nexus.malware.count')
         .mockReturnValue(maliciousRiskOnDiskResponseWithCount0);

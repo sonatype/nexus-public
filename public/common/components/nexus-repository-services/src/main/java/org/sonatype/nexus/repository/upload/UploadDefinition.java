@@ -82,7 +82,7 @@ public class UploadDefinition
    * Whether uploads through the API are allowed by the available handler.
    */
   public boolean isApiUpload() {
-    return uiUpload;
+    return apiUpload;
   }
 
   /**

@@ -15,6 +15,8 @@ package org.sonatype.nexus.plugins.defaultrole.internal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.sonatype.nexus.plugins.defaultrole.DefaultRoleRealm;
@@ -45,6 +47,14 @@ public class DefaultRoleStateContributor
 
   private final RealmManager realmManager;
 
+  /**
+   * NEXUS-53915: {@link #getState()} runs on every application-state poll (every authenticated UI session polls
+   * every few seconds). Remember the last missing role we warned about so the WARN is emitted only when the
+   * misconfiguration first appears or changes, rather than on every poll. Reset when the configuration is healthy
+   * so a subsequent breakage is logged again.
+   */
+  private final AtomicReference<String> lastWarnedMissingRole = new AtomicReference<>();
+
   @Autowired
   public DefaultRoleStateContributor(
       final DefaultRoleRealm defaultRoleRealm,
@@ -62,12 +72,27 @@ public class DefaultRoleStateContributor
     if (realmManager.isRealmEnabled(DefaultRoleRealm.NAME) && subject != null
         && (subject.isAuthenticated() || subject.isRemembered())) {
       try {
-        Map<String, Object> defaultRole = new HashMap<>(2);
         Role matched = securitySystem.listRoles(DEFAULT_SOURCE)
             .stream()
             .filter(role -> role.getRoleId().equals(defaultRoleRealm.getRole()))
             .findFirst()
             .orElse(null);
+        if (matched == null) {
+          // NEXUS-53915: the configured default role was removed. Previously this dereferenced null and threw an
+          // NPE that was swallowed at DEBUG, leaving no trace at default log levels. Surface it as a WARN and
+          // return a clean empty state so the UI simply omits the default-role indicator. Because this method is
+          // polled every few seconds by every authenticated UI session, only log when the missing role first
+          // appears or changes to avoid flooding the log with an identical WARN on every poll.
+          String missingRole = defaultRoleRealm.getRole();
+          if (!Objects.equals(missingRole, lastWarnedMissingRole.getAndSet(missingRole))) {
+            log.warn("Configured default role '{}' does not exist; omitting default role from application state",
+                missingRole);
+          }
+          return Collections.emptyMap();
+        }
+        // Configuration is healthy again; re-arm so a future breakage is logged once more.
+        lastWarnedMissingRole.set(null);
+        Map<String, Object> defaultRole = new HashMap<>(2);
         defaultRole.put("id", matched.getRoleId());
         defaultRole.put("name", matched.getName());
         return Collections.singletonMap("defaultRole", defaultRole);

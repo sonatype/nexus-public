@@ -158,6 +158,35 @@ describe('TaskScheduler', () => {
     });
   });
 
+  describe('advanced (cron) schedule', () => {
+    const advancedSchedule: ScheduleData = {
+      schedule: 'advanced',
+      timeZoneOffset: '+00:00',
+      startDate: null,
+      startTime: undefined,
+      recurringDays: [],
+      cronExpression: '0 0 3 * * ?',
+    };
+
+    it('renders the cron expression input', () => {
+      renderWithTheme(<TaskScheduler value={advancedSchedule} onChange={mockOnChange} />);
+
+      expect(screen.getByText('Cron Expression')).toBeInTheDocument();
+    });
+
+    // NEXUS-52338: a cron expression is positional, so it must render in the monospace
+    // stack rather than the Super UI default. The examples below the field already use it.
+    it('renders the cron expression input with monospace styling', () => {
+      const { container } = renderWithTheme(
+        <TaskScheduler value={advancedSchedule} onChange={mockOnChange} />,
+      );
+
+      const cronInput = container.querySelector('input[name="cronExpression"]');
+      expect(cronInput).not.toBeNull();
+      expect(cronInput!.closest('.settings-text-input__input--mono')).not.toBeNull();
+    });
+  });
+
   describe('cron preview', () => {
     it('shows human-readable preview for valid cron expression', () => {
       expect(describeCron('0 0 3 * * ?')).toBe('Every day at 3:00 AM');

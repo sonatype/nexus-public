@@ -16,6 +16,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 import { TagDetailPage } from '../TagDetailPage';
 import * as tagsApi from '../tags.api';
+import { ExtJS } from '../../../../../interface/ExtJS';
 
 // Mock UIRouter
 const mockGo = jest.fn();
@@ -100,6 +101,14 @@ jest.mock('../../../shared/form', () => ({
 // Mock TagDetailPage.scss
 jest.mock('../TagDetailPage.scss', () => ({}), { virtual: true });
 
+// TagDetailPage uses ExtJS.usePermission (provider-independent) rather than the
+// context-based usePermission — the latter returns false without a <PermissionsProvider>,
+// which coreui never mounts, hiding the action from admins too (NEXUS-54212).
+// Spy on the real ExtJS statics rather than mocking the whole module: the real shared
+// components rendered here rely on other ExtJS methods (e.g. waitForPermissions).
+const mockUsePermission = jest.spyOn(ExtJS, 'usePermission');
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 const mockTagDetail = {
   name: 'test-tag',
   firstCreated: '2026-01-15T10:30:45Z',
@@ -136,6 +145,9 @@ describe('TagDetailPage', () => {
     jest.clearAllMocks();
     // Reset permission mock to default (permitted)
     setCanOpenComponent(true);
+    // ExtJS.usePermission just evaluates its getter synchronously in the test.
+    mockUsePermission.mockImplementation((getValue: () => unknown) => getValue());
+    mockCheckPermission.mockReturnValue(true);
     mockFetchTagDetail.mockResolvedValue(mockTagDetail as any);
     // Route mockGet by URL: filtered API returns tag count, search API returns components
     mockGet.mockImplementation((url: string) => {
@@ -386,6 +398,30 @@ describe('TagDetailPage', () => {
         const exportBtn = screen.getByText('Export CSV');
         expect(exportBtn.closest('button')).toBeDisabled();
       });
+    });
+  });
+
+  describe('delete-tag permission gating (NEXUS-54212)', () => {
+    it('shows the Delete Tag button when the user has tags:delete', async () => {
+      mockCheckPermission.mockReturnValue(true);
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /delete tag/i })).toBeInTheDocument();
+      });
+    });
+
+    it('disables the Delete Tag button when the user lacks tags:delete', async () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderPage();
+
+      // Wait for the page to finish loading the tag detail.
+      await waitFor(() => {
+        expect(mockFetchTagDetail).toHaveBeenCalled();
+      });
+
+      // Large delete button is shown but disabled (NEXUS-54212), not hidden.
+      expect(screen.getByRole('button', { name: /delete tag/i })).toBeDisabled();
     });
   });
 
@@ -661,16 +697,16 @@ describe('TagDetailPage', () => {
       const row = screen.getByRole('button', { name: 'View my-package' });
       fireEvent.click(row);
 
-      // Navigate to component detail route with correctly encoded gaId
-      // gaId = encodeURIComponent(format:group:name) = encodeURIComponent('npm:my-group:my-package')
+      // Navigate to component detail route with gaId passed plain (format:group:name);
+      // the route's `type: 'path'` param encodes/decodes it symmetrically (NEXUS-54201)
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'my-package',
-        gaId: 'npm%3Amy-group%3Amy-package',
+        gaId: 'npm:my-group:my-package',
         version: '1.0.0',
       });
     });
 
-    it('navigates with correctly encoded gaId for Alpine format with slashes in group', async () => {
+    it('navigates with a plain gaId for Alpine format with slashes in group', async () => {
       const component = makeComponent({
         id: 'comp-alpine',
         format: 'alpine',
@@ -690,10 +726,10 @@ describe('TagDetailPage', () => {
       const row = screen.getByRole('button', { name: 'View acpi' });
       fireEvent.click(row);
 
-      // gaId = encodeURIComponent('alpine:1.0.0/main:acpi') - encoded exactly once
+      // gaId = 'alpine:1.0.0/main:acpi' - passed plain, not pre-encoded
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'acpi',
-        gaId: 'alpine%3A1.0.0%2Fmain%3Aacpi',
+        gaId: 'alpine:1.0.0/main:acpi',
         version: '1.7-r7',
       });
     });
@@ -718,10 +754,10 @@ describe('TagDetailPage', () => {
       const row = screen.getByRole('button', { name: 'View ungrouped-pkg' });
       fireEvent.click(row);
 
-      // gaId = encodeURIComponent('npm:ungrouped-pkg') - no group segment
+      // gaId = 'npm:ungrouped-pkg' - no group segment
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'ungrouped-pkg',
-        gaId: 'npm%3Aungrouped-pkg',
+        gaId: 'npm:ungrouped-pkg',
         version: '2.0.0',
       });
     });
@@ -749,7 +785,7 @@ describe('TagDetailPage', () => {
       // No version in params when version is null
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'no-version-pkg',
-        gaId: 'npm%3Amy-group%3Ano-version-pkg',
+        gaId: 'npm:my-group:no-version-pkg',
       });
     });
 
@@ -776,7 +812,7 @@ describe('TagDetailPage', () => {
 
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'no-assets-pkg',
-        gaId: 'npm%3Ano-assets-pkg',
+        gaId: 'npm:no-assets-pkg',
         version: '1.0.0',
       });
     });
@@ -803,7 +839,7 @@ describe('TagDetailPage', () => {
 
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'row-click-pkg',
-        gaId: 'npm%3Arow-click-pkg',
+        gaId: 'npm:row-click-pkg',
         version: '1.0.0',
       });
     });
@@ -829,7 +865,7 @@ describe('TagDetailPage', () => {
 
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'enter-key-pkg',
-        gaId: 'npm%3Aenter-key-pkg',
+        gaId: 'npm:enter-key-pkg',
         version: '1.0.0',
       });
     });
@@ -855,7 +891,7 @@ describe('TagDetailPage', () => {
 
       expect(mockGo).toHaveBeenCalledWith('preview.browse.search.component', {
         keyword: 'space-key-pkg',
-        gaId: 'npm%3Aspace-key-pkg',
+        gaId: 'npm:space-key-pkg',
         version: '1.0.0',
       });
     });

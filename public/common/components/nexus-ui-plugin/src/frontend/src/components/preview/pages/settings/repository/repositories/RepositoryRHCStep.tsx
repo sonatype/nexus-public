@@ -16,7 +16,8 @@
  * Proxy repos only. Same pattern as Firewall: Enable or None (skip).
  */
 import React, { useState } from 'react';
-import { Box, Flex, Text, Card, Switch } from '@radix-ui/themes';
+import { Box, Flex, Text, Card, Switch, Callout } from '@radix-ui/themes';
+import { AlertCircle } from 'lucide-react';
 import { useRepositoriesApi } from './useRepositoriesApi';
 
 import './RepositoryRHCStep.scss';
@@ -32,6 +33,8 @@ export interface RepositoryRHCStepProps {
   value?: 'enable' | 'none';
   /** Deferred mode: when user selects Enable or None */
   onChoice?: (choice: 'enable' | 'none') => void;
+  /** Whether the Health Check system capability is enabled on this instance. Defaults to true. */
+  capabilityEnabled?: boolean;
 }
 
 export function RepositoryRHCStep({
@@ -40,6 +43,7 @@ export function RepositoryRHCStep({
   mode = 'immediate',
   value = 'none',
   onChoice,
+  capabilityEnabled = true,
 }: RepositoryRHCStepProps): JSX.Element {
   const { enableHealthCheck } = useRepositoriesApi();
   const [loading, setLoading] = useState(false);
@@ -77,13 +81,25 @@ export function RepositoryRHCStep({
         <Flex direction="column" gap="4">
           <Box>
             <Text size="4" weight="bold" as="div" mb="1">
-              Repository Health Check<br/>
+              Repository Health Check
             </Text>
             <Text size="2" color="gray" as="div">
               Repository Health Check analyzes components for security vulnerabilities and license issues. You can
               enable it now or configure it later from the repository profile.
             </Text>
           </Box>
+
+          {!capabilityEnabled && (
+            <Callout.Root color="yellow" data-testid="rhc-capability-disabled-callout">
+              <Callout.Icon>
+                <AlertCircle size={16} />
+              </Callout.Icon>
+              <Callout.Text>
+                Repository Health Check is not available — the system capability is not enabled.{' '}
+                <a href="#preview/admin/system/capabilities">Go to System Capabilities →</a>
+              </Callout.Text>
+            </Callout.Root>
+          )}
 
           {error && (
             <Text size="2" color="red">
@@ -97,9 +113,9 @@ export function RepositoryRHCStep({
                 size="3"
                 checked={value === 'enable'}
                 onCheckedChange={handleToggle}
-                disabled={!isDeferred && loading}
+                disabled={(!isDeferred && loading) || !capabilityEnabled}
               />
-              <Text size="3" weight="medium">
+              <Text size="3" weight="medium" color={capabilityEnabled ? undefined : 'gray'}>
                 Enable Repository Health Check
               </Text>
             </label>

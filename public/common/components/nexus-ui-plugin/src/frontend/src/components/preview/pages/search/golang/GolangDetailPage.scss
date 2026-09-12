@@ -70,7 +70,7 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--nx-color-text-dark, #333);
-    font-family: monospace;
+    font-family: var(--font-family-mono);
   }
 
   &__description {
@@ -156,7 +156,7 @@
   }
 
   &__version-cell {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     color: var(--nx-color-primary-button-background, #00add8);
   }
 

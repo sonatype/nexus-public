@@ -11,26 +11,31 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {Box} from '@radix-ui/themes';
-import {InstanceTotalsPanel} from './dashboard';
+import {Box, Flex} from '@radix-ui/themes';
+// UsageCenter replaces InstanceTotalsPanel for self-hosted (NEXUS-53863): matches classic layout,
+// no Storage/Egress charts, handles both Pro and CE editions internally
+import UsageCenter from './UsageCenter';
 import {CloudUsageCenterPanel} from './CloudUsageCenterPanel';
 import {useUsageMetricsTabData} from './useUsageMetricsTabData';
+import CELimitsAlerts from './CELimitsAlerts';
+import MalwareBanner from '../../shared/security/MalwareBanner';
 
 export default function UsageMetricsTabContent() {
-  const {isCloud, instanceTotals, monthlyMetrics, monthlyMetricsFormatted} = useUsageMetricsTabData();
+  const {isCloud, monthlyMetrics} = useUsageMetricsTabData();
 
   return (
     <Box pt="4">
-      {isCloud ? (
-        <CloudUsageCenterPanel monthlyMetrics={monthlyMetrics} />
-      ) : (
-        <InstanceTotalsPanel
-          data={instanceTotals.data}
-          loading={instanceTotals.loading}
-          monthlyMetricsHistory={monthlyMetrics.history}
-          monthlyMetrics={monthlyMetricsFormatted}
-        />
-      )}
+      <Flex direction="column" gap="4">
+        <CELimitsAlerts />
+        <MalwareBanner />
+      </Flex>
+      <Box mt="4">
+        {isCloud ? (
+          <CloudUsageCenterPanel monthlyMetrics={monthlyMetrics} />
+        ) : (
+          <UsageCenter />
+        )}
+      </Box>
     </Box>
   );
 }

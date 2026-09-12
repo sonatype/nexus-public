@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.Response.Status;
 
+import org.sonatype.nexus.bootstrap.jetty.NexusReasonPhraseCustomizer;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
@@ -79,8 +80,8 @@ public class ErrorPageService
     else {
       // NEXUS-46395: HttpServletResponse.setStatus(int, String) was removed in Jakarta
       // Servlet 6; only setStatus(int) remains. The custom HTTP/1.1 reason phrase that
-      // Firewall depends on is propagated through the patched Jetty handler chain via
-      // Response#setReason() (jetty-modifications/jetty-server).
+      // Firewall depends on is carried via a sentinel response header and serialized on the wire by
+      // NexusReasonPhraseCustomizer (STL-476).
       response.setStatus(errorCode);
       setJettyReason(response, errorMessage);
     }
@@ -99,8 +100,9 @@ public class ErrorPageService
   }
 
   /**
-   * Forwards the HTTP/1.1 reason phrase to the underlying Jetty core {@code Response} so it appears
-   * on the wire. {@link ServletContextResponse#getServletContextResponse(jakarta.servlet.ServletResponse)}
+   * Records the desired HTTP/1.1 reason phrase as a sentinel response header (read by
+   * {@link NexusReasonPhraseCustomizer}) so it is serialized on the wire.
+   * {@link ServletContextResponse#getServletContextResponse(jakarta.servlet.ServletResponse)}
    * walks any {@code ServletResponseWrapper} chain (covers {@code ShiroHttpServletResponse} and any
    * other wrappers added by Shiro / servlet filters) before returning the EE10 ServletContextResponse,
    * from which we can reach the core {@code org.eclipse.jetty.server.Response}.
@@ -113,7 +115,10 @@ public class ErrorPageService
    */
   private void setJettyReason(final HttpServletResponse response, final String errorMessage) {
     try {
-      ServletContextResponse.getServletContextResponse(response).getResponse().setReason(errorMessage);
+      ServletContextResponse.getServletContextResponse(response)
+          .getResponse()
+          .getHeaders()
+          .put(NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER, errorMessage);
     }
     catch (IllegalStateException e) {
       log.debug("Could not unwrap response to set HTTP reason phrase: {}", e.toString());

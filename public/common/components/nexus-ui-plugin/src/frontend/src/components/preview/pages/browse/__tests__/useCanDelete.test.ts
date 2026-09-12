@@ -57,7 +57,10 @@ const FOLDER_NODE: BrowseNode = {
 };
 
 const COMPONENT_DATA: ComponentData = {
-  id: 'comp-9',
+  // From the REST v1 API: id is the base64(repository:internalId) RepositoryItemIDXO form,
+  // distinct from the raw browse-node componentId ('comp-9'). The preflight must use the raw
+  // componentId (see NEXUS-54171 regression test below).
+  id: 'cmVwbzpjb21wLTk',
   repositoryName: REPO_NAME,
   format: 'maven2',
   group: 'org.example',
@@ -154,7 +157,11 @@ describe('useCanDelete (NEXUS-53861)', () => {
     expect(mockCanDeleteComponent).not.toHaveBeenCalled();
   });
 
-  it('calls canDeleteComponent with the ComponentXO shape once componentData is present', async () => {
+  it('calls canDeleteComponent with the raw browse componentId (NOT the REST base64 componentData.id)', async () => {
+    // Regression (NEXUS-54171): the ExtDirect coreui_Component.canDeleteComponent server method expects
+    // the raw internal id and numeric-parses it. Passing the REST base64 id (componentData.id) throws
+    // NumberFormatException server-side → preflight false → Delete button wrongly hidden. The preflight
+    // must therefore send selectedNode.componentId, not componentData.id.
     mockCanDeleteComponent.mockResolvedValue(true);
 
     const { result } = renderHook(() =>
@@ -163,13 +170,33 @@ describe('useCanDelete (NEXUS-53861)', () => {
 
     await waitFor(() => expect(result.current).toBe(true));
     expect(mockCanDeleteComponent).toHaveBeenCalledWith({
-      id: COMPONENT_DATA.id,
+      id: COMPONENT_NODE.componentId,
       repositoryName: COMPONENT_DATA.repositoryName,
       format: COMPONENT_DATA.format,
       group: COMPONENT_DATA.group,
       name: COMPONENT_DATA.name,
       version: COMPONENT_DATA.version,
     });
+    // Guard against regressing to the REST base64 id.
+    expect(mockCanDeleteComponent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: COMPONENT_DATA.id })
+    );
+  });
+
+  it('never runs the preflight (and stays false) for a component node missing componentId', async () => {
+    // The only id available without componentId is componentData.id (the base64 REST id), which
+    // the ExtDirect canDeleteComponent method mis-parses → false → button wrongly hidden
+    // (NEXUS-54171). Rather than send that known-bad id, the hook must treat the node as
+    // not-deletable and skip the preflight entirely.
+    mockCanDeleteComponent.mockResolvedValue(true);
+    const nodeWithoutComponentId: BrowseNode = { ...COMPONENT_NODE, componentId: undefined };
+
+    const { result } = renderHook(() =>
+      useCanDelete(nodeWithoutComponentId, REPO_NAME, COMPONENT_DATA)
+    );
+
+    expect(result.current).toBe(false);
+    expect(mockCanDeleteComponent).not.toHaveBeenCalled();
   });
 
   it('coerces nullable group and version to XO-safe defaults', async () => {

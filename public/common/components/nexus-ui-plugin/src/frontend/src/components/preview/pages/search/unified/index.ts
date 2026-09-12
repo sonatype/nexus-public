@@ -60,13 +60,9 @@ export { useSearchUrlState } from './useSearchUrlState';
 export type { UrlSearchState, UseSearchUrlStateReturn } from './useSearchUrlState';
 
 // Agent 3: Navigation hook
-export { useSearchNavigation } from './useSearchNavigation';
-export type {
-  DetailRoute,
-  UseSearchNavigationReturn,
-  SearchStateToPreserve,
-} from './useSearchNavigation';
-export { COMPONENT_DETAIL_RETURN_SEARCH_KEY } from './useSearchNavigation';
+export { useSearchNavigation, consumeSearchReturnUrl } from './useSearchNavigation';
+export type { DetailRoute, UseSearchNavigationReturn } from './useSearchNavigation';
+export { SEARCH_RETURN_URL_KEY } from './useSearchNavigation';
 
 // Components
 export { default as SearchHeader } from './SearchHeader';

@@ -53,6 +53,12 @@ jest.mock('../../settings/repository/repositories/components/FormatIcon', () => 
   FormatIcon: ({ format }: { format: string }) => <span data-testid="format-icon">{format}</span>,
 }));
 
+import { ExtJS } from '../../../../../interface/ExtJS';
+import Permissions from '../../../../../constants/Permissions';
+// ProtectRepoRow reads permissions through the provider-independent ExtJS.usePermission
+// (NEXUS-54212); spy on checkPermission so tests keep driving behavior via permission strings.
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
+
 import ProtectRepoRow from '../ProtectRepoRow';
 import { restClient } from '../../../../../interface/api';
 
@@ -99,6 +105,8 @@ const renderRow = (props: Partial<React.ComponentProps<typeof ProtectRepoRow>> =
 describe('ProtectRepoRow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: user has all write permissions so pre-existing behavior is exercised.
+    mockCheckPermission.mockReturnValue(true);
   });
 
   it('renders the repository name', () => {
@@ -191,5 +199,44 @@ describe('ProtectRepoRow', () => {
     await waitFor(() =>
       expect(mockToastError).toHaveBeenCalledWith('Repository Health Check instance capability is not enabled')
     );
+  });
+
+  describe('write gating (NEXUS-54212)', () => {
+    const fwRadios = () =>
+      screen.queryAllByRole('radio').filter((r) => r.getAttribute('name') === 'fw-maven-central');
+    const mpRadios = () =>
+      screen.queryAllByRole('radio').filter((r) => r.getAttribute('name') === 'mp-maven-central');
+
+    it('shows protection + remediation radios with edit + tasks:create', () => {
+      mockCheckPermission.mockImplementation(
+        (p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT || p === Permissions.TASKS.CREATE,
+      );
+      renderRow();
+      expect(fwRadios()).toHaveLength(3);
+      expect(mpRadios()).toHaveLength(3);
+    });
+
+    it('hides protection radios without repository-admin edit', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.TASKS.CREATE);
+      renderRow();
+      expect(fwRadios()).toHaveLength(0);
+      // Remediation radios remain because tasks:create is granted.
+      expect(mpRadios()).toHaveLength(3);
+    });
+
+    it('hides remediation radios without tasks:create', () => {
+      mockCheckPermission.mockImplementation((p: string) => p === Permissions.REPOSITORY_ADMIN.EDIT);
+      renderRow();
+      expect(mpRadios()).toHaveLength(0);
+      // Protection radios remain because repository-admin edit is granted.
+      expect(fwRadios()).toHaveLength(3);
+    });
+
+    it('hides both radio groups for a read-only user', () => {
+      mockCheckPermission.mockReturnValue(false);
+      renderRow();
+      expect(fwRadios()).toHaveLength(0);
+      expect(mpRadios()).toHaveLength(0);
+    });
   });
 });

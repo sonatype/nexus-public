@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { ExtJS } from '../../../../../interface/ExtJS';
 import { restClient, parseApiError, isNotFoundError, isPermissionError } from '../../../../../interface/api';
 
 const MONTHLY_METRICS_URL = '/service/rest/v1/monthly-metrics';
@@ -115,13 +116,28 @@ export function useMonthlyMetrics(): MonthlyMetricsResult {
     error: null,
   });
 
+  // Check if this is a cloud deployment - only cloud uses CloudUsageCenterPanel
+  const isCloud = typeof ExtJS !== 'undefined' && ExtJS.state?.()?.getValue?.('isCloud', false);
+
   const fetchData = useCallback(async () => {
+    // Skip fetch for self-hosted deployments - they use UsageCenter instead
+    if (!isCloud) {
+      setState({
+        peakStorage: null,
+        responseSize: null,
+        history: EMPTY_HISTORY,
+        loading: false,
+        error: null,
+      });
+      return;
+    }
+
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const data = await restClient.get<MonthlyMetricRecord[]>(MONTHLY_METRICS_URL);
       const records = Array.isArray(data) ? data : [];
-      const latest = records[0] ?? records[records.length - 1];
+      const latest = records[0];
 
       // Build 12-month history (oldest first for charts)
       const reversed = [...records].reverse();
@@ -192,7 +208,7 @@ export function useMonthlyMetrics(): MonthlyMetricsResult {
         error: apiError.message,
       }));
     }
-  }, []);
+  }, [isCloud]);
 
   useEffect(() => {
     fetchData();

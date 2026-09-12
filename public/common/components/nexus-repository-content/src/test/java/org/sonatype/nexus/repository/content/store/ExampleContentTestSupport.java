@@ -55,7 +55,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,7 +180,7 @@ public abstract class ExampleContentTestSupport
     }
   }
 
-  @NotNull
+  @Nonnull
   private ConfigurationData getConfigurationData() {
     ConfigurationData configurationData = new ConfigurationData();
     Map<String, Object> key = Collections.singletonMap("key", "value");

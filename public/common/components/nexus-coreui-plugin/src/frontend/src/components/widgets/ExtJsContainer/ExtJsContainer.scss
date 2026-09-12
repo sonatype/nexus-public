@@ -12,7 +12,23 @@
  */
 
 .nxrm-ext-js-wrapper {
- .risk-on-disk-container {
+  /*
+   * Restore the ExtJS font for legacy components embedded in the React shell (NEXUS-52338).
+   *
+   * In standalone Classic UI the compiled Sencha theme anchors typography on `.x-body`
+   * (applied by Ext's Viewport to the document body) and lets it inherit; only panel bodies
+   * and headers redeclare it. Components rendered into this wrapper have no `.x-body`
+   * ancestor, so they would inherit the Super UI font from the enclosing `.radix-themes`
+   * instead - leaving panel bodies on the ExtJS font while grid cells, toolbars, buttons and
+   * field labels switched to Inter, i.e. mixed typography inside one legacy panel.
+   *
+   * This re-establishes the inheritance root that `.x-body` provides everywhere else. The
+   * value is the theme's own: `$font-regular` in nexus-rapture's sass/etc/fonts.scss, which
+   * is what `.x-body` and every `.x-panel-body-*` rule compile to in baseapp-prod_*.css.
+   */
+  font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  .risk-on-disk-container {
     flex: none !important;
     border-bottom: 8px solid #606060;
   }

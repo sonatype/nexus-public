@@ -36,6 +36,8 @@ export interface PageHeaderProps {
   count?: string | number;
   /** Optional description text */
   description?: string;
+  /** Optional node rendered inline immediately after the description text (e.g. a URL chip) */
+  descriptionSuffix?: React.ReactNode;
   /** Optional action buttons (rendered on the right) */
   actions?: React.ReactNode;
   /** Optional breadcrumb navigation */
@@ -84,6 +86,7 @@ export function PageHeader({
   headingAs = 'h1',
   count,
   description,
+  descriptionSuffix,
   actions,
   breadcrumbs,
   className = '',
@@ -152,9 +155,18 @@ export function PageHeader({
               </Flex>
             )}
             {description && (
-              <Text as="p" size="2" color="gray">
-                {description}
-              </Text>
+              descriptionSuffix ? (
+                <Flex align="center" gap="2">
+                  <Text as="p" size="2" color="gray" style={{ margin: 0 }}>
+                    {description}
+                  </Text>
+                  <Box style={{ flexShrink: 0 }}>{descriptionSuffix}</Box>
+                </Flex>
+              ) : (
+                <Text as="p" size="2" color="gray">
+                  {description}
+                </Text>
+              )
             )}
           </Flex>
 

@@ -90,12 +90,6 @@
     // Add padding to cells in editing rows for better input spacing
     tr.editing td {
       padding-left: var(--space-2, 8px);
-      padding-right: var(--space-2, 8px);
-    }
-
-    // Add right padding to action cell (last column)
-    td:last-child {
-      padding-right: var(--space-2, 8px);
     }
   }
 
@@ -340,7 +334,7 @@
   }
 
   &__format-example {
-    font-family: monospace;
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-1, 12px);
     background: var(--gray-1, #fff);
     padding: var(--space-2, 8px);

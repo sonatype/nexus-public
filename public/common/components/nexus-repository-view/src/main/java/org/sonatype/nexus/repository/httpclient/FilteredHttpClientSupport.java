@@ -17,7 +17,9 @@ import java.io.IOException;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.Configurable;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.params.HttpParams;
@@ -28,10 +30,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Support for wrapping {@link CloseableHttpClient}s.
  *
- * @since 3.1
+ * <p>
+ * Implements {@link Configurable} so that consumers which unconditionally cast the wrapped
+ * client (for example RESTEasy's {@code ManualClosingApacheHttpClient43Engine} in RESTEasy 7+)
+ * can retrieve the delegate's {@link RequestConfig} instead of failing with a
+ * {@link ClassCastException}.
  */
 public abstract class FilteredHttpClientSupport
     extends CloseableHttpClient
+    implements Configurable
 {
   private final CloseableHttpClient delegate;
 
@@ -47,6 +54,14 @@ public abstract class FilteredHttpClientSupport
   @Override
   public ClientConnectionManager getConnectionManager() {
     return delegate.getConnectionManager();
+  }
+
+  @Override
+  public RequestConfig getConfig() {
+    if (delegate instanceof Configurable) {
+      return ((Configurable) delegate).getConfig();
+    }
+    return RequestConfig.DEFAULT;
   }
 
   @Override

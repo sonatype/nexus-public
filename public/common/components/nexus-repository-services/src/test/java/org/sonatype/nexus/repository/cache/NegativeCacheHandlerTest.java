@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.cache;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
@@ -20,6 +22,7 @@ import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType;
+import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.replication.PullReplicationSupport;
 import org.sonatype.nexus.repository.view.Context;
 
@@ -63,11 +66,17 @@ public class NegativeCacheHandlerTest
   @Mock
   private RemoteConnectionStatus mockConnectionStatus;
 
+  @Mock
+  private ProxyFacet mockProxyFacet;
+
+  @Mock
+  private NodeAccess mockNodeAccess;
+
   private NegativeCacheHandler underTest;
 
   @Before
   public void setUp() {
-    underTest = new NegativeCacheHandler();
+    underTest = new NegativeCacheHandler(mockNodeAccess);
 
     when(mockContext.getRequest()).thenReturn(mockRequest);
     when(mockContext.getRepository()).thenReturn(mockRepository);
@@ -76,7 +85,11 @@ public class NegativeCacheHandlerTest
     when(mockConnectionStatus.getType()).thenReturn(RemoteConnectionStatusType.AVAILABLE);
     when(mockRequest.getAction()).thenReturn(HttpMethods.GET);
     when(mockRepository.facet(NegativeCacheFacet.class)).thenReturn(mockNegativeCacheFacet);
+    when(mockRepository.facet(ProxyFacet.class)).thenReturn(mockProxyFacet);
     when(mockNegativeCacheFacet.getCacheKey(mockContext)).thenReturn(mockNegativeCacheKey);
+    // Default to clustered so the HA-only local-content check runs in tests that exercise it.
+    // Individual tests that care about the non-clustered fast path override this.
+    when(mockNodeAccess.isClustered()).thenReturn(true);
   }
 
   /**
@@ -199,6 +212,7 @@ public class NegativeCacheHandlerTest
   /**
    * Given:
    * - cached key present
+   * - no local content available (nobody else fetched it)
    * Then:
    * - cached status is returned
    * - context is not asked to proceed
@@ -209,10 +223,75 @@ public class NegativeCacheHandlerTest
   public void returnCached404() throws Exception {
     Status cachedStatus = Status.failure(HttpStatus.NOT_FOUND, "404");
     when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(cachedStatus);
+    when(mockProxyFacet.hasContentFor(mockContext)).thenReturn(false);
     Response response = underTest.handle(mockContext);
     assert response.getStatus() == cachedStatus;
     verify(mockContext, never()).proceed();
     verify(mockNegativeCacheFacet, never()).put(any(NegativeCacheKey.class), any(Status.class));
+    verify(mockNegativeCacheFacet, never()).invalidate(any(NegativeCacheKey.class));
+  }
+
+  /**
+   * Given:
+   * - cached key present (stale 404 held on this node)
+   * - a peer node has populated the shared local content store since we cached the 404
+   * Then:
+   * - the stale NFC entry is invalidated
+   * - the request proceeds so the downstream handler serves the cluster-cached asset
+   * - the cached 404 is NOT returned
+   */
+  @Test
+  public void cachedNfcEntryIsBypassedWhenLocalContentExists() throws Exception {
+    Status cachedStatus = Status.failure(HttpStatus.NOT_FOUND, "404");
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(cachedStatus);
+    when(mockProxyFacet.hasContentFor(mockContext)).thenReturn(true);
+    Response contextResponse = HttpResponses.ok("200");
+    when(mockContext.proceed()).thenReturn(contextResponse);
+    Response response = underTest.handle(mockContext);
+    assert response == contextResponse;
+    verify(mockNegativeCacheFacet).invalidate(mockNegativeCacheKey);
+    verify(mockContext).proceed();
+  }
+
+  /**
+   * Given:
+   * - cached NFC entry present
+   * - the deployment is NOT clustered (single-node CE / Pro-standalone)
+   * Then:
+   * - the local-content probe is skipped entirely (no ProxyFacet call)
+   * - the cached 404 is returned directly, preserving NFC's zero-cost fast path
+   */
+  @Test
+  public void nfcEntryOnNonClusteredDeploymentSkipsLocalContentCheck() throws Exception {
+    when(mockNodeAccess.isClustered()).thenReturn(false);
+    Status cachedStatus = Status.failure(HttpStatus.NOT_FOUND, "404");
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(cachedStatus);
+    Response response = underTest.handle(mockContext);
+    assert response.getStatus() == cachedStatus;
+    verify(mockContext, never()).proceed();
+    verify(mockProxyFacet, never()).hasContentFor(any(Context.class));
+    verify(mockNegativeCacheFacet, never()).invalidate(any(NegativeCacheKey.class));
+  }
+
+  /**
+   * Given:
+   * - cached NFC entry present
+   * - repository is not a proxy repository (ProxyFacet is not attached)
+   * Then:
+   * - the MissingFacetException is caught and treated as "no local content"
+   * - the cached 404 is returned normally, not propagated as an error
+   */
+  @Test
+  public void nfcEntryOnNonProxyRepoStillReturnsCachedNotFound() throws Exception {
+    Status cachedStatus = Status.failure(HttpStatus.NOT_FOUND, "404");
+    when(mockNegativeCacheFacet.get(mockNegativeCacheKey)).thenReturn(cachedStatus);
+    // Construct the exception outside the when(...) chain — its constructor calls
+    // repository.getName() and Mockito cannot distinguish an intra-stub interaction otherwise.
+    MissingFacetException missingProxyFacet = new MissingFacetException(mockRepository, ProxyFacet.class);
+    when(mockRepository.facet(ProxyFacet.class)).thenThrow(missingProxyFacet);
+    Response response = underTest.handle(mockContext);
+    assert response.getStatus() == cachedStatus;
+    verify(mockContext, never()).proceed();
     verify(mockNegativeCacheFacet, never()).invalidate(any(NegativeCacheKey.class));
   }
 

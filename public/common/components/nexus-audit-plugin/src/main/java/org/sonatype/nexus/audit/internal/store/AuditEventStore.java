@@ -91,4 +91,14 @@ public class AuditEventStore
   {
     return dao().countByDomains(domains, type, initiator, repositoryName, startDate, endDate);
   }
+
+  /**
+   * Delete a single batch of rows older than {@code cutoff}. Returns the number of rows deleted.
+   * The batch bound protects against long-lived row locks and unbounded transaction size; callers
+   * should loop until the returned count is zero to fully prune the backlog.
+   */
+  @Transactional
+  public int deleteOlderThan(final OffsetDateTime cutoff, final int batchSize) {
+    return dao().deleteOlderThan(cutoff, batchSize);
+  }
 }

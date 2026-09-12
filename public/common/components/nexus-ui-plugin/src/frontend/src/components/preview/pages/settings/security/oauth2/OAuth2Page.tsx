@@ -11,10 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
+import ValidationUtils from '../../../../../../interface/ValidationUtils';
+import UIStrings from '../../../../../../constants/UIStrings';
 
 import { PageHeader } from '../../../../shared';
 import {
@@ -23,7 +25,10 @@ import {
   SettingsPasswordInput,
   SettingsTextArea,
   SettingsFormSection,
+  SettingsCheckbox,
+  SettingsButton,
 } from '../../../../shared/form';
+import { CertificateViewDialog } from '../../repository/repositories/facets/CertificateViewDialog';
 import { useOAuth2Form } from './useOAuth2Form';
 import { OAuth2PageProps } from './types';
 
@@ -34,9 +39,18 @@ const navigateTo = (path: string) => {
 };
 
 export function OAuth2Page({ className }: OAuth2PageProps) {
-  const { isLoading, isSaving, isPristine, loadError, saveError, field, submit, reset } = useOAuth2Form();
+  const { data, isLoading, isSaving, isPristine, loadError, saveError, field, checkbox, submit, reset } =
+    useOAuth2Form();
 
   const canUpdate = ExtJS.checkPermission('nexus:settings:update');
+  const canReadTruststore = ExtJS.checkPermission('nexus:ssl-truststore:read');
+  const [showCertDialog, setShowCertDialog] = useState(false);
+
+  // Matches Classic, which passes the token URL as UseNexusTruststore's
+  // remoteUrl and gates on ValidationUtils.isSecureUrl — the certificate being
+  // trusted is the one presented by the token endpoint.
+  const idpTokenUrl = data.idpTokenUrl;
+  const hasSecureTokenUrl = ValidationUtils.isSecureUrl(idpTokenUrl);
 
   if (isLoading) {
     return (
@@ -50,15 +64,22 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
   }
 
   return (
-    <>
-      <PageHeader
-        title="OAuth2"
-        description="Configure OpenID Connect (OIDC) authentication settings"
-        breadcrumbs={[
-          { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
-          { label: 'OAuth2' }
-        ]}
-      />
+    <Box
+      className={`oauth2-page ${className || ''}`.trim()}
+      data-testid="oauth2-page"
+      px={{ initial: '4', md: '6', lg: '6' }}
+      py={{ initial: '4', md: '5', lg: '6' }}
+    >
+      <Box mb="4">
+        <PageHeader
+          title="OAuth2"
+          description="Configure OpenID Connect (OIDC) authentication settings"
+          breadcrumbs={[
+            { label: 'Settings', onClick: () => navigateTo('#preview/admin/settings') },
+            { label: 'OAuth2' }
+          ]}
+        />
+      </Box>
       <SettingsForm
         onSave={submit}
         onCancel={reset}
@@ -68,7 +89,6 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
         showActions={canUpdate}
         externalDirtyTracking
         testId="oauth2-settings-form"
-        className={className || ''}
       >
         <SettingsFormSection title="OIDC Settings">
           <SettingsPasswordInput
@@ -92,7 +112,6 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
             helpText="The authorization endpoint of your identity provider"
             required
             disabled={!canUpdate}
-            type="url"
           />
           <SettingsTextInput
             {...field('idpLogoutUrl')}
@@ -100,7 +119,6 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
             helpText="The logout endpoint of your identity provider"
             required
             disabled={!canUpdate}
-            type="url"
           />
           <SettingsTextInput
             {...field('idpTokenUrl')}
@@ -108,7 +126,6 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
             helpText="The token endpoint of your identity provider"
             required
             disabled={!canUpdate}
-            type="url"
           />
           <SettingsTextInput
             {...field('idpJwksUrl')}
@@ -116,8 +133,37 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
             helpText="The JWKS endpoint for token verification"
             required
             disabled={!canUpdate}
-            type="url"
           />
+
+          {/*
+            Truststore control. Kept always-visible-but-disabled (rather than
+            hidden) to match Classic, so the setting never silently disappears
+            from a configuration that already has it enabled.
+          */}
+          <Box>
+            <SettingsCheckbox
+              {...checkbox('useTrustStore')}
+              label={UIStrings.USE_TRUST_STORE.LABEL}
+              description={
+                hasSecureTokenUrl
+                  ? UIStrings.USE_TRUST_STORE.DESCRIPTION
+                  : UIStrings.USE_TRUST_STORE.NOT_SECURE_URL
+              }
+              disabled={!canUpdate || !hasSecureTokenUrl}
+              analyticsId="nxrm-oauth2-toggle-truststore"
+            />
+            <Box mt="2" ml="6">
+              <SettingsButton
+                variant="secondary"
+                size="small"
+                icon={ShieldCheck}
+                onClick={() => setShowCertDialog(true)}
+                disabled={!canReadTruststore || !hasSecureTokenUrl}
+              >
+                {UIStrings.USE_TRUST_STORE.VIEW_CERTIFICATE}
+              </SettingsButton>
+            </Box>
+          </Box>
         </SettingsFormSection>
 
         <SettingsFormSection title="Claim Mappings">
@@ -199,7 +245,11 @@ export function OAuth2Page({ className }: OAuth2PageProps) {
           />
         </SettingsFormSection>
       </SettingsForm>
-    </>
+
+      {showCertDialog && (
+        <CertificateViewDialog remoteUrl={idpTokenUrl} onClose={() => setShowCertDialog(false)} />
+      )}
+    </Box>
   );
 }
 

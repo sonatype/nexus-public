@@ -23,7 +23,11 @@ import org.sonatype.nexus.bootstrap.validation.ValidationConfiguration;
 import org.sonatype.nexus.coreui.UploadResource.ErrorPacket;
 import org.sonatype.nexus.coreui.UploadResource.Packet;
 import org.sonatype.nexus.coreui.internal.UploadService;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.RedeployDisabledException;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
@@ -43,6 +47,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -62,6 +67,9 @@ class UploadResourceTest
 
   @Mock
   private HttpServletRequest request;
+
+  @Mock
+  private Repository repository;
 
   private ObjectMapper objectMapper;
 
@@ -118,6 +126,20 @@ class UploadResourceTest
   }
 
   @Test
+  void postComponent_concurrentOperationException_returns409() throws IOException {
+    when(uploadService.upload("test-repo", request))
+        .thenThrow(new ConcurrentOperationException(
+            "Upload failed: component was concurrently deleted. Please retry."));
+
+    Response response = underTest.postComponent("test-repo", request);
+
+    assertThat(response.getStatus(), is(409));
+    String body = (String) response.getEntity();
+    assertThat(body, containsString("\"success\":false"));
+    assertThat(body, containsString("Upload failed: component was concurrently deleted"));
+  }
+
+  @Test
   void postComponent_illegalOperationException_returns400WithEnvelope() throws IOException {
     // NEXUS-53344: read-only deployment policy and duplicate-asset rejections surface as
     // IllegalOperationException from the facet layer (see TerraformHostedFacetImpl).
@@ -133,6 +155,30 @@ class UploadResourceTest
     String body = (String) response.getEntity();
     assertThat(body, containsString("\"success\":false"));
     assertThat(body, containsString("\"message\":\"Repository is read only: test-repo\""));
+  }
+
+  @Test
+  void postComponent_validationErrorsException_propagatesToMapper() throws IOException {
+    // NEXUS-54217: ValidationErrorsException is rethrown so JAX-RS' ValidationErrorsExceptionMapper
+    // maps it to HTTP 400 automatically. Verify the exception propagates out of the resource
+    // instead of being swallowed by the generic catch (Exception) and logged at ERROR.
+    ValidationErrorsException thrown = new ValidationErrorsException("Invalid npm package name: bad");
+    when(uploadService.upload("test-repo", request)).thenThrow(thrown);
+
+    ValidationErrorsException actual = assertThrows(ValidationErrorsException.class,
+        () -> underTest.postComponent("test-repo", request));
+    assertThat(actual, is(thrown));
+  }
+
+  @Test
+  void postComponentWithHtmlResponse_validationErrorsException_propagatesToMapper() throws IOException {
+    // NEXUS-54217: same behavior on the HTML response path — let the mapper handle it.
+    ValidationErrorsException thrown = new ValidationErrorsException("Invalid npm package name: bad");
+    when(uploadService.upload("test-repo", request)).thenThrow(thrown);
+
+    ValidationErrorsException actual = assertThrows(ValidationErrorsException.class,
+        () -> underTest.postComponentWithHtmlResponse("test-repo", request));
+    assertThat(actual, is(thrown));
   }
 
   @Test
@@ -182,6 +228,49 @@ class UploadResourceTest
     assertThat(body, containsString("</textarea></body></html>"));
     assertThat(body, containsString("\"success\":false"));
     assertThat(body, containsString("Repository is read only: test-repo"));
+  }
+
+  @Test
+  void postComponent_redeployDisabledException_returns409() throws IOException {
+    // RedeployDisabledException (extends IllegalOperationException) must be caught before
+    // IllegalOperationException — this test guards the catch-ordering constraint.
+    // Exception is constructed before the when() call to avoid triggering Mockito's
+    // unfinished-stubbing detection when getName() is invoked inside the constructor.
+    when(repository.getName()).thenReturn("test-repo");
+    RedeployDisabledException ex = new RedeployDisabledException(repository, "/path/to/asset",
+        "asset already exists and re-deploy is not allowed");
+    when(uploadService.upload("test-repo", request)).thenThrow(ex);
+
+    Response response = underTest.postComponent("test-repo", request);
+
+    assertThat(response.getStatus(), is(409));
+    assertThat(response.getMediaType().toString(), is(MediaType.APPLICATION_JSON));
+    String body = (String) response.getEntity();
+    assertThat(body, containsString("\"success\":false"));
+    assertThat(body, containsString("already exists and re-deploy is not allowed"));
+  }
+
+  @Test
+  void postComponentWithHtmlResponse_redeployDisabledException_returns409() throws IOException {
+    // HTML response path must also return 409 for RedeployDisabledException.
+    when(repository.getName()).thenReturn("test-repo");
+    RedeployDisabledException ex = new RedeployDisabledException(repository, "/path/to/asset",
+        "asset already exists and re-deploy is not allowed");
+    when(uploadService.upload("test-repo", request)).thenThrow(ex);
+
+    Response response;
+    try (MockedStatic<EncodingUtils> encoding = mockStatic(EncodingUtils.class)) {
+      encoding.when(() -> EncodingUtils.htmlEncode(anyString())).thenAnswer(inv -> inv.getArgument(0));
+      response = underTest.postComponentWithHtmlResponse("test-repo", request);
+    }
+
+    assertThat(response.getStatus(), is(409));
+    assertThat(response.getMediaType().toString(), is(MediaType.TEXT_HTML));
+    String body = (String) response.getEntity();
+    assertThat(body, containsString("<html><body><textarea>"));
+    assertThat(body, containsString("</textarea></body></html>"));
+    assertThat(body, containsString("\"success\":false"));
+    assertThat(body, containsString("already exists and re-deploy is not allowed"));
   }
 
   @Test

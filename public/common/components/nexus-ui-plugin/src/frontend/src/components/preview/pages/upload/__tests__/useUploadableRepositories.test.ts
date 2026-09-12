@@ -33,6 +33,10 @@ import { restClient } from '../../../../../interface/api';
 // Get mock reference
 const mockGet = restClient.get as jest.MockedFunction<typeof restClient.get>;
 
+// The hook issues this many parallel REST calls per fetch (repositories + upload-specs).
+// Centralized so the count assertions don't hard-code an implementation detail.
+const CALLS_PER_FETCH = 2;
+
 describe('useUploadableRepositories', () => {
   const mockRepositories = [
     {
@@ -95,7 +99,7 @@ describe('useUploadableRepositories', () => {
       if (url.includes('/repositories/details')) {
         return Promise.resolve(mockRepositories);
       }
-      if (url.includes('/formats/upload-specs')) {
+      if (url === '/service/rest/v1/formats/upload-specs') {
         return Promise.resolve(mockUploadDefinitions);
       }
       return Promise.resolve([]);
@@ -121,7 +125,7 @@ describe('useUploadableRepositories', () => {
       });
 
       // Two parallel REST calls
-      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(mockGet).toHaveBeenCalledTimes(CALLS_PER_FETCH);
     });
 
     it('filters to only hosted repositories', async () => {
@@ -199,12 +203,12 @@ describe('useUploadableRepositories', () => {
       expect(result.current.repositories).toEqual([]);
     });
 
-    it('handles 404 on upload-specs by showing all hosted repos without format filtering (cloud deployment)', async () => {
+    it('surfaces an error when upload-specs cannot be loaded', async () => {
       mockGet.mockImplementation((url: string) => {
         if (url.includes('/repositories/details')) {
           return Promise.resolve(mockRepositories);
         }
-        if (url.includes('/formats/upload-specs')) {
+        if (url === '/service/rest/v1/formats/upload-specs') {
           return Promise.reject({ response: { status: 404 } });
         }
         return Promise.resolve([]);
@@ -216,21 +220,17 @@ describe('useUploadableRepositories', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.error).toBeNull();
-
-      const repoNames = result.current.repositories.map((r) => r.name);
-      expect(repoNames).toContain('maven-releases');
-      expect(repoNames).toContain('npm-hosted');
-      expect(repoNames).toContain('docker-hosted');
-      expect(repoNames).not.toContain('maven-snapshots');
-      expect(repoNames).not.toContain('npm-proxy');
-      expect(repoNames).not.toContain('raw-offline');
+      expect(result.current.error).not.toBeNull();
+      expect(result.current.repositories).toEqual([]);
     });
 
     it('falls back to public repos endpoint when internal endpoint returns 404 (cloud deployment)', async () => {
       const publicRepos = [
         { name: 'maven-releases', type: 'hosted', format: 'maven2', url: 'http://localhost:8081/repository/maven-releases/', online: true },
+        // Excluded by type (proxy, not hosted).
         { name: 'npm-proxy', type: 'proxy', format: 'npm', url: 'http://localhost:8081/repository/npm-proxy/', online: true },
+        // Hosted + online but its format has no upload definition — exercises the format-filtering path.
+        { name: 'pypi-hosted', type: 'hosted', format: 'pypi', url: 'http://localhost:8081/repository/pypi-hosted/', online: true },
       ];
 
       mockGet.mockImplementation((url: string) => {
@@ -240,8 +240,8 @@ describe('useUploadableRepositories', () => {
         if (url === '/service/rest/v1/repositories') {
           return Promise.resolve(publicRepos);
         }
-        if (url.includes('/formats/upload-specs')) {
-          return Promise.reject({ response: { status: 404 } });
+        if (url === '/service/rest/v1/formats/upload-specs') {
+          return Promise.resolve(mockUploadDefinitions);
         }
         return Promise.resolve([]);
       });
@@ -254,9 +254,10 @@ describe('useUploadableRepositories', () => {
 
       expect(result.current.error).toBeNull();
 
+      // Only maven-releases survives: it is hosted, online, and its format (maven2) is present in
+      // the resolved upload definitions. npm-proxy is dropped by type, pypi-hosted by format.
       const repoNames = result.current.repositories.map((r) => r.name);
-      expect(repoNames).toContain('maven-releases');
-      expect(repoNames).not.toContain('npm-proxy');
+      expect(repoNames).toEqual(['maven-releases']);
     });
   });
 
@@ -436,13 +437,14 @@ describe('useUploadableRepositories', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(mockGet).toHaveBeenCalledTimes(CALLS_PER_FETCH);
 
       await act(async () => {
         await result.current.refetch();
       });
 
-      expect(mockGet).toHaveBeenCalledTimes(4);
+      // Refetch repeats the same set of parallel calls.
+      expect(mockGet).toHaveBeenCalledTimes(CALLS_PER_FETCH * 2);
     });
   });
 });

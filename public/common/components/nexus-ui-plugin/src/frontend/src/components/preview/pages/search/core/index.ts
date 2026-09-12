@@ -32,7 +32,6 @@
 // Domain Types
 export type {
   GAFormat,
-  VersionStatus,
   GAResult,
   GADetail,
   GARepository,
@@ -48,6 +47,11 @@ export type {
   GADetailTab,
   GASearchState,
   GADetailState,
+  ComponentVersionSort,
+  ComponentVersionsRequest,
+  ComponentVersionsPage,
+  ComponentVersionDetailRequest,
+  ComponentVersionDetail,
 } from './search.types';
 
 // API Contracts
@@ -93,6 +97,12 @@ export {
   searchMavenGA,
   searchComponents,
 } from './searchApi';
+
+// Component Versions API (paginated versions)
+export { fetchComponentVersions } from './componentVersionsApi';
+
+// Component Version Detail API (single version, Files tab)
+export { fetchComponentVersionDetail, MAX_DETAIL_PAGES } from './componentVersionDetailApi';
 
 // Shared Search Utilities (for all formats)
 export {

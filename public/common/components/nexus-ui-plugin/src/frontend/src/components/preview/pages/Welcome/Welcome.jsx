@@ -19,6 +19,7 @@ import {useMachine} from '@xstate/react';
 import {useRouter} from '@uirouter/react';
 import {Box, Flex, Tabs, Heading} from '@radix-ui/themes';
 import { ExtJS } from '../../../../interface/ExtJS';
+import { Permissions } from '../../../../constants/Permissions';
 import { toURIParams } from '../../../../interface/urlUtil';
 import { getVersionMajorMinor } from '../../../../interface/versionUtil';
 import welcomeMachine from '../../../pages/user/Welcome/WelcomeMachine';
@@ -69,23 +70,42 @@ function WelcomeDashboard({
   const user = ExtJS.useUser();
   const isAdmin = user?.administrator;
   const isAuthenticated = !!user;
-  const initialTab = params?.tab === 'usage-metrics' && !showUsageMetrics
-    ? 'overview'
-    : (params?.tab || 'overview');
+  const canSeeUsageMetrics = isAdmin && showUsageMetrics;
+  const initialTab = params?.tab || 'overview';
+  // Depend on the raw user object (not the isAuthenticated boolean) so the check re-evaluates on
+  // any user/permission change, matching every other ExtJS.usePermission call in this PR. A
+  // permission reload that keeps the user logged in replaces the user object but not the boolean.
+  const hasUser = user ?? false;
+  // The "Repository Security" section's Health Check card calls the RHC summary API,
+  // which requires nexus:healthcheck:read. Without it the card renders a 403 error, so
+  // gate the whole section on that permission to match Classic (NEXUS-54212).
+  const canReadHealthCheck = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.HEALTHCHECK.READ),
+    [hasUser],
+  );
   const [activeTab, setActiveTab] = useState(initialTab);
+  // isAdmin can resolve after first render, so re-derive on every render rather than
+  // only in the useState initializer/redirect effect below.
+  const effectiveTab = activeTab === 'usage-metrics' && !canSeeUsageMetrics ? 'overview' : activeTab;
   const outreachRef = useRef();
 
   useEffect(() => {
     if (params?.tab && params.tab !== activeTab) {
-      const nextTab = params.tab === 'usage-metrics' && !showUsageMetrics
+      const nextTab = params.tab === 'usage-metrics' && !canSeeUsageMetrics
         ? 'overview'
         : params.tab;
       setActiveTab(nextTab);
       if (nextTab !== params.tab) {
         router.stateService.go('preview.browse.welcome', {tab: nextTab}, {notify: false, location: 'replace'});
       }
+    } else if (isAuthenticated && activeTab === 'usage-metrics' && !canSeeUsageMetrics) {
+      // params.tab already equals activeTab (both 'usage-metrics') on a fresh deep-link,
+      // so the branch above never fires. Correct the URL once the user object has
+      // resolved (isAuthenticated) and we know for sure they can't see the tab.
+      setActiveTab('overview');
+      router.stateService.go('preview.browse.welcome', {tab: 'overview'}, {notify: false, location: 'replace'});
     }
-  }, [params?.tab, activeTab]);
+  }, [params?.tab, activeTab, canSeeUsageMetrics, isAuthenticated, router]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -113,10 +133,10 @@ function WelcomeDashboard({
 
       <OutreachActions ref={outreachRef} showCards={false} />
 
-      <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
+      <Tabs.Root value={effectiveTab} onValueChange={handleTabChange}>
         <Tabs.List className="nxrm-welcome-tabs">
           <Tabs.Trigger value="overview">Overview</Tabs.Trigger>
-          {isAdmin && showUsageMetrics && (
+          {canSeeUsageMetrics && (
             <Tabs.Trigger value="usage-metrics">Usage Metrics</Tabs.Trigger>
           )}
           {isAuthenticated && state.context.data?.showOutreachIframe && (
@@ -146,15 +166,21 @@ function WelcomeDashboard({
               <Box style={{ flex: '1 1 300px', minWidth: 0 }}>
                 {isAuthenticated && (
                   <Flex direction="column" gap="4">
-                    <CELimitsAlerts />
+                    {/* Non-admins never see the admin-only Usage Metrics tab, so their
+                        page-level CE alerts are shown here on the Overview tab (NEXUS-53219) */}
+                    {!isAdmin && <CELimitsAlerts />}
                     <MalwareBanner />
-                    <Heading as="h2" size="4" weight="bold" pt="2">Repository Security</Heading>
-                    <ErrorBoundary>
-                      <HealthCheckStatusCard />
-                    </ErrorBoundary>
-                    <ErrorBoundary>
-                      <MalwareStatusCard />
-                    </ErrorBoundary>
+                    {canReadHealthCheck && (
+                      <>
+                        <Heading as="h2" size="4" weight="bold" pt="2">Repository Security</Heading>
+                        <ErrorBoundary>
+                          <HealthCheckStatusCard />
+                        </ErrorBoundary>
+                        <ErrorBoundary>
+                          <MalwareStatusCard />
+                        </ErrorBoundary>
+                      </>
+                    )}
                   </Flex>
                 )}
               </Box>
@@ -162,7 +188,7 @@ function WelcomeDashboard({
           </Flex>
         </Tabs.Content>
 
-        {isAdmin && showUsageMetrics && (
+        {canSeeUsageMetrics && (
           <Tabs.Content value="usage-metrics">
             <ErrorBoundary>
               <UsageMetricsTabContent />

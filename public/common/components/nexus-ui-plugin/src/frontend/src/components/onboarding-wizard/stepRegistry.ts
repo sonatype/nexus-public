@@ -15,6 +15,8 @@ import type React from 'react';
 
 import AnonymousAccessStep from './AnonymousAccessStep';
 import ChangePasswordStep from './ChangePasswordStep';
+import CommunityDiscoverStep from './steps/CommunityDiscoverStep/CommunityDiscoverStep';
+import EulaStep from './steps/EulaStep/EulaStep';
 
 export type StepComponent = React.FC;
 
@@ -23,4 +25,6 @@ export type StepComponent = React.FC;
 export const stepRegistry: Record<string, StepComponent> = {
   ChangeAdminPassword: ChangePasswordStep,
   ConfigureAnonymousAccess: AnonymousAccessStep,
+  CommunityDiscover: CommunityDiscoverStep,
+  CommunityEula: EulaStep,
 };

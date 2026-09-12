@@ -24,7 +24,10 @@ import {
 
 /**
  * Validate LDAP connection fields.
- * Checks name, host, port, search base DN, and auth credentials.
+ * Checks name, host, port, search base DN, auth credentials, and the three
+ * numeric connection-settings fields (connectionTimeout, connectionRetryDelay,
+ * maxIncidentsCount). All three are @NotNull on the backend, so a cleared
+ * (undefined) value is an error — "This field is required" — not a pass.
  *
  * @param isCreate When true (the default), a password is required for
  *   authenticated connections. In edit mode (isCreate=false) the bind password
@@ -32,12 +35,18 @@ import {
  *   field means "keep the existing password". This mirrors the
  *   `required={isCreate}` behavior in LdapForm.tsx so the machine's continuous
  *   validation does not flag a genuinely-optional field as invalid on edit.
+ * @param existingNames Names of other LDAP servers, used to reject a name
+ *   collision in both create and edit mode. The caller is responsible for
+ *   excluding the server's own current name (e.g. when editing) so that
+ *   saving a server without renaming it does not flag itself as a duplicate.
  */
-export function validateConnection(data: LdapFormData, isCreate = true): ValidationErrors {
+export function validateConnection(data: LdapFormData, isCreate = true, existingNames: string[] = []): ValidationErrors {
   const errors: ValidationErrors = {};
 
   if (!data.name?.trim()) {
     errors.name = 'Name is required';
+  } else if (existingNames.includes(data.name.trim())) {
+    errors.name = 'This name is already in use';
   }
 
   if (!(data.protocol && ['ldap', 'ldaps'].includes(data.protocol))) {
@@ -68,35 +77,28 @@ export function validateConnection(data: LdapFormData, isCreate = true): Validat
     }
   }
 
-  // Numeric connection rules; bounds mirror the backend contract enforced by
-  // LdapServerConnectionXO/LdapServerXo (connectionTimeout is 1-3600 seconds,
-  // the other two only have a lower bound of 0 server-side).
-  const connectionTimeoutError = ValidationUtils.isInRange({
-    value: data.connectionTimeout,
-    min: 1,
-    max: 3600,
-    allowDecimals: false,
-  });
-  if (connectionTimeoutError) {
-    errors.connectionTimeout = connectionTimeoutError;
+  // Numeric connection rules; all three fields are @NotNull on the backend
+  // (LdapServerXo / LdapServerConnectionXO). Required check runs first so
+  // that a cleared field shows "This field is required" rather than silently
+  // passing validation. NaN, below-range, and above-range all show the same
+  // range message so users get actionable feedback regardless of how the value
+  // is invalid (NEXUS-54076).
+  if (data.connectionTimeout == null) {
+    errors.connectionTimeout = 'This field is required';
+  } else if (Number.isNaN(data.connectionTimeout) || !Number.isInteger(data.connectionTimeout) || data.connectionTimeout < 1 || data.connectionTimeout > 3600) {
+    errors.connectionTimeout = 'Must be a number between 1 and 3600';
   }
 
-  const connectionRetryDelayError = ValidationUtils.isInRange({
-    value: data.connectionRetryDelay,
-    min: 0,
-    allowDecimals: false,
-  });
-  if (connectionRetryDelayError) {
-    errors.connectionRetryDelay = connectionRetryDelayError;
+  if (data.connectionRetryDelay == null) {
+    errors.connectionRetryDelay = 'This field is required';
+  } else if (Number.isNaN(data.connectionRetryDelay) || !Number.isInteger(data.connectionRetryDelay) || data.connectionRetryDelay < 0) {
+    errors.connectionRetryDelay = 'Must be a number 0 or greater';
   }
 
-  const maxIncidentsCountError = ValidationUtils.isInRange({
-    value: data.maxIncidentsCount,
-    min: 0,
-    allowDecimals: false,
-  });
-  if (maxIncidentsCountError) {
-    errors.maxIncidentsCount = maxIncidentsCountError;
+  if (data.maxIncidentsCount == null) {
+    errors.maxIncidentsCount = 'This field is required';
+  } else if (Number.isNaN(data.maxIncidentsCount) || !Number.isInteger(data.maxIncidentsCount) || data.maxIncidentsCount < 0) {
+    errors.maxIncidentsCount = 'Must be a number 0 or greater';
   }
 
   return errors;
@@ -153,10 +155,12 @@ export function validateUserGroup(data: LdapFormData): ValidationErrors {
 /**
  * Validate all LDAP form fields (connection + user/group mapping).
  * `isCreate` controls whether the bind password is required (create) or optional (edit).
+ * `existingNames` is used in both modes to reject a name that already belongs to another
+ * server; the caller excludes the server's own current name in edit mode.
  */
-export function validateLdap(data: LdapFormData, isCreate = true): ValidationErrors {
+export function validateLdap(data: LdapFormData, isCreate = true, existingNames: string[] = []): ValidationErrors {
   return {
-    ...validateConnection(data, isCreate),
+    ...validateConnection(data, isCreate, existingNames),
     ...validateUserGroup(data),
   };
 }
@@ -217,7 +221,8 @@ function serverToFormData(server?: LdapServer | null): LdapFormData {
  */
 export function createLdapFormMachine(
   serverId: string | undefined,
-  preloadedServer?: LdapServer | null
+  preloadedServer?: LdapServer | null,
+  existingNamesRef?: { current: string[] }
 ) {
   // Edit mode (an existing server was preloaded, or is being loaded by ID)
   // does not require a password to be re-entered on every save; create mode
@@ -244,7 +249,7 @@ export function createLdapFormMachine(
     },
     actions: {
       validate: assign((ctx: FormContext<LdapFormData>) => ({
-        validationErrors: validateLdap(ctx.data, isCreate),
+        validationErrors: validateLdap(ctx.data, isCreate, existingNamesRef?.current ?? []),
       })),
       // Apply a schema template to user/group mapping fields
       applyTemplate: assign((context: any, event: any) => {

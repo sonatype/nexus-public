@@ -205,29 +205,6 @@ describe('AdminSystemDirectoryPage', () => {
     });
   });
 
-  describe('Upgrade Link', () => {
-    beforeEach(() => {
-      givenExtJSState({
-        ...defaultExtState(),
-        capabilityActiveTypes: ['migration'],
-        capabilityCreatedTypes: ['migration']
-      })
-    });
-
-    it('shows given permissions', async () => {
-      givenPermissions({ [Permissions.MIGRATION.READ]: true });
-      await runLinkVisiblityTestForSystemPage(UIStrings.UPGRADE.MENU);
-    });
-
-    it('does not show without permissions', async () => {
-      givenPermissions({
-        [Permissions.MIGRATION.READ]: false,
-        [Permissions.TASKS.READ]: true  // Grant at least one permission so page renders
-      });
-      await runLinkNotVisibleTestForSystemPage(UIStrings.UPGRADE.MENU);
-    });
-  });
-
   function defaultExtState() {
     return {
       'nexus.extjs.capabilities.enabled': true,

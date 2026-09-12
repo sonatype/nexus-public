@@ -36,10 +36,12 @@ jest.mock('../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper', () => (
 
 import {ExtJS} from '../../../../../interface/ExtJS';
 import {helperFunctions} from '../../../../widgets/SystemStatusAlerts/CELimits/UsageHelper';
+import {scrollToUsageCenter} from '../../../../../interface/LocationUtils';
 
 const mockStatus = helperFunctions.useThrottlingStatus as jest.Mock;
 const mockUser = ExtJS.useUser as jest.Mock;
 const mockState = ExtJS.state as jest.Mock;
+const mockScrollToUsageCenter = scrollToUsageCenter as jest.Mock;
 const stateValue = {
   getValue: jest.fn().mockReturnValue(false), // HA off
   getEdition: jest.fn().mockReturnValue('COMMUNITY'),
@@ -138,5 +140,28 @@ describe('CELimitsAlert', () => {
     mockStatus.mockReturnValue('OVER_LIMITS_GRACE_PERIOD_ENDED');
     const {container} = render(<CELimitsAlert />);
     expect(container.querySelector('[data-testid="nxrm-system-alert"]')).toBeNull();
+  });
+
+  describe('Review your usage CTA', () => {
+    it('calls scrollToUsageCenter when clicked in NEAR_LIMITS_NEVER_IN_GRACE', () => {
+      mockStatus.mockReturnValue('NEAR_LIMITS_NEVER_IN_GRACE');
+      render(<CELimitsAlert />);
+      fireEvent.click(screen.getByText('Review your usage'));
+      expect(mockScrollToUsageCenter).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls scrollToUsageCenter when clicked in OVER_LIMITS_IN_GRACE', () => {
+      mockStatus.mockReturnValue('OVER_LIMITS_IN_GRACE');
+      render(<CELimitsAlert />);
+      fireEvent.click(screen.getByText('Review your usage'));
+      expect(mockScrollToUsageCenter).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls scrollToUsageCenter when clicked in OVER_LIMITS_GRACE_PERIOD_ENDED', () => {
+      mockStatus.mockReturnValue('OVER_LIMITS_GRACE_PERIOD_ENDED');
+      render(<CELimitsAlert />);
+      fireEvent.click(screen.getByText('Review your usage'));
+      expect(mockScrollToUsageCenter).toHaveBeenCalledTimes(1);
+    });
   });
 });

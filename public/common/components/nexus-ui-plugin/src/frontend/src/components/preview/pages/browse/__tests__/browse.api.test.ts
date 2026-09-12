@@ -77,12 +77,13 @@ import {
   showSuccessMessage,
   showErrorMessage,
 } from '../browse.api';
-import { restClient } from '../../../../../interface/api';
+import { restClient, encodeRepositoryItemId } from '../../../../../interface/api';
 import ExtAPIUtils from '../../../../../interface/ExtAPIUtils';
 import type { ComponentXO } from '../browse.types';
 
 // Get mock references
 const mockRestClient = restClient as jest.Mocked<typeof restClient>;
+const mockEncode = encodeRepositoryItemId as jest.Mock;
 const mockExtAPI = ExtAPIUtils as unknown as {
   extAPIRequest: jest.Mock;
   checkForErrorAndExtract: jest.Mock;
@@ -498,6 +499,29 @@ describe('browse.api', () => {
       expect(result).toEqual(['comp-123']);
     });
 
+    it('uses componentData.id as-is and does NOT re-encode it (avoids double-encode 404)', async () => {
+      // componentData.id is already the base64 RepositoryItemIDXO from REST fetchComponent.
+      // Re-encoding would double-encode → REST DELETE 404. Assert we never call the encoder
+      // for the component id and hit the endpoint with the id verbatim.
+      mockRestClient.delete.mockResolvedValue(undefined);
+      const alreadyEncodedId = 'c2QtbWF2ZW4taG9zdGVkOjRmMWJiY2Rk';
+      const mockComponent: ComponentXO = {
+        id: alreadyEncodedId,
+        repositoryName: 'maven-hosted',
+        format: 'maven2',
+        group: 'com.example',
+        name: 'my-lib',
+        version: '1.0.0',
+      };
+
+      await deleteComponent(mockComponent);
+
+      expect(mockEncode).not.toHaveBeenCalledWith('maven-hosted', alreadyEncodedId);
+      expect(mockRestClient.delete).toHaveBeenCalledWith(
+        `/service/rest/v1/components/${alreadyEncodedId}`
+      );
+    });
+
     it('throws error on failure', async () => {
       const mockComponent: ComponentXO = {
         id: 'comp-123',
@@ -533,21 +557,20 @@ describe('browse.api', () => {
       consoleSpy.mockRestore();
     });
 
-    it('handles Go asset IDs with special characters using real base64 encoding', async () => {
-      // deleteAsset now expects the ID to be already encoded (the encoded RepositoryItemIDXO from fetchAsset)
+    it('encodes the raw asset ID before calling the REST delete endpoint', async () => {
+      // deleteAsset receives a RAW id (as fetchAsset returns it from ExtDirect
+      // readAsset) and must encode it via encodeRepositoryItemId before hitting
+      // the REST endpoint. Assert the encoder is actually invoked with the raw
+      // id and repo (the earlier bug shipped the raw id straight through, 404).
+      mockEncode.mockReturnValueOnce('go-proxy:v2.2.1+incompatible-encoded');
       mockRestClient.delete.mockResolvedValue(undefined);
-      const goRawId = 'v2.2.1+incompatible';
-      // Use URL-safe base64 without padding (matching encodeRepositoryItemId implementation)
-      const expectedEncoded = btoa(`go-proxy:${goRawId}`)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+      const rawId = 'v2.2.1+incompatible';
 
-      // Pass the already-encoded ID (as fetchAsset would return)
-      await deleteAsset(expectedEncoded, 'go-proxy');
+      await deleteAsset(rawId, 'go-proxy');
 
+      expect(mockEncode).toHaveBeenCalledWith('go-proxy', rawId);
       expect(mockRestClient.delete).toHaveBeenCalledWith(
-        `/service/rest/v1/assets/${expectedEncoded}`
+        '/service/rest/v1/assets/go-proxy:v2.2.1+incompatible-encoded'
       );
     });
   });

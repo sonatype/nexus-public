@@ -268,11 +268,6 @@ export default function SettingsSidebar() {
           params={{ taskId: null }}
           data-analytics-id="nxrm-global-secondary-navbar-system-tasks"
         />
-        <LeftNavigationMenuCollapsibleChildItem
-          name={ADMIN.SYSTEM.UPGRADE.ROOT}
-          text={UIStrings.UPGRADE.MENU.text}
-          data-analytics-id="nxrm-global-secondary-navbar-system-upgrade"
-        />
       </LeftNavigationMenuCollapsibleItem>
 
       <LeftNavigationMenuItem

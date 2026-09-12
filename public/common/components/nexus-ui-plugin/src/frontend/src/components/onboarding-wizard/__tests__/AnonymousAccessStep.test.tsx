@@ -57,6 +57,7 @@ describe('AnonymousAccessStep', () => {
       submit,
       skip: jest.fn(),
       finish: jest.fn(),
+      actionButtonRef: { current: null },
     });
 
     mockedUseAnonymousApi.mockReturnValue({
@@ -115,72 +116,52 @@ describe('AnonymousAccessStep', () => {
     expect(disableLabel).toHaveAttribute('data-selected', 'false');
   });
 
-  it('shouldRenderTitleAndDescription', async () => {
+  it('shouldRenderTitleAndSubtitle', async () => {
     render(<AnonymousAccessStep />);
     await waitFor(() => expect(fetchSettings).toHaveBeenCalled());
 
     expect(screen.getByText('Configure Anonymous Access')).toBeInTheDocument();
-    expect(
-      screen.getByText(/consider the security implications for your organization/i)
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /More information/i })).toHaveAttribute(
-      'href',
-      'https://links.sonatype.com/products/nexus/anonymous-access/docs'
-    );
+    expect(screen.getByText('Control access to your repositories')).toBeInTheDocument();
   });
 
-  it('shouldRenderDescriptionInsideCalloutWithDefinitionList', async () => {
-    // Hybrid — the description block is wrapped in a Radix Callout (Option
-    // C container) with a top-left info icon, and internally uses a
-    // semantic <dl>/<dt>/<dd> (Option A structure). Each definition reads
-    // as a complete sentence so the term and explanation stand on their
-    // own without prose-level connective words.
+  it('shouldRenderDescriptionAsSingleParagraphWithInlineLearnMoreLink', async () => {
+    // The description collapses to one paragraph with an inline "Learn more"
+    // link — the wizard's 640×560 dimensions don't afford a dl/dt/dd block.
     render(<AnonymousAccessStep />);
     await waitFor(() => expect(fetchSettings).toHaveBeenCalled());
 
     const callout = screen.getByTestId('onboarding-wizard__anonymous-access-description-callout');
     expect(callout).toHaveAttribute('id', 'onboarding-wizard__anonymous-access-description');
-
-    const list = screen.getByTestId('onboarding-wizard__anonymous-access-description-list');
-    expect(list.tagName).toBe('DL');
-    expect(callout.contains(list)).toBe(true);
-
-    const terms = list.querySelectorAll('dt');
-    const definitions = list.querySelectorAll('dd');
-    expect(terms).toHaveLength(2);
-    expect(definitions).toHaveLength(2);
-    expect(terms[0]).toHaveTextContent('Enable anonymous access');
-    expect(terms[1]).toHaveTextContent('Disable anonymous access');
-    expect(definitions[0].textContent).toMatch(/^By default, users can search/);
-    expect(definitions[0].textContent).toMatch(
-      /consider the security implications for your organization/i
+    expect(callout.textContent).toMatch(
+      /Anonymous access allows users to browse and download repository content without authentication\. Disable anonymous access to require authentication for all users and build tools\./
     );
-    expect(definitions[1].textContent).toMatch(/^Choose with care because it/);
-    expect(definitions[1].textContent).toMatch(/will require credentials for all/i);
 
-    // The security-warning phrases are emphasized via <em> so screen
-    // readers announce the stress and sighted users see the italics.
-    // Disable narrows the emphasis to just the two words "require
-    // credentials" — the surrounding "will" and "for all" render normally.
-    const enableEmphasis = definitions[0].querySelector('em');
-    const disableEmphasis = definitions[1].querySelector('em');
-    expect(enableEmphasis).toHaveTextContent(
-      'Please consider the security implications for your organization.'
+    const learnMore = screen.getByTestId(
+      'onboarding-wizard__anonymous-access-more-info-link'
     );
-    expect(disableEmphasis).toHaveTextContent('require credentials');
-    expect(disableEmphasis?.textContent).not.toMatch(/will/);
-    expect(disableEmphasis?.textContent).not.toMatch(/for all/);
-
-    expect(callout.querySelector('a')).toHaveAttribute(
+    expect(learnMore).toHaveTextContent('Learn more');
+    expect(learnMore).toHaveAttribute(
       'href',
       'https://links.sonatype.com/products/nexus/anonymous-access/docs'
     );
+    expect(learnMore).toHaveAttribute('target', '_blank');
+    expect(learnMore).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(callout.contains(learnMore)).toBe(true);
+  });
+
+  it('shouldNotRenderDefinitionListDescription', async () => {
+    render(<AnonymousAccessStep />);
+    await waitFor(() => expect(fetchSettings).toHaveBeenCalled());
+
+    expect(
+      screen.queryByTestId('onboarding-wizard__anonymous-access-description-list')
+    ).not.toBeInTheDocument();
   });
 
   it('shouldAssociateDescriptionWithFieldsetForScreenReaders', async () => {
-    // Screen reader users must hear the security-implications context when
-    // they land on the radio group. aria-describedby on the fieldset links
-    // it to the descriptive paragraphs above the radios.
+    // Screen reader users must hear the description when they land on the
+    // radio group. aria-describedby on the fieldset links it to the callout
+    // above the radios.
     render(<AnonymousAccessStep />);
     await waitFor(() => expect(fetchSettings).toHaveBeenCalled());
 
@@ -190,7 +171,7 @@ describe('AnonymousAccessStep', () => {
     const describedBy = document.getElementById(describedById as string);
     expect(describedBy).not.toBeNull();
     expect(describedBy?.textContent).toMatch(
-      /consider the security implications for your organization/i
+      /Anonymous access allows users to browse and download repository content without authentication/
     );
   });
 

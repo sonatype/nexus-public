@@ -14,16 +14,8 @@ package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.common.QualifierUtil;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -41,14 +33,24 @@ import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.annotation.RequiresUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -89,6 +91,7 @@ public class AssetsResource
     this.assetDescriptors = QualifierUtil.buildQualifierBeanMap(assetDescriptorsList);
   }
 
+  @RequiresUser
   @GET
   @Override
   public Page<AssetXO> getAssets(
@@ -100,6 +103,7 @@ public class AssetsResource
     return new Page<>(toAssetXOs(repository, assets, this.assetDescriptors), nextContinuationToken(assets));
   }
 
+  @RequiresUser
   @GET
   @Path("/{id}")
   @Override
@@ -111,6 +115,7 @@ public class AssetsResource
     return fromAsset(asset, repository, this.assetDescriptors, uploaderVisible);
   }
 
+  @RequiresUser
   @DELETE
   @Path("/{id}")
   @Override

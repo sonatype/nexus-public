@@ -22,8 +22,12 @@ import { ToastProvider } from '../../../../../shared/Toast';
 
 jest.mock('@uirouter/react', () => ({
   useRouter: () => ({
-    stateService: { go: jest.fn() },
+    stateService: {
+      go: jest.fn(),
+      href: jest.fn(() => '#preview/admin/iq/hosted-repos-eval'),
+    },
   }),
+  useCurrentStateAndParams: () => ({ state: null, params: {} }),
 }));
 
 jest.mock('../useRepositoriesApi');
@@ -40,16 +44,28 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
         return undefined;
       }),
     }),
+    // RepositoryForm reads permissions through the provider-independent ExtJS.usePermission
+    // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
   },
 }));
 
+// mockDirty is a test-only knob that lets each test drive the mocked
+// RepositoryForm's dirty state (NEXUS-54349). Undefined → pristine.
+let mockDirty: boolean | undefined;
+
 jest.mock('../RepositoryForm', () => ({
-  RepositoryForm: ({ onSave, onSubmitRef, onCanAdvanceChange }: any) => {
+  RepositoryForm: ({ onSave, onSubmitRef, onCanAdvanceChange, onDirtyChange }: any) => {
     const { useEffect } = require('react');
 
     useEffect(() => {
       if (onCanAdvanceChange) onCanAdvanceChange(true);
     }, [onCanAdvanceChange]);
+
+    useEffect(() => {
+      if (onDirtyChange) onDirtyChange(!!mockDirty);
+    }, [onDirtyChange]);
 
     useEffect(() => {
       if (onSubmitRef) {
@@ -80,7 +96,9 @@ const mockApiHook = {
   fetchRoutingRules: jest.fn().mockResolvedValue([]),
   fetchCleanupPolicies: jest.fn().mockResolvedValue([]),
   fetchHealthCheckStatus: jest.fn().mockResolvedValue({}),
+  fetchHealthCheckCapabilityEnabled: jest.fn().mockResolvedValue(true),
   enableHealthCheck: jest.fn().mockResolvedValue(undefined),
+  disableHealthCheck: jest.fn().mockResolvedValue(undefined),
 };
 
 const renderWithTheme = (component: React.ReactElement) => {
@@ -177,5 +195,72 @@ describe('RepositoriesPage wizard firewall step', () => {
 
     const auditBtn = screen.getByRole('button', { name: 'Audit' });
     expect(auditBtn).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+describe('RepositoriesPage wizard cancel on pristine config step (NEXUS-54349)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDirty = undefined;
+    window.location.hash = '#preview/admin/repository/repositories/create/maven2/hosted';
+    mockUseRepositoriesApi.mockReturnValue(mockApiHook);
+  });
+
+  it('navigates away without opening the "Unsaved Changes" dialog when Cancel is clicked on a pristine form', async () => {
+    mockDirty = false;
+    renderWithTheme(<RepositoriesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-repository-form')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId('form-cancel'));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /unsaved changes/i })).not.toBeInTheDocument();
+  });
+
+  it('opens the "Unsaved Changes" dialog when Cancel is clicked on a dirty form', async () => {
+    mockDirty = true;
+    renderWithTheme(<RepositoriesPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mock-repository-form')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId('form-cancel'));
+
+    expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument();
+  });
+});
+
+describe('RepositoriesPage wizard HC disabled-by-default', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    window.location.hash = '#preview/admin/repository/repositories/create/maven2/proxy';
+    mockUseRepositoriesApi.mockReturnValue(mockApiHook);
+  });
+
+  it('calls disableHealthCheck after creating a proxy repo when user did not enable HC', async () => {
+    renderWithTheme(<RepositoriesPage />);
+
+    // Step 2: form
+    await waitFor(() => expect(screen.getByTestId('mock-repository-form')).toBeInTheDocument());
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+
+    // Step 3: firewall — advance without choosing firewall
+    await waitFor(() => expect(screen.getByText('Enable Repository Firewall')).toBeInTheDocument());
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+
+    // Step 4: RHC — click "Create Repository" without enabling HC
+    await waitFor(() => expect(screen.getByText('Enable Repository Health Check')).toBeInTheDocument());
+    await userEvent.click(screen.getByRole('button', { name: /Create Repository/i }));
+
+    await waitFor(() => {
+      expect(mockApiHook.createRepository).toHaveBeenCalled();
+      expect(mockApiHook.disableHealthCheck).toHaveBeenCalledWith('test-proxy');
+    });
+    expect(mockApiHook.enableHealthCheck).not.toHaveBeenCalled();
   });
 });

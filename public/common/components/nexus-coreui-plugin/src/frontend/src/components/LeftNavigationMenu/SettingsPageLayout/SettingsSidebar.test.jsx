@@ -789,32 +789,6 @@ describe('SettingsSidebar', () => {
         });
       });
 
-      describe('upgrade link', () => {
-        it('should render if user is admin and has read permissions', async () => {
-          givenUserLoggedIn();
-          givenPermissions({ 'nexus:migration:read': true });
-          givenExtJSState({
-            ...getDefaultStateValues(),
-            capabilityActiveTypes: ['migration'],
-            capabilityCreatedTypes: ['migration']
-          });
-
-          renderComponent();
-
-          await assertLinkVisible('Upgrade', '/#admin/system/upgrade', 'System');
-        });
-
-        it('should not render if user is admin but does not have read permissions', async () => {
-          givenUserLoggedIn();
-          givenExtJSState({
-            ...getDefaultStateValues(),
-            capabilityActiveTypes: ['migration'],
-            capabilityCreatedTypes: ['migration']
-          });
-          renderComponent();
-          await assertLinkNotVisible('Upgrade', 'System');
-        });
-      });
     });
 
     describe('IQ link', () => {

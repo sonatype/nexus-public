@@ -28,7 +28,8 @@ Ext.define('NX.coreui.controller.Repositories', {
     'NX.Messages',
     'NX.Permissions',
     'NX.State',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Url'
   ],
 
   masters: [
@@ -283,7 +284,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       var repositoryName = model.get('name');
 
       Ext.Ajax.request({
-        url: '/service/rest/v1/repositories/' + encodeURIComponent(repositoryName) + '/evaluation-settings',
+        url: NX.util.Url.urlOf('/service/rest/v1/repositories/' + encodeURIComponent(repositoryName) + '/evaluation-settings'),
         method: 'GET',
         success: function(response) {
           try {
@@ -932,7 +933,7 @@ Ext.define('NX.coreui.controller.Repositories', {
         };
 
         Ext.Ajax.request({
-          url: '/service/rest/v1/repositories/' + encodeURIComponent(record.get('name')) + '/evaluation-settings',
+          url: NX.util.Url.urlOf('/service/rest/v1/repositories/' + encodeURIComponent(record.get('name')) + '/evaluation-settings'),
           method: 'PUT',
           jsonData: payload,
           success: function() {

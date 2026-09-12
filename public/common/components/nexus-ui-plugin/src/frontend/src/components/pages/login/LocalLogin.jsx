@@ -22,6 +22,7 @@ import LoginPageStrings from '../../../constants/LoginPageStrings';
 import { RouteNames } from '../../../constants/RouteNames';
 import FormUtils from '../../../interface/FormUtils';
 import LoginFormMachine from './LocalLoginMachine';
+import { resolveDefaultLandingRoute, isClassicLandingHash, PREVIEW_WELCOME_ROUTE, USER_REQUESTED_LEGACY_KEY } from '../../../utils/loginUtils';
 
 const { LOGIN_BUTTON_LOADING, USERNAME_LABEL, PASSWORD_LABEL, LOGIN_BUTTON } = LoginPageStrings;
 
@@ -39,17 +40,33 @@ export default function LocalLogin({ primaryButton, onError }) {
     onError?.(null);
     try {
       await ExtJS.waitForNextPermissionChange();
+      // A fresh login starts a new session: reset any in-session "use Classic UI"
+      // preference so the defaultToPreviewUi setting is honored again (NEXUS-53957).
+      sessionStorage.removeItem(USER_REQUESTED_LEGACY_KEY);
+      const state = ExtJS.state();
+      const landingRoute = resolveDefaultLandingRoute({
+        defaultToPreviewUi: state?.getValue('defaultToPreviewUi', false) ?? false,
+        canAccessPreviewUi: state?.getValue('loggedInEnabled', false) ?? false,
+        userRequestedLegacy: false
+      });
+      const wantsPreview = landingRoute === PREVIEW_WELCOME_ROUTE;
       const returnTo = router.globals.params.returnTo;
       if (returnTo) {
         const decodedReturnTo = atob(returnTo);
         // Validate decoded URL is a safe relative path (prevents open redirect)
         if (decodedReturnTo.startsWith('/') || decodedReturnTo.startsWith('#')) {
-          router.urlService.url(decodedReturnTo);
+          if (wantsPreview && isClassicLandingHash(decodedReturnTo)) {
+            // "Default to Nexus One UI" overrides a Classic landing returnTo with the Preview
+            // dashboard, but preserves Classic deep links (matches the GlobalHeaderRadix soft default).
+            router.stateService.go(PREVIEW_WELCOME_ROUTE);
+          } else {
+            router.urlService.url(decodedReturnTo);
+          }
         } else {
           router.stateService.go(RouteNames.MISSING_ROUTE);
         }
       } else {
-        router.stateService.go('browse.welcome');
+        router.stateService.go(landingRoute);
       }
     } catch (ex) {
       console.warn('redirection unsuccessful: ', ex);

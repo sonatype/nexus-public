@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -513,5 +514,28 @@ public class SearchStoreTest
       assets.add(asset);
     }
     return assets;
+  }
+
+  @Test
+  public void browseComponentVersions_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    ComponentVersionSearchRequest request = ComponentVersionSearchRequest.builder()
+        .filter("cs.format = #{filterParams.format}")
+        .filterParams(Map.of("format", "maven2"))
+        .build();
+    ComponentVersionData row = new ComponentVersionData();
+    row.setVersion("1.0.0");
+    when(dao.browseComponentVersions(request)).thenReturn(List.of(row));
+
+    assertThat(underTest.browseComponentVersions(request), is(List.of(row)));
+  }
+
+  @Test
+  public void countComponentVersions_DelegatesToDao() {
+    underTest = new SearchStore(sessionSupplier, 1000, DEFAULT_BATCH_SIZE);
+    ComponentVersionSearchRequest request = ComponentVersionSearchRequest.builder().build();
+    when(dao.countComponentVersions(request)).thenReturn(7L);
+
+    assertThat(underTest.countComponentVersions(request), is(7L));
   }
 }

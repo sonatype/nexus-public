@@ -153,10 +153,8 @@ export default {
         LABEL: 'Direct Download (SAS URLs)',
         SUBLABEL: 'Reduces server bandwidth and improves download speed.',
         CHECKBOX_LABEL: 'Redirect downloads directly to Azure Blob Storage',
-        RBAC_NOTE: "Requires the 'Storage Blob Delegator' role on the storage account. Verified on save.",
-        RBAC_ERROR: 'Could not enable direct download: the configured Azure principal cannot mint signed URLs. ' +
-                    "Grant the 'Storage Blob Delegator' role on the storage account to the configured identity, " +
-                    'then try again.'
+        RBAC_NOTE: 'The identity needs an Azure role that can generate a user delegation key — ' +
+                   'any Storage Blob Data role, or Storage Blob Delegator. Verified on save.'
       }
     },
 

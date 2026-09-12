@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -20,6 +22,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -34,6 +38,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -46,6 +51,7 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 import org.sonatype.nexus.repository.view.payloads.HeaderOnlyPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import org.apache.http.HttpResponse;
@@ -839,6 +845,69 @@ public class MavenContentGroupFacetImplTest
 
     // No real content contributed to the merge — return null instead of a poisoned blob.
     assertThat(merged, nullValue());
+  }
+
+  /**
+   * NEXUS-53858 (regression coverage): when every member returns unparseable maven-metadata
+   * (e.g. an HTML error page), the merger produces zero bytes. The resulting zero-size
+   * {@code TempBlob} must not be stored via {@code put()} — that would fail Maven metadata
+   * validation ({@code InvalidContentException}) and spam WARN logs on every request. The
+   * guard in {@code cache()} must detect the zero-size blob, skip {@code put()}, and serve
+   * an empty 200 body uncached so the group stays functional without log pollution.
+   */
+  @Test
+  public void mergeAndCache_emptyMergedBlob_skipsPutAndServesUncached() throws Exception {
+    MavenContentFacet mavenContentFacet = mock(MavenContentFacet.class);
+    when(mavenContentFacet.getMavenPathParser()).thenReturn(new Maven2MavenPathParser());
+
+    // Mock the blobs chain so createTempBlob returns a zero-size TempBlob
+    FluentBlobs blobsMock = mock(FluentBlobs.class);
+    when(mavenContentFacet.blobs()).thenReturn(blobsMock);
+
+    TempBlob tempBlob = mock(TempBlob.class);
+    Blob blob = mock(Blob.class);
+    BlobMetrics metrics = mock(BlobMetrics.class);
+    when(metrics.getContentSize()).thenReturn(0L);
+    when(blob.getMetrics()).thenReturn(metrics);
+    when(tempBlob.getBlob()).thenReturn(blob);
+    when(tempBlob.get()).thenReturn(new ByteArrayInputStream(new byte[0]));
+    when(blobsMock.ingest(any(InputStream.class), any(), any())).thenReturn(tempBlob);
+
+    // Assets chain used by serveUncached to mark any existing cached asset as stale
+    FluentAssetBuilder assetBuilder = mock(FluentAssetBuilder.class);
+    when(assetBuilder.find()).thenReturn(Optional.empty());
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(fluentAssets.path(any())).thenReturn(assetBuilder);
+    when(mavenContentFacet.assets()).thenReturn(fluentAssets);
+
+    Repository repository = mock(Repository.class);
+    when(repository.getName()).thenReturn("maven-group");
+    when(repository.facet(MavenContentFacet.class)).thenReturn(mavenContentFacet);
+    when(repository.facet(ContentFacet.class)).thenReturn(mavenContentFacet);
+    underTest.attach(repository);
+
+    // Both members return unparseable content (HTML instead of maven-metadata XML),
+    // so the merger writes nothing and the resulting TempBlob is empty.
+    Repository memberA = mock(Repository.class);
+    when(memberA.getName()).thenReturn("member-a");
+    Repository memberB = mock(Repository.class);
+    when(memberB.getName()).thenReturn("member-b");
+
+    Response responseA = okResponseWith(new Content(new StringPayload("<html>not metadata</html>", "text/html")));
+    Response responseB = okResponseWith(new Content(new StringPayload("<html>not metadata</html>", "text/html")));
+
+    LinkedHashMap<Repository, Response> responses = new LinkedHashMap<>();
+    responses.put(memberA, responseA);
+    responses.put(memberB, responseB);
+
+    MavenPath mavenPath = new Maven2MavenPathParser().parsePath("/com/example/nexus-test/maven-metadata.xml");
+
+    Content result = underTest.mergeAndCache(mavenPath, responses);
+
+    assertThat(result, notNullValue());
+    assertThat(result.openInputStream().readAllBytes().length, equalTo(0));
+    // Key regression assertion: empty merged blob must never be put() — no InvalidContentException, no WARN spam
+    verify(mavenContentFacet, never()).put(any(), any());
   }
 
   private static Response okResponseWith(final Content payload) {

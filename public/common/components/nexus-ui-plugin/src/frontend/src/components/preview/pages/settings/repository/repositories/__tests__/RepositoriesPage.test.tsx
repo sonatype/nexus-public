@@ -21,10 +21,15 @@ import { useRepositoriesApi } from '../useRepositoriesApi';
 import { ToastProvider } from '../../../../../shared/Toast';
 
 // Mock @uirouter/react to avoid UIRouter context requirement in RepositoryListTable
+// and useRepositoryForm (which reads ?tab= via useCurrentStateAndParams).
 jest.mock('@uirouter/react', () => ({
   useRouter: () => ({
-    stateService: { go: jest.fn() },
+    stateService: {
+      go: jest.fn(),
+      href: jest.fn(() => '#preview/admin/iq/hosted-repos-eval'),
+    },
   }),
+  useCurrentStateAndParams: () => ({ state: null, params: {} }),
 }));
 
 // Mock the API hook
@@ -37,6 +42,13 @@ jest.mock('../../../../../../../interface/ExtJS', () => ({
     checkPermission: jest.fn().mockReturnValue(true),
     showSuccessMessage: jest.fn(),
     showErrorMessage: jest.fn(),
+    state: jest.fn().mockReturnValue({
+      getValue: jest.fn().mockReturnValue(false),
+    }),
+    // RepositoryForm reads permissions through the provider-independent ExtJS.usePermission
+    // (NEXUS-54212); delegate to the getter so tests keep driving behavior via checkPermission.
+    usePermission: jest.fn((getValue: () => boolean) => getValue()),
+    useUser: jest.fn(() => ({ id: 'admin' })),
   },
 }));
 
@@ -93,7 +105,9 @@ const mockApiHook = {
   fetchRoutingRules: jest.fn().mockResolvedValue([]),
   fetchCleanupPolicies: jest.fn().mockResolvedValue([]),
   fetchHealthCheckStatus: jest.fn().mockResolvedValue({}),
+  fetchHealthCheckCapabilityEnabled: jest.fn().mockResolvedValue(true),
   enableHealthCheck: jest.fn().mockResolvedValue(undefined),
+  disableHealthCheck: jest.fn().mockResolvedValue(undefined),
 };
 
 const renderWithTheme = (component: React.ReactElement) => {

@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Flex, Text } from '@radix-ui/themes';
 import { Loader2, Trash2, CheckCircle } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
@@ -36,7 +36,11 @@ const navigateTo = (path: string) => {
 };
 
 // Fields with inline validation errors that participate in touched-gating.
+// The Enable checkboxes are intentionally excluded — they have no inline
+// text error of their own, only a side effect of revealing these fields'.
 const VALIDATED_FIELDS = ['url', 'applicationName', 'applicationPassword', 'timeout'] as const;
+
+const LOADING_MESSAGE = 'Loading Crowd configuration...';
 
 /**
  * CrowdPage - Atlassian Crowd configuration page for Preview UI
@@ -55,6 +59,9 @@ export function CrowdPage({ className }: CrowdPageProps) {
     isFormValid,
     isInitialLoading,
     isBusy,
+    isSaving,
+    isVerifyingConnection,
+    isClearingCache,
     error,
     handleChange,
     handleSubmit,
@@ -71,6 +78,97 @@ export function CrowdPage({ className }: CrowdPageProps) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   // Presentation-only: raw string for the timeout input so NaN/null never reach the DOM value.
   const [timeoutRaw, setTimeoutRaw] = useState<string>('');
+
+  // A11y (NEXUS-54024, following the NEXUS-53625 pattern in LdapForm.tsx):
+  // screen-reader announcer for loading/busy/verify-failure transitions. The
+  // node is mounted *fresh* on each announcement (conditional render, keyed by
+  // an incrementing counter) rather than kept persistent with its text swapped
+  // in place — VoiceOver reliably announces a newly-inserted node but
+  // frequently misses a text change inside an already-present live region.
+  // Always assertive/role="alert" (matching LdapForm.tsx's only
+  // proven-in-VoiceOver announcement style, NEXUS-53625): a polite/
+  // role="status" announcement here queues behind VoiceOver's own page-load
+  // narration and is reliably dropped rather than spoken once that narration
+  // finishes.
+  const [status, setStatus] = useState<{ message: string; key: number }>({ message: '', key: 0 });
+  const announce = useCallback((message: string) => {
+    setStatus((prev) => ({ message, key: prev.key + 1 }));
+  }, []);
+
+  // Each announcing effect (F1/F2/F3) tracks the message *it* put up here, and
+  // only clears the live region if that message is still showing — otherwise
+  // a slow effect's cleanup could stomp a newer message from a different
+  // effect. Shared across F1/F2/F3 rather than one ref per effect since at
+  // most one of them is ever active at a time.
+  const activeMessage = useRef<string | null>(null);
+  const announceActive = useCallback(
+    (message: string) => {
+      activeMessage.current = message;
+      announce(message);
+    },
+    [announce]
+  );
+  const clearIfActive = useCallback((message: string) => {
+    if (activeMessage.current !== message) return;
+    activeMessage.current = null;
+    setStatus((prev) => (prev.message === message ? { message: '', key: prev.key } : prev));
+  }, []);
+
+  // F1: announce the loading state once, on mount, while the initial load is
+  // in flight. The loading Box itself unmounts as soon as data arrives, so
+  // this fresh-mount announcer is not tied to isInitialLoading's lifetime.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally mount-only; see comment above.
+  useEffect(() => {
+    if (isInitialLoading) {
+      announceActive(LOADING_MESSAGE);
+    }
+  }, []);
+
+  // Clear the F1 loading announcement once the initial load completes, so it
+  // doesn't linger in the live region after the form has rendered.
+  useEffect(() => {
+    if (!isInitialLoading) {
+      clearIfActive(LOADING_MESSAGE);
+    }
+  }, [isInitialLoading, clearIfActive]);
+
+  // F2: announce each busy operation's start, and clear it once the operation
+  // settles (success or failure) so a stale "Saving..." message does not
+  // linger — a failure replaces it with F3's error announcement below; a
+  // success just clears it, since the visible toast covers that case for
+  // sighted users.
+  useEffect(() => {
+    if (isSaving) {
+      announceActive('Saving Crowd settings...');
+    } else if (isVerifyingConnection) {
+      announceActive('Verifying connection...');
+    } else if (isClearingCache) {
+      announceActive('Clearing cache...');
+    } else {
+      clearIfActive('Saving Crowd settings...');
+      clearIfActive('Verifying connection...');
+      clearIfActive('Clearing cache...');
+    }
+  }, [isSaving, isVerifyingConnection, isClearingCache, announceActive, clearIfActive]);
+
+  // F3: announce a verify-connection/save failure assertively, matching the
+  // visible error banner's text so both channels agree. Clear the announcer
+  // once the error is dismissed/resolved so a stale failure message doesn't
+  // linger after a later operation succeeds. Tracks the exact error string it
+  // last announced (lastError) rather than reading activeMessage back, so
+  // this effect only ever clears a message it put up itself and never stomps
+  // a live F1/F2 announcement.
+  const lastError = useRef<string | null>(null);
+  useEffect(() => {
+    if (error) {
+      lastError.current = error;
+      announceActive(error);
+    } else if (lastError.current) {
+      clearIfActive(lastError.current);
+      lastError.current = null;
+    }
+  }, [error, announceActive, clearIfActive]);
 
   // Keep the raw timeout string in sync with the machine's config whenever the
   // form is pristine (initial load, after discard, after a successful save).
@@ -111,6 +209,26 @@ export function CrowdPage({ className }: CrowdPageProps) {
     [handleChange, markTouched]
   );
 
+  // The Enable checkboxes are part of the form like any other field, so
+  // toggling either one reveals every field's inline error (not just its
+  // own) rather than waiting for each field to be individually touched, so
+  // the user sees the full set of required fields to fix in one pass.
+  const changeEnabled = useCallback(
+    (checked: boolean) => {
+      handleChange('enabled', checked);
+      markAllTouched();
+    },
+    [handleChange, markAllTouched]
+  );
+
+  const changeRealmActive = useCallback(
+    (checked: boolean) => {
+      handleChange('realmActive', checked);
+      markAllTouched();
+    },
+    [handleChange, markAllTouched]
+  );
+
   const onSubmit = useCallback(() => {
     // Reveal all field errors on a save attempt; the machine's guard still
     // blocks the actual save while the form is invalid.
@@ -140,6 +258,27 @@ export function CrowdPage({ className }: CrowdPageProps) {
   const showValidationSummary = isDirty && !isFormValid;
   const validationErrorCount = Object.keys(validationErrors).length;
 
+  // A11y (NEXUS-54024): visually-hidden announcer, mounted fresh per message
+  // via `key` so VoiceOver reliably announces loading/busy/error transitions.
+  // Rendered in both branches below — including the early loading return —
+  // since the announce-on-mount effect for F1 fires before isInitialLoading
+  // flips false, and this node must already be present in the DOM to catch it
+  // reliably (a node inserted together with its first text is missed just as
+  // often as one removed and replaced). See LdapForm.tsx:516-536 for the
+  // pattern this mirrors.
+  const announcer = status.message && (
+    <Box
+      key={status.key}
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+      data-testid="crowd-page-status"
+      className="crowd-page__sr-status"
+    >
+      {status.message}
+    </Box>
+  );
+
   if (isInitialLoading) {
     return (
       <Box
@@ -148,11 +287,11 @@ export function CrowdPage({ className }: CrowdPageProps) {
         data-view="edit"
         data-loading="true"
         aria-busy="true"
-        aria-live="polite"
       >
+        {announcer}
         <Flex align="center" justify="center" className="crowd-page__loading">
           <Loader2 size={24} className="crowd-page__spinner" />
-          <Text size="2">Loading Crowd configuration...</Text>
+          <Text size="2">{LOADING_MESSAGE}</Text>
         </Flex>
       </Box>
     );
@@ -163,9 +302,13 @@ export function CrowdPage({ className }: CrowdPageProps) {
       className={`crowd-page ${className || ''}`.trim()}
       data-testid="crowd-page"
       data-view="edit"
+      data-loading={isBusy ? 'true' : 'false'}
+      aria-busy={isBusy}
       px={{ initial: '4', md: '6', lg: '6' }}
       py={{ initial: '4', md: '5', lg: '6' }}
     >
+      {announcer}
+
       {/* Header */}
       <Box mb="4">
         <PageHeader
@@ -191,15 +334,6 @@ export function CrowdPage({ className }: CrowdPageProps) {
         <Box className="crowd-page__alerts">
           <SettingsAlert type="error">
             {`Please fix ${validationErrorCount} validation error${validationErrorCount !== 1 ? 's' : ''} to continue.`}
-          </SettingsAlert>
-        </Box>
-      )}
-
-      {/* Permission Warning */}
-      {!canUpdate && (
-        <Box className="crowd-page__alerts">
-          <SettingsAlert type="warning">
-            You don't have permission to edit this page. Contact your administrator to request access.
           </SettingsAlert>
         </Box>
       )}
@@ -254,7 +388,7 @@ export function CrowdPage({ className }: CrowdPageProps) {
             name="enabled"
             label="Enable Crowd"
             checked={config.enabled}
-            onChange={(checked) => changeField('enabled', checked)}
+            onChange={changeEnabled}
             description="Enable Crowd Capability"
             disabled={!canUpdate}
             analyticsId="nxrm-crowd-toggle-enabled"
@@ -263,7 +397,7 @@ export function CrowdPage({ className }: CrowdPageProps) {
             name="realmActive"
             label="Enable Crowd Realm for authentication"
             checked={config.realmActive}
-            onChange={(checked) => changeField('realmActive', checked)}
+            onChange={changeRealmActive}
             description={<>To control ordering, go to the <a href="#preview/admin/security/realms">Realms</a> page.</>}
             disabled={!canUpdate}
             analyticsId="nxrm-crowd-toggle-realm-active"

@@ -118,9 +118,6 @@ export const mockPermissions = {
     CREATE: 'nexus:capabilities:create', 
     UPDATE: 'nexus:capabilities:update', 
     DELETE: 'nexus:capabilities:delete' 
-  },
-  MIGRATION: { 
-    READ: 'nexus:migration:read' 
   }
 };
 

@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.rest.internal.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.repository.Facet;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension;
 import org.sonatype.nexus.testcommon.extensions.AuthenticationExtension.WithUser;
 import org.sonatype.nexus.testcommon.validation.ValidationExtension;
@@ -49,6 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -310,6 +313,26 @@ class RepositoryInternalResourceTest
         underTest.getRepositories(null, false, false, null, "org.sonatype.nexus.repository.NonexistentFacet", null);
 
     assertThat(response.isEmpty(), is(true));
+  }
+
+  @Test
+  void getRepositoryReturnsNotFoundWhenRepositoryUnknown() {
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("unknown-repo")).thenReturn(Optional.empty());
+
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.getRepository("unknown-repo"));
+
+    assertThat(exception.getResponse().getStatus(), is(404));
+  }
+
+  @Test
+  void getSigningPassphraseReturnsNotFoundWhenRepositoryUnknown() {
+    when(authorizingRepositoryManager.getRepositoryWithAdmin("unknown-repo")).thenReturn(Optional.empty());
+
+    WebApplicationMessageException exception =
+        assertThrows(WebApplicationMessageException.class, () -> underTest.getSigningPassphrase("unknown-repo"));
+
+    assertThat(exception.getResponse().getStatus(), is(404));
   }
 
   @Test

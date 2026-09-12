@@ -53,6 +53,7 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ForbiddenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -240,10 +241,15 @@ public class SqlSearchService
       SqlSearchQueryConditionGroup queryCondition = getSqlSearchQueryCondition(modifiedSearchRequest);
       return searchStore.count(queryCondition);
     }
-    catch (SqlSearchPermissionException | UnknownRepositoriesException e) {
-      log.warn("Search skipped due to permission/unknown-repo condition: {}", e.getMessage(), e);
+    catch (SqlSearchPermissionException e) {
+      log.debug("Search skipped due to permission condition: {}", e.getMessage(), e);
+      throw new ForbiddenException("User lacks permission to specified repository", e);
+
     }
-    return 0L;
+    catch (UnknownRepositoriesException e) {
+      log.debug("Search skipped due to unknown-repo condition: {}", e.getMessage(), e);
+      throw new BadRequestException("Unknown repository", e);
+    }
   }
 
   private SqlSearchService.ComponentSearchResultPage searchComponents(final SearchRequest searchRequest) {
@@ -256,10 +262,15 @@ public class SqlSearchService
       log.debug("Query: {}", queryCondition);
       return doSearch(modifiedSearchRequest, queryCondition);
     }
-    catch (SqlSearchPermissionException | UnknownRepositoriesException e) {
-      log.warn("Search skipped due to permission/unknown-repo condition: {}", e.getMessage(), e);
+    catch (SqlSearchPermissionException e) {
+      log.debug("Search skipped due to permission condition: {}", e.getMessage(), e);
+      throw new ForbiddenException("User lacks permission to specified repository", e);
+
     }
-    return SqlSearchService.ComponentSearchResultPage.empty();
+    catch (UnknownRepositoriesException e) {
+      log.debug("Search skipped due to unknown-repo condition: {}", e.getMessage(), e);
+      throw new BadRequestException("Unknown repository", e);
+    }
   }
 
   @Nullable

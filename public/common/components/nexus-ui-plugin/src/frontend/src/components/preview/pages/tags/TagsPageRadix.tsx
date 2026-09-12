@@ -28,6 +28,8 @@ import { useFilteredTags, type TagSortField } from './hooks/useFilteredTags';
 import { createTag } from './tags.api';
 import { useToast } from '../../shared/Toast';
 import { parseApiError } from '../../../../interface/api';
+import { ExtJS } from '../../../../interface/ExtJS';
+import Permissions from '../../../../constants/Permissions';
 
 import { PageHeader, TablePagination } from '../../shared';
 import { TagsFilterSidebar } from './TagsFilterSidebar';
@@ -65,6 +67,18 @@ const NAME_FILTER_DEBOUNCE_MS = 300;
  * Tags list page aligned with Browse layout: same structure, spacing, and components.
  */
 export function TagsPageRadix(): JSX.Element {
+  // Use the provider-independent ExtJS.usePermission (reads window.NX.Permissions.check
+  // directly and stays reactive to login/permission changes). The context-based
+  // usePermission returns false without a <PermissionsProvider> ancestor, which coreui
+  // (self-hosted) never mounts — that disabled this button for everyone, admins included
+  // (NEXUS-54212). Depend on hasUser so the check re-evaluates once the user and their
+  // permissions have loaded (permissions arrive asynchronously after mount); without it a
+  // non-admin who holds nexus:tags:create would stay stuck on the initial false.
+  const hasUser = ExtJS.useUser() ?? false;
+  const canCreateTag = ExtJS.usePermission(
+    () => ExtJS.checkPermission(Permissions.TAGS.CREATE),
+    [hasUser],
+  );
   const {
     tags,
     loading,
@@ -269,6 +283,7 @@ export function TagsPageRadix(): JSX.Element {
                     variant="solid"
                     size="2"
                     onClick={() => setCreateDialogOpen(true)}
+                    disabled={!canCreateTag}
                     data-testid="create-tag-button"
                   >
                     <Plus size={14} />

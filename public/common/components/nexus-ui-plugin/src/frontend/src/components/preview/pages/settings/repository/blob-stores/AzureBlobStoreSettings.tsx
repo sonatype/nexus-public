@@ -71,7 +71,8 @@ const STRINGS = {
   DIRECT_DOWNLOAD: {
     label: 'Direct Download (SAS URLs)',
     description: 'Redirect downloads directly to Azure Blob Storage. Reduces server bandwidth and improves download speed.',
-    rbacNote: "Requires the 'Storage Blob Delegator' role on the storage account. Verified on save."
+    rbacNote: 'The identity needs an Azure role that can generate a user delegation key — ' +
+      'any Storage Blob Data role, or Storage Blob Delegator. Verified on save.'
   },
   TEST_CONNECTION: {
     button: 'Test Connection',
@@ -97,7 +98,6 @@ export default function AzureBlobStoreSettings({
   const { testing, result, testConnection, reset } = useAzureConnectionTest();
 
   const isProEdition = ExtJS.isProEdition();
-  const isAzureSasEnabled = ExtJS.state()?.getValue?.('azureSasUrlEnabled') === true;
 
   const config: AzureBlobStoreConfig = (data.bucketConfiguration as AzureBlobStoreConfig) || {
     accountName: '',
@@ -130,7 +130,7 @@ export default function AzureBlobStoreSettings({
       config.authentication?.authenticationMethod === 'MANAGEDIDENTITY' ||
       config.authentication?.authenticationMethod === 'ENVIRONMENTVARIABLE';
   const showRbacNote =
-      isProEdition && isAzureSasEnabled && !!config.preSignedUrlEnabled && isTokenCredentialAuth;
+      isProEdition && !!config.preSignedUrlEnabled && isTokenCredentialAuth;
 
   return (
     <div className="azure-blob-store-settings">
@@ -186,7 +186,7 @@ export default function AzureBlobStoreSettings({
           />
         )}
 
-        {isProEdition && isAzureSasEnabled && (
+        {isProEdition && (
           <div className="azure-blob-store-settings__sas-section">
             <SettingsCheckbox
               name="azure-direct-download"

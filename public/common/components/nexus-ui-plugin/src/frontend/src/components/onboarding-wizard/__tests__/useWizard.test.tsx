@@ -558,11 +558,10 @@ describe('useWizard', () => {
     });
 
     it('isCurrentStepValid is true on issueOccurred', async () => {
-      const mockFetchSteps = jest.fn().mockResolvedValue([]);
-      const mockVerify = jest.fn().mockRejectedValue(new Error('verify failed'));
+      const mockFetchSteps = jest.fn().mockRejectedValue(new Error('fetch failed'));
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
-        <WizardProvider fetchSteps={mockFetchSteps} verify={mockVerify}>
+        <WizardProvider fetchSteps={mockFetchSteps}>
           {children}
         </WizardProvider>
       );
@@ -570,23 +569,8 @@ describe('useWizard', () => {
       const { result } = renderHook(() => useWizard(), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.state).toBe('stepReady');
-      });
-
-      act(() => {
-        result.current.getStarted();
-      });
-
-      await waitFor(() => {
-        expect(result.current.state).toBe('setupComplete');
-      });
-
-      await act(async () => {
-        result.current.submit();
-      });
-
-      await waitFor(() => {
         expect(result.current.state).toBe('issueOccurred');
+        expect(result.current.errorMessage).toBe('Error: fetch failed');
         expect(result.current.isCurrentStepValid).toBe(true);
       });
     });
@@ -628,6 +612,94 @@ describe('useWizard', () => {
       });
 
       expect(onDoneSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('sets onboarding.dismissed flag in sessionStorage on skip from issueOccurred', async () => {
+      sessionStorage.clear();
+
+      const mockFetchSteps = jest.fn().mockRejectedValue(new Error('fetch failed'));
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps}>{children}</WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('issueOccurred');
+      });
+
+      act(() => {
+        result.current.skip();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('skipped');
+      });
+
+      expect(sessionStorage.getItem('onboarding.dismissed')).toBe('true');
+
+      sessionStorage.clear();
+    });
+
+    it('does NOT set onboarding.dismissed flag when skipping from stepReady', async () => {
+      sessionStorage.clear();
+
+      const mockFetchSteps = jest.fn().mockResolvedValue([{ type: 'admin-password' }]);
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps}>{children}</WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('stepReady');
+      });
+
+      act(() => {
+        result.current.skip();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('skipped');
+      });
+
+      expect(sessionStorage.getItem('onboarding.dismissed')).toBeNull();
+
+      sessionStorage.clear();
+    });
+
+    it('still dispatches SKIP when sessionStorage.setItem throws', async () => {
+      sessionStorage.clear();
+      const setItemSpy = jest
+        .spyOn(Storage.prototype, 'setItem')
+        .mockImplementation(() => {
+          throw new Error('QuotaExceededError');
+        });
+
+      const mockFetchSteps = jest.fn().mockRejectedValue(new Error('fetch failed'));
+
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <WizardProvider fetchSteps={mockFetchSteps}>{children}</WizardProvider>
+      );
+
+      const { result } = renderHook(() => useWizard(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('issueOccurred');
+      });
+
+      act(() => {
+        result.current.skip();
+      });
+
+      await waitFor(() => {
+        expect(result.current.state).toBe('skipped');
+      });
+
+      setItemSpy.mockRestore();
+      sessionStorage.clear();
     });
   });
 });

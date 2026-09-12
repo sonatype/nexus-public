@@ -201,6 +201,7 @@ describe('SslCertificatesDetail', () => {
         canDelete={true}
         onDelete={mockOnDelete}
         onCancel={mockOnCancel}
+        showTrustWarning
       />,
       { wrapper: TestWrapper }
     );
@@ -240,6 +241,43 @@ describe('SslCertificatesDetail', () => {
 
     fireEvent.click(screen.getByText('Delete Certificate'));
     expect(mockOnDelete).toHaveBeenCalled();
+  });
+
+  // NEXUS-54265: the warning is advice about whether to add a certificate, so it is only correct
+  // in the add-form preview. On an already-trusted certificate it describes a past decision.
+  describe('trust warning', () => {
+    const warning = /Adding a certificate to the trust store means you trust/i;
+
+    it('is hidden when viewing a certificate that is already in the trust store', () => {
+      render(
+        <SslCertificatesDetail
+          certificate={mockCertificate}
+          loading={false}
+          canDelete={true}
+          onDelete={mockOnDelete}
+          onCancel={mockOnCancel}
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      expect(screen.queryByText(warning)).not.toBeInTheDocument();
+    });
+
+    it('is shown while previewing a certificate that has not been added yet', () => {
+      render(
+        <SslCertificatesDetail
+          certificate={mockCertificate}
+          loading={false}
+          canDelete={false}
+          onDelete={mockOnDelete}
+          onCancel={mockOnCancel}
+          showTrustWarning
+        />,
+        { wrapper: TestWrapper }
+      );
+
+      expect(screen.getByText(warning)).toBeInTheDocument();
+    });
   });
 });
 

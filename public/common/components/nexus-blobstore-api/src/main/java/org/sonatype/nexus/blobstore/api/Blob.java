@@ -60,4 +60,11 @@ public interface Blob
   default Optional<URL> getRedirectUrl(final String action, final String name, @Nullable final String contentType) {
     return Optional.empty();
   }
+
+  /**
+   * @return if this payload would return a URL when calling getRedirectUrl
+   */
+  default boolean hasRedirect() {
+    return false;
+  }
 }

@@ -14,9 +14,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {ExtJS} from '@sonatype/nexus-ui-plugin';
-import {createRouter} from '@sonatype/nexus-ui-plugin';
-import {isSonatypeDevMode} from '@sonatype/nexus-ui-plugin';
+import {createRouter, isSonatypeDevMode, MissingRoutePage} from '@sonatype/nexus-ui-plugin';
 import {ROUTE_NAMES} from './routeNames/routeNames';
 import {browseRoutes} from './routes/browseRoutes';
 import {adminRoutes} from './routes/adminRoutes';
@@ -25,7 +23,7 @@ import {loginRoutes} from "./routes/loginRoutes";
 import {previewAdminRoutes, sonatypeInternalTestRoutes} from './routes/previewAdminRoutes';
 import {previewBrowseRoutes} from './routes/previewBrowseRoutes';
 import {previewUserRoutes} from './routes/previewUserRoutes';
-import {MissingRoutePage} from '@sonatype/nexus-ui-plugin';
+import {getInitialRoute} from './getInitialRoute';
 
 export function getRouter() {
   const initialRoute = getInitialRoute();
@@ -56,29 +54,6 @@ export function getRouter() {
   };
 
   const router = createRouter({initialRoute, menuRoutes, missingRoute});
-  
-  return router;
-}
 
-/**
- * Determines the initial route based on anonymous access settings.
- *
- * Phase 2: bootstrapFromREST() seeds window.NX.State before this runs,
- * so ExtJS.state().getValue() returns real data from REST.
- * The try/catch is a safety net in case REST bootstrap failed.
- */
-function getInitialRoute() {
-  try {
-    const state = ExtJS.state();
-    if (state && typeof state.getValue === 'function') {
-      const anonUser = state.getValue('anonymousUsername');
-      // Only use ExtJS state if it returned a real value (not the fallback null)
-      if (anonUser !== null && anonUser !== undefined) {
-        return anonUser ? ROUTE_NAMES.BROWSE.WELCOME.ROOT : ROUTE_NAMES.LOGIN;
-      }
-    }
-  } catch {
-    // ExtJS not ready
-  }
-  return ROUTE_NAMES.BROWSE.WELCOME.ROOT;
+  return router;
 }

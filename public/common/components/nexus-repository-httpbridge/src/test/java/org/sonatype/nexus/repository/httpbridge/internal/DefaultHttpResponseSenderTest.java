@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.sonatype.nexus.bootstrap.jetty.NexusReasonPhraseCustomizer;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.httpbridge.HttpResponseSender;
@@ -38,6 +39,7 @@ import org.mockito.Spy;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -233,8 +235,8 @@ public class DefaultHttpResponseSenderTest
   /**
    * NEXUS-46395: when an error response carries a payload (e.g. Repository Firewall
    * quarantine bodies returning 403/409 with an RFC 9457 / format-specific report),
-   * the {@code sendError} path is bypassed. We must still forward the custom HTTP/1.1
-   * reason phrase to Jetty's core {@link org.eclipse.jetty.server.Response#setReason}
+   * the {@code sendError} path is bypassed. We must still set the custom HTTP/1.1
+   * reason phrase as the sentinel response header read by NexusReasonPhraseCustomizer (STL-476)
    * so HTTP/1.1 clients (notably Maven 3.9.x) can read it off the status line.
    */
   @Test
@@ -244,6 +246,9 @@ public class DefaultHttpResponseSenderTest
     ServletApiResponse servletApiResponse = org.mockito.Mockito.mock(ServletApiResponse.class);
     org.eclipse.jetty.server.Response coreResponse =
         org.mockito.Mockito.mock(org.eclipse.jetty.server.Response.class);
+    org.eclipse.jetty.http.HttpFields.Mutable coreHeaders =
+        org.mockito.Mockito.mock(org.eclipse.jetty.http.HttpFields.Mutable.class);
+    when(coreResponse.getHeaders()).thenReturn(coreHeaders);
     when(servletApiResponse.getStatus()).thenReturn(403);
     when(servletApiResponse.getOutputStream()).thenReturn(output);
     when(servletApiResponse.getResponse()).thenReturn(coreResponse);
@@ -256,15 +261,16 @@ public class DefaultHttpResponseSenderTest
     underTest.send(request, response, servletApiResponse);
 
     verify(servletApiResponse).setStatus(403);
-    verify(coreResponse).setReason("package-quarantined");
+    // STL-476: producer sets the sentinel reason-phrase header; NexusReasonPhraseCustomizer serializes + strips it.
+    verify(coreHeaders).put(NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER, "package-quarantined");
   }
 
   /**
    * NEXUS-53114: in production the servlet response handed to
    * {@link DefaultHttpResponseSender} is wrapped by Shiro's
    * {@link ShiroHttpServletResponse}. Verify the unwrap path traverses Shiro and
-   * still forwards the custom reason phrase to the core Jetty
-   * {@link org.eclipse.jetty.server.Response}.
+   * still sets the custom reason phrase as the sentinel response header
+   * read by NexusReasonPhraseCustomizer.
    */
   @Test
   public void customStatusMessageWithPayload_unwrapsThroughShiro() throws Exception {
@@ -273,6 +279,9 @@ public class DefaultHttpResponseSenderTest
     ServletApiResponse servletApiResponse = org.mockito.Mockito.mock(ServletApiResponse.class);
     org.eclipse.jetty.server.Response coreResponse =
         org.mockito.Mockito.mock(org.eclipse.jetty.server.Response.class);
+    org.eclipse.jetty.http.HttpFields.Mutable coreHeaders =
+        org.mockito.Mockito.mock(org.eclipse.jetty.http.HttpFields.Mutable.class);
+    when(coreResponse.getHeaders()).thenReturn(coreHeaders);
     when(servletApiResponse.getResponse()).thenReturn(coreResponse);
 
     // ShiroHttpServletResponse is a concrete class that wraps an HttpServletResponse.
@@ -292,6 +301,18 @@ public class DefaultHttpResponseSenderTest
     // setStatus is called on the outer ShiroHttpServletResponse, which delegates to
     // the wrapped servletApiResponse.
     verify(servletApiResponse).setStatus(403);
-    verify(coreResponse).setReason("package-quarantined");
+    // STL-476: producer sets the sentinel reason-phrase header; NexusReasonPhraseCustomizer serializes + strips it.
+    verify(coreHeaders).put(NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER, "package-quarantined");
+  }
+
+  /**
+   * STL-476: {@link DefaultHttpResponseSender} deliberately writes the sentinel header as a literal to avoid a
+   * repository-module dependency on the bootstrap module. This pins that literal to
+   * {@link NexusReasonPhraseCustomizer#REASON_PHRASE_HEADER} so renaming the header value turns a silent
+   * producer/consumer mismatch into a test failure.
+   */
+  @Test
+  public void reasonPhraseHeader_literalMatchesCustomizerConstant() {
+    assertEquals("X-Nexus-Reason-Phrase", NexusReasonPhraseCustomizer.REASON_PHRASE_HEADER);
   }
 }

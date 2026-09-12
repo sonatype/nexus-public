@@ -13,42 +13,86 @@
 
 import { assign } from 'xstate';
 import { createFormMachine, type FormContext, type ValidationErrors } from '../../../../../../interface/form';
+import ValidationUtils from '../../../../../../interface/ValidationUtils';
+import UIStrings from '../../../../../../constants/UIStrings';
 import { OAuth2Config, DEFAULT_OAUTH2_CONFIG } from './types';
 import { fetchOAuth2Config, saveOAuth2Config } from './oauth2Api';
 
-const URL_PATTERN = /^https?:\/\/.+/;
+/** Fields that are required but carry no format constraint. */
+const REQUIRED_FIELDS = [
+  'clientId',
+  'clientSecret',
+  'usernameClaim',
+  'firstNameClaim',
+  'lastNameClaim',
+  'emailClaim',
+  'groupsClaim',
+  'idpJwsAlgorithm',
+] as const;
+
+/** Fields that are required AND must parse as a URL. */
+const REQUIRED_URL_FIELDS = ['idpAuthorizationUrl', 'idpLogoutUrl', 'idpTokenUrl', 'idpJwksUrl'] as const;
 
 /**
- * Validate OAuth2 form data. Mirrors the legacy synchronous validation so the
- * same error messages are produced.
+ * Optional fields sent to the API as JSON objects. Blank is allowed (becomes
+ * `{}`), but non-blank input must parse to a JSON object.
+ */
+const JSON_OBJECT_FIELDS = ['exactMatchClaims', 'authorizationCustomParams', 'tokenRequestCustomParams'] as const;
+
+/**
+ * True when `value` parses as a flat JSON object whose values are all strings.
+ *
+ * The API models these fields as `Map<String, String>`
+ * (`OAuth2OidcConfigurationXO`), so arrays and nested objects are rejected — the
+ * backend answers 400 for those, which surfaces only as a generic save error.
+ * Non-string scalars are rejected too: Jackson silently coerces them (`5` is
+ * stored as `"5"`), so rejecting keeps what is saved equal to what was typed.
+ */
+function isStringMap(value: string): boolean {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    return false;
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return false;
+  }
+  return Object.values(parsed).every((entry) => typeof entry === 'string');
+}
+
+/**
+ * Validate OAuth2 form data.
+ *
+ * Delegates to the shared `ValidationUtils` so both the rules and the message
+ * text stay identical to the Classic page (NEXUS-54266) — previously this
+ * reimplemented blank/URL checks with a local regex and bespoke per-field
+ * strings, which drifted from Classic's shared `UIStrings.ERROR` messages.
  */
 export function validateOAuth2(data: OAuth2Config): ValidationErrors {
   const errors: ValidationErrors = {};
 
-  if (!data.clientId?.trim()) errors.clientId = 'Client ID is required';
-  if (!data.clientSecret?.trim()) errors.clientSecret = 'Client Secret is required';
-  if (!data.idpAuthorizationUrl?.trim()) errors.idpAuthorizationUrl = 'Authorization URL is required';
-  if (!data.idpLogoutUrl?.trim()) errors.idpLogoutUrl = 'Logout URL is required';
-  if (!data.idpTokenUrl?.trim()) errors.idpTokenUrl = 'Token URL is required';
-  if (!data.idpJwksUrl?.trim()) errors.idpJwksUrl = 'JWKS URL is required';
-  if (!data.usernameClaim?.trim()) errors.usernameClaim = 'Username claim is required';
-  if (!data.firstNameClaim?.trim()) errors.firstNameClaim = 'First name claim is required';
-  if (!data.lastNameClaim?.trim()) errors.lastNameClaim = 'Last name claim is required';
-  if (!data.emailClaim?.trim()) errors.emailClaim = 'Email claim is required';
-  if (!data.groupsClaim?.trim()) errors.groupsClaim = 'Groups claim is required';
-  if (!data.idpJwsAlgorithm?.trim()) errors.idpJwsAlgorithm = 'JWS Algorithm is required';
+  for (const name of REQUIRED_FIELDS) {
+    const error = ValidationUtils.validateNotBlank(data[name]);
+    if (error) errors[name] = error;
+  }
 
-  if (data.idpAuthorizationUrl && !URL_PATTERN.test(data.idpAuthorizationUrl)) {
-    errors.idpAuthorizationUrl = 'Must be a valid URL';
+  for (const name of REQUIRED_URL_FIELDS) {
+    // Blank takes precedence over format, matching Classic's ternary ordering.
+    const error = ValidationUtils.validateNotBlank(data[name]) ?? ValidationUtils.validateIsUrl(data[name]);
+    if (error) errors[name] = error;
   }
-  if (data.idpLogoutUrl && !URL_PATTERN.test(data.idpLogoutUrl)) {
-    errors.idpLogoutUrl = 'Must be a valid URL';
-  }
-  if (data.idpTokenUrl && !URL_PATTERN.test(data.idpTokenUrl)) {
-    errors.idpTokenUrl = 'Must be a valid URL';
-  }
-  if (data.idpJwksUrl && !URL_PATTERN.test(data.idpJwksUrl)) {
-    errors.idpJwksUrl = 'Must be a valid URL';
+
+  // NEXUS-54266: reject malformed JSON rather than letting the API layer coerce
+  // it to `{}`, which reported a successful save while destroying the previous
+  // value. Classic aborts the save by throwing from JSON.parse; validating here
+  // rejects earlier and points at the offending field.
+  for (const name of JSON_OBJECT_FIELDS) {
+    const value = data[name];
+    if (value?.trim() && !isStringMap(value)) {
+      errors[name] = UIStrings.ERROR.INVALID_JSON_OBJECT;
+    }
   }
 
   return errors;

@@ -11,52 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { ExtJS } from '../../../../interface/ExtJS';
-import {
-  useInstanceTotals,
-  useMonthlyMetrics,
-  useInstanceStorage,
-  formatBytesToGB,
-} from './dashboard';
-
-export interface MonthlyMetricsFormatted {
-  peakStorageGB?: string;
-  responseSizeGB: string;
-  isEgressTbd: boolean;
-}
+// monthlyMetrics is only needed for the cloud path (CloudUsageCenterPanel).
+// Self-hosted path uses UsageCenter which reads its own state internally (NEXUS-53863).
+import { useMonthlyMetrics } from './dashboard';
 
 export function useUsageMetricsTabData() {
   const isCloud: boolean = ExtJS.state().getValue('isCloud', false);
-  const instanceTotals = useInstanceTotals();
   const monthlyMetrics = useMonthlyMetrics();
-  const instanceStorage = useInstanceStorage();
 
-  let monthlyMetricsFormatted: MonthlyMetricsFormatted | undefined;
-
-  if (!monthlyMetrics.loading) {
-    const storageBytes: number | null =
-      (monthlyMetrics.peakStorage != null && monthlyMetrics.peakStorage > 0
-        ? monthlyMetrics.peakStorage
-        : null) ?? (instanceStorage.currentStorageBytes ?? null);
-
-    const latestEgress = monthlyMetrics.responseSize ?? 0;
-    const lastKnownEgress =
-      monthlyMetrics.history?.egress?.slice().reverse().find((p: {value: number}) => p.value > 0)?.value ?? 0;
-    const egressBytes = latestEgress > 0 ? latestEgress : lastKnownEgress;
-    const hasAnyEgressHistory = (monthlyMetrics.history?.egress ?? []).some((p: {value: number}) => p.value > 0);
-    const isEgressTbd = egressBytes === 0 && !hasAnyEgressHistory;
-
-    const peakStorageGB =
-      storageBytes != null && storageBytes > 0 ? formatBytesToGB(storageBytes) : undefined;
-
-    const out: MonthlyMetricsFormatted = {
-      responseSizeGB: isEgressTbd ? 'TBD' : formatBytesToGB(egressBytes, true),
-      isEgressTbd,
-    };
-    if (peakStorageGB !== undefined) {
-      out.peakStorageGB = peakStorageGB;
-    }
-    monthlyMetricsFormatted = out;
-  }
-
-  return {isCloud, instanceTotals, monthlyMetrics, monthlyMetricsFormatted};
+  return {isCloud, monthlyMetrics};
 }

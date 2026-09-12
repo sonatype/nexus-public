@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
 import org.sonatype.nexus.datastore.api.SerializedAccessException;
 
 import org.apache.ibatis.cache.CacheKey;
@@ -253,6 +254,9 @@ final class EntityExecutor
       }
       if (SerializedAccessException.SQL_STATE.equals(state)) {
         return new SerializedAccessException(e);
+      }
+      if (ForeignKeyViolationException.SQL_STATE.equals(state)) {
+        return new ForeignKeyViolationException(ex);
       }
       ex = ex.getNextException();
     }

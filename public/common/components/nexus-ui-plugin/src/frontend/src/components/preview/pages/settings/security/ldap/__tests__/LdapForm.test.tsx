@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { Theme } from '@radix-ui/themes';
 
 import { LdapForm } from '../LdapForm';
@@ -174,6 +174,9 @@ describe('LdapForm', () => {
     authScheme: 'simple',
     authUsername: 'cn=admin,dc=example,dc=com',
     authPassword: 'secret',
+    connectionTimeout: 30,
+    connectionRetryDelay: 300,
+    maxIncidentsCount: 3,
     order: 1,
     userObjectClass: 'inetOrgPerson',
     userIdAttribute: 'uid',
@@ -234,10 +237,16 @@ describe('LdapForm', () => {
         groupIdAttribute: '', groupMemberAttribute: '', groupMemberFormat: '', userMemberOfAttribute: '',
       };
       const [formData, setFormData] = React.useState<any>(initialFormData);
+      // Track isPristine so the raw-string sync effect in LdapForm.tsx does not
+      // overwrite user-typed values: the effect only re-syncs when isPristine is
+      // true (i.e. after a reset), not while the user is actively editing.
+      const [isPristine, setIsPristine] = React.useState(true);
       const form = createMockLdapForm(formData);
+      form.isPristine = isPristine;
       form.send = jest.fn((event: any) => {
         if (event?.type === 'UPDATE') {
           setFormData((prev: any) => ({ ...prev, [event.name]: event.value }));
+          setIsPristine(false);
         }
       });
       return {
@@ -345,18 +354,40 @@ describe('LdapForm', () => {
     expect(defaultProps.verifyConnection).not.toHaveBeenCalled();
   });
 
-  it('calls verifyConnection with the form data when connection fields are valid', () => {
-    // Edit mode with a fully-populated server: connectionValid === true, so the verify call fires.
+  it('calls verifyConnection with the modal password when connection fields are valid (edit mode)', async () => {
+    // Edit mode: clicking Verify Connection always prompts for the password via
+    // the modal (NEXUS-54062), regardless of whether authPassword is already set.
     render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
 
     fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
 
-    expect(defaultProps.verifyConnection).toHaveBeenCalledTimes(1);
-    // Edit mode passes the existing server name so the backend can merge the stored bind password.
-    expect(defaultProps.verifyConnection).toHaveBeenCalledWith(
-      expect.objectContaining({ name: mockServer.name, host: mockServer.host }),
-      mockServer.name
-    );
+    // Modal should appear — verifyConnection must NOT be called yet.
+    await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+    expect(defaultProps.verifyConnection).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+    fireEvent.click(screen.getByTestId('ldap-password-submit'));
+
+    await waitFor(() => {
+      expect(defaultProps.verifyConnection).toHaveBeenCalledTimes(1);
+      // Edit mode passes the existing server name so the backend can merge stored bind password.
+      expect(defaultProps.verifyConnection).toHaveBeenCalledWith(
+        expect.objectContaining({ name: mockServer.name, host: mockServer.host, authPassword: 'test-password' }),
+        mockServer.name
+      );
+    });
+  });
+
+  it('calls verifyConnection directly in create mode without opening the password modal', async () => {
+    // AC7 guard: the !isCreate path skips the password modal entirely and fires
+    // verifyConnection directly. Without this test, removing the !isCreate guard
+    // would go undetected.
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={true} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
+
+    await waitFor(() => expect(defaultProps.verifyConnection).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument();
   });
 
   it('displays loading state when loading', () => {
@@ -545,6 +576,136 @@ describe('LdapForm', () => {
     expect(screen.getByRole('button', { name: /Verify Connection/i })).not.toBeDisabled();
   });
 
+  it('calls verifyConnection directly in create mode without a password modal', async () => {
+    mockUseLdapForm.mockImplementation(() => ({
+      form: createMockLdapForm({ ...mockServer }),
+      server: null,
+      isCreate: true,
+      applyTemplate: jest.fn(),
+      changeProtocol: jest.fn(),
+      confirmPasswordAndSubmit: jest.fn(),
+    } as any));
+
+    render(<LdapForm {...defaultProps} server={null} isCreate={true} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
+
+    // Create mode bypasses the !isCreate guard — no modal should appear.
+    expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument();
+    await waitFor(() => expect(defaultProps.verifyConnection).toHaveBeenCalledTimes(1));
+    // Create mode passes undefined as the server name (no existing record to merge).
+    expect(defaultProps.verifyConnection).toHaveBeenCalledWith(
+      expect.objectContaining({ name: mockServer.name }),
+      undefined
+    );
+  });
+
+  it('shows password modal when Verify Connection is clicked in edit mode (non-anonymous auth)', async () => {
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    // Button must NOT be disabled — the user clicks it then provides credentials via modal.
+    expect(screen.getByRole('button', { name: /Verify Connection/i })).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
+
+    await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+    expect(screen.getByText(/A password is required to verify the LDAP server connection/i)).toBeInTheDocument();
+    expect(defaultProps.verifyConnection).not.toHaveBeenCalled();
+  });
+
+  it('calls verifyConnection directly when auth scheme is anonymous in edit mode (no password modal)', async () => {
+    mockUseLdapForm.mockImplementation(({ server }: any) => {
+      const formData = { ...server, authScheme: 'none', authPassword: '' };
+      return {
+        form: createMockLdapForm(formData),
+        server: server || null,
+        isCreate: false,
+        applyTemplate: jest.fn(),
+        changeProtocol: jest.fn(),
+        confirmPasswordAndSubmit: jest.fn(),
+      } as any;
+    });
+
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    const verifyBtn = screen.getByRole('button', { name: /Verify Connection/i });
+    expect(verifyBtn).not.toBeDisabled();
+
+    fireEvent.click(verifyBtn);
+
+    // No modal — anonymous mode bypasses the password gate entirely.
+    expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument();
+    await waitFor(() => expect(defaultProps.verifyConnection).toHaveBeenCalledTimes(1));
+  });
+
+  it('calls verifyUserMapping directly when auth scheme is anonymous in edit mode (no password modal)', async () => {
+    mockUseLdapForm.mockImplementation(({ server }: any) => {
+      const formData = { ...server, authScheme: 'none', authPassword: '' };
+      return {
+        form: createMockLdapForm(formData),
+        server: server || null,
+        isCreate: false,
+        applyTemplate: jest.fn(),
+        changeProtocol: jest.fn(),
+        confirmPasswordAndSubmit: jest.fn(),
+      } as any;
+    });
+
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    const verifyBtn = screen.getByTestId('ldap-verify-user-mapping');
+    expect(verifyBtn).not.toBeDisabled();
+
+    fireEvent.click(verifyBtn);
+
+    expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument();
+    await waitFor(() => expect(defaultProps.verifyUserMapping).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows password modal when Verify User Mapping is clicked in edit mode (non-anonymous auth)', async () => {
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    // Button must NOT be disabled — the user clicks it then provides credentials via modal.
+    expect(screen.getByTestId('ldap-verify-user-mapping')).not.toBeDisabled();
+
+    fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+
+    await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+    expect(screen.getByText(/A password is required to verify the LDAP user mapping/i)).toBeInTheDocument();
+    expect(defaultProps.verifyUserMapping).not.toHaveBeenCalled();
+  });
+
+  it('calls verifyUserMapping with the modal password after submitting the password prompt', async () => {
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+
+    await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+
+    fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'mapping-password' } });
+    fireEvent.click(screen.getByTestId('ldap-password-submit'));
+
+    await waitFor(() => {
+      expect(defaultProps.verifyUserMapping).toHaveBeenCalledWith(
+        expect.objectContaining({ authPassword: 'mapping-password' }),
+        mockServer.name
+      );
+    });
+  });
+
+  it('keeps the Verify User Mapping button enabled in edit mode (password prompt replaces disable)', () => {
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    expect(screen.getByTestId('ldap-verify-user-mapping')).not.toBeDisabled();
+  });
+
   it('shows password re-entry modal when saving an existing server with authentication', async () => {
     mockUseLdapForm.mockImplementation(({ server }: any) => {
       const formData = { ...server, authPassword: '' }; // No password pre-filled for edit
@@ -569,6 +730,41 @@ describe('LdapForm', () => {
     // Modal should appear
     expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument();
     expect(screen.getByText(/For security reasons, the password must be re-entered/i)).toBeInTheDocument();
+  });
+
+  it('resets pendingVerifyAction on modal cancel so a subsequent Save shows the save-flow copy', async () => {
+    mockUseLdapForm.mockImplementation(({ server }: any) => {
+      const formData = { ...server, authPassword: '' }; // empty password → triggers save modal
+      return {
+        form: createMockLdapForm(formData),
+        server: server || null,
+        isCreate: false,
+        applyTemplate: jest.fn(),
+        changeProtocol: jest.fn(),
+        confirmPasswordAndSubmit: jest.fn(),
+      } as any;
+    });
+
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    // Open the verify-flow modal from step 1
+    fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
+    await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+    expect(screen.getByText(/A password is required to verify/i)).toBeInTheDocument();
+
+    // Cancel — pendingVerifyAction should reset to null
+    fireEvent.click(within(screen.getByTestId('ldap-password-modal')).getByRole('button', { name: /Cancel/i }));
+    await waitFor(() => expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument());
+
+    // Navigate to step 2 and click Save
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+
+    // Save modal must show save-flow copy, not verify-flow copy
+    await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+    expect(screen.getByText(/For security reasons/i)).toBeInTheDocument();
+    expect(screen.queryByText(/A password is required to verify/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('ldap-password-submit')).toHaveTextContent('Save');
   });
 
   describe('read-only mode when lacking nexus:ldap:update (NEXUS-53627)', () => {
@@ -732,6 +928,33 @@ describe('LdapForm', () => {
     expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument();
     expect(send).toHaveBeenCalledWith('SUBMIT');
     expect(confirmPasswordAndSubmit).not.toHaveBeenCalled();
+  });
+
+  it('skips the password modal and submits directly when authScheme is none in edit mode', () => {
+    // Regression guard for the authScheme !== 'none' guard in handleSave. Anonymous
+    // auth has no bind password, so requiring re-entry would block saves permanently.
+    const send = jest.fn();
+    mockUseLdapForm.mockImplementation(({ server }: any) => {
+      const formData = { ...server, authScheme: 'none', authPassword: '' };
+      const mockForm = createMockLdapForm(formData);
+      mockForm.send = send;
+      return {
+        form: mockForm,
+        server: server || null,
+        isCreate: false,
+        applyTemplate: jest.fn(),
+        changeProtocol: jest.fn(),
+        confirmPasswordAndSubmit: jest.fn(),
+      } as any;
+    });
+
+    render(<LdapForm {...defaultProps} server={mockServer} isCreate={false} />, { wrapper: TestWrapper });
+
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Save$/i }));
+
+    expect(screen.queryByTestId('ldap-password-modal')).not.toBeInTheDocument();
+    expect(send).toHaveBeenCalledWith('SUBMIT');
   });
 
   it('shows static group fields when editing a server with ldapGroupsAsRoles and groupType static', () => {
@@ -963,6 +1186,10 @@ describe('LdapForm', () => {
   describe('connection verified badge (NEXUS-53623 F2)', () => {
     async function verifyConnectionAndAwaitBadge() {
       fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
+      // Edit mode always prompts for password before verifying (NEXUS-54062).
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
       await waitFor(() => {
         expect(screen.getAllByText('Connection successful').length).toBeGreaterThan(0);
       });
@@ -1070,6 +1297,11 @@ describe('LdapForm', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
 
+      // Edit mode always shows the password modal first (NEXUS-54062).
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
+
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Verify Connection/i })).toHaveAttribute('aria-busy', 'true');
       });
@@ -1105,6 +1337,11 @@ describe('LdapForm', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
       fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+
+      // Edit mode always shows the password modal first (NEXUS-54062).
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
 
       await waitFor(() => {
         expect(screen.getByTestId('ldap-verify-user-mapping')).toHaveAttribute('aria-busy', 'true');
@@ -1151,6 +1388,11 @@ describe('LdapForm', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
       fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+
+      // Edit mode always prompts for password before verifying (NEXUS-54062).
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
 
       await waitFor(() => {
         expect(screen.getByText(`Found ${users.length} user(s):`)).toBeInTheDocument();
@@ -1254,14 +1496,23 @@ describe('LdapForm', () => {
       );
 
       fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+      // First verify — edit mode always prompts for password (NEXUS-54062).
       fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
 
       await waitFor(() => {
         expect(screen.getByText('Found 3 user(s):')).toBeInTheDocument();
       });
       expect(screen.getByTestId('ldap-user-mapping-badge')).toHaveTextContent('3 user(s)');
 
+      // Second verify — modal again.
       fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
 
       await waitFor(() => {
         expect(screen.queryByTestId('ldap-user-mapping-badge')).not.toBeInTheDocument();
@@ -1278,8 +1529,16 @@ describe('LdapForm', () => {
     // connectionTimeout (1-3600) both correctly reject 0 once validation
     // runs. Regression guard for a parseInt(value) || default bug that clobbered 0 with the
     // default on every one of these fields.
+    it('keeps an explicitly entered 0 for port instead of reverting to the default', () => {
+      render(<LdapForm {...defaultProps} />, { wrapper: TestWrapper });
+      const input = screen.getByTestId('input-port');
+      fireEvent.change(input, { target: { value: '0' } });
+      expect(input).toHaveValue(0);
+    });
+
+    // The three connection settings fields use type="text" (NEXUS-54076) so their
+    // value is a string, not a number — toHaveValue('0'), not toHaveValue(0).
     it.each([
-      ['port', 'input-port'],
       ['connectionTimeout', 'input-connectionTimeout'],
       ['connectionRetryDelay', 'input-connectionRetryDelay'],
       ['maxIncidentsCount', 'input-maxIncidentsCount'],
@@ -1289,39 +1548,124 @@ describe('LdapForm', () => {
       const input = screen.getByTestId(testId);
       fireEvent.change(input, { target: { value: '0' } });
 
-      expect(input).toHaveValue(0);
+      expect(input).toHaveValue('0');
     });
 
+    it('falls back to the default for port when cleared to a non-numeric value', () => {
+      render(<LdapForm {...defaultProps} />, { wrapper: TestWrapper });
+
+      const input = screen.getByTestId('input-port');
+      fireEvent.change(input, { target: { value: '' } });
+
+      expect(input).toHaveValue(389);
+    });
+
+    // NEXUS-54076: connection settings fields must stay empty when cleared so
+    // the user sees the validation error instead of the field silently
+    // reverting to its default, hiding the invalid state.
     it.each([
-      ['port', 'input-port', 389],
-      ['connectionTimeout', 'input-connectionTimeout', 30],
-      ['connectionRetryDelay', 'input-connectionRetryDelay', 300],
-      ['maxIncidentsCount', 'input-maxIncidentsCount', 3],
-    ])('falls back to the default for %s when cleared to a non-numeric value', (_field, testId, defaultValue) => {
+      ['connectionTimeout', 'input-connectionTimeout'],
+      ['connectionRetryDelay', 'input-connectionRetryDelay'],
+      ['maxIncidentsCount', 'input-maxIncidentsCount'],
+    ])('keeps %s empty when cleared instead of reverting to the default (NEXUS-54076)', (_field, testId) => {
       render(<LdapForm {...defaultProps} />, { wrapper: TestWrapper });
 
       const input = screen.getByTestId(testId);
       fireEvent.change(input, { target: { value: '' } });
 
-      expect(input).toHaveValue(defaultValue);
+      // type="text" returns '' for an empty field (not null like type="number")
+      expect(input).toHaveValue('');
     });
+
+    // NEXUS-54076: typing a letter in a connection settings field must keep the
+    // letter visible (type="text" behaviour) so the machine can detect non-numeric
+    // input as NaN and surface the range error message, rather than type="number"
+    // silently clearing the value and making it indistinguishable from an
+    // empty/cleared field.
+    it.each([
+      ['connectionTimeout', 'input-connectionTimeout'],
+      ['connectionRetryDelay', 'input-connectionRetryDelay'],
+      ['maxIncidentsCount', 'input-maxIncidentsCount'],
+    ])('keeps non-numeric text visible in %s so it can be validated (NEXUS-54076)', (_field, testId) => {
+      render(<LdapForm {...defaultProps} />, { wrapper: TestWrapper });
+      const input = screen.getByTestId(testId);
+      fireEvent.change(input, { target: { value: 'abc' } });
+      expect(input).toHaveValue('abc');
+    });
+
+    // NEXUS-54076 regression: Number('   ') === 0, which is a valid value for
+    // connectionRetryDelay/maxIncidentsCount (min 0). A whitespace-only input
+    // must be treated as empty (undefined) so validation shows "required",
+    // not silently accepted as the integer 0.
+    it.each([
+      ['connectionRetryDelay', 'input-connectionRetryDelay'],
+      ['maxIncidentsCount', 'input-maxIncidentsCount'],
+    ])(
+      'sends undefined (not 0) to the form when %s input is whitespace-only',
+      (_field, testId) => {
+        const sendHistory: any[] = [];
+        // Override the mock for this test only; must call React.useState the
+        // same number of times as the beforeEach mock so hooks count stays
+        // consistent across re-renders (React rules of hooks).
+        mockUseLdapForm.mockImplementation(({ server }: any) => {
+          const initialFormData = server ? { ...server } : {
+            name: '', host: '', port: 389, protocol: 'ldap', searchBase: '', authScheme: 'simple',
+            authUsername: '', authPassword: '', useTrustStore: false, connectionTimeout: 30,
+            connectionRetryDelay: 300, maxIncidentsCount: 3, userBaseDn: '', userSubtree: false,
+            userObjectClass: '', userLdapFilter: '', userIdAttribute: '', userRealNameAttribute: '',
+            userEmailAddressAttribute: '', userPasswordAttribute: '', ldapGroupsAsRoles: true,
+            groupType: 'dynamic', groupBaseDn: '', groupSubtree: false, groupObjectClass: '',
+            groupIdAttribute: '', groupMemberAttribute: '', groupMemberFormat: '', userMemberOfAttribute: '',
+          };
+          const [formData, setFormData] = React.useState<any>(initialFormData);
+          const [isPristine, setIsPristine] = React.useState(true);
+          const form = createMockLdapForm(formData);
+          form.isPristine = isPristine;
+          form.send = jest.fn((event: any) => {
+            sendHistory.push(event);
+            if (event?.type === 'UPDATE') {
+              setFormData((prev: any) => ({ ...prev, [event.name]: event.value }));
+              setIsPristine(false);
+            }
+          });
+          return {
+            form,
+            server: server || null,
+            isCreate: !server,
+            applyTemplate: jest.fn(),
+            changeProtocol: jest.fn(),
+            confirmPasswordAndSubmit: jest.fn(),
+          } as any;
+        });
+
+        render(<LdapForm {...defaultProps} />, { wrapper: TestWrapper });
+        fireEvent.change(screen.getByTestId(testId), { target: { value: '   ' } });
+
+        const updateEvent = sendHistory.find(
+          (e: any) => e?.type === 'UPDATE' && e?.name === _field
+        );
+        expect(updateEvent).toBeDefined();
+        expect(updateEvent?.value).toBeUndefined();
+      }
+    );
   });
 
   describe('numeric field validation error display (NEXUS-53623 review follow-up)', () => {
     // port, connectionTimeout, connectionRetryDelay, and maxIncidentsCount are
     // wired directly (name/value/onChange) instead of via form.field(), so
     // unlike host/searchBase/authUsername/etc. they don't automatically pick
-    // up an `error` prop. validateConnection (and, for the latter three, the
-    // ValidationUtils.isInRange bounds added for NEXUS-53623 F4/F5) can mark
-    // any of them invalid - and disable the Verify Connection/Continue
-    // buttons as a result - but without an explicit `error` prop wired to
-    // form.validationErrors, the user has no visible explanation why.
-    // Regression guard for that missing wiring.
+    // up an `error` prop. validateConnection can mark any of them invalid and
+    // disable the Verify Connection/Continue buttons as a result, but without
+    // an explicit `error` prop wired to form.validationErrors the user has no
+    // visible explanation why. Regression guard for that missing wiring.
     it.each([
       ['port', 'input-port', 'Port must be between 1 and 65535'],
-      ['connectionTimeout', 'input-connectionTimeout', 'The minimum value for this field is 1'],
-      ['connectionRetryDelay', 'input-connectionRetryDelay', 'The minimum value for this field is 0'],
-      ['maxIncidentsCount', 'input-maxIncidentsCount', 'The minimum value for this field is 0'],
+      ['connectionTimeout', 'input-connectionTimeout', 'Must be a number between 1 and 3600'],
+      ['connectionRetryDelay', 'input-connectionRetryDelay', 'Must be a number 0 or greater'],
+      ['maxIncidentsCount', 'input-maxIncidentsCount', 'Must be a number 0 or greater'],
+      ['connectionTimeout', 'input-connectionTimeout', 'This field is required'],
+      ['connectionRetryDelay', 'input-connectionRetryDelay', 'This field is required'],
+      ['maxIncidentsCount', 'input-maxIncidentsCount', 'This field is required'],
     ])('surfaces the %s validation error message from form.validationErrors', (field, testId, errorMessage) => {
       mockUseLdapForm.mockImplementation(({ server }: any) => {
         // Mirrors DEFAULT_LDAP_SERVER in types.ts, same rationale as the
@@ -1405,6 +1749,11 @@ describe('LdapForm', () => {
       expect(screen.queryByTestId('ldap-user-mapping-status')).toBeNull();
 
       fireEvent.click(screen.getByRole('button', { name: /Verify Connection/i }));
+      // Edit mode always prompts for password first (NEXUS-54062).
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
+
       await waitFor(() => {
         expect(screen.getByTestId('ldap-user-mapping-status')).toHaveTextContent('Connection successful');
       });
@@ -1424,6 +1773,10 @@ describe('LdapForm', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
       fireEvent.click(screen.getByTestId('ldap-verify-user-mapping'));
+      // Edit mode always prompts for password first (NEXUS-54062).
+      await waitFor(() => expect(screen.getByTestId('ldap-password-modal')).toBeInTheDocument());
+      fireEvent.change(screen.getByTestId('ldap-password-input'), { target: { value: 'test-password' } });
+      fireEvent.click(screen.getByTestId('ldap-password-submit'));
 
       await waitFor(() => {
         expect(screen.getByTestId('ldap-user-mapping-status')).toHaveTextContent('Found 1 user(s)');

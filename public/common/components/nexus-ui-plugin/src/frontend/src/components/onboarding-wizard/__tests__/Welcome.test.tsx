@@ -38,6 +38,7 @@ describe('Welcome', () => {
       submit: jest.fn(),
       skip: jest.fn(),
       finish: jest.fn(),
+      actionButtonRef: { current: null },
     });
   });
 

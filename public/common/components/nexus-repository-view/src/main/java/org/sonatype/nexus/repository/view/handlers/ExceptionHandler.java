@@ -16,6 +16,7 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreWarmingUpException;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
+import org.sonatype.nexus.repository.ConcurrentOperationException;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.MissingBlobException;
@@ -54,6 +55,12 @@ public class ExceptionHandler
     }
     catch (RedeployDisabledException e) {
       log.debug("Attempted redeploy in repository '{}': {} {}: {}",
+          context.getRepository() != null ? context.getRepository().getName() : "unknown",
+          context.getRequest().getAction(), context.getRequest().getPath(), e.toString());
+      return HttpResponses.conflict(e.getMessage());
+    }
+    catch (ConcurrentOperationException e) {
+      log.debug("Concurrent operation conflict in repository '{}': {} {}: {}",
           context.getRepository() != null ? context.getRepository().getName() : "unknown",
           context.getRequest().getAction(), context.getRequest().getPath(), e.toString());
       return HttpResponses.conflict(e.getMessage());

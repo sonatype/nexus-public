@@ -47,6 +47,8 @@
     "@babel/preset-env": "^7.28.6",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
+    "@fontsource/geist-mono": "5.2.7",
+    "@fontsource/inter": "5.2.8",
     "@rspack/cli": "1.2.7",
     "@rspack/core": "1.2.7",
     "@sonatype/nexus-ui-plugin": "workspace:*",

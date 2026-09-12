@@ -18,8 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.sonatype.nexus.bootstrap.entrypoint.event.EventExecutor;
-import org.sonatype.nexus.bootstrap.entrypoint.event.EventManagerImpl;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
@@ -29,24 +27,52 @@ import com.google.common.base.Throwables;
 import com.google.common.eventbus.Subscribe;
 import org.junit.Test;
 
-import static java.util.Collections.emptyList;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 public class EventManagerImplTest
 {
   @Test
-  public void dispatchOrder() {
-    EventManager underTest = new EventManagerImpl(newEventExecutor(), emptyList());
+  public void dispatchOrder() throws Exception {
+    EventManagerImpl underTest = new EventManagerImpl(newEventExecutor());
+    underTest.start();
     ReentrantHandler handler = new ReentrantHandler(underTest);
 
     underTest.register(handler);
     underTest.post("a string");
 
     assertThat(handler.firstCalled, is("handle2"));
+  }
+
+  @Test
+  public void ignoresEventsPostedBeforeStarted() {
+    EventManagerImpl underTest = new EventManagerImpl(newEventExecutor());
+    ReentrantHandler handler = new ReentrantHandler(underTest);
+    underTest.register(handler);
+
+    // EventManager not started (pre-EVENTS): the post must be dropped without delivery and without throwing
+    underTest.post("a string");
+
+    assertThat(handler.firstCalled, is(nullValue()));
+  }
+
+  @Test
+  public void ignoresEventsPostedAfterStopped() throws Exception {
+    EventManagerImpl underTest = new EventManagerImpl(newEventExecutor());
+    underTest.start();
+    ReentrantHandler handler = new ReentrantHandler(underTest);
+    underTest.register(handler);
+
+    underTest.stop();
+
+    // After shutdown the manager is no longer started: the post must be dropped without delivery or throwing
+    underTest.post("a string");
+
+    assertThat(handler.firstCalled, is(nullValue()));
   }
 
   private static class ReentrantHandler
@@ -78,7 +104,8 @@ public class EventManagerImplTest
   @Test
   public void asyncInheritsIsReplicating() throws Exception {
     EventExecutor executor = newEventExecutor();
-    EventManager underTest = new EventManagerImpl(executor, emptyList());
+    EventManagerImpl underTest = new EventManagerImpl(executor);
+    underTest.start();
     AsyncReentrantHandler handler = new AsyncReentrantHandler(underTest);
     underTest.register(handler);
 
@@ -145,7 +172,8 @@ public class EventManagerImplTest
   @Test
   public void singleThreadedOnShutdown() throws Exception {
     EventExecutor executor = newEventExecutor();
-    EventManager underTest = new EventManagerImpl(executor, emptyList());
+    EventManagerImpl underTest = new EventManagerImpl(executor);
+    underTest.start();
     AsyncHandler handler = new AsyncHandler();
     underTest.register(handler);
 

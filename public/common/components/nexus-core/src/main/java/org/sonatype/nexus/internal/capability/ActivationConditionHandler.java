@@ -43,6 +43,10 @@ public class ActivationConditionHandler
 
   private Condition activationCondition;
 
+  private Condition capabilityActivationCondition;
+
+  private Condition nexusActiveCondition;
+
   @Autowired
   public ActivationConditionHandler(
       final EventManager eventManager,
@@ -64,6 +68,14 @@ public class ActivationConditionHandler
     if (event.getCondition() == activationCondition) {
       reference.activate();
     }
+    else if (reference.hasFailure() && isRecoveryTrigger(event.getCondition())) {
+      reference.resetFailure();
+    }
+  }
+
+  private boolean isRecoveryTrigger(final Condition condition) {
+    return (capabilityActivationCondition != null && condition == capabilityActivationCondition)
+        || (nexusActiveCondition != null && condition == nexusActiveCondition);
   }
 
   @AllowConcurrentEvents
@@ -77,14 +89,15 @@ public class ActivationConditionHandler
   ActivationConditionHandler bind() {
     if (activationCondition == null) {
       try {
-        Condition capabilityActivationCondition = reference.capability().activationCondition();
+        capabilityActivationCondition = reference.capability().activationCondition();
         if (capabilityActivationCondition == null) {
           capabilityActivationCondition = conditions.always("Capability has no activation condition");
         }
+        nexusActiveCondition = conditions.nexus().active();
         activationCondition = conditions.logical()
             .and(
                 capabilityActivationCondition,
-                conditions.nexus().active(),
+                nexusActiveCondition,
                 conditions.capabilities().capabilityHasNoFailures(),
                 conditions.capabilities().capabilityHasNoDuplicates());
         if (activationCondition instanceof CapabilityContextAware) {
@@ -92,6 +105,8 @@ public class ActivationConditionHandler
         }
       }
       catch (Exception e) {
+        capabilityActivationCondition = null;
+        nexusActiveCondition = null;
         activationCondition = conditions.never("Failed to determine activation condition");
         log.error(
             "Could not get activation condition from capability {} ({}). Considering it as non activatable",
@@ -108,6 +123,8 @@ public class ActivationConditionHandler
       eventManager.unregister(this);
       activationCondition.release();
       activationCondition = null;
+      capabilityActivationCondition = null;
+      nexusActiveCondition = null;
     }
     return this;
   }

@@ -73,7 +73,7 @@ export interface EntityTableProps<T> {
   clickable?: boolean;
   /** Make rows focusable as tab stops without making them clickable. Useful for SR users to read row content. */
   focusableRows?: boolean;
-  /** Function returning an aria-label for a row when focusableRows is true. Falls back to the row key. */
+  /** Function returning an aria-label for a row. When provided, wins over the default `View ${rowKey}` on clickable rows and supplies the label on focusable non-clickable rows. */
   getRowAriaLabel?: (item: T) => string;
   /** Aria label for the table */
   ariaLabel?: string;
@@ -207,7 +207,7 @@ export function EntityTable<T>({
   }
 
   return (
-    <Table.Root className={`entity-table ${className}`} aria-label={ariaLabel}>
+    <Table.Root variant="surface" className={`entity-table ${className}`} aria-label={ariaLabel}>
       <Table.Header>
         <Table.Row>
           {columns.map((column) => {
@@ -251,7 +251,7 @@ export function EntityTable<T>({
           const isRowClickable = clickable && onRowClick;
           const isRowFocusable = !isRowClickable && focusableRows;
           const rowAriaLabel = isRowClickable
-            ? `View ${key}`
+            ? (getRowAriaLabel ? getRowAriaLabel(item) : `View ${key}`)
             : isRowFocusable && getRowAriaLabel
               ? getRowAriaLabel(item)
               : undefined;

@@ -19,6 +19,10 @@ import { TasksList } from '../TasksList';
 import { useTasksApi } from '../useTasksApi';
 import { Task } from '../types';
 
+// TasksList imports ExtJS from the relative interface, which delegates to
+// window.NX.Permissions.check (reset to return true before each test by __jest__/setup.js).
+const mockCheckPermission = (global as any).NX.Permissions.check as jest.Mock;
+
 jest.mock('../useTasksApi');
 const mockedUseTasksApi = useTasksApi as jest.MockedFunction<typeof useTasksApi>;
 
@@ -187,6 +191,8 @@ describe('TasksList', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default to all permissions granted; individual tests override per-permission.
+    mockCheckPermission.mockReturnValue(true);
     mockedUseTasksApi.mockReturnValue(defaultMockApi);
   });
 
@@ -334,6 +340,30 @@ describe('TasksList', () => {
       await waitFor(() => {
         expect(screen.getByLabelText('Stop Index Task')).toBeInTheDocument();
       });
+    });
+
+    // NEXUS-54212: the Stop button must respect nexus:tasks:stop, which is distinct
+    // from the nexus:tasks:start permission that gates Run (matches Classic).
+    it('hides the Stop button when the user lacks nexus:tasks:stop (even with start)', async () => {
+      mockCheckPermission.mockImplementation((perm: string) => perm !== 'nexus:tasks:stop');
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Run Cleanup Task')).toBeInTheDocument();
+      });
+      expect(screen.queryByLabelText('Stop Index Task')).not.toBeInTheDocument();
+    });
+
+    it('hides the Run button when the user lacks nexus:tasks:start (even with stop)', async () => {
+      mockCheckPermission.mockImplementation((perm: string) => perm !== 'nexus:tasks:start');
+
+      renderWithTheme(<TasksList {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Stop Index Task')).toBeInTheDocument();
+      });
+      expect(screen.queryByLabelText('Run Cleanup Task')).not.toBeInTheDocument();
     });
 
     it('renders Delete button for all tasks', async () => {

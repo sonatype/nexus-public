@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef, useEffect } from 'react';
 import { useForm } from '../../../../../../interface/form';
 import { useToast } from '../../../../shared';
 import { createLdapFormMachine } from './ldapFormMachine';
@@ -20,6 +20,7 @@ import { LdapServer, LdapFormData, LdapSchemaTemplate } from './types';
 export interface UseLdapFormOptions {
   serverId?: string;
   server?: LdapServer | null;
+  existingNames?: string[];
   onSave?: (data: LdapFormData) => Promise<void>;
   onCancel: () => void;
   createServer: (data: LdapFormData) => Promise<LdapServer>;
@@ -47,6 +48,7 @@ export interface UseLdapFormReturn {
 export function useLdapForm({
   serverId,
   server,
+  existingNames,
   onSave,
   onCancel,
   createServer,
@@ -55,9 +57,19 @@ export function useLdapForm({
   const toast = useToast();
   const isCreate = !(serverId || server);
 
-  // Create the form machine - memoized based on serverId and server
+  // Mutable ref so the machine's validate action always sees the latest list
+  // without needing to recreate the machine (which would reset form state).
+  const existingNamesRef = useRef<string[]>(existingNames ?? []);
+  useEffect(() => {
+    existingNamesRef.current = existingNames ?? [];
+  }, [existingNames]);
+
+  // Create the form machine - memoized based on serverId and server.
+  // existingNamesRef intentionally omitted from deps: it's a stable object
+  // whose .current is kept up-to-date by the effect above.
   const machine = useMemo(
-    () => createLdapFormMachine(serverId, server),
+    () => createLdapFormMachine(serverId, server, existingNamesRef),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable ref, kept current by effect above
     [serverId, server]
   );
 

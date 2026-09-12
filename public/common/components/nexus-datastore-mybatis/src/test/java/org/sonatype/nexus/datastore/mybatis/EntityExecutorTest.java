@@ -15,6 +15,7 @@ package org.sonatype.nexus.datastore.mybatis;
 import java.sql.SQLException;
 
 import org.sonatype.nexus.datastore.api.DuplicateKeyException;
+import org.sonatype.nexus.datastore.api.ForeignKeyViolationException;
 import org.sonatype.nexus.datastore.api.SerializedAccessException;
 
 import org.apache.ibatis.executor.Executor;
@@ -49,9 +50,11 @@ public class EntityExecutorTest
     underTest.commit(true);
     verify(delegate).commit(true);
 
-    doThrow(duplicateKeyException(), serializedAccessException(), missingStateException()).when(delegate).commit(true);
+    doThrow(duplicateKeyException(), serializedAccessException(), foreignKeyViolationException(),
+        missingStateException()).when(delegate).commit(true);
     assertThrows(DuplicateKeyException.class, () -> underTest.commit(true));
     assertThrows(SerializedAccessException.class, () -> underTest.commit(true));
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.commit(true));
     assertThrows(SQLException.class, () -> underTest.commit(true));
   }
 
@@ -61,9 +64,10 @@ public class EntityExecutorTest
     verify(delegate).flushStatements();
 
     when(delegate.flushStatements()).thenThrow(duplicateKeyException(), serializedAccessException(),
-        missingStateException());
+        foreignKeyViolationException(), missingStateException());
     assertThrows(DuplicateKeyException.class, () -> underTest.flushStatements());
     assertThrows(SerializedAccessException.class, () -> underTest.flushStatements());
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.flushStatements());
     assertThrows(SQLException.class, () -> underTest.flushStatements());
   }
 
@@ -73,9 +77,10 @@ public class EntityExecutorTest
     verify(delegate).query(null, null, null, null);
 
     when(delegate.query(null, null, null, null)).thenThrow(duplicateKeyException(), serializedAccessException(),
-        missingStateException());
+        foreignKeyViolationException(), missingStateException());
     assertThrows(DuplicateKeyException.class, () -> underTest.query(null, null, null, null));
     assertThrows(SerializedAccessException.class, () -> underTest.query(null, null, null, null));
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.query(null, null, null, null));
     assertThrows(SQLException.class, () -> underTest.query(null, null, null, null));
   }
 
@@ -85,9 +90,10 @@ public class EntityExecutorTest
     verify(delegate).query(null, null, null, null, null, null);
 
     when(delegate.query(null, null, null, null, null, null)).thenThrow(duplicateKeyException(),
-        serializedAccessException(), missingStateException());
+        serializedAccessException(), foreignKeyViolationException(), missingStateException());
     assertThrows(DuplicateKeyException.class, () -> underTest.query(null, null, null, null, null, null));
     assertThrows(SerializedAccessException.class, () -> underTest.query(null, null, null, null, null, null));
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.query(null, null, null, null, null, null));
     assertThrows(SQLException.class, () -> underTest.query(null, null, null, null, null, null));
   }
 
@@ -97,9 +103,10 @@ public class EntityExecutorTest
     verify(delegate).queryCursor(null, null, null);
 
     when(delegate.queryCursor(null, null, null)).thenThrow(duplicateKeyException(), serializedAccessException(),
-        missingStateException());
+        foreignKeyViolationException(), missingStateException());
     assertThrows(DuplicateKeyException.class, () -> underTest.queryCursor(null, null, null));
     assertThrows(SerializedAccessException.class, () -> underTest.queryCursor(null, null, null));
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.queryCursor(null, null, null));
     assertThrows(SQLException.class, () -> underTest.queryCursor(null, null, null));
   }
 
@@ -108,10 +115,13 @@ public class EntityExecutorTest
     underTest.rollback(true);
     verify(delegate).rollback(true);
 
-    doThrow(duplicateKeyException(), serializedAccessException(), missingStateException()).when(delegate)
-        .rollback(true);
+    doThrow(duplicateKeyException(), serializedAccessException(), foreignKeyViolationException(),
+        missingStateException())
+            .when(delegate)
+            .rollback(true);
     assertThrows(DuplicateKeyException.class, () -> underTest.rollback(true));
     assertThrows(SerializedAccessException.class, () -> underTest.rollback(true));
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.rollback(true));
     assertThrows(SQLException.class, () -> underTest.rollback(true));
   }
 
@@ -122,9 +132,10 @@ public class EntityExecutorTest
     verify(delegate).update(ms, null);
 
     when(delegate.update(ms, null)).thenThrow(duplicateKeyException(), serializedAccessException(),
-        missingStateException());
+        foreignKeyViolationException(), missingStateException());
     assertThrows(DuplicateKeyException.class, () -> underTest.update(ms, null));
     assertThrows(SerializedAccessException.class, () -> underTest.update(ms, null));
+    assertThrows(ForeignKeyViolationException.class, () -> underTest.update(ms, null));
     assertThrows(SQLException.class, () -> underTest.update(ms, null));
   }
 
@@ -134,6 +145,10 @@ public class EntityExecutorTest
 
   private static SQLException serializedAccessException() {
     return new SQLException("Isolation", SerializedAccessException.SQL_STATE);
+  }
+
+  private static SQLException foreignKeyViolationException() {
+    return new SQLException("Foreign key violation", ForeignKeyViolationException.SQL_STATE);
   }
 
   private static SQLException missingStateException() {

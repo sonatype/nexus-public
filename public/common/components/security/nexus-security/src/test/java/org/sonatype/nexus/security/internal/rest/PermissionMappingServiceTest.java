@@ -93,6 +93,15 @@ class PermissionMappingServiceTest
   }
 
   @Test
+  void testGetPermissionForEndpoint_statusWritableRequiresNoAuth() {
+    // /status/writable is a no-auth health probe — permission must be null so callers
+    // that send credentials are not charged the Shiro realm (bcrypt) cost on each probe
+    String permission = underTest.getPermissionForEndpoint("/service/rest/v1/status/writable", "GET");
+
+    assertThat(permission, is(nullValue()));
+  }
+
+  @Test
   void testGetPermissionForEndpoint_normalizesTrailingSlash() {
     String permission = underTest.getPermissionForEndpoint("/service/rest/v1/repositories/", "GET");
 

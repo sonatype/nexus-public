@@ -75,7 +75,7 @@
   }
 
   &__fingerprint {
-    font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+    font-family: var(--font-family-mono);
     color: var(--gray-12, #18181b);
     word-break: break-all;
 

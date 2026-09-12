@@ -16,30 +16,38 @@ import org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusProperties;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEdition;
 import org.sonatype.nexus.bootstrap.entrypoint.edition.NexusEditionSelector;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MutablePropertySources;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.bootstrap.entrypoint.configuration.NexusPropertiesVerifier.COMMUNITY;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationLauncherTest
 {
-  private static final String PRO_EDITION_ID = "nexus-professional-edition";
-
   @Mock
   private NexusEditionSelector nexusEditionSelector;
 
@@ -53,18 +61,18 @@ class ApplicationLauncherTest
   private NexusProperties nexusProperties;
 
   @Mock
-  private NexusEdition communityEdition;
-
-  @Mock
   private NexusEdition proEdition;
 
   private ApplicationLauncher applicationLauncher;
 
   private ConfigurableConversionService conversionService;
 
+  private Logger launcherLogger;
+
+  private ListAppender<ILoggingEvent> logAppender;
+
   @BeforeEach
   void setUp() {
-    // Mock the Spring environment
     ConfigurableEnvironment environment = mock(ConfigurableEnvironment.class);
     MutablePropertySources propertySources = new MutablePropertySources();
     conversionService = mock(ConfigurableConversionService.class);
@@ -78,63 +86,38 @@ class ApplicationLauncherTest
         springComponentScan,
         nexusProperties);
 
-    // Setup mock editions - use lenient() since not all tests use all editions
-    lenient().when(communityEdition.getId()).thenReturn(COMMUNITY);
-    lenient().when(communityEdition.getShortName()).thenReturn("COMMUNITY");
-    lenient().when(proEdition.getId()).thenReturn(PRO_EDITION_ID);
     lenient().when(proEdition.getShortName()).thenReturn("PRO");
+
+    launcherLogger = (Logger) LoggerFactory.getLogger(ApplicationLauncher.class);
+    logAppender = new ListAppender<>();
+    logAppender.start();
+    launcherLogger.addAppender(logAppender);
+  }
+
+  @AfterEach
+  void tearDown() {
+    launcherLogger.detachAppender(logAppender);
   }
 
   @Test
-  void initialize_WithCommunityEdition_WhenAnalyticsDisabled_EnforcesAnalytics() {
-    when(nexusEditionSelector.getCurrent()).thenReturn(communityEdition);
+  void initialize_WhenAnalyticsSet_LogsDeprecation() {
+    when(nexusEditionSelector.getCurrent()).thenReturn(proEdition);
     when(nexusProperties.getProperty("nexus.analytics.enabled")).thenReturn("false");
 
     applicationLauncher.initialize();
 
-    verify(nexusProperties).enforceCommunityEditionAnalytics();
+    assertThat(logAppender.list, hasItem(warnLogWithMessage("nexus.analytics.enabled")));
+    assertThat(logAppender.list, hasItem(warnLogWithMessage("deprecated and has no effect")));
   }
 
   @Test
-  void initialize_WithCommunityEdition_WhenAnalyticsEnabled_StillEnforcesAnalytics() {
-    when(nexusEditionSelector.getCurrent()).thenReturn(communityEdition);
-    when(nexusProperties.getProperty("nexus.analytics.enabled")).thenReturn("true");
-
-    applicationLauncher.initialize();
-
-    verify(nexusProperties).enforceCommunityEditionAnalytics();
-  }
-
-  @Test
-  void initialize_WithCommunityEdition_WhenAnalyticsUnset_EnforcesAnalytics() {
-    when(nexusEditionSelector.getCurrent()).thenReturn(communityEdition);
+  void initialize_WhenAnalyticsUnset_NoDeprecationWarning() {
+    when(nexusEditionSelector.getCurrent()).thenReturn(proEdition);
     when(nexusProperties.getProperty("nexus.analytics.enabled")).thenReturn(null);
 
     applicationLauncher.initialize();
 
-    verify(nexusProperties).enforceCommunityEditionAnalytics();
-  }
-
-  @Test
-  void initialize_WithProEdition_DoesNotEnforceAnalytics() {
-    when(nexusEditionSelector.getCurrent()).thenReturn(proEdition);
-    // Use lenient() because Pro Edition doesn't check analytics property at all
-    lenient().when(nexusProperties.getProperty("nexus.analytics.enabled")).thenReturn("false");
-
-    applicationLauncher.initialize();
-
-    verify(nexusProperties, never()).enforceCommunityEditionAnalytics();
-  }
-
-  @Test
-  void initialize_WithProEdition_WhenAnalyticsEnabled_DoesNotEnforceAnalytics() {
-    when(nexusEditionSelector.getCurrent()).thenReturn(proEdition);
-    // Use lenient() because Pro Edition doesn't check analytics property at all
-    lenient().when(nexusProperties.getProperty("nexus.analytics.enabled")).thenReturn("true");
-
-    applicationLauncher.initialize();
-
-    verify(nexusProperties, never()).enforceCommunityEditionAnalytics();
+    assertThat(warnEvents(), is(empty()));
   }
 
   @Test
@@ -144,5 +127,17 @@ class ApplicationLauncherTest
     applicationLauncher.initialize();
 
     verify(conversionService).addConverter(eq(NexusEdition.class), eq(String.class), any());
+  }
+
+  private static org.hamcrest.Matcher<ILoggingEvent> warnLogWithMessage(final String messageFragment) {
+    return org.hamcrest.Matchers.allOf(
+        hasProperty("level", is(Level.WARN)),
+        hasProperty("formattedMessage", containsString(messageFragment)));
+  }
+
+  private java.util.List<ILoggingEvent> warnEvents() {
+    return logAppender.list.stream()
+        .filter(e -> e.getLevel() == Level.WARN)
+        .toList();
   }
 }

@@ -75,17 +75,38 @@ export function CertificateViewDialog({ remoteUrl, onClose }: CertificateViewDia
     setLoading(true);
     setError(null);
 
-    if (!remoteUrl.startsWith('https://')) {
+    // NEXUS-54266: parse before gating on the scheme. A case-sensitive
+    // `startsWith('https://')` rejected "HTTPS://host" even though callers gate the
+    // trigger on ValidationUtils.isSecureUrl, whose regex is case-insensitive — so
+    // the button was enabled but the dialog bailed out here. `new URL` lower-cases
+    // the scheme, making the comparison below case-insensitive for free.
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(remoteUrl);
+    } catch {
+      setError(UIStrings.CERTIFICATE.DIALOG.httpsOnlyError);
+      setLoading(false);
+      return;
+    }
+
+    if (parsedUrl.protocol !== 'https:') {
       setError(UIStrings.CERTIFICATE.DIALOG.httpsOnlyError);
       setLoading(false);
       return;
     }
 
     try {
-      const { hostname, port, protocol } = new URL(remoteUrl);
+      const { hostname, port } = parsedUrl;
       const params = new URLSearchParams({ host: hostname });
       if (port) params.append('port', port);
-      if (protocol) params.append('protocolHint', protocol);
+      // Send the bare scheme ("https"), not URL.protocol ("https:").
+      // CertificateRetriever compares with `"https".equalsIgnoreCase(hint)`, so a
+      // trailing colon never matched: it fell through to a raw-socket attempt and,
+      // because the hint was non-null, returned null instead of retrying over the
+      // proxy-aware HTTPS client. That broke retrieval wherever an outbound proxy
+      // is required. The guard above means this is always "https".
+      const scheme = parsedUrl.protocol.replace(/:$/, '');
+      if (scheme) params.append('protocolHint', scheme);
 
       const [certResponse, truststoreResponse] = await Promise.all([
         Axios.get<CertificateDetails>(`${SSL_RETRIEVE_URL}?${params.toString()}`),

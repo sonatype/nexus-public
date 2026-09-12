@@ -379,6 +379,93 @@ describe('useUsersApi', () => {
     });
   });
 
+  describe('patchUserStatus', () => {
+    const baseUser = {
+      userId: 'jsmith',
+      realm: 'default',
+      source: 'default',
+      firstName: 'John',
+      lastName: 'Smith',
+      emailAddress: 'jsmith@example.com',
+      status: 'active' as const,
+      roles: ['nx-admin'],
+    };
+
+    it('sends a full PUT with only status flipped, preserving the other server-truth fields', async () => {
+      mockPut.mockResolvedValue({
+        userId: 'jsmith',
+        firstName: 'John',
+        lastName: 'Smith',
+        emailAddress: 'jsmith@example.com',
+        source: 'default',
+        status: 'disabled',
+        roles: ['nx-admin'],
+      });
+
+      const { result } = renderHook(() => useUsersApi());
+
+      await act(async () => {
+        await result.current.patchUserStatus(baseUser, false);
+      });
+
+      expect(mockPut).toHaveBeenCalledWith(
+        '/service/rest/v1/security/users/jsmith',
+        expect.objectContaining({
+          userId: 'jsmith',
+          firstName: 'John',
+          lastName: 'Smith',
+          emailAddress: 'jsmith@example.com',
+          status: 'disabled',
+          roles: ['nx-admin'],
+        }),
+      );
+    });
+
+    it('routes the PUT through the external self-hosted branch when the user source is not local', async () => {
+      const ldapUser = { ...baseUser, source: 'LDAP', realm: 'LDAP' };
+      mockGetValue.mockImplementation((key: string) =>
+        key === 'isCloud' ? false : undefined,
+      );
+      mockPut.mockResolvedValue({
+        userId: 'jsmith',
+        firstName: 'John',
+        lastName: 'Smith',
+        emailAddress: 'jsmith@example.com',
+        source: 'LDAP',
+        status: 'active',
+        roles: ['nx-admin'],
+      });
+
+      const { result } = renderHook(() => useUsersApi());
+
+      await act(async () => {
+        await result.current.patchUserStatus(ldapUser, true);
+      });
+
+      const call = mockPut.mock.calls[0];
+      expect(call[0]).toContain('/service/rest/v1/security/users/jsmith');
+      expect(call[0]).toContain('source=LDAP');
+      expect(call[1]).toEqual(
+        expect.objectContaining({
+          status: 'active',
+          roles: ['nx-admin'],
+        }),
+      );
+    });
+
+    it('surfaces API errors through the shared error state', async () => {
+      mockPut.mockRejectedValue({
+        response: { data: { message: 'User modification failed' } },
+      });
+
+      const { result } = renderHook(() => useUsersApi());
+
+      await expect(
+        result.current.patchUserStatus(baseUser, false),
+      ).rejects.toThrow('User modification failed');
+    });
+  });
+
   describe('deleteUser', () => {
     it('deletes user successfully', async () => {
       mockDelete.mockResolvedValue(undefined);

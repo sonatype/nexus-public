@@ -495,7 +495,7 @@ public abstract class ProxyFacetSupport
    * Attempt to retrieve from the remote using proxy co-operation
    */
   protected Content get(final Context context, @Nullable final Content staleContent) throws IOException {
-    return proxyCooperation.on(() -> doGet(context, staleContent))
+    Content content = proxyCooperation.on(() -> doGet(context, staleContent))
         .checkFunction(() -> {
           Content latestContent = maybeGetCachedContent(context);
           boolean isReplication = PullReplicationSupport.isReplicationRequest(context);
@@ -506,6 +506,34 @@ public abstract class ProxyFacetSupport
           return Optional.empty();
         })
         .cooperate(getRequestKey(context));
+
+    // A HEAD leader returns a header-only payload - it reports the upstream Content-Length but
+    // has no body - which a GET can never write, failing the response with
+    // "written 0 < N content-length". Such a GET must fetch the body itself. The key is left
+    // method-insensitive on purpose so GET-to-GET cooperation keeps shielding the remote.
+    if (isHeaderOnlyPayloadUnusableFor(context, content)) {
+      log.debug("Discarding header-only payload from a HEAD-led cooperation; re-fetching for {} {}",
+          context.getRequest().getAction(), getUrl(context));
+      // Not closed deliberately: this instance is shared with the HEAD thread that led the
+      // cooperation and may still be serving it. HeaderOnlyPayload holds no body to release
+      // (its close() only consumes an entity that is null by construction), so dropping the
+      // reference leaks nothing.
+      return doGet(context, staleContent);
+    }
+
+    return content;
+  }
+
+  /**
+   * A header-only payload carries a Content-Length with an empty body, which only a HEAD response
+   * can honour. Any other method receiving one must fetch the content itself.
+   *
+   * @see HeaderOnlyPayload
+   */
+  private boolean isHeaderOnlyPayloadUnusableFor(final Context context, @Nullable final Content content) {
+    return content != null
+        && content.getPayload() instanceof HeaderOnlyPayload
+        && !isHeadRequest(context);
   }
 
   /**
@@ -698,6 +726,32 @@ public abstract class ProxyFacetSupport
 
     // Post event to synchronize cache token across nodes
     postCacheTokenEvent(getRepository(), cacheControllerHolder.getContentCacheController().current().getCacheToken());
+  }
+
+  @Override
+  public boolean hasContentFor(final Context context) {
+    // Calls getCachedContent directly rather than delegating to maybeGetCachedContent, which sets
+    // {@link #MISSING_BLOB_SKIP_NEGATIVE_CACHE} on the context when a MissingBlobException is caught.
+    // That flag is read by NegativeCacheHandler.skipNegativeCacheForMissingBlob and suppresses NFC caching
+    // for the current request; if it fired from a read-only probe it would permanently defeat NFC's
+    // upstream-shielding role for that path, because subsequent 404 responses could never be NFC-cached.
+    // Probe paths must therefore stay free of fetch-path side effects.
+    try {
+      return getCachedContent(context) != null;
+    }
+    catch (MissingBlobException e) {
+      // Blob metadata exists but the blob is missing: from the caller's perspective this is "no content locally
+      // available". Do NOT set MISSING_BLOB_SKIP_NEGATIVE_CACHE — this is a probe, not a fetch.
+      return false;
+    }
+    catch (IOException | RuntimeException e) {
+      // Best-effort: any lookup failure is treated as "not locally available" so callers safely fall through
+      // to their existing behavior. Log at WARN so a genuine storage regression is visible in operator logs
+      // rather than silently degrading callers to stale-NFC behavior.
+      log.warn("hasContentFor lookup failed for {} — treating as no local content on this node",
+          context.getRequest().getPath(), e);
+      return false;
+    }
   }
 
   private Content maybeGetCachedContent(final Context context) throws IOException {

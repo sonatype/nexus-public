@@ -487,6 +487,36 @@ describe('DetailPanel', () => {
       expect(onDeleted).toHaveBeenCalled();
     });
 
+    it('deletes ONLY the asset (never the component) for an asset node, even when componentData is loaded', async () => {
+      // Regression (NEXUS-54172): the asset detail panel also receives componentData (to show component
+      // info). The confirm handler must key off node.type and call deleteAsset — NOT fall through to the
+      // componentData branch and cascade-delete the whole component. For multi-asset components (e.g. a
+      // Terraform provider version = one zip per OS/arch) that wrongly removed every sibling platform.
+      const onDeleted = jest.fn();
+      (deleteAsset as jest.Mock).mockResolvedValueOnce(undefined);
+
+      renderWithTheme(
+        <DetailPanel
+          node={mockAssetNode}
+          repositoryName={repositoryName}
+          assetData={mockAssetData}
+          componentData={mockComponentData}
+          canDelete={true}
+          onDeleted={onDeleted}
+        />
+      );
+
+      const deleteButton = screen.getByRole('button', { name: /delete asset/i });
+      await userEvent.click(deleteButton);
+      const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
+      await userEvent.click(confirmButton);
+
+      await waitFor(() => {
+        expect(deleteAsset).toHaveBeenCalledWith(mockAssetData.id, repositoryName);
+      });
+      expect(deleteComponent).not.toHaveBeenCalled();
+    });
+
     it('shows error toast and refreshes tree when component delete fails', async () => {
       const onDeleted = jest.fn();
       (deleteComponent as jest.Mock).mockRejectedValueOnce(

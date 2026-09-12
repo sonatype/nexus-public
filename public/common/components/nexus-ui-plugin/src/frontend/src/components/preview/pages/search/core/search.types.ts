@@ -36,21 +36,6 @@
 export type GAFormat = 'maven';
 
 // =============================================================================
-// VERSION STATUS
-// =============================================================================
-
-/**
- * Version status indicators.
- * Matches UX requirements for version badges.
- */
-export type VersionStatus = 
-  | 'recommended'     // Green badge - recommended version
-  | 'quarantined'     // Yellow badge - quarantined by policy
-  | 'malware'         // Red badge - confirmed malware
-  | 'not-recommended' // Gray badge - not recommended (outdated, vulnerable)
-  | 'none';           // No badge - standard version
-
-// =============================================================================
 // SEARCH RESULTS (GA-Level Aggregated)
 // =============================================================================
 
@@ -142,11 +127,6 @@ export interface GADetail {
   readonly description?: string;
 
   /**
-   * Project URL from POM.
-   */
-  readonly projectUrl?: string;
-
-  /**
    * License identifier.
    */
   readonly license?: string;
@@ -171,11 +151,6 @@ export interface GARepository {
    * Repository name.
    */
   readonly name: string;
-
-  /**
-   * Repository format (always 'maven2' for Maven).
-   */
-  readonly format: string;
 
   /**
    * Repository type.
@@ -206,16 +181,6 @@ export interface GAVersion {
    * Repositories containing this version.
    */
   readonly repositories: readonly string[];
-
-  /**
-   * Version status indicator.
-   */
-  readonly status: VersionStatus;
-
-  /**
-   * Status reason (e.g., "CVE-2021-12345" for not-recommended).
-   */
-  readonly statusReason?: string;
 }
 
 // =============================================================================
@@ -273,9 +238,13 @@ export interface GAAsset {
   readonly contentType: string;
 
   /**
-   * ISO 8601 timestamp of last modified.
+   * ISO 8601 timestamp of last modified, or null when the asset carries none.
+   *
+   * Nullable rather than '': `new Date('')` is an Invalid Date that throws nothing, so an
+   * empty-string sentinel reaches the renderer and prints the literal "Invalid Date", and
+   * reaches comparators as NaN. Absence has to be representable to be handled.
    */
-  readonly lastModified: string;
+  readonly lastModified: string | null;
 
   /**
    * Checksum information.
@@ -550,5 +519,54 @@ export interface GADetailState {
   readonly error?: string;
 }
 
+// =============================================================================
+// COMPONENT VERSIONS (Paginated)
+// =============================================================================
 
+/** Sort keys accepted by GET /service/rest/v1/search/versions. */
+export type ComponentVersionSort = 'version' | 'lastUpdated' | 'repositories';
 
+/** A request for one page of a component's distinct versions. `page` is 0-based. */
+export interface ComponentVersionsRequest {
+  readonly format: string;
+  readonly group?: string;
+  readonly name: string;
+  readonly versionFilter?: string;
+  readonly page: number;
+  readonly size: number;
+  readonly sort: ComponentVersionSort;
+  readonly direction: 'asc' | 'desc';
+}
+
+/** One page of a component's distinct versions. `page` is 0-based. */
+export interface ComponentVersionsPage {
+  readonly items: readonly GAVersion[];
+  readonly total: number;
+  readonly page: number;
+  readonly size: number;
+}
+
+// =============================================================================
+// COMPONENT VERSION DETAIL (Files tab, single version)
+// =============================================================================
+
+/**
+ * A request for one version's detail. `version` is `''` for versionless formats
+ * (e.g. raw); the API layer omits the filter in that case rather than sending an empty one.
+ */
+export interface ComponentVersionDetailRequest {
+  readonly format: string;
+  readonly group?: string;
+  readonly name: string;
+  readonly version: string;
+}
+
+/**
+ * One version's assets, the repositories holding it, and its most recent asset timestamp.
+ * `lastUpdated` is null when no asset carries a timestamp — never a substituted "now".
+ */
+export interface ComponentVersionDetail {
+  readonly assets: readonly GAAsset[];
+  readonly repositories: readonly string[];
+  readonly lastUpdated: string | null;
+}

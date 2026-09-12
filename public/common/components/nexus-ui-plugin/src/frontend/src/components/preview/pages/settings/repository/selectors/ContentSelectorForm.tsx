@@ -42,6 +42,13 @@ interface ContentSelectorFormProps {
   selector?: ContentSelector;
   isCreate: boolean;
   canDelete?: boolean;
+  /**
+   * When false, hides the Save button so a user without nexus:selectors:update
+   * cannot submit edits (NEXUS-54212). The route only requires nexus:selectors:read,
+   * so a read-only user can open the detail. Defaults to true; create mode is gated
+   * on nexus:selectors:create at navigation.
+   */
+  canEdit?: boolean;
   onCancel: () => void;
   onComplete?: () => void;
   loading?: boolean;
@@ -64,6 +71,7 @@ export function ContentSelectorForm({
   selector,
   isCreate,
   canDelete,
+  canEdit = true,
   onCancel,
   onComplete,
   loading = false,
@@ -167,7 +175,7 @@ export function ContentSelectorForm({
   return (
     <Box className="content-selector-form">
         <SettingsForm
-          onSubmit={() => form.submit()}
+          onSubmit={canEdit ? () => form.submit() : undefined}
           onCancel={onCancel}
           onDiscardConfirm={handleDiscardConfirm}
           loading={isSaving || isDeleting || loading}
@@ -186,11 +194,11 @@ export function ContentSelectorForm({
           data-valid={!form.hasValidationErrors ? 'true' : 'false'}
           aria-busy={loading}
           footerExtra={
-            !isCreate && canDelete ? (
+            !isCreate ? (
               <SettingsButton
                 variant="danger"
                 onClick={() => form.requestDelete()}
-                disabled={isSaving || isDeleting || loading || attachedPrivileges.length > 0}
+                disabled={!canDelete || isSaving || isDeleting || loading || attachedPrivileges.length > 0}
                 icon={Trash2}
                 testId="form-delete"
                 title={attachedPrivileges.length > 0 ? `Cannot delete: used by ${attachedPrivileges.length} privilege${attachedPrivileges.length === 1 ? '' : 's'}` : undefined}

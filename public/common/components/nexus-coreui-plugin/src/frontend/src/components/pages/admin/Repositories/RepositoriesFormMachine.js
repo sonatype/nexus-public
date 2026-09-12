@@ -35,10 +35,9 @@ export const saveRepositoryUrl = (format, type, name) =>
   )}/${name ? encodeURIComponent(name) : ''}`;
 export const getRepositoryUrl = (name) => INTERNAL.REPOSITORIES_REPOSITORY + name;
 export const deleteRepositoryUrl = (name) => PUBLIC.REPOSITORIES + name;
-export const getEvaluationSettingsUrl = (repositoryId) =>
-  `/service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
-export const saveEvaluationSettingsUrl = (repositoryId) =>
-  `/service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
+// No leading slash — Axios prepends baseURL (which includes the context path).
+export const evaluationSettingsUrl = (repositoryId) =>
+  `service/rest/v1/repositories/${encodeURIComponent(repositoryId)}/evaluation-settings`;
 
 export default FormUtils.buildFormMachine({
   id: 'RepositoriesFormMachine',
@@ -131,7 +130,7 @@ export default FormUtils.buildFormMachine({
 
         if (response.data.type === 'hosted' && isEvaluationEnabled) {
           try {
-            const evalResponse = await Axios.get(getEvaluationSettingsUrl(response.data.name));
+            const evalResponse = await Axios.get(evaluationSettingsUrl(response.data.name));
             // Store in attributes.evaluation to match ExtJS structure
             if (!response.data.attributes) {
               response.data.attributes = {};
@@ -200,7 +199,7 @@ export default FormUtils.buildFormMachine({
         const repositoryId = isEdit(pristineData) ? name : repoResponse.data.name;
 
         try {
-          await Axios.put(saveEvaluationSettingsUrl(repositoryId), {
+          await Axios.put(evaluationSettingsUrl(repositoryId), {
             mode: evaluation.mode,
             activityTimeFrame: evaluation.activityTimeFrame || null,
             artifactLatestVersions: evaluation.artifactLatestVersions || null,

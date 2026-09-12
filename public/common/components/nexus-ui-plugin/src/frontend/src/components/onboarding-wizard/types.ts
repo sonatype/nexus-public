@@ -22,10 +22,13 @@ export type WizardStateValue =
   | 'issueOccurred'
   | 'skipped';
 
+export type WizardErrorKind = 'stillRequired' | 'network';
+
 export interface WizardMachineContext {
   steps: OnboardingStep[];
   currentIndex: number;
   errorMessage: string | null;
+  errorKind: WizardErrorKind | null;
 }
 
 export type WizardEvent =

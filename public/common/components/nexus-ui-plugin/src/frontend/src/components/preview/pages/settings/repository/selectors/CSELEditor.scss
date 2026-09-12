@@ -22,7 +22,7 @@
     width: 100%;
     min-height: 100px;
     padding: var(--space-3);
-    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-family: var(--font-family-mono);
     font-size: var(--font-size-2);
     line-height: 1.5;
     color: var(--gray-12);
@@ -99,7 +99,7 @@
   }
 
   &__suggestion-label {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-family: var(--font-family-mono);
   }
 
   &__suggestion-description {

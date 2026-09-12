@@ -102,6 +102,12 @@ export interface RolesListProps {
   onSelect: (roleId: string, mode?: 'profile' | 'edit') => void;
   onDelete?: (roleId: string, roleName?: string) => void;
   onCreate: () => void;
+  /**
+   * When false, hides the row Edit (pencil) action so a user without
+   * nexus:roles:update sees only the read-only View action (NEXUS-54212).
+   * Defaults to true.
+   */
+  canUpdate?: boolean;
   canDelete?: boolean;
 }
 

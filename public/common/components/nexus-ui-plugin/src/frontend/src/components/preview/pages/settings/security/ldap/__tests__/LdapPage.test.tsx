@@ -75,11 +75,12 @@ jest.mock('../LdapList', () => ({
 }));
 
 jest.mock('../LdapForm', () => ({
-  LdapForm: function MockLdapForm({ server, isCreate, onSave, onCancel, onDelete }: any) {
+  LdapForm: function MockLdapForm({ server, isCreate, existingNames, onSave, onCancel, onDelete }: any) {
     return (
       <div data-testid="ldap-form">
         <span>{isCreate ? 'Create LDAP Server' : 'Edit LDAP Server'}</span>
         <span data-testid="ldap-form-server-name">{server?.name ?? 'NONE'}</span>
+        <span data-testid="ldap-form-existing-names">{JSON.stringify(existingNames ?? [])}</span>
         <button data-testid="button-submit" onClick={() => onSave({ name: 'Test Server', host: 'ldap.example.com', port: 389, searchBase: 'dc=example,dc=com', authScheme: 'simple', protocol: 'ldap', userObjectClass: 'inetOrgPerson', userIdAttribute: 'uid', userRealNameAttribute: 'cn', userEmailAddressAttribute: 'mail', ldapGroupsAsRoles: false })}>
           Save
         </button>
@@ -249,6 +250,45 @@ describe('LdapPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('ldap-form')).toBeInTheDocument();
     });
+  });
+
+  it('passes loaded server names as existingNames to LdapForm in create mode (NEXUS-54082)', async () => {
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-list')).toBeInTheDocument();
+    });
+
+    const createButtons = screen.getAllByText('Create LDAP Server');
+    fireEvent.click(createButtons[0]);
+    simulateHashChange('#preview/admin/security/ldap/create');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-form')).toBeInTheDocument();
+    });
+
+    const existingNamesEl = screen.getByTestId('ldap-form-existing-names');
+    const passed = JSON.parse(existingNamesEl.textContent ?? '[]');
+    expect(passed).toEqual(['LDAP Server 1', 'LDAP Server 2']);
+  });
+
+  it('passes other server names as existingNames to LdapForm in edit mode, excluding its own name (NEXUS-54125)', async () => {
+    render(<LdapPage />, { wrapper: TestWrapper });
+
+    await waitFor(() => {
+      expect(screen.getByText('LDAP Server 1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('LDAP Server 1'));
+    simulateHashChange('#preview/admin/security/ldap/LDAP%20Server%201');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ldap-form')).toBeInTheDocument();
+    });
+
+    const existingNamesEl = screen.getByTestId('ldap-form-existing-names');
+    const passed = JSON.parse(existingNamesEl.textContent ?? '[]');
+    expect(passed).toEqual(['LDAP Server 2']);
   });
 
   it('redirects to the list with an error toast when a user without nexus:ldap:create lands directly on the create URL (NEXUS-53627 review fix)', async () => {

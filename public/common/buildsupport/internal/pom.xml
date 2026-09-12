@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.95.4-01</version>
+    <version>3.96.1-01</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-internal</artifactId>
@@ -191,35 +191,6 @@
         <groupId>com.sonatype.insight.scan</groupId>
         <artifactId>insight-scanner-model</artifactId>
         <version>${insight-scanner.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.insight.brain</groupId>
-        <artifactId>nexus-iq-cli</artifactId>
-        <version>2.4.6-01</version>
-        <classifier>core</classifier>
-        <exclusions>
-          <exclusion>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jgit</groupId>
-            <artifactId>org.eclipse.jgit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.sisu</groupId>
-            <artifactId>org.eclipse.sisu.inject</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>

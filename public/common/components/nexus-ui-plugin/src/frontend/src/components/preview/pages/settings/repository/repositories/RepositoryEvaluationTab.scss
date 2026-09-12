@@ -1,0 +1,52 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ */
+
+.repository-evaluation-tab {
+  max-width: 960px;
+
+  &__radio-row {
+    padding: 4px 0;
+
+    // Radix RadioGroup.Item is 16px square; the medium-weight label is 14px / 20px line-height. align="start" puts the radio's top edge at the text top, leaving the radio's optical center ~5px above the text's optical center (measured live: radio centerY=539 vs label centerY=542 + 3px margin baseline). Nudge the radio down by 5px so the two visual centers align across all 3 rows.
+    button[role='radio'] {
+      margin-top: 5px;
+    }
+  }
+
+  &__field-row {
+    border-bottom: 1px solid var(--gray-a4, #e5e7eb);
+
+    &--last {
+      border-bottom: none;
+    }
+  }
+
+  &__error {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--red-a3, #fee2e2);
+    color: var(--red-11, #991b1b);
+  }
+
+  &__success {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--green-a3, #dcfce7);
+    color: var(--green-11, #166534);
+  }
+
+  &__inline-link,
+  &__inline-link:visited,
+  &__inline-link:hover {
+    color: var(--blue-11) !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    gap: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+}

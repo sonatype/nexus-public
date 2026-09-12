@@ -15,6 +15,10 @@ package org.sonatype.nexus.audit.internal.store;
 import java.util.Date;
 import java.util.Map;
 
+import org.sonatype.nexus.audit.AuditData;
+import org.sonatype.nexus.audit.AuditDataRecordedEvent;
+import org.sonatype.nexus.common.event.EventHelper;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,13 +31,11 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.sonatype.nexus.audit.AuditData;
-import org.sonatype.nexus.audit.AuditDataRecordedEvent;
-import org.sonatype.nexus.common.event.EventHelper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -104,82 +106,86 @@ public class AuditEventPersistingSubscriberTest
     verifyNoInteractions(auditEventStore);
   }
 
+  @Test
+  void testBlobStoreEventFiltering() {
+    assertEventPersisted(createBlobstoreAuditData("created"));
+    assertEventPersisted(createBlobstoreAuditData("updated"));
+    assertEventPersisted(createBlobstoreAuditData("deleted"));
+
+    assertEventFiltered(createBlobstoreAuditData("started"));
+    assertEventFiltered(createBlobstoreAuditData("stopped"));
+  }
+
+  @Test
+  void testRepositoryEventFiltering() {
+    assertEventPersisted(createRepositoryAuditData("created"));
+    assertEventPersisted(createRepositoryAuditData("updated"));
+    assertEventPersisted(createRepositoryAuditData("deleted"));
+    assertEventPersisted(createRepositoryAuditData("cacheInvalidated"));
+    assertEventPersisted(createRepositoryAuditData("autoBlockStatus"));
+
+    assertEventFiltered(createRepositoryAuditData("started"));
+    assertEventFiltered(createRepositoryAuditData("restored"));
+    assertEventFiltered(createRepositoryAuditData("destroyed"));
+    assertEventFiltered(createRepositoryAuditData("loaded"));
+    assertEventFiltered(createRepositoryAuditData("stopped"));
+  }
+
   // ===== Task lifecycle event filtering tests =====
 
   @Test
   void testSkipsTaskStartedEvent() {
-    assertTaskLifecycleEventFiltered("started");
+    assertEventFiltered(createTaskAuditData("started"));
   }
 
   @Test
   void testSkipsTaskFinishedEvent() {
-    assertTaskLifecycleEventFiltered("finished");
+    assertEventFiltered(createTaskAuditData("finished"));
   }
 
   @Test
   void testSkipsTaskFailedEvent() {
-    assertTaskLifecycleEventFiltered("failed");
+    assertEventFiltered(createTaskAuditData("failed"));
   }
 
   @Test
   void testSkipsTaskCancelRequestedEvent() {
-    assertTaskLifecycleEventFiltered("cancel-requested");
+    assertEventFiltered(createTaskAuditData("cancel-requested"));
   }
 
   @Test
   void testSkipsTaskCanceledEvent() {
-    assertTaskLifecycleEventFiltered("canceled");
+    assertEventFiltered(createTaskAuditData("canceled"));
   }
 
   @Test
   void testSkipsTaskBlockedEvent() {
-    assertTaskLifecycleEventFiltered("blocked");
+    assertEventFiltered(createTaskAuditData("blocked"));
   }
 
   @Test
   void testSkipsUnregisteredTaskEventType() {
     // TaskStartedRunningEvent has no registerType(...) call in TaskAuditor, so it falls through
     // to Strings2.lower(class.simpleName). The allowlist must skip any type not in {scheduled, deleted}.
-    assertTaskLifecycleEventFiltered("taskstartedrunningevent");
-  }
-
-  private void assertTaskLifecycleEventFiltered(String type) {
-    AuditData auditData = createTaskAuditData(type);
-    try (MockedStatic<EventHelper> eh = Mockito.mockStatic(EventHelper.class)) {
-      eh.when(EventHelper::isReplicating).thenReturn(false);
-      subscriber.on(new AuditDataRecordedEvent(auditData));
-    }
-    verifyNoInteractions(auditEventStore);
+    assertEventFiltered(createTaskAuditData("taskstartedrunningevent"));
   }
 
   // ===== Task configuration events should be persisted =====
 
   @Test
   void testPersistsTaskScheduledEvent() {
-    assertTaskConfigurationEventPersisted("scheduled");
+    assertEventPersisted(createTaskAuditData("scheduled"));
   }
 
   @Test
   void testPersistsTaskDeletedEvent() {
-    assertTaskConfigurationEventPersisted("deleted");
-  }
-
-  private void assertTaskConfigurationEventPersisted(String type) {
-    AuditData auditData = createTaskAuditData(type);
-    try (MockedStatic<EventHelper> eh = Mockito.mockStatic(EventHelper.class)) {
-      eh.when(EventHelper::isReplicating).thenReturn(false);
-      subscriber.on(new AuditDataRecordedEvent(auditData));
-    }
-    verify(auditEventStore).insert(dataCaptor.capture());
-    AuditEventData persisted = dataCaptor.getValue();
-    assertThat(persisted.getDomain(), is("tasks"));
-    assertThat(persisted.getType(), is(type));
+    assertEventPersisted(createTaskAuditData("deleted"));
   }
 
   // ===== Null-type edge case =====
 
   @Test
-  void testSkipsTaskEventWithNullType() {
+  void testSkipsEventWithNullType() {
     // A null type in a policed domain cannot be in the allowlist, so it is filtered.
     AuditData auditData = new AuditData();
     auditData.setDomain("tasks");
@@ -199,14 +205,10 @@ public class AuditEventPersistingSubscriberTest
   // ===== Non-task domains should not be affected by filtering =====
 
   @Test
-  void testPersistsNonTaskEventWithLifecycleTypeName() {
-    // Verify that "started" type is only filtered for tasks domain
-    AuditData auditData = new AuditData();
-    auditData.setDomain("repository");
-    auditData.setType("started"); // Same type name as task lifecycle event
-    auditData.setContext("maven-releases");
-    auditData.setInitiator("admin");
-    auditData.setTimestamp(new Date());
+  void testPersistsFilteredTypeFromOtherDomain() {
+    // Verify that "started" type is not only filtered a different domain
+    AuditData auditData = createRepositoryAuditData("started");
+    auditData.setDomain("some-other-domain");
 
     try (MockedStatic<EventHelper> eh = Mockito.mockStatic(EventHelper.class)) {
       eh.when(EventHelper::isReplicating).thenReturn(false);
@@ -215,13 +217,37 @@ public class AuditEventPersistingSubscriberTest
 
     verify(auditEventStore).insert(dataCaptor.capture());
     AuditEventData persisted = dataCaptor.getValue();
-    assertThat(persisted.getDomain(), is("repository"));
+    assertThat(persisted.getDomain(), is("some-other-domain"));
     assertThat(persisted.getType(), is("started"));
   }
 
   // ===== Helper methods =====
 
-  private AuditData createTaskAuditData(String type) {
+  private static AuditData createBlobstoreAuditData(final String type) {
+    AuditData auditData = new AuditData();
+    auditData.setDomain("blobstore");
+    auditData.setType(type);
+    auditData.setContext("default");
+    auditData.setInitiator("admin");
+    auditData.setNodeId("node-1");
+    auditData.setTimestamp(new Date());
+    auditData.setAttributes(Map.of());
+    return auditData;
+  }
+
+  private static AuditData createRepositoryAuditData(final String type) {
+    AuditData auditData = new AuditData();
+    auditData.setDomain("repository");
+    auditData.setType(type);
+    auditData.setContext("maven-central");
+    auditData.setInitiator("admin");
+    auditData.setNodeId("node-1");
+    auditData.setTimestamp(new Date());
+    auditData.setAttributes(Map.of());
+    return auditData;
+  }
+
+  private static AuditData createTaskAuditData(final String type) {
     AuditData auditData = new AuditData();
     auditData.setDomain("tasks");
     auditData.setType(type);
@@ -234,5 +260,25 @@ public class AuditEventPersistingSubscriberTest
         "currentState", "RUNNING",
         "lastRunState", "OK"));
     return auditData;
+  }
+
+  private void assertEventPersisted(final AuditData auditData) {
+    try (MockedStatic<EventHelper> eh = Mockito.mockStatic(EventHelper.class)) {
+      eh.when(EventHelper::isReplicating).thenReturn(false);
+      subscriber.on(new AuditDataRecordedEvent(auditData));
+    }
+    verify(auditEventStore).insert(dataCaptor.capture());
+    AuditEventData persisted = dataCaptor.getValue();
+    assertThat(persisted.getDomain(), is(auditData.getDomain()));
+    assertThat(persisted.getType(), is(auditData.getType()));
+    clearInvocations(auditEventStore);
+  }
+
+  private void assertEventFiltered(final AuditData auditData) {
+    try (MockedStatic<EventHelper> eh = Mockito.mockStatic(EventHelper.class)) {
+      eh.when(EventHelper::isReplicating).thenReturn(false);
+      subscriber.on(new AuditDataRecordedEvent(auditData));
+    }
+    verifyNoInteractions(auditEventStore);
   }
 }

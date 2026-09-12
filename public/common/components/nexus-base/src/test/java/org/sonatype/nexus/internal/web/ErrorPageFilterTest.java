@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
@@ -67,6 +68,26 @@ public class ErrorPageFilterTest
   public void testDoFilter_eofExceptionRethrown() throws Exception {
     EofException eofException = new EofException("Client disconnected");
     doThrow(eofException).when(filterChain).doFilter(any(), any());
+
+    assertThrows(EofException.class, () -> underTest.doFilter(request, response, filterChain));
+    verifyNoInteractions(response);
+  }
+
+  @Test
+  public void testDoFilter_wrappedEofExceptionRethrown() throws Exception {
+    doThrow(new UncheckedIOException(new EofException("Client disconnected")))
+        .when(filterChain)
+        .doFilter(any(), any());
+
+    assertThrows(EofException.class, () -> underTest.doFilter(request, response, filterChain));
+    verifyNoInteractions(response);
+  }
+
+  @Test
+  public void testDoFilter_deeplyWrappedEofExceptionRethrown() throws Exception {
+    doThrow(new RuntimeException("outer", new UncheckedIOException(new EofException("gone"))))
+        .when(filterChain)
+        .doFilter(any(), any());
 
     assertThrows(EofException.class, () -> underTest.doFilter(request, response, filterChain));
     verifyNoInteractions(response);

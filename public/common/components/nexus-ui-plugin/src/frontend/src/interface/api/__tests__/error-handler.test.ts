@@ -110,6 +110,21 @@ describe('HelperBean / attributes prefix stripping (via parseApiError)', () => {
   });
 });
 
+describe('405 Method Not Allowed (via parseApiError)', () => {
+  it('returns status 405 with fallback message when no body message', () => {
+    const data = { 'status-code': 405, 'status-message': 'METHOD_NOT_ALLOWED' };
+    const result = parseApiError(makeAxiosError(405, data));
+    expect(result.status).toBe(405);
+    expect(result.message).toBe('This operation is not supported for the current resource state.');
+  });
+
+  it('returns the body message when present', () => {
+    const data = { message: 'Health Check is not available' };
+    const result = parseApiError(makeAxiosError(405, data));
+    expect(result.message).toBe('Health Check is not available');
+  });
+});
+
 // WebApplicationMessageException callers on the backend commonly pass the message as a
 // JSON string literal (e.g. `"\"Repository not found\""`), so the parsed `message` field
 // is wrapped in a redundant pair of literal quote characters. Toasts should show the

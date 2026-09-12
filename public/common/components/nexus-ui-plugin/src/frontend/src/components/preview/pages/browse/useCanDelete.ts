@@ -81,10 +81,29 @@ export function useCanDelete(
         permissionPromise = canDeleteAsset(selectedNode.assetId, selectedRepository);
         break;
       case 'component': {
+        // Use the raw browse-node componentId (the internal id, e.g. "4f1bbcdd") for the preflight,
+        // NOT componentData.id. componentData comes from the REST v1 API, whose id is the
+        // base64(repository:internalId) RepositoryItemIDXO form; the ExtDirect coreui_Component
+        // .canDeleteComponent server method expects the raw internal id (same value ExtDirect
+        // readComponent returns) and does a numeric parse on it, so the base64 form throws
+        // NumberFormatException server-side → preflight false → the Delete button is wrongly hidden
+        // (NEXUS-54171).
+        //
+        // If the raw componentId is absent we cannot run the preflight correctly — the only other
+        // id we hold is componentData.id (the base64 form), which is guaranteed to mis-parse and
+        // return false. So treat the node as not-deletable rather than sending a known-bad id.
+        // BrowsePage only populates componentData when componentId is present (it gates the detail
+        // fetch on selectedNode.componentId), so this guard is defensive and should not trigger in
+        // practice; it exists to keep the invariant explicit instead of silently reproducing
+        // NEXUS-54171 if the wiring ever changes.
+        if (!selectedNode.componentId) {
+          setCanDelete(false);
+          return;
+        }
         // Guarded above — componentData is present here. Widen ComponentData
         // to the server's ComponentXO shape (nullable fields default to empty).
         const xo: ComponentXO = {
-          id: componentData!.id,
+          id: selectedNode.componentId,
           repositoryName: componentData!.repositoryName,
           format: componentData!.format,
           group: componentData!.group ?? undefined,

@@ -13,7 +13,12 @@
 
 import { assign, createMachine, type StateMachine, type StateSchema } from 'xstate';
 
-import type { OnboardingStep, WizardMachineContext, WizardEvent } from './types';
+import type {
+  OnboardingStep,
+  WizardErrorKind,
+  WizardMachineContext,
+  WizardEvent,
+} from './types';
 
 interface WizardStateSchema extends StateSchema<WizardMachineContext> {
   states: {
@@ -36,7 +41,24 @@ const initialContext: WizardMachineContext = {
   steps: [],
   currentIndex: -1,
   errorMessage: null,
+  errorKind: null,
 };
+
+// Identifies "the API says onboarding isn't finished" so the UI can prompt the
+// user to re-finalize choices instead of showing a transport-failure message.
+export const ONBOARDING_STILL_REQUIRED_NAME = 'OnboardingStillRequired';
+
+// Ceiling for the verify request before the machine falls back to setupComplete.
+// Prevents the user getting stranded on the verifying screen if the request never
+// resolves or rejects (silently-dropped TCP, hung proxy, etc.).
+export const VERIFY_TIMEOUT_MS = 30_000;
+
+function classifyVerifyError(err: unknown): WizardErrorKind {
+  if (err && typeof err === 'object' && (err as { name?: string }).name === ONBOARDING_STILL_REQUIRED_NAME) {
+    return 'stillRequired';
+  }
+  return 'network';
+}
 
 export function createWizardMachine(
   services: WizardMachineServices,
@@ -106,7 +128,11 @@ export function createWizardMachine(
         },
         setupComplete: {
           on: {
-            SUBMIT: 'verifying',
+            // Clear any prior verify failure so the retry starts from a clean slate.
+            SUBMIT: {
+              target: 'verifying',
+              actions: assign({ errorMessage: null, errorKind: null }),
+            },
           },
         },
         verifying: {
@@ -114,10 +140,20 @@ export function createWizardMachine(
             src: 'verify',
             onDone: 'done',
             onError: {
-              target: 'issueOccurred',
+              target: 'setupComplete',
               actions: assign((_, event) => ({
                 errorMessage: String(event.data),
+                errorKind: classifyVerifyError(event.data),
               })),
+            },
+          },
+          after: {
+            [VERIFY_TIMEOUT_MS]: {
+              target: 'setupComplete',
+              actions: assign({
+                errorMessage: 'Verification timed out',
+                errorKind: 'network',
+              }),
             },
           },
         },

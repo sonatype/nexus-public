@@ -16,6 +16,8 @@ import { Box, Flex, Text, Separator } from '@radix-ui/themes';
 import { Loader2, Key, RefreshCw, AlertTriangle } from 'lucide-react';
 import { ExtJS } from '@sonatype/nexus-ui-plugin';
 
+import { MetadataGrid, StatusBadge, type StatusType } from '../../../../shared';
+
 import {
   SettingsFormSection,
   SettingsButton,
@@ -24,11 +26,9 @@ import {
   ConfirmDialog,
 } from '../../../../shared/form';
 import { useToast } from '../../../../shared';
-import { UserForm } from './UserForm';
 import { useUsersApi } from './useUsersApi';
 import {
   User,
-  UserFormData,
   isExternalUser,
   getFullName,
 } from './types';
@@ -39,11 +39,7 @@ interface UserDetailProps {
   user: User | null;
   loading: boolean;
   canEdit: boolean;
-  canDelete: boolean;
-  onSave: (data: UserFormData) => Promise<void>;
-  onDelete: () => void;
   onCancel: () => void;
-  error?: string;
 }
 
 /**
@@ -53,11 +49,7 @@ export function UserDetail({
   user,
   loading,
   canEdit,
-  canDelete,
-  onSave,
-  onDelete,
   onCancel,
-  error,
 }: UserDetailProps) {
   const { changePassword, resetUserToken, loading: apiLoading, error: apiError, setError } = useUsersApi();
   const toast = useToast();
@@ -66,21 +58,17 @@ export function UserDetail({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [_showResetToken, setShowResetToken] = useState(false);
   const [resetTokenDialogOpen, setResetTokenDialogOpen] = useState(false);
 
   const isPro = ExtJS.isProEdition();
   const isAdmin = ExtJS.checkPermission('nexus:*');
   const state = ExtJS.state();
   const isAnonymous = user?.userId === state?.getValue?.('anonymousUsername');
-  const isCurrentUser = user?.userId === state?.getUser?.()?.id;
-  const isAdminUser = user?.userId === 'admin';
   const isExternal = user ? isExternalUser(user.source) : false;
   const activeCapabilities = state?.getValue?.('capabilityActiveTypes') || [];
   const isUserTokenCapabilityActive = activeCapabilities.includes('usertoken');
   const canResetUserToken = ExtJS.checkPermission('nexus:usertoken-user:delete');
 
-  const showDeleteButton = canDelete && !isExternal && !isAnonymous && !isCurrentUser && !isAdminUser;
   const showChangePasswordButton = canEdit && !isExternal && !isAnonymous && isAdmin;
   const showResetTokenButton = isPro && !isExternal && isUserTokenCapabilityActive && canResetUserToken;
 
@@ -147,7 +135,6 @@ export function UserDetail({
     try {
       await resetUserToken(user.userId, user.realm || user.source);
       toast.success(`User token has been reset for ${getFullName(user)}`);
-      setShowResetToken(false);
     } catch (_err) {
       // Error is set by the API hook
     }
@@ -155,37 +142,24 @@ export function UserDetail({
 
   // Read-only view for users without edit permission
   if (!canEdit) {
+    const userStatusMap: Record<string, StatusType> = {
+      active: 'success',
+      disabled: 'offline',
+    };
+    const statusType: StatusType = userStatusMap[user.status] ?? 'unknown';
+    const statusLabel = user.status.charAt(0).toUpperCase() + user.status.slice(1);
+
     return (
       <Box className="user-detail">
         <SettingsFormSection title="User Information" defaultOpen>
-          <dl className="user-detail__info">
-            <div className="user-detail__row">
-              <dt className="user-detail__label">ID</dt>
-              <dd className="user-detail__value">{user.userId}</dd>
-            </div>
-            <div className="user-detail__row">
-              <dt className="user-detail__label">First Name</dt>
-              <dd className="user-detail__value">{user.firstName}</dd>
-            </div>
-            <div className="user-detail__row">
-              <dt className="user-detail__label">Last Name</dt>
-              <dd className="user-detail__value">{user.lastName}</dd>
-            </div>
-            <div className="user-detail__row">
-              <dt className="user-detail__label">Email</dt>
-              <dd className="user-detail__value">{user.emailAddress || user.email}</dd>
-            </div>
-            <div className="user-detail__row">
-              <dt className="user-detail__label">Status</dt>
-              <dd className={`user-detail__value user-detail__status user-detail__status--${user.status}`}>
-                {user.status}
-              </dd>
-            </div>
-            <div className="user-detail__row">
-              <dt className="user-detail__label">Source</dt>
-              <dd className="user-detail__value">{isExternal ? user.source : 'Local'}</dd>
-            </div>
-          </dl>
+          <MetadataGrid items={[
+            { label: 'ID', value: user.userId },
+            { label: 'First Name', value: user.firstName },
+            { label: 'Last Name', value: user.lastName },
+            { label: 'Email', value: user.emailAddress || user.email },
+            { label: 'Status', value: <StatusBadge status={statusType} label={statusLabel} size="small" /> },
+            { label: 'Source', value: isExternal ? user.source : 'Local' },
+          ]} />
         </SettingsFormSection>
 
         <SettingsFormSection title="Assigned Roles">
@@ -222,17 +196,6 @@ export function UserDetail({
           {apiError}
         </SettingsAlert>
       )}
-
-      {/* User Form */}
-      <UserForm
-        user={user}
-        isCreate={false}
-        onSave={onSave}
-        onCancel={onCancel}
-        onDelete={showDeleteButton ? onDelete : undefined}
-        loading={loading || apiLoading}
-        error={error}
-      />
 
       {/* Account Actions -- grouped in one section */}
       {(showChangePasswordButton || showResetTokenButton) && (
@@ -339,5 +302,4 @@ export function UserDetail({
 }
 
 export default UserDetail;
-
 

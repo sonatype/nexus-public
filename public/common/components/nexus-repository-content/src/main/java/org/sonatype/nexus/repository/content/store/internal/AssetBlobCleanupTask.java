@@ -269,11 +269,13 @@ public class AssetBlobCleanupTask
                 blobRef.getStore(), blobRef);
             successfullyDeleted.add(blobRef);
           }
-          else if (deleteBlobContent(blobStore, blobRef)) {
-            successfullyDeleted.add(blobRef);
-          }
           else {
-            log.warn("Could not delete blob content under {}", blobRef);
+            if (!deleteBlobContent(blobStore, blobRef)) {
+              log.warn(
+                  "Blob content was already absent under {}; database record will still be removed",
+                  blobRef);
+            }
+            successfullyDeleted.add(blobRef);
           }
         }
         catch (Exception e) {
@@ -337,9 +339,11 @@ public class AssetBlobCleanupTask
     if (HARD_DELETE) {
       return blobStore.deleteHard(blobRef.getBlobId());
     }
-    else {
-      return blobStore.delete(blobRef.getBlobId(), "Removing unused asset blob");
+    boolean deleted = blobStore.delete(blobRef.getBlobId(), "Removing unused asset blob");
+    if (!deleted) {
+      blobStore.deleteHard(blobRef.getBlobId());
     }
+    return deleted;
   }
 
   private List<BlobRef> extractBlobRefsFromAssetBlobs(final Continuation<AssetBlob> assetBlobs) {

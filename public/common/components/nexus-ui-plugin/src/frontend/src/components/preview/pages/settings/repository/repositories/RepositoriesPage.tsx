@@ -13,11 +13,13 @@
 
 import { PageHeader, useToast } from '../../../../shared';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Box, Button, } from '@radix-ui/themes';
-import { Database, Plus } from 'lucide-react';
+import { Box, Button, Flex, Link } from '@radix-ui/themes';
+import { useCurrentStateAndParams, useRouter } from '@uirouter/react';
+import { ArrowLeft, Database, Plus } from 'lucide-react';
 import { ExtJS } from '../../../../../../interface/ExtJS';
 
 import { SettingsAlert, WizardForm } from '../../../../shared/form';
+import { clearDirtyState } from '../../../../shared/hooks/useUnsavedChangesWarning';
 
 import { DeleteConfirmationModal } from '../../../../shared/modals/DeleteConfirmationModal';
 import { ConfirmDialog } from '../../../../shared/ConfirmDialog';
@@ -65,6 +67,14 @@ interface RouteState {
   type: string | null;
 }
 
+// Confirmation state for repository action buttons (rebuild index,
+// invalidate cache, toggle online). Each shares the same ConfirmDialog so
+// we hold the pending action in a single piece of state.
+type PendingAction =
+  | { kind: 'rebuild-index' }
+  | { kind: 'invalidate-cache' }
+  | { kind: 'toggle-online'; nextOnline: boolean };
+
 function parseRoute(hash: string): RouteState {
   const cleanHash = hash.replace(/^#/, '').replace(/\?.*$/, '');
   const parts = cleanHash.split('/');
@@ -111,17 +121,12 @@ export function RepositoriesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [_fetchingRepository, _setFetchingRepository] = useState(false);
 
-  // Confirmation dialog state for repository action buttons (rebuild index,
-  // invalidate cache, toggle online). Each shares the same ConfirmDialog so
-  // we hold the pending action in a single piece of state.
-  type PendingAction =
-    | { kind: 'rebuild-index' }
-    | { kind: 'invalidate-cache' }
-    | { kind: 'toggle-online'; nextOnline: boolean };
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [isExecutingAction, setIsExecutingAction] = useState(false);
 
   const toast = useToast();
+  const router = useRouter();
+  const { params: routerParams } = useCurrentStateAndParams();
   const {
     loading,
     error,
@@ -133,6 +138,8 @@ export function RepositoriesPage() {
     rebuildIndex,
     setRepositoryOnline,
     enableHealthCheck,
+    disableHealthCheck,
+    fetchHealthCheckCapabilityEnabled,
   } = useRepositoriesApi();
 
   const canCreate = ExtJS.checkPermission('nexus:repository-admin:*:*:add');
@@ -157,6 +164,7 @@ export function RepositoriesPage() {
         setFirewallChoice(null);
         setRhcChoice(null);
         setCanAdvanceFromStep2(false);
+        setIsRepoFormDirty(false);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -193,13 +201,30 @@ export function RepositoriesPage() {
   const [canAdvanceFromStep0, setCanAdvanceFromStep0] = useState(false);
   const [canAdvanceFromStep1, setCanAdvanceFromStep1] = useState(false);
   const [canAdvanceFromStep2, setCanAdvanceFromStep2] = useState(false);
+  // NEXUS-54349: mirrors the RepositoryForm machine's dirty state so Cancel on
+  // an untouched config step navigates away without the "Unsaved Changes" dialog.
+  const [isRepoFormDirty, setIsRepoFormDirty] = useState(false);
   const [pendingRecipe, setPendingRecipe] = useState<Recipe | null>(null);
   const [postCreateStep, setPostCreateStep] = useState<'firewall' | 'rhc' | null>(null);
   const [firewallChoice, setFirewallChoice] = useState<'none' | 'audit' | 'quarantine' | 'pccs' | null>(null);
   const [rhcChoice, setRhcChoice] = useState<'enable' | 'none' | null>(null);
+  const [rhcCapabilityEnabled, setRhcCapabilityEnabled] = useState<boolean | null>(null);
+  const rhcCapabilityFetchedRef = useRef(false);
   const savedFormDataRef = useRef<RepositoryFormData | null>(null);
 
   const isProxyRecipe = selectedRecipe?.type === 'proxy';
+
+  useEffect(() => {
+    if (!isProxyRecipe) {
+      setRhcCapabilityEnabled(null);
+      rhcCapabilityFetchedRef.current = false;
+      return;
+    }
+    if (rhcCapabilityFetchedRef.current) return;
+    rhcCapabilityFetchedRef.current = true;
+    fetchHealthCheckCapabilityEnabled().then(setRhcCapabilityEnabled);
+  }, [isProxyRecipe, fetchHealthCheckCapabilityEnabled]);
+
   const wizardSteps = useMemo(
     () => [
       { id: 'format', label: 'Select Format' },
@@ -288,8 +313,17 @@ export function RepositoriesPage() {
         if (rhcChoice === 'enable') {
           try {
             await enableHealthCheck(repoName);
-          } catch {
-            // Health Check enable is best-effort; analysis will run on next scheduled task
+          } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to enable Health Check';
+            toast.warning(`Health Check could not be enabled for "${repoName}": ${errorMessage}`);
+          }
+        } else {
+          // The backend may auto-enable HC for new proxy repos; explicitly disable to enforce
+          // the user's choice (or the default) of having HC off after creation.
+          try {
+            await disableHealthCheck(repoName);
+          } catch (err) {
+            console.warn(`Could not disable auto-enabled Health Check for "${repoName}":`, err);
           }
         }
         toast.success(`Repository "${repoName}" created successfully`);
@@ -301,7 +335,7 @@ export function RepositoriesPage() {
     } else if (repoFormSubmitRef.current) {
       repoFormSubmitRef.current();
     }
-  }, [postCreateStep, firewallChoice, rhcChoice, createRepository, enableHealthCheck, finishCreate, toast]);
+  }, [postCreateStep, firewallChoice, rhcChoice, createRepository, enableHealthCheck, disableHealthCheck, finishCreate, toast]);
 
   const handleRecipeSelectionChange = useCallback((canAdvance: boolean, recipe: Recipe | null) => {
     if (recipe && !recipe.type) {
@@ -323,11 +357,7 @@ export function RepositoriesPage() {
 
   const handleSave = useCallback(
     async (data: RepositoryFormData) => {
-      // Edit mode: the form's save service has already PUT the update.
-      // useRepositoryForm calls this onSave AFTER updateRepository succeeds,
-      // so we must NOT fall through to the create branch — doing so would
-      // POST the same name and the server would reject it as
-      // "Repository name already exists." Just navigate back to the list.
+      // Edit mode: updateRepository already PUT — skip create branch to avoid duplicate POST rejection.
       if (routeState.viewMode === 'edit') {
         finishCreate();
         return { skipNavigate: true };
@@ -384,14 +414,7 @@ export function RepositoriesPage() {
     }
   }, [repository, deleteRepository, toast, handleBack, setError]);
 
-  // ---------------------------------------------------------------------------
-  // Repository action handlers (Rebuild Index / Invalidate Cache / Toggle Online)
-  //
-  // Each handler stages a pending action; ConfirmDialog renders the prompt and
-  // calls handleConfirmAction when the user accepts. We do not optimistically
-  // mutate `repository` after a toggle — a refetch via fetchRepository is the
-  // single source of truth so the form's pristineData is in sync.
-  // ---------------------------------------------------------------------------
+  // Action handlers: stage pending action → ConfirmDialog → handleConfirmAction; refetch after toggle keeps pristineData in sync.
   const handleRebuildIndex = useCallback(() => {
     if (!repository) return;
     setPendingAction({ kind: 'rebuild-index' });
@@ -406,6 +429,11 @@ export function RepositoriesPage() {
     if (!repository) return;
     setPendingAction({ kind: 'toggle-online', nextOnline });
   }, [repository]);
+
+  const handleBrowseRepository = useCallback(() => {
+    if (!repository) return;
+    router.stateService.go('preview.browse.browse.repo', { repoName: repository.name });
+  }, [repository, router]);
 
   const cancelPendingAction = useCallback(() => {
     if (isExecutingAction) return;
@@ -517,11 +545,32 @@ export function RepositoriesPage() {
 
   const headerProps = getHeaderProps();
 
+  const EVAL_HUB_STATE = 'preview.admin.iqHostedReposEval';
+  const showEvalBackLink = routeState.viewMode === 'edit' && routerParams?.tab === 'evaluation';
+  const evalHubHref =
+    router.stateService.href(EVAL_HUB_STATE, {}) ?? '#preview/admin/iq/hosted-repos-eval';
+
   return (
     <Box className="repositories-page" data-testid="repositories-page" data-view={routeState.viewMode}>
       <PageHeader icon={headerProps.icon} title={headerProps.title} description={headerProps.description} actions={headerProps.actions}
           breadcrumbs={getBreadcrumbs()}
 />
+      {showEvalBackLink && (
+        <Box className="repositories-page__eval-back" mb="2">
+          <Link
+            href={evalHubHref}
+            size="2"
+            weight="medium"
+            data-testid="repositories-page-eval-back-link"
+            data-analytics-id="nxrm-repository-eval-back-link"
+          >
+            <Flex align="center" gap="1" as="span">
+              <ArrowLeft size={14} aria-hidden />
+              <span>Hosted Repository Evaluation</span>
+            </Flex>
+          </Link>
+        </Box>
+      )}
       {error && <Box className="repositories-page__alerts"><SettingsAlert type="error" onClose={() => setError(null)}>{error}</SettingsAlert></Box>}
       <Box className="repositories-page__content">
         {routeState.viewMode === 'list' && <RepositoriesList key={refreshKey} onSelect={handleSelectRepository} onCreate={handleCreate} onDelete={canDelete ? async (n) => { await deleteRepository(n); setRefreshKey(k => k + 1); } : undefined} />}
@@ -538,6 +587,15 @@ export function RepositoriesPage() {
               setRhcChoice(null);
               handleBack();
             }}
+            externalDirtyTracking
+            onDiscardConfirm={() => {
+              clearDirtyState('repository-form-new');
+              setSelectedFormat(null);
+              setPostCreateStep(null);
+              setFirewallChoice(null);
+              setRhcChoice(null);
+              handleBack();
+            }}
             completeLabel="Create Repository"
             onStepSubmitOverride={(step) =>
               step === 2
@@ -546,7 +604,7 @@ export function RepositoriesPage() {
                   }
                 : undefined
             }
-            dirty={createStep >= 2}
+            dirty={createStep > 2 || (createStep === 2 && isRepoFormDirty)}
             canAdvance={
               createStep === 0
                 ? canAdvanceFromStep0
@@ -557,7 +615,7 @@ export function RepositoriesPage() {
                     : true
             }
             loading={loading && createStep === 2}
-            noDirtyTracking={createStep < 2}
+            noDirtyTracking={createStep < 2 || (createStep === 2 && !isRepoFormDirty)}
             hideSubmitButton={createStep === 0 || createStep === 1}
             hideStepTitle={createStep === 0 || createStep === 1}
           >
@@ -574,6 +632,7 @@ export function RepositoriesPage() {
                   onSubmitRef={repoFormSubmitRef}
                   advanceOnly
                   onCanAdvanceChange={createStep === 2 ? setCanAdvanceFromStep2 : undefined}
+                  onDirtyChange={setIsRepoFormDirty}
                 />
               </Box>
             )}
@@ -591,6 +650,7 @@ export function RepositoriesPage() {
                 mode="deferred"
                 value={rhcChoice ?? 'none'}
                 onChoice={setRhcChoice}
+                capabilityEnabled={rhcCapabilityEnabled ?? false}
               />
             )}
           </WizardForm>
@@ -606,6 +666,7 @@ export function RepositoriesPage() {
             onRebuildIndex={canUpdate ? handleRebuildIndex : undefined}
             onInvalidateCache={canUpdate ? handleInvalidateCache : undefined}
             onToggleOnline={canUpdate ? handleToggleOnline : undefined}
+            onBrowseRepository={handleBrowseRepository}
             isActionInFlight={isExecutingAction}
             loading={loading}
           />

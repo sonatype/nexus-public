@@ -69,4 +69,11 @@ public interface AuditEventDAO
       @Param("repositoryName") String repositoryName,
       @Param("startDate") OffsetDateTime startDate,
       @Param("endDate") OffsetDateTime endDate);
+
+  /**
+   * Delete up to {@code batchSize} rows whose {@code timestamp} is strictly older than {@code cutoff}.
+   * Returns the number of rows actually deleted. Callers should invoke in a loop until this returns 0
+   * to prune the full backlog in bounded-size transactions.
+   */
+  int deleteOlderThan(@Param("cutoff") OffsetDateTime cutoff, @Param("batchSize") int batchSize);
 }

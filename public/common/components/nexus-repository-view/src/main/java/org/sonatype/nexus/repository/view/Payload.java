@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import com.google.common.io.ByteStreams;
@@ -64,8 +65,18 @@ public interface Payload
 
   /**
    * Provides a URL for direct access (i.e. not through Nexus Repository) to the Payload's content.
+   *
+   * @param action the request action expected
+   * @param name the filename to use for the download
    */
   default Optional<URL> getRedirectUrl(final String action, final String name) {
     return Optional.empty();
+  }
+
+  /**
+   * @return if this payload would return a URL when calling getRedirectUrl
+   */
+  default boolean hasRedirect() {
+    return false;
   }
 }

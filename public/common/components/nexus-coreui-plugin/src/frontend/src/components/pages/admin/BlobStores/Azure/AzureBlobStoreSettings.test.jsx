@@ -44,8 +44,7 @@ jest.mock('@sonatype/nexus-ui-plugin', () => ({
     handleUpdate: jest.fn(() => jest.fn())
   },
   ExtJS: {
-    isProEdition: jest.fn(() => true),
-    state: () => ({getValue: (key) => key === 'azureSasUrlEnabled' ? true : null})
+    isProEdition: jest.fn(() => true)
   }
 }));
 
@@ -137,16 +136,5 @@ describe('AzureBlobStoreSettings — preSignedUrl', () => {
       }
     });
     expect(screen.queryByText(AZURE.PRE_SIGNED_URL.RBAC_NOTE)).not.toBeInTheDocument();
-  });
-
-  it('renders the RBAC error alert when form-errors include preSignedUrlEnabled', () => {
-    renderWith({
-      bucketConfiguration: {
-        preSignedUrlEnabled: true,
-        authentication: {authenticationMethod: 'MANAGEDIDENTITY'}
-      },
-      errors: {bucketConfiguration: {preSignedUrlEnabled: 'rbac-denied'}}
-    });
-    expect(screen.getByText(AZURE.PRE_SIGNED_URL.RBAC_ERROR)).toBeInTheDocument();
   });
 });

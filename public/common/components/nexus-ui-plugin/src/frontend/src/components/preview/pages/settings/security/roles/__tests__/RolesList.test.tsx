@@ -127,6 +127,29 @@ describe('RolesList', () => {
     expect(editButtons.length).toBeGreaterThanOrEqual(1);
   });
 
+  // NEXUS-54212: the row Edit (pencil) action must respect nexus:roles:update.
+  it('should hide the Edit pencil for editable roles when canUpdate is false', async () => {
+    renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} canUpdate={false} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom Role')).toBeInTheDocument();
+    });
+
+    // No Edit pencil for any role, but the read-only View action remains.
+    expect(screen.queryAllByLabelText(/^Edit /).length).toBe(0);
+    expect(screen.getAllByLabelText(/^View /).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('should show the Edit pencil for editable roles when canUpdate is true', async () => {
+    renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} canUpdate={true} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom Role')).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByLabelText(/^Edit /).length).toBeGreaterThanOrEqual(1);
+  });
+
   it('should filter roles by search term', async () => {
     renderWithTheme(<RolesList onSelect={mockOnSelect} onCreate={mockOnCreate} />);
     

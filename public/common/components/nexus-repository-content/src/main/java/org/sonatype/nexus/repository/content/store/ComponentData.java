@@ -89,6 +89,10 @@ public class ComponentData
     this.componentId = componentId;
   }
 
+  public Integer componentId() {
+    return componentId;
+  }
+
   /**
    * Sets the component namespace.
    */

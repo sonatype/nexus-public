@@ -149,6 +149,118 @@ describe('rolesFormMachine', () => {
       service.stop();
     });
 
+    it('seeds roleType from role.source for a Nexus role', async () => {
+      const preloadedRole = {
+        id: 'nx-admin',
+        version: '1',
+        source: 'Default',
+        name: 'nx-admin',
+        description: 'Administrator role',
+        readOnly: false,
+        privileges: ['nx-all'],
+        roles: [],
+      };
+
+      const machine = createRolesFormMachine('nx-admin', preloadedRole);
+      const service = await startAndLoad(machine);
+
+      const state = service.getSnapshot();
+      expect(state.context.data.roleType).toBe('nexus');
+      expect(state.context.data.externalSource).toBeUndefined();
+
+      service.stop();
+    });
+
+    it('seeds roleType and externalSource from role.source for an external role', async () => {
+      const preloadedRole = {
+        id: 'ldap-devs',
+        version: '1',
+        source: 'LDAP',
+        name: 'ldap-devs',
+        description: 'LDAP-mapped role',
+        readOnly: true,
+        privileges: [],
+        roles: [],
+      };
+
+      const machine = createRolesFormMachine('ldap-devs', preloadedRole);
+      const service = await startAndLoad(machine);
+
+      const state = service.getSnapshot();
+      expect(state.context.data.roleType).toBe('external');
+      expect(state.context.data.externalSource).toBe('LDAP');
+
+      service.stop();
+    });
+
+    // Guards the non-preloaded path: role fetched by ID via restClient → restToRole → seeding.
+    // The mocked response is a RestRole shape (no `version` field), matching what
+    // the REST API actually returns; restToRole normalises `source` and stamps version.
+    it('seeds roleType/externalSource when an external role is fetched by id (non-preloaded path)', async () => {
+      restClient.get.mockImplementation((url: string) => {
+        if (url?.endsWith('/roles/ldap-fetched')) {
+          return Promise.resolve({
+            id: 'ldap-fetched',
+            source: 'LDAP',
+            name: 'ldap-fetched',
+            description: 'Fetched external role',
+            readOnly: true,
+            privileges: [],
+            roles: [],
+          });
+        }
+        if (url?.endsWith('/privileges')) return Promise.resolve([]);
+        if (url?.endsWith('/sources')) return Promise.resolve([]);
+        if (url?.includes('/roles') && !url?.includes('/sources') && !url?.includes('/roles/')) return Promise.resolve([]);
+        return Promise.resolve([]);
+      });
+
+      const machine = createRolesFormMachine('ldap-fetched');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const state = service.getSnapshot();
+      expect(state.context.role?.source).toBe('LDAP');
+      expect(state.context.data.roleType).toBe('external');
+      expect(state.context.data.externalSource).toBe('LDAP');
+
+      service.stop();
+    });
+
+    // Confirms restToRole normalisation runs on the findRole path: REST returns
+    // lowercase 'default' → restToRole maps to 'Default' → seeding produces
+    // roleType='nexus' and no externalSource.
+    it("normalises source 'default' to 'Default' and seeds roleType='nexus' on the findRole path", async () => {
+      restClient.get.mockImplementation((url: string) => {
+        if (url?.endsWith('/roles/plain-fetched')) {
+          return Promise.resolve({
+            id: 'plain-fetched',
+            source: 'default',  // lowercase, as returned by the REST API
+            name: 'plain-fetched',
+            description: 'Fetched Nexus role',
+            readOnly: false,
+            privileges: [],
+            roles: [],
+          });
+        }
+        if (url?.endsWith('/privileges')) return Promise.resolve([]);
+        if (url?.endsWith('/sources')) return Promise.resolve([]);
+        if (url?.includes('/roles') && !url?.includes('/sources') && !url?.includes('/roles/')) return Promise.resolve([]);
+        return Promise.resolve([]);
+      });
+
+      const machine = createRolesFormMachine('plain-fetched');
+      const service = interpret(machine).start();
+      await waitFor(service, (state) => state.matches('editing'));
+
+      const state = service.getSnapshot();
+      expect(state.context.role?.source).toBe('Default');  // normalised by restToRole
+      expect(state.context.data.roleType).toBe('nexus');
+      expect(state.context.data.externalSource).toBeUndefined();
+
+      service.stop();
+    });
+
     it('filters out current role from available roles', async () => {
       const preloadedRole = {
         id: 'nx-admin',

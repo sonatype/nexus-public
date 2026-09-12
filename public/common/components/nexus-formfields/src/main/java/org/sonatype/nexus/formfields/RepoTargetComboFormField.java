@@ -34,7 +34,8 @@ public class RepoTargetComboFormField
       boolean required,
       String regexValidation)
   {
-    super(id, label, helpText, required, regexValidation);
+    super(id, label, helpText, required);
+    withRegexValidation(regexValidation);
   }
 
   public RepoTargetComboFormField(String id, String label, String helpText, boolean required) {

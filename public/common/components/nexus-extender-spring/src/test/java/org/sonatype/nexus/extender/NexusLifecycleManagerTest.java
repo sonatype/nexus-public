@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.common.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.app.ManagedComponentRegistrar;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 
@@ -121,6 +122,25 @@ public class NexusLifecycleManagerTest
 
     assertThat(callLog.contains("start:high"), is(true));
     assertThat(callLog.contains("start:storage"), is(false));
+  }
+
+  @Test
+  public void registrarsNotifiedAfterStartAndBeforeStop() throws Exception {
+    Map<String, Lifecycle> beans = new LinkedHashMap<>();
+    beans.put("component", new HighPrecedenceComponent());
+    when(applicationContext.getBeansOfType(Lifecycle.class)).thenReturn(beans);
+    when(applicationContext.getBeansOfType(ManagedComponentRegistrar.class))
+        .thenReturn(Map.of("recording", new RecordingRegistrar()));
+
+    underTest.to(Phase.KERNEL);
+    underTest.to(Phase.OFF);
+
+    // onStarted fires immediately after the component's start(); onStopping fires immediately before its stop().
+    assertThat(callLog, is(List.of(
+        "start:high",
+        "onStarted:HighPrecedenceComponent",
+        "onStopping:HighPrecedenceComponent",
+        "stop:high")));
   }
 
   @Test
@@ -234,6 +254,23 @@ public class NexusLifecycleManagerTest
     @Override
     public void stop() throws Exception {
       callLog.add("stop:storage");
+    }
+  }
+
+  /**
+   * Records registrar call-backs into {@link #callLog} so ordering relative to component start/stop can be asserted.
+   */
+  static class RecordingRegistrar
+      implements ManagedComponentRegistrar
+  {
+    @Override
+    public void onStarted(final Object component) {
+      callLog.add("onStarted:" + component.getClass().getSimpleName());
+    }
+
+    @Override
+    public void onStopping(final Object component) {
+      callLog.add("onStopping:" + component.getClass().getSimpleName());
     }
   }
 }

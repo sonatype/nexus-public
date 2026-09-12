@@ -116,6 +116,16 @@ export function SettingsHubPage() {
         .filter((section) => section.cards.length > 0);
     }
 
+    // Cloud-only cards (e.g. Usage) are hidden on any self-hosted deployment.
+    if (!isCloud) {
+      sections = sections
+        .map((section) => ({
+          ...section,
+          cards: section.cards.filter((card) => !card.cloudOnly),
+        }))
+        .filter((section) => section.cards.length > 0);
+    }
+
     if (!isAdmin) {
       sections = sections
         .map((section) => ({

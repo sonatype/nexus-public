@@ -82,6 +82,7 @@ export { default as OnboardingWizardMount } from './components/onboarding-wizard
 export * from './components/pages/admin/Usage/HistoricalUsageColumns';
 export { default as ChangeIcon } from './components/pages/admin/Usage/ChangeIcon';
 export { default as UnsavedChangesModal } from './components/widgets/UnsavedChangesModal/UnsavedChangesModal';
+export { default as PreviewUnsavedDialog } from './components/widgets/PreviewUnsavedDialog/PreviewUnsavedDialog';
 
 export { DirectoryList } from './components/widgets/DirectoryList/DirectoryList';
 export { DirectoryPage } from './components/widgets/DirectoryPage/DirectoryPage';
@@ -238,6 +239,7 @@ import React from 'react';
 
 // Browse pages
 export const BrowsePage         = React.lazy(() => import('./components/preview/pages/browse/BrowsePage'));
+export const AuditLogPage       = React.lazy(() => import('./components/preview/pages/audit/AuditLogPage'));
 
 // Settings hub + layout
 export const SettingsHubPage         = React.lazy(() => import('./components/preview/pages/settings/SettingsHubPage'));
@@ -287,7 +289,9 @@ export const LicensingPage          = React.lazy(() => import('./components/prev
 export const NodesPage              = React.lazy(() => import('./components/preview/pages/settings/system/nodes/NodesPage'));
 export const UpgradePage            = React.lazy(() => import('./components/preview/pages/settings/system/upgrade/UpgradePage'));
 export const UsagePage              = React.lazy(() => import('./components/preview/pages/settings/system/usage/UsagePage'));
-export const IqServerPage           = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerPage'));
+export const IqServerOverviewPage   = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerOverviewPage'));
+export const IqServerConnectedPage  = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/IqServerConnectedPage'));
+export const HostedRepoEvaluationSetupPage = React.lazy(() => import('./components/preview/pages/settings/system/iq-server/HostedRepoEvaluationSetupPage'));
 
 // Settings — User account (shared by admin settings and user menu routes)
 export const UserAccountPage = React.lazy(() => import('./components/preview/pages/settings/user-account/UserAccountPage'));
@@ -373,12 +377,10 @@ export { default as ComingSoonPage } from './components/preview/shared/ComingSoo
 // FeatureGate / withFeatureGate: HOC used by coreui admin routes to wrap pages
 export { FeatureGate, withFeatureGate, withCloudExcluded } from './components/preview/shared/FeatureGate';
 
-// Preview UI: audit log data/types (relocated from coreui so ui-plugin has no
-// cross-package dependency on coreui). coreui's AuditLogPage and
-// AuditFilterSidebar re-use these via the package-name import. TypeScript
-// type exports (AuditFilters, AuditCategory, AuditEvent, AuditLogResponse)
-// live in the sibling index.d.ts so consumers can import them via the
-// package name: `import type { AuditFilters } from '@sonatype/nexus-ui-plugin'`.
+// Preview UI: audit log data/types. TypeScript type exports (AuditFilters,
+// AuditCategory, AuditEvent, AuditLogResponse) live in the sibling index.d.ts
+// so consumers can import them via the package name:
+// `import type { AuditFilters } from '@sonatype/nexus-ui-plugin'`.
 export { useAuditLogApi } from './utils/audit/useAuditLogApi';
 export { formatAuditEvent, formatTimestamp } from './utils/audit/auditEventFormatter';
 export {

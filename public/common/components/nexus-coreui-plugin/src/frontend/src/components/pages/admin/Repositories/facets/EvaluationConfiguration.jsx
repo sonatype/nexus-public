@@ -67,7 +67,7 @@ export default function EvaluationConfiguration({parentMachine}) {
 
     const fetchSettings = async () => {
       try {
-        const response = await Axios.get('/service/rest/v1/evaluation/settings');
+        const response = await Axios.get('service/rest/v1/evaluation/settings');
         if (response?.data) {
           const stage = response.data.policyEvaluationStage;
           const normalizedStage = stage ? stage.toLowerCase().replace(/_/g, '-') : 'build';

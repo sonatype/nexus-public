@@ -15,7 +15,9 @@ import React, { createContext, useCallback, useMemo, useRef, useState } from 're
 import { useMachine } from '@xstate/react';
 
 import { createWizardMachine } from './wizardMachine';
-import type { OnboardingStep, WizardStateValue } from './types';
+import type { OnboardingStep, WizardErrorKind, WizardStateValue } from './types';
+
+export type ActionButtonRef = React.RefObject<HTMLButtonElement>;
 
 export interface StepRegistration {
   valid: boolean;
@@ -37,12 +39,20 @@ export interface UseWizardResult {
   currentIndex: number;
   currentStep: OnboardingStep | null;
   errorMessage: string | null;
+  errorKind: WizardErrorKind | null;
   isCurrentStepValid: boolean;
   registerStep: (registration: StepRegistration) => void;
   getStarted: () => void;
   submit: () => void;
   skip: () => void;
   finish: () => void;
+  /**
+   * Ref to the wizard chrome's action (Next/Finish/Get Started) button.
+   * Steps with no form fields (e.g. CommunityDiscoverStep) call
+   * `.current?.focus()` on mount so keyboard users don't need an extra Tab.
+   * Null if the button is not currently rendered.
+   */
+  actionButtonRef: ActionButtonRef;
 }
 
 export interface WizardProviderProps {
@@ -69,9 +79,10 @@ export function WizardProvider({
 
   const [stepRegistration, setStepRegistration] = useState<StepRegistration | null>(null);
   const onDoneFiredRef = useRef(false);
+  const actionButtonRef = useRef<HTMLButtonElement>(null);
 
   const state = snapshot.value as WizardStateValue;
-  const { steps, currentIndex, errorMessage } = snapshot.context;
+  const { steps, currentIndex, errorMessage, errorKind } = snapshot.context;
 
   const currentStep: OnboardingStep | null =
     currentIndex >= 0 && currentIndex < steps.length ? steps[currentIndex] : null;
@@ -137,8 +148,19 @@ export function WizardProvider({
   }, [state, currentIndex, stepRegistration, send]);
 
   const skip = useCallback(() => {
+    // Only the "Dismiss for now" affordance on issueOccurred should surface
+    // the "setup was not completed" toast on close. Any other future SKIP
+    // wiring (e.g. skipping a step) should not trip that path.
+    if (state === 'issueOccurred') {
+      try {
+        sessionStorage.setItem('onboarding.dismissed', 'true');
+      } catch {
+        // sessionStorage blocked; best-effort — always dispatch SKIP so the
+        // user can still exit the modal.
+      }
+    }
     send({ type: 'SKIP' });
-  }, [send]);
+  }, [state, send]);
 
   // onDone is invoked exclusively by finish() (idempotent via onDoneFiredRef).
   // We intentionally do NOT fire onDone on machine entry into done/skipped —
@@ -160,12 +182,14 @@ export function WizardProvider({
       currentIndex,
       currentStep,
       errorMessage,
+      errorKind,
       isCurrentStepValid,
       registerStep,
       getStarted,
       submit,
       skip,
       finish,
+      actionButtonRef,
     }),
     [
       state,
@@ -173,6 +197,7 @@ export function WizardProvider({
       currentIndex,
       currentStep,
       errorMessage,
+      errorKind,
       isCurrentStepValid,
       registerStep,
       getStarted,

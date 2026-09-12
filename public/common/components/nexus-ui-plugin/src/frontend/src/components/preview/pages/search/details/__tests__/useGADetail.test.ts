@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useGADetail } from '../useGADetail';
 import type { GADetail, GAAsset } from '../../core/search.types';
 
@@ -34,11 +34,21 @@ jest.mock('../gaDetailMachine', () => ({
   createGaDetailMachine: jest.fn(),
 }));
 
+// Mock the version-scoped detail API (NEXUS-54201)
+jest.mock('../../core/componentVersionDetailApi', () => ({
+  fetchComponentVersionDetail: jest.fn(),
+  MAX_DETAIL_PAGES: 5,
+}));
+
 import Axios from 'axios';
 import { createGaDetailMachine } from '../gaDetailMachine';
+import { fetchComponentVersionDetail } from '../../core/componentVersionDetailApi';
 import { createMachine } from 'xstate';
 
 const mockAxios = Axios as jest.Mocked<typeof Axios>;
+const mockFetchDetail = fetchComponentVersionDetail as jest.MockedFunction<
+  typeof fetchComponentVersionDetail
+>;
 
 // Sample mock data
 const MOCK_DETAIL: GADetail = {
@@ -46,7 +56,6 @@ const MOCK_DETAIL: GADetail = {
   format: 'maven',
   displayName: 'commons-lang3',
   description: 'org.apache.commons:commons-lang3',
-  projectUrl: undefined,
   license: 'Apache-2.0',
   repositories: [
     { name: 'maven-central', format: 'maven2', type: 'proxy', versionsCount: 3 },
@@ -175,9 +184,132 @@ describe('useGADetail', () => {
         rerender();
       });
 
-      // The fix changes the condition from `initialVersion !== selectedVersion`
-      // to `!selectedVersion`, so it shouldn't fire when version is already set
+      // The sync compares `initialVersion === selectedVersion`, so an initialVersion that already
+      // matches the machine's context is a no-op no matter how many times we re-render.
       expect(selectVersionCallCount).toBe(0);
+    });
+
+    /*
+     * The regression `dynamic: true` on the `version` route param exposes.
+     *
+     * With the param dynamic, a version change no longer re-enters the state, so this hook is
+     * never remounted — and `useMachine` captured the machine (and its initial selectedVersion)
+     * with useConstant, so recreating it on an initialVersion change is ignored with a warning.
+     * The effect is therefore the only path from the URL to the machine. Without it, Back after a
+     * version switch leaves the header and the Files and Security tabs on the previous version.
+     */
+    it('sends SELECT_VERSION when the URL version changes after mount', async () => {
+      const selectedVersions: string[] = [];
+
+      const mockMachine = createMachine({
+        id: 'test-ga-detail',
+        initial: 'loaded',
+        context: {
+          gaId: 'maven:test:component',
+          detail: MOCK_DETAIL,
+          // Static: this stands in for a machine whose context the mount-time version set, and
+          // which therefore cannot see a later URL change on its own.
+          selectedVersion: '1.0.0',
+          assets: MOCK_ASSETS,
+          versionRepositories: [] as readonly string[],
+          versionLastUpdated: null,
+          loading: false,
+          assetsLoading: false,
+          error: null,
+          lastLoadedVersion: '1.0.0',
+        },
+        states: {
+          loaded: {
+            on: {
+              SELECT_VERSION: {
+                actions: (_ctx, event: any) => {
+                  selectedVersions.push(event.version);
+                },
+              },
+            },
+          },
+        },
+      });
+
+      (createGaDetailMachine as jest.Mock).mockReturnValue(mockMachine);
+
+      const { rerender } = renderHook(
+        ({ initialVersion }: { initialVersion?: string }) =>
+          useGADetail({ gaId: 'maven:test:component', initialVersion }),
+        { initialProps: { initialVersion: '1.0.0' as string | undefined } }
+      );
+
+      // Mount-time version already matches the machine's context — nothing to send.
+      expect(selectedVersions).toEqual([]);
+
+      await act(async () => {
+        rerender({ initialVersion: '2.0.0' });
+      });
+
+      expect(selectedVersions).toEqual(['2.0.0']);
+    });
+
+    // '' is the selected version of a versionless format (raw), and it is falsy. A truthiness
+    // guard here would silently drop it and leave the Files tab permanently empty.
+    it('sends SELECT_VERSION for the empty-string version of a versionless component', async () => {
+      const selectedVersions: string[] = [];
+
+      const mockMachine = createMachine({
+        id: 'test-ga-detail',
+        initial: 'loaded',
+        context: {
+          gaId: 'raw:some/path:file.txt',
+          detail: MOCK_DETAIL,
+          selectedVersion: null,
+          assets: [] as readonly GAAsset[],
+          versionRepositories: [] as readonly string[],
+          versionLastUpdated: null,
+          loading: false,
+          assetsLoading: false,
+          error: null,
+          lastLoadedVersion: null,
+        },
+        states: {
+          loaded: {
+            on: {
+              SELECT_VERSION: {
+                actions: (_ctx, event: any) => {
+                  selectedVersions.push(event.version);
+                },
+              },
+            },
+          },
+        },
+      });
+
+      (createGaDetailMachine as jest.Mock).mockReturnValue(mockMachine);
+
+      const { rerender } = renderHook(
+        ({ initialVersion }: { initialVersion: string | null }) =>
+          useGADetail({ gaId: 'raw:some/path:file.txt', initialVersion }),
+        { initialProps: { initialVersion: null as string | null } },
+      );
+
+      /*
+       * Mount adopts nothing: the real `createGaDetailMachine` seeds `selectedVersion` from
+       * `initialVersion` (see its context initializer), and an `always` transition starts the load
+       * from there, so a mount-time SELECT_VERSION would be redundant. The sync effect's job is
+       * narrower and more specific — adopt URL *changes*. Asserting a mount send here is what let
+       * the effect fire inside the window where the URL lags a just-selected version, pushing the
+       * previous version back into the machine (three requests per version click, NEXUS-54201).
+       *
+       * The versionless coverage this test exists for now lives in
+       * versionlessComponentDetail.test.tsx, against the real machine, where it asserts the load
+       * itself rather than the event.
+       */
+      expect(selectedVersions).toEqual([]);
+
+      // The original protection, at the point it actually applies: a URL that *changes* to '' must
+      // be adopted. '' is falsy, so any truthiness guard reintroduced here would drop it and leave
+      // a versionless component on the previous version.
+      rerender({ initialVersion: '' });
+
+      expect(selectedVersions).toEqual(['']);
     });
 
     it('should reset lastLoadedVersion when gaId changes', async () => {
@@ -386,110 +518,187 @@ describe('useGADetail', () => {
       }));
     });
 
-    it('should auto-select first version when detail loads without initialVersion', async () => {
-      // This test verifies the machine's shouldAutoSelectVersion guard works correctly
-      // Mock Axios to return search results
-      mockAxios.get.mockResolvedValue({
-        data: {
-          items: [
-            {
-              id: 'test-1',
-              repository: 'maven-central',
-              format: 'maven2',
-              group: 'org.test',
-              name: 'test-artifact',
-              version: '1.0.0',
-              assets: [
-                {
-                  id: 'asset-1',
-                  downloadUrl: 'http://test.com/asset.jar',
-                  path: 'org/test/test-artifact/1.0.0/test-artifact-1.0.0.jar',
-                  repository: 'maven-central',
-                  format: 'maven2',
-                },
-              ],
-            },
-          ],
-          continuationToken: null,
-        },
-      });
-
-      // Need to reimport the real module
+    /*
+     * The complaint this guards: opening a component detail page fired one /v1/search request per
+     * 50 component/repository rows — ~101 on the 5,005-version depth fixture — before anything
+     * rendered, because loadDetail walked every page on mount.
+     *
+     * It was first made lazy behind a needsAggregates flag, then deleted outright once both of its
+     * readers had bounded per-version sources (NEXUS-54201 for Files, NEXUS-54220 for
+     * Repositories). So the assertion is now unconditional: mounting the hook without a version
+     * issues no request at all, and no prop can make it issue one.
+     */
+    it('issues no request at all when mounted without a version', async () => {
       const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
       (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
 
-      const { result } = renderHook(() =>
-        useGADetail({ gaId: 'maven:org.test:test-artifact' })
-      );
-
-      // Wait for the machine to transition through states
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      });
-
-      // The machine should have auto-selected the first version
-      expect(result.current.selectedVersion).toBe('1.0.0');
-    });
-
-    it('should prevent infinite loop when assets are empty', async () => {
-      // This test verifies the machine's shouldLoadAssets guard prevents
-      // re-loading when assets are empty but already loaded
-      mockAxios.get.mockResolvedValue({
-        data: {
-          items: [
-            {
-              id: 'test-1',
-              repository: 'maven-central',
-              format: 'maven2',
-              group: 'org.test',
-              name: 'empty-artifact',
-              version: '1.0.0',
-              assets: [], // No assets - would have caused infinite loop
-            },
-          ],
-          continuationToken: null,
-        },
-      });
-
-      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
-      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
-
-      // Track the number of axios calls
       let axiosCallCount = 0;
       mockAxios.get.mockImplementation(() => {
         axiosCallCount++;
         return Promise.resolve({
-          data: {
-            items: [
-              {
-                id: 'test-1',
-                repository: 'maven-central',
-                format: 'maven2',
-                group: 'org.test',
-                name: 'empty-artifact',
-                version: '1.0.0',
-                assets: [],
-              },
-            ],
-            continuationToken: null,
-          },
+          data: { items: [], continuationToken: null },
         });
       });
 
-      const { result } = renderHook(() =>
-        useGADetail({ gaId: 'maven:org.test:empty-artifact' })
+      const { result, rerender } = renderHook(() =>
+        useGADetail({ gaId: 'maven:org.test:test-artifact' }),
       );
 
-      // Wait for state transitions to complete
+      // Fixed delay, not waitFor: this asserts an absence, and waitFor cannot prove a
+      // negative — it would pass on the first tick and never see a request arriving late.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      expect(axiosCallCount).toBe(0);
+      expect(mockFetchDetail).not.toHaveBeenCalled();
+      // The shell is still fully usable: these come from the gaId, not the network.
+      expect(result.current.detail?.displayName).toBe('test-artifact');
+      expect(result.current.detail?.repositories).toEqual([]);
+      expect(result.current.detail?.versions).toEqual([]);
+
+      // Re-rendering cannot conjure a fetch either — only a selected version can.
+      await act(async () => {
+        rerender();
+      });
+      expect(axiosCallCount).toBe(0);
+      expect(mockFetchDetail).not.toHaveBeenCalled();
+    });
+
+    it('should prevent infinite loop when assets are empty', async () => {
+      // The machine's shouldLoadAssets guard must not re-invoke once assets have resolved empty
+      // for a version — an empty result is a legitimate answer, not a reason to retry. The
+      // version is supplied via initialVersion, matching how GADetailPage sources it (from the
+      // URL, resolved from the versions machine's first page); the machine never invents one.
+      mockFetchDetail.mockResolvedValue({ assets: [], repositories: [], lastUpdated: null });
+
+      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
+      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
+
+      // No axios call is expected at all now: the drain that used it is gone, and assets go
+      // through the mocked fetchComponentVersionDetail.
+      let axiosCallCount = 0;
+      mockAxios.get.mockImplementation(() => {
+        axiosCallCount++;
+        return Promise.resolve({ data: { items: [], continuationToken: null } });
+      });
+
+      const { result } = renderHook(() =>
+        useGADetail({
+          gaId: 'maven:org.test:empty-artifact',
+          initialVersion: '1.0.0',
+        })
+      );
+
+      // Fixed delay, not waitFor: the assertions below are all "did not happen more than
+      // once", which waitFor would satisfy on its first tick before any re-invoke could occur.
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 200));
       });
 
-      // Should only call axios once for the detail, then once for assets
-      // Not infinitely due to lastLoadedVersion guard
-      expect(axiosCallCount).toBeLessThanOrEqual(2);
+      expect(axiosCallCount).toBe(0);
+      // The lastLoadedVersion guard should stop fetchComponentVersionDetail from being
+      // re-invoked once assets have resolved empty for this version.
+      expect(mockFetchDetail).toHaveBeenCalledTimes(1);
       expect(result.current.assets).toEqual([]);
       expect(result.current.selectedVersion).toBe('1.0.0');
+    });
+  });
+
+  describe('version-scoped detail (NEXUS-54201)', () => {
+    // Real machine: verifying loadAssets' real wiring to fetchComponentVersionDetail, not
+    // the mocked-out createGaDetailMachine the other describe blocks use.
+    beforeEach(() => {
+      jest.dontMock('../gaDetailMachine');
+      mockFetchDetail.mockResolvedValue({
+        assets: MOCK_ASSETS,
+        repositories: ['maven-hosted-1', 'maven-hosted-3'],
+        lastUpdated: '2026-06-01T00:00:00Z',
+      });
+    });
+
+    afterEach(() => {
+      jest.mock('../gaDetailMachine', () => ({
+        createGaDetailMachine: jest.fn(),
+      }));
+    });
+
+    it('requests only the selected version, never the whole component', async () => {
+      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
+      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
+
+      renderHook(() =>
+        useGADetail({ gaId: 'maven:org.sonatype.test:depth-fixture-v3', initialVersion: '1.0.500' }),
+      );
+
+      await waitFor(() =>
+        expect(mockFetchDetail).toHaveBeenCalledWith({
+          format: 'maven',
+          group: 'org.sonatype.test',
+          name: 'depth-fixture-v3',
+          version: '1.0.500',
+        }),
+      );
+    });
+
+    it('exposes the selected version repositories and timestamp', async () => {
+      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
+      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
+
+      const { result } = renderHook(() =>
+        useGADetail({ gaId: 'maven:org.sonatype.test:depth-fixture-v3', initialVersion: '1.0.500' }),
+      );
+
+      await waitFor(() =>
+        expect(result.current.versionRepositories).toEqual([
+          'maven-hosted-1',
+          'maven-hosted-3',
+        ]),
+      );
+      expect(result.current.versionLastUpdated).toBe('2026-06-01T00:00:00Z');
+    });
+
+    // AT-018: '' is a valid selected version, not "unresolved".
+    it('fetches for a versionless component', async () => {
+      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
+      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
+
+      renderHook(() => useGADetail({ gaId: 'raw::my-file.txt', initialVersion: '' }));
+
+      await waitFor(() =>
+        expect(mockFetchDetail).toHaveBeenCalledWith(
+          expect.objectContaining({ version: '' }),
+        ),
+      );
+    });
+
+    it('does not fetch before a version is selected', async () => {
+      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
+      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
+
+      renderHook(() => useGADetail({ gaId: 'maven:org.sonatype.test:depth-fixture-v3' }));
+
+      // Fixed delay, not waitFor: this asserts an absence, and waitFor cannot prove a
+      // negative — it would pass on the first tick and never see a request arriving late.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      expect(mockFetchDetail).not.toHaveBeenCalled();
+    });
+
+    it('keeps the shell rendered when the fetch fails', async () => {
+      const realMachine = jest.requireActual('../gaDetailMachine').createGaDetailMachine;
+      (createGaDetailMachine as jest.Mock).mockImplementation(realMachine);
+      mockFetchDetail.mockRejectedValue(new Error('boom'));
+
+      const { result } = renderHook(() =>
+        useGADetail({ gaId: 'maven:org.sonatype.test:depth-fixture-v3', initialVersion: '1.0.500' }),
+      );
+
+      await waitFor(() => expect(result.current.assetsLoading).toBe(false));
+      expect(result.current.detail).not.toBeNull();
+      expect(result.current.assets).toEqual([]);
     });
   });
 });

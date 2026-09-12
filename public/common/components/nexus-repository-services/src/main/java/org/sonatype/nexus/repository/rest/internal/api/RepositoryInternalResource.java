@@ -53,6 +53,7 @@ import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.slf4j.Logger;
@@ -62,6 +63,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 import static java.util.stream.Collectors.toList;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.sonatype.nexus.security.BreadActions.READ;
 import org.springframework.stereotype.Component;
@@ -270,7 +272,7 @@ public class RepositoryInternalResource
     return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
         .map(repository -> convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter)
             .adaptDecorated(repository))
-        .get();
+        .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
   }
 
   /**
@@ -281,7 +283,8 @@ public class RepositoryInternalResource
   @Path("/repository/{repositoryName}/signing-passphrase")
   @RequiresAuthentication
   public Map<String, String> getSigningPassphrase(@PathParam("repositoryName") final String repositoryName) {
-    Repository repository = authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName).get();
+    Repository repository = authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
+        .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
     String format = repository.getFormat().getValue();
     Map<String, String> result = new HashMap<>();
 

@@ -57,6 +57,13 @@ interface DynamicCapabilityFormProps {
   onDelete?: () => void;
   loading?: boolean;
   error?: string;
+  /**
+   * When false, hides the Save button so a user without nexus:capabilities:update
+   * cannot submit edits (NEXUS-54212). Matches Classic CapabilitySettingsForm, whose
+   * editableCondition is NX.Conditions.isPermitted('nexus:capabilities:update').
+   * Defaults to true; create mode is gated on nexus:capabilities:create at navigation.
+   */
+  canEdit?: boolean;
   /** When true, skip the SettingsForm wrapper (for use in WizardForm) */
   embedded?: boolean;
   /** Ref callback to expose submit function (for embedded mode) */
@@ -81,6 +88,7 @@ export function DynamicCapabilityForm({
   onDelete,
   loading = false,
   error,
+  canEdit = true,
   embedded = false,
   onSubmitRef,
   isEnabled: isEnabledProp,
@@ -578,7 +586,7 @@ export function DynamicCapabilityForm({
     <Box className="dynamic-capability-form">
       <SettingsForm
         testId="capability-form"
-        onSubmit={handleSubmit}
+        onSubmit={canEdit ? handleSubmit : undefined}
         onCancel={onCancel}
         loading={form.isSaving || loading}
         pristine={isCreate ? false : form.isPristine}

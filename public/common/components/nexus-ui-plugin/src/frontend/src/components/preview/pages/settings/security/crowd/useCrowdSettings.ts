@@ -27,6 +27,9 @@ export interface UseCrowdSettingsResult {
   isInitialLoading: boolean;
   /** A save/verify/clear-cache operation is in progress (disables actions). */
   isBusy: boolean;
+  isSaving: boolean;
+  isVerifyingConnection: boolean;
+  isClearingCache: boolean;
   error: string | null;
   handleChange: (field: keyof CrowdConfig, value: string | boolean | number | undefined) => void;
   handleSubmit: () => void;
@@ -67,8 +70,10 @@ export function useCrowdSettings(): UseCrowdSettingsResult {
   });
 
   const c = state.context;
-  const isBusy =
-    state.matches('saving') || state.matches('verifyingConnection') || state.matches('clearingCache');
+  const isSaving = state.matches('saving');
+  const isVerifyingConnection = state.matches('verifyingConnection');
+  const isClearingCache = state.matches('clearingCache');
+  const isBusy = isSaving || isVerifyingConnection || isClearingCache;
 
   return {
     config: c.data,
@@ -77,6 +82,9 @@ export function useCrowdSettings(): UseCrowdSettingsResult {
     isFormValid: Object.keys(c.validationErrors).length === 0,
     isInitialLoading: state.matches('loading'),
     isBusy,
+    isSaving,
+    isVerifyingConnection,
+    isClearingCache,
     error: c.error,
     handleChange: (field, value) => send({ type: 'UPDATE', field, value }),
     handleSubmit: () => send({ type: 'SUBMIT' }),

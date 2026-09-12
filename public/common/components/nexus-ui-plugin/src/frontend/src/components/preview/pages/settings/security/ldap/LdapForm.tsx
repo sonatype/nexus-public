@@ -53,6 +53,7 @@ import './LdapForm.scss';
 interface LdapFormProps {
   server?: LdapServer | null;
   isCreate: boolean;
+  existingNames?: string[];
   onSave: (data: LdapFormData) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => void;
@@ -120,6 +121,7 @@ const USER_MAPPING_COLUMNS: TableColumn<LdapUser>[] = [
 export function LdapForm({
   server,
   isCreate,
+  existingNames,
   onSave,
   onCancel,
   onDelete,
@@ -144,6 +146,7 @@ export function LdapForm({
   const { form, applyTemplate: hookApplyTemplate, changeProtocol, confirmPasswordAndSubmit } = useLdapForm({
     serverId: isCreate ? undefined : server?.id,
     server: server || null,
+    existingNames,
     onSave,
     onCancel,
     createServer,
@@ -151,6 +154,46 @@ export function LdapForm({
   });
 
   const formData = form.data as LdapFormData;
+
+  // Presentation-only raw strings for the three numeric connection settings fields.
+  // Using type="text" (not type="number") prevents the browser from showing its
+  // native invalid-number indicator (cursor shift / shrink) when the user types a
+  // letter. Storing the raw string lets the machine receive NaN for non-numeric
+  // input, which the validator in ldapFormMachine.ts catches and surfaces as a
+  // range message, distinct from undefined which means "This field is required".
+  // Mirrors the timeoutRaw pattern in CrowdPage.tsx.
+  const [connectionTimeoutRaw, setConnectionTimeoutRaw] = useState<string>(() =>
+    formData.connectionTimeout != null && !Number.isNaN(formData.connectionTimeout)
+      ? String(formData.connectionTimeout) : ''
+  );
+  const [connectionRetryDelayRaw, setConnectionRetryDelayRaw] = useState<string>(() =>
+    formData.connectionRetryDelay != null && !Number.isNaN(formData.connectionRetryDelay)
+      ? String(formData.connectionRetryDelay) : ''
+  );
+  const [maxIncidentsCountRaw, setMaxIncidentsCountRaw] = useState<string>(() =>
+    formData.maxIncidentsCount != null && !Number.isNaN(formData.maxIncidentsCount)
+      ? String(formData.maxIncidentsCount) : ''
+  );
+
+  // Re-sync the raw strings when the form resets to pristine (after a successful
+  // save, discard, or initial load from the server) so the displayed values
+  // track the machine state. While the user is actively editing (isPristine=false)
+  // the raw strings are authoritative and must not be overwritten.
+  useEffect(() => {
+    if (!form.isPristine) return;
+    setConnectionTimeoutRaw(
+      formData.connectionTimeout != null && !Number.isNaN(formData.connectionTimeout)
+        ? String(formData.connectionTimeout) : ''
+    );
+    setConnectionRetryDelayRaw(
+      formData.connectionRetryDelay != null && !Number.isNaN(formData.connectionRetryDelay)
+        ? String(formData.connectionRetryDelay) : ''
+    );
+    setMaxIncidentsCountRaw(
+      formData.maxIncidentsCount != null && !Number.isNaN(formData.maxIncidentsCount)
+        ? String(formData.maxIncidentsCount) : ''
+    );
+  }, [form.isPristine, formData.connectionTimeout, formData.connectionRetryDelay, formData.maxIncidentsCount]);
 
   const [currentStep, setCurrentStep] = useState(0);
   const [templates, setTemplates] = useState<LdapSchemaTemplate[]>([]);
@@ -195,8 +238,12 @@ export function LdapForm({
   const [loginResult, setLoginResult] = useState<{ success: boolean; message: string } | null>(null);
   const [loginVerifying, setLoginVerifying] = useState(false);
 
-  // Password re-entry modal state (NEXUS-23184)
+  // Password re-entry modal state (NEXUS-23184).
+  // pendingVerifyAction tracks whether the modal was opened from a verify button
+  // ('connection' | 'userMapping') or from the save flow (null). The submit
+  // handler branches on this to either run verification or commit the save.
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [pendingVerifyAction, setPendingVerifyAction] = useState<'connection' | 'userMapping' | null>(null);
   const [reenteredPassword, setReenteredPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   // NEXUS-53959: verify the re-entered password with an LDAP bind before
@@ -251,11 +298,11 @@ export function LdapForm({
     setShowDeleteConfirm(false);
   }, [onDelete]);
 
-  // Check if connection step is valid
+  // Check if connection step is valid (used for save/continue button gating)
   const connectionValid = useMemo(() => {
-    const stepErrors = validateConnection(formData, isCreate);
+    const stepErrors = validateConnection(formData, isCreate, existingNames);
     return Object.keys(stepErrors).length === 0;
-  }, [formData, isCreate]);
+  }, [formData, isCreate, existingNames]);
 
   // Check if user/group step is valid
   const userGroupValid = useMemo(() => {
@@ -272,18 +319,16 @@ export function LdapForm({
     }
   }, [templates, hookApplyTemplate]);
 
-  // Verify connection — sends full form data because the REST endpoint
-  // validates CreateLdapServerXo (including user mapping fields)
-  const handleVerifyConnection = useCallback(async () => {
-    const stepErrors = validateConnection(formData, isCreate);
-    if (Object.keys(stepErrors).length > 0) {
-      return;
-    }
-
+  // Internal runner: executes verifyConnection with the given data. Separated
+  // from the button handler so the password-modal path can call it with an
+  // augmented copy of formData that includes the modal-supplied password.
+  const runVerifyConnection = useCallback(async (data: LdapFormData) => {
+    const stepErrors = validateConnection(data, isCreate);
+    if (Object.keys(stepErrors).length > 0) return;
     setConnectionVerifying(true);
     setVerificationError(null);
     try {
-      await verifyConnection(formData, isCreate ? undefined : server?.name);
+      await verifyConnection(data, isCreate ? undefined : server?.name);
       setConnectionVerified(true);
       announceStatus('Connection successful');
     } catch (err: any) {
@@ -293,20 +338,17 @@ export function LdapForm({
     } finally {
       setConnectionVerifying(false);
     }
-  }, [formData, verifyConnection, isCreate, server?.name, announceStatus]);
+  }, [verifyConnection, isCreate, server?.name, announceStatus]);
 
-  // Verify user mapping
-  const handleVerifyUserMapping = useCallback(async () => {
-    const stepErrors = validateUserGroup(formData);
-    if (Object.keys(stepErrors).length > 0) {
-      return;
-    }
-
+  // Internal runner: executes verifyUserMapping with the given data.
+  const runVerifyUserMapping = useCallback(async (data: LdapFormData) => {
+    const stepErrors = validateUserGroup(data);
+    if (Object.keys(stepErrors).length > 0) return;
     setUserMappingVerifying(true);
     setVerificationError(null);
     setShowUserResults(false);
     try {
-      const users = await verifyUserMapping(formData, isCreate ? undefined : server?.name);
+      const users = await verifyUserMapping(data, isCreate ? undefined : server?.name);
       setVerifiedUsers(users);
       setShowUserResults(true);
       announceStatus(`Found ${users.length} user(s)`);
@@ -317,7 +359,45 @@ export function LdapForm({
     } finally {
       setUserMappingVerifying(false);
     }
-  }, [formData, verifyUserMapping, isCreate, server?.name, announceStatus]);
+  }, [verifyUserMapping, isCreate, server?.name, announceStatus]);
+
+  // Verify connection — in edit mode with non-anonymous auth the user must
+  // supply credentials via the password modal before the request fires. This
+  // mirrors the Classic UI's LdapSystemPasswordModal pattern (NEXUS-54062).
+  const handleVerifyConnection = useCallback(async () => {
+    if (!isCreate && formData.authScheme !== 'none') {
+      setReenteredPassword('');
+      setPasswordError(null);
+      setPendingVerifyAction('connection');
+      setShowPasswordModal(true);
+      return;
+    }
+
+    const stepErrors = validateConnection(formData, isCreate);
+    if (Object.keys(stepErrors).length > 0) {
+      return;
+    }
+
+    await runVerifyConnection(formData);
+  }, [formData, isCreate, runVerifyConnection]);
+
+  // Verify user mapping — same password-modal gate as handleVerifyConnection.
+  const handleVerifyUserMapping = useCallback(async () => {
+    if (!isCreate && formData.authScheme !== 'none') {
+      setReenteredPassword('');
+      setPasswordError(null);
+      setPendingVerifyAction('userMapping');
+      setShowPasswordModal(true);
+      return;
+    }
+
+    const stepErrors = validateUserGroup(formData);
+    if (Object.keys(stepErrors).length > 0) {
+      return;
+    }
+
+    await runVerifyUserMapping(formData);
+  }, [formData, isCreate, runVerifyUserMapping]);
 
   // Verify login
   const handleOpenLoginModal = useCallback(() => {
@@ -354,10 +434,8 @@ export function LdapForm({
     }
   }, [showLoginModal, loginVerifying, loginResult]);
 
-  // Handle password re-entry for updates (NEXUS-23184).
-  // NEXUS-53959: bind against LDAP with the re-entered password BEFORE
-  // submitting. If the bind fails, the modal stays open with the backend's
-  // error message and the update PUT is never issued.
+  // Handle password entry from the modal. Routes to the verify runner (when
+  // opened from a verify button) or to the save flow (when opened from Save).
   const handlePasswordReentry = useCallback(async () => {
     if (!reenteredPassword) {
       setPasswordError('Password is required');
@@ -365,33 +443,51 @@ export function LdapForm({
     }
 
     setPasswordError(null);
-    setPasswordVerifying(true);
-    try {
-      // Server name is present in edit mode - that's the only path that opens
-      // this modal (handleSave gates on !isCreate). Pass it so the backend
-      // scopes verify to this server's identity.
-      await verifyConnection(
-        { ...formData, authPassword: reenteredPassword },
-        server?.name
-      );
-    } catch (err: any) {
-      setPasswordError(err?.message || 'Connection verification failed');
-      setPasswordVerifying(false);
-      return;
-    }
-    setPasswordVerifying(false);
 
-    // Assign the re-entered password and submit in one synchronous machine
-    // transition, so there is no window where the password hasn't been
-    // applied yet when SUBMIT is processed.
-    confirmPasswordAndSubmit(reenteredPassword);
-    setShowPasswordModal(false);
-    setReenteredPassword('');
-  }, [reenteredPassword, confirmPasswordAndSubmit, verifyConnection, formData, server?.name]);
+    if (pendingVerifyAction === 'connection') {
+      // Verify flow: close modal immediately, then run with entered password.
+      setShowPasswordModal(false);
+      const password = reenteredPassword;
+      setReenteredPassword('');
+      setPendingVerifyAction(null);
+      runVerifyConnection({ ...formData, authPassword: password });
+    } else if (pendingVerifyAction === 'userMapping') {
+      setShowPasswordModal(false);
+      const password = reenteredPassword;
+      setReenteredPassword('');
+      setPendingVerifyAction(null);
+      runVerifyUserMapping({ ...formData, authPassword: password });
+    } else {
+      // Save flow (NEXUS-53959): bind against LDAP with the re-entered password
+      // BEFORE submitting. If the bind fails, the modal stays open with the
+      // backend's error message and the update PUT is never issued.
+      setPasswordVerifying(true);
+      try {
+        // Server name is present in edit mode - that's the only path that opens
+        // this modal (handleSave gates on !isCreate). Pass it so the backend
+        // scopes verify to this server's identity.
+        await verifyConnection(
+          { ...formData, authPassword: reenteredPassword },
+          server?.name
+        );
+      } catch (err: any) {
+        setPasswordError(err?.message || 'Connection verification failed');
+        setPasswordVerifying(false);
+        return;
+      }
+      setPasswordVerifying(false);
+      // Assign the re-entered password and submit in one synchronous machine
+      // transition, so there is no window where the password hasn't been
+      // applied yet when SUBMIT is processed.
+      confirmPasswordAndSubmit(reenteredPassword);
+      setShowPasswordModal(false);
+      setReenteredPassword('');
+    }
+  }, [reenteredPassword, confirmPasswordAndSubmit, pendingVerifyAction, formData, runVerifyConnection, runVerifyUserMapping, verifyConnection, server?.name]);
 
   const handleStepChange = useCallback((step: number) => {
     if (step > currentStep) {
-      const stepErrors = validateConnection(formData, isCreate);
+      const stepErrors = validateConnection(formData, isCreate, existingNames);
       if (Object.keys(stepErrors).length > 0) {
         return;
       }
@@ -407,11 +503,11 @@ export function LdapForm({
       setShowUserResults(false);
     }
     setCurrentStep(step);
-  }, [currentStep, formData, isCreate]);
+  }, [currentStep, formData, isCreate, existingNames]);
 
   const handleSave = useCallback(() => {
     const allErrors = {
-      ...validateConnection(formData, isCreate),
+      ...validateConnection(formData, isCreate, existingNames),
       ...validateUserGroup(formData),
     };
 
@@ -431,12 +527,13 @@ export function LdapForm({
     if (!isCreate && formData.authScheme !== 'none' && !formData.authPassword) {
       setReenteredPassword('');
       setPasswordError(null);
+      // pendingVerifyAction intentionally NOT set → null = save flow in handlePasswordReentry
       setShowPasswordModal(true);
       return;
     }
 
     form.send('SUBMIT');
-  }, [formData, isCreate, form]);
+  }, [formData, isCreate, existingNames, form]);
 
   // Show loading state
   if (form.isLoading) {
@@ -569,6 +666,9 @@ export function LdapForm({
                   value={formData.port ?? 389}
                   onChange={(value) => {
                     const parsed = parseInt(value as any, 10);
+                    // Port intentionally reverts to 389 on clear — unlike the connection-
+                    // timeout/retry/incidents fields (NEXUS-54076), an empty port is not a
+                    // meaningful intermediate state and the backend rejects a missing port.
                     handleChange('port', Number.isNaN(parsed) ? 389 : parsed);
                   }}
                   helpText="Default: 389 (ldap) or 636 (ldaps)"
@@ -654,11 +754,12 @@ export function LdapForm({
               <SettingsTextInput
                 name="connectionTimeout"
                 label="Connection Timeout (seconds)"
-                type="number"
-                value={formData.connectionTimeout ?? 30}
+                type="text"
+                value={connectionTimeoutRaw}
                 onChange={(value) => {
-                  const parsed = parseInt(value as any, 10);
-                  handleChange('connectionTimeout', Number.isNaN(parsed) ? 30 : parsed);
+                  const val = value as string;
+                  setConnectionTimeoutRaw(val);
+                  handleChange('connectionTimeout', val.trim() === '' ? undefined : Number(val));
                 }}
                 helpText="1-3600 seconds"
                 disabled={!canEditFields}
@@ -668,11 +769,12 @@ export function LdapForm({
               <SettingsTextInput
                 name="connectionRetryDelay"
                 label="Retry Delay (seconds)"
-                type="number"
-                value={formData.connectionRetryDelay ?? 300}
+                type="text"
+                value={connectionRetryDelayRaw}
                 onChange={(value) => {
-                  const parsed = parseInt(value as any, 10);
-                  handleChange('connectionRetryDelay', Number.isNaN(parsed) ? 300 : parsed);
+                  const val = value as string;
+                  setConnectionRetryDelayRaw(val);
+                  handleChange('connectionRetryDelay', val.trim() === '' ? undefined : Number(val));
                 }}
                 helpText="Delay between connection retries"
                 disabled={!canEditFields}
@@ -682,11 +784,12 @@ export function LdapForm({
               <SettingsTextInput
                 name="maxIncidentsCount"
                 label="Max Incidents"
-                type="number"
-                value={formData.maxIncidentsCount ?? 3}
+                type="text"
+                value={maxIncidentsCountRaw}
                 onChange={(value) => {
-                  const parsed = parseInt(value as any, 10);
-                  handleChange('maxIncidentsCount', Number.isNaN(parsed) ? 3 : parsed);
+                  const val = value as string;
+                  setMaxIncidentsCountRaw(val);
+                  handleChange('maxIncidentsCount', val.trim() === '' ? undefined : Number(val));
                 }}
                 helpText="Max failures before blacklisting"
                 disabled={!canEditFields}
@@ -1073,14 +1176,20 @@ export function LdapForm({
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* Password Re-entry Modal (NEXUS-23184) */}
-      <Dialog.Root open={showPasswordModal} onOpenChange={(open) => {
-        setShowPasswordModal(open);
-        if (!open) {
-          setPasswordVerifying(false);
-          setReenteredPassword('');
-        }
-      }}>
+      {/* Password Modal — used for both the save re-entry flow (NEXUS-23184) and
+          the verify-before-action flow (NEXUS-54062). pendingVerifyAction
+          distinguishes the two paths in handlePasswordReentry. */}
+      <Dialog.Root
+        open={showPasswordModal}
+        onOpenChange={(open) => {
+          setShowPasswordModal(open);
+          if (!open) {
+            setPasswordVerifying(false);
+            setReenteredPassword('');
+            setPendingVerifyAction(null);
+          }
+        }}
+      >
         <Dialog.Content maxWidth="450px" data-testid="ldap-password-modal">
           <Dialog.Title>
             <Flex align="center" gap="2">
@@ -1089,8 +1198,11 @@ export function LdapForm({
             </Flex>
           </Dialog.Title>
           <Dialog.Description size="2">
-            For security reasons, the password must be re-entered when updating an LDAP server.
-            Enter the password for the service account used to connect to LDAP.
+            {pendingVerifyAction === 'userMapping'
+              ? 'A password is required to verify the LDAP user mapping. Enter the password for the service account used to connect to LDAP.'
+              : pendingVerifyAction === 'connection'
+              ? 'A password is required to verify the LDAP server connection. Enter the password for the service account used to connect to LDAP.'
+              : 'For security reasons, the password must be re-entered when updating an LDAP server. Enter the password for the service account used to connect to LDAP.'}
           </Dialog.Description>
 
           <Flex direction="column" gap="3" mt="4">
@@ -1128,7 +1240,7 @@ export function LdapForm({
               data-testid="ldap-password-submit"
               data-analytics-id="nxrm-ldap-form-password-submit"
             >
-              Save
+              {pendingVerifyAction ? 'Verify' : 'Save'}
             </SettingsButton>
           </Flex>
         </Dialog.Content>

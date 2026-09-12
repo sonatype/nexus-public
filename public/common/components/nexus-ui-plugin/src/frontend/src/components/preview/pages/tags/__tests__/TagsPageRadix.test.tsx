@@ -17,9 +17,17 @@ import { Theme } from '@radix-ui/themes';
 import { TagsPageRadix } from '../TagsPageRadix';
 import { useFilteredTags } from '../hooks/useFilteredTags';
 import * as tagsApi from '../tags.api';
+import { ExtJS } from '../../../../../interface/ExtJS';
 
 jest.mock('../hooks/useFilteredTags');
 jest.mock('../tags.api');
+// TagsPageRadix uses ExtJS.usePermission (provider-independent) rather than the
+// context-based usePermission — the latter returns false without a <PermissionsProvider>,
+// which coreui never mounts, disabling the button for admins too (NEXUS-54212).
+// Spy on the real ExtJS statics rather than mocking the whole module: the real shared
+// components rendered here rely on other ExtJS methods (e.g. waitForPermissions).
+const mockUsePermission = jest.spyOn(ExtJS, 'usePermission');
+const mockCheckPermission = jest.spyOn(ExtJS, 'checkPermission');
 const mockToastSuccess = jest.fn();
 const mockToastError = jest.fn();
 jest.mock('../../../shared/Toast', () => ({
@@ -73,6 +81,27 @@ describe('TagsPageRadix', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFilteredTags.mockReturnValue({ ...defaultHookReturn });
+    // ExtJS.usePermission just evaluates its getter synchronously in the test.
+    mockUsePermission.mockImplementation((getValue: () => unknown) => getValue());
+    // Default: user has all permissions so existing rendering tests are unaffected.
+    mockCheckPermission.mockReturnValue(true);
+  });
+
+  describe('create-tag permission gating (NEXUS-54212)', () => {
+    it('shows Create Tag when user has tags:create', () => {
+      mockCheckPermission.mockReturnValue(true);
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(screen.getByTestId('create-tag-button')).toBeInTheDocument();
+      expect(screen.getByTestId('create-tag-button')).toBeEnabled();
+    });
+
+    it('disables Create Tag when user lacks tags:create', () => {
+      mockCheckPermission.mockReturnValue(false);
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(screen.getByText('Tags')).toBeInTheDocument(); // page still renders
+      // Large create button is shown but disabled (NEXUS-54212), not hidden.
+      expect(screen.getByTestId('create-tag-button')).toBeDisabled();
+    });
   });
 
   describe('rendering', () => {
@@ -104,6 +133,22 @@ describe('TagsPageRadix', () => {
       expect(screen.getByText('Components')).toBeInTheDocument();
       expect(screen.getByText('Created')).toBeInTheDocument();
       expect(screen.getByText('Last Updated')).toBeInTheDocument();
+    });
+
+    it('shouldRenderActionsColumnHeaderWithRowActionsLabel', () => {
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      expect(
+        screen.getByRole('columnheader', { name: /row actions/i })
+      ).toBeInTheDocument();
+    });
+
+    it('shouldRenderPerRowActionsTriggerForEveryTag', () => {
+      render(<TagsPageRadix />, { wrapper: TestWrapper });
+      mockTags.forEach((tag) => {
+        expect(
+          screen.getByRole('button', { name: `Actions for tag ${tag.name}` })
+        ).toBeInTheDocument();
+      });
     });
 
     it('renders Create Tag button', () => {

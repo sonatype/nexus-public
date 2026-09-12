@@ -22,14 +22,26 @@
     border-radius: var(--radius-4, 8px);
 }
 
+// Blue accent scope inside the AlertDialog portal. Radix's <Theme asChild>
+// applies its data-accent-color etc. to this element; it also has to fill
+// the dialog so the wizard's flex layout keeps working.
+.onboarding-wizard__theme-scope {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 16px);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .onboarding-wizard__stepper-area {
     min-height: 32px;
 }
 
 .onboarding-wizard__stepper {
     display: flex;
+    align-items: center;
     justify-content: center;
-    gap: var(--space-3, 12px);
+    gap: var(--space-2, 8px);
 
     &-item {
         width: 32px;
@@ -41,6 +53,7 @@
         background-color: var(--gray-4, #e5e7eb);
         color: var(--gray-11, #6b7280);
         font-weight: 600;
+        flex-shrink: 0;
 
         &--active {
             background-color: var(--accent-9, #3b82f6);
@@ -50,6 +63,16 @@
         &--completed {
             background-color: var(--green-9, #10b981);
             color: white;
+        }
+    }
+
+    &-connector {
+        flex: 0 0 40px;
+        height: 2px;
+        background-color: var(--gray-6, #d1d5db);
+
+        &--completed {
+            background-color: var(--green-9, #10b981);
         }
     }
 }
@@ -85,6 +108,19 @@
         max-width: 60ch;
         margin: 0;
     }
+
+    &-actions {
+        display: flex;
+        justify-content: center;
+        margin-top: var(--space-5, 20px);
+    }
+}
+
+.onboarding-wizard__complete-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-5, 20px);
 }
 
 .onboarding-wizard__verifying {
@@ -92,26 +128,4 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-}
-
-.onboarding-wizard__error-container {
-    padding: var(--space-4, 16px);
-}
-
-.onboarding-wizard__error-title {
-    font-size: var(--font-size-5, 20px);
-    font-weight: 600;
-    margin: 0 0 var(--space-3, 12px) 0;
-}
-
-.onboarding-wizard__error-dismiss-help {
-    color: var(--gray-11, #6b7280);
-    font-size: var(--font-size-2, 14px);
-    margin: var(--space-3, 12px) 0 0 0;
-}
-
-.onboarding-wizard__error-actions {
-    display: flex;
-    justify-content: flex-start;
-    margin-top: var(--space-3, 12px);
 }

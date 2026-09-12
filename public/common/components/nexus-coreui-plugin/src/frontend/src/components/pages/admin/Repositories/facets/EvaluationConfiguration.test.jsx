@@ -56,7 +56,7 @@ describe('EvaluationConfiguration', () => {
 
     // Mock Axios GET for global settings
     Axios.get.mockImplementation((url) => {
-      if (url === '/service/rest/v1/evaluation/settings') {
+      if (url === 'service/rest/v1/evaluation/settings') {
         return Promise.resolve({ data: mockGlobalSettings });
       }
       return Promise.resolve({ data: {} });
@@ -119,7 +119,7 @@ describe('EvaluationConfiguration', () => {
 
     // Wait for global settings to be fetched
     await waitFor(() => {
-      expect(Axios.get).toHaveBeenCalledWith('/service/rest/v1/evaluation/settings');
+      expect(Axios.get).toHaveBeenCalledWith('service/rest/v1/evaluation/settings');
     });
 
     const activityTimeFrameSelect = screen.getByLabelText('Activity Time Frame');
@@ -242,7 +242,7 @@ describe('EvaluationConfiguration', () => {
     render(<EvaluationConfiguration parentMachine={mockParentMachine} />);
 
     await waitFor(() => {
-      expect(Axios.get).toHaveBeenCalledWith('/service/rest/v1/evaluation/settings');
+      expect(Axios.get).toHaveBeenCalledWith('service/rest/v1/evaluation/settings');
     });
   });
 

@@ -27,16 +27,16 @@ const BASE_URL = 'http://localhost:8081/repository';
 // =============================================================================
 
 const MAVEN_CORE_VERSIONS: readonly GAVersion[] = [
-  { version: '3.9.6', status: 'recommended', lastUpdated: '2024-01-15T10:00:00Z', repositories: ['maven-central', 'maven-releases'] },
-  { version: '3.9.5', status: 'none', lastUpdated: '2023-11-20T09:00:00Z', repositories: ['maven-central'] },
-  { version: '3.9.4', status: 'none', lastUpdated: '2023-08-15T14:00:00Z', repositories: ['maven-central'] },
-  { version: '3.9.3', status: 'not-recommended', lastUpdated: '2023-05-01T11:00:00Z', repositories: ['maven-central'], statusReason: 'Security vulnerability CVE-2023-1234' },
-  { version: '3.9.2', status: 'none', lastUpdated: '2023-02-10T08:00:00Z', repositories: ['maven-central'] },
-  { version: '3.9.1', status: 'none', lastUpdated: '2022-11-15T12:00:00Z', repositories: ['maven-central'] },
-  { version: '3.9.0', status: 'none', lastUpdated: '2022-08-01T10:00:00Z', repositories: ['maven-central'] },
-  { version: '3.8.8', status: 'none', lastUpdated: '2022-05-20T09:00:00Z', repositories: ['maven-central'] },
-  { version: '3.8.7', status: 'none', lastUpdated: '2022-02-14T14:00:00Z', repositories: ['maven-central'] },
-  { version: '3.8.6', status: 'none', lastUpdated: '2021-11-01T11:00:00Z', repositories: ['maven-central'] },
+  { version: '3.9.6', lastUpdated: '2024-01-15T10:00:00Z', repositories: ['maven-central', 'maven-releases'] },
+  { version: '3.9.5', lastUpdated: '2023-11-20T09:00:00Z', repositories: ['maven-central'] },
+  { version: '3.9.4', lastUpdated: '2023-08-15T14:00:00Z', repositories: ['maven-central'] },
+  { version: '3.9.3', lastUpdated: '2023-05-01T11:00:00Z', repositories: ['maven-central'] },
+  { version: '3.9.2', lastUpdated: '2023-02-10T08:00:00Z', repositories: ['maven-central'] },
+  { version: '3.9.1', lastUpdated: '2022-11-15T12:00:00Z', repositories: ['maven-central'] },
+  { version: '3.9.0', lastUpdated: '2022-08-01T10:00:00Z', repositories: ['maven-central'] },
+  { version: '3.8.8', lastUpdated: '2022-05-20T09:00:00Z', repositories: ['maven-central'] },
+  { version: '3.8.7', lastUpdated: '2022-02-14T14:00:00Z', repositories: ['maven-central'] },
+  { version: '3.8.6', lastUpdated: '2021-11-01T11:00:00Z', repositories: ['maven-central'] },
 ];
 
 const MAVEN_CORE_REPOSITORIES: readonly GARepository[] = [
@@ -103,7 +103,6 @@ const MAVEN_CORE_DETAIL: GADetail = {
   format: 'maven',
   displayName: 'maven-core',
   description: 'Maven Core is the core of the Maven build system. It contains the default implementation for building Maven projects.',
-  projectUrl: 'https://maven.apache.org/ref/current/maven-core/',
   license: 'Apache-2.0',
   repositories: MAVEN_CORE_REPOSITORIES,
   versions: MAVEN_CORE_VERSIONS,
@@ -135,20 +134,14 @@ export function withDelay<T>(data: T, delayMs = 300): Promise<T> {
   });
 }
 
-/**
- * Get mock detail data.
- * Returns full maven-core mock when gaId matches; otherwise generic mock.
+/*
+ * getMockDetail was removed with the aggregate drain (NEXUS-54201 / NEXUS-54220).
+ *
+ * Its only caller was useGADetail's loadDetail, which supplied mock-mode values for
+ * detail.repositories and detail.versions. No tab reads those now — each has its own per-version
+ * source, and each has its own mock fallback — so there is nothing left for it to fill.
+ * MAVEN_CORE_DETAIL is still exported as `mockDetail` for tests and other detail pages.
  */
-export function getMockDetail(gaId: string): GADetail {
-  if (isMavenCore(gaId)) {
-    return { ...MAVEN_CORE_DETAIL, gaId };
-  }
-  return {
-    ...MAVEN_CORE_DETAIL,
-    gaId,
-    displayName: gaId.split(':').pop() || 'unknown',
-  };
-}
 
 /**
  * Get mock assets for a version.

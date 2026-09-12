@@ -53,7 +53,6 @@ export function BlobStoreWizardStepBasic({
   const { values: s3Dropdown, loading: s3Loading } = useS3DropdownValues();
   const { blobStores, loading: groupLoading } = useGroupableBlobStores();
   const isProEdition = ExtJS.isProEdition();
-  const isAzureSasEnabled = ExtJS.state()?.getValue?.('azureSasUrlEnabled') === true;
   const isClustered = useIsClustered();
   const workDirectory = ExtJS.state()?.getValue?.('nexus.application.workDirectory') || '';
 
@@ -169,7 +168,7 @@ export function BlobStoreWizardStepBasic({
               required
               error={validationErrors['bucketConfiguration.containerName']}
             />
-            {isProEdition && isAzureSasEnabled && (
+            {isProEdition && (
               <div className="azure-blob-store-settings__sas-section">
                 <SettingsCheckbox
                   name="azure-direct-download"
@@ -180,7 +179,8 @@ export function BlobStoreWizardStepBasic({
                 />
                 {config.preSignedUrlEnabled && (
                   <SettingsAlert type="info">
-                    {"Requires the 'Storage Blob Delegator' role on the storage account. Verified on save."}
+                    {"The identity needs an Azure role that can generate a user delegation key — " +
+                      "any Storage Blob Data role, or Storage Blob Delegator. Verified on save."}
                   </SettingsAlert>
                 )}
               </div>

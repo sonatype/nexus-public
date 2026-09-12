@@ -60,15 +60,17 @@ export async function fetchIqSettings(): Promise<IqServerFormData> {
   }
 }
 
+export async function putIqSettings(config: IqServerConfiguration): Promise<IqServerConfiguration> {
+  const response = await Axios.put(IQ_API, config);
+  return response.data;
+}
+
 export async function saveIqSettings(formData: IqServerFormData): Promise<IqServerFormData> {
   const payload = toUpdatePayload(formData);
   await Axios.put(IQ_API, payload);
   const response = await Axios.get(IQ_API);
   const serverData = response.data || {};
-  // These four fields are local-only because the IQ Server GET response never echoes them
-  // back today; they're explicitly preserved here so a save doesn't silently discard them.
-  // If the API starts returning any of them, `...serverData` below wins and this merge
-  // silently switches to server-wins for that field.
+  // These four fields are not returned by GET — preserve from payload so save doesn't silently discard them.
   const data: IqServerConfiguration = {
     ...DEFAULT_IQ_CONFIGURATION,
     authenticationType: payload.authenticationType,
@@ -78,10 +80,7 @@ export async function saveIqSettings(formData: IqServerFormData): Promise<IqServ
     ...serverData,
   };
   if (!data.authenticationType && data.username) data.authenticationType = 'USER';
-  // Keep the caller's own properties array (stable row ids) rather than re-parsing the
-  // round-tripped string, so rows don't remount / lose focus after a save. The dropped-line
-  // count is reset to 0: the string on the wire is exactly serializeProperties(formData.properties),
-  // which by construction has no unparseable lines.
+  // Keep caller's properties array (stable row ids) to avoid row remounts/focus loss after save.
   return { ...toFormData(data), properties: formData.properties, propertiesDroppedLineCount: 0 };
 }
 

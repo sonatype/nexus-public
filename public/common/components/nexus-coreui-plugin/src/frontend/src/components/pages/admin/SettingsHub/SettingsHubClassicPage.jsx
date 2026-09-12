@@ -68,7 +68,6 @@ export default function SettingsHubClassicPage() {
         <DirectoryList.DirectoryListItem text="Nodes" description="View cluster nodes and status" routeName={ADMIN.SYSTEM.NODES.ROOT} />
         <DirectoryList.DirectoryListItem text="IQ Server" description="Configure Sonatype IQ Server integration" routeName={ADMIN.IQ.ROOT} />
         <DirectoryList.DirectoryListItem text="Nexus One UI" description="Configure Nexus One UI settings and features" routeName={ADMIN.SYSTEM.PREVIEWUI.ROOT} />
-        <DirectoryList.DirectoryListItem text="Upgrade" description="Manage system upgrades and updates" routeName={ADMIN.SYSTEM.UPGRADE.ROOT} />
       </DirectoryList>
 
       <h3 style={sectionHeadingStyle}>Support</h3>

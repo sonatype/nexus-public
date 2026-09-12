@@ -235,7 +235,7 @@ public class ReNormalizeComponentVersionTask
           "re-normalization stopped for format={}: component id={} repositoryId={} version='{}' could not be "
               + "normalized; retain-N stays DISABLED for {} until this is resolved (delete the component or fix "
               + "the normalizer). Will retry on next restart.",
-          format, InternalIds.internalComponentId(componentData), repositoryId, component.version(), format, e);
+          format, componentData.componentId(), repositoryId, component.version(), format, e);
       throw new RuntimeException("re-normalization stopped for format=" + format, e);
     }
   }

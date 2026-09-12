@@ -263,7 +263,7 @@ public class PermissionMappingService
     mappings.add(new ApiEndpointMapping("GET", "/service/rest/v1/status/check",
         null, "Health check (no auth required)"));
     mappings.add(new ApiEndpointMapping("GET", "/service/rest/v1/status/writable",
-        "nexus:*", "Check if system is writable"));
+        null, "Health check — writable (no auth required)"));
 
     // Email configuration
     mappings.add(new ApiEndpointMapping("GET", "/service/rest/v1/email",

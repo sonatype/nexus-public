@@ -101,3 +101,46 @@ describe('ENDPOINTS repository health check constants', () => {
       .toBe('/service/rest/v1/repositories/repo%2Fwith%2Fslashes/health-check');
   });
 });
+
+const IQ_PATH = '/service/rest/v1/iq';
+
+describe('ENDPOINTS IQ Server constants', () => {
+  it('exposes IQ_CAPABILITIES as the capabilities path', () => {
+    expect(ENDPOINTS.IQ_CAPABILITIES).toBe(`${IQ_PATH}/capabilities`);
+  });
+
+  it('exposes IQ_AUDIT as the audit path', () => {
+    expect(ENDPOINTS.IQ_AUDIT).toBe(`${IQ_PATH}/audit`);
+  });
+
+  it('URL-encodes special characters in IQ_AUDIT_REPO repository names', () => {
+    expect(ENDPOINTS.IQ_AUDIT_REPO('repo/with/slashes')).toBe(
+      `${IQ_PATH}/audit/repo%2Fwith%2Fslashes`
+    );
+  });
+
+  /**
+   * NEXUS-54431: IQ_CAPABILITIES was absent from this registry while two Preview UI callers
+   * read it. The build compiles TypeScript with Babel only, so a missing key on an `as const`
+   * object is not a compile error — it silently becomes `undefined`, and axios then resolves
+   * the request against the current document URL. Any new IQ key must be asserted here.
+   */
+  it('produces a defined value for every IQ ENDPOINTS key (regression guard)', () => {
+    expect(ENDPOINTS.IQ_CAPABILITIES).toBeDefined();
+    expect(ENDPOINTS.IQ_AUDIT).toBeDefined();
+    expect(typeof ENDPOINTS.IQ_AUDIT_REPO).toBe('function');
+    expect(ENDPOINTS.IQ_AUDIT_REPO('maven-central')).toBeDefined();
+  });
+
+  it('has no key whose value is undefined or stringifies to contain "undefined"', () => {
+    const bad = Object.entries(ENDPOINTS)
+      .map(([key, value]) => {
+        const resolved = typeof value === 'function' ? value('maven-central') : value;
+        return { key, resolved };
+      })
+      .filter(({ resolved }) => resolved == null || String(resolved).includes('undefined'))
+      .map(({ key }) => key);
+
+    expect(bad).toEqual([]);
+  });
+});

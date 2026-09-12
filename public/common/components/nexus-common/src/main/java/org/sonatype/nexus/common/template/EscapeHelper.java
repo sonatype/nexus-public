@@ -34,7 +34,6 @@ import static java.util.stream.Collectors.joining;
 @TemplateAccessible
 public class EscapeHelper
 {
-
   private static final Map<String, String> DEFAULT_RULES;
 
   static {
@@ -118,6 +117,10 @@ public class EscapeHelper
   }
 
   public String html(final String value) {
+    // Shared, general-purpose HTML escaper used by $esc.html(...) across many templates (error pages,
+    // describe, capability status, SAML, etc.). Deliberately NOT changed by NEXUS-52802: the PyPI perf
+    // path escapes via its own Guava escaper in PyPiIndexUtils, so this stays escapeHtml4 to preserve
+    // exact output for every other caller.
     return StringEscapeUtils.escapeHtml4(value);
   }
 
@@ -200,7 +203,7 @@ public class EscapeHelper
 
   /**
    * Strip java el start token from a string
-   * 
+   *
    * @since 3.14
    */
   public String stripJavaEl(final String value) {

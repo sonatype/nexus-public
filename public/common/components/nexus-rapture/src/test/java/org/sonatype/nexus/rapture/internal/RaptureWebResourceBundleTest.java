@@ -61,7 +61,8 @@ public class RaptureWebResourceBundleTest
     underTest =
         new RaptureWebResourceBundle(applicationVersion, () -> httpServletRequest, () -> stateComponent,
             templateHelper, asList(new UiPluginDescriptorImpl()),
-            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")), null, false);
+            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")), null,
+            null);
   }
 
   @Test
@@ -124,6 +125,53 @@ public class RaptureWebResourceBundleTest
         new URI("./react-script-1-test-debug.js"),
         new URI("./react-script-2-test-debug.js"),
         new URI("./static/rapture/app.js"))));
+  }
+
+  private RaptureWebResourceBundle bundleWith(final String webResourcesVersion) {
+    return new RaptureWebResourceBundle(applicationVersion, () -> httpServletRequest, () -> stateComponent,
+        templateHelper, asList(new UiPluginDescriptorImpl()),
+        asList(new ExtJsUiPluginDescriptorImpl("test-1")), "2025-09-04-1449-03942", webResourcesVersion);
+  }
+
+  @Test
+  public void testUrlSuffix_defaultsToAppVersion() {
+    when(applicationVersion.getVersion()).thenReturn("3.95.0");
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+
+    String suffix = bundleWith(null).generateUrlSuffix();
+
+    assertThat(suffix, is("_v=3.95.0&_e=PRO&_c=2025-09-04-1449-03942"));
+  }
+
+  @Test
+  public void testUrlSuffix_usesOverrideWhenSet() {
+    when(applicationVersion.getVersion()).thenReturn("3.95.0");
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+
+    String suffix = bundleWith("202509231124-1456-947ccc9f").generateUrlSuffix();
+
+    assertThat(suffix, is("_v=202509231124-1456-947ccc9f&_e=PRO&_c=2025-09-04-1449-03942"));
+    assertThat(suffix.contains("3.95.0"), is(false));
+  }
+
+  @Test
+  public void testUrlSuffix_snapshotStillAddsDc_whenOverridden() {
+    when(applicationVersion.getVersion()).thenReturn("3.95.0-SNAPSHOT");
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+
+    String suffix = bundleWith("202509231124-1456-947ccc9f").generateUrlSuffix();
+
+    assertThat(suffix.startsWith("_v=202509231124-1456-947ccc9f&_e=PRO&_c=2025-09-04-1449-03942&_dc="), is(true));
+  }
+
+  @Test
+  public void testUrlSuffix_snapshotAddsDc_noOverride() {
+    when(applicationVersion.getVersion()).thenReturn("3.95.0-SNAPSHOT");
+    when(applicationVersion.getEdition()).thenReturn("PRO");
+
+    String suffix = bundleWith(null).generateUrlSuffix();
+
+    assertThat(suffix.startsWith("_v=3.95.0-SNAPSHOT&_e=PRO&_c=2025-09-04-1449-03942&_dc="), is(true));
   }
 
   private final class UiPluginDescriptorImpl

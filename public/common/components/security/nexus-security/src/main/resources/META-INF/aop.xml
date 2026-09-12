@@ -16,6 +16,7 @@
     <aspects>
         <aspect name="org.sonatype.nexus.security.aspect.RequiresAuthenticationAspect"/>
         <aspect name="org.sonatype.nexus.security.aspect.RequiresPermissionsAspect"/>
+        <aspect name="org.sonatype.nexus.security.aspect.RequiresUserAspect"/>
         <weaver options="-verbose -showWeaveInfo">
             <include within="org.sonatype.nexus.*"/>
             <include within="com.sonatype.nexus.*"/>
