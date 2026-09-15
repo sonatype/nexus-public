@@ -25,6 +25,7 @@ import org.sonatype.nexus.crypto.secrets.SecretsFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -36,8 +37,9 @@ import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.S3ServiceClientConfiguration;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -73,7 +75,7 @@ public class AmazonS3FactoryTest
 
   private SecretsFactory secretsFactory = mock(SecretsFactory.class);
 
-  private AmazonS3Factory amazonS3Factory = new AmazonS3Factory(-1, null, false, "", secretsFactory);
+  private AmazonS3Factory amazonS3Factory = new AmazonS3Factory(-1, null, false, "", false, secretsFactory);
 
   private MockBlobStoreConfiguration config = new MockBlobStoreConfiguration();
 
@@ -89,7 +91,6 @@ public class AmazonS3FactoryTest
     when(s3ClientBuilder.httpClient(any(SdkHttpClient.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.serviceConfiguration(any(S3Configuration.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.credentialsProvider(any(StaticCredentialsProvider.class))).thenReturn(s3ClientBuilder);
-    when(s3ClientBuilder.forcePathStyle(anyBoolean())).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.endpointOverride(any(URI.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.region(any(Region.class))).thenReturn(s3ClientBuilder);
     when(s3ClientBuilder.build()).thenReturn(client);
@@ -139,7 +140,7 @@ public class AmazonS3FactoryTest
   @Test
   public void cloudWatchMetricsAreEnabledWhenSet() {
     final String givenNamespace = "some-namepace";
-    amazonS3Factory = new AmazonS3Factory(-1, null, true, givenNamespace, secretsFactory);
+    amazonS3Factory = new AmazonS3Factory(-1, null, true, givenNamespace, false, secretsFactory);
 
     amazonS3Factory.create(config);
 
@@ -148,14 +149,27 @@ public class AmazonS3FactoryTest
   }
 
   @Test
-  public void pathStyleAccessIsSetWhenProvidedInConfig() {
+  public void pathStyleAccessIsSetInServiceConfiguration() {
     config.getAttributes().get("s3").put("region", "us-west-2");
     config.getAttributes().get("s3").put("forcepathstyle", "true");
+    ArgumentCaptor<S3Configuration> serviceConfiguration = ArgumentCaptor.forClass(S3Configuration.class);
 
     amazonS3Factory.create(config);
 
     verify(s3ClientBuilder).region(Region.US_WEST_2);
-    verify(s3ClientBuilder).forcePathStyle(true);
+    verify(s3ClientBuilder).serviceConfiguration(serviceConfiguration.capture());
+    assertThat(serviceConfiguration.getValue().pathStyleAccessEnabled(), is(true));
+  }
+
+  @Test
+  public void chunkedEncodingIsDisabledWhenConfigured() {
+    amazonS3Factory = new AmazonS3Factory(-1, null, false, "", true, secretsFactory);
+    ArgumentCaptor<S3Configuration> serviceConfiguration = ArgumentCaptor.forClass(S3Configuration.class);
+
+    amazonS3Factory.create(config);
+
+    verify(s3ClientBuilder).serviceConfiguration(serviceConfiguration.capture());
+    assertThat(serviceConfiguration.getValue().chunkedEncodingEnabled(), is(false));
   }
 
   @Test

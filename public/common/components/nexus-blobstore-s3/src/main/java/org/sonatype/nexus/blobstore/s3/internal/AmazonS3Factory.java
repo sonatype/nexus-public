@@ -57,6 +57,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 
@@ -78,6 +79,8 @@ public class AmazonS3Factory
 
   private final String cloudWatchMetricsNamespace;
 
+  private final boolean disableChunkedEncoding;
+
   private final Time connectionTtl;
 
   private final SecretsFactory secretsFactory;
@@ -88,11 +91,13 @@ public class AmazonS3Factory
       @Nullable @Value("${nexus.s3.connection.ttl:#{null}}") final Time connectionTtl,
       @Value("${nexus.s3.cloudwatchmetrics.enabled:false}") final boolean cloudWatchMetricsEnabled,
       @Value("${nexus.s3.cloudwatchmetrics.namespace:nexus-blobstore-s3}") final String cloudWatchMetricsNamespace,
+      @Value("${nexus.blobstore.s3.disableChunkedEncoding:false}") final boolean disableChunkedEncoding,
       final SecretsFactory secretsFactory)
   {
     this.defaultConnectionPoolSize = connectionPoolSize;
     this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
     this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
+    this.disableChunkedEncoding = disableChunkedEncoding;
     this.connectionTtl = connectionTtl;
     this.secretsFactory = checkNotNull(secretsFactory);
   }
@@ -145,7 +150,12 @@ public class AmazonS3Factory
     builder = builder.httpClient(httpClientBuilder.build());
     // === end connection settings ===
 
-    builder = builder.forcePathStyle(Boolean.parseBoolean(forcePathStyle));
+    S3Configuration.Builder serviceConfiguration = S3Configuration.builder()
+        .pathStyleAccessEnabled(Boolean.parseBoolean(forcePathStyle));
+    if (disableChunkedEncoding) {
+      serviceConfiguration.chunkedEncodingEnabled(false);
+    }
+    builder = builder.serviceConfiguration(serviceConfiguration.build());
 
     if (cloudWatchMetricsEnabled) {
       // Converted from AWS SDK V1 to V2 according to following this AWS blog
