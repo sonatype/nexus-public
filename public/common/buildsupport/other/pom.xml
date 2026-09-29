@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.common.buildsupport</groupId>
     <artifactId>nexus-common-buildsupport-parent</artifactId>
-    <version>3.96.3-01</version>
+    <version>3.96.4-01</version>
   </parent>
 
   <artifactId>nexus-common-buildsupport-other</artifactId>
@@ -260,10 +260,11 @@
         <version>1.2.3</version>
       </dependency>
 
+      <!-- 2.3.35 is the first release fixing the localized-lookup path traversal (CVE-2026-84939); do not lower. -->
       <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
-        <version>2.3.32</version>
+        <version>2.3.35</version>
       </dependency>
 
       <dependency>
